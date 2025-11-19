@@ -68,7 +68,7 @@ func TestCheck(t *testing.T) {
 	require.NoError(t, err)
 
 	client := redis.NewClient(opts)
-	redIdx, err := index.NewRedis(client, "test", redisTTL)
+	redIdx := index.New(client, "test", 0, 0)
 	require.NoError(t, err, "failed to create Redis index")
 
 	rtRedis, rtRedisCancelFunc := mkRuleTable(t, params, redIdx)

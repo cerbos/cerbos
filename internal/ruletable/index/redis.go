@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -16,37 +17,88 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const defaultKeyTTL = time.Minute * 5
+const (
+	// expirationBuffer is the safety margin between the sentinel expiring and the data expiring.
+	// This guarantees that if GetExisting() returns successfully, the data keys will persist for at least
+	// this long, covering the duration of the read operation.
+	defaultKeyTTL           = time.Minute * 5
+	defaultExpirationBuffer = time.Minute * 1
+	sentinelSuffix          = "sentinel"
+)
 
 var (
 	_ Index      = (*Redis)(nil)
 	_ literalMap = (*RedisLiteralMap)(nil)
 	_ globMap    = (*RedisGlobMap)(nil)
+
+	ErrCacheMiss = errors.New("index not found in cache")
+	ErrReadOnly  = errors.New("redis instance is read only")
 )
 
 type Redis struct {
-	db    *redis.Client
-	nsKey string
-	ttl   time.Duration
+	db               *redis.Client
+	nsKey            string
+	sentKey          string
+	sentinelDeadline time.Time
+	dataDeadline     time.Time
+	readOnly         bool
 }
 
-func NewRedis(client *redis.Client, namespace string, ttl time.Duration) (*Redis, error) {
-	if ttl == 0 {
-		ttl = defaultKeyTTL
+// GetExisting checks if a valid index exists for the given namespace.
+// It checks for the presence of the sentinel key.
+//   - If the sentinel exists, it returns a valid *Redis adapter ready for reading.
+//   - If the sentinel is missing, it returns (nil, ErrCacheMiss), signaling the caller to use New().
+func GetExisting(ctx context.Context, client *redis.Client, namespace string) (*Redis, error) {
+	sentKey := namespace + ":" + sentinelSuffix
+	exists, err := client.Exists(ctx, sentKey).Result()
+	if err != nil {
+		return nil, err
 	}
+
+	if exists == 0 {
+		return nil, ErrCacheMiss
+	}
+
 	return &Redis{
-		db:    client,
-		nsKey: namespace,
-		ttl:   ttl,
+		db:       client,
+		nsKey:    namespace,
+		sentKey:  sentKey,
+		readOnly: true,
 	}, nil
 }
 
+// New creates a new index generation.
+// All data written via this instance will share these exact timestamps, ensuring the entire
+// batch expires consistently with no time drift.
+//
+// Usage: Call this when GetExisting returns ErrCacheMiss.
+func New(client *redis.Client, namespace string, ttl time.Duration, expirationBuffer time.Duration) *Redis {
+	if ttl <= 0 {
+		ttl = defaultKeyTTL
+	}
+	if expirationBuffer <= 0 {
+		expirationBuffer = defaultExpirationBuffer
+	}
+
+	now := time.Now()
+	sentinelDeadline := now.Add(ttl)
+	dataDeadline := sentinelDeadline.Add(expirationBuffer)
+
+	return &Redis{
+		db:               client,
+		nsKey:            namespace,
+		sentKey:          namespace + ":" + sentinelSuffix,
+		sentinelDeadline: sentinelDeadline,
+		dataDeadline:     dataDeadline,
+	}
+}
+
 func (r *Redis) getLiteralMap(category string) literalMap {
-	return newRedisLiteralMap(r.db, r.nsKey, category, r.ttl)
+	return newRedisLiteralMap(r.db, r.nsKey, category, r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
 }
 
 func (r *Redis) getGlobMap(category string) globMap {
-	return newRedisGlobMap(r.db, r.nsKey, category, r.ttl)
+	return newRedisGlobMap(r.db, r.nsKey, category, r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
 }
 
 func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
@@ -73,7 +125,8 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for i, raw := range rawRows {
 		if rows[i].RuleTable_RuleRow == nil {
 			if raw == nil {
-				return nil, fmt.Errorf("data missing for key %s", sums[i])
+				// If we reach this case, somethings gone unexpectedly wrong.
+				return nil, fmt.Errorf("data missing for row checksum %s", sums[i])
 			}
 			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
 			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
@@ -94,18 +147,24 @@ func (r *Redis) rowKey(sum string) string {
 }
 
 type redisMap struct {
-	db     *redis.Client
-	nsKey  string
-	catKey string
-	ttl    time.Duration
+	db               *redis.Client
+	nsKey            string
+	catKey           string
+	sentKey          string
+	sentinelDeadline time.Time
+	dataDeadline     time.Time
+	readOnly         bool
 }
 
-func newRedisMap(db *redis.Client, namespace, categoryKey string, ttl time.Duration) *redisMap {
+func newRedisMap(db *redis.Client, namespace, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
 	return &redisMap{
-		db:     db,
-		nsKey:  namespace,
-		catKey: namespace + ":" + categoryKey,
-		ttl:    ttl,
+		db:               db,
+		nsKey:            namespace,
+		catKey:           namespace + ":" + categoryKey,
+		sentKey:          sentKey,
+		sentinelDeadline: sentinelDeadline,
+		dataDeadline:     dataDeadline,
+		readOnly:         readOnly,
 	}
 }
 
@@ -161,8 +220,11 @@ We store the following:
 - {nsKey:row_checksum} -> *Ruletable_RuleRow
 // scoping checksums by namespace prevents duplicating rows across categories).
 */
-
 func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
+	if rm.readOnly {
+		return ErrReadOnly
+	}
+
 	sums, rows, err := rm.serialize(rs)
 	if err != nil {
 		return err
@@ -172,15 +234,19 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 
 	_, err = rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
 		p.SAdd(ctx, rm.catKey, sumsKey)
+		p.PExpireAt(ctx, rm.catKey, rm.dataDeadline)
+
 		p.SAdd(ctx, sumsKey, sums...)
+		p.PExpireAt(ctx, sumsKey, rm.dataDeadline)
 
 		for i, r := range rows {
 			rk := sums[i].(string) //nolint:forcetypeassert
-			p.Set(ctx, rk, r, rm.ttl)
+			p.Set(ctx, rk, r, 0)
+			p.PExpireAt(ctx, rk, rm.dataDeadline)
 		}
 
-		p.Expire(ctx, sumsKey, rm.ttl)
-		p.Expire(ctx, rm.catKey, rm.ttl)
+		p.Set(ctx, rm.sentKey, "1", 0)
+		p.PExpireAt(ctx, rm.sentKey, rm.sentinelDeadline)
 
 		return nil
 	})
@@ -282,9 +348,9 @@ type RedisLiteralMap struct {
 	*redisMap
 }
 
-func newRedisLiteralMap(db *redis.Client, namespace, category string, ttl time.Duration) *RedisLiteralMap {
+func newRedisLiteralMap(db *redis.Client, namespace, category string, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
 	return &RedisLiteralMap{
-		redisMap: newRedisMap(db, namespace, category, ttl),
+		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
 }
 
@@ -292,9 +358,9 @@ type RedisGlobMap struct {
 	*redisMap
 }
 
-func newRedisGlobMap(db *redis.Client, namespace, category string, ttl time.Duration) *RedisGlobMap {
+func newRedisGlobMap(db *redis.Client, namespace, category string, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
 	return &RedisGlobMap{
-		redisMap: newRedisMap(db, namespace, category, ttl),
+		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
 }
 
