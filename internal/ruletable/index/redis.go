@@ -179,7 +179,6 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

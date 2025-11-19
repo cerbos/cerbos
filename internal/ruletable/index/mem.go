@@ -39,8 +39,8 @@ func (m *Mem) resolve(_ context.Context, rows []*Row) ([]*Row, error) {
 }
 
 type memLiteralMap struct {
-	mu sync.RWMutex
 	m  map[string]*rowSet
+	mu sync.RWMutex
 }
 
 func newMemLiteralMap() *memLiteralMap {
@@ -91,8 +91,8 @@ func (lm *memLiteralMap) delete(_ context.Context, keys ...string) error {
 }
 
 type memGlobMap struct {
-	mu sync.RWMutex
 	m  *util.GlobMap[*rowSet]
+	mu sync.RWMutex
 }
 
 func newMemGlobMap() *memGlobMap {
