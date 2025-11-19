@@ -1,3 +1,6 @@
+// Copyright ((20\d\d\-2025)|(2025)) Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package index
 
 import (
@@ -51,10 +54,9 @@ type globMap interface {
 
 type Row struct {
 	*runtimev1.RuleTable_RuleRow
-	// sum                        [sha256.Size]byte
-	sum                        string
 	Params                     *rowParams
 	DerivedRoleParams          *rowParams
+	sum                        string
 	NoMatchForScopePermissions bool
 }
 
@@ -355,7 +357,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
-			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok {
+			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
 				if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
 					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 					// retrieve actions mapped to all effectual rows

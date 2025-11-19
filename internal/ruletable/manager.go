@@ -137,9 +137,13 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 		}
 
 		// Only delete if we successfully retrieved the policy above (e.g. no compilation errors occurred)
-		mgr.deletePolicy(evt.PolicyID)
+		if err := mgr.deletePolicy(evt.PolicyID); err != nil {
+			return fmt.Errorf("failed to delete policy: %w", err)
+		}
 		if evt.OldPolicyID != nil {
-			mgr.deletePolicy(*evt.OldPolicyID)
+			if err := mgr.deletePolicy(*evt.OldPolicyID); err != nil {
+				return fmt.Errorf("failed to delete old policy: %w", err)
+			}
 		}
 
 		if rps != nil {
@@ -148,7 +152,9 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 			}
 		}
 	case storage.EventDeleteOrDisablePolicy:
-		mgr.deletePolicy(evt.PolicyID)
+		if err := mgr.deletePolicy(evt.PolicyID); err != nil {
+			return fmt.Errorf("failed to delete policy: %w", err)
+		}
 	}
 
 	if len(evt.Dependents) > 0 {
@@ -160,7 +166,9 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 
 		// we leave ruletable state static until we're sure all dependents are valid, and then update
 		for _, modID := range evt.Dependents {
-			mgr.deletePolicy(modID)
+			if err := mgr.deletePolicy(modID); err != nil {
+				mgr.log.Errorf("Failed to delete dependent: %w", err)
+			}
 		}
 
 		for _, rps := range toReload {
@@ -188,11 +196,11 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	return nil
 }
 
-func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) {
+func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	mgr.doDeletePolicy(moduleID)
+	return mgr.doDeletePolicy(moduleID)
 }
 
 // doDeletePolicy implements the delete logic. The caller must obtain a lock first.
