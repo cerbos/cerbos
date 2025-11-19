@@ -218,70 +218,48 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	if err := mgr.idx.DeletePolicy(ctx, meta.GetFqn()); err != nil {
 		return err
 	}
-	scopes, err := mgr.idx.GetScopes(ctx)
+
+	activeScopes, err := mgr.idx.GetScopes(ctx)
 	if err != nil {
 		return err
 	}
-	for _, scope := range scopes {
-		scopedParentRoleAncestors := mgr.parentRoleAncestors[scope]
-		roleGlobs, err := mgr.idx.GetRoleGlobs(ctx)
-		if err != nil {
-			return err
+	activeScopeSet := make(map[string]struct{}, len(activeScopes))
+	for _, s := range activeScopes {
+		activeScopeSet[s] = struct{}{}
+	}
+
+	for scope := range mgr.parentRoleAncestors {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.parentRoleAncestors, scope)
+			continue
 		}
-		for _, roleGlob := range roleGlobs {
-			exists, err := mgr.idx.ScopedRoleGlobExists(ctx, scope, roleGlob)
-			if err != nil {
-				return err
-			}
+
+		existingRoles := mgr.parentRoleAncestors[scope]
+		for role := range existingRoles {
+			exists, _ := mgr.idx.ScopedRoleGlobExists(ctx, scope, role)
 			if !exists {
-				delete(scopedParentRoleAncestors, roleGlob)
+				delete(existingRoles, role)
 			}
 		}
 	}
 
-	// TODO(saml) reintroduce housekeeping on empty maps
+	for scope := range mgr.principalScopeMap {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.principalScopeMap, scope)
+		}
+	}
 
-	// for version, scopeMap := range mgr.primaryIdx {
-	// 	for scope, roleMap := range scopeMap {
-	// 		scopedParentRoleAncestors := mgr.parentRoleAncestors[scope]
+	for scope := range mgr.resourceScopeMap {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.resourceScopeMap, scope)
+		}
+	}
 
-	// 		for role, actionMap := range roleMap.GetAll() {
-	// 			for action, rules := range actionMap.GetAll() {
-	// 				newRules := make([]*index.Row, 0, len(rules))
-	// 				for _, r := range rules {
-	// 					if r.OriginFqn != meta.GetFqn() {
-	// 						newRules = append(newRules, r)
-	// 					} else {
-	// 						mgr.log.Debugf("Dropping rule %s", r.GetOriginFqn())
-	// 					}
-	// 				}
-
-	// 				if len(newRules) > 0 {
-	// 					actionMap.Set(action, newRules)
-	// 				} else {
-	// 					actionMap.DeleteLiteral(action)
-	// 				}
-	// 			}
-
-	// 			if actionMap.Len() == 0 {
-	// 				roleMap.DeleteLiteral(role)
-	// 				delete(scopedParentRoleAncestors, role)
-	// 			}
-	// 		}
-
-	// 		if roleMap.Len() == 0 {
-	// 			delete(scopeMap, scope)
-	// 			delete(mgr.principalScopeMap, scope)
-	// 			delete(mgr.resourceScopeMap, scope)
-	// 			delete(mgr.scopeScopePermissions, scope)
-	// 			delete(mgr.parentRoleAncestors, scope)
-	// 		}
-	// 	}
-
-	// 	if len(scopeMap) == 0 {
-	// 		delete(mgr.primaryIdx, version)
-	// 	}
-	// }
+	for scope := range mgr.scopeScopePermissions {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.scopeScopePermissions, scope)
+		}
+	}
 
 	delete(mgr.Schemas, moduleID.RawValue())
 	delete(mgr.Meta, moduleID.RawValue())
