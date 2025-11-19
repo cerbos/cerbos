@@ -1,3 +1,6 @@
+// Copyright ((20\d\d\-2025)|(2025)) Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package index
 
 import (
@@ -47,9 +50,9 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for _, row := range rows {
 		var sum string
 		if row.RuleTable_RuleRow != nil {
-			sum = string(row.sum[:])
+			sum = row.sum
 		} else {
-			sum = r.rowKey(string(row.sum[:]))
+			sum = r.rowKey(row.sum)
 		}
 		sums = append(sums, sum)
 	}
@@ -66,7 +69,7 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for i, raw := range rawRows {
 		if rows[i].RuleTable_RuleRow == nil {
 			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
-			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil {
+			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
 				return nil, err
 			}
 			if err := hydrateParams(rows[i]); err != nil {
@@ -110,7 +113,7 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 	sums := make([]any, 0, len(rs.m))
 	raws := make([]any, 0, len(rs.m))
 	for sum, r := range rs.m {
-		sums = append(sums, rm.rowKey(string(sum[:])))
+		sums = append(sums, rm.rowKey(sum))
 		b, err := r.MarshalVT()
 		if err != nil {
 			return nil, nil, err
@@ -129,18 +132,14 @@ func (rm *redisMap) sumFromRowKey(key string) string {
 	return strings.TrimPrefix(key, rm.nsKey+":")
 }
 
-func (rm *redisMap) getRowSetWithSums(sums []string) (*rowSet, error) {
+func (rm *redisMap) getRowSetWithSums(sums []string) *rowSet {
 	rs := newRowSet()
 	for i := range sums {
-		// b := []byte(rm.sumFromRowKey(sums[i]))
-		// var sum [32]byte
-		// copy(sum[:], b)
-
 		rs.set(&Row{
 			sum: rm.sumFromRowKey(sums[i]),
 		})
 	}
-	return rs, nil
+	return rs
 }
 
 /*
@@ -151,7 +150,7 @@ We store the following:
 - {catKey} -> set[{catKey:category_item}] e.g. `1:scope:foo`
 - {catKey:category_item} -> set[{namespace:row_checksum}]
 - {nsKey:row_checksum} -> *Ruletable_RuleRow
-// scoping checksums by namespace prevents duplicating rows across categories)
+// scoping checksums by namespace prevents duplicating rows across categories).
 */
 func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 	sumsKey := rm.sumsKey(cat)
@@ -167,7 +166,7 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 
 		rkBatch := []any{}
 		for i, r := range rows {
-			rk := sums[i].(string)
+			rk := sums[i].(string) //nolint:forcetypeassert
 			rkBatch = append(rkBatch, rk, r)
 		}
 
@@ -207,12 +206,7 @@ func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet
 			return nil, err
 		}
 
-		rs, err := rm.getRowSetWithSums(sums)
-		if err != nil {
-			return nil, err
-		}
-
-		res[cat] = rs
+		res[cat] = rm.getRowSetWithSums(sums)
 	}
 
 	return res, nil
@@ -231,12 +225,7 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 			return nil, err
 		}
 
-		rs, err := rm.getRowSetWithSums(sums)
-		if err != nil {
-			return nil, err
-		}
-
-		res[rm.catFromSumsKey(catKey)] = rs
+		res[rm.catFromSumsKey(catKey)] = rm.getRowSetWithSums(sums)
 	}
 
 	return res, nil
@@ -263,7 +252,7 @@ func newRedisGlobMap(db *redis.Client, namespace, category string) *RedisGlobMap
 }
 
 func (gl *RedisGlobMap) getWithLiteral(ctx context.Context, keys ...string) (map[string]*rowSet, error) {
-	return gl.redisMap.get(ctx, keys...)
+	return gl.get(ctx, keys...)
 }
 
 func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[string]*rowSet, error) {
@@ -317,11 +306,7 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 	}
 
 	for k := range matched {
-		rs, err := gl.getRowSetWithSums(sumsMap[k])
-		if err != nil {
-			return nil, err
-		}
-		res[k] = rs
+		res[k] = gl.getRowSetWithSums(sumsMap[k])
 	}
 
 	return res, nil

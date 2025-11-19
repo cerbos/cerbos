@@ -1,3 +1,6 @@
+// Copyright ((20\d\d\-2025)|(2025)) Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
 package index
 
 import (
