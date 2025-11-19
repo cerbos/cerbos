@@ -44,8 +44,6 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const redisTTL = time.Second * 5
-
 // trick compiler into not converting benchmarks into nops.
 var dummy int
 
