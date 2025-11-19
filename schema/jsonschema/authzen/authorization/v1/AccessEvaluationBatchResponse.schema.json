@@ -1,12 +1,15 @@
 {
-  "$id": "https://api.cerbos.dev/authzen/authorization/v1/AccessEvaluationResponse/Context.schema.json",
+  "$id": "https://api.cerbos.dev/authzen/authorization/v1/AccessEvaluationBatchResponse.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "authzen.authorization.v1.AccessEvaluationResponse.Context.Reason": {
+    "authzen.authorization.v1.AccessEvaluationResponse": {
       "type": "object",
+      "required": [
+        "decision"
+      ],
       "additionalProperties": false,
       "properties": {
-        "properties": {
+        "context": {
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/google.protobuf.Value"
@@ -15,6 +18,9 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "decision": {
+          "type": "boolean"
         }
       }
     },
@@ -25,19 +31,15 @@
   },
   "type": "object",
   "required": [
-    "id"
+    "evaluations"
   ],
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "reasonAdmin": {
-      "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse.Context.Reason"
-    },
-    "reasonUser": {
-      "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse.Context.Reason"
+    "evaluations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse"
+      }
     }
   }
 }

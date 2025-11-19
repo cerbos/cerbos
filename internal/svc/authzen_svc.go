@@ -12,6 +12,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	"github.com/cerbos/cerbos/internal/util"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -31,7 +32,6 @@ func NewAuthzenAuthorizationService(svc *CerbosService) *AuthzenAuthorizationSer
 	}
 }
 
-// AccessEvaluation implements authorizationv1.AuthorizationServiceServer.
 func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r *svcv1.AccessEvaluationRequest) (*svcv1.AccessEvaluationResponse, error) {
 	req, err := toCheckResourcesRequest(r)
 	if err != nil {
@@ -47,13 +47,143 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 	}
 	return &svcv1.AccessEvaluationResponse{
 		Decision: resp.Results[0].Actions[req.Resources[0].Actions[0]] == effectv1.Effect_EFFECT_ALLOW,
-		Context: &svcv1.AccessEvaluationResponse_Context{
-			Id: resp.RequestId,
-			ReasonUser: &svcv1.AccessEvaluationResponse_Context_Reason{
-				Properties: map[string]*structpb.Value{cerbosProp("response"): respAsValue},
-			},
-		},
+		Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 	}, nil
+}
+
+func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
+	// Merge each evaluation with defaults to create complete requests
+	type evalRequest struct {
+		subject  *svcv1.Subject
+		resource *svcv1.Resource
+		action   *svcv1.Action
+		context  map[string]*structpb.Value
+		auxData  *requestv1.AuxData
+		index    int // Original index for maintaining order
+	}
+
+	evals := make([]evalRequest, len(r.Evaluations)) // evaluations with default values taken into account
+
+	defaultAuxData, err := extractAuxData(r.Context)
+	if err != nil {
+		return nil, err
+	}
+	for i, eval := range r.Evaluations {
+		ctx := r.Context
+		auxData := defaultAuxData
+		if len(eval.Context) > 0 {
+			ctx = eval.Context
+			auxData, err = extractAuxData(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
+		evals[i] = evalRequest{
+			subject:  merge(r.Subject, eval.Subject),
+			resource: merge(r.Resource, eval.Resource),
+			action:   merge(r.Action, eval.Action),
+			context:  ctx,
+			auxData:  auxData,
+			index:    i,
+		}
+	}
+
+	// Group evaluations by (subject, auxData) to call CheckResources for each group
+	type groupKey struct {
+		subjectID   string
+		auxDataHash uint64
+	}
+
+	groups := make(map[groupKey][]evalRequest)
+	for _, req := range evals {
+		key := groupKey{
+			subjectID:   req.subject.Id,
+			auxDataHash: util.HashPB(req.auxData, nil),
+		}
+		groups[key] = append(groups[key], req)
+	}
+
+	responses := make([]*svcv1.AccessEvaluationResponse, len(r.Evaluations))
+
+	// Process each group with a single CheckResources call
+	for _, reqs := range groups {
+		checkReq := &requestv1.CheckResourcesRequest{
+			RequestId:   lookupOrEmptyString(reqs[0].context, "requestId"),
+			IncludeMeta: true,
+			Principal:   toPrincipal(reqs[0].subject),
+			AuxData:     reqs[0].auxData,
+		}
+
+		// Group by resource since a ResourceEntry can have multiple actions
+		type resourceKey struct {
+			resourceType string
+			resourceID   string
+		}
+		reqsByRes := make(map[resourceKey][]evalRequest)
+		for _, req := range reqs {
+			key := resourceKey{
+				resourceType: req.resource.Type,
+				resourceID:   req.resource.Id,
+			}
+			reqsByRes[key] = append(reqsByRes[key], req)
+		}
+
+		// Build resource entries and track mapping
+		type resultMapping struct {
+			action           string
+			resourceEntryIdx int
+			responseIdx      int
+		}
+		var mappings []resultMapping
+
+		resourceEntryIdx := 0
+		checkReq.Resources = make([]*requestv1.CheckResourcesRequest_ResourceEntry, len(reqsByRes))
+		for _, reqs1 := range reqsByRes {
+			actions := make([]string, len(reqs1))
+			for i, req := range reqs1 {
+				actions[i] = req.action.GetName()
+				mappings = append(mappings, resultMapping{
+					action:           actions[i],
+					responseIdx:      req.index,
+					resourceEntryIdx: resourceEntryIdx,
+				})
+			}
+			checkReq.Resources[resourceEntryIdx] = &requestv1.CheckResourcesRequest_ResourceEntry{
+				Actions:  actions,
+				Resource: toResource(reqs1[0].resource),
+			}
+			resourceEntryIdx++
+		}
+
+		checkResp, err := aas.svc.CheckResources(ctx, checkReq)
+		if err != nil {
+			return nil, err
+		}
+
+		respAsValue, err := messageToValue(checkResp.ProtoReflect())
+		if err != nil {
+			return nil, err
+		}
+
+		// Map results back to original positions
+		for _, mapping := range mappings {
+			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
+				Decision: checkResp.Results[mapping.resourceEntryIdx].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
+				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
+			}
+		}
+	}
+
+	return &svcv1.AccessEvaluationBatchResponse{
+		Evaluations: responses,
+	}, nil
+}
+
+func merge[T any](defaults, override *T) *T {
+	if override != nil {
+		return override
+	}
+	return defaults
 }
 
 func cerbosProp(s string) string {
@@ -92,7 +222,7 @@ func toCheckResourcesRequest(req *svcv1.AccessEvaluationRequest) (*requestv1.Che
 	}, nil
 }
 
-func toResource(res *svcv1.AccessEvaluationRequest_Resource) *enginev1.Resource {
+func toResource(res *svcv1.Resource) *enginev1.Resource {
 	props := res.Properties
 	return &enginev1.Resource{
 		Kind:          res.Type,
@@ -103,7 +233,7 @@ func toResource(res *svcv1.AccessEvaluationRequest_Resource) *enginev1.Resource 
 	}
 }
 
-func toPrincipal(subj *svcv1.AccessEvaluationRequest_Subject) *enginev1.Principal {
+func toPrincipal(subj *svcv1.Subject) *enginev1.Principal {
 	props := subj.Properties
 	var roles []string
 	for _, v := range lookup(props, "roles").GetListValue().GetValues() {

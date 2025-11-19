@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/authzen/authorization/v1/AccessEvaluationRequest/Subject.schema.json",
+  "$id": "https://api.cerbos.dev/authzen/authorization/v1/Subject.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "google.protobuf.Value": {

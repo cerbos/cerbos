@@ -16,10 +16,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req01_XX125_approve (expect DENY)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -29,10 +29,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
 
 # Valid AccessEvaluation request - req01_XX125_create (expect DENY)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -42,10 +42,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
 
 # Valid AccessEvaluation request - req01_XX125_defer (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -55,10 +55,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['defer']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['defer']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req01_XX150_view_public (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -68,10 +68,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX150"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req01_XX150_approve (expect DENY)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -81,10 +81,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX150"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
 
 # Valid AccessEvaluation request - req01_XX150_create (expect DENY)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -94,10 +94,10 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX150"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
 
 # Valid AccessEvaluation request - req02_XX125_view_public (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -107,11 +107,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.scope" == "acme.hr.uk"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].resource.scope" == "acme.hr.uk"
+jsonpath "$.context['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req02_XX125_delete (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -121,11 +121,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.scope" == "acme.hr.uk"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['delete']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].resource.scope" == "acme.hr.uk"
+jsonpath "$.context['cerbos.response'].results[0].actions['delete']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req02_XX125_create (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -135,11 +135,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.scope" == "acme.hr.uk"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['create']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].resource.scope" == "acme.hr.uk"
+jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req02_XX225_view_public (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -149,11 +149,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX225"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.scope" == "acme.hr"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX225"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].resource.scope" == "acme.hr"
+jsonpath "$.context['cerbos.response'].results[0].actions['view:public']" == "EFFECT_ALLOW"
 
 # Valid AccessEvaluation request - req02_XX225_delete (expect DENY)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -163,11 +163,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX225"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.scope" == "acme.hr"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['delete']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX225"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].resource.scope" == "acme.hr"
+jsonpath "$.context['cerbos.response'].results[0].actions['delete']" == "EFFECT_DENY"
 
 # Valid AccessEvaluation request - req02_XX225_create (expect ALLOW)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -177,11 +177,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" == true
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX225"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.scope" == "acme.hr"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['create']" == "EFFECT_ALLOW"
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX225"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].resource.scope" == "acme.hr"
+jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_ALLOW"
 
 # Invalid AccessEvaluation request - bad_req01_XX125_view_public (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -191,11 +191,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['view:public']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['view:public']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
 
 # Invalid AccessEvaluation request - bad_req01_XX125_approve (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -205,11 +205,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
 
 # Invalid AccessEvaluation request - bad_req01_XX125_create (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -219,11 +219,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
 
 # Invalid AccessEvaluation request - bad_req01_XX125_defer (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -233,11 +233,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX125"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['defer']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['defer']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
 
 # Invalid AccessEvaluation request - bad_req01_XX150_view_public (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -247,11 +247,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX150"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['view:public']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['view:public']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
 
 # Invalid AccessEvaluation request - bad_req01_XX150_approve (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -261,11 +261,11 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX150"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['approve']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
 
 # Invalid AccessEvaluation request - bad_req01_XX150_create (expect DENY with validation errors)
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
@@ -275,8 +275,8 @@ HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
 jsonpath "$.decision" not exists
-jsonpath "$.context.id" == "test"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.id" == "XX150"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].resource.kind" == "leave_request"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
-jsonpath "$.context.reasonUser.properties['cerbos.response'].results[0].validationErrors[*]" count == 2
+jsonpath "$.context['cerbos.response'].requestId" == "test"
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
+jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
+jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2

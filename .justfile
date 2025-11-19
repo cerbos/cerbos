@@ -179,6 +179,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"]="playground_validate"
     tests["cerbos.svc.v1.CerbosPlaygroundService/PlaygroundEvaluate"]="playground_evaluate"
     tests["authzen.authorization.v1.AuthorizationService/AccessEvaluation"]="access_evaluation"
+    tests["authzen.authorization.v1.AuthorizationService/AccessEvaluationBatch"]="access_evaluation_batch"
 
     for svc in "${!tests[@]}"; do
         echo "--- $svc ---"
@@ -190,7 +191,7 @@ check-grpc PROTOCOL='https' HOST='localhost:3593': _buf
     done
 
 check-http PROTOCOL='https' HOST='localhost' PORT='3592':
-	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan,access_evaluation}.hurl
+	@ hurl -k --variable protocol={{ PROTOCOL }} --variable host={{ HOST }} --variable port={{ PORT }} --test {{ dev_dir }}/{check,playground,plan,access_evaluation,access_evaluation_batch}.hurl
 
 # Executables
 
