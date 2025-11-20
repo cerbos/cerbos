@@ -6,7 +6,6 @@ package engine
 import (
 	"context"
 	"fmt"
-	"maps"
 	"math/rand"
 	"net/http"
 	"sync/atomic"
@@ -17,8 +16,8 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	engaudit "github.com/cerbos/cerbos/internal/engine/audit"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
@@ -302,7 +301,7 @@ func (engine *Engine) checkSerial(ctx context.Context, inputs []*enginev1.CheckI
 		}
 
 		outputs[i] = o
-		trail = mergeTrails(trail, t)
+		trail = engaudit.MergeTrails(trail, t)
 	}
 
 	return outputs, trail, nil
@@ -332,7 +331,7 @@ func (engine *Engine) checkParallel(ctx context.Context, inputs []*enginev1.Chec
 			}
 
 			outputs[wo.index] = wo.result
-			trail = mergeTrails(trail, wo.trail)
+			trail = engaudit.MergeTrails(trail, wo.trail)
 		}
 	}
 
@@ -369,19 +368,4 @@ type workIn struct {
 	checkOpts *evaluator.CheckOptions
 	out       chan<- workOut
 	index     int
-}
-
-func mergeTrails(a, b *auditv1.AuditTrail) *auditv1.AuditTrail {
-	switch {
-	case a == nil || len(a.EffectivePolicies) == 0:
-		return b
-	case b == nil || len(b.EffectivePolicies) == 0:
-		return a
-	default:
-		if a.EffectivePolicies == nil {
-			a.EffectivePolicies = make(map[string]*policyv1.SourceAttributes, len(b.EffectivePolicies))
-		}
-		maps.Copy(a.EffectivePolicies, b.EffectivePolicies)
-		return a
-	}
 }

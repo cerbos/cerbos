@@ -412,7 +412,7 @@ func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFun
 	rt, err := ruletable.NewRuleTable(protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
 	require.NoError(tb, err)
 
-	return rt, cancelFunc
+	return rt.Evaluator(), cancelFunc
 }
 
 func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {

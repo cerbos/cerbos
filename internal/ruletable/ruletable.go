@@ -25,6 +25,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/engine/audit"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
@@ -39,8 +40,6 @@ import (
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 )
-
-var _ evaluator.Evaluator = (*RuleTable)(nil)
 
 const (
 	allowActionsIdxKey      = "\x00_cerbos_reserved_allow_actions"
@@ -1004,21 +1003,24 @@ func (rt *RuleTable) GetMeta(fqn string) *runtimev1.RuleTableMetadata {
 	return nil
 }
 
-func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error) {
+func (rt *RuleTable) Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
 	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
 	tctx := tracing.StartTracer(checkOpts.TracerSink)
 
 	// Primary use for this Evaluator interface is the ePDP, so we run the checks synchronously (for now)
-	out := make([]*enginev1.CheckOutput, len(inputs))
+	outputs := make([]*enginev1.CheckOutput, len(inputs))
+	trail := &auditv1.AuditTrail{}
 	for i, input := range inputs {
-		res, _, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, input)
+		out, t, err := rt.checkWithAuditTrail(ctx, tctx, checkOpts.EvalParams, input)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		out[i] = res
+
+		outputs[i] = out
+		trail = audit.MergeTrails(trail, t)
 	}
 
-	return out, nil
+	return outputs, trail, nil
 }
 
 func (rt *RuleTable) checkWithAuditTrail(ctx context.Context, tctx tracer.Context, evalParams evaluator.EvalParams, input *enginev1.CheckInput) (*enginev1.CheckOutput, *auditv1.AuditTrail, error) {
@@ -1749,14 +1751,13 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 	return result.Value(), nil
 }
 
-func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, error) {
+func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
 
 	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
 
-	out, _, err := rt.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
-	return out, err
+	return rt.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
 }
 
 func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
@@ -2069,4 +2070,8 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 	}
 
 	return output, auditTrail, nil
+}
+
+func (rt *RuleTable) Evaluator() evaluator.Evaluator {
+	return (*ruletableEvaluator)(rt)
 }
