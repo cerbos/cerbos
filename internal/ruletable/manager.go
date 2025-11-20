@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -39,6 +40,7 @@ func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader
 	rt := &RuleTable{
 		conf:      conf,
 		schemaMgr: schemaMgr,
+		idx:       index.NewImpl(index.NewMem()),
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -135,9 +137,13 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 		}
 
 		// Only delete if we successfully retrieved the policy above (e.g. no compilation errors occurred)
-		mgr.deletePolicy(evt.PolicyID)
+		if err := mgr.deletePolicy(evt.PolicyID); err != nil {
+			return fmt.Errorf("failed to delete policy: %w", err)
+		}
 		if evt.OldPolicyID != nil {
-			mgr.deletePolicy(*evt.OldPolicyID)
+			if err := mgr.deletePolicy(*evt.OldPolicyID); err != nil {
+				return fmt.Errorf("failed to delete old policy: %w", err)
+			}
 		}
 
 		if rps != nil {
@@ -146,7 +152,9 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 			}
 		}
 	case storage.EventDeleteOrDisablePolicy:
-		mgr.deletePolicy(evt.PolicyID)
+		if err := mgr.deletePolicy(evt.PolicyID); err != nil {
+			return fmt.Errorf("failed to delete policy: %w", err)
+		}
 	}
 
 	if len(evt.Dependents) > 0 {
@@ -158,7 +166,9 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 
 		// we leave ruletable state static until we're sure all dependents are valid, and then update
 		for _, modID := range evt.Dependents {
-			mgr.deletePolicy(modID)
+			if err := mgr.deletePolicy(modID); err != nil {
+				mgr.log.Errorf("Failed to delete dependent: %w", err)
+			}
 		}
 
 		for _, rps := range toReload {
@@ -186,65 +196,74 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	return nil
 }
 
-func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) {
+func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	mgr.doDeletePolicy(moduleID)
+	return mgr.doDeletePolicy(moduleID)
 }
 
 // doDeletePolicy implements the delete logic. The caller must obtain a lock first.
-func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) {
+func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	meta := mgr.Meta[moduleID.RawValue()]
 	if meta == nil {
-		return
+		return nil
 	}
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	for version, scopeMap := range mgr.primaryIdx {
-		for scope, roleMap := range scopeMap {
-			scopedParentRoleAncestors := mgr.parentRoleAncestors[scope]
+	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
+	defer cancelFn()
 
-			for role, actionMap := range roleMap.GetAll() {
-				for action, rules := range actionMap.GetAll() {
-					newRules := make([]*Row, 0, len(rules))
-					for _, r := range rules {
-						if r.OriginFqn != meta.GetFqn() {
-							newRules = append(newRules, r)
-						} else {
-							mgr.log.Debugf("Dropping rule %s", r.GetOriginFqn())
-						}
-					}
+	if err := mgr.idx.DeletePolicy(ctx, meta.GetFqn()); err != nil {
+		return err
+	}
 
-					if len(newRules) > 0 {
-						actionMap.Set(action, newRules)
-					} else {
-						actionMap.DeleteLiteral(action)
-					}
-				}
+	activeScopes, err := mgr.idx.GetScopes(ctx)
+	if err != nil {
+		return err
+	}
+	activeScopeSet := make(map[string]struct{}, len(activeScopes))
+	for _, s := range activeScopes {
+		activeScopeSet[s] = struct{}{}
+	}
 
-				if actionMap.Len() == 0 {
-					roleMap.DeleteLiteral(role)
-					delete(scopedParentRoleAncestors, role)
-				}
-			}
-
-			if roleMap.Len() == 0 {
-				delete(scopeMap, scope)
-				delete(mgr.principalScopeMap, scope)
-				delete(mgr.resourceScopeMap, scope)
-				delete(mgr.scopeScopePermissions, scope)
-				delete(mgr.parentRoleAncestors, scope)
-			}
+	for scope := range mgr.parentRoleAncestors {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.parentRoleAncestors, scope)
+			continue
 		}
 
-		if len(scopeMap) == 0 {
-			delete(mgr.primaryIdx, version)
+		existingRoles := mgr.parentRoleAncestors[scope]
+		for role := range existingRoles {
+			exists, _ := mgr.idx.ScopedRoleGlobExists(ctx, scope, role)
+			if !exists {
+				delete(existingRoles, role)
+			}
+		}
+	}
+
+	for scope := range mgr.principalScopeMap {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.principalScopeMap, scope)
+		}
+	}
+
+	for scope := range mgr.resourceScopeMap {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.resourceScopeMap, scope)
+		}
+	}
+
+	for scope := range mgr.scopeScopePermissions {
+		if _, ok := activeScopeSet[scope]; !ok {
+			delete(mgr.scopeScopePermissions, scope)
 		}
 	}
 
 	delete(mgr.Schemas, moduleID.RawValue())
 	delete(mgr.Meta, moduleID.RawValue())
 	delete(mgr.policyDerivedRoles, moduleID)
+
+	return nil
 }
