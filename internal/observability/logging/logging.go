@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
@@ -24,6 +25,8 @@ import (
 )
 
 const defaultTmpLogLevelDuration = 10 * time.Minute
+
+var initOnce sync.Once
 
 type ctxLog struct{}
 
@@ -46,12 +49,14 @@ var (
 
 // InitLogging initializes the global logger.
 func InitLogging(ctx context.Context, level string) {
-	if envLevel := os.Getenv("CERBOS_LOG_LEVEL"); envLevel != "" {
-		doInitLogging(ctx, envLevel)
-		return
-	}
+	initOnce.Do(func() {
+		if envLevel := os.Getenv("CERBOS_LOG_LEVEL"); envLevel != "" {
+			doInitLogging(ctx, envLevel)
+			return
+		}
 
-	doInitLogging(ctx, level)
+		doInitLogging(ctx, level)
+	})
 }
 
 func doInitLogging(ctx context.Context, level string) {
