@@ -162,8 +162,8 @@ github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1x
 github.com/cenkalti/backoff/v5 v5.0.3/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
 github.com/cerbos/cerbos-sdk-go v0.3.13 h1:Z5bJLJGvSlj+Q6WxgOB/KTBaW+wJf8Hy4KTKD0bJgJE=
 github.com/cerbos/cerbos-sdk-go v0.3.13/go.mod h1:6KpOKUiTSTpbSeqN5weymX/IdihMyZm/blUqBqLMmyk=
-github.com/cerbos/cerbos/api/genpb v0.47.0 h1:jTzSCr2nI7sK5kE6uSU8IZ3Fvdp/teFPZh575EHbDRg=
-github.com/cerbos/cerbos/api/genpb v0.47.0/go.mod h1:/Pkk5bTpm49VHvkA6Wa+rxJLVbWM7h6UIBYmKj5wYm0=
+github.com/cerbos/cerbos/api/genpb v0.47.1-0.20251119042530-81c39aa79f84 h1:m/fK8rCtEqnov90MDkAdOvNh0Ey5kSulwHlqis9F+To=
+github.com/cerbos/cerbos/api/genpb v0.47.1-0.20251119042530-81c39aa79f84/go.mod h1:S8ZElks3ySmQiIa037hZL4B+rOSPBS8mM+bfhvVik2Q=
 github.com/cerbos/cloud-api v0.1.64 h1:WBPu8Uv4LFYTHaKFHpgsuqqx4TVDigjtdt7UQiEehD8=
 github.com/cerbos/cloud-api v0.1.64/go.mod h1:vcxlsSENx77Zcd3im0+8juGofaAw7FP9zFNglkcTvVM=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
@@ -793,8 +793,8 @@ golang.org/x/crypto v0.13.0/go.mod h1:y6Z2r+Rw4iayiXXAIxJIDAJ1zMW4yaTpebo8fPOliY
 golang.org/x/crypto v0.18.0/go.mod h1:R0j02AL6hcrfOiy9T4ZYp/rcWeMxM3L6QYxlOuEG1mg=
 golang.org/x/crypto v0.19.0/go.mod h1:Iy9bg/ha4yyC70EfRS8jz+B6ybOBKMaSxLj6P6oBDfU=
 golang.org/x/crypto v0.20.0/go.mod h1:Xwo95rrVNIoSMx9wa1JroENMToLWn3RNVrTBpLHgZPQ=
-golang.org/x/crypto v0.44.0 h1:A97SsFvM3AIwEEmTBiaxPPTYpDC47w720rdiiUvgoAU=
-golang.org/x/crypto v0.44.0/go.mod h1:013i+Nw79BMiQiMsOPcVCB5ZIJbYkerPrGnOa00tvmc=
+golang.org/x/crypto v0.45.0 h1:jMBrvKuj23MTlT0bQEOBcAE0mjg8mK9RXFhRH6nyF3Q=
+golang.org/x/crypto v0.45.0/go.mod h1:XTGrrkGJve7CYK7J8PEww4aY7gM3qMCElcJQ8n8JdX4=
 golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b h1:M2rDM6z3Fhozi9O7NWsxAkg/yqS/lQJ6PmkyIV3YP+o=
 golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b/go.mod h1:3//PLf8L/X+8b4vuAfHzxeRUl04Adcb341+IGKfnqS8=
 golang.org/x/lint v0.0.0-20190930215403-16217165b5de/go.mod h1:6SW0HCj/g11FgYtHlgUYUwCkIfeOF89ocIRzGO/8vkc=
