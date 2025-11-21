@@ -259,6 +259,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 	}, nil
 }
 
+// TODO(db): share this function with CerbosService?
 func buildCheckResourcesResponse(requestID string, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, includeMeta bool) *responsev1.CheckResourcesResponse {
 	result := &responsev1.CheckResourcesResponse{
 		RequestId: requestID,
