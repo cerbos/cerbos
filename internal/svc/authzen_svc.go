@@ -126,11 +126,11 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 	for i, eval := range r.Evaluations {
-		azCtx := r.Context
+		defaultContext := r.Context
 		auxData := defaultAuxData
 		if len(eval.Context) > 0 {
-			azCtx = eval.Context
-			auxData, err = aas.extractAuxData(ctx, azCtx)
+			defaultContext = eval.Context
+			auxData, err = aas.extractAuxData(ctx, defaultContext)
 			if err != nil {
 				log.Error("Failed to extract auxData", zap.Error(err))
 				return nil, status.Error(codes.InvalidArgument, "invalid auxData")
@@ -140,7 +140,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			subject:  merge(r.Subject, eval.Subject),
 			resource: merge(r.Resource, eval.Resource),
 			action:   merge(r.Action, eval.Action),
-			context:  azCtx,
+			context:  defaultContext,
 			auxData:  auxData,
 			index:    i,
 		}
