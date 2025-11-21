@@ -20,6 +20,23 @@ align PKG='./...': _betteralign
 
 build: generate lint tests package
 
+changelog-build PREV_VERSION: _changelog_build
+    @ ${TOOLS_BIN_DIR}/changelog-build \
+        -entries-dir ".changelog" \
+        -note-template "{{ justfile_directory() }}/hack/tools/changelog/note.tmpl" \
+        -changelog-template "{{ justfile_directory() }}/hack/tools/changelog/changelog.tmpl" \
+        -last-release {{ PREV_VERSION }} \
+        -this-release HEAD
+
+# Generate a changelog entry. E.g. changelog-entry feature "Added a frobnicate function to frobnicate"
+changelog-entry TYPE DESCRIPTION *ARGS: _changelog_entry
+    @ ${TOOLS_BIN_DIR}/changelog-entry \
+        -allowed-types-file "{{ justfile_directory() }}/hack/tools/changelog/allowed-types.txt" \
+        -dir "{{ justfile_directory() }}/.changelog" \
+        -pr {{ datetime_utc('%-y%m%d%H%M') }} \
+        -type {{ TYPE }} \
+        -description "{{ DESCRIPTION }}" {{ ARGS }}
+
 clean:
     @ rm -rf {{ genpb_dir }}/cerbos {{ genmocks_dir }}  {{ json_schema_dir }} {{ openapi_dir }}
 
@@ -198,6 +215,12 @@ check-http PROTOCOL='https' HOST='localhost' PORT='3592':
 _betteralign: (_install "betteralign" "github.com/dkorunic/betteralign" "cmd/betteralign")
 
 _buf: (_install "buf" "github.com/bufbuild/buf" "cmd/buf")
+
+_changelog_build: (_install "changelog-build" "github.com/hashicorp/go-changelog" "cmd/changelog-build")
+
+_changelog_check: (_install "changelog-check" "github.com/hashicorp/go-changelog" "cmd/changelog-check")
+
+_changelog_entry: (_install "changelog-entry" "github.com/hashicorp/go-changelog" "cmd/changelog-entry")
 
 _cover: (_install "cover" "nikand.dev/go/cover@master" )
 

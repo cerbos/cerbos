@@ -1,0 +1,70 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#vVERSION]
+= Cerbos vVERSION
+
+{{- if .NotesByType.highlight -}}
+== Highlights
+
+{{range .NotesByType.highlight -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+== Changelog
+
+{{- if .NotesByType.deprecation -}}
+=== Deprecations
+
+{{range .NotesByType.deprecation -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+{{- if .NotesByType.breaking -}}
+=== Breaking changes
+
+{{range .NotesByType.breaking  -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+{{- if .NotesByType.feature -}}
+=== Features
+
+{{range .NotesByType.feature  -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+{{- if .NotesByType.enhancement -}}
+=== Enhancements
+
+{{range .NotesByType.enhancement  -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+{{- if .NotesByType.fix -}}
+=== Bug fixes
+
+{{range .NotesByType.fix  -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+{{- if .NotesByType.docs -}}
+=== Documentation
+
+{{range .NotesByType.docs  -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end }}
+
+{{- if .NotesByType.chore -}}
+=== Other
+
+{{range .NotesByType.chore  -}}
+- {{ template "note" .}}
+{{ end -}}
+{{- end -}}

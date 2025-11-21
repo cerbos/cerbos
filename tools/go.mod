@@ -14,6 +14,7 @@ require (
 	github.com/google/go-licenses v1.6.0
 	github.com/goreleaser/goreleaser/v2 v2.12.7
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
+	github.com/hashicorp/go-changelog v0.0.0-20250919195833-01c397f608a9
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/vektra/mockery/v3 v3.5.5
 	go.elastic.co/go-licence-detector v0.10.0
