@@ -4,9 +4,6 @@
   "definitions": {
     "authzen.authorization.v1.AccessEvaluationResponse": {
       "type": "object",
-      "required": [
-        "decision"
-      ],
       "additionalProperties": false,
       "properties": {
         "context": {
