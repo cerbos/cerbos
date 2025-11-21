@@ -275,7 +275,7 @@ func (x *AccessEvaluationRequest) GetContext() map[string]*structpb.Value {
 // AuthZEN evaluation response message
 type AccessEvaluationResponse struct {
 	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Decision      bool                       `protobuf:"varint,1,opt,name=decision,proto3" json:"decision,omitempty"`
+	Decision      *bool                      `protobuf:"varint,1,opt,name=decision,proto3,oneof" json:"decision,omitempty"`
 	Context       map[string]*structpb.Value `protobuf:"bytes,2,rep,name=context,proto3" json:"context,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -312,8 +312,8 @@ func (*AccessEvaluationResponse) Descriptor() ([]byte, []int) {
 }
 
 func (x *AccessEvaluationResponse) GetDecision() bool {
-	if x != nil {
-		return x.Decision
+	if x != nil && x.Decision != nil {
+		return *x.Decision
 	}
 	return false
 }
@@ -558,14 +558,15 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:(\x92A%\n" +
-	"#2!AuthZEN access evaluation request\"\xab\x03\n" +
-	"\x18AccessEvaluationResponse\x12W\n" +
-	"\bdecision\x18\x01 \x01(\bB;\x92A/2'Whether to allow or deny the operation.J\x04true\xe0A\x02\xbaH\x03\xc8\x01\x01R\bdecision\x12\xb6\x01\n" +
+	"#2!AuthZEN access evaluation request\"\xbd\x03\n" +
+	"\x18AccessEvaluationResponse\x12\\\n" +
+	"\bdecision\x18\x01 \x01(\bB;\x92A/2'Whether to allow or deny the operation.J\x04true\xe0A\x02\xbaH\x03\xc8\x01\x01H\x00R\bdecision\x88\x01\x01\x12\xb6\x01\n" +
 	"\acontext\x18\x02 \x03(\v2?.authzen.authorization.v1.AccessEvaluationResponse.ContextEntryB[\x92AG2#Additional context about evaluationJ {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\acontext\x1aR\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:)\x92A&\n" +
-	"$2\"AuthZEN access evaluation response\"\xe0\x0e\n" +
+	"$2\"AuthZEN access evaluation responseB\v\n" +
+	"\t_decision\"\xe0\x0e\n" +
 	"\x1cAccessEvaluationBatchRequest\x12;\n" +
 	"\asubject\x18\x01 \x01(\v2!.authzen.authorization.v1.SubjectR\asubject\x12>\n" +
 	"\bresource\x18\x02 \x01(\v2\".authzen.authorization.v1.ResourceR\bresource\x128\n" +
@@ -664,6 +665,7 @@ func file_authzen_authorization_v1_evaluation_proto_init() {
 	if File_authzen_authorization_v1_evaluation_proto != nil {
 		return
 	}
+	file_authzen_authorization_v1_evaluation_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

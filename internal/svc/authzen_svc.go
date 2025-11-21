@@ -6,89 +6,147 @@ package svc
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
+
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	svcv1 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/internal/auxdata"
+	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var _ svcv1.AuthorizationServiceServer = (*AuthzenAuthorizationService)(nil)
 
 // AuthzenAuthorizationService implements the policy checking service.
 type AuthzenAuthorizationService struct {
-	svc *CerbosService
+	eng     *engine.Engine
+	auxData *auxdata.AuxData
 	*svcv1.UnimplementedAuthorizationServiceServer
+	reqLimits RequestLimits
 }
 
-func NewAuthzenAuthorizationService(svc *CerbosService) *AuthzenAuthorizationService {
+func NewAuthzenAuthorizationService(eng *engine.Engine, auxData *auxdata.AuxData, reqLimits RequestLimits) *AuthzenAuthorizationService {
 	return &AuthzenAuthorizationService{
-		svc:                                     svc,
+		eng:                                     eng,
+		auxData:                                 auxData,
+		reqLimits:                               reqLimits,
 		UnimplementedAuthorizationServiceServer: &svcv1.UnimplementedAuthorizationServiceServer{},
 	}
 }
 
 func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r *svcv1.AccessEvaluationRequest) (*svcv1.AccessEvaluationResponse, error) {
-	req, err := toCheckResourcesRequest(r)
+	log := logging.ReqScopeLog(ctx)
+
+	// Extract auxData
+	auxData, err := aas.extractAuxData(ctx, r.GetContext())
 	if err != nil {
-		return nil, err
+		log.Error("Failed to extract auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
-	resp, err := aas.svc.CheckResources(ctx, req)
+
+	// Build engine input
+	input := &enginev1.CheckInput{
+		RequestId: lookupOrEmptyString(r.GetContext(), "requestId"),
+		Actions:   []string{r.Action.GetName()},
+		Principal: toPrincipal(r.Subject),
+		Resource:  toResource(r.Resource),
+		AuxData:   auxData,
+	}
+
+	// Call engine
+	outputs, err := aas.eng.Check(logging.ToContext(ctx, log), []*enginev1.CheckInput{input})
 	if err != nil {
-		return nil, err
+		log.Error("Policy check failed", zap.Error(err))
+		if errors.Is(err, compile.PolicyCompilationErr{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		}
+		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
-	respAsValue, err := messageToValue(resp.ProtoReflect())
-	if err != nil {
-		return nil, err
-	}
-	return &svcv1.AccessEvaluationResponse{
-		Decision: resp.Results[0].Actions[req.Resources[0].Actions[0]] == effectv1.Effect_EFFECT_ALLOW,
-		Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
-	}, nil
+
+	// Assemble response
+	return tracing.RecordSpan2(ctx, "assemble_response", func(_ context.Context, _ trace.Span) (*svcv1.AccessEvaluationResponse, error) {
+		output := outputs[0]
+		actionName := r.Action.GetName()
+		decision := output.Actions[actionName].Effect == effectv1.Effect_EFFECT_ALLOW
+
+		// Build CheckResourcesResponse structure for context
+		checkResp := buildCheckResourcesResponse(lookupOrEmptyString(r.GetContext(), "requestId"), []*enginev1.CheckInput{input}, outputs, true)
+
+		// Convert to value for context
+		respAsValue, err := messageToValue(checkResp.ProtoReflect())
+		if err != nil {
+			return nil, err
+		}
+
+		return &svcv1.AccessEvaluationResponse{
+			Decision: &decision,
+			Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
+		}, nil
+	})
 }
 
 func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
+	log := logging.ReqScopeLog(ctx)
+
+	// Validate total resources
+	if err := aas.checkTotalLimit(len(r.Evaluations)); err != nil {
+		log.Error("Request too large", zap.Error(err))
+		return nil, err
+	}
+
 	// Merge each evaluation with defaults to create complete requests
 	type evalRequest struct {
 		subject  *svcv1.Subject
 		resource *svcv1.Resource
 		action   *svcv1.Action
 		context  map[string]*structpb.Value
-		auxData  *requestv1.AuxData
+		auxData  *enginev1.AuxData
 		index    int // Original index for maintaining order
 	}
 
 	evals := make([]evalRequest, len(r.Evaluations)) // evaluations with default values taken into account
 
-	defaultAuxData, err := extractAuxData(r.Context)
+	defaultAuxData, err := aas.extractAuxData(ctx, r.Context)
 	if err != nil {
-		return nil, err
+		log.Error("Failed to extract default auxData", zap.Error(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 	for i, eval := range r.Evaluations {
-		ctx := r.Context
+		defaultContext := r.Context
 		auxData := defaultAuxData
 		if len(eval.Context) > 0 {
-			ctx = eval.Context
-			auxData, err = extractAuxData(ctx)
+			defaultContext = eval.Context
+			auxData, err = aas.extractAuxData(ctx, defaultContext)
 			if err != nil {
-				return nil, err
+				log.Error("Failed to extract auxData", zap.Error(err))
+				return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 			}
 		}
 		evals[i] = evalRequest{
 			subject:  merge(r.Subject, eval.Subject),
 			resource: merge(r.Resource, eval.Resource),
 			action:   merge(r.Action, eval.Action),
-			context:  ctx,
+			context:  defaultContext,
 			auxData:  auxData,
 			index:    i,
 		}
 	}
 
-	// Group evaluations by (subject, auxData) to call CheckResources for each group
+	// Group evaluations by (subject, auxData) to process efficiently
 	type groupKey struct {
 		subjectID   string
 		auxDataHash uint64
@@ -105,14 +163,9 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 
 	responses := make([]*svcv1.AccessEvaluationResponse, len(r.Evaluations))
 
-	// Process each group with a single CheckResources call
+	// Process each group
 	for _, reqs := range groups {
-		checkReq := &requestv1.CheckResourcesRequest{
-			RequestId:   lookupOrEmptyString(reqs[0].context, "requestId"),
-			IncludeMeta: true,
-			Principal:   toPrincipal(reqs[0].subject),
-			AuxData:     reqs[0].auxData,
-		}
+		auxData := reqs[0].auxData
 
 		// Group by resource since a ResourceEntry can have multiple actions
 		type resourceKey struct {
@@ -128,38 +181,62 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			reqsByRes[key] = append(reqsByRes[key], req)
 		}
 
-		// Build resource entries and track mapping
+		// Validate total resources
+		if err := aas.checkNumResourcesLimit(len(reqsByRes)); err != nil {
+			log.Error("Request too large", zap.Error(err))
+			return nil, err
+		}
+
+		// Build engine inputs and track mapping
 		type resultMapping struct {
-			action           string
-			resourceEntryIdx int
-			responseIdx      int
+			action      string
+			inputIdx    int
+			responseIdx int
 		}
 		var mappings []resultMapping
 
-		resourceEntryIdx := 0
-		checkReq.Resources = make([]*requestv1.CheckResourcesRequest_ResourceEntry, len(reqsByRes))
+		inputs := make([]*enginev1.CheckInput, 0, len(reqsByRes))
+		inputIdx := 0
 		for _, reqs1 := range reqsByRes {
+			if err := aas.checkNumActionsLimit(len(reqs1)); err != nil {
+				log.Error("Request too large", zap.Error(err))
+				return nil, err
+			}
+
 			actions := make([]string, len(reqs1))
 			for i, req := range reqs1 {
 				actions[i] = req.action.GetName()
 				mappings = append(mappings, resultMapping{
-					action:           actions[i],
-					responseIdx:      req.index,
-					resourceEntryIdx: resourceEntryIdx,
+					action:      actions[i],
+					responseIdx: req.index,
+					inputIdx:    inputIdx,
 				})
 			}
-			checkReq.Resources[resourceEntryIdx] = &requestv1.CheckResourcesRequest_ResourceEntry{
-				Actions:  actions,
-				Resource: toResource(reqs1[0].resource),
-			}
-			resourceEntryIdx++
+
+			inputs = append(inputs, &enginev1.CheckInput{
+				RequestId: lookupOrEmptyString(reqs1[0].context, "requestId"),
+				Actions:   actions,
+				Principal: toPrincipal(reqs1[0].subject),
+				Resource:  toResource(reqs1[0].resource),
+				AuxData:   auxData,
+			})
+			inputIdx++
 		}
 
-		checkResp, err := aas.svc.CheckResources(ctx, checkReq)
+		// Call engine
+		outputs, err := aas.eng.Check(logging.ToContext(ctx, log), inputs)
 		if err != nil {
-			return nil, err
+			log.Error("Policy check failed", zap.Error(err))
+			if errors.Is(err, compile.PolicyCompilationErr{}) {
+				return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+			}
+			return nil, status.Errorf(codes.Internal, "Policy check failed")
 		}
 
+		// Build CheckResourcesResponse for this group
+		checkResp := buildCheckResourcesResponse(lookupOrEmptyString(reqs[0].context, "requestId"), inputs, outputs, true)
+
+		// Convert to value for context
 		respAsValue, err := messageToValue(checkResp.ProtoReflect())
 		if err != nil {
 			return nil, err
@@ -167,8 +244,11 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 
 		// Map results back to original positions
 		for _, mapping := range mappings {
+			output := outputs[mapping.inputIdx]
+			decision := output.Actions[mapping.action].Effect == effectv1.Effect_EFFECT_ALLOW
+
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
-				Decision: checkResp.Results[mapping.resourceEntryIdx].Actions[mapping.action] == effectv1.Effect_EFFECT_ALLOW,
+				Decision: &decision,
 				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 			}
 		}
@@ -177,6 +257,53 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 	return &svcv1.AccessEvaluationBatchResponse{
 		Evaluations: responses,
 	}, nil
+}
+
+// TODO(db): share this function with CerbosService?
+func buildCheckResourcesResponse(requestID string, inputs []*enginev1.CheckInput, outputs []*enginev1.CheckOutput, includeMeta bool) *responsev1.CheckResourcesResponse {
+	result := &responsev1.CheckResourcesResponse{
+		RequestId: requestID,
+		Results:   make([]*responsev1.CheckResourcesResponse_ResultEntry, len(outputs)),
+	}
+
+	for i, out := range outputs {
+		resource := inputs[i].Resource
+		entry := &responsev1.CheckResourcesResponse_ResultEntry{
+			Resource: &responsev1.CheckResourcesResponse_ResultEntry_Resource{
+				Id:            resource.Id,
+				Kind:          resource.Kind,
+				PolicyVersion: resource.PolicyVersion,
+				Scope:         resource.Scope,
+			},
+			ValidationErrors: out.ValidationErrors,
+			Actions:          make(map[string]effectv1.Effect, len(out.Actions)),
+		}
+
+		if includeMeta {
+			entry.Meta = &responsev1.CheckResourcesResponse_ResultEntry_Meta{
+				EffectiveDerivedRoles: out.EffectiveDerivedRoles,
+				Actions:               make(map[string]*responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta, len(out.Actions)),
+			}
+		}
+
+		if len(out.Outputs) > 0 {
+			entry.Outputs = out.Outputs
+		}
+
+		for action, actionEffect := range out.Actions {
+			entry.Actions[action] = actionEffect.Effect
+			if includeMeta {
+				entry.Meta.Actions[action] = &responsev1.CheckResourcesResponse_ResultEntry_Meta_EffectMeta{
+					MatchedPolicy: actionEffect.Policy,
+					MatchedScope:  actionEffect.Scope,
+				}
+			}
+		}
+
+		result.Results[i] = entry
+	}
+
+	return result
 }
 
 func merge[T any](defaults, override *T) *T {
@@ -205,21 +332,28 @@ func lookupOrEmptyString(m map[string]*structpb.Value, k string) string {
 	return ""
 }
 
-func toCheckResourcesRequest(req *svcv1.AccessEvaluationRequest) (*requestv1.CheckResourcesRequest, error) {
-	auxData, err := extractAuxData(req.GetContext())
-	if err != nil {
-		return nil, err
+func (aas *AuthzenAuthorizationService) checkTotalLimit(n int) error {
+	if n > int(aas.reqLimits.MaxActionsPerResource*aas.reqLimits.MaxResourcesPerRequest) {
+		return status.Errorf(codes.InvalidArgument,
+			"number of evaluations (%d) exceeds configured limit (%d)", n, aas.reqLimits.MaxResourcesPerRequest*aas.reqLimits.MaxActionsPerResource)
 	}
-	return &requestv1.CheckResourcesRequest{
-		RequestId:   lookupOrEmptyString(req.GetContext(), "requestId"),
-		IncludeMeta: true,
-		Principal:   toPrincipal(req.Subject),
-		AuxData:     auxData,
-		Resources: []*requestv1.CheckResourcesRequest_ResourceEntry{{
-			Actions:  []string{req.Action.GetName()},
-			Resource: toResource(req.Resource),
-		}},
-	}, nil
+	return nil
+}
+
+func (aas *AuthzenAuthorizationService) checkNumResourcesLimit(n int) error {
+	if n > int(aas.reqLimits.MaxResourcesPerRequest) {
+		return status.Errorf(codes.InvalidArgument,
+			"number of resources in batch (%d) exceeds configured limit (%d)", n, aas.reqLimits.MaxResourcesPerRequest)
+	}
+	return nil
+}
+
+func (aas *AuthzenAuthorizationService) checkNumActionsLimit(n int) error {
+	if n > int(aas.reqLimits.MaxActionsPerResource) {
+		return status.Errorf(codes.InvalidArgument,
+			"number of actions (%d) exceeds configured limit (%d)", n, aas.reqLimits.MaxActionsPerResource)
+	}
+	return nil
 }
 
 func toResource(res *svcv1.Resource) *enginev1.Resource {
@@ -454,7 +588,7 @@ func structValueToProtoValue(value *structpb.Value, fd protoreflect.FieldDescrip
 	}
 }
 
-func extractAuxData(m map[string]*structpb.Value) (*requestv1.AuxData, error) {
+func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m map[string]*structpb.Value) (*enginev1.AuxData, error) {
 	var auxData *structpb.Value
 	var ok bool
 	if auxData, ok = m[cerbosProp("auxData")]; !ok {
@@ -464,8 +598,12 @@ func extractAuxData(m map[string]*structpb.Value) (*requestv1.AuxData, error) {
 	cAuxData := new(requestv1.AuxData)
 	err := valueToMessage(auxData, cAuxData.ProtoReflect())
 	if err != nil {
-		return nil, fmt.Errorf("can't extract auxData: %w", err)
+		return nil, fmt.Errorf("can't deserialize auxData: %w", err)
 	}
 
-	return cAuxData, nil
+	engAuxData, err := aas.auxData.Extract(ctx, cAuxData)
+	if err != nil {
+		return nil, fmt.Errorf("can't extract auxData: %w", err)
+	}
+	return engAuxData, nil
 }

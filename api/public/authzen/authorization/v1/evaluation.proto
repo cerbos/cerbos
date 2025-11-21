@@ -157,7 +157,7 @@ message AccessEvaluationResponse {
     json_schema: {description: "AuthZEN access evaluation response"}
   };
 
-  bool decision = 1 [
+  optional bool decision = 1 [
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
