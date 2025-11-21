@@ -93,7 +93,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 		}
 
 		return &svcv1.AccessEvaluationResponse{
-			Decision: decision,
+			Decision: &decision,
 			Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 		}, nil
 	})
@@ -248,7 +248,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			decision := output.Actions[mapping.action].Effect == effectv1.Effect_EFFECT_ALLOW
 
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
-				Decision: decision,
+				Decision: &decision,
 				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 			}
 		}

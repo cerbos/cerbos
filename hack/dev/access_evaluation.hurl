@@ -28,7 +28,7 @@ file,requests/access_evaluation/req01_XX125_approve.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -41,7 +41,7 @@ file,requests/access_evaluation/req01_XX125_create.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -80,7 +80,7 @@ file,requests/access_evaluation/req01_XX150_approve.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -93,7 +93,7 @@ file,requests/access_evaluation/req01_XX150_create.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -162,7 +162,7 @@ file,requests/access_evaluation/req02_XX225_delete.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX225"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -190,7 +190,7 @@ file,requests/access_evaluation/bad_req01_XX125_view_public.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -204,7 +204,7 @@ file,requests/access_evaluation/bad_req01_XX125_approve.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -218,7 +218,7 @@ file,requests/access_evaluation/bad_req01_XX125_create.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -232,7 +232,7 @@ file,requests/access_evaluation/bad_req01_XX125_defer.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -246,7 +246,7 @@ file,requests/access_evaluation/bad_req01_XX150_view_public.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -260,7 +260,7 @@ file,requests/access_evaluation/bad_req01_XX150_approve.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
@@ -274,7 +274,7 @@ file,requests/access_evaluation/bad_req01_XX150_create.json;
 HTTP 200
 [Asserts]
 header "Content-Type" == "application/json"
-jsonpath "$.decision" not exists
+jsonpath "$.decision" == false
 jsonpath "$.context['cerbos.response'].requestId" == "test"
 jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
