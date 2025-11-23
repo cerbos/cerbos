@@ -8,9 +8,6 @@
     }
   },
   "type": "object",
-  "required": [
-    "decision"
-  ],
   "additionalProperties": false,
   "properties": {
     "context": {

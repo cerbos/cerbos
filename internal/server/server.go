@@ -295,7 +295,7 @@ func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Se
 	svcv1.RegisterCerbosServiceServer(server, cerbosSvc)
 	s.health.SetServingStatus(svcv1.CerbosService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 
-	authzenSvc := svc.NewAuthzenAuthorizationService(cerbosSvc)
+	authzenSvc := svc.NewAuthzenAuthorizationService(core.Engine, core.AuxData, core.ReqLimits)
 	authzenv1.RegisterAuthorizationServiceServer(server, authzenSvc)
 	s.health.SetServingStatus(authzenv1.AuthorizationService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 

@@ -357,9 +357,9 @@ func (m *AccessEvaluationResponse) MarshalToSizedBufferVT(dAtA []byte) (int, err
 			dAtA[i] = 0x12
 		}
 	}
-	if m.Decision {
+	if m.Decision != nil {
 		i--
-		if m.Decision {
+		if *m.Decision {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
@@ -727,7 +727,7 @@ func (m *AccessEvaluationResponse) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Decision {
+	if m.Decision != nil {
 		n += 2
 	}
 	if len(m.Context) > 0 {
@@ -1875,7 +1875,8 @@ func (m *AccessEvaluationResponse) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
-			m.Decision = bool(v != 0)
+			b := bool(v != 0)
+			m.Decision = &b
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Context", wireType)
