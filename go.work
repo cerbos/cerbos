@@ -1,9 +1,10 @@
-go 1.25.1
+go 1.25.3
 
 use (
 	.
 	./api/genpb
 	./deploy/awslambda/extension
+	./hack/tools/changelog
 	./hack/tools/generate-npm-packages
 	./hack/tools/testsplit
 	./tools

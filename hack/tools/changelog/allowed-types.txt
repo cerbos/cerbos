@@ -1,8 +1,0 @@
-breaking
-chore
-deprecation
-docs
-enhancement
-feature
-fix
-highlight

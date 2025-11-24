@@ -1,0 +1,24 @@
+{{- define "section" -}}
+=== {{ .Title }}
+
+{{ range .Entries -}}
+- {{ .Description }}
+{{ end -}}
+
+
+{{ end -}}
+
+include::ROOT:partial$attributes.adoc[]
+
+[#v{{ .Version }}]
+= Cerbos v{{ .Version }}
+
+== Highlights
+
+
+== Changelog
+
+{{ range .Sections -}}
+{{- template "section" . -}}
+{{ end -}}
+
