@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"maps"
 	"sync"
 
 	"github.com/cerbos/cerbos/internal/util"
@@ -53,6 +54,13 @@ func (lm *memLiteralMap) set(_ context.Context, k string, rs *rowSet) error {
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
 	lm.m[k] = rs
+	return nil
+}
+
+func (lm *memLiteralMap) setBatch(_ context.Context, batch map[string]*rowSet) error {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+	maps.Copy(lm.m, batch)
 	return nil
 }
 
@@ -105,6 +113,15 @@ func (gl *memGlobMap) set(_ context.Context, k string, rs *rowSet) error {
 	gl.mu.Lock()
 	defer gl.mu.Unlock()
 	gl.m.Set(k, rs)
+	return nil
+}
+
+func (gl *memGlobMap) setBatch(_ context.Context, batch map[string]*rowSet) error {
+	gl.mu.Lock()
+	defer gl.mu.Unlock()
+	for k, rs := range batch {
+		gl.m.Set(k, rs)
+	}
 	return nil
 }
 

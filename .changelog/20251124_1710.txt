@@ -1,0 +1,2 @@
+type:chore
+Implement batch indexing for rules
