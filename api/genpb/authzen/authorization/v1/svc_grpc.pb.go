@@ -22,7 +22,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthorizationService_GetMetadata_FullMethodName           = "/authzen.authorization.v1.AuthorizationService/GetMetadata"
+	AuthorizationService_Metadata_FullMethodName              = "/authzen.authorization.v1.AuthorizationService/Metadata"
 	AuthorizationService_AccessEvaluation_FullMethodName      = "/authzen.authorization.v1.AuthorizationService/AccessEvaluation"
 	AuthorizationService_AccessEvaluationBatch_FullMethodName = "/authzen.authorization.v1.AuthorizationService/AccessEvaluationBatch"
 )
@@ -34,7 +34,7 @@ const (
 // AuthZEN Authorization Service
 type AuthorizationServiceClient interface {
 	// GetMetadata returns the Policy Decision Point metadata
-	GetMetadata(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*MetadataResponse, error)
+	Metadata(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*MetadataResponse, error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(ctx context.Context, in *AccessEvaluationRequest, opts ...grpc.CallOption) (*AccessEvaluationResponse, error)
 	// Evaluate performs an access evaluation
@@ -49,10 +49,10 @@ func NewAuthorizationServiceClient(cc grpc.ClientConnInterface) AuthorizationSer
 	return &authorizationServiceClient{cc}
 }
 
-func (c *authorizationServiceClient) GetMetadata(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*MetadataResponse, error) {
+func (c *authorizationServiceClient) Metadata(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*MetadataResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MetadataResponse)
-	err := c.cc.Invoke(ctx, AuthorizationService_GetMetadata_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AuthorizationService_Metadata_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *authorizationServiceClient) AccessEvaluationBatch(ctx context.Context, 
 // AuthZEN Authorization Service
 type AuthorizationServiceServer interface {
 	// GetMetadata returns the Policy Decision Point metadata
-	GetMetadata(context.Context, *MetadataRequest) (*MetadataResponse, error)
+	Metadata(context.Context, *MetadataRequest) (*MetadataResponse, error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *AccessEvaluationRequest) (*AccessEvaluationResponse, error)
 	// Evaluate performs an access evaluation
@@ -101,8 +101,8 @@ type AuthorizationServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthorizationServiceServer struct{}
 
-func (UnimplementedAuthorizationServiceServer) GetMetadata(context.Context, *MetadataRequest) (*MetadataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMetadata not implemented")
+func (UnimplementedAuthorizationServiceServer) Metadata(context.Context, *MetadataRequest) (*MetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Metadata not implemented")
 }
 func (UnimplementedAuthorizationServiceServer) AccessEvaluation(context.Context, *AccessEvaluationRequest) (*AccessEvaluationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AccessEvaluation not implemented")
@@ -131,20 +131,20 @@ func RegisterAuthorizationServiceServer(s grpc.ServiceRegistrar, srv Authorizati
 	s.RegisterService(&AuthorizationService_ServiceDesc, srv)
 }
 
-func _AuthorizationService_GetMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AuthorizationService_Metadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MetadataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthorizationServiceServer).GetMetadata(ctx, in)
+		return srv.(AuthorizationServiceServer).Metadata(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthorizationService_GetMetadata_FullMethodName,
+		FullMethod: AuthorizationService_Metadata_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthorizationServiceServer).GetMetadata(ctx, req.(*MetadataRequest))
+		return srv.(AuthorizationServiceServer).Metadata(ctx, req.(*MetadataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -193,8 +193,8 @@ var AuthorizationService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthorizationServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetMetadata",
-			Handler:    _AuthorizationService_GetMetadata_Handler,
+			MethodName: "Metadata",
+			Handler:    _AuthorizationService_Metadata_Handler,
 		},
 		{
 			MethodName: "AccessEvaluation",

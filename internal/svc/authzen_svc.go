@@ -609,7 +609,7 @@ func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m ma
 	return engAuxData, nil
 }
 
-func (aas *AuthzenAuthorizationService) GetMetadata(ctx context.Context, _ *svcv1.MetadataRequest) (*svcv1.MetadataResponse, error) {
+func (aas *AuthzenAuthorizationService) Metadata(ctx context.Context, _ *svcv1.MetadataRequest) (*svcv1.MetadataResponse, error) {
 	// Extract host and scheme from gRPC metadata
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

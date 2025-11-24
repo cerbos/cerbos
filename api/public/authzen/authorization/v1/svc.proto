@@ -32,7 +32,7 @@ service AuthorizationService {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {description: "AuthZEN Authorization Service for access evaluations"};
 
   // GetMetadata returns the Policy Decision Point metadata
-  rpc GetMetadata(MetadataRequest) returns (MetadataResponse) {
+  rpc Metadata(MetadataRequest) returns (MetadataResponse) {
     option (google.api.http) = {get: "/.well-known/authzen-configuration"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Policy Decision Point metadata"

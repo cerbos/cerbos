@@ -29,7 +29,7 @@
       "get": {
         "summary": "Get Policy Decision Point metadata",
         "description": "Returns the AuthZEN Policy Decision Point metadata including endpoint URLs",
-        "operationId": "AuthorizationService_GetMetadata",
+        "operationId": "AuthorizationService_Metadata",
         "responses": {
           "200": {
             "description": "A successful response.",
