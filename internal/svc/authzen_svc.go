@@ -610,19 +610,16 @@ func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m ma
 }
 
 func (aas *AuthzenAuthorizationService) Metadata(ctx context.Context, _ *svcv1.MetadataRequest) (*svcv1.MetadataResponse, error) {
-	// Extract host and scheme from gRPC metadata
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil, status.Error(codes.Internal, "failed to get metadata from context")
 	}
 
-	// Determine the HTTP scheme
 	httpScheme := "http"
 	if proto := md.Get("x-forwarded-proto"); len(proto) > 0 && proto[0] == "https" {
 		httpScheme = "https"
 	}
 
-	// Determine the host (considering reverse proxy headers)
 	host := "localhost"
 	if forwardedHost := md.Get("x-forwarded-host"); len(forwardedHost) > 0 && forwardedHost[0] != "" {
 		host = forwardedHost[0]
