@@ -10,10 +10,6 @@
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/google.protobuf.Value"
-          },
-          "propertyNames": {
-            "type": "string",
-            "minLength": 1
           }
         },
         "decision": {
@@ -27,9 +23,6 @@
     }
   },
   "type": "object",
-  "required": [
-    "evaluations"
-  ],
   "additionalProperties": false,
   "properties": {
     "evaluations": {
