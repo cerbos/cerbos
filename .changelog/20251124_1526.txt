@@ -1,7 +1,0 @@
-type:feature
-Bar
-This is a big
-[source]
-====
-source
-====
