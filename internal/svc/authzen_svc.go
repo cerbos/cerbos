@@ -621,7 +621,12 @@ func AuthZenMetadata(w http.ResponseWriter, r *http.Request) {
 		httpScheme = "https"
 	}
 
-	baseURL := fmt.Sprintf("%s://%s", httpScheme, r.Host)
+	host := r.Host
+	if forwardedHost := r.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
+		host = forwardedHost
+	}
+
+	baseURL := fmt.Sprintf("%s://%s", httpScheme, host)
 
 	meta := &svcv1.Metadata{
 		PolicyDecisionPoint:       baseURL,
