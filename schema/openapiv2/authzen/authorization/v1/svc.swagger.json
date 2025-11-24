@@ -199,10 +199,7 @@
         }
       },
       "description": "AuthZEN access evaluations response",
-      "title": "AuthZEN evaluations response message",
-      "required": [
-        "evaluations"
-      ]
+      "title": "AuthZEN evaluations response message"
     },
     "v1AccessEvaluationRequest": {
       "type": "object",
@@ -251,10 +248,7 @@
         }
       },
       "description": "AuthZEN access evaluation response",
-      "title": "AuthZEN evaluation response message",
-      "required": [
-        "decision"
-      ]
+      "title": "AuthZEN evaluation response message"
     },
     "v1Action": {
       "type": "object",

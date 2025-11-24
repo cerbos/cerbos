@@ -8,11 +8,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -606,4 +609,43 @@ func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m ma
 		return nil, fmt.Errorf("can't extract auxData: %w", err)
 	}
 	return engAuxData, nil
+}
+
+const authzenEndpoint = "/access/v1"
+
+func AuthZenMetadata(w http.ResponseWriter, r *http.Request) {
+	defer cleanup(r)
+
+	httpScheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		httpScheme = "https"
+	}
+
+	baseURL := fmt.Sprintf("%s://%s", httpScheme, r.Host)
+
+	meta := &svcv1.Metadata{
+		PolicyDecisionPoint:       baseURL,
+		AccessEvaluationEndpoint:  fmt.Sprintf("%s%s/evaluation", baseURL, authzenEndpoint),
+		AccessEvaluationsEndpoint: fmt.Sprintf("%s%s/evaluations", baseURL, authzenEndpoint),
+	}
+
+	// Need snake_case field names
+	marshaler := protojson.MarshalOptions{
+		UseProtoNames: true,
+	}
+	data, err := marshaler.Marshal(meta)
+	if err != nil {
+		http.Error(w, "Failed to marshal metadata", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(data)
+}
+
+func cleanup(r *http.Request) {
+	if r.Body != nil {
+		_, _ = io.Copy(io.Discard, r.Body)
+		r.Body.Close()
+	}
 }

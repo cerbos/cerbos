@@ -157,19 +157,15 @@ message AccessEvaluationResponse {
     json_schema: {description: "AuthZEN access evaluation response"}
   };
 
-  optional bool decision = 1 [
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Whether to allow or deny the operation."
-      example: "true"
-    }
-  ];
+  optional bool decision = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Whether to allow or deny the operation."
+    example: "true"
+  }];
 
-  map<string, google.protobuf.Value> context = 2 [
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Additional context about evaluation"
-      example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
-    }
-  ];
+  map<string, google.protobuf.Value> context = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Additional context about evaluation"
+    example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
+  }];
 }
 
 // AuthZEN evaluations request message
