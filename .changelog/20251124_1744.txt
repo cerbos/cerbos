@@ -1,0 +1,3 @@
+type:breaking
+Detect diff parameters for hubctl `upload-git` command
+The `hubctl upload-git` command is now able to determine the last git reference from the remote store and upload the files that changed since that revision. If the remote store doesn't contain git information, it will be overwritten with the files from the current HEAD. As part of this change, the `from` and `to` parameters have been converted to explicit flags rather than positional arguments. The link:https://github.com/cerbos/cerbos-store-action[cerbos-store-action GitHub Action] uses this updated command under the hood to sync changes from GitHub repositories to Cerbos Hub stores.

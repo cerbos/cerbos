@@ -1,0 +1,3 @@
+type:enhancement
+Support for consuming new bundle format
+When using the `hub` storage driver, the PDP is now able to consume bundles generated using a new format. This format is more efficient and closer to the final in-memory data structure used by the Cerbos engine.
