@@ -50,7 +50,7 @@ const (
 // AuthorizationServiceClient is a client for the authzen.authorization.v1.AuthorizationService
 // service.
 type AuthorizationServiceClient interface {
-	// GetMetadata returns the Policy Decision Point metadata
+	// Metadata returns the Policy Decision Point metadata
 	Metadata(context.Context, *connect.Request[v1.MetadataRequest]) (*connect.Response[v1.MetadataResponse], error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error)
@@ -116,7 +116,7 @@ func (c *authorizationServiceClient) AccessEvaluationBatch(ctx context.Context, 
 // AuthorizationServiceHandler is an implementation of the
 // authzen.authorization.v1.AuthorizationService service.
 type AuthorizationServiceHandler interface {
-	// GetMetadata returns the Policy Decision Point metadata
+	// Metadata returns the Policy Decision Point metadata
 	Metadata(context.Context, *connect.Request[v1.MetadataRequest]) (*connect.Response[v1.MetadataResponse], error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error)

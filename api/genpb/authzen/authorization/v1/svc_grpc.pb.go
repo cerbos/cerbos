@@ -33,7 +33,7 @@ const (
 //
 // AuthZEN Authorization Service
 type AuthorizationServiceClient interface {
-	// GetMetadata returns the Policy Decision Point metadata
+	// Metadata returns the Policy Decision Point metadata
 	Metadata(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*MetadataResponse, error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(ctx context.Context, in *AccessEvaluationRequest, opts ...grpc.CallOption) (*AccessEvaluationResponse, error)
@@ -85,7 +85,7 @@ func (c *authorizationServiceClient) AccessEvaluationBatch(ctx context.Context, 
 //
 // AuthZEN Authorization Service
 type AuthorizationServiceServer interface {
-	// GetMetadata returns the Policy Decision Point metadata
+	// Metadata returns the Policy Decision Point metadata
 	Metadata(context.Context, *MetadataRequest) (*MetadataResponse, error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *AccessEvaluationRequest) (*AccessEvaluationResponse, error)
