@@ -20,6 +20,13 @@ align PKG='./...': _betteralign
 
 build: generate lint tests package
 
+# Generate a changelog entry. E.g. changelog-entry feature "Added a frobnicate function to frobnicate"
+changelog-entry TYPE DESCRIPTION:
+    @ go run hack/tools/changelog/main.go add --type='{{ TYPE }}' --description='{{ DESCRIPTION }}'
+
+changelog-generate NEW_VERSION PREV_VERSION=`git describe --abbrev=0  --match='v*'`:
+    @ go run hack/tools/changelog/main.go generate --from='{{ PREV_VERSION }}' --new-version='{{ NEW_VERSION }}'
+
 clean:
     @ rm -rf {{ genpb_dir }}/cerbos {{ genmocks_dir }}  {{ json_schema_dir }} {{ openapi_dir }}
 

@@ -72,10 +72,18 @@ Please be respectful to maintainers and disclose AI assistance.
 - Add new documentation or update existing content to ensure that the documentation stays consistent with the change you are introducing. See [below](#submitting-pull-requests-for-documentation-changes) for tips on writing documentation.
 - Avoid introducing new dependencies if possible. All dependencies must have an appropriate open source licence (Apache-2.0, BSD, MIT).
 - Make sure your code is `gofmt`ed. Run `make lint` and fix any warnings produced by the linter.
+
+- Add a changelog entry for your change with the following command:
+
+    ```console
+    just changelog-entry <TYPE> <DESCRIPTION>
+    ```
+
+   The type of the changelog entry should be one of `breaking`, `chore`, `enhancement`, `feature` or `fix`.
 - Sign-off your commits to provide a [DCO](https://developercertificate.org). You can do this by adding the `-s` flag to your `git commit` command.
 
     ```sh
-    git commit -s -m 'bug: Fix for bug X'
+    git commit -s -m 'fix: Fix for bug X'
     ```
 
 ### Submitting pull requests for documentation changes
@@ -84,6 +92,13 @@ Please be respectful to maintainers and disclose AI assistance.
 - Use simple, [inclusive language](https://developers.google.com/style/inclusive-documentation). Also refer to the [Microsoft Style Guide](https://docs.microsoft.com/en-us/style-guide/welcome/) for general advice on writing good documentation.
 - Do not add third-party content in-line without attribution. Use links where possible.
 - Ensure that any binary assets (images, videos, etc.) are added to [Git LFS](https://github.com/git-lfs/git-lfs/tree/main/docs).
+
+- Add a changelog entry for your change with the following command:
+
+    ```console
+    just changelog-entry docs <DESCRIPTION>
+    ```
+
 - Sign-off your commits to provide a [DCO](https://developercertificate.org). You can do this by adding the `-s` flag to your `git commit` command.
 
     ```sh
