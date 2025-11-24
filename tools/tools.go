@@ -19,7 +19,6 @@ import (
 	_ "github.com/goreleaser/goreleaser/v2"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
-	_ "github.com/hashicorp/go-changelog"
 	_ "github.com/planetscale/vtprotobuf/cmd/protoc-gen-go-vtproto"
 	_ "github.com/vektra/mockery/v3"
 	_ "go.elastic.co/go-licence-detector"
