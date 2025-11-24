@@ -38,21 +38,21 @@ type Index interface {
 	resolve(context.Context, []*Row) ([]*Row, error)
 }
 
-type literalMap interface {
-	set(context.Context, string, *rowSet) error
-	// setBatch atomically replaces the rowSets for all keys in the batch.
-	// Each key in the map is overwritten entirely as a single atomic update.
+type batchWriter interface {
 	setBatch(context.Context, map[string]*rowSet) error
+}
+
+type literalMap interface {
+	batchWriter
+	set(context.Context, string, *rowSet) error
 	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
 	delete(context.Context, ...string) error
 }
 
 type globMap interface {
+	batchWriter
 	set(context.Context, string, *rowSet) error
-	// setBatch atomically replaces the rowSets for all keys in the batch.
-	// Each key in the map is overwritten entirely as a single atomic update.
-	setBatch(context.Context, map[string]*rowSet) error
 	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
 	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
@@ -209,11 +209,8 @@ func NewImpl(idx Index) *Impl {
 	}
 }
 
-// IndexRules atomically builds all indexes from the provided rules.
-// It is intended to be called once on an empty index and performs
-// a full rebuild rather than an incremental update.
 func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
-	version := make(map[string]*rowSet)
+	versions := make(map[string]*rowSet)
 	scopes := make(map[string]*rowSet)
 	roleGlobs := make(map[string]*rowSet)
 	actionGlobs := make(map[string]*rowSet)
@@ -231,7 +228,7 @@ func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
 		r.HashPB(h, ignoredRuleTableProtoFields)
 		r.sum = string(h.Sum(nil))
 
-		addToSet(version, r.Version, r)
+		addToSet(versions, r.Version, r)
 		addToSet(scopes, r.Scope, r)
 		addToSet(roleGlobs, r.Role, r)
 		addToSet(resourceGlobs, r.Resource, r)
@@ -246,23 +243,55 @@ func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
 	// TODO(saml) ideally, we'd batch _all_ writes within a single call, but this
 	// is less intrusive and doesn't require a significant re-write (while still
 	// seeing significant speed-ups).
-	if err := m.version.setBatch(ctx, version); err != nil {
+	if err := m.updateIndex(ctx, m.version, m.version.get, versions); err != nil {
 		return err
 	}
-	if err := m.scope.setBatch(ctx, scopes); err != nil {
+	if err := m.updateIndex(ctx, m.scope, m.scope.get, scopes); err != nil {
 		return err
 	}
-	if err := m.roleGlob.setBatch(ctx, roleGlobs); err != nil {
+	if err := m.updateIndex(ctx, m.roleGlob, m.roleGlob.getWithLiteral, roleGlobs); err != nil {
 		return err
 	}
-	if err := m.resourceGlob.setBatch(ctx, resourceGlobs); err != nil {
+	if err := m.updateIndex(ctx, m.resourceGlob, m.resourceGlob.getWithLiteral, resourceGlobs); err != nil {
 		return err
 	}
-	if err := m.actionGlob.setBatch(ctx, actionGlobs); err != nil {
+	if err := m.updateIndex(ctx, m.actionGlob, m.actionGlob.getWithLiteral, actionGlobs); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// updateIndex fetches existing rows for the keys in the batch, resolves them if necessary,
+// merges them with the new batch, and writes the result back. This is only relevant
+// for cases where the rule table is retrospectively updated by the manager (via mutable store
+// events) after init.
+func (m *Impl) updateIndex(ctx context.Context, bw batchWriter, getFn func(context.Context, ...string) (map[string]*rowSet, error), batch map[string]*rowSet) error {
+	if len(batch) == 0 {
+		return nil
+	}
+
+	keys := make([]string, 0, len(batch))
+	for k := range batch {
+		keys = append(keys, k)
+	}
+
+	existing, err := getFn(ctx, keys...)
+	if err != nil {
+		return err
+	}
+
+	for k, oldSet := range existing {
+		if err := oldSet.resolve(ctx, m.idx); err != nil {
+			return err
+		}
+
+		if newSet, ok := batch[k]; ok {
+			batch[k] = oldSet.unionWith(newSet)
+		}
+	}
+
+	return bw.setBatch(ctx, batch)
 }
 
 func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, roles, actions []string) ([]*Row, error) {
