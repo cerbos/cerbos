@@ -158,8 +158,6 @@ message AccessEvaluationResponse {
   };
 
   optional bool decision = 1 [
-    (buf.validate.field).required = true,
-    (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Whether to allow or deny the operation."
       example: "true"
@@ -167,10 +165,6 @@ message AccessEvaluationResponse {
   ];
 
   map<string, google.protobuf.Value> context = 2 [
-    (buf.validate.field).map.keys = {
-      string: {min_len: 1}
-    },
-    (buf.validate.field).map.values.required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Additional context about evaluation"
       example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
@@ -250,8 +244,14 @@ message AccessEvaluationBatchResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN access evaluations response"}
   };
-  repeated AccessEvaluationResponse evaluations = 1 [
-    (buf.validate.field).required = true,
-    (google.api.field_behavior) = REQUIRED
-  ];
+  repeated AccessEvaluationResponse evaluations = 1;
+}
+
+message Metadata {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Policy Decision Point Metadata"}
+  };
+  string policy_decision_point = 1;
+  string access_evaluation_endpoint = 2;
+  string access_evaluations_endpoint = 3;
 }
