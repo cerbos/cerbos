@@ -25,6 +25,30 @@
     "application/json"
   ],
   "paths": {
+    "/.well-known/authzen-configuration": {
+      "get": {
+        "summary": "Get Policy Decision Point metadata",
+        "description": "Returns the AuthZEN Policy Decision Point metadata including endpoint URLs",
+        "operationId": "AuthorizationService_GetMetadata",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1MetadataResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "AuthorizationService"
+        ]
+      }
+    },
     "/access/v1/evaluation": {
       "post": {
         "summary": "Evaluate access request",
@@ -272,6 +296,21 @@
       "required": [
         "name"
       ]
+    },
+    "v1MetadataResponse": {
+      "type": "object",
+      "properties": {
+        "policy_decision_point": {
+          "type": "string"
+        },
+        "access_evaluation_endpoint": {
+          "type": "string"
+        },
+        "access_evaluations_endpoint": {
+          "type": "string"
+        }
+      },
+      "description": "AuthZEN Policy Decision Point Metadata"
     },
     "v1Resource": {
       "type": "object",

@@ -432,9 +432,9 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), adminEndpoint))
 	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), apiEndpoint))
 	cerbosMux.PathPrefix(authzenEndpont).Handler(tracing.HTTPHandler(prettyJSON(gwmux), authzenEndpont))
+	cerbosMux.Path(authzenMetadataEnpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(healthEndpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
-	cerbosMux.Path(authzenMetadataEnpoint).HandlerFunc(svc.AuthZenMetadata)
 
 	if s.conf.MetricsEnabled {
 		h, err := metrics.NewHandler()

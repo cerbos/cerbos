@@ -29,8 +29,9 @@ var File_authzen_authorization_v1_svc_proto protoreflect.FileDescriptor
 
 const file_authzen_authorization_v1_svc_proto_rawDesc = "" +
 	"\n" +
-	"\"authzen/authorization/v1/svc.proto\x12\x18authzen.authorization.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xaa\x05\n" +
-	"\x14AuthorizationService\x12\x9b\x02\n" +
+	"\"authzen/authorization/v1/svc.proto\x12\x18authzen.authorization.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xb1\a\n" +
+	"\x14AuthorizationService\x12\x84\x02\n" +
+	"\vGetMetadata\x12).authzen.authorization.v1.MetadataRequest\x1a*.authzen.authorization.v1.MetadataResponse\"\x9d\x01\x92Ap\x12\"Get Policy Decision Point metadata\x1aJReturns the AuthZEN Policy Decision Point metadata including endpoint URLs\x82\xd3\xe4\x93\x02$\x12\"/.well-known/authzen-configuration\x12\x9b\x02\n" +
 	"\x10AccessEvaluation\x121.authzen.authorization.v1.AccessEvaluationRequest\x1a2.authzen.authorization.v1.AccessEvaluationResponse\"\x9f\x01\x92A|\x12\x17Evaluate access request\x1aaEvaluate whether a subject can perform an action on a resource according to AuthZEN specification\x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/access/v1/evaluation\x12\xb8\x02\n" +
 	"\x15AccessEvaluationBatch\x126.authzen.authorization.v1.AccessEvaluationBatchRequest\x1a7.authzen.authorization.v1.AccessEvaluationBatchResponse\"\xad\x01\x92A\x88\x01\x12\x1dBatch evaluate access request\x1agBatch evaluate whether a subject can perform an action on a resource according to AuthZEN specification\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/access/v1/evaluations\x1a9\x92A6\x124AuthZEN Authorization Service for access evaluationsB\xbf\x02\x92A\x9f\x01\x12v\n" +
 	"\x19AuthZEN Authorization API\x127OpenID AuthZEN Authorization API for access evaluations\"\x1c\n" +
@@ -38,18 +39,22 @@ const file_authzen_authorization_v1_svc_proto_rawDesc = "" +
 	"'dev.cerbos.authzen.api.v1.authorizationZKgithub.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1\xaa\x02#Cerbos.AuthZen.Api.V1.Authorizationb\x06proto3"
 
 var file_authzen_authorization_v1_svc_proto_goTypes = []any{
-	(*AccessEvaluationRequest)(nil),       // 0: authzen.authorization.v1.AccessEvaluationRequest
-	(*AccessEvaluationBatchRequest)(nil),  // 1: authzen.authorization.v1.AccessEvaluationBatchRequest
-	(*AccessEvaluationResponse)(nil),      // 2: authzen.authorization.v1.AccessEvaluationResponse
-	(*AccessEvaluationBatchResponse)(nil), // 3: authzen.authorization.v1.AccessEvaluationBatchResponse
+	(*MetadataRequest)(nil),               // 0: authzen.authorization.v1.MetadataRequest
+	(*AccessEvaluationRequest)(nil),       // 1: authzen.authorization.v1.AccessEvaluationRequest
+	(*AccessEvaluationBatchRequest)(nil),  // 2: authzen.authorization.v1.AccessEvaluationBatchRequest
+	(*MetadataResponse)(nil),              // 3: authzen.authorization.v1.MetadataResponse
+	(*AccessEvaluationResponse)(nil),      // 4: authzen.authorization.v1.AccessEvaluationResponse
+	(*AccessEvaluationBatchResponse)(nil), // 5: authzen.authorization.v1.AccessEvaluationBatchResponse
 }
 var file_authzen_authorization_v1_svc_proto_depIdxs = []int32{
-	0, // 0: authzen.authorization.v1.AuthorizationService.AccessEvaluation:input_type -> authzen.authorization.v1.AccessEvaluationRequest
-	1, // 1: authzen.authorization.v1.AuthorizationService.AccessEvaluationBatch:input_type -> authzen.authorization.v1.AccessEvaluationBatchRequest
-	2, // 2: authzen.authorization.v1.AuthorizationService.AccessEvaluation:output_type -> authzen.authorization.v1.AccessEvaluationResponse
-	3, // 3: authzen.authorization.v1.AuthorizationService.AccessEvaluationBatch:output_type -> authzen.authorization.v1.AccessEvaluationBatchResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	0, // 0: authzen.authorization.v1.AuthorizationService.GetMetadata:input_type -> authzen.authorization.v1.MetadataRequest
+	1, // 1: authzen.authorization.v1.AuthorizationService.AccessEvaluation:input_type -> authzen.authorization.v1.AccessEvaluationRequest
+	2, // 2: authzen.authorization.v1.AuthorizationService.AccessEvaluationBatch:input_type -> authzen.authorization.v1.AccessEvaluationBatchRequest
+	3, // 3: authzen.authorization.v1.AuthorizationService.GetMetadata:output_type -> authzen.authorization.v1.MetadataResponse
+	4, // 4: authzen.authorization.v1.AuthorizationService.AccessEvaluation:output_type -> authzen.authorization.v1.AccessEvaluationResponse
+	5, // 5: authzen.authorization.v1.AuthorizationService.AccessEvaluationBatch:output_type -> authzen.authorization.v1.AccessEvaluationBatchResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

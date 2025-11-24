@@ -243,11 +243,17 @@ message AccessEvaluationBatchResponse {
   repeated AccessEvaluationResponse evaluations = 1;
 }
 
-message Metadata {
+message MetadataRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Policy Decision Point Metadata request"}
+  };
+}
+
+message MetadataResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN Policy Decision Point Metadata"}
   };
-  string policy_decision_point = 1;
-  string access_evaluation_endpoint = 2;
-  string access_evaluations_endpoint = 3;
+  string policy_decision_point = 1 [json_name = "policy_decision_point"];
+  string access_evaluation_endpoint = 2 [json_name = "access_evaluation_endpoint"];
+  string access_evaluations_endpoint = 3 [json_name = "access_evaluations_endpoint"];
 }

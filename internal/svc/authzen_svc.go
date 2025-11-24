@@ -8,14 +8,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -611,46 +609,32 @@ func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m ma
 	return engAuxData, nil
 }
 
-const authzenEndpoint = "/access/v1"
+func (aas *AuthzenAuthorizationService) GetMetadata(ctx context.Context, _ *svcv1.MetadataRequest) (*svcv1.MetadataResponse, error) {
+	// Extract host and scheme from gRPC metadata
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Internal, "failed to get metadata from context")
+	}
 
-func AuthZenMetadata(w http.ResponseWriter, r *http.Request) {
-	defer cleanup(r)
-
+	// Determine the HTTP scheme
 	httpScheme := "http"
-	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+	if proto := md.Get("x-forwarded-proto"); len(proto) > 0 && proto[0] == "https" {
 		httpScheme = "https"
 	}
 
-	host := r.Host
-	if forwardedHost := r.Header.Get("X-Forwarded-Host"); forwardedHost != "" {
-		host = forwardedHost
+	// Determine the host (considering reverse proxy headers)
+	host := "localhost"
+	if forwardedHost := md.Get("x-forwarded-host"); len(forwardedHost) > 0 && forwardedHost[0] != "" {
+		host = forwardedHost[0]
+	} else if hostHeader := md.Get(":authority"); len(hostHeader) > 0 && hostHeader[0] != "" {
+		host = hostHeader[0]
 	}
 
 	baseURL := fmt.Sprintf("%s://%s", httpScheme, host)
 
-	meta := &svcv1.Metadata{
+	return &svcv1.MetadataResponse{
 		PolicyDecisionPoint:       baseURL,
-		AccessEvaluationEndpoint:  fmt.Sprintf("%s%s/evaluation", baseURL, authzenEndpoint),
-		AccessEvaluationsEndpoint: fmt.Sprintf("%s%s/evaluations", baseURL, authzenEndpoint),
-	}
-
-	// Need snake_case field names
-	marshaler := protojson.MarshalOptions{
-		UseProtoNames: true,
-	}
-	data, err := marshaler.Marshal(meta)
-	if err != nil {
-		http.Error(w, "Failed to marshal metadata", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(data)
-}
-
-func cleanup(r *http.Request) {
-	if r.Body != nil {
-		_, _ = io.Copy(io.Discard, r.Body)
-		r.Body.Close()
-	}
+		AccessEvaluationEndpoint:  fmt.Sprintf("%s/access/v1/evaluation", baseURL),
+		AccessEvaluationsEndpoint: fmt.Sprintf("%s/access/v1/evaluations", baseURL),
+	}, nil
 }

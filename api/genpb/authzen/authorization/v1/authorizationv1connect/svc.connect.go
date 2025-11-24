@@ -36,6 +36,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
+	// AuthorizationServiceGetMetadataProcedure is the fully-qualified name of the
+	// AuthorizationService's GetMetadata RPC.
+	AuthorizationServiceGetMetadataProcedure = "/authzen.authorization.v1.AuthorizationService/GetMetadata"
 	// AuthorizationServiceAccessEvaluationProcedure is the fully-qualified name of the
 	// AuthorizationService's AccessEvaluation RPC.
 	AuthorizationServiceAccessEvaluationProcedure = "/authzen.authorization.v1.AuthorizationService/AccessEvaluation"
@@ -47,6 +50,8 @@ const (
 // AuthorizationServiceClient is a client for the authzen.authorization.v1.AuthorizationService
 // service.
 type AuthorizationServiceClient interface {
+	// GetMetadata returns the Policy Decision Point metadata
+	GetMetadata(context.Context, *connect.Request[v1.MetadataRequest]) (*connect.Response[v1.MetadataResponse], error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error)
 	// Evaluate performs an access evaluation
@@ -65,6 +70,12 @@ func NewAuthorizationServiceClient(httpClient connect.HTTPClient, baseURL string
 	baseURL = strings.TrimRight(baseURL, "/")
 	authorizationServiceMethods := v1.File_authzen_authorization_v1_svc_proto.Services().ByName("AuthorizationService").Methods()
 	return &authorizationServiceClient{
+		getMetadata: connect.NewClient[v1.MetadataRequest, v1.MetadataResponse](
+			httpClient,
+			baseURL+AuthorizationServiceGetMetadataProcedure,
+			connect.WithSchema(authorizationServiceMethods.ByName("GetMetadata")),
+			connect.WithClientOptions(opts...),
+		),
 		accessEvaluation: connect.NewClient[v1.AccessEvaluationRequest, v1.AccessEvaluationResponse](
 			httpClient,
 			baseURL+AuthorizationServiceAccessEvaluationProcedure,
@@ -82,8 +93,14 @@ func NewAuthorizationServiceClient(httpClient connect.HTTPClient, baseURL string
 
 // authorizationServiceClient implements AuthorizationServiceClient.
 type authorizationServiceClient struct {
+	getMetadata           *connect.Client[v1.MetadataRequest, v1.MetadataResponse]
 	accessEvaluation      *connect.Client[v1.AccessEvaluationRequest, v1.AccessEvaluationResponse]
 	accessEvaluationBatch *connect.Client[v1.AccessEvaluationBatchRequest, v1.AccessEvaluationBatchResponse]
+}
+
+// GetMetadata calls authzen.authorization.v1.AuthorizationService.GetMetadata.
+func (c *authorizationServiceClient) GetMetadata(ctx context.Context, req *connect.Request[v1.MetadataRequest]) (*connect.Response[v1.MetadataResponse], error) {
+	return c.getMetadata.CallUnary(ctx, req)
 }
 
 // AccessEvaluation calls authzen.authorization.v1.AuthorizationService.AccessEvaluation.
@@ -99,6 +116,8 @@ func (c *authorizationServiceClient) AccessEvaluationBatch(ctx context.Context, 
 // AuthorizationServiceHandler is an implementation of the
 // authzen.authorization.v1.AuthorizationService service.
 type AuthorizationServiceHandler interface {
+	// GetMetadata returns the Policy Decision Point metadata
+	GetMetadata(context.Context, *connect.Request[v1.MetadataRequest]) (*connect.Response[v1.MetadataResponse], error)
 	// Evaluate performs an access evaluation
 	AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error)
 	// Evaluate performs an access evaluation
@@ -112,6 +131,12 @@ type AuthorizationServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewAuthorizationServiceHandler(svc AuthorizationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	authorizationServiceMethods := v1.File_authzen_authorization_v1_svc_proto.Services().ByName("AuthorizationService").Methods()
+	authorizationServiceGetMetadataHandler := connect.NewUnaryHandler(
+		AuthorizationServiceGetMetadataProcedure,
+		svc.GetMetadata,
+		connect.WithSchema(authorizationServiceMethods.ByName("GetMetadata")),
+		connect.WithHandlerOptions(opts...),
+	)
 	authorizationServiceAccessEvaluationHandler := connect.NewUnaryHandler(
 		AuthorizationServiceAccessEvaluationProcedure,
 		svc.AccessEvaluation,
@@ -126,6 +151,8 @@ func NewAuthorizationServiceHandler(svc AuthorizationServiceHandler, opts ...con
 	)
 	return "/authzen.authorization.v1.AuthorizationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case AuthorizationServiceGetMetadataProcedure:
+			authorizationServiceGetMetadataHandler.ServeHTTP(w, r)
 		case AuthorizationServiceAccessEvaluationProcedure:
 			authorizationServiceAccessEvaluationHandler.ServeHTTP(w, r)
 		case AuthorizationServiceAccessEvaluationBatchProcedure:
@@ -138,6 +165,10 @@ func NewAuthorizationServiceHandler(svc AuthorizationServiceHandler, opts ...con
 
 // UnimplementedAuthorizationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedAuthorizationServiceHandler struct{}
+
+func (UnimplementedAuthorizationServiceHandler) GetMetadata(context.Context, *connect.Request[v1.MetadataRequest]) (*connect.Response[v1.MetadataResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("authzen.authorization.v1.AuthorizationService.GetMetadata is not implemented"))
+}
 
 func (UnimplementedAuthorizationServiceHandler) AccessEvaluation(context.Context, *connect.Request[v1.AccessEvaluationRequest]) (*connect.Response[v1.AccessEvaluationResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("authzen.authorization.v1.AuthorizationService.AccessEvaluation is not implemented"))

@@ -156,16 +156,19 @@ func authzen_authorization_v1_Action_hashpb_sum(m *Action, hasher hash.Hash, ign
 	}
 }
 
-func authzen_authorization_v1_Metadata_hashpb_sum(m *Metadata, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["authzen.authorization.v1.Metadata.policy_decision_point"]; !ok {
+func authzen_authorization_v1_MetadataRequest_hashpb_sum(m *MetadataRequest, hasher hash.Hash, ignore map[string]struct{}) {
+}
+
+func authzen_authorization_v1_MetadataResponse_hashpb_sum(m *MetadataResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["authzen.authorization.v1.MetadataResponse.policy_decision_point"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetPolicyDecisionPoint()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPolicyDecisionPoint()), len(m.GetPolicyDecisionPoint())))
 	}
-	if _, ok := ignore["authzen.authorization.v1.Metadata.access_evaluation_endpoint"]; !ok {
+	if _, ok := ignore["authzen.authorization.v1.MetadataResponse.access_evaluation_endpoint"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetAccessEvaluationEndpoint()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAccessEvaluationEndpoint()), len(m.GetAccessEvaluationEndpoint())))
 	}
-	if _, ok := ignore["authzen.authorization.v1.Metadata.access_evaluations_endpoint"]; !ok {
+	if _, ok := ignore["authzen.authorization.v1.MetadataResponse.access_evaluations_endpoint"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetAccessEvaluationsEndpoint()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAccessEvaluationsEndpoint()), len(m.GetAccessEvaluationsEndpoint())))
 	}
