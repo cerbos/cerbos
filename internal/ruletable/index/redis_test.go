@@ -55,7 +55,7 @@ func TestRedisIndex(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, writerImpl.IndexRule(ctx, testRow))
+	require.NoError(t, writerImpl.IndexRules(ctx, []*index.Row{testRow}))
 
 	readerIdx, err := index.GetExisting(ctx, client, namespace)
 	require.NoError(t, err)
@@ -83,5 +83,5 @@ func TestRedisIndex(t *testing.T) {
 		},
 	}
 
-	require.ErrorIs(t, readerImpl.IndexRule(ctx, newRow), index.ErrReadOnly)
+	require.ErrorIs(t, readerImpl.IndexRules(ctx, []*index.Row{newRow}), index.ErrReadOnly)
 }

@@ -257,6 +257,46 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 	return nil
 }
 
+func (rm *redisMap) setBatch(ctx context.Context, batch map[string]*rowSet) error {
+	if len(batch) == 0 {
+		return nil
+	}
+
+	if rm.readOnly {
+		return ErrReadOnly
+	}
+
+	_, err := rm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
+		for cat, rs := range batch {
+			sums, rows, err := rm.serialize(rs)
+			if err != nil {
+				return err
+			}
+
+			sumsKey := rm.sumsKey(cat)
+
+			p.SAdd(ctx, rm.catKey, sumsKey)
+			p.PExpireAt(ctx, rm.catKey, rm.dataDeadline)
+
+			p.SAdd(ctx, sumsKey, sums...)
+			p.PExpireAt(ctx, sumsKey, rm.dataDeadline)
+
+			for i, r := range rows {
+				rk := sums[i].(string) //nolint:forcetypeassert
+				p.Set(ctx, rk, r, 0)
+				p.PExpireAt(ctx, rk, rm.dataDeadline)
+			}
+		}
+
+		p.Set(ctx, rm.sentKey, "1", 0)
+		p.PExpireAt(ctx, rm.sentKey, rm.sentinelDeadline)
+
+		return nil
+	})
+
+	return err
+}
+
 func (rm *redisMap) get(ctx context.Context, cats ...string) (map[string]*rowSet, error) {
 	if len(cats) == 0 {
 		return nil, nil

@@ -40,6 +40,9 @@ type Index interface {
 
 type literalMap interface {
 	set(context.Context, string, *rowSet) error
+	// setBatch atomically replaces the rowSets for all keys in the batch.
+	// Each key in the map is overwritten entirely as a single atomic update.
+	setBatch(context.Context, map[string]*rowSet) error
 	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
 	delete(context.Context, ...string) error
@@ -47,6 +50,9 @@ type literalMap interface {
 
 type globMap interface {
 	set(context.Context, string, *rowSet) error
+	// setBatch atomically replaces the rowSets for all keys in the batch.
+	// Each key in the map is overwritten entirely as a single atomic update.
+	setBatch(context.Context, map[string]*rowSet) error
 	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
 	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
@@ -203,87 +209,56 @@ func NewImpl(idx Index) *Impl {
 	}
 }
 
-func (m *Impl) IndexRule(ctx context.Context, r *Row) error {
-	h := sha256.New()
-	r.HashPB(h, ignoredRuleTableProtoFields)
-	r.sum = string(h.Sum(nil))
+// IndexRules atomically builds all indexes from the provided rules.
+// It is intended to be called once on an empty index and performs
+// a full rebuild rather than an incremental update.
+func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
+	version := make(map[string]*rowSet)
+	scopes := make(map[string]*rowSet)
+	roleGlobs := make(map[string]*rowSet)
+	actionGlobs := make(map[string]*rowSet)
+	resourceGlobs := make(map[string]*rowSet)
 
-	versionRowSets, err := m.version.get(ctx, r.Version)
-	if err != nil {
-		return err
-	}
-	versionRowSet, ok := versionRowSets[r.Version]
-	if !ok {
-		versionRowSet = newRowSet()
-	} else if err := versionRowSet.resolve(ctx, m.idx); err != nil {
-		return err
-	}
-	versionRowSet.set(r)
-	if err := m.version.set(ctx, r.Version, versionRowSet); err != nil {
-		return err
+	addToSet := func(m map[string]*rowSet, key string, r *Row) {
+		if _, ok := m[key]; !ok {
+			m[key] = newRowSet()
+		}
+		m[key].set(r)
 	}
 
-	scopeRowSets, err := m.scope.get(ctx, r.Scope)
-	if err != nil {
-		return err
-	}
-	scopeRowSet, ok := scopeRowSets[r.Scope]
-	if !ok {
-		scopeRowSet = newRowSet()
-	} else if err := scopeRowSet.resolve(ctx, m.idx); err != nil {
-		return err
-	}
-	scopeRowSet.set(r)
-	if err := m.scope.set(ctx, r.Scope, scopeRowSet); err != nil {
-		return err
+	for _, r := range rows {
+		h := sha256.New()
+		r.HashPB(h, ignoredRuleTableProtoFields)
+		r.sum = string(h.Sum(nil))
+
+		addToSet(version, r.Version, r)
+		addToSet(scopes, r.Scope, r)
+		addToSet(roleGlobs, r.Role, r)
+		addToSet(resourceGlobs, r.Resource, r)
+
+		action := r.GetAction()
+		if len(r.GetAllowActions().GetActions()) > 0 {
+			action = allowActionsIdxKey
+		}
+		addToSet(actionGlobs, action, r)
 	}
 
-	roleRowSets, err := m.roleGlob.getWithLiteral(ctx, r.Role)
-	if err != nil {
+	// TODO(saml) ideally, we'd batch _all_ writes within a single call, but this
+	// is less intrusive and doesn't require a significant re-write (while still
+	// seeing significant speed-ups).
+	if err := m.version.setBatch(ctx, version); err != nil {
 		return err
 	}
-	roleRowSet, ok := roleRowSets[r.Role]
-	if !ok {
-		roleRowSet = newRowSet()
-	} else if err := roleRowSet.resolve(ctx, m.idx); err != nil {
+	if err := m.scope.setBatch(ctx, scopes); err != nil {
 		return err
 	}
-	roleRowSet.set(r)
-	if err := m.roleGlob.set(ctx, r.Role, roleRowSet); err != nil {
+	if err := m.roleGlob.setBatch(ctx, roleGlobs); err != nil {
 		return err
 	}
-
-	resourceRowSets, err := m.resourceGlob.getWithLiteral(ctx, r.Resource)
-	if err != nil {
+	if err := m.resourceGlob.setBatch(ctx, resourceGlobs); err != nil {
 		return err
 	}
-	resourceRowSet, ok := resourceRowSets[r.Resource]
-	if !ok {
-		resourceRowSet = newRowSet()
-	} else if err := resourceRowSet.resolve(ctx, m.idx); err != nil {
-		return err
-	}
-	resourceRowSet.set(r)
-	if err := m.resourceGlob.set(ctx, r.Resource, resourceRowSet); err != nil {
-		return err
-	}
-
-	action := r.GetAction()
-	if len(r.GetAllowActions().GetActions()) > 0 {
-		action = allowActionsIdxKey
-	}
-	actionRowSets, err := m.actionGlob.getWithLiteral(ctx, action)
-	if err != nil {
-		return err
-	}
-	actionRowSet, ok := actionRowSets[action]
-	if !ok {
-		actionRowSet = newRowSet()
-	} else if err := actionRowSet.resolve(ctx, m.idx); err != nil {
-		return err
-	}
-	actionRowSet.set(r)
-	if err := m.actionGlob.set(ctx, action, actionRowSet); err != nil {
+	if err := m.actionGlob.setBatch(ctx, actionGlobs); err != nil {
 		return err
 	}
 

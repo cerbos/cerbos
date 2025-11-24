@@ -487,6 +487,7 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
 	defer cancelFn()
 
+	indexRows := make([]*index.Row, 0, len(rules))
 	for _, rule := range rules {
 		row := &index.Row{
 			RuleTable_RuleRow: rule,
@@ -530,27 +531,25 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			row.Params = params
 		}
 
-		if err := rt.indexRule(ctx, row); err != nil {
-			return err
+		if row.ScopePermissions != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
+			rt.scopeScopePermissions[row.Scope] = row.ScopePermissions
 		}
+
+		switch row.PolicyKind { //nolint:exhaustive
+		case policyv1.Kind_KIND_PRINCIPAL:
+			rt.principalScopeMap[row.Scope] = struct{}{}
+		case policyv1.Kind_KIND_RESOURCE:
+			rt.resourceScopeMap[row.Scope] = struct{}{}
+		}
+
+		indexRows = append(indexRows, row)
+	}
+
+	if len(indexRows) > 0 {
+		return rt.idx.IndexRules(ctx, indexRows)
 	}
 
 	return nil
-}
-
-func (rt *RuleTable) indexRule(ctx context.Context, r *index.Row) error {
-	if r.ScopePermissions != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-		rt.scopeScopePermissions[r.Scope] = r.ScopePermissions
-	}
-
-	switch r.PolicyKind { //nolint:exhaustive
-	case policyv1.Kind_KIND_PRINCIPAL:
-		rt.principalScopeMap[r.Scope] = struct{}{}
-	case policyv1.Kind_KIND_RESOURCE:
-		rt.resourceScopeMap[r.Scope] = struct{}{}
-	}
-
-	return rt.idx.IndexRule(ctx, r)
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
