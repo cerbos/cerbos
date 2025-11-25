@@ -85,13 +85,14 @@ const (
 	defaultTimeout        = 30 * time.Second
 	minGRPCConnectTimeout = 20 * time.Second
 
-	adminEndpoint      = "/admin"
-	apiEndpoint        = "/api"
-	authzenEndpont     = "/access"
-	healthEndpoint     = "/_cerbos/health"
-	metricsEndpoint    = "/_cerbos/metrics"
-	playgroundEndpoint = "/api/playground"
-	schemaEndpoint     = "/schema/swagger.json"
+	adminEndpoint          = "/admin"
+	apiEndpoint            = "/api"
+	authzenEndpont         = "/access/v1"
+	authzenMetadataEnpoint = "/.well-known/authzen-configuration"
+	healthEndpoint         = "/_cerbos/health"
+	metricsEndpoint        = "/_cerbos/metrics"
+	playgroundEndpoint     = "/api/playground"
+	schemaEndpoint         = "/schema/swagger.json"
 )
 
 var ErrInvalidStore = errors.New("store does not implement either SourceStore or BinaryStore interfaces")
@@ -431,6 +432,7 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	cerbosMux.PathPrefix(adminEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), adminEndpoint))
 	cerbosMux.PathPrefix(apiEndpoint).Handler(tracing.HTTPHandler(prettyJSON(gwmux), apiEndpoint))
 	cerbosMux.PathPrefix(authzenEndpont).Handler(tracing.HTTPHandler(prettyJSON(gwmux), authzenEndpont))
+	cerbosMux.Path(authzenMetadataEnpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(healthEndpoint).Handler(prettyJSON(gwmux))
 	cerbosMux.Path(schemaEndpoint).HandlerFunc(schema.ServeSvcSwagger)
 

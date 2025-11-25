@@ -14,10 +14,6 @@
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/google.protobuf.Value"
-      },
-      "propertyNames": {
-        "type": "string",
-        "minLength": 1
       }
     },
     "decision": {

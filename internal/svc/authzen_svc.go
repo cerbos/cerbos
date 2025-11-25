@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -606,4 +607,31 @@ func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m ma
 		return nil, fmt.Errorf("can't extract auxData: %w", err)
 	}
 	return engAuxData, nil
+}
+
+func (aas *AuthzenAuthorizationService) Metadata(ctx context.Context, _ *svcv1.MetadataRequest) (*svcv1.MetadataResponse, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Internal, "failed to get metadata from context")
+	}
+
+	httpScheme := "http"
+	if proto := md.Get("x-forwarded-proto"); len(proto) > 0 && proto[0] == "https" {
+		httpScheme = "https"
+	}
+
+	host := "localhost"
+	if forwardedHost := md.Get("x-forwarded-host"); len(forwardedHost) > 0 && forwardedHost[0] != "" {
+		host = forwardedHost[0]
+	} else if hostHeader := md.Get(":authority"); len(hostHeader) > 0 && hostHeader[0] != "" {
+		host = hostHeader[0]
+	}
+
+	baseURL := fmt.Sprintf("%s://%s", httpScheme, host)
+
+	return &svcv1.MetadataResponse{
+		PolicyDecisionPoint:       baseURL,
+		AccessEvaluationEndpoint:  fmt.Sprintf("%s/access/v1/evaluation", baseURL),
+		AccessEvaluationsEndpoint: fmt.Sprintf("%s/access/v1/evaluations", baseURL),
+	}, nil
 }

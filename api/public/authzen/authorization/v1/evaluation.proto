@@ -157,25 +157,15 @@ message AccessEvaluationResponse {
     json_schema: {description: "AuthZEN access evaluation response"}
   };
 
-  optional bool decision = 1 [
-    (buf.validate.field).required = true,
-    (google.api.field_behavior) = REQUIRED,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Whether to allow or deny the operation."
-      example: "true"
-    }
-  ];
+  optional bool decision = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Whether to allow or deny the operation."
+    example: "true"
+  }];
 
-  map<string, google.protobuf.Value> context = 2 [
-    (buf.validate.field).map.keys = {
-      string: {min_len: 1}
-    },
-    (buf.validate.field).map.values.required = true,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "Additional context about evaluation"
-      example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
-    }
-  ];
+  map<string, google.protobuf.Value> context = 2 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Additional context about evaluation"
+    example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
+  }];
 }
 
 // AuthZEN evaluations request message
@@ -250,8 +240,20 @@ message AccessEvaluationBatchResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "AuthZEN access evaluations response"}
   };
-  repeated AccessEvaluationResponse evaluations = 1 [
-    (buf.validate.field).required = true,
-    (google.api.field_behavior) = REQUIRED
-  ];
+  repeated AccessEvaluationResponse evaluations = 1;
+}
+
+message MetadataRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Policy Decision Point Metadata request"}
+  };
+}
+
+message MetadataResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Policy Decision Point Metadata"}
+  };
+  string policy_decision_point = 1 [json_name = "policy_decision_point"];
+  string access_evaluation_endpoint = 2 [json_name = "access_evaluation_endpoint"];
+  string access_evaluations_endpoint = 3 [json_name = "access_evaluations_endpoint"];
 }

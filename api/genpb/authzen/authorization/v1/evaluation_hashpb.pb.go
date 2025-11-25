@@ -71,3 +71,11 @@ func (m *AccessEvaluationBatchResponse) HashPB(hasher hash.Hash, ignore map[stri
 		authzen_authorization_v1_AccessEvaluationBatchResponse_hashpb_sum(m, hasher, ignore)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *MetadataResponse) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		authzen_authorization_v1_MetadataResponse_hashpb_sum(m, hasher, ignore)
+	}
+}
