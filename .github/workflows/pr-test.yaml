@@ -53,7 +53,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+        uses: ./.github/actions/setup-just
 
       - name: Generate
         run: just generate
@@ -113,7 +113,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+        uses: ./.github/actions/setup-just
 
       - name: Download previous test times
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
@@ -179,7 +179,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+        uses: ./.github/actions/setup-just
 
       - name: Download JUnit reports
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
@@ -235,7 +235,7 @@ jobs:
           cache: false
 
       - name: Install just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+        uses: ./.github/actions/setup-just
 
       - name: modernize
         run: just lint-modernize
