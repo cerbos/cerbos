@@ -1,0 +1,9 @@
+type:feature
+Partially implements AuthZEN Authorization API 1.0 https://openid.net/public-review-period-for-proposed-authorization-api-1-final-specification/[specification].
+
+The following APIs are implemented:
+
+- Access Evaluation API,
+- Access Evaluations API.
+
+Additionally, Policy Decision Point Metadata endpoint is provided.
