@@ -1,0 +1,2 @@
+type:fix
+sanitise resource kinds in principal policy rules
