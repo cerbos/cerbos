@@ -102,13 +102,6 @@
                 "major"
             ],
             "enabled": false
-        },
-        {
-            "description": "https://github.com/verdaccio/verdaccio/issues/5187",
-            "matchPackageNames": [
-                "verdaccio"
-            ],
-            "enabled": false
         }
     ],
     "labels": [
