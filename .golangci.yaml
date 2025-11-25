@@ -55,7 +55,7 @@ linters:
         const:
           COMPANY: Zenauth Ltd.
       template: |-
-        Copyright {{ YEAR-RANGE }} {{ COMPANY }}
+        Copyright 2021-{{ YEAR }} {{ COMPANY }}
         SPDX-License-Identifier: Apache-2.0
 
     gomoddirectives:
