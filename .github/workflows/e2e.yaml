@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
@@ -22,7 +22,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           version: v3.18.1
@@ -32,10 +32,10 @@ jobs:
         run: |-
           helm plugin install https://github.com/jkroepke/helm-secrets --version v4.6.5
       - name: Install Helmfile
-        uses: jaxxstorm/action-install-gh-release@v2.1.0
+        uses: jaxxstorm/action-install-gh-release@6096f2a2bbfee498ced520b6922ac2c06e990ed2 # v2.1.0
         with:
           repo: helmfile/helmfile
-          tag: v1.1.9
+          tag: v1.2.0
 
       - name: Telepresence
         run: |
@@ -55,7 +55,7 @@ jobs:
         run: helmfile init --force
 
       - name: Install KinD
-        uses: helm/kind-action@v1.13.0
+        uses: helm/kind-action@92086f6be054225fa813e0a4b13787fc9088faab # v1.13.0
         with:
           cluster_name: cerbos-e2e
           config: e2e/kind.yaml
@@ -71,7 +71,7 @@ jobs:
         if: failure()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        uses: voxmedia/github-action-slack-notify-build@v2
+        uses: voxmedia/github-action-slack-notify-build@373da97827332b19e753c84d1e5b7937dbe0fbfa # v2
         with:
           channel_id: C02TMGNNL4V
           status: FAILED
