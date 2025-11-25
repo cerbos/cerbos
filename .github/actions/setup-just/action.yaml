@@ -1,0 +1,12 @@
+name: Set up just
+
+description: Install the just command runner
+
+runs:
+  using: composite
+
+  steps:
+    - name: Set up just
+      uses: extractions/setup-crate@4993624604c307fbca528d28a3c8b60fa5ecc859 # v1
+      with:
+        repo: casey/just

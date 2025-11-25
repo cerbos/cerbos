@@ -92,7 +92,7 @@ jobs:
           use-installer: true
 
       - name: Install just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3
+        uses: ./.github/actions/setup-just
 
       - name: Test Lambda function publishing
         run: |
