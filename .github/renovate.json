@@ -6,6 +6,7 @@
     "internalChecksFilter": "strict",
     "extends": [
         "group:allNonMajor",
+        "helpers:pinGitHubActionDigests",
         "schedule:weekly",
         ":automergeDisabled",
         ":combinePatchMinorReleases",
