@@ -18,7 +18,7 @@ Submitting pull requests
 - Create your patch, constraining yourself to what was agreed on the issue. If previously unforeseen problems arise and you have to make significant changes to an area that wasn’t discussed in the issue, make sure to go back to the issue to discuss the new circumstances and get buy-in from the people who are involved.
 - Run the pre-commit checks that are appropriate for the kind of change. (See below for details.)
 - Submit your pull request.
-  - We require all pull requests to follow the [conventional commit](https://www.conventionalcommits.org/en/v1.0.0/) format.
+  - Use a descriptive title for the pull request.
   - Use [closing keywords](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) to link the PR to the original issue.
   - At least one approval from a maintainer is required to merge the pull request.
 
@@ -83,7 +83,7 @@ Please be respectful to maintainers and disclose AI assistance.
 - Sign-off your commits to provide a [DCO](https://developercertificate.org). You can do this by adding the `-s` flag to your `git commit` command.
 
     ```sh
-    git commit -s -m 'fix: Fix for bug X'
+    git commit -s -m 'Fix for bug X'
     ```
 
 ### Submitting pull requests for documentation changes
@@ -102,7 +102,7 @@ Please be respectful to maintainers and disclose AI assistance.
 - Sign-off your commits to provide a [DCO](https://developercertificate.org). You can do this by adding the `-s` flag to your `git commit` command.
 
     ```sh
-    git commit -s -m 'bug: Fix for bug X'
+    git commit -s -m 'Document feature X'
     ```
 
 Developing Cerbos
