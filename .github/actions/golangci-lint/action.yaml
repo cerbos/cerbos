@@ -1,0 +1,27 @@
+name: golangci-lint
+
+description: Lint Go code
+
+inputs:
+  working-directory:
+    description: golangci-lint working directory. The default is the project root.
+    required: false
+
+runs:
+  using: composite
+
+  steps:
+    - name: Get golangci-lint version
+      id: version
+      shell: bash
+      run: |
+        version=$(go list -m -f "{{.Version}}" github.com/golangci/golangci-lint/v2)
+        printf "version=%s\n" "${version}" >> "${GITHUB_OUTPUT}"
+      working-directory: tools
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # v9
+      with:
+        args: --config="${{ github.workspace }}/.golangci.yaml" --verbose
+        version: ${{ steps.version.outputs.version }}
+        working-directory: ${{ inputs.working-directory }}
