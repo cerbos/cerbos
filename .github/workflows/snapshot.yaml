@@ -74,16 +74,8 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false # this might remove tools that are actually needed, if set to "true" but frees about 6 GB
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Checkout code
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
