@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: frodo
+  version: default
+  rules:
+    - resource: the:one:ring # no numeric chars to ensure it matches in `sanitizeResource` to test this regression: # https://github.com/cerbos/cerbos/issues/2813
+      actions:
+        - action: cast
+          effect: EFFECT_ALLOW

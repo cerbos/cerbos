@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Principal policy special resource kind chars"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["cast"],
+      "principal":
+        {
+          "id": "frodo",
+          "scope": "",
+          "roles": ["fellowship"]
+        },
+      "resource":
+        {
+          "kind": "the:one:ring",
+          "id": "XX125"
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "cast":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "principal.frodo.vdefault",
+              "scope": "",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01KAZMQSXNPTQ0F2HM0MT3CQQX",
+      "timestamp": "2023-12-01T14:53:27.559283481Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "the:one:ring",
+                    "id": "XX125",
+                  },
+                "principal":
+                  {
+                    "id": "frodo",
+                    "roles": ["fellowship"],
+                    "scope": "",
+                  },
+                "actions": ["cast"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "cast":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "principal.frodo.vdefault",
+                        "scope": "",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.frodo.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_07.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]

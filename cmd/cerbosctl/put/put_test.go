@@ -97,6 +97,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"principal.donald_duck.vdefault/acme.hr",
 					"principal.donald_duck.vdefault/acme.hr.uk",
 					"principal.donald_duck.vdefault/acme.sales",
+					"principal.frodo.vdefault",
 					"principal.scrooge_mcduck.vdefault",
 					"principal.terry_tibbs.vdefault",
 					"resource.account.vdefault",
