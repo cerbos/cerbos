@@ -1,6 +1,3 @@
 type:enhancement
 Simplify plan with all operation
-In case a collection is a known value, then `collection.all(t,
-<bodyExpr>) can be simplified as a logical AND of the body expr evaluated
-for each value of `t` in the collection. The collection can be either a
-map or a list. Both single- and two-var operations are supported.
+In case a collection is a known value, then `collection.all(t, <bodyExpr>)` can be simplified as a logical AND of the body expr evaluated for each value of `t` in the collection. The collection can be either a map or a list. Both single- and two-var operations are supported.
