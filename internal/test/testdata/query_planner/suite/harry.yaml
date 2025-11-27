@@ -133,7 +133,6 @@ tests:
                 operands:
                   - value: team2
                   - variable: request.resource.attr.teamId
-            - value: ["team1", "team2"]
   - action: just-index
     resource:
       kind: leave_request
