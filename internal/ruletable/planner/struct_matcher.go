@@ -163,13 +163,8 @@ func (s *structMatcher) Process(_ context.Context, e celast.Expr) (bool, celast.
 	if n == 0 {
 		return false, e, nil
 	}
-	var output celast.Expr
 
-	if n == 1 {
-		output = opts[0]
-	} else {
-		output = mkLogicalOr(opts)
-	}
+	output := mkLogicalOr(opts)
 	internal.ZeroIDs(output)
 	output.RenumberIDs(internal.NewIDGen().Remap)
 	return true, output, nil
@@ -248,6 +243,17 @@ func mkLogicalOr(args []celast.Expr) celast.Expr {
 	return internal.MkCallExpr(operators.LogicalOr, args[0], mkLogicalOr(args[1:]))
 }
 
+func mkLogicalAnd(args []celast.Expr) celast.Expr {
+	const logicalAndArity = 2
+	if len(args) == 1 {
+		return args[0]
+	}
+	if len(args) == logicalAndArity {
+		return internal.MkCallExpr(operators.LogicalAnd, args...)
+	}
+	return internal.MkCallExpr(operators.LogicalAnd, args[0], mkLogicalAnd(args[1:]))
+}
+
 func mkOption(op string, key, val, expr, constExpr celast.Expr) celast.Expr {
 	if op == "" {
 		panic("mkOption: operation is empty")
@@ -321,8 +327,12 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 		return false, nil, err
 	}
 
-	if lambda.operator != Exists {
+	if lambda.operator != Exists && lambda.operator != All {
 		return false, nil, err
+	}
+	optMerger := mkLogicalOr
+	if lambda.operator == All {
+		optMerger = mkLogicalAnd
 	}
 	l.iterRange, err = celast.ProtoToExpr(lambda.iterRange)
 	if err != nil {
@@ -363,7 +373,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 			}
 			opts = append(opts, ex)
 		}
-		output := mkLogicalOr(opts)
+		output := optMerger(opts)
 		internal.ZeroIDs(output)
 		output.RenumberIDs(internal.NewIDGen().Remap)
 		return true, output, nil
@@ -391,7 +401,7 @@ func (l *lambdaMatcher) Process(ctx context.Context, e celast.Expr) (bool, celas
 			}
 			opts = append(opts, ex)
 		}
-		output := mkLogicalOr(opts)
+		output := optMerger(opts)
 		internal.ZeroIDs(output)
 		output.RenumberIDs(internal.NewIDGen().Remap)
 		return true, output, nil
