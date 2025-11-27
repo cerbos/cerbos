@@ -95,18 +95,18 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: all
+          operator: and
           operands:
-            - value: ["US", "UK"]
             - expression:
-                operator: lambda
+                operator: ne
                 operands:
-                  - expression:
-                      operator: ne
-                      operands:
-                        - variable: request.resource.attr.country
-                        - variable: x
-                  - variable: x
+                  - variable: request.resource.attr.country
+                  - value: US
+            - expression:
+                operator: ne
+                operands:
+                  - variable: request.resource.attr.country
+                  - value: UK
   - action: all
     resource:
       kind: macro

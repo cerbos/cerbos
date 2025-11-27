@@ -121,18 +121,18 @@ tests:
       kind: KIND_CONDITIONAL
       condition:
         expression:
-          operator: all
+          operator: and
           operands:
-            - value: ["team1", "team2"]
             - expression:
-                operator: lambda
+                operator: startsWith
                 operands:
-                  - expression:
-                      operator: startsWith
-                      operands:
-                        - variable: t
-                        - variable: request.resource.attr.teamId
-                  - variable: t
+                  - value: team1
+                  - variable: request.resource.attr.teamId
+            - expression:
+                operator: startsWith
+                operands:
+                  - value: team2
+                  - variable: request.resource.attr.teamId
   - action: just-index
     resource:
       kind: leave_request
