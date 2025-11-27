@@ -1,0 +1,3 @@
+type:fix
+Sanitise resource kinds in principal policy rules.
+Fixes a regression where resource kinds with special characters in their name were not correctly matched during policy evaluation.

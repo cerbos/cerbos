@@ -152,7 +152,7 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 
 			row := &runtimev1.RuleTable_RuleRow{
 				OriginFqn: rpps.Meta.Fqn,
-				Resource:  resource,
+				Resource:  namer.SanitizedResource(resource),
 				// Since principal policies don't have explicit roles, we use "*" to match any role
 				Role: "*",
 				ActionSet: &runtimev1.RuleTable_RuleRow_Action{
