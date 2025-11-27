@@ -126,12 +126,12 @@ tests:
             - expression:
                 operator: startsWith
                 operands:
-                  - variable: team1
+                  - value: team1
                   - variable: request.resource.attr.teamId
             - expression:
                 operator: startsWith
                 operands:
-                  - variable: team2
+                  - value: team2
                   - variable: request.resource.attr.teamId
             - value: ["team1", "team2"]
   - action: just-index

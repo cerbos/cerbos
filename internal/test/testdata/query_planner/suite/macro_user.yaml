@@ -101,12 +101,12 @@ tests:
                 operator: ne
                 operands:
                   - variable: request.resource.attr.country
-                  - variable: US
+                  - value: US
             - expression:
                 operator: ne
                 operands:
                   - variable: request.resource.attr.country
-                  - variable: UK
+                  - value: UK
   - action: all
     resource:
       kind: macro
