@@ -103,6 +103,11 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 
+	evalSemantics := r.GetOptions().GetEvaluationsSemantic()
+	if evalSemantics == svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_UNSPECIFIED {
+		evalSemantics = svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_EXECUTE_ALL
+	}
+
 	// Validate total resources
 	if err := aas.checkTotalLimit(len(r.Evaluations)); err != nil {
 		log.Error("Request too large", zap.Error(err))
@@ -251,6 +256,12 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
 				Decision: &decision,
 				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
+			}
+			if decision && evalSemantics == svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT ||
+				!decision && evalSemantics == svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY {
+				return &svcv1.AccessEvaluationBatchResponse{
+					Evaluations: responses,
+				}, nil
 			}
 		}
 	}
