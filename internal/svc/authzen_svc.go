@@ -257,15 +257,16 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 				Decision: &decision,
 				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
 			}
-			if decision && evalSemantics == svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT ||
-				!decision && evalSemantics == svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY {
-				return &svcv1.AccessEvaluationBatchResponse{
-					Evaluations: responses,
-				}, nil
+		}
+	}
+	if evalSemantics != svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_EXECUTE_ALL {
+		for i, r := range responses {
+			if *r.Decision == (evalSemantics == svcv1.EvaluationSemantics_EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT) {
+				responses = responses[:i+1]
+				break
 			}
 		}
 	}
-
 	return &svcv1.AccessEvaluationBatchResponse{
 		Evaluations: responses,
 	}, nil

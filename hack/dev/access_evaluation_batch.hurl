@@ -35,6 +35,16 @@ jsonpath "$.evaluations" count == 2
 jsonpath "$.evaluations[0].decision" == true
 jsonpath "$.evaluations[1].decision" == false
 
+# Valid AccessEvaluationBatch request 1 with evaluation semantic being permit on first permit
+POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluations
+Content-Type: application/json
+file,requests/access_evaluation_batch/req01_permit_on_first_permit.json;
+HTTP 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.evaluations" count == 1
+jsonpath "$.evaluations[0].decision" == true
+
 # Valid AccessEvaluationBatch request 2
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluations
 Content-Type: application/json
