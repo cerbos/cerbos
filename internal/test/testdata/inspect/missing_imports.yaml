@@ -64,3 +64,15 @@ policySetsExpectation:
             line: 12
             path: $.resourcePolicy.rules[0]
         file: resource.leave_request.vdefault.yaml
+
+ruleTablesExpectation:
+  indexBuildErrors:
+    loadFailures:
+      - error: "rule #1 does not specify any roles or derived roles to match"
+        errorDetails:
+          message: "rule #1 does not specify any roles or derived roles to match"
+          position:
+            column: 12
+            line: 12
+            path: $.resourcePolicy.rules[0]
+        file: resource.leave_request.vdefault.yaml

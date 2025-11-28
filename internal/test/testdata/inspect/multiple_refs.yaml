@@ -270,8 +270,61 @@ policySetsExpectation:
           name: commonVar
           used: true
           value: request.resource.attr.commonVar
-
         - kind: KIND_UNKNOWN
           name: var
           used: true
+          value: request.resource.attr.var
+
+ruleTablesExpectation:
+  ruleTables:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+      actions:
+        - all
+        - any
+        - none
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: var
+      constants:
+        - kind: KIND_UNKNOWN
+          name: commonConst
+          value: 42
+        - kind: KIND_UNKNOWN
+          name: const
+          value: 9000
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonVar
+          value: request.resource.attr.commonVar
+        - kind: KIND_UNKNOWN
+          name: var
+          value: request.resource.attr.var
+
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault
+      actions:
+        - all
+        - any
+        - none
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: var
+      constants:
+        - kind: KIND_UNKNOWN
+          name: commonConst
+          value: 42
+        - kind: KIND_UNKNOWN
+          name: const
+          value: 9000
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonVar
+          value: request.resource.attr.commonVar
+        - kind: KIND_UNKNOWN
+          name: var
           value: request.resource.attr.var

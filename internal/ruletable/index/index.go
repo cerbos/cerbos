@@ -294,6 +294,54 @@ func (m *Impl) updateIndex(ctx context.Context, bw batchWriter, getFn func(conte
 	return bw.setBatch(ctx, batch)
 }
 
+func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
+	versions, err := m.version.getAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	scopes, err := m.scope.getAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	roles, err := m.roleGlob.getAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resources, err := m.resourceGlob.getAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	actions, err := m.actionGlob.getAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resSet := newRowSet()
+	var res []*Row
+	appendRows := func(rowSets map[string]*rowSet) {
+		for _, rowSet := range rowSets {
+			for _, row := range rowSet.rows() {
+				if !resSet.has(row.sum) {
+					resSet.set(row)
+					res = append(res, row)
+				}
+			}
+		}
+	}
+
+	appendRows(versions)
+	appendRows(scopes)
+	appendRows(roles)
+	appendRows(resources)
+	appendRows(actions)
+
+	return res, nil
+}
+
 func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, roles, actions []string) ([]*Row, error) {
 	// we need the determinism of a slice, so track results in that and use the resSet to prevent dupes
 	resSet := newRowSet()

@@ -37,3 +37,14 @@ policySetsExpectation:
           column: 9
           line: 11
           path: $.resourcePolicy.rules[0].condition.match.expr
+
+ruleTablesExpectation:
+  compileErrors:
+    compileErrors:
+      - description: Undefined variable 'missingVar'
+        error: undefined variable
+        file: resource.leave_request.vdefault.yaml
+        position:
+          column: 9
+          line: 11
+          path: $.resourcePolicy.rules[0].condition.match.expr
