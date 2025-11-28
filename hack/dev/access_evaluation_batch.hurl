@@ -24,6 +24,17 @@ jsonpath "$.evaluations[4].decision" == true
 jsonpath "$.evaluations[5].decision" == false
 jsonpath "$.evaluations[6].decision" == false
 
+# Valid AccessEvaluationBatch request 1 with evaluation semantic being deny on first deny
+POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluations
+Content-Type: application/json
+file,requests/access_evaluation_batch/req01_deny_on_first_deny.json;
+HTTP 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.evaluations" count == 2
+jsonpath "$.evaluations[0].decision" == true
+jsonpath "$.evaluations[1].decision" == false
+
 # Valid AccessEvaluationBatch request 2
 POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluations
 Content-Type: application/json
