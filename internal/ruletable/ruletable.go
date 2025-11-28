@@ -1893,12 +1893,11 @@ func ListRuleTableRowConstants(row *index.Row) []*responsev1.InspectPoliciesResp
 
 	if len(constants) > 1 {
 		slices.SortFunc(constants, func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
-			kind := cmp.Compare(a.GetKind(), b.GetKind())
-			if kind == 0 {
-				return cmp.Compare(a.GetName(), b.GetName())
+			if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+				return kind
 			}
 
-			return kind
+			return cmp.Compare(a.GetName(), b.GetName())
 		})
 	}
 
@@ -1935,12 +1934,11 @@ func ListRuleTableRowVariables(row *index.Row) []*responsev1.InspectPoliciesResp
 
 	if len(variables) > 1 {
 		slices.SortFunc(variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
-			kind := cmp.Compare(a.GetKind(), b.GetKind())
-			if kind == 0 {
-				return cmp.Compare(a.GetName(), b.GetName())
+			if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+				return kind
 			}
 
-			return kind
+			return cmp.Compare(a.GetName(), b.GetName())
 		})
 	}
 

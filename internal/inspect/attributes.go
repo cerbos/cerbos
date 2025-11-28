@@ -21,12 +21,11 @@ func attributeList(in map[string]*responsev1.InspectPoliciesResponse_Attribute) 
 
 	if len(out) > 1 {
 		slices.SortFunc(out, func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
-			kind := cmp.Compare(a.GetKind(), b.GetKind())
-			if kind == 0 {
-				return cmp.Compare(a.GetName(), b.GetName())
+			if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+				return kind
 			}
 
-			return kind
+			return cmp.Compare(a.GetName(), b.GetName())
 		})
 	}
 

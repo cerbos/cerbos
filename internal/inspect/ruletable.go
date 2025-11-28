@@ -167,45 +167,41 @@ func (rt *RuleTable) Results() map[string]*responsev1.InspectPoliciesResponse_Re
 
 		if len(result.GetAttributes()) > 1 {
 			slices.SortFunc(result.GetAttributes(), func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
-				kind := cmp.Compare(a.GetKind(), b.GetKind())
-				if kind == 0 {
-					return cmp.Compare(a.GetName(), b.GetName())
+				if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+					return kind
 				}
 
-				return kind
+				return cmp.Compare(a.GetName(), b.GetName())
 			})
 		}
 
 		if len(result.GetConstants()) > 1 {
 			slices.SortFunc(result.GetConstants(), func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
-				kind := cmp.Compare(a.GetKind(), b.GetKind())
-				if kind == 0 {
-					return cmp.Compare(a.GetName(), b.GetName())
+				if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+					return kind
 				}
 
-				return kind
+				return cmp.Compare(a.GetName(), b.GetName())
 			})
 		}
 
 		if len(result.GetDerivedRoles()) > 1 {
 			slices.SortFunc(result.GetDerivedRoles(), func(a, b *responsev1.InspectPoliciesResponse_DerivedRole) int {
-				kind := cmp.Compare(a.GetKind(), b.GetKind())
-				if kind == 0 {
-					return cmp.Compare(a.GetName(), b.GetName())
+				if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+					return kind
 				}
 
-				return kind
+				return cmp.Compare(a.GetName(), b.GetName())
 			})
 		}
 
 		if len(result.GetVariables()) > 1 {
 			slices.SortFunc(result.GetVariables(), func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
-				kind := cmp.Compare(a.GetKind(), b.GetKind())
-				if kind == 0 {
-					return cmp.Compare(a.GetName(), b.GetName())
+				if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+					return kind
 				}
 
-				return kind
+				return cmp.Compare(a.GetName(), b.GetName())
 			})
 		}
 	}
