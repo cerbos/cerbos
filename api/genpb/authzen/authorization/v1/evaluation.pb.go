@@ -28,55 +28,55 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type EvaluationSemantics int32
+type EvaluationSemantic int32
 
 const (
-	EvaluationSemantics_EVALUATION_SEMANTICS_UNSPECIFIED            EvaluationSemantics = 0
-	EvaluationSemantics_EVALUATION_SEMANTICS_EXECUTE_ALL            EvaluationSemantics = 1 // default
-	EvaluationSemantics_EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY     EvaluationSemantics = 2
-	EvaluationSemantics_EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT EvaluationSemantics = 3
+	EvaluationSemantic_EVALUATION_SEMANTIC_UNSPECIFIED            EvaluationSemantic = 0
+	EvaluationSemantic_EVALUATION_SEMANTIC_EXECUTE_ALL            EvaluationSemantic = 1 // default
+	EvaluationSemantic_EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY     EvaluationSemantic = 2
+	EvaluationSemantic_EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT EvaluationSemantic = 3
 )
 
-// Enum value maps for EvaluationSemantics.
+// Enum value maps for EvaluationSemantic.
 var (
-	EvaluationSemantics_name = map[int32]string{
-		0: "EVALUATION_SEMANTICS_UNSPECIFIED",
-		1: "EVALUATION_SEMANTICS_EXECUTE_ALL",
-		2: "EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY",
-		3: "EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT",
+	EvaluationSemantic_name = map[int32]string{
+		0: "EVALUATION_SEMANTIC_UNSPECIFIED",
+		1: "EVALUATION_SEMANTIC_EXECUTE_ALL",
+		2: "EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY",
+		3: "EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT",
 	}
-	EvaluationSemantics_value = map[string]int32{
-		"EVALUATION_SEMANTICS_UNSPECIFIED":            0,
-		"EVALUATION_SEMANTICS_EXECUTE_ALL":            1,
-		"EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY":     2,
-		"EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT": 3,
+	EvaluationSemantic_value = map[string]int32{
+		"EVALUATION_SEMANTIC_UNSPECIFIED":            0,
+		"EVALUATION_SEMANTIC_EXECUTE_ALL":            1,
+		"EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY":     2,
+		"EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT": 3,
 	}
 )
 
-func (x EvaluationSemantics) Enum() *EvaluationSemantics {
-	p := new(EvaluationSemantics)
+func (x EvaluationSemantic) Enum() *EvaluationSemantic {
+	p := new(EvaluationSemantic)
 	*p = x
 	return p
 }
 
-func (x EvaluationSemantics) String() string {
+func (x EvaluationSemantic) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (EvaluationSemantics) Descriptor() protoreflect.EnumDescriptor {
+func (EvaluationSemantic) Descriptor() protoreflect.EnumDescriptor {
 	return file_authzen_authorization_v1_evaluation_proto_enumTypes[0].Descriptor()
 }
 
-func (EvaluationSemantics) Type() protoreflect.EnumType {
+func (EvaluationSemantic) Type() protoreflect.EnumType {
 	return &file_authzen_authorization_v1_evaluation_proto_enumTypes[0]
 }
 
-func (x EvaluationSemantics) Number() protoreflect.EnumNumber {
+func (x EvaluationSemantic) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use EvaluationSemantics.Descriptor instead.
-func (EvaluationSemantics) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use EvaluationSemantic.Descriptor instead.
+func (EvaluationSemantic) EnumDescriptor() ([]byte, []int) {
 	return file_authzen_authorization_v1_evaluation_proto_rawDescGZIP(), []int{0}
 }
 
@@ -607,7 +607,7 @@ func (x *MetadataResponse) GetAccessEvaluationsEndpoint() string {
 type AccessEvaluationsOptions struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Controls how the PDP should execute the evaluations array.
-	EvaluationsSemantic EvaluationSemantics `protobuf:"varint,1,opt,name=evaluations_semantic,json=evaluationsSemantic,proto3,enum=authzen.authorization.v1.EvaluationSemantics" json:"evaluations_semantic,omitempty"`
+	EvaluationsSemantic EvaluationSemantic `protobuf:"varint,1,opt,name=evaluations_semantic,json=evaluationsSemantic,proto3,enum=authzen.authorization.v1.EvaluationSemantic" json:"evaluations_semantic,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -642,11 +642,11 @@ func (*AccessEvaluationsOptions) Descriptor() ([]byte, []int) {
 	return file_authzen_authorization_v1_evaluation_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *AccessEvaluationsOptions) GetEvaluationsSemantic() EvaluationSemantics {
+func (x *AccessEvaluationsOptions) GetEvaluationsSemantic() EvaluationSemantic {
 	if x != nil {
 		return x.EvaluationsSemantic
 	}
-	return EvaluationSemantics_EVALUATION_SEMANTICS_UNSPECIFIED
+	return EvaluationSemantic_EVALUATION_SEMANTIC_UNSPECIFIED
 }
 
 type AccessEvaluationBatchRequest_Evaluation struct {
@@ -803,15 +803,15 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\x15policy_decision_point\x18\x01 \x01(\tR\x15policy_decision_point\x12>\n" +
 	"\x1aaccess_evaluation_endpoint\x18\x02 \x01(\tR\x1aaccess_evaluation_endpoint\x12@\n" +
 	"\x1baccess_evaluations_endpoint\x18\x03 \x01(\tR\x1baccess_evaluations_endpoint:-\x92A*\n" +
-	"(2&AuthZEN Policy Decision Point Metadata\"\x9c\x02\n" +
-	"\x18AccessEvaluationsOptions\x12\xc0\x01\n" +
-	"\x14evaluations_semantic\x18\x01 \x01(\x0e2-.authzen.authorization.v1.EvaluationSemanticsB^\x92A[2CEvaluation semantic to apply. Defaults to \"execute_all\" when unset.J\x14\"deny_on_first_deny\"R\x13evaluationsSemantic:=\x92A:\n" +
-	"826Optional execution controls for AuthZEN batch requests*\xbf\x01\n" +
-	"\x13EvaluationSemantics\x12$\n" +
-	" EVALUATION_SEMANTICS_UNSPECIFIED\x10\x00\x12$\n" +
-	" EVALUATION_SEMANTICS_EXECUTE_ALL\x10\x01\x12+\n" +
-	"'EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY\x10\x02\x12/\n" +
-	"+EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT\x10\x03B\x9c\x01\n" +
+	"(2&AuthZEN Policy Decision Point Metadata\"\x9b\x02\n" +
+	"\x18AccessEvaluationsOptions\x12\xbf\x01\n" +
+	"\x14evaluations_semantic\x18\x01 \x01(\x0e2,.authzen.authorization.v1.EvaluationSemanticB^\x92A[2CEvaluation semantic to apply. Defaults to \"execute_all\" when unset.J\x14\"deny_on_first_deny\"R\x13evaluationsSemantic:=\x92A:\n" +
+	"826Optional execution controls for AuthZEN batch requests*\xba\x01\n" +
+	"\x12EvaluationSemantic\x12#\n" +
+	"\x1fEVALUATION_SEMANTIC_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fEVALUATION_SEMANTIC_EXECUTE_ALL\x10\x01\x12*\n" +
+	"&EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY\x10\x02\x12.\n" +
+	"*EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT\x10\x03B\x9c\x01\n" +
 	"'dev.cerbos.authzen.api.v1.authorizationZKgithub.com/cerbos/cerbos/api/genpb/authzen/authorization/v1;authorizationv1\xaa\x02#Cerbos.AuthZen.Api.V1.Authorizationb\x06proto3"
 
 var (
@@ -829,7 +829,7 @@ func file_authzen_authorization_v1_evaluation_proto_rawDescGZIP() []byte {
 var file_authzen_authorization_v1_evaluation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
 var file_authzen_authorization_v1_evaluation_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_authzen_authorization_v1_evaluation_proto_goTypes = []any{
-	(EvaluationSemantics)(0),              // 0: authzen.authorization.v1.EvaluationSemantics
+	(EvaluationSemantic)(0),               // 0: authzen.authorization.v1.EvaluationSemantic
 	(*Subject)(nil),                       // 1: authzen.authorization.v1.Subject
 	(*Resource)(nil),                      // 2: authzen.authorization.v1.Resource
 	(*Action)(nil),                        // 3: authzen.authorization.v1.Action
@@ -866,7 +866,7 @@ var file_authzen_authorization_v1_evaluation_proto_depIdxs = []int32{
 	17, // 12: authzen.authorization.v1.AccessEvaluationBatchRequest.evaluations:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation
 	10, // 13: authzen.authorization.v1.AccessEvaluationBatchRequest.options:type_name -> authzen.authorization.v1.AccessEvaluationsOptions
 	5,  // 14: authzen.authorization.v1.AccessEvaluationBatchResponse.evaluations:type_name -> authzen.authorization.v1.AccessEvaluationResponse
-	0,  // 15: authzen.authorization.v1.AccessEvaluationsOptions.evaluations_semantic:type_name -> authzen.authorization.v1.EvaluationSemantics
+	0,  // 15: authzen.authorization.v1.AccessEvaluationsOptions.evaluations_semantic:type_name -> authzen.authorization.v1.EvaluationSemantic
 	19, // 16: authzen.authorization.v1.Subject.PropertiesEntry.value:type_name -> google.protobuf.Value
 	19, // 17: authzen.authorization.v1.Resource.PropertiesEntry.value:type_name -> google.protobuf.Value
 	19, // 18: authzen.authorization.v1.Action.PropertiesEntry.value:type_name -> google.protobuf.Value

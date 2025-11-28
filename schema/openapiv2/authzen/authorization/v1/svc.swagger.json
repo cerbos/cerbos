@@ -281,7 +281,7 @@
       "type": "object",
       "properties": {
         "evaluationsSemantic": {
-          "$ref": "#/definitions/v1EvaluationSemantics",
+          "$ref": "#/definitions/v1EvaluationSemantic",
           "example": "deny_on_first_deny",
           "description": "Evaluation semantic to apply. Defaults to \"execute_all\" when unset."
         }
@@ -311,16 +311,16 @@
         "name"
       ]
     },
-    "v1EvaluationSemantics": {
+    "v1EvaluationSemantic": {
       "type": "string",
       "enum": [
-        "EVALUATION_SEMANTICS_UNSPECIFIED",
-        "EVALUATION_SEMANTICS_EXECUTE_ALL",
-        "EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY",
-        "EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT"
+        "EVALUATION_SEMANTIC_UNSPECIFIED",
+        "EVALUATION_SEMANTIC_EXECUTE_ALL",
+        "EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY",
+        "EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT"
       ],
-      "default": "EVALUATION_SEMANTICS_UNSPECIFIED",
-      "title": "- EVALUATION_SEMANTICS_EXECUTE_ALL: default"
+      "default": "EVALUATION_SEMANTIC_UNSPECIFIED",
+      "title": "- EVALUATION_SEMANTIC_EXECUTE_ALL: default"
     },
     "v1MetadataResponse": {
       "type": "object",

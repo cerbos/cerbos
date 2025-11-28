@@ -3184,7 +3184,7 @@ func (m *AccessEvaluationsOptions) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.EvaluationsSemantic |= EvaluationSemantics(b&0x7F) << shift
+				m.EvaluationsSemantic |= EvaluationSemantic(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

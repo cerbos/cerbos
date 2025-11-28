@@ -260,11 +260,11 @@ message MetadataResponse {
   string access_evaluations_endpoint = 3 [json_name = "access_evaluations_endpoint"];
 }
 
-enum EvaluationSemantics {
-  EVALUATION_SEMANTICS_UNSPECIFIED = 0;
-  EVALUATION_SEMANTICS_EXECUTE_ALL = 1; // default
-  EVALUATION_SEMANTICS_DENY_ON_FIRST_DENY = 2;
-  EVALUATION_SEMANTICS_PERMIT_ON_FIRST_PERMIT = 3;
+enum EvaluationSemantic {
+  EVALUATION_SEMANTIC_UNSPECIFIED = 0;
+  EVALUATION_SEMANTIC_EXECUTE_ALL = 1; // default
+  EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY = 2;
+  EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT = 3;
 }
 
 // AccessEvaluationsOptions captures optional execution controls for batch requests.
@@ -273,7 +273,7 @@ message AccessEvaluationsOptions {
     json_schema: {description: "Optional execution controls for AuthZEN batch requests"}
   };
   // Controls how the PDP should execute the evaluations array.
-  EvaluationSemantics evaluations_semantic = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+  EvaluationSemantic evaluations_semantic = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Evaluation semantic to apply. Defaults to \"execute_all\" when unset."
     example: "\"deny_on_first_deny\""
   }];

@@ -27,6 +27,15 @@
         }
       }
     },
+    "authzen.authorization.v1.AccessEvaluationsOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluationsSemantic": {
+          "$ref": "#/definitions/authzen.authorization.v1.EvaluationSemantic"
+        }
+      }
+    },
     "authzen.authorization.v1.Action": {
       "type": "object",
       "required": [
@@ -49,6 +58,15 @@
           }
         }
       }
+    },
+    "authzen.authorization.v1.EvaluationSemantic": {
+      "type": "string",
+      "enum": [
+        "EVALUATION_SEMANTIC_UNSPECIFIED",
+        "EVALUATION_SEMANTIC_EXECUTE_ALL",
+        "EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY",
+        "EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT"
+      ]
     },
     "authzen.authorization.v1.Resource": {
       "type": "object",
@@ -133,6 +151,9 @@
         "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation"
       },
       "minItems": 1
+    },
+    "options": {
+      "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationsOptions"
     },
     "resource": {
       "$ref": "#/definitions/authzen.authorization.v1.Resource"
