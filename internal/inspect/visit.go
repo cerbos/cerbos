@@ -15,26 +15,26 @@ import (
 
 func visitRuleTableRow(row *index.Row, visitor ast.Visitor) error {
 	if err := visitCompiledCondition(row.GetCondition(), visitor); err != nil {
-		return fmt.Errorf("failed in the condition of the rule table row: %w", err)
+		return fmt.Errorf("failed to visit condition: %w", err)
 	}
 
 	if err := visitCompiledCondition(row.GetDerivedRoleCondition(), visitor); err != nil {
-		return fmt.Errorf("failed in the derived role condition of the rule table row: %w", err)
+		return fmt.Errorf("failed to visit derived role condition condition: %w", err)
 	}
 
 	if err := visitCompiledOutput(row.GetEmitOutput(), visitor); err != nil {
-		return fmt.Errorf("failed in the output of the rule table row: %w", err)
+		return fmt.Errorf("failed to visit output: %w", err)
 	}
 
 	for _, variable := range row.GetParams().GetOrderedVariables() {
 		if err := visitCompiledExpr(variable.Expr, visitor); err != nil {
-			return fmt.Errorf("failed in the ordered variables of the params of the rule table row: %w", err)
+			return fmt.Errorf("failed to visit ordered variables: %w", err)
 		}
 	}
 
 	for _, variable := range row.GetDerivedRoleParams().GetOrderedVariables() {
 		if err := visitCompiledExpr(variable.Expr, visitor); err != nil {
-			return fmt.Errorf("failed in the ordered variables of the derived role params of the rule table row: %w", err)
+			return fmt.Errorf("failed to visit ordered variables of the derived role params: %w", err)
 		}
 	}
 
