@@ -52,6 +52,8 @@ func NewAuthzenAuthorizationService(eng *engine.Engine, auxData *auxdata.AuxData
 func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r *svcv1.AccessEvaluationRequest) (*svcv1.AccessEvaluationResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 
+	includeMeta := metaRequested(r.Context)
+
 	// Extract auxData
 	auxData, err := aas.extractAuxData(ctx, r.GetContext())
 	if err != nil {
@@ -78,25 +80,25 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
-	// Assemble response
 	return tracing.RecordSpan2(ctx, "assemble_response", func(_ context.Context, _ trace.Span) (*svcv1.AccessEvaluationResponse, error) {
 		output := outputs[0]
 		actionName := r.Action.GetName()
 		decision := output.Actions[actionName].Effect == effectv1.Effect_EFFECT_ALLOW
-
-		// Build CheckResourcesResponse structure for context
-		checkResp := buildCheckResourcesResponse(lookupOrEmptyString(r.GetContext(), "requestId"), []*enginev1.CheckInput{input}, outputs, true)
-
-		// Convert to value for context
-		respAsValue, err := messageToValue(checkResp.ProtoReflect())
-		if err != nil {
-			return nil, err
-		}
-
-		return &svcv1.AccessEvaluationResponse{
+		response := &svcv1.AccessEvaluationResponse{
 			Decision: &decision,
-			Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
-		}, nil
+		}
+		if includeMeta {
+			// Build CheckResourcesResponse structure for context
+			checkResp := buildCheckResourcesResponse(lookupOrEmptyString(r.GetContext(), "requestId"), []*enginev1.CheckInput{input}, outputs, true)
+
+			// Convert to value for context
+			respAsValue, err := messageToValue(checkResp.ProtoReflect())
+			if err != nil {
+				return nil, err
+			}
+			response.Context = map[string]*structpb.Value{cerbosProp("response"): respAsValue}
+		}
+		return response, nil
 	})
 }
 
@@ -108,6 +110,8 @@ const (
 
 func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
 	log := logging.ReqScopeLog(ctx)
+
+	includeMeta := metaRequested(r.Context)
 
 	evalSemantics := r.GetOptions().GetEvaluationsSemantic()
 	if evalSemantics == "" {
@@ -245,15 +249,18 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			return nil, status.Errorf(codes.Internal, "Policy check failed")
 		}
 
-		// Build CheckResourcesResponse for this group
-		checkResp := buildCheckResourcesResponse(lookupOrEmptyString(reqs[0].context, "requestId"), inputs, outputs, true)
+		var retCtx map[string]*structpb.Value
+		if includeMeta {
+			// Build CheckResourcesResponse for this group
+			checkResp := buildCheckResourcesResponse(lookupOrEmptyString(reqs[0].context, "requestId"), inputs, outputs, true)
 
-		// Convert to value for context
-		respAsValue, err := messageToValue(checkResp.ProtoReflect())
-		if err != nil {
-			return nil, err
+			// Convert to value for context
+			respAsValue, err := messageToValue(checkResp.ProtoReflect())
+			if err != nil {
+				return nil, err
+			}
+			retCtx = map[string]*structpb.Value{cerbosProp("response"): respAsValue}
 		}
-
 		// Map results back to original positions
 		for _, mapping := range mappings {
 			output := outputs[mapping.inputIdx]
@@ -261,7 +268,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
 				Decision: &decision,
-				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
+				Context:  retCtx,
 			}
 		}
 	}
@@ -619,7 +626,9 @@ func structValueToProtoValue(value *structpb.Value, fd protoreflect.FieldDescrip
 		return protoreflect.Value{}, fmt.Errorf("unsupported field kind: %s", fd.Kind())
 	}
 }
-
+func metaRequested(m map[string]*structpb.Value) bool {
+	return m[cerbosProp("includeMeta")].GetBoolValue()
+}
 func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m map[string]*structpb.Value) (*enginev1.AuxData, error) {
 	var auxData *structpb.Value
 	var ok bool
