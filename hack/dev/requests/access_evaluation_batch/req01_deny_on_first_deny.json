@@ -137,6 +137,6 @@
     }
   ],
   "options": {
-    "evaluations_semantic": "EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY"
+    "evaluations_semantic": "deny_on_first_deny"
   }
 }

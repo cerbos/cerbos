@@ -100,12 +100,18 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 	})
 }
 
+const (
+	evalSemanticExecuteAll          = "execute_all"
+	evalSemanticDenyOnFirstDeny     = "deny_on_first_deny"
+	evalSemanticPermitOnFirstPermit = "permit_on_first_permit"
+)
+
 func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 
 	evalSemantics := r.GetOptions().GetEvaluationsSemantic()
-	if evalSemantics == svcv1.EvaluationSemantic_EVALUATION_SEMANTIC_UNSPECIFIED {
-		evalSemantics = svcv1.EvaluationSemantic_EVALUATION_SEMANTIC_EXECUTE_ALL
+	if evalSemantics == "" {
+		evalSemantics = evalSemanticExecuteAll
 	}
 
 	// Validate total resources
@@ -259,9 +265,9 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			}
 		}
 	}
-	if evalSemantics != svcv1.EvaluationSemantic_EVALUATION_SEMANTIC_EXECUTE_ALL {
+	if evalSemantics != evalSemanticExecuteAll {
 		for i, r := range responses {
-			if *r.Decision == (evalSemantics == svcv1.EvaluationSemantic_EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT) {
+			if *r.Decision == (evalSemantics == evalSemanticPermitOnFirstPermit) {
 				responses = responses[:i+1]
 				break
 			}
