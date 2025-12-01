@@ -206,6 +206,9 @@
             "type": "object",
             "$ref": "#/definitions/AccessEvaluationBatchRequestEvaluation"
           }
+        },
+        "options": {
+          "$ref": "#/definitions/v1AccessEvaluationsOptions"
         }
       },
       "description": "AuthZEN access evaluations request",
@@ -273,6 +276,17 @@
       },
       "description": "AuthZEN access evaluation response",
       "title": "AuthZEN evaluation response message"
+    },
+    "v1AccessEvaluationsOptions": {
+      "type": "object",
+      "properties": {
+        "evaluationsSemantic": {
+          "type": "string",
+          "example": "deny_on_first_deny",
+          "description": "Evaluation semantic to apply. Defaults to \"execute_all\" when unset."
+        }
+      },
+      "description": "Optional execution controls for AuthZEN batch requests"
     },
     "v1Action": {
       "type": "object",

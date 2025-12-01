@@ -52,6 +52,8 @@ func NewAuthzenAuthorizationService(eng *engine.Engine, auxData *auxdata.AuxData
 func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r *svcv1.AccessEvaluationRequest) (*svcv1.AccessEvaluationResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 
+	includeMeta := metaRequested(r.Context)
+
 	// Extract auxData
 	auxData, err := aas.extractAuxData(ctx, r.GetContext())
 	if err != nil {
@@ -78,30 +80,43 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
-	// Assemble response
 	return tracing.RecordSpan2(ctx, "assemble_response", func(_ context.Context, _ trace.Span) (*svcv1.AccessEvaluationResponse, error) {
 		output := outputs[0]
 		actionName := r.Action.GetName()
 		decision := output.Actions[actionName].Effect == effectv1.Effect_EFFECT_ALLOW
-
-		// Build CheckResourcesResponse structure for context
-		checkResp := buildCheckResourcesResponse(lookupOrEmptyString(r.GetContext(), "requestId"), []*enginev1.CheckInput{input}, outputs, true)
-
-		// Convert to value for context
-		respAsValue, err := messageToValue(checkResp.ProtoReflect())
-		if err != nil {
-			return nil, err
-		}
-
-		return &svcv1.AccessEvaluationResponse{
+		response := &svcv1.AccessEvaluationResponse{
 			Decision: &decision,
-			Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
-		}, nil
+		}
+		if includeMeta {
+			// Build CheckResourcesResponse structure for context
+			checkResp := buildCheckResourcesResponse(lookupOrEmptyString(r.GetContext(), "requestId"), []*enginev1.CheckInput{input}, outputs, true)
+
+			// Convert to value for context
+			respAsValue, err := messageToValue(checkResp.ProtoReflect())
+			if err != nil {
+				return nil, err
+			}
+			response.Context = map[string]*structpb.Value{cerbosProp("response"): respAsValue}
+		}
+		return response, nil
 	})
 }
 
+const (
+	evalSemanticExecuteAll          = "execute_all"
+	evalSemanticDenyOnFirstDeny     = "deny_on_first_deny"
+	evalSemanticPermitOnFirstPermit = "permit_on_first_permit"
+)
+
 func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Context, r *svcv1.AccessEvaluationBatchRequest) (*svcv1.AccessEvaluationBatchResponse, error) {
 	log := logging.ReqScopeLog(ctx)
+
+	includeMeta := metaRequested(r.Context)
+
+	evalSemantics := r.GetOptions().GetEvaluationsSemantic()
+	if evalSemantics == "" {
+		evalSemantics = evalSemanticExecuteAll
+	}
 
 	// Validate total resources
 	if err := aas.checkTotalLimit(len(r.Evaluations)); err != nil {
@@ -234,15 +249,18 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			return nil, status.Errorf(codes.Internal, "Policy check failed")
 		}
 
-		// Build CheckResourcesResponse for this group
-		checkResp := buildCheckResourcesResponse(lookupOrEmptyString(reqs[0].context, "requestId"), inputs, outputs, true)
+		var retCtx map[string]*structpb.Value
+		if includeMeta {
+			// Build CheckResourcesResponse for this group
+			checkResp := buildCheckResourcesResponse(lookupOrEmptyString(reqs[0].context, "requestId"), inputs, outputs, true)
 
-		// Convert to value for context
-		respAsValue, err := messageToValue(checkResp.ProtoReflect())
-		if err != nil {
-			return nil, err
+			// Convert to value for context
+			respAsValue, err := messageToValue(checkResp.ProtoReflect())
+			if err != nil {
+				return nil, err
+			}
+			retCtx = map[string]*structpb.Value{cerbosProp("response"): respAsValue}
 		}
-
 		// Map results back to original positions
 		for _, mapping := range mappings {
 			output := outputs[mapping.inputIdx]
@@ -250,11 +268,18 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 
 			responses[mapping.responseIdx] = &svcv1.AccessEvaluationResponse{
 				Decision: &decision,
-				Context:  map[string]*structpb.Value{cerbosProp("response"): respAsValue},
+				Context:  retCtx,
 			}
 		}
 	}
-
+	if evalSemantics != evalSemanticExecuteAll {
+		for i, r := range responses {
+			if *r.Decision == (evalSemantics == evalSemanticPermitOnFirstPermit) {
+				responses = responses[:i+1]
+				break
+			}
+		}
+	}
 	return &svcv1.AccessEvaluationBatchResponse{
 		Evaluations: responses,
 	}, nil
@@ -411,18 +436,31 @@ func messageToValue(msg protoreflect.Message) (*structpb.Value, error) {
 	}), nil
 }
 
+func mkStructPBValue(repeated bool, v protoreflect.Value, f func(v protoreflect.Value) *structpb.Value) *structpb.Value {
+	if repeated {
+		list := v.List()
+		values := make([]*structpb.Value, list.Len())
+		for i := 0; i < list.Len(); i++ {
+			values[i] = f(list.Get(i))
+		}
+		return structpb.NewListValue(&structpb.ListValue{Values: values})
+	}
+	return f(v)
+}
+
 func valueToStructValue(fd protoreflect.FieldDescriptor, v protoreflect.Value) (*structpb.Value, error) {
+	type pv = protoreflect.Value
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
-		return structpb.NewBoolValue(v.Bool()), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewBoolValue(v.Bool()) }), nil
 	case protoreflect.Int32Kind, protoreflect.Int64Kind, protoreflect.Sint32Kind, protoreflect.Sint64Kind, protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
-		return structpb.NewNumberValue(float64(v.Int())), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewNumberValue(float64(v.Int())) }), nil
 	case protoreflect.Uint32Kind, protoreflect.Uint64Kind, protoreflect.Fixed32Kind, protoreflect.Fixed64Kind:
-		return structpb.NewNumberValue(float64(v.Uint())), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewNumberValue(float64(v.Uint())) }), nil
 	case protoreflect.FloatKind, protoreflect.DoubleKind:
-		return structpb.NewNumberValue(v.Float()), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewNumberValue(v.Float()) }), nil
 	case protoreflect.StringKind:
-		return structpb.NewStringValue(v.String()), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewStringValue(v.String()) }), nil
 	case protoreflect.BytesKind:
 		return structpb.NewStringValue(base64.StdEncoding.EncodeToString(v.Bytes())), nil
 	case protoreflect.MessageKind:
@@ -587,6 +625,10 @@ func structValueToProtoValue(value *structpb.Value, fd protoreflect.FieldDescrip
 	default:
 		return protoreflect.Value{}, fmt.Errorf("unsupported field kind: %s", fd.Kind())
 	}
+}
+
+func metaRequested(m map[string]*structpb.Value) bool {
+	return m[cerbosProp("includeMeta")].GetBoolValue()
 }
 
 func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m map[string]*structpb.Value) (*enginev1.AuxData, error) {

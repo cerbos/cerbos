@@ -136,5 +136,8 @@
         "properties": {}
       }
     }
-  ]
+  ],
+  "options": {
+    "evaluations_semantic": "deny_on_first_deny"
+  }
 }

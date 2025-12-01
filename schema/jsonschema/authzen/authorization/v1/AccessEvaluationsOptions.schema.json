@@ -1,0 +1,17 @@
+{
+  "$id": "https://api.cerbos.dev/authzen/authorization/v1/AccessEvaluationsOptions.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "evaluationsSemantic": {
+      "type": "string",
+      "enum": [
+        "",
+        "execute_all",
+        "deny_on_first_deny",
+        "permit_on_first_permit"
+      ]
+    }
+  }
+}
