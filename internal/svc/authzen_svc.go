@@ -626,9 +626,11 @@ func structValueToProtoValue(value *structpb.Value, fd protoreflect.FieldDescrip
 		return protoreflect.Value{}, fmt.Errorf("unsupported field kind: %s", fd.Kind())
 	}
 }
+
 func metaRequested(m map[string]*structpb.Value) bool {
 	return m[cerbosProp("includeMeta")].GetBoolValue()
 }
+
 func (aas *AuthzenAuthorizationService) extractAuxData(ctx context.Context, m map[string]*structpb.Value) (*enginev1.AuxData, error) {
 	var auxData *structpb.Value
 	var ok bool
