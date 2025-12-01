@@ -422,6 +422,7 @@ func messageToValue(msg protoreflect.Message) (*structpb.Value, error) {
 		Fields: fields,
 	}), nil
 }
+
 func mkStructPBValue(repeated bool, v protoreflect.Value, f func(v protoreflect.Value) *structpb.Value) *structpb.Value {
 	if repeated {
 		list := v.List()
@@ -433,6 +434,7 @@ func mkStructPBValue(repeated bool, v protoreflect.Value, f func(v protoreflect.
 	}
 	return f(v)
 }
+
 func valueToStructValue(fd protoreflect.FieldDescriptor, v protoreflect.Value) (*structpb.Value, error) {
 	type pv = protoreflect.Value
 	switch fd.Kind() {
