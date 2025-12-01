@@ -145,7 +145,8 @@ func authzen_authorization_v1_AccessEvaluationResponse_hashpb_sum(m *AccessEvalu
 
 func authzen_authorization_v1_AccessEvaluationsOptions_hashpb_sum(m *AccessEvaluationsOptions, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["authzen.authorization.v1.AccessEvaluationsOptions.evaluations_semantic"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetEvaluationsSemantic())))
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetEvaluationsSemantic()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetEvaluationsSemantic()), len(m.GetEvaluationsSemantic())))
 	}
 }
 

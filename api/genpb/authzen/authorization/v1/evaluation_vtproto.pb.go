@@ -724,10 +724,12 @@ func (m *AccessEvaluationsOptions) MarshalToSizedBufferVT(dAtA []byte) (int, err
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.EvaluationsSemantic != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.EvaluationsSemantic))
+	if len(m.EvaluationsSemantic) > 0 {
+		i -= len(m.EvaluationsSemantic)
+		copy(dAtA[i:], m.EvaluationsSemantic)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.EvaluationsSemantic)))
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1016,8 +1018,9 @@ func (m *AccessEvaluationsOptions) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.EvaluationsSemantic != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.EvaluationsSemantic))
+	l = len(m.EvaluationsSemantic)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3171,10 +3174,10 @@ func (m *AccessEvaluationsOptions) UnmarshalVT(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EvaluationsSemantic", wireType)
 			}
-			m.EvaluationsSemantic = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -3184,11 +3187,24 @@ func (m *AccessEvaluationsOptions) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.EvaluationsSemantic |= EvaluationSemantic(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EvaluationsSemantic = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
