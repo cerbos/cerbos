@@ -130,3 +130,30 @@ policySetsExpectation:
           name: c
           value: R.attr.x
           used: true
+
+ruleTablesExpectation:
+  ruleTables:
+    resource.variables_referencing_variables.vdefault:
+      policyId: resource.variables_referencing_variables.vdefault
+      actions:
+        - test
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: x
+      constants:
+        - kind: KIND_UNKNOWN
+          name: xMax
+          value: 9000
+        - kind: KIND_UNKNOWN
+          name: xMin
+          value: 1
+      variables:
+        - kind: KIND_UNKNOWN
+          name: a
+          value: V.b
+        - kind: KIND_UNKNOWN
+          name: b
+          value: V.c > C.xMin && V.c < C.xMax
+        - kind: KIND_UNKNOWN
+          name: c
+          value: R.attr.x

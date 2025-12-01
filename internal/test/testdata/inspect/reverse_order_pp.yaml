@@ -132,3 +132,20 @@ policySetsExpectation:
           name: markedResource
           used: true
           value: R.attr.markedResource
+
+ruleTablesExpectation:
+  ruleTables:
+    principal.john.vdefault:
+      policyId: principal.john.vdefault
+      actions:
+        - "*"
+      attributes:
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          value: R.attr.markedResource
+        - kind: KIND_UNKNOWN
+          name: markedResource
+          value: R.attr.markedResource

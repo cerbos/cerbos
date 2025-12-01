@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"sort"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -65,7 +64,7 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	//nolint:nestif
 	if drp := p.GetDerivedRoles(); drp != nil {
 		derivedRoles = policy.ListExportedDerivedRoles(drp)
-		if len(derivedRoles) > 0 {
+		if len(derivedRoles) > 1 {
 			slices.SortFunc(derivedRoles, func(a, b *responsev1.InspectPoliciesResponse_DerivedRole) int {
 				return cmp.Compare(a.GetName(), b.GetName())
 			})
@@ -105,7 +104,7 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	}
 
 	// sort constants if there is nothing to resolve since we are not going to modify constants in the future.
-	if len(pol.constantsToResolve[policyID]) == 0 {
+	if len(constants) > 1 && len(pol.constantsToResolve[policyID]) == 0 {
 		slices.SortFunc(constants, func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
 			return cmp.Compare(a.GetName(), b.GetName())
 		})
@@ -135,14 +134,17 @@ func (pol *Policy) Inspect(p *policyv1.Policy) error {
 	}
 
 	// sort variables if there is nothing to resolve since we are not going to modify variables in the future.
-	if len(pol.variablesToResolve[policyID]) == 0 {
+	if len(variables) > 1 && len(pol.variablesToResolve[policyID]) == 0 {
 		slices.SortFunc(variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
 			return cmp.Compare(a.GetName(), b.GetName())
 		})
 	}
 
 	actions := policy.ListActions(p)
-	sort.Strings(actions)
+	if len(actions) > 1 {
+		slices.Sort(actions)
+	}
+
 	pol.results[policyID] = &responsev1.InspectPoliciesResponse_Result{
 		Actions:      actions,
 		Attributes:   attributes,
@@ -220,9 +222,11 @@ func (pol *Policy) resolveDerivedRoles(ctx context.Context, loadPolicy loadPolic
 			}
 		}
 
-		slices.SortFunc(pol.results[policyID].DerivedRoles, func(a, b *responsev1.InspectPoliciesResponse_DerivedRole) int {
-			return cmp.Compare(a.GetName(), b.GetName())
-		})
+		if len(pol.results[policyID].DerivedRoles) > 1 {
+			slices.SortFunc(pol.results[policyID].DerivedRoles, func(a, b *responsev1.InspectPoliciesResponse_DerivedRole) int {
+				return cmp.Compare(a.GetName(), b.GetName())
+			})
+		}
 	}
 }
 
@@ -287,9 +291,11 @@ func (pol *Policy) resolveConstants(ctx context.Context, loadPolicy loadPolicyFn
 			}
 		}
 
-		slices.SortFunc(pol.results[policyID].Constants, func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
-			return cmp.Compare(a.GetName(), b.GetName())
-		})
+		if len(pol.results[policyID].Constants) > 1 {
+			slices.SortFunc(pol.results[policyID].Constants, func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
+				return cmp.Compare(a.GetName(), b.GetName())
+			})
+		}
 	}
 }
 
@@ -384,13 +390,17 @@ func (pol *Policy) resolveVariables(ctx context.Context, loadPolicy loadPolicyFn
 			}
 		}
 
-		slices.SortFunc(pol.results[policyID].Attributes, func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
-			return cmp.Compare(a.GetName(), b.GetName())
-		})
+		if len(pol.results[policyID].Attributes) > 1 {
+			slices.SortFunc(pol.results[policyID].Attributes, func(a, b *responsev1.InspectPoliciesResponse_Attribute) int {
+				return cmp.Compare(a.GetName(), b.GetName())
+			})
+		}
 
-		slices.SortFunc(pol.results[policyID].Variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
-			return cmp.Compare(a.GetName(), b.GetName())
-		})
+		if len(pol.results[policyID].Variables) > 1 {
+			slices.SortFunc(pol.results[policyID].Variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
+				return cmp.Compare(a.GetName(), b.GetName())
+			})
+		}
 	}
 
 	return nil

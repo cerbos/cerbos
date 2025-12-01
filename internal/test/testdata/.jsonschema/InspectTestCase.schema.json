@@ -713,6 +713,18 @@
         }
       }
     },
+    "cerbos.private.v1.InspectTestCase.CompileErrors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "compileErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.CompileErrors.Err"
+          }
+        }
+      }
+    },
     "cerbos.private.v1.InspectTestCase.PoliciesExpectation": {
       "type": "object",
       "additionalProperties": false,
@@ -736,7 +748,7 @@
       "additionalProperties": false,
       "properties": {
         "compileErrors": {
-          "$ref": "#/definitions/cerbos.private.v1.InspectTestCase.PolicySetsExpectation.CompileErrors"
+          "$ref": "#/definitions/cerbos.private.v1.InspectTestCase.CompileErrors"
         },
         "indexBuildErrors": {
           "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors"
@@ -749,14 +761,20 @@
         }
       }
     },
-    "cerbos.private.v1.InspectTestCase.PolicySetsExpectation.CompileErrors": {
+    "cerbos.private.v1.InspectTestCase.RuleTablesExpectation": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "compileErrors": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.runtime.v1.CompileErrors.Err"
+          "$ref": "#/definitions/cerbos.private.v1.InspectTestCase.CompileErrors"
+        },
+        "indexBuildErrors": {
+          "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors"
+        },
+        "ruleTables": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.response.v1.InspectPoliciesResponse.Result"
           }
         }
       }
@@ -1147,6 +1165,9 @@
     },
     "policySetsExpectation": {
       "$ref": "#/definitions/cerbos.private.v1.InspectTestCase.PolicySetsExpectation"
+    },
+    "ruleTablesExpectation": {
+      "$ref": "#/definitions/cerbos.private.v1.InspectTestCase.RuleTablesExpectation"
     }
   }
 }

@@ -172,3 +172,34 @@ policySetsExpectation:
           name: markedResource
           used: true
           value: R.attr.markedResource
+
+ruleTablesExpectation:
+  ruleTables:
+    resource.leave_request.vdefault:
+      policyId: resource.leave_request.vdefault
+      actions:
+        - "*"
+        - create
+        - duplicate
+        - view
+      attributes:
+        - kind: KIND_PRINCIPAL_ATTRIBUTE
+          name: someAttr
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: approvedUser
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: commonMarkedResource
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: isDerivedRoleVar
+        - kind: KIND_RESOURCE_ATTRIBUTE
+          name: markedResource
+      derivedRoles:
+        - kind: KIND_IMPORTED
+          name: approved_user
+      variables:
+        - kind: KIND_UNKNOWN
+          name: commonMarkedResource
+          value: R.attr.commonMarkedResource
+        - kind: KIND_UNKNOWN
+          name: markedResource
+          value: R.attr.markedResource

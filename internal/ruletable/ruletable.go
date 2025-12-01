@@ -4,6 +4,7 @@
 package ruletable
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -14,7 +15,11 @@ import (
 	"strings"
 	"time"
 
+	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	"github.com/cerbos/cerbos/internal/util"
 	celast "github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/types"
+	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -37,8 +42,6 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
 )
 
 const (
@@ -550,6 +553,10 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	}
 
 	return nil
+}
+
+func (rt *RuleTable) GetAllRows(ctx context.Context) ([]*index.Row, error) {
+	return rt.idx.GetAllRows(ctx)
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
@@ -1824,4 +1831,116 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 
 func (rt *RuleTable) Evaluator() evaluator.Evaluator {
 	return (*ruletableEvaluator)(rt)
+}
+
+// ListRuleTableRowActions returns unique list of actions in a rule table row.
+func ListRuleTableRowActions(row *index.Row) []string {
+	var actions []string
+	if row == nil {
+		return actions
+	}
+
+	ss := make(util.StringSet)
+
+	switch a := row.GetActionSet().(type) {
+	case *runtimev1.RuleTable_RuleRow_Action:
+		if !ss.Contains(a.Action) {
+			actions = append(actions, a.Action)
+		}
+
+	case *runtimev1.RuleTable_RuleRow_AllowActions_:
+		for action := range a.AllowActions.Actions {
+			if !ss.Contains(action) {
+				actions = append(actions, action)
+			}
+		}
+	}
+
+	if len(actions) > 1 {
+		slices.Sort(actions)
+	}
+
+	return actions
+}
+
+// ListRuleTableRowConstants returns local and exported constants defined in a rule table row.
+func ListRuleTableRowConstants(row *index.Row) []*responsev1.InspectPoliciesResponse_Constant {
+	if row == nil {
+		return nil
+	}
+
+	constants := make([]*responsev1.InspectPoliciesResponse_Constant, len(row.GetParams().GetConstants())+len(row.GetDerivedRoleParams().GetConstants()))
+	i := 0
+	for name, value := range row.GetParams().GetConstants() {
+		constants[i] = &responsev1.InspectPoliciesResponse_Constant{
+			Name:  name,
+			Value: value,
+			Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+		}
+
+		i++
+	}
+
+	for name, value := range row.GetDerivedRoleParams().GetConstants() {
+		constants[i] = &responsev1.InspectPoliciesResponse_Constant{
+			Name:  name,
+			Value: value,
+			Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+		}
+
+		i++
+	}
+
+	if len(constants) > 1 {
+		slices.SortFunc(constants, func(a, b *responsev1.InspectPoliciesResponse_Constant) int {
+			if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+				return kind
+			}
+
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
+	}
+
+	return constants
+}
+
+// GetRuleTableRowDerivedRoles returns the derived role defined in a rule table row if it exists.
+func GetRuleTableRowDerivedRoles(row *index.Row) *responsev1.InspectPoliciesResponse_DerivedRole {
+	if row == nil || row.GetOriginDerivedRole() == "" {
+		return nil
+	}
+
+	return &responsev1.InspectPoliciesResponse_DerivedRole{
+		Name: row.GetOriginDerivedRole(),
+		Kind: responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
+	}
+}
+
+// ListRuleTableRowVariables returns local and exported variables defined in a rule table row.
+func ListRuleTableRowVariables(row *index.Row) []*responsev1.InspectPoliciesResponse_Variable {
+	if row == nil {
+		return nil
+	}
+
+	variables := make([]*responsev1.InspectPoliciesResponse_Variable, len(row.GetParams().GetOrderedVariables()))
+	for i := 0; i < len(row.GetParams().GetOrderedVariables()); i++ {
+		variable := row.GetParams().GetOrderedVariables()[i]
+		variables[i] = &responsev1.InspectPoliciesResponse_Variable{
+			Name:  variable.Name,
+			Value: variable.Expr.Original,
+			Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
+		}
+	}
+
+	if len(variables) > 1 {
+		slices.SortFunc(variables, func(a, b *responsev1.InspectPoliciesResponse_Variable) int {
+			if kind := cmp.Compare(a.GetKind(), b.GetKind()); kind != 0 {
+				return kind
+			}
+
+			return cmp.Compare(a.GetName(), b.GetName())
+		})
+	}
+
+	return variables
 }

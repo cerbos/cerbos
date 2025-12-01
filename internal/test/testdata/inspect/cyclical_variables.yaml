@@ -48,3 +48,14 @@ policySetsExpectation:
           line: 17
           column: 10
           path: $.resourcePolicy.variables.local.a
+
+ruleTablesExpectation:
+  compileErrors:
+    compileErrors:
+      - file: resource.cyclical_variables.vdefault.yaml
+        error: cyclical variable definitions
+        description: Variables 'a' (resource.cyclical_variables.vdefault.yaml:17:10) and 'b' (resource.cyclical_variables.vdefault.yaml:18:10) form a cycle
+        position:
+          line: 17
+          column: 10
+          path: $.resourcePolicy.variables.local.a

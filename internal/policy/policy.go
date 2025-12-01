@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -614,7 +613,7 @@ func ListPolicySetActions(ps *runtimev1.RunnablePolicySet) []string {
 	}
 
 	if len(actions) > 0 {
-		sort.Strings(actions)
+		slices.Sort(actions)
 	}
 
 	return actions

@@ -32,3 +32,14 @@ policySetsExpectation:
           column: 7
           line: 10
           path: $.resourcePolicy.rules[0].derivedRoles[0]
+
+ruleTablesExpectation:
+  compileErrors:
+    compileErrors:
+      - description: Derived role "undefined_derived_role" is not defined in any imports
+        error: unknown derived role
+        file: resource.leave_request.vdefault.yaml
+        position:
+          column: 7
+          line: 10
+          path: $.resourcePolicy.rules[0].derivedRoles[0]
