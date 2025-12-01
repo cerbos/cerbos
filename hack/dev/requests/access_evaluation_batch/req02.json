@@ -14,7 +14,8 @@
     }
   },
   "context": {
-    "cerbos.requestId": "test"
+    "cerbos.requestId": "test",
+    "cerbos.includeMeta": true
   },
   "evaluations": [
     {
