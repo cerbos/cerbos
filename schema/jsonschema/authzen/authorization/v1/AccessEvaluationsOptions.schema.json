@@ -1,22 +1,17 @@
 {
   "$id": "https://api.cerbos.dev/authzen/authorization/v1/AccessEvaluationsOptions.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "authzen.authorization.v1.EvaluationSemantic": {
-      "type": "string",
-      "enum": [
-        "EVALUATION_SEMANTIC_UNSPECIFIED",
-        "EVALUATION_SEMANTIC_EXECUTE_ALL",
-        "EVALUATION_SEMANTIC_DENY_ON_FIRST_DENY",
-        "EVALUATION_SEMANTIC_PERMIT_ON_FIRST_PERMIT"
-      ]
-    }
-  },
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "evaluationsSemantic": {
-      "$ref": "#/definitions/authzen.authorization.v1.EvaluationSemantic"
+      "type": "string",
+      "enum": [
+        "",
+        "execute_all",
+        "deny_on_first_deny",
+        "permit_on_first_permit"
+      ]
     }
   }
 }
