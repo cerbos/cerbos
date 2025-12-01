@@ -422,19 +422,30 @@ func messageToValue(msg protoreflect.Message) (*structpb.Value, error) {
 		Fields: fields,
 	}), nil
 }
-
+func mkStructPBValue(repeated bool, v protoreflect.Value, f func(v protoreflect.Value) *structpb.Value) *structpb.Value {
+	if repeated {
+		list := v.List()
+		values := make([]*structpb.Value, list.Len())
+		for i := 0; i < list.Len(); i++ {
+			values[i] = f(list.Get(i))
+		}
+		return structpb.NewListValue(&structpb.ListValue{Values: values})
+	}
+	return f(v)
+}
 func valueToStructValue(fd protoreflect.FieldDescriptor, v protoreflect.Value) (*structpb.Value, error) {
+	type pv = protoreflect.Value
 	switch fd.Kind() {
 	case protoreflect.BoolKind:
-		return structpb.NewBoolValue(v.Bool()), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewBoolValue(v.Bool()) }), nil
 	case protoreflect.Int32Kind, protoreflect.Int64Kind, protoreflect.Sint32Kind, protoreflect.Sint64Kind, protoreflect.Sfixed32Kind, protoreflect.Sfixed64Kind:
-		return structpb.NewNumberValue(float64(v.Int())), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewNumberValue(float64(v.Int())) }), nil
 	case protoreflect.Uint32Kind, protoreflect.Uint64Kind, protoreflect.Fixed32Kind, protoreflect.Fixed64Kind:
-		return structpb.NewNumberValue(float64(v.Uint())), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewNumberValue(float64(v.Uint())) }), nil
 	case protoreflect.FloatKind, protoreflect.DoubleKind:
-		return structpb.NewNumberValue(v.Float()), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewNumberValue(v.Float()) }), nil
 	case protoreflect.StringKind:
-		return structpb.NewStringValue(v.String()), nil
+		return mkStructPBValue(fd.IsList(), v, func(v pv) *structpb.Value { return structpb.NewStringValue(v.String()) }), nil
 	case protoreflect.BytesKind:
 		return structpb.NewStringValue(base64.StdEncoding.EncodeToString(v.Bytes())), nil
 	case protoreflect.MessageKind:
