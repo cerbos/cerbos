@@ -439,7 +439,7 @@ Returns Cerbos server version.
 
 == Request and response formats (AuthZEN Authorization API)
 
-Cerbos implements the link:https://openid.github.io/authzen/[OpenID AuthZEN Authorization API specification], providing a standardized way to make authorization decisions. The AuthZEN API uses a simplified entity model that maps to Cerbos's native authorization model.
+Cerbos partially implements the link:https://openid.github.io/authzen/[OpenID AuthZEN Authorization API specification], providing a standardized way to make authorization decisions. The AuthZEN API uses a simplified entity model that maps to Cerbos's native authorization model.
 
 [#authzen-entity-model]
 === AuthZEN Entity Model Mapping
@@ -495,18 +495,18 @@ This endpoint accepts GET requests with no body.
 [source,json,linenums]
 ----
 {
-  "policy_decision_point": "Cerbos", <1>
-  "access_evaluation_endpoint": "/access/v1/evaluation", <2>
-  "access_evaluations_endpoint": "/access/v1/evaluations" <3>
+  "policy_decision_point": "https://localhost:3592", <1>
+  "access_evaluation_endpoint": "https://localhost:3592/access/v1/evaluation", <2>
+  "access_evaluations_endpoint": "https://localhost:3592/access/v1/evaluations" <3>
 }
 ----
-<1> Name of the Policy Decision Point implementation
-<2> URL path for single access evaluation requests
-<3> URL path for batch access evaluation requests
+<1> Base URL of the Policy Decision Point
+<2> Full URL for single access evaluation request
+<3> Full URL for multiple access evaluation requests
 
 
 [#authzen-access-evaluation]
-=== `AccessEvaluation` (`/access/v1/evaluation`)
+=== `Access Evaluation` (`/access/v1/evaluation`)
 
 Evaluates whether a subject can perform a single action on a single resource according to the AuthZEN specification.
 
@@ -607,7 +607,7 @@ Evaluates whether a subject can perform a single action on a single resource acc
 
 
 [#authzen-access-evaluation-batch]
-=== `AccessEvaluationBatch` (`/access/v1/evaluations`)
+=== `Access Evaluations` (`/access/v1/evaluations`)
 
 Evaluates multiple access requests in a single call. This endpoint supports default values that can be overridden for individual evaluations, and evaluation semantics that control execution behavior.
 
@@ -866,7 +866,7 @@ cat <<EOF | curl --silent "localhost:3592/access/v1/evaluation?pretty" -d @-
 EOF
 ----
 
-**Access Evaluation (batch):**
+**Access Evaluations (batch):**
 
 [source,sh,linenums]
 ----
