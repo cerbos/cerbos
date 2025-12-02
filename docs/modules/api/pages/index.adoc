@@ -437,10 +437,414 @@ Returns Cerbos server version.
 }
 ----
 
+== Request and response formats (AuthZEN Authorization API)
+
+Cerbos partially implements the link:https://openid.github.io/authzen/[OpenID AuthZEN Authorization API specification], providing a standardized way to make authorization decisions. The AuthZEN API uses a simplified entity model that maps to Cerbos's native authorization model.
+
+[#authzen-entity-model]
+=== AuthZEN entity model mapping
+
+The AuthZEN specification uses a simplified entity model with three core entities:
+
+* **Subject**: The principal requesting access (maps to Cerbos `principal`)
+* **Resource**: The target of the access request (maps to Cerbos `resource`)
+* **Action**: The operation being performed (maps to Cerbos `actions`)
+
+==== Mapping AuthZEN to Cerbos
+
+AuthZEN entities are mapped to Cerbos CheckResources requests as follows:
+
+**Subject → Principal**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `subject.type`
+| -
+| Informational field describing the type of subject
+
+| `subject.id`
+| `principal.id`
+| Unique identifier for the principal
+
+| `subject.properties.cerbos.roles`
+| `principal.roles`
+| Array of role names assigned by the identity provider
+
+| `subject.properties.cerbos.policyVersion`
+| `principal.policyVersion`
+| Policy version to use for the principal
+
+| `subject.properties.cerbos.scope`
+| `principal.scope`
+| Policy scope for the principal
+
+| `subject.properties.*`
+| `principal.attr.*`
+| All other properties become principal attributes
+|===
+
+**Resource → Resource**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `resource.type`
+| `resource.kind`
+| Type of resource (determines which policy applies)
+
+| `resource.id`
+| `resource.id`
+| Unique identifier for the resource
+
+| `resource.properties.cerbos.policyVersion`
+| `resource.policyVersion`
+| Policy version to use for the resource
+
+| `resource.properties.cerbos.scope`
+| `resource.scope`
+| Policy scope for the resource
+
+| `resource.properties.*`
+| `resource.attr.*`
+| All other properties become resource attributes
+|===
+
+**Action → Actions**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `action.name`
+| `actions[0]`
+| Action name added as the first item in the actions array
+
+| `action.properties`
+| -
+| Reserved for future use
+|===
+
+**Context**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `context.cerbos.requestId`
+| `requestId`
+| Application-provided correlation identifier
+
+| `context.cerbos.auxData`
+| `auxData`
+| Auxiliary data such as JWT tokens
+
+| `context.cerbos.includeMeta`
+| -
+| Controls whether full Cerbos response is included in context
+|===
+
+
+[#authzen-metadata]
+=== `Metadata` (`/.well-known/authzen-configuration`)
+
+Returns metadata about the Cerbos Policy Decision Point, including endpoint URLs for accessing the AuthZEN APIs.
+
+.Request
+
+This endpoint accepts GET requests with no body.
+
+.Response
+[source,json,linenums]
+----
+{
+  "policy_decision_point": "https://localhost:3592", <1>
+  "access_evaluation_endpoint": "https://localhost:3592/access/v1/evaluation", <2>
+  "access_evaluations_endpoint": "https://localhost:3592/access/v1/evaluations" <3>
+}
+----
+<1> Base URL of the Policy Decision Point
+<2> Full URL for single access evaluation request
+<3> Full URL for multiple access evaluation requests
+
+
+[#authzen-access-evaluation]
+=== `Access Evaluation` (`/access/v1/evaluation`)
+
+Evaluates whether a subject can perform a single action on a single resource according to the AuthZEN specification.
+
+.Request
+[source,json,linenums]
+----
+{
+  "subject": { <1>
+    "type": "user", <2>
+    "id": "donald_duck", <3>
+    "properties": { <4>
+      "cerbos.policyVersion": "20210210",
+      "cerbos.roles": ["employee"],
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resource": { <5>
+    "type": "leave_request", <6>
+    "id": "XX125", <7>
+    "properties": { <8>
+      "cerbos.policyVersion": "20210210",
+      "department": "marketing",
+      "geography": "GB",
+      "owner": "john",
+      "team": "design"
+    }
+  },
+  "action": { <9>
+    "name": "view:public", <10>
+    "properties": {} <11>
+  },
+  "context": { <12>
+    "cerbos.requestId": "test",
+    "cerbos.auxData": { <13>
+      "jwt": {
+        "token": "xxx.yyy.zzz"
+      }
+    },
+    "cerbos.includeMeta": true <14>
+  }
+}
+----
+<1> Subject requesting access (maps to Cerbos `principal`)
+<2> Type of the subject (informational field)
+<3> Unique identifier for the subject
+<4> Properties about the subject. Special `cerbos.*` properties are mapped to Cerbos-specific fields, others become attributes
+<5> Resource being accessed (maps to Cerbos `resource`)
+<6> Type of the resource (maps to Cerbos `resource.kind`)
+<7> Unique identifier for the resource
+<8> Properties about the resource. Special `cerbos.*` properties are mapped to Cerbos-specific fields, others become attributes
+<9> Action being performed
+<10> Name of the action to check
+<11> Optional properties about the action (currently unused)
+<12> Environmental/contextual data
+<13> Auxiliary data such as JWT tokens. See xref:#check-resources[] for details
+<14> Include metadata about evaluation in the response (Cerbos extension)
+
+.Response
+[source,json,linenums]
+----
+{
+  "decision": true, <1>
+  "context": { <2>
+    "cerbos.response": { <3>
+      "requestId": "test",
+      "results": [
+        {
+          "resource": {
+            "id": "XX125",
+            "kind": "leave_request",
+            "policyVersion": "20210210"
+          },
+          "actions": {
+            "view:public": "EFFECT_ALLOW"
+          },
+          "meta": {
+            "actions": {
+              "view:public": {
+                "matchedPolicy": "resource.leave_request.v20210210"
+              }
+            },
+            "effectiveDerivedRoles": [
+              "employee_that_owns_the_record"
+            ]
+          }
+        }
+      ],
+      "cerbosCallId": "01HHENANTHFD5DV3HZGDKB87PJ"
+    }
+  }
+}
+----
+<1> Boolean decision: `true` for allow, `false` for deny
+<2> Additional context about the evaluation
+<3> Full Cerbos CheckResources response (included when `cerbos.includeMeta` is `true`). See xref:#check-resources[] for response structure details
+
+
+[#authzen-access-evaluation-batch]
+=== `Access Evaluations` (`/access/v1/evaluations`)
+
+Evaluates multiple access requests in a single call. This endpoint supports default values that can be overridden for individual evaluations, and evaluation semantics that control execution behavior.
+
+.Request
+[source,json,linenums]
+----
+{
+  "subject": { <1>
+    "type": "user",
+    "id": "donald_duck",
+    "properties": {
+      "cerbos.policyVersion": "20210210",
+      "cerbos.roles": ["employee"],
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resource": { <2>
+    "type": "leave_request",
+    "id": "XX125",
+    "properties": {
+      "cerbos.policyVersion": "20210210",
+      "department": "marketing",
+      "geography": "GB",
+      "owner": "john",
+      "team": "design"
+    }
+  },
+  "context": { <3>
+    "cerbos.requestId": "test",
+    "cerbos.includeMeta": true
+  },
+  "evaluations": [ <4>
+    {
+      "action": { <5>
+        "name": "view:public",
+        "properties": {}
+      }
+    },
+    {
+      "action": {
+        "name": "approve",
+        "properties": {}
+      }
+    },
+    {
+      "resource": { <6>
+        "type": "leave_request",
+        "id": "XX150",
+        "properties": {
+          "cerbos.policyVersion": "20210210",
+          "department": "marketing",
+          "geography": "GB",
+          "owner": "mary",
+          "team": "design"
+        }
+      },
+      "action": {
+        "name": "create",
+        "properties": {}
+      }
+    }
+  ],
+  "options": { <7>
+    "evaluations_semantic": "execute_all" <8>
+  }
+}
+----
+<1> Default subject for all evaluations (can be overridden in individual evaluations)
+<2> Default resource for all evaluations (can be overridden in individual evaluations)
+<3> Default context for all evaluations (can be overridden in individual evaluations)
+<4> Array of evaluations to perform. Each can override the default subject, resource, action, or context
+<5> Evaluation using default subject and resource, specifying only the action
+<6> Evaluation overriding the default resource while using the default subject
+<7> Optional execution controls
+<8> Evaluation semantic: `execute_all` (default), `deny_on_first_deny`, or `permit_on_first_permit`
+
+**Evaluation Semantics:**
+
+`execute_all` (default):: Process all evaluations regardless of individual results
+`deny_on_first_deny`:: Stop processing after the first denial
+`permit_on_first_permit`:: Stop processing after the first permit
+
+.Response
+[source,json,linenums]
+----
+{
+  "evaluations": [ <1>
+    {
+      "decision": true, <2>
+      "context": {
+        "cerbos.response": { <3>
+          "requestId": "test",
+          "results": [
+            {
+              "resource": {
+                "id": "XX125",
+                "kind": "leave_request",
+                "policyVersion": "20210210"
+              },
+              "actions": {
+                "view:public": "EFFECT_ALLOW"
+              },
+              "meta": {
+                "actions": {
+                  "view:public": {
+                    "matchedPolicy": "resource.leave_request.v20210210"
+                  }
+                }
+              }
+            }
+          ],
+          "cerbosCallId": "01HHENANTHFD5DV3HZGDKB87PJ"
+        }
+      }
+    },
+    {
+      "decision": false,
+      "context": {
+        "cerbos.response": {
+          "requestId": "test",
+          "results": [
+            {
+              "resource": {
+                "id": "XX125",
+                "kind": "leave_request",
+                "policyVersion": "20210210"
+              },
+              "actions": {
+                "approve": "EFFECT_DENY"
+              }
+            }
+          ],
+          "cerbosCallId": "01HHENANTHFD5DV3HZGDKB87PJ"
+        }
+      }
+    },
+    {
+      "decision": false,
+      "context": {
+        "cerbos.response": {
+          "requestId": "test",
+          "results": [
+            {
+              "resource": {
+                "id": "XX150",
+                "kind": "leave_request",
+                "policyVersion": "20210210"
+              },
+              "actions": {
+                "create": "EFFECT_DENY"
+              }
+            }
+          ],
+          "cerbosCallId": "01HHENANTHFD5DV3HZGDKB87PJ"
+        }
+      }
+    }
+  ]
+}
+----
+<1> Array of evaluation responses, in the same order as the request
+<2> Boolean decision for this evaluation
+<3> Full Cerbos CheckResources response for this evaluation (included when `cerbos.includeMeta` is `true`)
+
+
 == Accessing the API
 
 === Using curl to access the REST API
 
+==== Cerbos API Examples
 
 [source,sh,linenums]
 ----
@@ -474,6 +878,107 @@ cat <<EOF | curl --silent "localhost:3592/api/check/resources?pretty" -d @-
         "approve",
         "create"
       ]
+    }
+  ]
+}
+EOF
+----
+
+==== AuthZEN API Examples
+
+**Metadata endpoint:**
+
+[source,sh,linenums]
+----
+curl --silent "localhost:3592/.well-known/authzen-configuration?pretty"
+----
+
+**Access Evaluation (single):**
+
+[source,sh,linenums]
+----
+cat <<EOF | curl --silent "localhost:3592/access/v1/evaluation?pretty" -d @-
+{
+  "subject": {
+    "type": "user",
+    "id": "alice",
+    "properties": {
+      "cerbos.roles": ["employee"],
+      "department": "accounting",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resource": {
+    "type": "leave_request",
+    "id": "XX125",
+    "properties": {
+      "department": "accounting",
+      "geography": "GB",
+      "owner": "john",
+      "team": "design"
+    }
+  },
+  "action": {
+    "name": "view:public",
+    "properties": {}
+  },
+  "context": {
+    "cerbos.requestId": "test",
+    "cerbos.includeMeta": true
+  }
+}
+EOF
+----
+
+**Access Evaluations (batch):**
+
+[source,sh,linenums]
+----
+cat <<EOF | curl --silent "localhost:3592/access/v1/evaluations?pretty" -d @-
+{
+  "subject": {
+    "type": "user",
+    "id": "alice",
+    "properties": {
+      "cerbos.roles": ["employee"],
+      "department": "accounting",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resource": {
+    "type": "leave_request",
+    "id": "XX125",
+    "properties": {
+      "department": "accounting",
+      "geography": "GB",
+      "owner": "john",
+      "team": "design"
+    }
+  },
+  "context": {
+    "cerbos.requestId": "test",
+    "cerbos.includeMeta": true
+  },
+  "evaluations": [
+    {
+      "action": {
+        "name": "view:public",
+        "properties": {}
+      }
+    },
+    {
+      "action": {
+        "name": "approve",
+        "properties": {}
+      }
+    },
+    {
+      "action": {
+        "name": "create",
+        "properties": {}
+      }
     }
   ]
 }
