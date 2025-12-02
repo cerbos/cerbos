@@ -437,6 +437,7 @@ Returns Cerbos server version.
 }
 ----
 
+[#authzen]
 == Request and response formats (AuthZEN Authorization API)
 
 Cerbos partially implements the link:https://openid.github.io/authzen/[OpenID AuthZEN Authorization API specification], providing a standardized way to make authorization decisions. The AuthZEN API uses a simplified entity model that maps to Cerbos's native authorization model.

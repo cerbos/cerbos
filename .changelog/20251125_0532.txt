@@ -1,9 +1,3 @@
 type:feature
-Partially implements AuthZEN Authorization API 1.0 https://openid.net/public-review-period-for-proposed-authorization-api-1-final-specification/[specification].
-
-The following APIs are implemented:
-
-- Access Evaluation API,
-- Access Evaluations API.
-
-Additionally, Policy Decision Point Metadata endpoint is provided.
+Implement AuthZEN Authorization API 1.0 https://openid.net/public-review-period-for-proposed-authorization-api-1-final-specification/[specification].
+The Cerbos PDP now exposes API endpoints that are compatible with the AuthZEN authorization API specification. These include the PDP metadata endpoint as well as the access evaluation endpoints. See xref:api:index.adoc#authzen[API documentation] for more details about how AuthZEN requests are mapped to Cerbos requests.

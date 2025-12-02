@@ -1,0 +1,3 @@
+type:fix
+Handle simple booleans in lambda expressions
+Fixes an issue where the query planner failed to correctly deal with expressions that make use of simple booleans as lambda expressions (e.g. `R.attr.teams.all(t, false)`).
