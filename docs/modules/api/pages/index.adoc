@@ -442,7 +442,7 @@ Returns Cerbos server version.
 Cerbos partially implements the link:https://openid.github.io/authzen/[OpenID AuthZEN Authorization API specification], providing a standardized way to make authorization decisions. The AuthZEN API uses a simplified entity model that maps to Cerbos's native authorization model.
 
 [#authzen-entity-model]
-=== AuthZEN Entity Model Mapping
+=== AuthZEN entity model mapping
 
 The AuthZEN specification uses a simplified entity model with three core entities:
 
