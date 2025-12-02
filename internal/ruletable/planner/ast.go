@@ -553,11 +553,6 @@ func buildLambdaExprOp(expr, cur *exprpb.Expr) (*exprOp, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := lambda.Node.(*exprOpExpr); !ok {
-		if _, ok = lambda.Node.(*exprOpVar); !ok {
-			return nil, fmt.Errorf("expected expression or variable, got %T", lambda.Node)
-		}
-	}
 	return lambda, nil
 }
 
