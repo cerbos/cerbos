@@ -454,32 +454,97 @@ The AuthZEN specification uses a simplified entity model with three core entitie
 
 AuthZEN entities are mapped to Cerbos CheckResources requests as follows:
 
-**Subject → Principal**::
-- `subject.type` - Informational field describing the type of subject
-- `subject.id` - Maps to `principal.id`
-- `subject.properties` - Maps to `principal.attr` with special handling for Cerbos-specific fields:
-  * `cerbos.roles` - Maps to `principal.roles` (array of role names)
-  * `cerbos.policyVersion` - Maps to `principal.policyVersion`
-  * `cerbos.scope` - Maps to `principal.scope`
-  * All other properties are mapped to `principal.attr`
+**Subject → Principal**
 
-**Resource → Resource**::
-- `resource.type` - Maps to `resource.kind`
-- `resource.id` - Maps to `resource.id`
-- `resource.properties` - Maps to `resource.attr` with special handling for Cerbos-specific fields:
-  * `cerbos.policyVersion` - Maps to `resource.policyVersion`
-  * `cerbos.scope` - Maps to `resource.scope`
-  * All other properties are mapped to `resource.attr`
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
 
-**Action → Actions**::
-- `action.name` - Maps to an entry in the `actions` array
-- `action.properties` - Currently unused but reserved for future extensions
+| `subject.type`
+| -
+| Informational field describing the type of subject
 
-**Context**::
-The `context` field contains environmental/contextual data for policy evaluation and Cerbos-specific control fields:
-  * `cerbos.requestId` - Maps to `requestId`
-  * `cerbos.auxData` - Maps to `auxData` (for JWT tokens, etc.)
-  * `cerbos.includeMeta` - Controls whether metadata is included in the response
+| `subject.id`
+| `principal.id`
+| Unique identifier for the principal
+
+| `subject.properties.cerbos.roles`
+| `principal.roles`
+| Array of role names assigned by the identity provider
+
+| `subject.properties.cerbos.policyVersion`
+| `principal.policyVersion`
+| Policy version to use for the principal
+
+| `subject.properties.cerbos.scope`
+| `principal.scope`
+| Policy scope for the principal
+
+| `subject.properties.*`
+| `principal.attr.*`
+| All other properties become principal attributes
+|===
+
+**Resource → Resource**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `resource.type`
+| `resource.kind`
+| Type of resource (determines which policy applies)
+
+| `resource.id`
+| `resource.id`
+| Unique identifier for the resource
+
+| `resource.properties.cerbos.policyVersion`
+| `resource.policyVersion`
+| Policy version to use for the resource
+
+| `resource.properties.cerbos.scope`
+| `resource.scope`
+| Policy scope for the resource
+
+| `resource.properties.*`
+| `resource.attr.*`
+| All other properties become resource attributes
+|===
+
+**Action → Actions**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `action.name`
+| `actions[0]`
+| Action name added as the first item in the actions array
+
+| `action.properties`
+| -
+| Reserved for future use
+|===
+
+**Context**
+
+[cols="2,3,3",options="header"]
+|===
+| AuthZEN Field | Cerbos Field | Notes
+
+| `context.cerbos.requestId`
+| `requestId`
+| Application-provided correlation identifier
+
+| `context.cerbos.auxData`
+| `auxData`
+| Auxiliary data such as JWT tokens
+
+| `context.cerbos.includeMeta`
+| -
+| Controls whether full Cerbos response is included in context
+|===
 
 
 [#authzen-metadata]
