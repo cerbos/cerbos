@@ -1,0 +1,50 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.48.0]
+= Cerbos v0.48.0
+== Changelog
+
+=== Breaking changes
+
+- Detect diff parameters for hubctl `upload-git` command
++
+The `hubctl upload-git` command is now able to determine the last git reference from the remote store and upload the files that changed since that revision. If the remote store doesn't contain git information, it will be overwritten with the files from the current HEAD. As part of this change, the `from` and `to` parameters have been converted to explicit flags rather than positional arguments. The link:https://github.com/cerbos/cerbos-store-action[cerbos-store-action GitHub Action] uses this updated command under the hood to sync changes from GitHub repositories to Cerbos Hub stores.
+
+
+=== Features
+
+- Implement AuthZEN Authorization API 1.0 https://openid.net/public-review-period-for-proposed-authorization-api-1-final-specification/[specification].
++
+The Cerbos PDP now exposes API endpoints that are compatible with the AuthZEN authorization API specification. These include the PDP metadata endpoint as well as the access evaluation endpoints. See xref:api:index.adoc#authzen[API documentation] for more details about how AuthZEN requests are mapped to Cerbos requests.
+
+
+=== Enhancements
+
+- Support for consuming new bundle format
++
+When using the `hub` storage driver, the PDP is now able to consume bundles generated using a new format. This format is more efficient and closer to the final in-memory data structure used by the Cerbos engine.
+
+
+- Simplify plan with all operation
++
+In case a collection is a known value, then `collection.all(t, <bodyExpr>)` can be simplified as a logical AND of the body expr evaluated for each value of `t` in the collection. The collection can be either a map or a list. Both single- and two-var operations are supported.
+
+
+=== Bug fixes
+
+- Sanitise resource kinds in principal policy rules.
++
+Fixes a regression where resource kinds with special characters in their name were not correctly matched during policy evaluation.+
+
+
+
+- Handle simple booleans in lambda expressions
++
+Fixes an issue where the query planner failed to correctly deal with expressions that make use of simple booleans as lambda expressions (e.g. `R.attr.teams.all(t, false)`).+
+
+
+
+=== Other
+
+- Implement batch indexing for rules
+

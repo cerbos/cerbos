@@ -408,21 +408,3 @@ release:
 
 changelog:
   sort: asc
-  groups:
-    - title: Features
-      regexp: 'feat(?:\(.+?\))?!?:'
-      order: 5
-    - title: Enhancements
-      regexp: 'enhancement(?:\(.+?\))?!?:'
-      order: 10
-    - title: Bug fixes
-      regexp: 'fix(?:\(.+?\))?!?:'
-      order: 15
-    - title: Documentation
-      regexp: 'docs(?:\(.+?\))?!?:'
-      order: 20
-    - title: Chores
-      regexp: 'chore(?:\(.+?\))?!?:'
-      order: 25
-    - title: Others
-      order: 100
