@@ -117,7 +117,7 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 		}
 
 		if ugc.from, err = ugc.repository.ResolveRevision(plumbing.Revision(g.GetHash())); err != nil {
-			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to resolve revision %q: %w", ugc.From, err))
+			return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to resolve revision specified in change details as %q: %w", g.GetHash(), err))
 		}
 
 		if ugc.VersionMustEq > 0 && ugc.VersionMustEq != resp.GetStoreVersion() {
