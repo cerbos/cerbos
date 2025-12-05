@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/multierr"
+
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
-	"go.uber.org/multierr"
 )
 
 const (
@@ -35,8 +36,8 @@ var (
 )
 
 type Conf struct {
-	// Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
-	Mask       MaskConf `yaml:"mask"`
+	PipeOutput PipeOutputConf `yaml:"pipeOutput"`
+	Mask       MaskConf       `yaml:"mask"`
 	local.Conf `yaml:",inline"`
 	Ingest     IngestConf `yaml:"ingest" conf:",ignore"`
 }
@@ -57,6 +58,11 @@ type MaskConf struct {
 	Metadata       []string `yaml:"metadata" conf:",example=['authorization']"`
 	CheckResources []string `yaml:"checkResources" conf:",example=\n    - inputs[*].principal.attr.foo\n    - inputs[*].auxData\n    - outputs"`
 	PlanResources  []string `yaml:"planResources" conf:",example=['input.principal.attr.nestedMap.foo']"`
+}
+
+type PipeOutputConf struct {
+	Backend string `yaml:"backend" conf:",example=file"`
+	Enabled bool   `yaml:"enabled" conf:",example=false"`
 }
 
 func (c *Conf) Key() string {
@@ -95,6 +101,10 @@ func (c *Conf) Validate() (outErr error) {
 
 	if c.Ingest.MinFlushInterval >= c.Advanced.FlushInterval {
 		outErr = multierr.Append(outErr, errors.New("ingest.minFlushInterval must be less than advanced.flushInterval"))
+	}
+
+	if c.PipeOutput.Enabled && c.PipeOutput.Backend == Backend {
+		outErr = multierr.Append(outErr, errors.New("cannot use hub as its own pipe output backend"))
 	}
 
 	return outErr

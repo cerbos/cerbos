@@ -29,6 +29,7 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/audit/file"
 	"github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
@@ -236,7 +237,9 @@ func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hu
 
 	syncer := newMockSyncer(t)
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
-	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"), hub.WithMaxBatchSize(int(maxBatchSize)))
+	pipeLog, err := file.NewLog(&file.Conf{Path: "stdout"}, decisionFilter)
+	require.NoError(t, err)
+	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"), pipeLog, hub.WithMaxBatchSize(int(maxBatchSize)))
 	require.NoError(t, err)
 
 	require.Equal(t, hub.Backend, db.Backend())
@@ -629,7 +632,9 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&auditConf)
 	syncer := newMockSyncer(t)
-	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"), hub.WithMaxBatchSize(int(batchSize)))
+	pipeLog, err := file.NewLog(&file.Conf{Path: "stdout"}, decisionFilter)
+	require.NoError(t, err)
+	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"), pipeLog, hub.WithMaxBatchSize(int(batchSize)))
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 

@@ -24,7 +24,7 @@ audit:
       flushInterval: 1s 
       gcInterval: 60s 
       maxBatchSize: 32 
-    mask: # Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
+    mask: 
       checkResources: 
         - inputs[*].principal.attr.foo
         - inputs[*].auxData
@@ -34,6 +34,9 @@ audit:
         - address
         - forwarded_for 
       planResources: ['input.principal.attr.nestedMap.foo'] 
+    pipeOutput: 
+      backend: file 
+      enabled: false 
     retentionPeriod: 168h # How long to keep records for
     storagePath: /path/to/dir # Path to store the data
   kafka:
