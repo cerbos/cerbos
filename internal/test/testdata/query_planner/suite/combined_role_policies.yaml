@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Separate role policy allowed rules are correctly negatively combined 
+principal:
+    id: user123
+    policyVersion: default
+    roles:
+        - comb_a
+        - comb_b
+tests:
+    - action: debug
+      resource:
+        kind: x
+        scope: acme
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: not
+                        operands:
+                        - expression:
+                            operator: eq
+                            operands:
+                              - variable: request.resource.attr.is_buggy
+                              - value: true
+                    - expression:
+                        operator: not
+                        operands:
+                        - expression:
+                            operator: eq
+                            operands:
+                              - variable: request.resource.attr.is_enabled
+                              - value: true

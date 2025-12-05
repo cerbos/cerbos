@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: comb_a
+  scope: acme
+  parentRoles:
+    - USER
+  rules:
+    - resource: x
+      allowActions:
+        - debug
+      condition:
+        match:
+          expr: R.attr.is_buggy == true
