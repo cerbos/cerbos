@@ -24,7 +24,7 @@ audit:
       flushInterval: 1s 
       gcInterval: 60s 
       maxBatchSize: 32 
-    mask: 
+    mask: # Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
       checkResources: 
         - inputs[*].principal.attr.foo
         - inputs[*].auxData

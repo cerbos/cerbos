@@ -37,7 +37,8 @@ var (
 
 type Conf struct {
 	PipeOutput PipeOutputConf `yaml:"pipeOutput"`
-	Mask       MaskConf       `yaml:"mask"`
+	// Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
+	Mask       MaskConf `yaml:"mask"`
 	local.Conf `yaml:",inline"`
 	Ingest     IngestConf `yaml:"ingest" conf:",ignore"`
 }
