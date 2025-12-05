@@ -1,0 +1,3 @@
+type:fix
+Correctly intersect role policy DENYs for multi-role principals
+Previously, DENYs from role policies were aggregated using a union (OR) strategy, causing a single role's DENY to block access globally even if other roles did not deny it (via `(not (or (not (FOO) (not (BAR)))))`). This change implements intersection (AND) logic for role policies, ensuring a request is only denied if *all* of the principal's active roles explicitly deny the action via their respective role policies (`(not (and (not (FOO) (not (BAR)))))`).
