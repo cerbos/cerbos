@@ -1,0 +1,3 @@
+type:feature
+Enable piping Hub audit logs to secondary backend
+When using the `hub` audit log backend, it's now possible to configure a secondary backend that also receives the stream of audit log entries. This is useful for teams that want to leverage the power of Cerbos Hub to analyze audit logs while also aggregating all logs into a central silo for monitoring and compliance requirements.
