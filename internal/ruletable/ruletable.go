@@ -1577,7 +1577,24 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 
 		// evaluate resource policies before principal policies
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
-			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+			var policyTypeAllowNode *planner.QpN
+			var policyTypeDenyNode *planner.QpN           // standard denials (OR)
+			var policyTypeDenyRolePolicyNode *planner.QpN // role policy denials (AND)
+
+			// If true at the end of the loop, we use policyTypeDenyRolePolicyNode.
+			// If false, it means at least one role did NOT have a role policy DENY, so the intersection is void.
+			allRolesDenyFromRolePolicy := true
+
+			addNode := func(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN) *planner.QpN {
+				if next == nil {
+					return curr
+				}
+				if curr == nil {
+					return next
+				}
+				return combine([]*planner.QpN{curr, next})
+			}
+
 			for i, role := range input.Principal.Roles {
 				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
 				// break out of the loop after the first iteration as it covers all potential principal rows.
@@ -1585,13 +1602,17 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 					break
 				}
 
-				var roleAllowNode, roleDenyNode *planner.QpN
+				var roleAllowNode *planner.QpN
+				var roleDenyNode *planner.QpN
+				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
 				rolesIncludingParents := rt.AddParentRoles(input.Resource.Scope, []string{role})
 
 				for _, scope := range scopes {
-					var scopeAllowNode, scopeDenyNode *planner.QpN
+					var scopeAllowNode *planner.QpN
+					var scopeDenyNode *planner.QpN
+					var scopeDenyRolePolicyNode *planner.QpN
 
 					derivedRolesList := planner.MkDerivedRolesList(nil)
 					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
@@ -1684,31 +1705,23 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 
 						switch row.Effect { //nolint:exhaustive
 						case effectv1.Effect_EFFECT_ALLOW:
-							if scopeAllowNode == nil {
-								scopeAllowNode = node
-							} else {
-								scopeAllowNode = planner.MkOrNode([]*planner.QpN{scopeAllowNode, node})
-							}
+							scopeAllowNode = addNode(scopeAllowNode, node, planner.MkOrNode)
 						case effectv1.Effect_EFFECT_DENY:
 							// ignore constant false DENY nodes
 							if b, ok := planner.IsNodeConstBool(node); ok && !b {
 								continue
 							}
-							if scopeDenyNode == nil {
-								scopeDenyNode = node
+
+							if row.FromRolePolicy {
+								scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, planner.MkOrNode)
 							} else {
-								scopeDenyNode = planner.MkOrNode([]*planner.QpN{scopeDenyNode, node})
+								scopeDenyNode = addNode(scopeDenyNode, node, planner.MkOrNode)
 							}
 						}
 					}
 
-					if scopeDenyNode != nil {
-						if roleDenyNode == nil {
-							roleDenyNode = scopeDenyNode
-						} else {
-							roleDenyNode = planner.MkOrNode([]*planner.QpN{roleDenyNode, scopeDenyNode})
-						}
-					}
+					roleDenyNode = addNode(roleDenyNode, scopeDenyNode, planner.MkOrNode)
+					roleDenyRolePolicyNode = addNode(roleDenyRolePolicyNode, scopeDenyRolePolicyNode, planner.MkOrNode)
 
 					if scopeAllowNode != nil { //nolint:nestif
 						if roleAllowNode == nil {
@@ -1727,7 +1740,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 						}
 					}
 
-					if (scopeDenyNode != nil || scopeAllowNode != nil) &&
+					if ((scopeDenyNode != nil || scopeDenyRolePolicyNode != nil) || scopeAllowNode != nil) &&
 						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 						matchedScopes[action] = scope
 						break
@@ -1740,38 +1753,47 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 					roleAllowNode = nil
 				}
 
-				// Const DENY overrides any ALLOW in the same role
+				// Const DENY overrides any ALLOW in the same role. Check both deny types.
+				constTrue := false
 				if b, ok := planner.IsNodeConstBool(roleDenyNode); ok && b {
+					constTrue = true
+				} else if b, ok := planner.IsNodeConstBool(roleDenyRolePolicyNode); ok && b {
+					constTrue = true
+				}
+
+				if constTrue {
 					// Roles are evaluated independently, therefore an ALLOW for one role needs to override a DENY for another.
 					// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
 					// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
 					// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
 					roleAllowNode = planner.MkFalseNode()
 					roleDenyNode = nil
-				} else if roleAllowNode != nil && roleDenyNode == nil {
+					roleDenyRolePolicyNode = nil
+				} else if roleAllowNode != nil && roleDenyNode == nil && roleDenyRolePolicyNode == nil {
 					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
 						policyTypeAllowNode = roleAllowNode
 						policyTypeDenyNode = nil
+						policyTypeDenyRolePolicyNode = nil
+						allRolesDenyFromRolePolicy = false
 						// Break out of the roles loop entirely
 						break
 					}
 				}
 
-				if roleAllowNode != nil {
-					if policyTypeAllowNode == nil {
-						policyTypeAllowNode = roleAllowNode
-					} else {
-						policyTypeAllowNode = planner.MkOrNode([]*planner.QpN{policyTypeAllowNode, roleAllowNode})
-					}
-				}
+				policyTypeAllowNode = addNode(policyTypeAllowNode, roleAllowNode, planner.MkOrNode)
+				policyTypeDenyNode = addNode(policyTypeDenyNode, roleDenyNode, planner.MkOrNode)
 
-				if roleDenyNode != nil {
-					if policyTypeDenyNode == nil {
-						policyTypeDenyNode = roleDenyNode
-					} else {
-						policyTypeDenyNode = planner.MkOrNode([]*planner.QpN{policyTypeDenyNode, roleDenyNode})
-					}
+				// for role policy denials: logic must be intersection (AND).
+				// if this role produced no role policy DENY, the intersection of the whole set is void (false).
+				if roleDenyRolePolicyNode == nil {
+					allRolesDenyFromRolePolicy = false
+				} else {
+					policyTypeDenyRolePolicyNode = addNode(policyTypeDenyRolePolicyNode, roleDenyRolePolicyNode, planner.MkAndNode)
 				}
+			}
+
+			if !allRolesDenyFromRolePolicy {
+				policyTypeDenyRolePolicyNode = nil
 			}
 
 			if policyTypeAllowNode != nil {
@@ -1789,8 +1811,19 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 			// PolicyType denies need to reside at the top level of their PolicyType sub trees (e.g. a conditional
 			// DENY in a principal policy needs to be a top level `(NOT deny condition) AND nested ALLOW`), so we
 			// invert and AND them as we go.
-			if policyTypeDenyNode != nil {
-				inv := planner.InvertNodeBooleanValue(policyTypeDenyNode)
+			var policyTypeDenyCombined *planner.QpN
+			switch {
+			case policyTypeDenyNode != nil && policyTypeDenyRolePolicyNode != nil:
+				// combine standard (OR) and role policy (AND) denies via union
+				policyTypeDenyCombined = planner.MkOrNode([]*planner.QpN{policyTypeDenyNode, policyTypeDenyRolePolicyNode})
+			case policyTypeDenyNode != nil:
+				policyTypeDenyCombined = policyTypeDenyNode
+			case policyTypeDenyRolePolicyNode != nil:
+				policyTypeDenyCombined = policyTypeDenyRolePolicyNode
+			}
+
+			if policyTypeDenyCombined != nil {
+				inv := planner.InvertNodeBooleanValue(policyTypeDenyCombined)
 				if rootNode == nil {
 					rootNode = inv
 				} else {
