@@ -12,6 +12,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"go.uber.org/zap"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -30,19 +32,24 @@ var ErrUnsupportedOperation = errors.New("operation not supported by bundle")
 const cerbosSchemaPrefix = schema.URLScheme + ":///"
 
 type RuleTableBundle struct {
-	ruleTable *runtimev1.RuleTable
+	ruleTable *ruletable.RuleTable
 }
 
 func OpenRuleTableBundle(opts OpenOpts) (*RuleTableBundle, error) {
 	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening rule table bundle")
 
-	ruleTable, err := decryptRuleTableBundle(opts, logger)
+	protoRT, err := decryptRuleTableBundle(opts, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Info("Rule table bundle opened", zap.String("id", ruleTable.GetManifest().GetBundleId()))
+	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Info("Rule table bundle opened", zap.String("id", protoRT.GetManifest().GetBundleId()))
 	return &RuleTableBundle{ruleTable: ruleTable}, nil
 }
 
@@ -114,7 +121,7 @@ func (rtb *RuleTableBundle) ListPolicyIDs(_ context.Context, params storage.List
 	}
 
 	policyFQNs := make(map[string]struct{})
-	for _, meta := range rtb.ruleTable.GetMeta() {
+	for _, meta := range rtb.ruleTable.RuleTable.GetMeta() {
 		policyFQNs[meta.GetFqn()] = struct{}{}
 	}
 
@@ -173,7 +180,7 @@ func (rtb *RuleTableBundle) GetRuleTable() (*runtimev1.RuleTable, error) {
 		return nil, ErrBundleNotLoaded
 	}
 
-	return rtb.ruleTable, nil
+	return rtb.ruleTable.RuleTable, nil
 }
 
 func (rtb *RuleTableBundle) Release() error {
