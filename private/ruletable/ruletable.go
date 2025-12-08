@@ -6,30 +6,31 @@ package ruletable
 import (
 	"fmt"
 
+	epdpv2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/epdp/v2"
+	"google.golang.org/protobuf/types/known/structpb"
+
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	internalruletable "github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
-	epdpv2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/epdp/v2"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type RuleTable = internalruletable.RuleTable
 
-func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *epdpv2.Config) (*RuleTable, error) {
+func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *epdpv2.Config) (evaluator.Evaluator, error) {
+	rt, err := internalruletable.NewRuleTable(index.NewMem(), rtProto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
+	}
+
 	schemaConf, err := schemaConfFromProto(conf.GetSchema())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}
 
-	rt, err := internalruletable.NewRuleTable(index.NewMem(), rtProto, evaluatorConfFromProto(conf.GetEvaluator()), schemaConf)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create rule table: %w", err)
-	}
-
-	return rt, nil
+	return internalruletable.NewEvaluator(evaluatorConfFromProto(conf.GetEvaluator()), schemaConf, rt)
 }
 
 func evaluatorConfFromProto(confProto *epdpv2.Config_Evaluator) *evaluator.Conf {

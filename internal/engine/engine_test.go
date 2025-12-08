@@ -430,10 +430,13 @@ func mkRuleTable(tb testing.TB, p param, idx index.Index) (evaluator.Evaluator, 
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
 
-	rt, err := ruletable.NewRuleTable(idx, protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
+	rt, err := ruletable.NewRuleTable(idx, protoRT)
 	require.NoError(tb, err)
 
-	return rt.Evaluator(), cancelFunc
+	eval, err := rt.Evaluator(evalConf, schema.NewConf(p.schemaEnforcement))
+	require.NoError(tb, err)
+
+	return eval, cancelFunc
 }
 
 func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {
