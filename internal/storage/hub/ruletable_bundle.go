@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"go.uber.org/zap"
@@ -111,8 +112,17 @@ func (*RuleTableBundle) GetAllMatching(_ context.Context, _ []namer.ModuleID) ([
 	return nil, ErrUnsupportedOperation
 }
 
-func (*RuleTableBundle) InspectPolicies(_ context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	return nil, ErrUnsupportedOperation
+func (rtb *RuleTableBundle) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	if rtb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	ins := inspect.RuleTables(rtb.ruleTable)
+	if err := ins.Inspect(ctx); err != nil {
+		return nil, fmt.Errorf("failed to inspect rule table: %w", err)
+	}
+
+	return ins.Results(), nil
 }
 
 func (rtb *RuleTableBundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
