@@ -4,21 +4,21 @@ go 1.25.1
 
 require (
 	connectrpc.com/connect v1.19.1
-	github.com/bufbuild/buf v1.60.0
+	github.com/bufbuild/buf v1.61.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.4.2
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20251117191428-c1ed61225ecc
-	github.com/dkorunic/betteralign v0.8.0
+	github.com/dkorunic/betteralign v0.8.1
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golangci/golangci-lint/v2 v2.6.2
 	github.com/google/go-licenses v1.6.0
-	github.com/goreleaser/goreleaser/v2 v2.12.7
+	github.com/goreleaser/goreleaser/v2 v2.13.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/vektra/mockery/v3 v3.6.1
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools/gopls v0.20.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.0
 	google.golang.org/protobuf v1.36.10
 	gotest.tools/gotestsum v1.13.0
 )
