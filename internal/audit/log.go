@@ -79,6 +79,19 @@ func RegisterBackend(name string, cons Constructor) {
 	backendsMu.Unlock()
 }
 
+// GetBackend returns the constructor for the given driver.
+func GetBackend(name string) (Constructor, error) {
+	backendsMu.RLock()
+	defer backendsMu.RUnlock()
+
+	cons, exists := backends[name]
+	if exists {
+		return cons, nil
+	}
+
+	return nil, fmt.Errorf("no such audit backend: %s", name)
+}
+
 // NewLog creates a new audit log.
 func NewLog(ctx context.Context) (Log, error) {
 	return NewLogFromConf(ctx, config.Global())

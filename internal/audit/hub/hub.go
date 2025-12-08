@@ -40,7 +40,7 @@ var (
 )
 
 func init() {
-	audit.RegisterBackend(Backend, func(_ context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
+	audit.RegisterBackend(Backend, func(ctx context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read hub audit log configuration: %w", err)
@@ -53,7 +53,20 @@ func init() {
 			return nil, err
 		}
 
-		return NewLog(conf, decisionFilter, syncer, logger)
+		var pipeLog audit.Log
+		if conf.PipeOutput.Enabled {
+			cons, err := audit.GetBackend(conf.PipeOutput.Backend)
+			if err != nil {
+				return nil, err
+			}
+
+			pipeLog, err = cons(ctx, confW, decisionFilter)
+			if err != nil {
+				return nil, fmt.Errorf("failed to construct pipe output backend: %w", err)
+			}
+		}
+
+		return NewLog(conf, decisionFilter, syncer, logger, pipeLog)
 	})
 }
 
@@ -70,20 +83,22 @@ func WithMaxBatchSize(maxBatchSize int) Opt {
 }
 
 type Log struct {
-	syncer IngestSyncer
+	syncer          IngestSyncer
+	pipeLog         audit.Log
+	cancel          context.CancelFunc
+	filter          *AuditLogFilter
+	oversizedFilter *AuditLogFilter
+	pool            *pool.ContextPool
+	logger          *zap.Logger
 	*local.Log
-	logger                  *zap.Logger
-	filter, oversizedFilter *AuditLogFilter
-	pool                    *pool.ContextPool
-	cancel                  context.CancelFunc
-	minFlushInterval        time.Duration
-	flushTimeout            time.Duration
-	maxBatchSize            int
-	maxBatchSizeBytes       int
-	numGo                   int
+	minFlushInterval  time.Duration
+	flushTimeout      time.Duration
+	maxBatchSize      int
+	maxBatchSizeBytes int
+	numGo             int
 }
 
-func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger, opts ...Opt) (*Log, error) {
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger, pipeLog audit.Log, opts ...Opt) (*Log, error) {
 	o := &options{
 		maxBatchSize: maxAllowedBatchSize,
 	}
@@ -129,6 +144,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		numGo:             numGo,
 		cancel:            cancelFn,
 		pool:              pool.New().WithContext(ctx),
+		pipeLog:           pipeLog,
 	}
 
 	log.pool.Go(log.syncLoop)
@@ -153,10 +169,17 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 
 	rec = entry.GetAccessLogEntry()
 
+	if l.pipeLog != nil {
+		if err := l.pipeLog.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
+			return rec, nil
+		}); err != nil {
+			l.logger.Warn("Failed to write access log entry to pipe", zap.Error(err))
+		}
+	}
+
 	s := entry.SizeVT()
 	if s > l.maxBatchSizeBytes {
-		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
-		logger.Error("Entry exceeds maximum batch size, masking",
+		l.logger.Error("Entry exceeds maximum batch size, masking",
 			zap.Int("entrySize", s),
 			zap.Int("maxAllowedBatchSizeBytes", l.maxBatchSizeBytes))
 		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindAccess))
@@ -204,10 +227,17 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 
 	rec = entry.GetDecisionLogEntry()
 
+	if l.pipeLog != nil {
+		if err := l.pipeLog.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
+			return rec, nil
+		}); err != nil {
+			l.logger.Warn("Failed to write decision log entry to pipe", zap.Error(err))
+		}
+	}
+
 	s := entry.SizeVT()
 	if s > l.maxBatchSizeBytes {
-		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
-		logger.Error("Entry exceeds maximum batch size, masking",
+		l.logger.Error("Entry exceeds maximum batch size, masking",
 			zap.Int("entrySize", s),
 			zap.Int("maxAllowedBatchSizeBytes", l.maxBatchSizeBytes))
 		metrics.Inc(ctx, metrics.AuditOversizedEntryCount(), metrics.KindKey(audit.KindDecision))
