@@ -2,6 +2,21 @@
   "$id": "https://api.cerbos.dev/cerbos/audit/v1/PolicySource/Hub.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ruleId": {
+          "type": "string"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "cerbos.audit.v1.PolicySource.Hub.LocalBundle": {
       "type": "object",
       "additionalProperties": false,
@@ -17,6 +32,9 @@
   "properties": {
     "deploymentId": {
       "type": "string"
+    },
+    "embeddedBundle": {
+      "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle"
     },
     "label": {
       "type": "string"

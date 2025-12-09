@@ -1198,6 +1198,20 @@
         }
       }
     },
+    "HubEmbeddedBundle": {
+      "type": "object",
+      "properties": {
+        "ruleId": {
+          "type": "string"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "HubLocalBundle": {
       "type": "object",
       "properties": {
@@ -1442,6 +1456,9 @@
         },
         "localBundle": {
           "$ref": "#/definitions/HubLocalBundle"
+        },
+        "embeddedBundle": {
+          "$ref": "#/definitions/HubEmbeddedBundle"
         }
       }
     },
