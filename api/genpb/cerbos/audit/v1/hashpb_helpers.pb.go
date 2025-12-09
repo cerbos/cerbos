@@ -278,6 +278,21 @@ func cerbos_audit_v1_PolicySource_Git_hashpb_sum(m *PolicySource_Git, hasher has
 	}
 }
 
+func cerbos_audit_v1_PolicySource_Hub_EmbeddedBundle_hashpb_sum(m *PolicySource_Hub_EmbeddedBundle, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle.rule_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetRuleId()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetRuleId()), len(m.GetRuleId())))
+	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle.scopes"]; !ok {
+		if len(m.Scopes) > 0 {
+			for _, v := range m.Scopes {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
 func cerbos_audit_v1_PolicySource_Hub_LocalBundle_hashpb_sum(m *PolicySource_Hub_LocalBundle, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.LocalBundle.path"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetPath()))))
@@ -301,6 +316,10 @@ func cerbos_audit_v1_PolicySource_Hub_hashpb_sum(m *PolicySource_Hub, hasher has
 			case *PolicySource_Hub_LocalBundle_:
 				if t.LocalBundle != nil {
 					cerbos_audit_v1_PolicySource_Hub_LocalBundle_hashpb_sum(t.LocalBundle, hasher, ignore)
+				}
+			case *PolicySource_Hub_EmbeddedBundle_:
+				if t.EmbeddedBundle != nil {
+					cerbos_audit_v1_PolicySource_Hub_EmbeddedBundle_hashpb_sum(t.EmbeddedBundle, hasher, ignore)
 				}
 			}
 		}

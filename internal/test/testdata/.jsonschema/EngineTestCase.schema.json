@@ -231,6 +231,9 @@
         "deploymentId": {
           "type": "string"
         },
+        "embeddedBundle": {
+          "$ref": "#/definitions/cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle"
+        },
         "label": {
           "type": "string"
         },
@@ -239,6 +242,21 @@
         },
         "playgroundId": {
           "type": "string"
+        }
+      }
+    },
+    "cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ruleId": {
+          "type": "string"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
