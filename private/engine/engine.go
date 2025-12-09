@@ -7,12 +7,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cerbos/cloud-api/bundle"
+
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/hub"
-	"github.com/cerbos/cloud-api/bundle"
 )
 
 type (
@@ -34,15 +36,20 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
 
-	rt := ruletable.NewProtoRuletable()
+	protoRT := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPolicies(ctx, rt, bundleSrc); err != nil {
-		return nil, err
+	if err := ruletable.LoadPolicies(ctx, protoRT, bundleSrc); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, bundleSrc, schemaMgr)
+	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, bundleSrc, schemaMgr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
 	return engine.NewEphemeral(nil, ruletableMgr, schemaMgr), nil

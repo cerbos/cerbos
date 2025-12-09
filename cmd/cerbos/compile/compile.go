@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
+	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -134,18 +135,23 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			Trace:                   c.Verbose,
 		}
 
-		rt := ruletable.NewProtoRuletable()
-
 		compileMgr, err := compile.NewManager(ctx, store)
 		if err != nil {
 			return err
 		}
 
-		if err := ruletable.LoadPolicies(ctx, rt, compileMgr); err != nil {
-			return err
+		protoRT := ruletable.NewProtoRuletable()
+
+		if err := ruletable.LoadPolicies(ctx, protoRT, compileMgr); err != nil {
+			return fmt.Errorf("failed to load policies: %w", err)
 		}
 
-		rtMgr, err := ruletable.NewRuleTableManager(rt, compileMgr, schemaMgr)
+		ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), protoRT)
+		if err != nil {
+			return fmt.Errorf("failed to create rule table: %w", err)
+		}
+
+		rtMgr, err := ruletable.NewRuleTableManager(ruleTable, compileMgr, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}

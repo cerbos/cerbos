@@ -20,6 +20,7 @@ import (
 	internalengine "github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
+	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -53,17 +54,22 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 		return nil, err
 	}
 
-	rt := ruletable.NewProtoRuletable()
+	protoRT := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPolicies(ctx, rt, compiler); err != nil {
-		return nil, err
+	if err := ruletable.LoadPolicies(ctx, protoRT, compiler); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), protoRT)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
 	eng := internalengine.NewEphemeral(nil, ruletableMgr, schemaMgr)

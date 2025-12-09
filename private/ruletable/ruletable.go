@@ -19,8 +19,8 @@ import (
 
 type RuleTable = internalruletable.RuleTable
 
-func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *epdpv2.Config) (evaluator.Evaluator, error) {
-	rt, err := internalruletable.NewRuleTable(index.NewMem(), rtProto)
+func NewRuleTableFromProto(protoRT *runtimev1.RuleTable, conf *epdpv2.Config) (evaluator.Evaluator, error) {
+	rt, err := internalruletable.NewRuleTable(index.NewMem(), protoRT)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}

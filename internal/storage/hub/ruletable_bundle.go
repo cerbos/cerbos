@@ -12,14 +12,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cerbos/cerbos/internal/inspect"
-	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"go.uber.org/zap"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
@@ -47,7 +47,7 @@ func OpenRuleTableBundle(opts OpenOpts) (*RuleTableBundle, error) {
 
 	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}
 
 	logger.Info("Rule table bundle opened", zap.String("id", protoRT.GetManifest().GetBundleId()))
@@ -185,12 +185,12 @@ func (rtb *RuleTableBundle) LoadSchema(_ context.Context, path string) (io.ReadC
 	return nil, fmt.Errorf("schema %s not found", path)
 }
 
-func (rtb *RuleTableBundle) GetRuleTable() (*runtimev1.RuleTable, error) {
+func (rtb *RuleTableBundle) GetRuleTable() (*ruletable.RuleTable, error) {
 	if rtb == nil || rtb.ruleTable == nil {
 		return nil, ErrBundleNotLoaded
 	}
 
-	return rtb.ruleTable.RuleTable, nil
+	return rtb.ruleTable, nil
 }
 
 func (rtb *RuleTableBundle) Release() error {

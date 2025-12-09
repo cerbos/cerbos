@@ -8,15 +8,14 @@ import (
 	"errors"
 	"fmt"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	audithub "github.com/cerbos/cerbos/internal/audit/hub"
-
 	"github.com/cerbos/cerbos/internal/audit"
+	audithub "github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	storagehub "github.com/cerbos/cerbos/internal/storage/hub"
@@ -80,7 +79,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, ErrInvalidStore
 	}
 
-	var ruleTable *runtimev1.RuleTable
+	var ruleTable *ruletable.RuleTable
 	//nolint:nestif
 	if ruleTableStore != nil {
 		rt, err := ruleTableStore.GetRuleTable()
@@ -89,21 +88,28 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 				return nil, fmt.Errorf("failed to load rule table: %w", err)
 			}
 
-			ruleTable = ruletable.NewProtoRuletable()
-			if err := ruletable.LoadPolicies(ctx, ruleTable, policyLoader); err != nil {
+			protoRT := ruletable.NewProtoRuletable()
+			if err := ruletable.LoadPolicies(ctx, protoRT, policyLoader); err != nil {
 				return nil, fmt.Errorf("failed to load policies: %w", err)
+			}
+
+			if ruleTable, err = ruletable.NewRuleTable(index.NewMem(), protoRT); err != nil {
+				return nil, fmt.Errorf("failed to create rule table: %w", err)
 			}
 		} else {
 			ruleTable = rt
 		}
 	} else {
-		ruleTable = ruletable.NewProtoRuletable()
-		if err := ruletable.LoadPolicies(ctx, ruleTable, policyLoader); err != nil {
+		protoRT := ruletable.NewProtoRuletable()
+		if err := ruletable.LoadPolicies(ctx, protoRT, policyLoader); err != nil {
 			return nil, fmt.Errorf("failed to load policies: %w", err)
+		}
+
+		if ruleTable, err = ruletable.NewRuleTable(index.NewMem(), protoRT); err != nil {
+			return nil, fmt.Errorf("failed to create rule table: %w", err)
 		}
 	}
 
-	// create schema manager
 	schemaMgr, err := internalSchema.New(ctx, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema manager: %w", err)

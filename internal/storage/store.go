@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/ruletable"
 )
 
 var (
@@ -166,7 +167,7 @@ type BinaryStore interface {
 
 // RuleTableStore is implemented by stores that have pre-compiled rule tables.
 type RuleTableStore interface {
-	GetRuleTable() (*runtimev1.RuleTable, error)
+	GetRuleTable() (*ruletable.RuleTable, error)
 }
 
 // MutableStore is a store that allows mutations.

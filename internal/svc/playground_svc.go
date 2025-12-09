@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable"
+	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -455,15 +456,20 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	rt := ruletable.NewProtoRuletable()
+	protoRT := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPolicies(ctx, rt, cm); err != nil {
-		return nil, err
+	if err := ruletable.LoadPolicies(ctx, protoRT, cm); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.schemaMgr)
+	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), protoRT)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
+	}
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, cm, c.schemaMgr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
 	return engine.NewEphemeral(nil, ruletableMgr, c.schemaMgr), nil
