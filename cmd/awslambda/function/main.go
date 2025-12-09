@@ -22,7 +22,7 @@ func main() {
 		logLevel = "info"
 	}
 
-	logging.InitLogging(ctx, logLevel)
+	logging.InitLogging(ctx, logLevel, nil)
 	defer zap.L().Sync() //nolint:errcheck
 
 	handler, err := awslambda.NewFunctionHandler(ctx)

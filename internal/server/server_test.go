@@ -55,7 +55,7 @@ type testParam struct {
 type testParamGen func(*testing.T) testParam
 
 func TestServer(t *testing.T) {
-	logging.InitLogging(t.Context(), "ERROR")
+	logging.InitLogging(t.Context(), "ERROR", nil)
 
 	t.Run("store=disk", func(t *testing.T) {
 		tpg := func(t *testing.T) testParam {

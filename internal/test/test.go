@@ -33,7 +33,7 @@ import (
 
 func init() {
 	if logLevel := os.Getenv("CERBOS_TEST_LOG_LEVEL"); logLevel != "" {
-		logging.InitLogging(context.Background(), logLevel)
+		logging.InitLogging(context.Background(), logLevel, nil)
 	}
 }
 
