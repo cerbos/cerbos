@@ -414,6 +414,11 @@ func toPrincipal(subj *svcv1.Subject) *enginev1.Principal {
 }
 
 func messageToValue(msg protoreflect.Message) (*structpb.Value, error) {
+	// If the message is already a structpb.Value, return it as-is
+	if spbValue, ok := msg.Interface().(*structpb.Value); ok {
+		return spbValue, nil
+	}
+
 	fields := make(map[string]*structpb.Value)
 	var rangeErr error
 

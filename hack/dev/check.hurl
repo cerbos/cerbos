@@ -57,6 +57,18 @@ jsonpath "$.results[1].actions['delete']" == "EFFECT_DENY"
 jsonpath "$.results[1].actions['create']" == "EFFECT_ALLOW"
 jsonpath "$.cerbosCallId" exists
 
+# Valid CheckResources request 3
+POST {{protocol}}://{{host}}:{{port}}/api/check/resources
+Content-Type: application/json
+file,requests/check_resources/req03.json;
+HTTP 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.results" count == 1
+jsonpath "$.results[0].resource.id" == "XX125"
+jsonpath "$.results[0].resource.kind" == "equipment_request"
+jsonpath "$.results[0].outputs[0].val.id" == "employee1"
+
 # Invalid CheckResources request 1
 POST {{protocol}}://{{host}}:{{port}}/api/check/resources
 Content-Type: application/json

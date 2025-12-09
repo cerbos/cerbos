@@ -280,3 +280,16 @@ jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX150"
 jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "leave_request"
 jsonpath "$.context['cerbos.response'].results[0].actions['create']" == "EFFECT_DENY"
 jsonpath "$.context['cerbos.response'].results[0].validationErrors[*]" count == 2
+
+# Valid AccessEvaluation request - req03_XX125_view_public.json (plain output)
+POST {{protocol}}://{{host}}:{{port}}/access/v1/evaluation
+Content-Type: application/json
+file,requests/access_evaluation/req03_XX125_view_public.json;
+HTTP 200
+[Asserts]
+header "Content-Type" == "application/json"
+jsonpath "$.decision" == true
+jsonpath "$.context['cerbos.response'].results" count == 1
+jsonpath "$.context['cerbos.response'].results[0].resource.id" == "XX125"
+jsonpath "$.context['cerbos.response'].results[0].resource.kind" == "equipment_request"
+jsonpath "$.context['cerbos.response'].results[0].outputs[0].val.id" == "employee1"
