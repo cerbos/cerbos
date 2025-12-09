@@ -1,0 +1,29 @@
+{
+  "subject": {
+    "type": "user",
+    "id": "employee1",
+    "properties": {
+      "cerbos.roles": [
+        "employee"
+      ],
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resource": {
+    "type": "equipment_request",
+    "id": "XX125",
+    "properties": {
+      "id": "XX125"
+    }
+  },
+  "action": {
+    "name": "view:public",
+    "properties": {}
+  },
+  "context": {
+    "cerbos.requestId": "test",
+    "cerbos.includeMeta": true
+  }
+}

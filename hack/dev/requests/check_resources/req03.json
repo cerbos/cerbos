@@ -1,0 +1,28 @@
+{
+  "requestId": "test",
+  "principal": {
+    "id": "employee1",
+    "roles": [
+      "employee"
+    ],
+    "attr": {
+      "department": "marketing",
+      "geography": "GB",
+      "team": "design"
+    }
+  },
+  "resources": [
+    {
+      "actions": [
+        "view:public"
+      ],
+      "resource": {
+        "kind": "equipment_request",
+        "id": "XX125",
+        "attr": {
+          "id": "XX125"
+        }
+      }
+    }
+  ]
+}
