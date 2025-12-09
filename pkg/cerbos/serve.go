@@ -11,6 +11,7 @@ import (
 	gomaxecs "github.com/rdforte/gomaxecs/maxprocs"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/integrations"
@@ -29,10 +30,14 @@ const (
 )
 
 type serveOptions struct {
-	configFilePath  string
-	configOverrides map[string]any
-	debugListenAddr string
-	logLevel        LogLevel
+	zapCore            zapcore.Core
+	configOverrides    map[string]any
+	configFilePath     string
+	debugListenAddr    string
+	logLevel           LogLevel
+	metricsDisabled    bool
+	tracesDisabled     bool
+	goMaxProcsDisabled bool
 }
 
 // ServeOption defines options for [Serve].
@@ -72,6 +77,34 @@ func WithLogLevel(level LogLevel) ServeOption {
 	}
 }
 
+// WithMetricsDisabled disables registering OpenTelemetry metrics publishers.
+func WithMetricsDisabled() ServeOption {
+	return func(opts *serveOptions) {
+		opts.metricsDisabled = true
+	}
+}
+
+// WithTracesDisabled disables registering OpenTelemetry trace publishers.
+func WithTracesDisabled() ServeOption {
+	return func(opts *serveOptions) {
+		opts.tracesDisabled = true
+	}
+}
+
+// WithGoMaxProcsDisabled disables automatically setting GOMAXPROCS.
+func WithGoMaxProcsDisabled() ServeOption {
+	return func(opts *serveOptions) {
+		opts.goMaxProcsDisabled = true
+	}
+}
+
+// WithZapCore sets the Zap core used by the logging system.
+func WithZapCore(zapCore zapcore.Core) ServeOption {
+	return func(opts *serveOptions) {
+		opts.zapCore = zapCore
+	}
+}
+
 // Serve runs the Cerbos policy decision point server, stopping it when the context is canceled.
 func Serve(ctx context.Context, options ...ServeOption) error {
 	opts := serveOptions{logLevel: LogLevelInfo}
@@ -79,34 +112,38 @@ func Serve(ctx context.Context, options ...ServeOption) error {
 		option(&opts)
 	}
 
-	logging.InitLogging(ctx, string(opts.logLevel))
+	logging.InitLogging(ctx, string(opts.logLevel), opts.zapCore)
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("server")
 
-	var undo func()
-	var err error
-	if gomaxecs.IsECS() {
-		undo, err = gomaxecs.Set(gomaxecs.WithLogger(log.Infof))
-	} else {
-		undo, err = maxprocs.Set(maxprocs.Logger(log.Infof))
-	}
+	if !opts.goMaxProcsDisabled {
+		var undo func()
+		var err error
+		if gomaxecs.IsECS() {
+			undo, err = gomaxecs.Set(gomaxecs.WithLogger(log.Infof))
+		} else {
+			undo, err = maxprocs.Set(maxprocs.Logger(log.Infof))
+		}
 
-	defer undo()
-	if err != nil {
-		log.Warnw("Failed to adjust GOMAXPROCS", "error", err)
+		defer undo()
+		if err != nil {
+			log.Warnw("Failed to adjust GOMAXPROCS", "error", err)
+		}
 	}
 
 	// initialize metrics
-	metricsDone, err := otel.InitMetrics(ctx, otel.Env(os.LookupEnv))
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := metricsDone(); err != nil {
-			log.Warnw("Metrics exporter did not shutdown cleanly", "error", err)
+	if !opts.metricsDisabled {
+		metricsDone, err := otel.InitMetrics(ctx, otel.Env(os.LookupEnv))
+		if err != nil {
+			return err
 		}
-	}()
+		defer func() {
+			if err := metricsDone(); err != nil {
+				log.Warnw("Metrics exporter did not shutdown cleanly", "error", err)
+			}
+		}()
+	}
 
 	if opts.debugListenAddr != "" {
 		startDebugListener(opts.debugListenAddr)
@@ -125,15 +162,17 @@ func Serve(ctx context.Context, options ...ServeOption) error {
 	}
 
 	// initialize tracing
-	tracingDone, err := otel.InitTraces(ctx, otel.Env(os.LookupEnv))
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err := tracingDone(); err != nil {
-			log.Warnw("Trace exporter did not shutdown cleanly", "error", err)
+	if !opts.tracesDisabled {
+		tracingDone, err := otel.InitTraces(ctx, otel.Env(os.LookupEnv))
+		if err != nil {
+			return err
 		}
-	}()
+		defer func() {
+			if err := tracingDone(); err != nil {
+				log.Warnw("Trace exporter did not shutdown cleanly", "error", err)
+			}
+		}()
+	}
 
 	if err := integrations.Init(ctx); err != nil {
 		return err

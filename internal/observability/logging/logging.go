@@ -48,18 +48,18 @@ var (
 )
 
 // InitLogging initializes the global logger.
-func InitLogging(ctx context.Context, level string) {
+func InitLogging(ctx context.Context, level string, zapCore zapcore.Core) {
 	initOnce.Do(func() {
 		if envLevel := os.Getenv("CERBOS_LOG_LEVEL"); envLevel != "" {
-			doInitLogging(ctx, envLevel)
+			doInitLogging(ctx, envLevel, zapCore)
 			return
 		}
 
-		doInitLogging(ctx, level)
+		doInitLogging(ctx, level, zapCore)
 	})
 }
 
-func doInitLogging(ctx context.Context, level string) {
+func doInitLogging(ctx context.Context, level string, zapCore zapcore.Core) {
 	var logger *zap.Logger
 
 	minLogLevel := zapcore.InfoLevel
@@ -80,32 +80,39 @@ func doInitLogging(ctx context.Context, level string) {
 		}
 	}
 
-	encoderConf := ecszap.NewDefaultEncoderConfig().ToZapCoreEncoderConfig()
-	var consoleEncoder zapcore.Encoder
+	core := zapCore
+	if core == nil {
+		encoderConf := ecszap.NewDefaultEncoderConfig().ToZapCoreEncoderConfig()
+		var consoleEncoder zapcore.Encoder
 
-	if !isatty.IsTerminal(os.Stdout.Fd()) {
-		consoleEncoder = zapcore.NewJSONEncoder(encoderConf)
-	} else {
-		encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		consoleEncoder = zapcore.NewConsoleEncoder(encoderConf)
+		if !isatty.IsTerminal(os.Stdout.Fd()) {
+			consoleEncoder = zapcore.NewJSONEncoder(encoderConf)
+		} else {
+			encoderConf.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			consoleEncoder = zapcore.NewConsoleEncoder(encoderConf)
+		}
+
+		consoleErrors := zapcore.Lock(os.Stderr)
+		consoleInfo := zapcore.Lock(os.Stdout)
+		atomicLevel := zap.NewAtomicLevelAt(minLogLevel)
+
+		errorPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return atomicLevel.Enabled(lvl) && lvl >= zapcore.ErrorLevel
+		})
+
+		infoPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+			return atomicLevel.Enabled(lvl) && lvl < zapcore.ErrorLevel
+		})
+
+		core = zapcore.NewTee(
+			zapcore.NewCore(consoleEncoder, consoleErrors, errorPriority),
+			zapcore.NewCore(consoleEncoder, consoleInfo, infoPriority),
+		)
+
+		if minLogLevel > zap.DebugLevel {
+			handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
+		}
 	}
-
-	consoleErrors := zapcore.Lock(os.Stderr)
-	consoleInfo := zapcore.Lock(os.Stdout)
-	atomicLevel := zap.NewAtomicLevelAt(minLogLevel)
-
-	errorPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return atomicLevel.Enabled(lvl) && lvl >= zapcore.ErrorLevel
-	})
-
-	infoPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return atomicLevel.Enabled(lvl) && lvl < zapcore.ErrorLevel
-	})
-
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, consoleErrors, errorPriority),
-		zapcore.NewCore(consoleEncoder, consoleInfo, infoPriority),
-	)
 
 	stackTraceEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl > zapcore.ErrorLevel
@@ -118,10 +125,6 @@ func doInitLogging(ctx context.Context, level string) {
 		zap.IncreaseLevel(zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl > zapcore.ErrorLevel
 		})))))
-
-	if minLogLevel > zap.DebugLevel {
-		handleUSR1Signal(ctx, minLogLevel, &atomicLevel)
-	}
 }
 
 // setLogLevelForDuration temporarily sets the global log level to the given level for a period of time.

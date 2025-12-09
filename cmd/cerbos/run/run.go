@@ -84,7 +84,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	notifyCtx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stopFunc()
 
-	logging.InitLogging(notifyCtx, c.LogLevel)
+	logging.InitLogging(notifyCtx, c.LogLevel, nil)
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.S().Named("run")

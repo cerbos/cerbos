@@ -31,7 +31,7 @@ func main() {
 		logLevel = "info"
 	}
 
-	logging.InitLogging(ctx, logLevel)
+	logging.InitLogging(ctx, logLevel, nil)
 	defer zap.L().Sync() //nolint:errcheck
 
 	runtimeAPI := os.Getenv("AWS_LAMBDA_RUNTIME_API")
