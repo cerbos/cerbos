@@ -1,0 +1,20 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.49.0]
+= Cerbos v0.49.0
+== Changelog
+
+=== Features
+
+- Enable piping Hub audit logs to secondary backend
++
+When using the `hub` audit log backend, it's now possible to configure a secondary backend that also receives the stream of audit log entries. This is useful for teams that want to leverage the power of Cerbos Hub to analyze audit logs while also aggregating all logs into a central silo for monitoring and compliance requirements.
+
+
+=== Bug fixes
+
+- Correctly intersect role policy DENYs for multi-role principals
++
+Previously, DENYs from role policies were aggregated using a union (OR) strategy, causing a single role's DENY to block access globally even if other roles did not deny it (via `(not (or (not (FOO) (not (BAR)))))`). This change implements intersection (AND) logic for role policies, ensuring a request is only denied if *all* of the principal's active roles explicitly deny the action via their respective role policies (`(not (and (not (FOO) (not (BAR)))))`).
+
+
