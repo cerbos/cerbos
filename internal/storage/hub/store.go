@@ -101,7 +101,7 @@ func NewStore(ctx context.Context, conf *Conf) (storage.BinaryStore, error) {
 type Source interface {
 	SourceKind() string
 	storage.BinaryStore
-	storage.RuleTableStore
+	ruletable.RuleTableStore
 }
 
 type HybridStore struct {
@@ -116,7 +116,7 @@ func (*HybridStore) Driver() string {
 }
 
 func (hs *HybridStore) GetRuleTable() (*ruletable.RuleTable, error) {
-	if rtStore, ok := hs.withActiveSource().(storage.RuleTableStore); ok {
+	if rtStore, ok := hs.withActiveSource().(ruletable.RuleTableStore); ok {
 		return rtStore.GetRuleTable()
 	}
 

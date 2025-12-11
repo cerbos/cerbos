@@ -333,7 +333,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 
 	var ruleTable *ruletable.RuleTable
 	//nolint:nestif
-	if rtStore, ok := tp.store.(storage.RuleTableStore); ok {
+	if rtStore, ok := tp.store.(ruletable.RuleTableStore); ok {
 		rt, err := rtStore.GetRuleTable()
 		if err != nil {
 			if !errors.Is(err, hubstore.ErrUnsupportedOperation) {

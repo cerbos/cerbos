@@ -19,7 +19,6 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
-	"github.com/cerbos/cerbos/internal/ruletable"
 )
 
 var (
@@ -163,11 +162,6 @@ type BinaryStore interface {
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
 	// GetAllMatching returns all modules that exist for the provided module IDs
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
-}
-
-// RuleTableStore is implemented by stores that have pre-compiled rule tables.
-type RuleTableStore interface {
-	GetRuleTable() (*ruletable.RuleTable, error)
 }
 
 // MutableStore is a store that allows mutations.

@@ -53,7 +53,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 	}
 
 	var policyLoader policyloader.PolicyLoader
-	var ruleTableStore storage.RuleTableStore
+	var ruleTableStore ruletable.RuleTableStore
 	switch st := store.(type) {
 	// Overlay needs to take precedence over BinaryStore in this type switch,
 	// as our overlay store implements BinaryStore also
@@ -66,7 +66,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		policyLoader = pl
 	case storage.BinaryStore:
 		policyLoader = st
-		if rtStore, ok := store.(storage.RuleTableStore); ok {
+		if rtStore, ok := store.(ruletable.RuleTableStore); ok {
 			ruleTableStore = rtStore
 		}
 	case storage.SourceStore:

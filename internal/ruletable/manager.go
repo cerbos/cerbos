@@ -89,7 +89,7 @@ func (mgr *Manager) reload() error {
 	defer mgr.mu.Unlock()
 
 	var newRuleTable *RuleTable
-	if ruleTableStore, ok := mgr.policyLoader.(storage.RuleTableStore); ok {
+	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
 		var err error
 		newRuleTable, err = ruleTableStore.GetRuleTable()
 		if err != nil {
