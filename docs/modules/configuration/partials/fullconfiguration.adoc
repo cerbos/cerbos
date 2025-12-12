@@ -84,6 +84,7 @@ auxData:
           url: https://domain.tld/.well-known/keys.jwks # Required. URL is the JWKS URL to fetch the keyset from.
 engine:
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
+  defaultScope: "" # DefaultScope defines what scope to assume if the request does not specify one.
   globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.
   lenientScopeSearch: false # LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
   policyLoaderTimeout: 2s # PolicyLoaderTimeout is the timeout for loading policies from the policy store.

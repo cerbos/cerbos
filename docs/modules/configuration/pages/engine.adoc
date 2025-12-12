@@ -17,6 +17,20 @@ engine:
   defaultPolicyVersion: "default"
 ----
 
+[#default_scope]
+== Default scope
+
+xref:policies:index.adoc[Cerbos policies] have a `scope` field to support a way to model hierarchical relationships that regularly occur in many situations.
+By default, when a request does not explicitly specify the scope, the Cerbos engine attempts to find a matching policy that has its scope set to `""`.
+You can change this fallback value by setting the `defaultScope`.
+For example, you may set the default scope to `acme` with `defaultScope: acme` which will take effect when the request does not explicitly specify `scope` field.
+
+[source,yaml,linenums]
+----
+engine:
+  defaultScope: "acme"
+----
+
 [#globals]
 == Globals
 
