@@ -1577,23 +1577,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 
 		// evaluate resource policies before principal policies
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
-			var policyTypeAllowNode *planner.QpN
-			var policyTypeDenyNode *planner.QpN           // standard denials (OR)
-			var policyTypeDenyRolePolicyNode *planner.QpN // role policy denials (AND)
-
-			// If true at the end of the loop, we use policyTypeDenyRolePolicyNode.
-			// If false, it means at least one role did NOT have a role policy DENY, so the intersection is void.
-			allRolesDenyFromRolePolicy := true
-
-			addNode := func(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN) *planner.QpN {
-				if next == nil {
-					return curr
-				}
-				if curr == nil {
-					return next
-				}
-				return combine([]*planner.QpN{curr, next})
-			}
+			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
 
 			for i, role := range input.Principal.Roles {
 				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
@@ -1773,27 +1757,22 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
 						policyTypeAllowNode = roleAllowNode
 						policyTypeDenyNode = nil
-						policyTypeDenyRolePolicyNode = nil
-						allRolesDenyFromRolePolicy = false
 						// Break out of the roles loop entirely
 						break
 					}
 				}
 
+				// If there is a role policy restriction for this specific role, we must apply it here.
+				// An ALLOW from this role is valid ONLY IF it is NOT denied by this role's role policy.
+				if roleDenyRolePolicyNode != nil && roleAllowNode != nil {
+					roleAllowNode = planner.MkAndNode([]*planner.QpN{
+						roleAllowNode,
+						planner.InvertNodeBooleanValue(roleDenyRolePolicyNode),
+					})
+				}
+
 				policyTypeAllowNode = addNode(policyTypeAllowNode, roleAllowNode, planner.MkOrNode)
 				policyTypeDenyNode = addNode(policyTypeDenyNode, roleDenyNode, planner.MkOrNode)
-
-				// for role policy denials: logic must be intersection (AND).
-				// if this role produced no role policy DENY, the intersection of the whole set is void (false).
-				if roleDenyRolePolicyNode == nil {
-					allRolesDenyFromRolePolicy = false
-				} else {
-					policyTypeDenyRolePolicyNode = addNode(policyTypeDenyRolePolicyNode, roleDenyRolePolicyNode, planner.MkAndNode)
-				}
-			}
-
-			if !allRolesDenyFromRolePolicy {
-				policyTypeDenyRolePolicyNode = nil
 			}
 
 			if policyTypeAllowNode != nil {
@@ -1811,19 +1790,8 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 			// PolicyType denies need to reside at the top level of their PolicyType sub trees (e.g. a conditional
 			// DENY in a principal policy needs to be a top level `(NOT deny condition) AND nested ALLOW`), so we
 			// invert and AND them as we go.
-			var policyTypeDenyCombined *planner.QpN
-			switch {
-			case policyTypeDenyNode != nil && policyTypeDenyRolePolicyNode != nil:
-				// combine standard (OR) and role policy (AND) denies via union
-				policyTypeDenyCombined = planner.MkOrNode([]*planner.QpN{policyTypeDenyNode, policyTypeDenyRolePolicyNode})
-			case policyTypeDenyNode != nil:
-				policyTypeDenyCombined = policyTypeDenyNode
-			case policyTypeDenyRolePolicyNode != nil:
-				policyTypeDenyCombined = policyTypeDenyRolePolicyNode
-			}
-
-			if policyTypeDenyCombined != nil {
-				inv := planner.InvertNodeBooleanValue(policyTypeDenyCombined)
+			if policyTypeDenyNode != nil {
+				inv := planner.InvertNodeBooleanValue(policyTypeDenyNode)
 				if rootNode == nil {
 					rootNode = inv
 				} else {
@@ -1860,6 +1828,16 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 	}
 
 	return output, auditTrail, nil
+}
+
+func addNode(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN) *planner.QpN {
+	if next == nil {
+		return curr
+	}
+	if curr == nil {
+		return next
+	}
+	return combine([]*planner.QpN{curr, next})
 }
 
 func (rt *RuleTable) Evaluator() evaluator.Evaluator {
