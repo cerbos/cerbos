@@ -810,11 +810,22 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 	defer span.End()
 
 	principalVersion := input.Principal.PolicyVersion
+	principalScope := input.Principal.Scope
+
+	if principalScope == "" {
+		principalScope = evalParams.DefaultScope
+	}
+
 	if principalVersion == "" {
 		principalVersion = evalParams.DefaultPolicyVersion
 	}
 
+	resourceScope := input.Resource.Scope
 	resourceVersion := input.Resource.PolicyVersion
+	if resourceScope == "" {
+		resourceScope = evalParams.DefaultScope
+	}
+
 	if resourceVersion == "" {
 		resourceVersion = evalParams.DefaultPolicyVersion
 	}
@@ -823,13 +834,13 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 	result := newEvalResult(input.Actions, trail)
 
 	if !evalParams.LenientScopeSearch &&
-		!rt.ScopeExists(policy.PrincipalKind, input.Principal.Scope) &&
-		!rt.ScopeExists(policy.ResourceKind, input.Resource.Scope) {
+		!rt.ScopeExists(policy.PrincipalKind, principalScope) &&
+		!rt.ScopeExists(policy.ResourceKind, resourceScope) {
 		return result, nil
 	}
 
-	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
-	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
+	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion)
+	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion)
 
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
@@ -882,7 +893,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 		return result, nil
 	}
 
-	allRoles := rt.AddParentRoles(input.Resource.Scope, input.Principal.Roles)
+	allRoles := rt.AddParentRoles(resourceScope, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -938,7 +949,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, evalParams 
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := rt.AddParentRoles(input.Resource.Scope, []string{role})
+				parentRoles := rt.AddParentRoles(resourceScope, []string{role})
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1508,21 +1519,24 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.Ch
 func (rt *RuleTable) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	checkOpts := evaluator.NewCheckOptions(ctx, rt.conf, opts...)
 
+	principalScope := evaluator.Scope(input.Principal.Scope, checkOpts.EvalParams)
 	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
+
+	resourceScope := evaluator.Scope(input.Resource.Scope, checkOpts.EvalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
 
-	return rt.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
+	return rt.planWithAuditTrail(ctx, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
 }
 
-func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
-	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, input.Resource.Scope)
+func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.PlanResourcesInput, principalScope, principalVersion, resourceScope, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, resourceScope)
 
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, input.Principal.Scope, input.Principal.Id, principalVersion)
-	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, input.Resource.Scope, input.Resource.Kind, resourceVersion)
+	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion)
+	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion)
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
@@ -1548,7 +1562,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 		}
 	}
 
-	allRoles := rt.AddParentRoles(input.Resource.Scope, input.Principal.Roles)
+	allRoles := rt.AddParentRoles(resourceScope, input.Principal.Roles)
 	scopes := rt.CombineScopes(principalScopes, resourceScopes)
 	candidateRows, err := rt.idx.GetRows(ctx, resourceVersion, namer.SanitizedResource(input.Resource.Kind), scopes, allRoles, input.Actions)
 	if err != nil {
@@ -1591,7 +1605,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, input *enginev1.Pla
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents := rt.AddParentRoles(input.Resource.Scope, []string{role})
+				rolesIncludingParents := rt.AddParentRoles(resourceScope, []string{role})
 
 				for _, scope := range scopes {
 					var scopeAllowNode *planner.QpN

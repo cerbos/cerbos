@@ -376,6 +376,10 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 		checkOpts = append(checkOpts, evaluator.WithDefaultPolicyVersion(defaultPolicyVersion))
 	}
 
+	if defaultScope := options.GetDefaultScope(); defaultScope != "" {
+		checkOpts = append(checkOpts, evaluator.WithDefaultScope(defaultScope))
+	}
+
 	if trace {
 		traceCollector := tracer.NewCollector()
 		checkOpts = append(checkOpts, evaluator.WithTraceSink(traceCollector))

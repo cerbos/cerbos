@@ -1,0 +1,62 @@
+-- testdata/principals.yaml --
+---
+principals:
+  john:
+    id: john
+    roles:
+      - employee
+
+-- testdata/resources.yaml --
+---
+resources:
+  john_leave_request:
+    kind: leave_request
+    id: XX125
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwt:
+      iss: cerbos-test-suite
+      aud: [cerbos-jwt-tests]
+      customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+tests:
+  - name: Default scope is set to empty on the suite
+    options:
+      defaultScope: ''
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_DENY
+
+  - name: Default scope is set to acme on the suite
+    options:
+      defaultScope: 'acme'
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - view:public
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          view:public: EFFECT_ALLOW

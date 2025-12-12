@@ -1,0 +1,55 @@
+{
+  "suites": [
+    {
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 1,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 1
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "Default scope is not set on the suite",
+          "principals": [
+            {
+              "name": "john",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "view:public",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 1,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 1
+      }
+    ]
+  }
+}

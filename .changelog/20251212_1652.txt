@@ -1,0 +1,3 @@
+type:feature
+Ability to configure a default scope for requests
+It is now possible to configure the PDP with a default scope value. If `engine.DefaultScope` is set, any `CheckResources` or `PlanResources` requests without an explicit scope will default to the configured value.

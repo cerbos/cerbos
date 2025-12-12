@@ -86,7 +86,7 @@ func (f *testFilter) shouldRunTestForResource(resource *enginev1.Resource, optio
 		return true
 	}
 
-	_, excluded := f.excludedResourcePolicyFQNs[namer.ResourcePolicyFQN(resource.Kind, policyVersion(resource, options), resource.Scope)]
+	_, excluded := f.excludedResourcePolicyFQNs[namer.ResourcePolicyFQN(resource.Kind, policyVersion(resource, options), scope(resource, options))]
 	return !excluded
 }
 
@@ -95,7 +95,7 @@ func (f *testFilter) shouldRunTestForPrincipal(principal *enginev1.Principal, op
 		return true
 	}
 
-	_, excluded := f.excludedPrincipalPolicyFQNs[namer.PrincipalPolicyFQN(principal.Id, policyVersion(principal, options), principal.Scope)]
+	_, excluded := f.excludedPrincipalPolicyFQNs[namer.PrincipalPolicyFQN(principal.Id, policyVersion(principal, options), scope(principal, options))]
 	return !excluded
 }
 
@@ -109,4 +109,16 @@ func policyVersion(fixture interface{ GetPolicyVersion() string }, options *poli
 	}
 
 	return namer.DefaultVersion
+}
+
+func scope(fixture interface{ GetScope() string }, options *policyv1.TestOptions) string {
+	if scope := fixture.GetScope(); scope != "" {
+		return scope
+	}
+
+	if defaultScope := options.GetDefaultScope(); defaultScope != "" {
+		return defaultScope
+	}
+
+	return namer.DefaultScope
 }

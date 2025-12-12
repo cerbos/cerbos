@@ -32,6 +32,7 @@ const (
 	RolePoliciesPrefix      = fqnPrefix + "role"
 
 	DefaultVersion = "default"
+	DefaultScope   = ""
 	fqnPrefix      = "cerbos."
 )
 

@@ -404,6 +404,7 @@ message TestOptions {
   bool lenient_scope_search = 2;
   map<string, google.protobuf.Value> globals = 3;
   string default_policy_version = 4;
+  string default_scope = 5;
 }
 
 message TestSuite {

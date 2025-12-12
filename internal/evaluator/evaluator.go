@@ -55,6 +55,13 @@ func WithDefaultPolicyVersion(defaultPolicyVersion string) CheckOpt {
 	}
 }
 
+// WithDefaultScope sets the default scope for the engine.
+func WithDefaultScope(defaultScope string) CheckOpt {
+	return func(co *CheckOptions) {
+		co.EvalParams.DefaultScope = defaultScope
+	}
+}
+
 type CheckOptions struct {
 	TracerSink tracer.Sink
 	EvalParams EvalParams
@@ -66,6 +73,10 @@ func (co *CheckOptions) NowFunc() func() time.Time {
 
 func (co *CheckOptions) DefaultPolicyVersion() string {
 	return co.EvalParams.DefaultPolicyVersion
+}
+
+func (co *CheckOptions) DefaultScope() string {
+	return co.EvalParams.DefaultScope
 }
 
 func (co *CheckOptions) LenientScopeSearch() bool {
@@ -80,6 +91,7 @@ type EvalParams struct {
 	Globals              map[string]any
 	NowFunc              conditions.NowFunc
 	DefaultPolicyVersion string
+	DefaultScope         string
 	LenientScopeSearch   bool
 }
 
@@ -89,4 +101,12 @@ func PolicyVersion(version string, params EvalParams) string {
 	}
 
 	return version
+}
+
+func Scope(scope string, params EvalParams) string {
+	if scope == "" {
+		scope = params.DefaultScope
+	}
+
+	return scope
 }
