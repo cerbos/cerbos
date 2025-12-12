@@ -27,6 +27,8 @@ type Conf struct {
 	Globals map[string]any `yaml:"globals" conf:",example={\"environment\": \"staging\"}"`
 	// DefaultPolicyVersion defines what version to assume if the request does not specify one.
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",example=\"default\""`
+	// DefaultScope defines what scope to assume if the request does not specify one.
+	DefaultScope string `yaml:"defaultScope" conf:",example=\"\""`
 	// LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
 	LenientScopeSearch bool `yaml:"lenientScopeSearch" conf:",example=false"`
 	// PolicyLoaderTimeout is the timeout for loading policies from the policy store.
@@ -40,6 +42,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
+	c.DefaultScope = namer.DefaultScope
 	c.PolicyLoaderTimeout = defaultPolicyLoaderTimeout
 	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:mnd
 }
