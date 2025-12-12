@@ -17,24 +17,15 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: not
+            operator: or
             operands:
               - expression:
-                  operator: and
+                  operator: eq
                   operands:
-                    - expression:
-                        operator: not
-                        operands:
-                        - expression:
-                            operator: eq
-                            operands:
-                              - variable: request.resource.attr.is_buggy
-                              - value: true
-                    - expression:
-                        operator: not
-                        operands:
-                        - expression:
-                            operator: eq
-                            operands:
-                              - variable: request.resource.attr.is_enabled
-                              - value: true
+                    - variable: request.resource.attr.is_buggy
+                    - value: true
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.is_enabled
+                    - value: true

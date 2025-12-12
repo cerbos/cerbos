@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "mixed_restrictions_res"
+  rules:
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["role_viewer_unrestricted"]
+    - actions: ["delete"]
+      effect: EFFECT_ALLOW
+      roles: ["role_deleter_restricted"]
