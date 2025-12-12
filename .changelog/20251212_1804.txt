@@ -1,0 +1,2 @@
+type:enhancement
+Add InspectPolicies support to rule table based stores
