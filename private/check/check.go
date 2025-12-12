@@ -14,7 +14,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/util"
@@ -127,15 +126,9 @@ func newEngine(ctx context.Context, conf *evaluator.Conf, idx compile.Index) (*i
 		return nil, err
 	}
 
-	protoRT := ruletable.NewProtoRuletable()
-
-	if err := ruletable.LoadPolicies(ctx, protoRT, compiler); err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
-	}
-
-	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create rule table: %w", err)
+		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))

@@ -376,13 +376,10 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 		auditLog = audit.NewNopLog()
 	}
 
-	protoRT := ruletable.NewProtoRuletable()
-	require.NoError(tb, ruletable.LoadPolicies(ctx, protoRT, compiler))
-
 	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	require.NoError(tb, err)
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)

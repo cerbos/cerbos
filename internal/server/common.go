@@ -15,7 +15,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	storagehub "github.com/cerbos/cerbos/internal/storage/hub"
@@ -88,25 +87,15 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 				return nil, fmt.Errorf("failed to load rule table: %w", err)
 			}
 
-			protoRT := ruletable.NewProtoRuletable()
-			if err := ruletable.LoadPolicies(ctx, protoRT, policyLoader); err != nil {
-				return nil, fmt.Errorf("failed to load policies: %w", err)
-			}
-
-			if ruleTable, err = ruletable.NewRuleTable(index.NewMem(), protoRT); err != nil {
-				return nil, fmt.Errorf("failed to create rule table: %w", err)
+			if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader); err != nil {
+				return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 			}
 		} else {
 			ruleTable = rt
 		}
 	} else {
-		protoRT := ruletable.NewProtoRuletable()
-		if err := ruletable.LoadPolicies(ctx, protoRT, policyLoader); err != nil {
-			return nil, fmt.Errorf("failed to load policies: %w", err)
-		}
-
-		if ruleTable, err = ruletable.NewRuleTable(index.NewMem(), protoRT); err != nil {
-			return nil, fmt.Errorf("failed to create rule table: %w", err)
+		if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader); err != nil {
+			return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 		}
 	}
 

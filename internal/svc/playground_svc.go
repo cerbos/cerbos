@@ -27,7 +27,6 @@ import (
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -456,15 +455,9 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	protoRT := ruletable.NewProtoRuletable()
-
-	if err := ruletable.LoadPolicies(ctx, protoRT, cm); err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
-	}
-
-	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), protoRT)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, cm)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create rule table: %w", err)
+		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, cm, c.schemaMgr)

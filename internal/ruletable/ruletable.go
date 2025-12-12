@@ -434,6 +434,16 @@ type WrappedRunnableDerivedRole struct {
 	Constants map[string]any
 }
 
+func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
+	protoRT := NewProtoRuletable()
+
+	if err := LoadPolicies(ctx, protoRT, policyLoader); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	return NewRuleTable(index.NewMem(), protoRT)
+}
+
 func NewRuleTable(idx index.Index, protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
 		idx: index.NewImpl(idx),

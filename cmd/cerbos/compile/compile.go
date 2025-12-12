@@ -27,7 +27,6 @@ import (
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -140,23 +139,17 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return err
 		}
 
-		protoRT := ruletable.NewProtoRuletable()
-
-		if err := ruletable.LoadPolicies(ctx, protoRT, compileMgr); err != nil {
-			return fmt.Errorf("failed to load policies: %w", err)
-		}
-
-		ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), protoRT)
+		ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compileMgr)
 		if err != nil {
-			return fmt.Errorf("failed to create rule table: %w", err)
+			return fmt.Errorf("failed to create rule table from loader: %w", err)
 		}
 
-		rtMgr, err := ruletable.NewRuleTableManager(ruleTable, compileMgr, schemaMgr)
+		ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compileMgr, schemaMgr)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}
 
-		eng := engine.NewEphemeral(nil, rtMgr, schemaMgr)
+		eng := engine.NewEphemeral(nil, ruletableMgr, schemaMgr)
 
 		testFsys, testDir, err := c.testsDir()
 		if err != nil {

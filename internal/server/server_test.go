@@ -30,7 +30,6 @@ import (
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
@@ -339,20 +338,14 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 			if !errors.Is(err, hubstore.ErrUnsupportedOperation) {
 				require.NoError(t, err, "Failed to get rule table")
 			}
-			protoRT := ruletable.NewProtoRuletable()
-			require.NoError(t, ruletable.LoadPolicies(ctx, protoRT, tp.policyLoader))
-
-			ruleTable, err = ruletable.NewRuleTable(index.NewMem(), protoRT)
+			ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
 			require.NoError(t, err)
 		} else {
 			ruleTable = rt
 		}
 	} else {
-		protoRT := ruletable.NewProtoRuletable()
-		require.NoError(t, ruletable.LoadPolicies(ctx, protoRT, tp.policyLoader))
-
 		var err error
-		ruleTable, err = ruletable.NewRuleTable(index.NewMem(), protoRT)
+		ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
 		require.NoError(t, err)
 	}
 

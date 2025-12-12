@@ -28,7 +28,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -384,10 +383,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	mgr, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	protoRT := ruletable.NewProtoRuletable()
-	require.NoError(t, ruletable.LoadPolicies(ctx, protoRT, mgr))
-
-	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, mgr)
 	require.NoError(t, err)
 
 	schemaMgr, err := schema.New(ctx, store)
