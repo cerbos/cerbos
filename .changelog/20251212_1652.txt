@@ -1,3 +1,3 @@
 type:feature
-Add default scope configuration to be used when scope is not specified in the request
-When configuring Cerbos, it is now possible to set a default scope with the configuration parameter "engine.defaultScope". When CheckResources or PlanResources requests don't explicitly set scope, the default scope will be used as fallback.
+Ability to configure a default scope for requests
+It is now possible to configure the PDP with a default scope value. If `engine.DefaultScope` is set, any `CheckResources` or `PlanResources` requests without an explicit scope will default to the configured value.
