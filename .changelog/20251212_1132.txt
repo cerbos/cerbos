@@ -1,0 +1,4 @@
+type:fix
+Isolate role policy restrictions in query planner
+This regression was introduced in my previous fix (https://github.com/cerbos/cerbos/pull/2831). After this "fix", role policy restrictions were aggregated and applied globally to the query plan. This caused a regression where restrictions on a specific role incorrectly constrained permissions granted by other unrestricted roles held by the user.
+This moves the evaluation logic into the per-role processing loop. Role policy restrictions are now applied as a local filter on the specific role's ALLOW node before merging into the final result, ensuring role independence.
