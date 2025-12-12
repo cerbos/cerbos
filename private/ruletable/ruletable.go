@@ -33,6 +33,7 @@ func NewRuleTableFromProto(rtProto *runtimev1.RuleTable, conf *epdpv2.Config) (*
 }
 
 func evaluatorConfFromProto(confProto *epdpv2.Config_Evaluator) *evaluator.Conf {
+	// TODO(oguzhan): Add engine.defaultScope to cloud-api
 	conf := &evaluator.Conf{
 		Globals:              (&structpb.Struct{Fields: confProto.GetGlobals()}).AsMap(),
 		DefaultPolicyVersion: confProto.GetDefaultPolicyVersion(),

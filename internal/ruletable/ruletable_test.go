@@ -93,6 +93,7 @@ func TestRuleTableManager(t *testing.T) {
 	conf.SetDefaults()
 	evalParams := evaluator.EvalParams{
 		DefaultPolicyVersion: conf.DefaultPolicyVersion,
+		DefaultScope:         conf.DefaultScope,
 		NowFunc:              conditions.Now(),
 	}
 	tctx := tracer.Start(nil)

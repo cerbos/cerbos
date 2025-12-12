@@ -21,6 +21,9 @@
         "defaultPolicyVersion": {
           "type": "string"
         },
+        "defaultScope": {
+          "type": "string"
+        },
         "globals": {
           "type": "object",
           "additionalProperties": {

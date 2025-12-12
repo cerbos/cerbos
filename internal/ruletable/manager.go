@@ -61,11 +61,11 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams e
 	return mgr.checkWithAuditTrail(ctx, tctx, evalParams, input)
 }
 
-func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalVersion, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalScope, principalVersion, resourceScope, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.planWithAuditTrail(ctx, input, principalVersion, resourceVersion, nowFunc, globals)
+	return mgr.planWithAuditTrail(ctx, input, principalScope, principalVersion, resourceScope, resourceVersion, nowFunc, globals)
 }
 
 func (mgr *Manager) SubscriberID() string {
