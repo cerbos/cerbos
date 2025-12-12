@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Ensure permissions from unrestricted roles do not leak into restricted roles
+principal:
+  id: user_mixed_roles
+  policyVersion: default
+  roles:
+    - role_viewer_unrestricted
+    - acme_role_deleter_restricted
+tests:
+  - action: view
+    resource:
+      kind: mixed_restrictions_res
+      scope: umbrellacorp
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_ALLOWED
+  - action: delete
+    resource:
+      kind: mixed_restrictions_res
+      scope: umbrellacorp
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.safe_to_delete
+            - value: true
+  - actions:
+      - view
+      - delete
+    resource:
+      kind: mixed_restrictions_res
+      scope: umbrellacorp
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.safe_to_delete
+            - value: true
