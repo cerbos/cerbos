@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/local"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
@@ -331,22 +330,23 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
-	var ruleTable *runtimev1.RuleTable
+	var ruleTable *ruletable.RuleTable
 	//nolint:nestif
-	if rtStore, ok := tp.store.(storage.RuleTableStore); ok {
+	if rtStore, ok := tp.store.(ruletable.RuleTableStore); ok {
 		rt, err := rtStore.GetRuleTable()
 		if err != nil {
 			if !errors.Is(err, hubstore.ErrUnsupportedOperation) {
 				require.NoError(t, err, "Failed to get rule table")
 			}
-			ruleTable = ruletable.NewProtoRuletable()
-			require.NoError(t, ruletable.LoadPolicies(ctx, ruleTable, tp.policyLoader))
+			ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
+			require.NoError(t, err)
 		} else {
 			ruleTable = rt
 		}
 	} else {
-		ruleTable = ruletable.NewProtoRuletable()
-		require.NoError(t, ruletable.LoadPolicies(ctx, ruleTable, tp.policyLoader))
+		var err error
+		ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
+		require.NoError(t, err)
 	}
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, tp.policyLoader, tp.schemaMgr)

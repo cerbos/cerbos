@@ -5,6 +5,7 @@ package check
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -125,17 +126,16 @@ func newEngine(ctx context.Context, conf *evaluator.Conf, idx compile.Index) (*i
 		return nil, err
 	}
 
-	rt := ruletable.NewProtoRuletable()
-
-	if err := ruletable.LoadPolicies(ctx, rt, compiler); err != nil {
-		return nil, err
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
 	return internalengine.NewEphemeral(conf, ruletableMgr, schemaMgr), nil

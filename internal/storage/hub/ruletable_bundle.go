@@ -16,7 +16,10 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/ruletable"
+	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
@@ -30,19 +33,24 @@ var ErrUnsupportedOperation = errors.New("operation not supported by bundle")
 const cerbosSchemaPrefix = schema.URLScheme + ":///"
 
 type RuleTableBundle struct {
-	ruleTable *runtimev1.RuleTable
+	ruleTable *ruletable.RuleTable
 }
 
 func OpenRuleTableBundle(opts OpenOpts) (*RuleTableBundle, error) {
 	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening rule table bundle")
 
-	ruleTable, err := decryptRuleTableBundle(opts, logger)
+	protoRT, err := decryptRuleTableBundle(opts, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Info("Rule table bundle opened", zap.String("id", ruleTable.GetManifest().GetBundleId()))
+	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table: %w", err)
+	}
+
+	logger.Info("Rule table bundle opened", zap.String("id", protoRT.GetManifest().GetBundleId()))
 	return &RuleTableBundle{ruleTable: ruleTable}, nil
 }
 
@@ -104,8 +112,17 @@ func (*RuleTableBundle) GetAllMatching(_ context.Context, _ []namer.ModuleID) ([
 	return nil, ErrUnsupportedOperation
 }
 
-func (*RuleTableBundle) InspectPolicies(_ context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
-	return nil, ErrUnsupportedOperation
+func (rtb *RuleTableBundle) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
+	if rtb == nil {
+		return nil, ErrBundleNotLoaded
+	}
+
+	ins := inspect.RuleTables(rtb.ruleTable)
+	if err := ins.Inspect(ctx); err != nil {
+		return nil, fmt.Errorf("failed to inspect rule table: %w", err)
+	}
+
+	return ins.Results(), nil
 }
 
 func (rtb *RuleTableBundle) ListPolicyIDs(_ context.Context, params storage.ListPolicyIDsParams) ([]string, error) {
@@ -114,7 +131,7 @@ func (rtb *RuleTableBundle) ListPolicyIDs(_ context.Context, params storage.List
 	}
 
 	policyFQNs := make(map[string]struct{})
-	for _, meta := range rtb.ruleTable.GetMeta() {
+	for _, meta := range rtb.ruleTable.RuleTable.GetMeta() {
 		policyFQNs[meta.GetFqn()] = struct{}{}
 	}
 
@@ -168,7 +185,7 @@ func (rtb *RuleTableBundle) LoadSchema(_ context.Context, path string) (io.ReadC
 	return nil, fmt.Errorf("schema %s not found", path)
 }
 
-func (rtb *RuleTableBundle) GetRuleTable() (*runtimev1.RuleTable, error) {
+func (rtb *RuleTableBundle) GetRuleTable() (*ruletable.RuleTable, error) {
 	if rtb == nil || rtb.ruleTable == nil {
 		return nil, ErrBundleNotLoaded
 	}

@@ -140,13 +140,13 @@ func mkEngine(t *testing.T) *engine.Engine {
 	mgr, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	rt := ruletable.NewProtoRuletable()
-	require.NoError(t, ruletable.LoadPolicies(ctx, rt, mgr))
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, mgr)
+	require.NoError(t, err)
 
 	schemaMgr, err := schema.New(ctx, store)
 	require.NoError(t, err)
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, mgr, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, mgr, schemaMgr)
 	require.NoError(t, err)
 
 	eng, err := engine.New(ctx, engine.Components{

@@ -17,15 +17,14 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
-	"github.com/spf13/afero"
-	"go.uber.org/zap"
-
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	hubapi "github.com/cerbos/cloud-api/hub"
+	"github.com/spf13/afero"
+	"go.uber.org/zap"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -33,6 +32,7 @@ import (
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -602,7 +602,7 @@ func (s *RemoteSource) Driver() string {
 	return DriverName
 }
 
-func (s *RemoteSource) GetRuleTable() (*runtimev1.RuleTable, error) {
+func (s *RemoteSource) GetRuleTable() (*ruletable.RuleTable, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 

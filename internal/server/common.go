@@ -8,10 +8,8 @@ import (
 	"errors"
 	"fmt"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	audithub "github.com/cerbos/cerbos/internal/audit/hub"
-
 	"github.com/cerbos/cerbos/internal/audit"
+	audithub "github.com/cerbos/cerbos/internal/audit/hub"
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -54,7 +52,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 	}
 
 	var policyLoader policyloader.PolicyLoader
-	var ruleTableStore storage.RuleTableStore
+	var ruleTableStore ruletable.RuleTableStore
 	switch st := store.(type) {
 	// Overlay needs to take precedence over BinaryStore in this type switch,
 	// as our overlay store implements BinaryStore also
@@ -67,7 +65,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		policyLoader = pl
 	case storage.BinaryStore:
 		policyLoader = st
-		if rtStore, ok := store.(storage.RuleTableStore); ok {
+		if rtStore, ok := store.(ruletable.RuleTableStore); ok {
 			ruleTableStore = rtStore
 		}
 	case storage.SourceStore:
@@ -80,7 +78,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, ErrInvalidStore
 	}
 
-	var ruleTable *runtimev1.RuleTable
+	var ruleTable *ruletable.RuleTable
 	//nolint:nestif
 	if ruleTableStore != nil {
 		rt, err := ruleTableStore.GetRuleTable()
@@ -89,21 +87,18 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 				return nil, fmt.Errorf("failed to load rule table: %w", err)
 			}
 
-			ruleTable = ruletable.NewProtoRuletable()
-			if err := ruletable.LoadPolicies(ctx, ruleTable, policyLoader); err != nil {
-				return nil, fmt.Errorf("failed to load policies: %w", err)
+			if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader); err != nil {
+				return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 			}
 		} else {
 			ruleTable = rt
 		}
 	} else {
-		ruleTable = ruletable.NewProtoRuletable()
-		if err := ruletable.LoadPolicies(ctx, ruleTable, policyLoader); err != nil {
-			return nil, fmt.Errorf("failed to load policies: %w", err)
+		if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader); err != nil {
+			return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 		}
 	}
 
-	// create schema manager
 	schemaMgr, err := internalSchema.New(ctx, store)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema manager: %w", err)

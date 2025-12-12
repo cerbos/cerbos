@@ -164,11 +164,6 @@ type BinaryStore interface {
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 }
 
-// RuleTableStore is implemented by stores that have pre-compiled rule tables.
-type RuleTableStore interface {
-	GetRuleTable() (*runtimev1.RuleTable, error)
-}
-
 // MutableStore is a store that allows mutations.
 type MutableStore interface {
 	Store

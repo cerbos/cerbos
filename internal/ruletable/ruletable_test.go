@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,6 +23,8 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/ruletable"
+	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -49,7 +50,10 @@ func TestRuleTableManager(t *testing.T) {
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruletable.NewProtoRuletable(), compiler, schemaMgr)
+	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), ruletable.NewProtoRuletable())
+	require.NoError(t, err)
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	require.NoError(t, err)
 
 	store.Subscribe(ruletableMgr)
