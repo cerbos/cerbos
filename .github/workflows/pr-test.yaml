@@ -16,7 +16,7 @@ jobs:
       npm: ${{ steps.filter.outputs.npm }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
           filters: |
@@ -44,7 +44,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -81,7 +81,7 @@ jobs:
           search_artifacts: true
 
       - name: Upload previous test times
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: previous-test-times
           path: test-times.json
@@ -102,7 +102,7 @@ jobs:
       job-total: ${{ strategy.job-total }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           lfs: true
 
@@ -116,7 +116,7 @@ jobs:
         uses: ./.github/actions/setup-just
 
       - name: Download previous test times
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: previous-test-times
 
@@ -135,13 +135,13 @@ jobs:
           CERBOS_HUB_STORE_ID: "${{ secrets.CERBOS_HUB_STORE_ID }}"
 
       - name: Upload JUnit reports
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: junit-reports-${{ strategy.job-index }}
           path: junit.*.xml
 
       - name: Upload unit coverage to Coveralls
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1
+        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
         continue-on-error: true
         with:
           path-to-profile: unit.cover
@@ -150,7 +150,7 @@ jobs:
           fail-on-error: false
 
       - name: Upload integration coverage to Coveralls
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1
+        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
         continue-on-error: true
         with:
           path-to-profile: integration.cover
@@ -169,10 +169,10 @@ jobs:
         run: test "${{ needs.test.result }}" = "success"
 
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install Go
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: 1.25.x
           cache: false
@@ -182,7 +182,7 @@ jobs:
         uses: ./.github/actions/setup-just
 
       - name: Download JUnit reports
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
 
       - name: Combine JUnit reports
         run: |-
@@ -190,13 +190,13 @@ jobs:
           just test-times ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: test-times
           path: test-times.json
 
       - name: Complete coveralls report
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1
+        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
         continue-on-error: true
         with:
           parallel-finished: true
@@ -210,7 +210,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
           lfs: true
@@ -226,9 +226,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - name: Install Go
-        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: 1.25.x
           check-latest: true
@@ -250,7 +250,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -286,9 +286,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
+      - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version: "1.25.x"
 
@@ -303,7 +303,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 0
 
@@ -316,10 +316,10 @@ jobs:
           cross_compiling: true
 
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@43a17d6e7add2b5535efe4dcae9952337c479a93 # v0
+        uses: anchore/sbom-action/download-syft@43a17d6e7add2b5535efe4dcae9952337c479a93 # v0.20.11
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
         with:
           version: latest
           args: build --config=.goreleaser.yml --clean --snapshot
@@ -333,7 +333,7 @@ jobs:
         run: tar --create --verbose --file npm.tar npm
 
       - name: Upload npm packages
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: npm-packages
           path: npm.tar
@@ -351,7 +351,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out .node-version file
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           sparse-checkout: |
             .node-version
@@ -359,7 +359,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Download npm packages
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           name: npm-packages
 
@@ -367,7 +367,7 @@ jobs:
         run: tar --extract --verbose --file npm.tar
 
       - name: Install Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           cache: npm
           cache-dependency-path: npm/test/registry/package-lock.json
