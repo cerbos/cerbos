@@ -6,7 +6,6 @@ package verify
 import (
 	"fmt"
 	"regexp"
-	"strings"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -113,7 +112,7 @@ func policyVersion(fixture interface{ GetPolicyVersion() string }, options *poli
 }
 
 func scope(fixture interface{ GetScope() string }, options *policyv1.TestOptions) string {
-	if scope := strings.TrimPrefix(fixture.GetScope(), "."); scope != "" {
+	if scope := namer.ScopeValue(fixture.GetScope()); scope != "" {
 		return scope
 	}
 
