@@ -5,12 +5,12 @@ package evaluator
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
+	"github.com/cerbos/cerbos/internal/namer"
 )
 
 type Evaluator interface {
@@ -109,5 +109,5 @@ func Scope(scope string, params EvalParams) string {
 		scope = params.DefaultScope
 	}
 
-	return strings.TrimPrefix(scope, ".")
+	return namer.ScopeValue(scope)
 }
