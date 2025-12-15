@@ -1853,7 +1853,8 @@ func addNode(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN)
 }
 
 func (rt *RuleTable) Evaluator(evalConf *evaluator.Conf, schemaConf *schema.Conf) (evaluator.Evaluator, error) {
-	return NewEvaluator(evalConf, schemaConf, rt)
+	evaluator, err := NewEvaluator(evalConf, schemaConf, rt)
+	return (*withoutAuditTrail)(evaluator), err
 }
 
 // ListRuleTableRowActions returns unique list of actions in a rule table row.
