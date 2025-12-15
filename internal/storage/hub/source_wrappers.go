@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -37,7 +38,7 @@ func (instrumentedSource) Driver() string {
 	return DriverName
 }
 
-func (is instrumentedSource) GetRuleTable() (*runtimev1.RuleTable, error) {
+func (is instrumentedSource) GetRuleTable() (*ruletable.RuleTable, error) {
 	return is.source.GetRuleTable()
 }
 

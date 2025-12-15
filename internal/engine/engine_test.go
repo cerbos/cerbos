@@ -376,13 +376,13 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 		auditLog = audit.NewNopLog()
 	}
 
-	rt := ruletable.NewProtoRuletable()
-	require.NoError(tb, ruletable.LoadPolicies(ctx, rt, compiler))
-
 	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
+	require.NoError(tb, err)
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	require.NoError(tb, err)
 
 	evalConf := &evaluator.Conf{}
@@ -430,10 +430,13 @@ func mkRuleTable(tb testing.TB, p param, idx index.Index) (evaluator.Evaluator, 
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
 
-	rt, err := ruletable.NewRuleTable(idx, protoRT, evalConf, schema.NewConf(p.schemaEnforcement))
+	rt, err := ruletable.NewRuleTable(idx, protoRT)
 	require.NoError(tb, err)
 
-	return rt.Evaluator(), cancelFunc
+	eval, err := rt.Evaluator(evalConf, schema.NewConf(p.schemaEnforcement))
+	require.NoError(tb, err)
+
+	return eval, cancelFunc
 }
 
 func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {

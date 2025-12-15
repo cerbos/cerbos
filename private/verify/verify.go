@@ -53,17 +53,16 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 		return nil, err
 	}
 
-	rt := ruletable.NewProtoRuletable()
-
-	if err := ruletable.LoadPolicies(ctx, rt, compiler); err != nil {
-		return nil, err
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, compiler, schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
 	eng := internalengine.NewEphemeral(nil, ruletableMgr, schemaMgr)

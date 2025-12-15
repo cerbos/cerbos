@@ -26,31 +26,25 @@ import (
 
 type Manager struct {
 	*RuleTable
+	conf         *evaluator.Conf
 	policyLoader policyloader.PolicyLoader
+	schemaMgr    schema.Manager
 	log          *logging.Logger
 	mu           sync.RWMutex
 }
 
-func NewRuleTableManager(protoRT *runtimev1.RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
+func NewRuleTableManager(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
 	conf, err := evaluator.GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
 
-	rt := &RuleTable{
-		conf:      conf,
-		schemaMgr: schemaMgr,
-		idx:       index.NewImpl(index.NewMem()),
-	}
-
-	if err := rt.init(protoRT); err != nil {
-		return nil, err
-	}
-
 	return &Manager{
+		conf:         conf,
 		log:          logging.NewLogger("ruletable"),
-		RuleTable:    rt,
 		policyLoader: policyLoader,
+		schemaMgr:    schemaMgr,
+		RuleTable:    ruleTable,
 	}, nil
 }
 
@@ -58,14 +52,14 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams e
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.checkWithAuditTrail(ctx, tctx, evalParams, input)
+	return mgr.checkWithAuditTrail(ctx, tctx, mgr.schemaMgr, evalParams, input)
 }
 
 func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalScope, principalVersion, resourceScope, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.planWithAuditTrail(ctx, input, principalScope, principalVersion, resourceScope, resourceVersion, nowFunc, globals)
+	return mgr.planWithAuditTrail(ctx, mgr.schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, nowFunc, globals)
 }
 
 func (mgr *Manager) SubscriberID() string {
@@ -94,8 +88,8 @@ func (mgr *Manager) reload() error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	var newRuleTable *runtimev1.RuleTable
-	if ruleTableStore, ok := mgr.policyLoader.(storage.RuleTableStore); ok {
+	var newRuleTable *RuleTable
+	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
 		var err error
 		newRuleTable, err = ruleTableStore.GetRuleTable()
 		if err != nil {
@@ -106,19 +100,21 @@ func (mgr *Manager) reload() error {
 		defer cancelFunc()
 
 		mgr.log.Info("Reloading rule table")
-		newRuleTable = NewProtoRuletable()
+		protoRT := NewProtoRuletable()
 
 		// If compilation fails, maintain the last valid rule table state.
 		// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-		if err := LoadPolicies(ctx, newRuleTable, mgr.policyLoader); err != nil {
+		if err := LoadPolicies(ctx, protoRT, mgr.policyLoader); err != nil {
 			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
+		}
+
+		var err error
+		if newRuleTable, err = NewRuleTable(index.NewMem(), protoRT); err != nil {
+			return fmt.Errorf("failed to create rule table: %w", err)
 		}
 	}
 
-	if err := mgr.init(newRuleTable); err != nil {
-		return err
-	}
-
+	mgr.RuleTable = newRuleTable
 	mgr.log.Info("Rule table reload successful")
 
 	return nil

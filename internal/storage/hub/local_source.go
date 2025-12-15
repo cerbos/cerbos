@@ -14,18 +14,18 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/spf13/afero"
-	"go.uber.org/multierr"
-	"go.uber.org/zap"
-
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
+	"github.com/spf13/afero"
+	"go.uber.org/multierr"
+	"go.uber.org/zap"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
@@ -212,7 +212,7 @@ func (ls *LocalSource) Driver() string {
 	return DriverName
 }
 
-func (ls *LocalSource) GetRuleTable() (*runtimev1.RuleTable, error) {
+func (ls *LocalSource) GetRuleTable() (*ruletable.RuleTable, error) {
 	ls.mu.RLock()
 	defer ls.mu.RUnlock()
 

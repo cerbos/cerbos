@@ -455,15 +455,14 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, err
 	}
 
-	rt := ruletable.NewProtoRuletable()
-
-	if err := ruletable.LoadPolicies(ctx, rt, cm); err != nil {
-		return nil, err
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, cm)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(rt, cm, c.schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, cm, c.schemaMgr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
 
 	return engine.NewEphemeral(nil, ruletableMgr, c.schemaMgr), nil

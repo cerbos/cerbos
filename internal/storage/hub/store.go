@@ -19,6 +19,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -100,7 +101,7 @@ func NewStore(ctx context.Context, conf *Conf) (storage.BinaryStore, error) {
 type Source interface {
 	SourceKind() string
 	storage.BinaryStore
-	storage.RuleTableStore
+	ruletable.RuleTableStore
 }
 
 type HybridStore struct {
@@ -114,9 +115,9 @@ func (*HybridStore) Driver() string {
 	return DriverName
 }
 
-func (hs *HybridStore) GetRuleTable() (*runtimev1.RuleTable, error) {
-	if rtTable, ok := hs.withActiveSource().(storage.RuleTableStore); ok {
-		return rtTable.GetRuleTable()
+func (hs *HybridStore) GetRuleTable() (*ruletable.RuleTable, error) {
+	if rtStore, ok := hs.withActiveSource().(ruletable.RuleTableStore); ok {
+		return rtStore.GetRuleTable()
 	}
 
 	return nil, ErrUnsupportedOperation
