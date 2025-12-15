@@ -1,0 +1,3 @@
+type:enhancement
+Add dot as an alias to empty scope
+It is now possible to set the scope '.' instead of '' in the check and plan resources requests for the same effect. This is particularly useful when engine.defaultScope is configured in Cerbos configuration.
