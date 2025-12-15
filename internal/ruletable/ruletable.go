@@ -1737,10 +1737,9 @@ func (rt *RuleTable) planWithAuditTrail(
 						}
 					}
 
-					if ((scopeDenyNode != nil || scopeDenyRolePolicyNode != nil) || scopeAllowNode != nil) &&
+					if (scopeDenyNode != nil || scopeDenyRolePolicyNode != nil || scopeAllowNode != nil) &&
 						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 						matchedScopes[action] = scope
-						break
 					}
 				}
 

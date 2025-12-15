@@ -38,19 +38,10 @@ planResources:
     "resourceKind": "leave_request",
     "policyVersion": "default",
     "filter": {
-      "kind": "KIND_CONDITIONAL",
-      "condition": {
-        "expression": {
-          "operator": "eq",
-          "operands": [
-            { "variable": "request.resource.attr.owner" },
-            { "value": "harry"}
-          ]
-        }
-      }
+      "kind": "KIND_ALWAYS_ALLOWED"
     },
     "meta": {
-      "filterDebug": "(eq request.resource.attr.owner \"harry\")",
-      "matchedScope": "acme.hr.uk"
+      "filterDebug": "(true)",
+      "matchedScope": "acme.hr"
     }
   }
