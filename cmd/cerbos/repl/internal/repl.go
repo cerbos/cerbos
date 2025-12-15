@@ -57,8 +57,8 @@ var (
 	errExit   = errors.New("exit")
 	errSilent = errors.New("") // returned when an error has occurred but feedback has already been provided to the user
 
-	listType = reflect.TypeOf([]any{})
-	mapType  = reflect.TypeOf(map[string]any{})
+	listType = reflect.TypeFor[[]any]()
+	mapType  = reflect.TypeFor[map[string]any]()
 
 	oppositeChars = map[rune]rune{
 		')': '(',

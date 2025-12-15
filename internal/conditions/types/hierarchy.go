@@ -150,7 +150,7 @@ func unaryHierarchyFnImpl(v ref.Val) ref.Val {
 	case types.String:
 		return Hierarchy(strings.Split(string(hv), hierarchyDelim))
 	case traits.Lister:
-		hieraEls, err := hv.ConvertToNative(reflect.SliceOf(reflect.TypeOf("")))
+		hieraEls, err := hv.ConvertToNative(reflect.SliceOf(reflect.TypeFor[string]()))
 		if err != nil {
 			return types.NewErr("failed to convert list to string slice: %v", err)
 		}
@@ -195,7 +195,7 @@ func (h Hierarchy) ConvertToNative(typeDesc reflect.Type) (any, error) {
 			return hv, nil
 		}
 
-		if reflect.TypeOf(h).Implements(typeDesc) {
+		if reflect.TypeFor[Hierarchy]().Implements(typeDesc) {
 			return h, nil
 		}
 	}

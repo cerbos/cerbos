@@ -240,7 +240,7 @@ func unarySPIFFEMatchOneOfFnImpl(v ref.Val) ref.Val {
 }
 
 func convertSPIFFEIDListToMatcher(l traits.Lister) (spiffeid.Matcher, error) {
-	maybeSpiffeIDs, err := l.ConvertToNative(reflect.SliceOf(reflect.TypeOf(SPIFFEID{})))
+	maybeSpiffeIDs, err := l.ConvertToNative(reflect.SliceOf(reflect.TypeFor[SPIFFEID]()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert list to SPIFFEID slice: %w", err)
 	}
@@ -259,7 +259,7 @@ func convertSPIFFEIDListToMatcher(l traits.Lister) (spiffeid.Matcher, error) {
 }
 
 func convertStringListToMatcher(l traits.Lister) (spiffeid.Matcher, error) {
-	maybeSpiffeIDs, err := l.ConvertToNative(reflect.SliceOf(reflect.TypeOf("")))
+	maybeSpiffeIDs, err := l.ConvertToNative(reflect.SliceOf(reflect.TypeFor[string]()))
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert list to string slice: %w", err)
 	}
@@ -312,7 +312,7 @@ func (sid SPIFFEID) ConvertToNative(typeDesc reflect.Type) (any, error) {
 			return sv, nil
 		}
 
-		if reflect.TypeOf(sid).Implements(typeDesc) {
+		if reflect.TypeFor[SPIFFEID]().Implements(typeDesc) {
 			return sid, nil
 		}
 	}
@@ -507,7 +507,7 @@ func (sm SPIFFEMatcher) ConvertToNative(typeDesc reflect.Type) (any, error) {
 			return sv, nil
 		}
 
-		if reflect.TypeOf(sm).Implements(typeDesc) {
+		if reflect.TypeFor[SPIFFEMatcher]().Implements(typeDesc) {
 			return sm, nil
 		}
 	}

@@ -1460,7 +1460,7 @@ func (ec *EvalContext) evaluateProtobufValueCELExpr(ctx context.Context, expr *e
 		return nil
 	}
 
-	val, err := result.ConvertToNative(reflect.TypeOf(&structpb.Value{}))
+	val, err := result.ConvertToNative(reflect.TypeFor[*structpb.Value]())
 	if err != nil {
 		return structpb.NewStringValue("<failed to convert evaluation to protobuf value>")
 	}
