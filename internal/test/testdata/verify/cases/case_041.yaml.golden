@@ -5,17 +5,17 @@
       "name": "TestSuite",
       "summary": {
         "overallResult": "RESULT_PASSED",
-        "testsCount": 2,
+        "testsCount": 1,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 2
+            "count": 1
           }
         ]
       },
       "testCases": [
         {
-          "name": "Default scope is set to empty on the test",
+          "name": "Default scope is set to acme on the suite and dot alias is used",
           "principals": [
             {
               "name": "john",
@@ -37,30 +37,6 @@
               ]
             }
           ]
-        },
-        {
-          "name": "Default scope is set to acme on the test",
-          "principals": [
-            {
-              "name": "john",
-              "resources": [
-                {
-                  "name": "john_leave_request",
-                  "actions": [
-                    {
-                      "name": "view:public",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_ALLOW"
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
         }
       ],
       "description": "Tests for verifying something"
@@ -68,11 +44,11 @@
   ],
   "summary": {
     "overallResult": "RESULT_PASSED",
-    "testsCount": 2,
+    "testsCount": 1,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 2
+        "count": 1
       }
     ]
   }

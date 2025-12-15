@@ -15,7 +15,7 @@
       },
       "testCases": [
         {
-          "name": "Default scope is set to empty on the test",
+          "name": "Default scope is set to empty on the test and dot alias is used",
           "principals": [
             {
               "name": "john",
@@ -39,7 +39,7 @@
           ]
         },
         {
-          "name": "Default scope is set to acme on the test",
+          "name": "Default scope is set to acme on the test and dot alias is used",
           "principals": [
             {
               "name": "john",
@@ -52,7 +52,7 @@
                       "details": {
                         "result": "RESULT_PASSED",
                         "success": {
-                          "effect": "EFFECT_ALLOW"
+                          "effect": "EFFECT_DENY"
                         }
                       }
                     }
