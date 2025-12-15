@@ -3950,13 +3950,13 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x11source_attributes\x18\x06 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x10sourceAttributes\x1a>\n" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb5\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbc\x04\n" +
 	"\x0eResourcePolicy\x125\n" +
 	"\bresource\x18\x01 \x01(\tB\x19\xbaH\x16\xc8\x01\x01r\x112\x0f^[^!*?\\[\\]{}]+$R\bresource\x12+\n" +
 	"\aversion\x18\x02 \x01(\tB\x11\xbaH\x0e\xc8\x01\x01r\t2\a^[\\w]+$R\aversion\x12K\n" +
 	"\x14import_derived_roles\x18\x03 \x03(\tB\x19\xbaH\x16\x92\x01\x13\x18\x01\"\x0fr\r2\v^[\\w\\-\\.]+$R\x12importDerivedRoles\x124\n" +
-	"\x05rules\x18\x04 \x03(\v2\x1e.cerbos.policy.v1.ResourceRuleR\x05rules\x12@\n" +
-	"\x05scope\x18\x05 \x01(\tB*\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x123\n" +
+	"\x05rules\x18\x04 \x03(\v2\x1e.cerbos.policy.v1.ResourceRuleR\x05rules\x12G\n" +
+	"\x05scope\x18\x05 \x01(\tB1\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x123\n" +
 	"\aschemas\x18\x06 \x01(\v2\x19.cerbos.policy.v1.SchemasR\aschemas\x129\n" +
 	"\tvariables\x18\a \x01(\v2\x1b.cerbos.policy.v1.VariablesR\tvariables\x12O\n" +
 	"\x11scope_permissions\x18\b \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsR\x10scopePermissions\x129\n" +
@@ -3970,12 +3970,12 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x06effect\x18\x05 \x01(\x0e2\x18.cerbos.effect.v1.EffectB\r\xbaH\n" +
 	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x123\n" +
 	"\x04name\x18\x06 \x01(\tB\x1f\xbaH\x1cr\x1a2\x18^([a-zA-Z][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
-	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xd6\x02\n" +
+	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xdd\x02\n" +
 	"\n" +
 	"RolePolicy\x12,\n" +
 	"\x04role\x18\x01 \x01(\tB\x16\xbaH\x13r\x112\x0f^[^!*?\\[\\]{}]+$H\x00R\x04role\x121\n" +
-	"\fparent_roles\x18\x05 \x03(\tB\x0e\xbaH\v\x92\x01\b\x18\x01\"\x04r\x02\x10\x01R\vparentRoles\x12@\n" +
-	"\x05scope\x18\x02 \x01(\tB*\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x120\n" +
+	"\fparent_roles\x18\x05 \x03(\tB\x0e\xbaH\v\x92\x01\b\x18\x01\"\x04r\x02\x10\x01R\vparentRoles\x12G\n" +
+	"\x05scope\x18\x02 \x01(\tB1\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x120\n" +
 	"\x05rules\x18\x03 \x03(\v2\x1a.cerbos.policy.v1.RoleRuleR\x05rules\x12]\n" +
 	"\x11scope_permissions\x18\x04 \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsB\f\xbaH\a\x82\x01\x04\x18\x00\x18\x02\x18\x01R\x10scopePermissionsB\x14\n" +
 	"\vpolicy_type\x12\x05\xbaH\x02\b\x01\"\xa7\x01\n" +
@@ -3984,12 +3984,12 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\bresource\x128\n" +
 	"\rallow_actions\x18\x02 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
 	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\fallowActions\x129\n" +
-	"\tcondition\x18\x03 \x01(\v2\x1b.cerbos.policy.v1.ConditionR\tcondition\"\xb7\x03\n" +
+	"\tcondition\x18\x03 \x01(\v2\x1b.cerbos.policy.v1.ConditionR\tcondition\"\xbe\x03\n" +
 	"\x0fPrincipalPolicy\x127\n" +
 	"\tprincipal\x18\x01 \x01(\tB\x19\xbaH\x16\xc8\x01\x01r\x112\x0f^[^!*?\\[\\]{}]+$R\tprincipal\x12+\n" +
 	"\aversion\x18\x02 \x01(\tB\x11\xbaH\x0e\xc8\x01\x01r\t2\a^[\\w]+$R\aversion\x125\n" +
-	"\x05rules\x18\x03 \x03(\v2\x1f.cerbos.policy.v1.PrincipalRuleR\x05rules\x12@\n" +
-	"\x05scope\x18\x04 \x01(\tB*\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x129\n" +
+	"\x05rules\x18\x03 \x03(\v2\x1f.cerbos.policy.v1.PrincipalRuleR\x05rules\x12G\n" +
+	"\x05scope\x18\x04 \x01(\tB1\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x129\n" +
 	"\tvariables\x18\x05 \x01(\v2\x1b.cerbos.policy.v1.VariablesR\tvariables\x12O\n" +
 	"\x11scope_permissions\x18\x06 \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsR\x10scopePermissions\x129\n" +
 	"\tconstants\x18\a \x01(\v2\x1b.cerbos.policy.v1.ConstantsR\tconstants\"\x98\x03\n" +

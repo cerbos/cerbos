@@ -82,7 +82,7 @@ message ResourcePolicy {
     }
   }];
   repeated ResourceRule rules = 4;
-  string scope = 5 [(buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"];
+  string scope = 5 [(buf.validate.field).string.pattern = "^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$"];
   Schemas schemas = 6;
   Variables variables = 7;
   ScopePermissions scope_permissions = 8;
@@ -137,7 +137,7 @@ message RolePolicy {
       string: {min_len: 1}
     }
   }];
-  string scope = 2 [(buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"];
+  string scope = 2 [(buf.validate.field).string.pattern = "^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$"];
   repeated RoleRule rules = 3;
   // Deprecated: no-op.
   ScopePermissions scope_permissions = 4 [
@@ -179,7 +179,7 @@ message PrincipalPolicy {
     (buf.validate.field).string.pattern = "^[\\w]+$"
   ];
   repeated PrincipalRule rules = 3;
-  string scope = 4 [(buf.validate.field).string.pattern = "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"];
+  string scope = 4 [(buf.validate.field).string.pattern = "^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$"];
   Variables variables = 5;
   ScopePermissions scope_permissions = 6;
   Constants constants = 7;

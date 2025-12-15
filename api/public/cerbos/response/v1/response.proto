@@ -210,7 +210,7 @@ message CheckResourcesResponse {
           "A dot-separated scope that describes the hierarchy "
           "this resource belongs to. This is used for "
           "determining policy inheritance."
-        pattern: "^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$"
+        pattern: "^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$"
         example: "\"acme.corp\""
       }];
     }

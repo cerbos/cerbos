@@ -2897,23 +2897,23 @@ const file_cerbos_response_v1_response_proto_rawDesc = "" +
 	"\fActionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
 	"\x05value\x18\x02 \x01(\x0e2\x18.cerbos.effect.v1.EffectR\x05value:\x028\x01:;\x92A8\n" +
-	"624Policy evaluation response for a batch of resources.\"\xac\x17\n" +
+	"624Policy evaluation response for a batch of resources.\"\xb3\x17\n" +
 	"\x16CheckResourcesResponse\x12o\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tBP\x92AM2#Request ID provided in the request.J&\"c2db17b8-4f9f-4fb1-acfd-9162a02be42b\"R\trequestId\x12\xe3\x01\n" +
 	"\aresults\x18\x02 \x03(\v26.cerbos.response.v1.CheckResourcesResponse.ResultEntryB\x90\x01\x92A\x8c\x012\x18Result for each resourceJp[{\"resource\": {\"Id\":\"XX125\", \"kind\":\"album:object\"}, \"actions\":{\"view\":\"EFFECT_ALLOW\",\"comment\":\"EFFECT_DENY\"}}]R\aresults\x12Y\n" +
-	"\x0ecerbos_call_id\x18\x03 \x01(\tB3\x92A02.Audit log call ID associated with this requestR\fcerbosCallId\x1a\xab\x13\n" +
+	"\x0ecerbos_call_id\x18\x03 \x01(\tB3\x92A02.Audit log call ID associated with this requestR\fcerbosCallId\x1a\xb2\x13\n" +
 	"\vResultEntry\x12[\n" +
 	"\bresource\x18\x01 \x01(\v2?.cerbos.response.v1.CheckResourcesResponse.ResultEntry.ResourceR\bresource\x12\xa1\x01\n" +
 	"\aactions\x18\x02 \x03(\v2C.cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntryBB\x92A?2$Mapping of each action to an effect.J\x17{\"view\":\"EFFECT_ALLOW\"}R\aactions\x12\x90\x01\n" +
 	"\x11validation_errors\x18\x03 \x03(\v2!.cerbos.schema.v1.ValidationErrorB@\x92A=2;List of validation errors (if schema validation is enabled)R\x10validationErrors\x12\x98\x02\n" +
 	"\x04meta\x18\x04 \x01(\v2;.cerbos.response.v1.CheckResourcesResponse.ResultEntry.MetaB\xc6\x01\x92A\xc2\x012 Metadata about policy evaluationJ\x9d\x01{\"actions\": {\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}, \"effective_derived_roles\": [\"owner\"]}R\x04meta\x12\xf6\x01\n" +
-	"\aoutputs\x18\x05 \x03(\v2\x1d.cerbos.engine.v1.OutputEntryB\xbc\x01\x92A\xb8\x012,Output for each rule with outputs configuredJ\x87\x01[{\"src\": \"resource.expense.v1/acme#rule-001\", \"val\": \"view_allowed:alice\"}, {\"src\": \"resource.expense.v1/acme#rule-002\", \"val\": \"foo\"}]R\aoutputs\x1a\xaa\x04\n" +
+	"\aoutputs\x18\x05 \x03(\v2\x1d.cerbos.engine.v1.OutputEntryB\xbc\x01\x92A\xb8\x012,Output for each rule with outputs configuredJ\x87\x01[{\"src\": \"resource.expense.v1/acme#rule-001\", \"val\": \"view_allowed:alice\"}, {\"src\": \"resource.expense.v1/acme#rule-002\", \"val\": \"foo\"}]R\aoutputs\x1a\xb1\x04\n" +
 	"\bResource\x129\n" +
 	"\x02id\x18\x01 \x01(\tB)\x92A&2\x1bID of the resource instanceJ\a\"XX125\"R\x02id\x12Q\n" +
 	"\x04kind\x18\x02 \x01(\tB=\x92A:2)Name of the resource kind being accessed.J\r\"album:photo\"R\x04kind\x12\xbf\x01\n" +
-	"\x0epolicy_version\x18\x03 \x01(\tB\x97\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$R\rpolicyVersion\x12\xcd\x01\n" +
-	"\x05scope\x18\x04 \x01(\tB\xb6\x01\x92A\xb2\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x1a\xf0\x06\n" +
+	"\x0epolicy_version\x18\x03 \x01(\tB\x97\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$R\rpolicyVersion\x12\xd4\x01\n" +
+	"\x05scope\x18\x04 \x01(\tB\xbd\x01\x92A\xb9\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1a\xf0\x06\n" +
 	"\x04Meta\x12\xa6\x02\n" +
 	"\aactions\x18\x01 \x03(\v2H.cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntryB\xc1\x01\x92A\xbd\x012OMetadata about the effect calculated for each action on this resource instance.Jj{\"view:*\":{\"matched_policy\": \"album:object:default\"},\"comment\":{\"matched_policy\": \"album:object:default\"}}R\aactions\x12\x83\x01\n" +
 	"\x17effective_derived_roles\x18\x02 \x03(\tBK\x92AH2;Derived roles that were effective during policy evaluation.J\t[\"owner\"]R\x15effectiveDerivedRoles\x1a\x88\x02\n" +
