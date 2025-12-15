@@ -811,23 +811,14 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	_, span := tracing.StartSpan(ctx, "engine.Check")
 	defer span.End()
 
+	principalScope := evaluator.Scope(input.Principal.Scope, evalParams)
 	principalVersion := input.Principal.PolicyVersion
-	principalScope := input.Principal.Scope
-
-	if principalScope == "" {
-		principalScope = evalParams.DefaultScope
-	}
-
 	if principalVersion == "" {
 		principalVersion = evalParams.DefaultPolicyVersion
 	}
 
-	resourceScope := input.Resource.Scope
+	resourceScope := evaluator.Scope(input.Resource.Scope, evalParams)
 	resourceVersion := input.Resource.PolicyVersion
-	if resourceScope == "" {
-		resourceScope = evalParams.DefaultScope
-	}
-
 	if resourceVersion == "" {
 		resourceVersion = evalParams.DefaultPolicyVersion
 	}
@@ -1254,14 +1245,14 @@ func checkInputToRequest(input *enginev1.CheckInput) *enginev1.Request {
 			Roles:         input.Principal.Roles,
 			Attr:          input.Principal.Attr,
 			PolicyVersion: input.Principal.PolicyVersion,
-			Scope:         input.Principal.Scope,
+			Scope:         namer.ScopeValue(input.Principal.Scope),
 		},
 		Resource: &enginev1.Request_Resource{
 			Kind:          input.Resource.Kind,
 			Id:            input.Resource.Id,
 			Attr:          input.Resource.Attr,
 			PolicyVersion: input.Resource.PolicyVersion,
-			Scope:         input.Resource.Scope,
+			Scope:         namer.ScopeValue(input.Resource.Scope),
 		},
 		AuxData: input.AuxData,
 	}

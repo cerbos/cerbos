@@ -5,6 +5,7 @@ package evaluator
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -108,5 +109,5 @@ func Scope(scope string, params EvalParams) string {
 		scope = params.DefaultScope
 	}
 
-	return scope
+	return strings.TrimPrefix(scope, ".")
 }

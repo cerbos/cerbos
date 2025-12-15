@@ -2098,7 +2098,7 @@ var File_cerbos_engine_v1_engine_proto protoreflect.FileDescriptor
 
 const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\n" +
-	"\x1dcerbos/engine/v1/engine.proto\x12\x10cerbos.engine.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a&google/api/expr/v1alpha1/checked.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xe2\b\n" +
+	"\x1dcerbos/engine/v1/engine.proto\x12\x10cerbos.engine.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a&google/api/expr/v1alpha1/checked.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\xf0\b\n" +
 	"\x12PlanResourcesInput\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1a\n" +
@@ -2107,12 +2107,12 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\tprincipal\x18\x03 \x01(\v2\x1b.cerbos.engine.v1.PrincipalR\tprincipal\x12I\n" +
 	"\bresource\x18\x04 \x01(\v2-.cerbos.engine.v1.PlanResourcesInput.ResourceR\bresource\x124\n" +
 	"\baux_data\x18\x05 \x01(\v2\x19.cerbos.engine.v1.AuxDataR\aauxData\x12!\n" +
-	"\finclude_meta\x18\x06 \x01(\bR\vincludeMeta\x1a\x97\x06\n" +
+	"\finclude_meta\x18\x06 \x01(\bR\vincludeMeta\x1a\xa5\x06\n" +
 	"\bResource\x12D\n" +
 	"\x04kind\x18\x01 \x01(\tB0\x92A 2\x0eResource kind.J\x0e\"album:object\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04kind\x12\xb0\x01\n" +
 	"\x04attr\x18\x02 \x03(\v27.cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntryBc\x92A`2^Key-value pairs of contextual data about the resource that are known at a time of the request.R\x04attr\x12\xd0\x01\n" +
-	"\x0epolicy_version\x18\x03 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12\xed\x01\n" +
-	"\x05scope\x18\x04 \x01(\tB\xd6\x01\x92A\xa5\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.\x8a\x01#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$\xe0A\x01\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x1aO\n" +
+	"\x0epolicy_version\x18\x03 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12\xfb\x01\n" +
+	"\x05scope\x18\x04 \x01(\tB\xe4\x01\x92A\xac\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$\xe0A\x01\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1aO\n" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\xa1\x04\n" +
@@ -2196,23 +2196,23 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2*.cerbos.engine.v1.CheckOutput.ActionEffectR\x05value:\x028\x01\"\xeb\x01\n" +
 	"\vOutputEntry\x12e\n" +
 	"\x03src\x18\x01 \x01(\tBS\x92AP2)Rule that matched to produce this output.J#\"resource.expense.v1/acme#rule-001\"R\x03src\x12u\n" +
-	"\x03val\x18\x02 \x01(\v2\x16.google.protobuf.ValueBK\x92AH27Dynamic output, determined by user defined rule output.J\r\"some_string\"R\x03val\"\xa4\a\n" +
+	"\x03val\x18\x02 \x01(\v2\x16.google.protobuf.ValueBK\x92AH27Dynamic output, determined by user defined rule output.J\r\"some_string\"R\x03val\"\xb2\a\n" +
 	"\bResource\x12^\n" +
 	"\x04kind\x18\x01 \x01(\tBJ\x92A:2)Name of the resource kind being accessed.J\r\"album:photo\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04kind\x12\xd0\x01\n" +
 	"\x0epolicy_version\x18\x02 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12F\n" +
 	"\x02id\x18\x03 \x01(\tB6\x92A&2\x1bID of the resource instanceJ\a\"XX125\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xce\x01\n" +
-	"\x04attr\x18\x04 \x03(\v2$.cerbos.engine.v1.Resource.AttrEntryB\x93\x01\x92A\x7f2dKay-value pairs of contextual data about this resource that should be used during policy evaluation.J\x17{\"owner\": \"bugs_bunny\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\x04attr\x12\xfa\x01\n" +
-	"\x05scope\x18\x05 \x01(\tB\xe3\x01\x92A\xb2\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$\xe0A\x01\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x1aO\n" +
+	"\x04attr\x18\x04 \x03(\v2$.cerbos.engine.v1.Resource.AttrEntryB\x93\x01\x92A\x7f2dKay-value pairs of contextual data about this resource that should be used during policy evaluation.J\x17{\"owner\": \"bugs_bunny\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\x04attr\x12\x88\x02\n" +
+	"\x05scope\x18\x05 \x01(\tB\xf1\x01\x92A\xb9\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$\xe0A\x01\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1aO\n" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\xa8\b\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\xb6\b\n" +
 	"\tPrincipal\x12C\n" +
 	"\x02id\x18\x01 \x01(\tB3\x92A#2\x13ID of the principalJ\f\"bugs_bunny\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xd0\x01\n" +
 	"\x0epolicy_version\x18\x02 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12\x87\x01\n" +
 	"\x05roles\x18\x03 \x03(\tBq\x92AX2FRoles assigned to this principal from your identity management system.J\b[\"user\"]\xa8\x01\x01\xb0\x01\x01\xe0A\x02\xbaH\x10\xc8\x01\x01\x92\x01\n" +
 	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\x05roles\x12\xce\x01\n" +
-	"\x04attr\x18\x04 \x03(\v2%.cerbos.engine.v1.Principal.AttrEntryB\x92\x01\x92A~2eKey-value pairs of contextual data about this principal that should be used during policy evaluation.J\x15{\"beta_tester\": true}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\x04attr\x12\xfb\x01\n" +
-	"\x05scope\x18\x05 \x01(\tB\xe4\x01\x92A\xb3\x012~A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$\xe0A\x01\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x1aO\n" +
+	"\x04attr\x18\x04 \x03(\v2%.cerbos.engine.v1.Principal.AttrEntryB\x92\x01\x92A~2eKey-value pairs of contextual data about this principal that should be used during policy evaluation.J\x15{\"beta_tester\": true}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\x04attr\x12\x89\x02\n" +
+	"\x05scope\x18\x05 \x01(\tB\xf2\x01\x92A\xba\x012~A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$\xe0A\x01\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1aO\n" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:Y\x92AV\n" +

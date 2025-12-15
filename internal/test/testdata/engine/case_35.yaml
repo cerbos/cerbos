@@ -1,0 +1,141 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Use dot alias for scope"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view:public", "approve"],
+      "principal":
+        {
+          "id": "john",
+          "scope": ".",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            { "department": "marketing", "geography": "GB", "team": "design" },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "scope": ".",
+          "policyVersion": "20210210",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.v20210210",
+            },
+          "approve":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.leave_request.v20210210",
+            },
+        },
+      "effectiveDerivedRoles":
+        ["employee_that_owns_the_record", "any_employee"],
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJVJCJG5D291VYDC8J5B569",
+      "timestamp": "2023-12-01T14:12:23.248570163Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "scope": ".",
+                    "policyVersion": "20210210",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "scope": ".",
+                    "policyVersion": "20210210",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["view:public", "approve"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.leave_request.v20210210",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.v20210210",
+                      },
+                  },
+                "effectiveDerivedRoles":
+                  ["employee_that_owns_the_record", "any_employee"],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.leave_request.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_01.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]

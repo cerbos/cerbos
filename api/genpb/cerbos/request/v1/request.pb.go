@@ -1864,12 +1864,12 @@ const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\bresource\x18\x04 \x01(\v2\x1e.cerbos.request.v1.ResourceSetB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\bresource\x12c\n" +
 	"\finclude_meta\x18\x05 \x01(\bB@\x92A=2;Opt to receive request processing metadata in the response.R\vincludeMeta\x12:\n" +
 	"\baux_data\x18\x06 \x01(\v2\x1a.cerbos.request.v1.AuxDataB\x03\xe0A\x01R\aauxData:\x12\x92A\x0f\n" +
-	"\r2\vPDP Request\"\x88\b\n" +
+	"\r2\vPDP Request\"\x96\b\n" +
 	"\vResourceSet\x12D\n" +
 	"\x04kind\x18\x01 \x01(\tB0\x92A 2\x0eResource kind.J\x0e\"album:object\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04kind\x12\xd0\x01\n" +
 	"\x0epolicy_version\x18\x02 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12\xec\x02\n" +
-	"\tinstances\x18\x03 \x03(\v2-.cerbos.request.v1.ResourceSet.InstancesEntryB\x9e\x02\x92A\x8c\x022mSet of resource instances to check. Each instance must be keyed by an application-specific unique identifier.J\x97\x01{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}\xc8\x01\x01\xe0A\x02\xbaH\b\xc8\x01\x01\x9a\x01\x02\b\x01R\tinstances\x12\xee\x01\n" +
-	"\x05scope\x18\x04 \x01(\tB\xd7\x01\x92A\xa6\x012~A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance.\x8a\x01#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$\xe0A\x01\xbaH'r%2#^([0-9a-zA-Z][\\w\\-]*(\\.[\\w\\-]*)*)*$R\x05scope\x1a^\n" +
+	"\tinstances\x18\x03 \x03(\v2-.cerbos.request.v1.ResourceSet.InstancesEntryB\x9e\x02\x92A\x8c\x022mSet of resource instances to check. Each instance must be keyed by an application-specific unique identifier.J\x97\x01{\"XX125\":{\"attr\":{\"owner\":\"bugs_bunny\", \"public\": false, \"flagged\": false}}, \"XX225\":{\"attr\":{\"owner\":\"daffy_duck\", \"public\": true, \"flagged\": false}}}\xc8\x01\x01\xe0A\x02\xbaH\b\xc8\x01\x01\x9a\x01\x02\b\x01R\tinstances\x12\xfc\x01\n" +
+	"\x05scope\x18\x04 \x01(\tB\xe5\x01\x92A\xad\x012~A dot-separated scope that describes the hierarchy these resources belong to. This is used for determining policy inheritance.\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$\xe0A\x01\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1a^\n" +
 	"\x0eInstancesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x126\n" +
 	"\x05value\x18\x02 \x01(\v2 .cerbos.request.v1.AttributesMapR\x05value:\x028\x01: \x92A\x1d\n" +

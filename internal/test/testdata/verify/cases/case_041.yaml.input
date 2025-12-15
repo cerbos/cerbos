@@ -11,6 +11,7 @@ principals:
 resources:
   john_leave_request:
     kind: leave_request
+    scope: "."
     id: XX125
 
 -- testdata/auxdata.yaml --
@@ -26,10 +27,10 @@ auxData:
 ---
 name: TestSuite
 description: Tests for verifying something
+options:
+  defaultScope: 'acme'
 tests:
-  - name: Default scope is set to empty on the test
-    options:
-      defaultScope: ''
+  - name: Default scope is set to acme on the suite and dot alias is used
     input:
       principals:
         - john
@@ -43,20 +44,3 @@ tests:
         resource: john_leave_request
         actions:
           view:public: EFFECT_DENY
-
-  - name: Default scope is set to acme on the test
-    options:
-      defaultScope: 'acme'
-    input:
-      principals:
-        - john
-      resources:
-        - john_leave_request
-      actions:
-        - view:public
-      auxData: myJWT
-    expected:
-      - principal: john
-        resource: john_leave_request
-        actions:
-          view:public: EFFECT_ALLOW

@@ -11,6 +11,7 @@ principals:
 resources:
   john_leave_request:
     kind: leave_request
+    scope: "."
     id: XX125
 
 -- testdata/auxdata.yaml --
@@ -27,7 +28,7 @@ auxData:
 name: TestSuite
 description: Tests for verifying something
 tests:
-  - name: Default scope is set to empty on the test
+  - name: Default scope is set to empty on the test and dot alias is used
     options:
       defaultScope: ''
     input:
@@ -44,7 +45,7 @@ tests:
         actions:
           view:public: EFFECT_DENY
 
-  - name: Default scope is set to acme on the test
+  - name: Default scope is set to acme on the test and dot alias is used
     options:
       defaultScope: 'acme'
     input:
@@ -59,4 +60,4 @@ tests:
       - principal: john
         resource: john_leave_request
         actions:
-          view:public: EFFECT_ALLOW
+          view:public: EFFECT_DENY

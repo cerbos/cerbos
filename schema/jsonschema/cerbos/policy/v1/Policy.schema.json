@@ -271,7 +271,7 @@
         },
         "scope": {
           "type": "string",
-          "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+          "pattern": "^(^$|\\.|[0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[0-9A-Z_a-z][\\-0-9A-Z_a-z]*)*)$"
         },
         "scopePermissions": {
           "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
@@ -371,7 +371,7 @@
         },
         "scope": {
           "type": "string",
-          "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+          "pattern": "^(^$|\\.|[0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[0-9A-Z_a-z][\\-0-9A-Z_a-z]*)*)$"
         },
         "scopePermissions": {
           "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
@@ -489,7 +489,7 @@
             },
             "scope": {
               "type": "string",
-              "pattern": "^([0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[\\-0-9A-Z_a-z]*)*)*$"
+              "pattern": "^(^$|\\.|[0-9A-Za-z][\\-0-9A-Z_a-z]*(\\.[0-9A-Z_a-z][\\-0-9A-Z_a-z]*)*)$"
             },
             "scopePermissions": {
               "type": "string",
