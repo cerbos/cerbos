@@ -31,10 +31,18 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: eq
+            operator: or
             operands:
-              - variable: request.resource.attr.status
-              - value: APPROVED
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: APPROVED
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: z0
+                    - variable: request.resource.id
     - action: edit
       resource:
         kind: x
@@ -52,10 +60,18 @@ tests:
                     - variable: request.resource.attr.status
                     - value: PENDING_STATUS
               - expression:
-                  operator: eq
+                  operator: or
                   operands:
-                    - variable: request.resource.attr.status
-                    - value: APPROVED
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.status
+                          - value: APPROVED
+                    - expression:
+                        operator: eq
+                        operands:
+                          - value: z0
+                          - variable: request.resource.id
     - action: debug
       resource:
         kind: x

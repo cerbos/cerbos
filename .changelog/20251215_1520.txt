@@ -1,0 +1,4 @@
+type:fix
+Union conditions across scope boundaries in query planner
+WARNING: this changes query planner behaviour for evaluations across multiple scopes.
+Fixes a bug where the query planner exited early if a policy with scope permissions `OVERRIDE_PARENT` had a matching `ALLOW` or `DENY` condition, thus preventing ancestor scopes' conditions from being evaluated and potentially; logically or'd.
