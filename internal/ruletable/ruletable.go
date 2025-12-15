@@ -1245,14 +1245,14 @@ func checkInputToRequest(input *enginev1.CheckInput) *enginev1.Request {
 			Roles:         input.Principal.Roles,
 			Attr:          input.Principal.Attr,
 			PolicyVersion: input.Principal.PolicyVersion,
-			Scope:         strings.TrimPrefix(input.Principal.Scope, "."),
+			Scope:         namer.ScopeValue(input.Principal.Scope),
 		},
 		Resource: &enginev1.Request_Resource{
 			Kind:          input.Resource.Kind,
 			Id:            input.Resource.Id,
 			Attr:          input.Resource.Attr,
 			PolicyVersion: input.Resource.PolicyVersion,
-			Scope:         strings.TrimPrefix(input.Resource.Scope, "."),
+			Scope:         namer.ScopeValue(input.Resource.Scope),
 		},
 		AuxData: input.AuxData,
 	}

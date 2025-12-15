@@ -378,3 +378,7 @@ func (pc PolicyCoords) FQN() string {
 func (pc PolicyCoords) PolicyKey() string {
 	return PolicyKeyFromFQN(pc.FQN())
 }
+
+func ScopeValue(scope string) string {
+	return strings.TrimPrefix(scope, ".")
+}

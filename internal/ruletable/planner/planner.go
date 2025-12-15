@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -27,6 +26,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/namer"
 	plannerutils "github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -115,7 +115,7 @@ func MkPlanResourcesOutput(input *enginev1.PlanResourcesInput, matchedScopes map
 		PolicyVersion:    input.Resource.PolicyVersion,
 		Action:           input.Action, //nolint:staticcheck
 		Actions:          input.Actions,
-		Scope:            strings.TrimPrefix(input.Resource.Scope, "."),
+		Scope:            namer.ScopeValue(input.Resource.Scope),
 		MatchedScopes:    matchedScopes,
 		ValidationErrors: validationErrors,
 	}
@@ -734,12 +734,12 @@ func PlanResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 			Id:    input.Principal.Id,
 			Roles: input.Principal.Roles,
 			Attr:  input.Principal.Attr,
-			Scope: strings.TrimPrefix(input.Principal.Scope, "."),
+			Scope: namer.ScopeValue(input.Principal.Scope),
 		},
 		Resource: &enginev1.Request_Resource{
 			Kind:  input.Resource.Kind,
 			Attr:  input.Resource.Attr,
-			Scope: strings.TrimPrefix(input.Resource.Scope, "."),
+			Scope: namer.ScopeValue(input.Resource.Scope),
 		},
 		AuxData: input.AuxData,
 	}
