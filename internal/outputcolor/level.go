@@ -25,7 +25,7 @@ func DefaultLevel() Level {
 	return Level(supportscolor.SupportsColor(os.Stdout.Fd(), supportscolor.SniffFlagsOption(false)).Level)
 }
 
-var TypeMapper = kong.TypeMapper(reflect.TypeOf((*Level)(nil)), kong.MapperFunc(decode))
+var TypeMapper = kong.TypeMapper(reflect.TypeFor[*Level](), kong.MapperFunc(decode))
 
 func (l *Level) Resolve(disable bool) Level {
 	if disable {
