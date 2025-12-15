@@ -1,10 +1,10 @@
 {
   "private": true,
-  "packageManager": "npm@11.6.4",
+  "packageManager": "npm@11.7.0",
   "scripts": {
     "start": "verdaccio"
   },
   "dependencies": {
-    "verdaccio": "6.2.2"
+    "verdaccio": "6.2.4"
   }
 }
