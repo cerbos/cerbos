@@ -15,7 +15,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: main
           fetch-depth: 0
@@ -29,4 +29,3 @@ jobs:
         with:
           auth_token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           site_id: ${{ secrets.NETLIFY_SITE_ID }}
-
