@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -114,7 +115,7 @@ func MkPlanResourcesOutput(input *enginev1.PlanResourcesInput, matchedScopes map
 		PolicyVersion:    input.Resource.PolicyVersion,
 		Action:           input.Action, //nolint:staticcheck
 		Actions:          input.Actions,
-		Scope:            input.Resource.Scope,
+		Scope:            strings.TrimPrefix(input.Resource.Scope, "."),
 		MatchedScopes:    matchedScopes,
 		ValidationErrors: validationErrors,
 	}
@@ -733,12 +734,12 @@ func PlanResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.R
 			Id:    input.Principal.Id,
 			Roles: input.Principal.Roles,
 			Attr:  input.Principal.Attr,
-			Scope: input.Principal.Scope,
+			Scope: strings.TrimPrefix(input.Principal.Scope, "."),
 		},
 		Resource: &enginev1.Request_Resource{
 			Kind:  input.Resource.Kind,
 			Attr:  input.Resource.Attr,
-			Scope: input.Resource.Scope,
+			Scope: strings.TrimPrefix(input.Resource.Scope, "."),
 		},
 		AuxData: input.AuxData,
 	}
