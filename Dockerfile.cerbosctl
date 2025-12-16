@@ -2,7 +2,8 @@ FROM alpine:3.16 AS base
 RUN apk add -U --no-cache ca-certificates && update-ca-certificates
 
 FROM scratch
+ARG TARGETPLATFORM
 ENTRYPOINT ["/cerbosctl"]
 COPY --from=base /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY cerbosctl /cerbosctl
+COPY ${TARGETPLATFORM}/cerbosctl /cerbosctl
 
