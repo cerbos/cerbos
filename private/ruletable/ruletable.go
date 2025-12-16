@@ -4,11 +4,14 @@
 package ruletable
 
 import (
+	"context"
 	"fmt"
 
 	epdpv2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/epdp/v2"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -17,9 +20,12 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
-type RuleTable = internalruletable.RuleTable
+type Evaluator interface {
+	Check(context.Context, []*enginev1.CheckInput, ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, *auditv1.AuditTrail, error)
+	Plan(context.Context, *enginev1.PlanResourcesInput, ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error)
+}
 
-func NewRuleTableFromProto(protoRT *runtimev1.RuleTable, conf *epdpv2.Config) (evaluator.Evaluator, error) {
+func NewRuleTableFromProto(protoRT *runtimev1.RuleTable, conf *epdpv2.Config) (Evaluator, error) {
 	rt, err := internalruletable.NewRuleTable(index.NewMem(), protoRT)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
