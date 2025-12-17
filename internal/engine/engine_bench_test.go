@@ -27,32 +27,9 @@ import (
 
 const numScopes = 2000
 
-func TestGeneratePolicies(t *testing.T) {
-	outputDir := os.Getenv("CERBOS_TEST_BENCH_OUTPUT")
-	if outputDir == "" {
-		t.Fatalf("CERBOS_TEST_BENCH_OUTPUT environment variable must be set")
-	}
-
-	tmpl, err := template.ParseFiles(filepath.Join("testdata", "policy_template.yaml.gotmpl"))
-	require.NoError(t, err)
-
-	for i := range numScopes {
-		require.NoError(t, writePolicy(outputDir, i, tmpl))
-	}
-}
-
-func writePolicy(outputDir string, i int, tmpl *template.Template) error {
-	f, err := os.Create(filepath.Join(outputDir, fmt.Sprintf("policy_%04d.yaml", i)))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	return tmpl.Execute(f, struct{ N int }{N: i})
-}
-
 func BenchmarkEvaluator(b *testing.B) {
-	evaluator := mkRuleTable(b)
+	policyDir := generatePolicies(b)
+	evaluator := mkRuleTable(b, policyDir)
 	b.ReportAllocs()
 	b.ResetTimer()
 	//nolint: gosec
@@ -87,30 +64,50 @@ func BenchmarkEvaluator(b *testing.B) {
 	}
 }
 
-func mkRuleTable(tb testing.TB) evaluator.Evaluator {
-	tb.Helper()
+func generatePolicies(b *testing.B) string {
+	b.Helper()
 
-	policyDir := os.Getenv("CERBOS_TEST_BENCH_OUTPUT")
-	if policyDir == "" {
-		tb.Fatalf("CERBOS_TEST_BENCH_OUTPUT environment variable must be set")
+	outputDir := b.TempDir()
+
+	tmpl, err := template.ParseFiles(filepath.Join("testdata", "policy_template.yaml.gotmpl"))
+	require.NoError(b, err)
+
+	for i := range numScopes {
+		require.NoError(b, writePolicy(outputDir, i, tmpl))
 	}
 
-	ctx, cancelFunc := context.WithCancel(tb.Context())
-	tb.Cleanup(cancelFunc)
+	return outputDir
+}
+
+func writePolicy(outputDir string, i int, tmpl *template.Template) error {
+	f, err := os.Create(filepath.Join(outputDir, fmt.Sprintf("policy_%04d.yaml", i)))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return tmpl.Execute(f, struct{ N int }{N: i})
+}
+
+func mkRuleTable(b *testing.B, policyDir string) evaluator.Evaluator {
+	b.Helper()
+
+	ctx, cancelFunc := context.WithCancel(b.Context())
+	b.Cleanup(cancelFunc)
 
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: policyDir})
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	protoRT := ruletable.NewProtoRuletable()
 
 	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	err = ruletable.LoadSchemas(ctx, protoRT, store)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	evalConf := &evaluator.Conf{}
 	evalConf.SetDefaults()
@@ -118,10 +115,10 @@ func mkRuleTable(tb testing.TB) evaluator.Evaluator {
 
 	idx := index.NewMem()
 	rt, err := ruletable.NewRuleTable(idx, protoRT)
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	eval, err := rt.Evaluator(evalConf, schema.NewConf(schema.EnforcementWarn))
-	require.NoError(tb, err)
+	require.NoError(b, err)
 
 	return eval
 }
