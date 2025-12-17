@@ -13,13 +13,14 @@ import (
 	"github.com/google/cel-go/common"
 	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/decls"
-	"github.com/google/cel-go/common/types"
+	celtypes "github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/conditions/types"
 )
 
 func TestCerbosLib(t *testing.T) {
@@ -140,10 +141,10 @@ func TestCmpSelectAndCall(t *testing.T) {
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.VariableDecls(
-			decls.NewVariable("y", types.NewListType(types.StringType)),
-			decls.NewVariable(conditions.CELResourceAbbrev, types.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVariable("z", types.StringType),
-			decls.NewVariable("v", types.NewMapType(types.StringType, types.DynType))),
+			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
+			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
+			decls.NewVariable("z", celtypes.StringType),
+			decls.NewVariable("v", celtypes.NewMapType(celtypes.StringType, celtypes.DynType))),
 		ext.Strings())
 
 	expr0 := "v.geo() in (y + [z]).map(t, t.upperAscii())"
@@ -172,9 +173,9 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.VariableDecls(
-			decls.NewVariable("y", types.NewListType(types.StringType)),
-			decls.NewVariable(conditions.CELResourceAbbrev, types.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVariable("z", types.StringType)),
+			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
+			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
+			decls.NewVariable("z", celtypes.StringType)),
 		// decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings(),
 		cel.Macros(geo))
@@ -196,7 +197,7 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 
 	out, det, err := conditions.ContextEval(t.Context(), env, ast.NativeRep(), vars, time.Now, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 	is.NoError(err)
-	is.True(types.IsUnknown(out))
+	is.True(celtypes.IsUnknown(out))
 	residual, err := env.ResidualAst(ast, det)
 	is.NoError(err)
 	astToString, err := cel.AstToString(residual)
@@ -208,12 +209,12 @@ func TestPartialEvaluation(t *testing.T) {
 	env, _ := cel.NewEnv(
 		cel.Types(&enginev1.Resource{}),
 		cel.VariableDecls(
-			decls.NewVariable(conditions.CELRequestIdent, types.NewObjectType("cerbos.engine.v1.CheckInput")),
-			decls.NewVariable("y", types.NewListType(types.StringType)),
-			decls.NewVariable(conditions.CELResourceAbbrev, types.NewObjectType("cerbos.engine.v1.Resource")),
-			decls.NewVariable("request.principal", types.NewMapType(types.StringType, types.DynType)),
-			decls.NewVariable("z", types.StringType),
-			decls.NewVariable("R.attr.department", types.StringType)),
+			decls.NewVariable(conditions.CELRequestIdent, types.MessageType[*enginev1.CheckInput]()),
+			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
+			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
+			decls.NewVariable("request.principal", celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+			decls.NewVariable("z", celtypes.StringType),
+			decls.NewVariable("R.attr.department", celtypes.StringType)),
 		ext.Strings())
 
 	vars, _ := cel.PartialVars(map[string]any{

@@ -42,10 +42,10 @@ var (
 	StdEnv *cel.Env
 
 	StdEnvDecls = []*decls.VariableDecl{
-		decls.NewVariable(CELRequestIdent, celtypes.NewObjectType("cerbos.engine.v1.Request")),
-		decls.NewVariable(CELPrincipalAbbrev, celtypes.NewObjectType("cerbos.engine.v1.Request.Principal")),
-		decls.NewVariable(CELResourceAbbrev, celtypes.NewObjectType("cerbos.engine.v1.Request.Resource")),
-		decls.NewVariable(CELRuntimeIdent, celtypes.NewObjectType("cerbos.engine.v1.Runtime")),
+		decls.NewVariable(CELRequestIdent, types.MessageType[*enginev1.Request]()),
+		decls.NewVariable(CELPrincipalAbbrev, types.MessageType[*enginev1.Request_Principal]()),
+		decls.NewVariable(CELResourceAbbrev, types.MessageType[*enginev1.Request_Resource]()),
+		decls.NewVariable(CELRuntimeIdent, types.MessageType[*enginev1.Runtime]()),
 		decls.NewVariable(CELConstantsIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 		decls.NewVariable(CELConstantsAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 		decls.NewVariable(CELVariablesIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
