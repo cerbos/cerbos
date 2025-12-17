@@ -167,204 +167,65 @@ nfpms:
 
 signs:
   - cmd: cosign
+    signature: "${artifact}.sigstore.json"
     args:
       - sign-blob
       - --yes
-      - --rekor-url
-      - https://rekor.sigstore.dev/
-      - "--bundle=${artifact}.bundle"
-      - "--output-signature=${signature}"
+      - "--bundle=${signature}"
       - "${artifact}"
     artifacts: all
 
-dockers:
-  - id: cerbos-amd64
+dockers_v2:
+  - id: cerbos
     dockerfile: Dockerfile.cerbos
-    image_templates:
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
-      - "ghcr.io/cerbos/cerbos:latest-amd64"
-      - "ghcr.io/cerbos/cerbos:dev-amd64"
-      - "docker.io/cerbos/cerbos:{{ .Version }}-amd64"
-      - "docker.io/cerbos/cerbos:latest-amd64"
-      - "docker.io/cerbos/cerbos:dev-amd64"
+    images:
+      - "ghcr.io/cerbos/cerbos"
+      - "docker.io/cerbos/cerbos"
+    tags:
+      - "{{.Version}}"
+      - latest
+      - dev
     ids:
       - cerbos
-    goarch: amd64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/amd64"
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
 
-  - id: cerbos-arm64
+  - id: cerbosctl
+    dockerfile: Dockerfile.cerbosctl
+    images:
+      - "ghcr.io/cerbos/cerbosctl"
+      - "docker.io/cerbos/cerbosctl"
+    tags:
+      - "{{.Version}}"
+      - latest
+      - dev
+    ids:
+      - cerbosctl
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+
+  - id: aws
     dockerfile: Dockerfile.cerbos
-    image_templates:
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
-      - "ghcr.io/cerbos/cerbos:latest-arm64"
-      - "ghcr.io/cerbos/cerbos:dev-arm64"
-      - "docker.io/cerbos/cerbos:{{ .Version }}-arm64"
-      - "docker.io/cerbos/cerbos:latest-arm64"
-      - "docker.io/cerbos/cerbos:dev-arm64"
+    images:
+      - "{{ .Env.AWS_CONTAINER_REPO }}"
+    tags:
+      - "{{.Version}}"
     ids:
       - cerbos
-    goarch: arm64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-
-  - id: cerbosctl-amd64
-    dockerfile: Dockerfile.cerbosctl
-    image_templates:
-      - "ghcr.io/cerbos/cerbosctl:{{ .Version }}-amd64"
-      - "ghcr.io/cerbos/cerbosctl:latest-amd64"
-      - "ghcr.io/cerbos/cerbosctl:dev-amd64"
-      - "docker.io/cerbos/cerbosctl:{{ .Version }}-amd64"
-      - "docker.io/cerbos/cerbosctl:latest-amd64"
-      - "docker.io/cerbos/cerbosctl:dev-amd64"
-    ids:
-      - cerbosctl
-    goarch: amd64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name=cerbosctl"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/amd64"
-
-  - id: cerbosctl-arm64
-    dockerfile: Dockerfile.cerbosctl
-    image_templates:
-      - "ghcr.io/cerbos/cerbosctl:{{ .Version }}-arm64"
-      - "ghcr.io/cerbos/cerbosctl:latest-arm64"
-      - "ghcr.io/cerbos/cerbosctl:dev-arm64"
-      - "docker.io/cerbos/cerbosctl:{{ .Version }}-arm64"
-      - "docker.io/cerbos/cerbosctl:latest-arm64"
-      - "docker.io/cerbos/cerbosctl:dev-arm64"
-    ids:
-      - cerbosctl
-    goarch: arm64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name=cerbosctl"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-
-  - id: cerbos-aws-amd64
-    dockerfile: Dockerfile.cerbos
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
-    ids:
-      - cerbos-aws
-    goarch: amd64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/amd64"
-
-  - id: cerbos-aws-arm64
-    dockerfile: Dockerfile.cerbos
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
-    ids:
-      - cerbos-aws
-    goarch: arm64
-    use: buildx
-    build_flag_templates:
-      - "--pull"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.name={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-      - "--label=org.opencontainers.image.source={{.GitURL}}"
-      - "--platform=linux/arm64"
-
-docker_manifests:
-  - name_template: "ghcr.io/cerbos/cerbos:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-amd64"
-      - "ghcr.io/cerbos/cerbos:{{ .Version }}-arm64"
-
-  - name_template: "ghcr.io/cerbos/cerbosctl:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/cerbos/cerbosctl:{{ .Version }}-amd64"
-      - "ghcr.io/cerbos/cerbosctl:{{ .Version }}-arm64"
-
-  - name_template: "ghcr.io/cerbos/cerbos:latest"
-    image_templates:
-      - "ghcr.io/cerbos/cerbos:latest-amd64"
-      - "ghcr.io/cerbos/cerbos:latest-arm64"
-
-  - name_template: "ghcr.io/cerbos/cerbosctl:latest"
-    image_templates:
-      - "ghcr.io/cerbos/cerbosctl:latest-amd64"
-      - "ghcr.io/cerbos/cerbosctl:latest-arm64"
-
-  - name_template: "ghcr.io/cerbos/cerbos:dev"
-    image_templates:
-      - "ghcr.io/cerbos/cerbos:dev-amd64"
-      - "ghcr.io/cerbos/cerbos:dev-arm64"
-
-  - name_template: "ghcr.io/cerbos/cerbosctl:dev"
-    image_templates:
-      - "ghcr.io/cerbos/cerbosctl:dev-amd64"
-      - "ghcr.io/cerbos/cerbosctl:dev-arm64"
-
-  - name_template: "docker.io/cerbos/cerbos:{{ .Version }}"
-    image_templates:
-      - "docker.io/cerbos/cerbos:{{ .Version }}-amd64"
-      - "docker.io/cerbos/cerbos:{{ .Version }}-arm64"
-
-  - name_template: "docker.io/cerbos/cerbosctl:{{ .Version }}"
-    image_templates:
-      - "docker.io/cerbos/cerbosctl:{{ .Version }}-amd64"
-      - "docker.io/cerbos/cerbosctl:{{ .Version }}-arm64"
-
-  - name_template: "docker.io/cerbos/cerbos:latest"
-    image_templates:
-      - "docker.io/cerbos/cerbos:latest-amd64"
-      - "docker.io/cerbos/cerbos:latest-arm64"
-
-  - name_template: "docker.io/cerbos/cerbosctl:latest"
-    image_templates:
-      - "docker.io/cerbos/cerbosctl:latest-amd64"
-      - "docker.io/cerbos/cerbosctl:latest-arm64"
-
-  - name_template: "docker.io/cerbos/cerbos:dev"
-    image_templates:
-      - "docker.io/cerbos/cerbos:dev-amd64"
-      - "docker.io/cerbos/cerbos:dev-arm64"
-
-  - name_template: "docker.io/cerbos/cerbosctl:dev"
-    image_templates:
-      - "docker.io/cerbos/cerbosctl:dev-amd64"
-      - "docker.io/cerbos/cerbosctl:dev-arm64"
-
-  - name_template: "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}"
-    image_templates:
-      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-amd64"
-      - "{{ .Env.AWS_CONTAINER_REPO }}:{{ .Version }}-arm64"
+    labels:
+      "org.opencontainers.image.created": "{{.Date}}"
+      "org.opencontainers.image.name": "{{.ProjectName}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.source": "{{.GitURL}}"
 
 docker_signs:
   - id: sign-images
@@ -372,13 +233,10 @@ docker_signs:
     args:
       - sign
       - --yes
-      - --rekor-url
-      - https://rekor.sigstore.dev/
       - "${artifact}"
-    artifacts: all
     output: true
 
-brews:
+homebrew_casks:
   - repository:
       owner: cerbos
       name: homebrew-tap
@@ -388,15 +246,24 @@ brews:
         enabled: true
         base:
           branch: main
-
-    directory: Formula
+    url:
+      verified: github.com/cerbos/homebrew-tap
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/cerbos"]
+          end
+    directory: Casks
     ids:
       - cerbos
     homepage: "https://cerbos.dev"
     description: "Cerbos is the open core, language-agnostic, scalable authorization solution that makes user permissions and authorization simple to implement and manage by writing context-aware access control policies for your application resources."
     license: "Apache-2.0"
+
 checksum:
   name_template: "checksums.txt"
+
 release:
   extra_files:
     - glob: "**/*.bundle"
