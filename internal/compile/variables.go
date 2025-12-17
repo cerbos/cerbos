@@ -67,7 +67,7 @@ func compileExportVariables(modCtx *moduleCtx) {
 
 func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]*runtimev1.Variable, error) {
 	modCtx := &moduleCtx{
-		unitCtx: &unitCtx{errors: new(ErrorSet)},
+		unitCtx: &unitCtx{errors: newErrorSet()},
 		fqn:     fqn,
 	}
 
