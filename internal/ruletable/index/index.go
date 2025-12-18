@@ -205,7 +205,7 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 }
 
 func (s *rowSet) copy() *rowSet {
-	// Mark original as shared (safe for concurrent calls - all write true)
+	// Mark original as shared
 	s.cow.Store(true)
 	// Create copy that shares the map
 	c := &rowSet{m: s.m}
