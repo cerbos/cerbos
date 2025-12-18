@@ -120,6 +120,12 @@ func newRowSet() *rowSet {
 	}
 }
 
+func newRowSetCap(capacity int) *rowSet {
+	return &rowSet{
+		m: make(map[string]*Row, capacity),
+	}
+}
+
 func (s *rowSet) getM() map[string]*Row {
 	if s == nil {
 		return nil
@@ -161,6 +167,17 @@ func (l *rowSet) del(r *Row) {
 	delete(l.m, r.sum)
 }
 
+// rowSetsLen returns the total number of rows across multiple rowSet maps.
+func rowSetsLen(ms ...map[string]*rowSet) int {
+	total := 0
+	for _, m := range ms {
+		for _, rs := range m {
+			total += len(rs.m)
+		}
+	}
+	return total
+}
+
 // unionAll creates a new rowSet containing all rows from the given rowSets.
 // Pre-allocates the map with the right capacity for efficiency.
 func unionAll(sets ...*rowSet) *rowSet {
@@ -172,7 +189,7 @@ func unionAll(sets ...*rowSet) *rowSet {
 		}
 	}
 
-	res := &rowSet{m: make(map[string]*Row, total)}
+	res := newRowSetCap(total)
 	for _, s := range sets {
 		if s != nil {
 			for _, r := range s.m {
@@ -186,7 +203,7 @@ func unionAll(sets ...*rowSet) *rowSet {
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	// Early return for empty sets (getM handles nil receiver)
 	if len(s.getM()) == 0 || len(o.getM()) == 0 {
-		return &rowSet{m: make(map[string]*Row)}
+		return newRowSet()
 	}
 
 	// Iterate over the smaller set for efficiency
@@ -196,7 +213,7 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	}
 
 	// Pre-allocate with capacity of smaller set (maximum possible result size)
-	res := &rowSet{m: make(map[string]*Row, len(small.m))}
+	res := newRowSetCap(len(small.m))
 	for _, r := range small.m {
 		if _, ok := large.m[r.sum]; ok {
 			res.m[r.sum] = r
@@ -211,7 +228,7 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 func intersect3(a, b, c *rowSet) *rowSet {
 	// Early return for empty sets (getM handles nil receiver)
 	if len(a.getM()) == 0 || len(b.getM()) == 0 || len(c.getM()) == 0 {
-		return &rowSet{m: make(map[string]*Row)}
+		return newRowSet()
 	}
 
 	// Sort sets by size: iterate over smallest, check smaller of remaining two first
@@ -226,7 +243,7 @@ func intersect3(a, b, c *rowSet) *rowSet {
 	}
 
 	// Pre-allocate with capacity of smallest set
-	res := &rowSet{m: make(map[string]*Row, len(sets[0].m))}
+	res := newRowSetCap(len(sets[0].m))
 	for _, r := range sets[0].m {
 		if _, ok := sets[1].m[r.sum]; ok {
 			if _, ok := sets[2].m[r.sum]; ok {
@@ -401,8 +418,9 @@ func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
 		return nil, err
 	}
 
-	resSet := newRowSet()
-	var res []*Row
+	capacity := rowSetsLen(versions, scopes, roles, resources, actions)
+	resSet := newRowSetCap(capacity)
+	res := make([]*Row, 0, capacity)
 	appendRows := func(rowSets map[string]*rowSet) {
 		for _, rowSet := range rowSets {
 			for _, row := range rowSet.rows() {
