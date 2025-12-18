@@ -1,0 +1,3 @@
+type:breaking
+Prevent index lookup of constants, globals, and variables
+The top-level identifiers `constants`/`C`, `globals`/`G`, or `variables`/`V` do not support index lookup in CEL expressions, so accessing these values must be done using the `.` operator (`V.foo` instead of `V["foo"]`). Consequently, these values must be defined with names that are valid CEL identifiers (matching `[_a-zA-Z][_a-zA-Z0-9]*` and excluding the keywords `true`, `false`, `null`, and `in`). Policy compilation will now fail on expressions using index lookups to access constants, globals, or variables, and definitions with invalid names.

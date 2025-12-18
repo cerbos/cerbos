@@ -32,14 +32,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -95,14 +88,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -111,14 +97,7 @@
                   "dyn": {}
                 },
                 "4": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "5": {
                   "dyn": {}
@@ -181,14 +160,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -228,14 +200,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -333,14 +298,7 @@
                       },
                       "typeMap": {
                         "1": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "2": {
                           "dyn": {}
@@ -349,27 +307,13 @@
                           "primitive": "BOOL"
                         },
                         "4": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "5": {
                           "dyn": {}
                         },
                         "6": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "7": {
                           "dyn": {}
@@ -378,14 +322,7 @@
                           "primitive": "BOOL"
                         },
                         "9": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "10": {
                           "dyn": {}
@@ -506,14 +443,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -556,14 +486,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -622,14 +545,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -638,14 +554,7 @@
                     "dyn": {}
                   },
                   "4": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "5": {
                     "dyn": {}
@@ -711,14 +620,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -770,14 +672,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -833,14 +728,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -849,14 +737,7 @@
                   "dyn": {}
                 },
                 "4": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "5": {
                   "dyn": {}
@@ -935,14 +816,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -951,14 +825,7 @@
                   "dyn": {}
                 },
                 "4": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "5": {
                   "dyn": {}
@@ -1037,14 +904,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -1053,14 +913,7 @@
                   "dyn": {}
                 },
                 "4": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "5": {
                   "dyn": {}
@@ -1123,14 +976,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -1170,14 +1016,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -1217,14 +1056,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -1264,14 +1096,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -1311,14 +1136,7 @@
               },
               "typeMap": {
                 "1": {
-                  "mapType": {
-                    "keyType": {
-                      "primitive": "STRING"
-                    },
-                    "valueType": {
-                      "dyn": {}
-                    }
-                  }
+                  "messageType": "cerbos.Variables"
                 },
                 "2": {
                   "dyn": {}
@@ -1387,14 +1205,7 @@
                       },
                       "typeMap": {
                         "1": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "2": {
                           "dyn": {}
@@ -1403,14 +1214,7 @@
                           "primitive": "BOOL"
                         },
                         "4": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "5": {
                           "dyn": {}
@@ -1477,14 +1281,7 @@
                         },
                         "typeMap": {
                           "1": {
-                            "mapType": {
-                              "keyType": {
-                                "primitive": "STRING"
-                              },
-                              "valueType": {
-                                "dyn": {}
-                              }
-                            }
+                            "messageType": "cerbos.Variables"
                           },
                           "2": {
                             "dyn": {}
@@ -1556,14 +1353,7 @@
                       },
                       "typeMap": {
                         "1": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "2": {
                           "dyn": {}
@@ -1572,14 +1362,7 @@
                           "primitive": "BOOL"
                         },
                         "4": {
-                          "mapType": {
-                            "keyType": {
-                              "primitive": "STRING"
-                            },
-                            "valueType": {
-                              "dyn": {}
-                            }
-                          }
+                          "messageType": "cerbos.Variables"
                         },
                         "5": {
                           "dyn": {}
@@ -1651,14 +1434,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -1701,14 +1477,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -1767,14 +1536,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -1783,14 +1545,7 @@
                     "dyn": {}
                   },
                   "4": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "5": {
                     "dyn": {}
@@ -1856,14 +1611,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -1922,14 +1670,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -1938,14 +1679,7 @@
                     "dyn": {}
                   },
                   "4": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "5": {
                     "dyn": {}
@@ -2011,14 +1745,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -2077,14 +1804,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -2093,14 +1813,7 @@
                     "dyn": {}
                   },
                   "4": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "5": {
                     "dyn": {}
@@ -2166,14 +1879,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}
@@ -2216,14 +1922,7 @@
                 },
                 "typeMap": {
                   "1": {
-                    "mapType": {
-                      "keyType": {
-                        "primitive": "STRING"
-                      },
-                      "valueType": {
-                        "dyn": {}
-                      }
-                    }
+                    "messageType": "cerbos.Variables"
                   },
                   "2": {
                     "dyn": {}

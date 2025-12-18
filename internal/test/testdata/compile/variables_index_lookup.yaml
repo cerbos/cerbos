@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+wantErrors:
+  - file: resource_policies/example.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression `C.foo > V["bar"]`: [found no matching overload for '_[_]' applied to '(cerbos.Variables, string)']
+    position:
+      line: 21
+      column: 11
+      path: $.resourcePolicy.rules[0].condition.match.expr
+  - file: resource_policies/example.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression `C["foo"] > G.baz`: [found no matching overload for '_[_]' applied to '(cerbos.Variables, string)']
+    position:
+      line: 31
+      column: 11
+      path: $.resourcePolicy.rules[1].condition.match.expr
+  - file: resource_policies/example.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression `G["baz"] > V.bar`: [found no matching overload for '_[_]' applied to '(cerbos.Variables, string)']
+    position:
+      line: 41
+      column: 11
+      path: $.resourcePolicy.rules[2].condition.match.expr
+mainDef: resource_policies/example.yaml

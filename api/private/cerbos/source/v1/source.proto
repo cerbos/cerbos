@@ -38,6 +38,7 @@ message SourceContext {
   StartPosition start_position = 1;
   map<string, Position> field_positions = 2;
   repeated Error errors = 3;
+  map<string, Position> map_key_positions = 4;
 }
 
 message PolicyWrapper {

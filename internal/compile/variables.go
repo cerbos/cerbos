@@ -22,6 +22,8 @@ import (
 	"github.com/cerbos/cerbos/internal/policy"
 )
 
+var errInvalidVariableName = errors.New("invalid variable name")
+
 func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
 	if modCtx.variables != nil {
 		return
@@ -35,7 +37,7 @@ func compilePolicyVariables(modCtx *moduleCtx, variables *policyv1.Variables) {
 		evModCtx := modCtx.moduleCtx(evModID)
 		if evModCtx == nil {
 			path := policy.VariablesImportProtoPath(modCtx.def, i)
-			modCtx.addErrForProtoPath(path, errImportNotFound, "Variables import '%s' cannot be found", imp)
+			modCtx.addErrForValueAtProtoPath(path, errImportNotFound, "Variables import '%s' cannot be found", imp)
 			continue
 		}
 
@@ -67,7 +69,7 @@ func compileExportVariables(modCtx *moduleCtx) {
 
 func sortCompiledVariables(fqn string, variables map[string]*runtimev1.Expr) ([]*runtimev1.Variable, error) {
 	modCtx := &moduleCtx{
-		unitCtx: &unitCtx{errors: new(ErrorSet)},
+		unitCtx: &unitCtx{errors: newErrorSet()},
 		fqn:     fqn,
 	}
 
@@ -112,6 +114,11 @@ func newVariableDefinitions(modCtx *moduleCtx) *variableDefinitions {
 func (vd *variableDefinitions) Compile(definitions map[string]string, path, source string) {
 	for name, expr := range definitions {
 		varPath := fmt.Sprintf("%s[%q]", path, name)
+
+		if err := ValidateIdentifier(name); err != nil {
+			vd.modCtx.addErrForMapKeyAtProtoPath(varPath, errInvalidVariableName, "%s", err)
+		}
+
 		variable := &runtimev1.Variable{
 			Name: name,
 			Expr: &runtimev1.Expr{
@@ -167,7 +174,7 @@ func (vd *variableDefinitions) reportRedefinedVariables() {
 func variableDefinitionPlaces(contexts []*variableCtx) []string {
 	out := make([]string, len(contexts))
 	for i, vc := range contexts {
-		pos := vc.srcCtx.PositionForProtoPath(vc.path)
+		pos := vc.srcCtx.PositionOfValueAtProtoPath(vc.path)
 		if pos != nil {
 			out[i] = fmt.Sprintf("%s (%s:%d:%d)", vc.source, vc.sourceFile, pos.GetLine(), pos.GetColumn())
 		} else {
@@ -185,19 +192,19 @@ func (vd *variableDefinitions) resolveReferences() {
 
 		for referencedConstName := range constants {
 			if !vd.modCtx.constants.IsDefined(referencedConstName) {
-				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errUndefinedConstant, "Undefined constant '%s' referenced in variable '%s'", referencedConstName, referrerName)
+				referrer.varCtx.addErrForValueAtProtoPath(referrer.varCtx.path, errUndefinedConstant, "Undefined constant '%s' referenced in variable '%s'", referencedConstName, referrerName)
 			}
 		}
 
 		for referencedVarName := range variables {
 			if referencedVarName == referrerName {
-				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errCyclicalVariables, "Variable '%s' references itself", referencedVarName)
+				referrer.varCtx.addErrForValueAtProtoPath(referrer.varCtx.path, errCyclicalVariables, "Variable '%s' references itself", referencedVarName)
 				continue
 			}
 
 			referencedID, ok := vd.ids[referencedVarName]
 			if !ok {
-				referrer.varCtx.addErrForProtoPath(referrer.varCtx.path, errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedVarName, referrerName)
+				referrer.varCtx.addErrForValueAtProtoPath(referrer.varCtx.path, errUndefinedVariable, "Undefined variable '%s' referenced in variable '%s'", referencedVarName, referrerName)
 				continue
 			}
 
@@ -210,7 +217,7 @@ func (vd *variableDefinitions) resolveReferences() {
 func (vd *variableDefinitions) references(path string, expr *expr.CheckedExpr) (constants, variables map[string]struct{}) {
 	exprAST, err := ast.ToAST(expr)
 	if err != nil {
-		vd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
+		vd.modCtx.addErrForValueAtProtoPath(path, err, "Failed to convert expression to AST")
 		return nil, nil
 	}
 
@@ -249,7 +256,7 @@ func (vd *variableDefinitions) Use(path string, expr *expr.CheckedExpr) {
 		if defined {
 			vd.use(id, name)
 		} else {
-			vd.modCtx.addErrForProtoPath(path, errUndefinedVariable, "Undefined variable '%s'", name)
+			vd.modCtx.addErrForValueAtProtoPath(path, errUndefinedVariable, "Undefined variable '%s'", name)
 		}
 	}
 }
@@ -328,7 +335,7 @@ func (vd *variableDefinitions) reportCyclicalVariables(cycles [][]graph.Node) {
 			}
 
 			variable := node.(*variableNode) //nolint:forcetypeassert
-			pos := variable.varCtx.srcCtx.PositionForProtoPath(variable.varCtx.path)
+			pos := variable.varCtx.srcCtx.PositionOfValueAtProtoPath(variable.varCtx.path)
 			if pos != nil {
 				fmt.Fprintf(&desc, "'%s' (%s:%d:%d)", variable.Name, variable.varCtx.sourceFile, pos.GetLine(), pos.GetColumn())
 			} else {
@@ -338,8 +345,8 @@ func (vd *variableDefinitions) reportCyclicalVariables(cycles [][]graph.Node) {
 
 		desc.WriteString(" form a cycle")
 		if len(cycle) > 0 {
-			firstItem := cycle[0].(*variableNode)                                                                 //nolint:forcetypeassert
-			firstItem.varCtx.addErrForProtoPath(firstItem.varCtx.path, errCyclicalVariables, "%s", desc.String()) //nolint:govet
+			firstItem := cycle[0].(*variableNode)                                                                        //nolint:forcetypeassert
+			firstItem.varCtx.addErrForValueAtProtoPath(firstItem.varCtx.path, errCyclicalVariables, "%s", desc.String()) //nolint:govet
 		} else {
 			vd.modCtx.addErrWithDesc(errCyclicalVariables, "%s", desc.String()) //nolint:govet
 		}

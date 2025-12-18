@@ -35,22 +35,52 @@ func (sc SourceCtx) StartPosition() *sourcev1.Position {
 	return nil
 }
 
-func (sc SourceCtx) PositionForProtoPath(path string) *sourcev1.Position {
+func (sc SourceCtx) PositionOfMapKeyAtProtoPath(path string) *sourcev1.Position {
+	return sc.GetMapKeyPositions()[path]
+}
+
+func (sc SourceCtx) PositionOfValueAtProtoPath(path string) *sourcev1.Position {
 	return sc.GetFieldPositions()[path]
 }
 
-func (sc SourceCtx) ContextForYAMLPath(path string) string {
-	if sc.doc == nil || path == "" {
+func (sc SourceCtx) ContextForMapKeyAtYAMLPath(path string) string {
+	valueNode := sc.nodeAtYAMLPath(path)
+	if valueNode == nil {
 		return ""
+	}
+
+	mappingValueNode, ok := ast.Parent(sc.doc.Body, valueNode).(*ast.MappingValueNode)
+	if !ok {
+		return ""
+	}
+
+	return sc.contextForNode(mappingValueNode.Key)
+}
+
+func (sc SourceCtx) ContextForValueAtYAMLPath(path string) string {
+	return sc.contextForNode(sc.nodeAtYAMLPath(path))
+}
+
+func (sc SourceCtx) nodeAtYAMLPath(path string) ast.Node {
+	if sc.doc == nil || path == "" {
+		return nil
 	}
 
 	yamlPath, err := yaml.PathString(path)
 	if err != nil {
-		return ""
+		return nil
 	}
 
 	node, err := yamlPath.FilterNode(sc.doc.Body)
 	if err != nil {
+		return nil
+	}
+
+	return node
+}
+
+func (sc SourceCtx) contextForNode(node ast.Node) string {
+	if node == nil {
 		return ""
 	}
 
@@ -58,10 +88,19 @@ func (sc SourceCtx) ContextForYAMLPath(path string) string {
 	return errPrinter.PrintErrorToken(node.GetToken(), false)
 }
 
-func (sc SourceCtx) PositionAndContextForProtoPath(path string) (pos *sourcev1.Position, context string) {
-	pos = sc.PositionForProtoPath(path)
+func (sc SourceCtx) PositionAndContextForMapKeyAtProtoPath(path string) (pos *sourcev1.Position, context string) {
+	pos = sc.PositionOfMapKeyAtProtoPath(path)
 	if pos != nil {
-		context = sc.ContextForYAMLPath(pos.GetPath())
+		context = sc.ContextForMapKeyAtYAMLPath(pos.GetPath())
+	}
+
+	return pos, context
+}
+
+func (sc SourceCtx) PositionAndContextForValueAtProtoPath(path string) (pos *sourcev1.Position, context string) {
+	pos = sc.PositionOfValueAtProtoPath(path)
+	if pos != nil {
+		context = sc.ContextForValueAtYAMLPath(pos.GetPath())
 	}
 
 	return pos, context

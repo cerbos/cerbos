@@ -240,7 +240,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 		drModCtx := modCtx.moduleCtx(impID)
 		if drModCtx == nil {
-			modCtx.addErrForProtoPath(path, errImportNotFound, "Derived roles import %q cannot be found", imp)
+			modCtx.addErrForValueAtProtoPath(path, errImportNotFound, "Derived roles import %q cannot be found", imp)
 			continue
 		}
 
@@ -280,7 +280,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 
 				rdList := make([]string, len(imp))
 				for i, dri := range imp {
-					pos := modCtx.srcCtx.PositionForProtoPath(dri.path)
+					pos := modCtx.srcCtx.PositionOfValueAtProtoPath(dri.path)
 					if pos != nil {
 						rdList[i] = fmt.Sprintf("%s (imported as %q at %d:%d)", dri.sourceFile, dri.importName, pos.GetLine(), pos.GetColumn())
 					} else {
@@ -296,7 +296,7 @@ func compileImportedDerivedRoles(modCtx *moduleCtx, rp *policyv1.ResourcePolicy)
 	}
 
 	for ur, urPath := range unknownRoles {
-		modCtx.addErrForProtoPath(urPath, errUnknownDerivedRole, "Derived role %q is not defined in any imports", ur)
+		modCtx.addErrForValueAtProtoPath(urPath, errUnknownDerivedRole, "Derived role %q is not defined in any imports", ur)
 	}
 
 	for ar, impList := range ambiguousRoles {
@@ -353,13 +353,13 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 
 	if ps := rp.Schemas.PrincipalSchema; ps != nil && ps.Ref != "" {
 		if _, err := schemaMgr.LoadSchema(context.TODO(), ps.Ref); err != nil {
-			modCtx.addErrForProtoPath(policy.ResourcePolicyPrincipalSchemaProtoPath(), errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
+			modCtx.addErrForValueAtProtoPath(policy.ResourcePolicyPrincipalSchemaProtoPath(), errInvalidSchema, "Failed to load principal schema %q: %v", ps.Ref, err)
 		}
 	}
 
 	if rs := rp.Schemas.ResourceSchema; rs != nil && rs.Ref != "" {
 		if _, err := schemaMgr.LoadSchema(context.TODO(), rs.Ref); err != nil {
-			modCtx.addErrForProtoPath(policy.ResourcePolicyResourceSchemaProtoPath(), errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
+			modCtx.addErrForValueAtProtoPath(policy.ResourcePolicyResourceSchemaProtoPath(), errInvalidSchema, "Failed to load resource schema %q: %v", rs.Ref, err)
 		}
 	}
 
@@ -368,7 +368,7 @@ func checkReferencedSchemas(modCtx *moduleCtx, rp *policyv1.ResourcePolicy, sche
 
 func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.ResourceRule) *runtimev1.RunnableResourcePolicySet_Policy_Rule {
 	if len(rule.DerivedRoles) == 0 && len(rule.Roles) == 0 {
-		modCtx.addErrForProtoPath(path, errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
+		modCtx.addErrForValueAtProtoPath(path, errInvalidResourceRule, "Rule '%s' does not specify any roles or derived roles to be matched", rule.Name)
 	}
 
 	cr := &runtimev1.RunnableResourcePolicySet_Policy_Rule{

@@ -1,0 +1,43 @@
+-- resource_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  constants:
+    local:
+      foo: 42
+  variables:
+    local:
+      bar: |-
+        1 + 1
+  rules:
+    - effect: EFFECT_ALLOW
+      actions:
+        - one
+      roles:
+        - "*"
+      condition:
+        match:
+          expr: |-
+            C.foo > V["bar"]
+
+    - effect: EFFECT_ALLOW
+      actions:
+        - two
+      roles:
+        - "*"
+      condition:
+        match:
+          expr: |-
+            C["foo"] > G.baz
+
+    - effect: EFFECT_ALLOW
+      actions:
+        - three
+      roles:
+        - "*"
+      condition:
+        match:
+          expr: |-
+            G["baz"] > V.bar
