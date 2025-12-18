@@ -223,6 +223,26 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	return res
 }
 
+// hasIntersectionWith returns true if there is any overlap between two rowSets.
+// Returns early on first match, avoiding allocation when just checking for existence.
+func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
+	if len(s.getM()) == 0 || len(o.getM()) == 0 {
+		return false
+	}
+
+	small, large := s, o
+	if len(o.m) < len(s.m) {
+		small, large = o, s
+	}
+
+	for _, r := range small.m {
+		if _, ok := large.m[r.sum]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
 // avoiding the intermediate allocation of chained intersectWith calls.
 func intersect3(a, b, c *rowSet) *rowSet {
@@ -515,7 +535,8 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
 			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
-				if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
+				if literalActionSet.hasIntersectionWith(roleSet) {
+					ars := literalActionSet.intersectWith(roleSet).rows()
 					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 					// retrieve actions mapped to all effectual rows
 					resolved, err := m.idx.resolve(ctx, ars)
@@ -792,7 +813,7 @@ func (m *Impl) ScopedRoleGlobExists(ctx context.Context, scope, role string) (bo
 	if !ok {
 		return false, nil
 	}
-	return len(rs.intersectWith(scopeSet).m) > 0, nil
+	return rs.hasIntersectionWith(scopeSet), nil
 }
 
 func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource string, scopes []string) (bool, error) {
