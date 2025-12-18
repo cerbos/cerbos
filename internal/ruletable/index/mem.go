@@ -145,11 +145,22 @@ func (gl *memGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*
 	res := make(map[string]*rowSet, len(keys))
 	for _, k := range keys {
 		merged := gl.m.GetMerged(k)
-		toUnion := make([]*rowSet, 0, len(merged))
-		for _, s := range merged {
-			toUnion = append(toUnion, s)
+		switch len(merged) {
+		case 0:
+			// No matches, skip
+		case 1:
+			// Single match, return copy directly (avoid unionAll overhead)
+			for _, s := range merged {
+				res[k] = s.copy()
+			}
+		default:
+			// Multiple matches, need to union
+			toUnion := make([]*rowSet, 0, len(merged))
+			for _, s := range merged {
+				toUnion = append(toUnion, s)
+			}
+			res[k] = unionAll(toUnion...)
 		}
-		res[k] = unionAll(toUnion...)
 	}
 	return res, nil
 }
