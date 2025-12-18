@@ -6,6 +6,7 @@ package index
 import (
 	"context"
 	"crypto/sha256"
+	"maps"
 	"slices"
 	"sync/atomic"
 
@@ -122,9 +123,7 @@ func newRowSet() *rowSet {
 func (s *rowSet) ensureUnique() {
 	if s.cow.Load() {
 		newM := make(map[string]*Row, len(s.m))
-		for k, v := range s.m {
-			newM[k] = v
-		}
+		maps.Copy(newM, s.m)
 		s.m = newM
 		s.cow.Store(false)
 	}
