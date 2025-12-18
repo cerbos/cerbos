@@ -174,14 +174,22 @@ func unionAll(sets ...*rowSet) *rowSet {
 }
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
-	res := newRowSet()
-	if o == nil {
-		return res
+	// Early return for empty sets
+	if o == nil || len(s.m) == 0 || len(o.m) == 0 {
+		return &rowSet{m: make(map[string]*Row)}
 	}
 
-	for _, r := range s.m {
-		if o.has(r.sum) {
-			res.set(r)
+	// Iterate over the smaller set for efficiency
+	small, large := s, o
+	if len(o.m) < len(s.m) {
+		small, large = o, s
+	}
+
+	// Pre-allocate with capacity of smaller set (maximum possible result size)
+	res := &rowSet{m: make(map[string]*Row, len(small.m))}
+	for _, r := range small.m {
+		if _, ok := large.m[r.sum]; ok {
+			res.m[r.sum] = r
 		}
 	}
 
