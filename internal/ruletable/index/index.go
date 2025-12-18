@@ -196,6 +196,48 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	return res
 }
 
+// intersectWith2 performs a three-way intersection (s ∩ o1 ∩ o2) in a single pass,
+// avoiding the intermediate allocation of chained intersectWith calls.
+func (s *rowSet) intersectWith2(o1, o2 *rowSet) *rowSet {
+	// Early return for empty sets
+	if o1 == nil || o2 == nil || len(s.m) == 0 || len(o1.m) == 0 || len(o2.m) == 0 {
+		return &rowSet{m: make(map[string]*Row)}
+	}
+
+	// Find the smallest set to iterate over
+	sets := [3]*rowSet{s, o1, o2}
+	smallIdx := 0
+	for i := 1; i < 3; i++ {
+		if len(sets[i].m) < len(sets[smallIdx].m) {
+			smallIdx = i
+		}
+	}
+	small := sets[smallIdx]
+
+	// The other two sets to check against
+	var check1, check2 *rowSet
+	switch smallIdx {
+	case 0:
+		check1, check2 = o1, o2
+	case 1:
+		check1, check2 = s, o2
+	case 2:
+		check1, check2 = s, o1
+	}
+
+	// Pre-allocate with capacity of smallest set
+	res := &rowSet{m: make(map[string]*Row, len(small.m))}
+	for _, r := range small.m {
+		if _, ok := check1.m[r.sum]; ok {
+			if _, ok := check2.m[r.sum]; ok {
+				res.m[r.sum] = r
+			}
+		}
+	}
+
+	return res
+}
+
 func (s *rowSet) copy() *rowSet {
 	// Mark original as shared
 	s.cow.Store(true)
@@ -441,7 +483,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			continue
 		}
 		// Intersect in order of selectivity: scope first (most selective), then version, then resource
-		scopeSet = scopeSet.intersectWith(versionSet).intersectWith(resourceSet)
+		scopeSet = scopeSet.intersectWith2(versionSet, resourceSet)
 
 		for _, role := range roles {
 			roleSet, ok := roleSets[role]
