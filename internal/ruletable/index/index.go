@@ -487,7 +487,8 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		if !ok {
 			continue
 		}
-		// Intersect in order of selectivity: scope first (most selective), then version, then resource
+		// intersectWith2 considers sizes of all three sets and iterates over the smallest,
+		// so it performs well whether scope, version, or resource is most selective.
 		scopeSet = scopeSet.intersectWith2(versionSet, resourceSet)
 
 		for _, role := range roles {
