@@ -8,7 +8,7 @@ import (
 	"crypto/sha256"
 	"maps"
 	"slices"
-	"sync/atomic"
+	"sync"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -110,7 +110,8 @@ func (r *Row) Matches(pt policyv1.Kind, scope, action, principalID string, roles
 
 type rowSet struct {
 	m   map[string]*Row
-	cow atomic.Bool // copy-on-write: if true, copy map before mutation
+	cow bool       // copy-on-write: if true, copy map before mutation
+	mu  sync.Mutex // protects cow flag and m pointer during copy operations
 }
 
 func newRowSet() *rowSet {
@@ -121,11 +122,13 @@ func newRowSet() *rowSet {
 
 // ensureUnique copies the map if it's shared (cow flag is set).
 func (s *rowSet) ensureUnique() {
-	if s.cow.Load() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.cow {
 		newM := make(map[string]*Row, len(s.m))
 		maps.Copy(newM, s.m)
 		s.m = newM
-		s.cow.Store(false)
+		s.cow = false
 	}
 }
 
@@ -240,11 +243,12 @@ func (s *rowSet) intersectWith2(o1, o2 *rowSet) *rowSet {
 }
 
 func (s *rowSet) copy() *rowSet {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	// Mark original as shared
-	s.cow.Store(true)
+	s.cow = true
 	// Create copy that shares the map
-	c := &rowSet{m: s.m}
-	c.cow.Store(true)
+	c := &rowSet{m: s.m, cow: true}
 	return c
 }
 
