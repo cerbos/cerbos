@@ -120,6 +120,13 @@ func newRowSet() *rowSet {
 	}
 }
 
+func (s *rowSet) getM() map[string]*Row {
+	if s == nil {
+		return nil
+	}
+	return s.m
+}
+
 // ensureUnique copies the map if it's shared (cow flag is set).
 func (s *rowSet) ensureUnique() {
 	s.mu.Lock()
@@ -177,8 +184,8 @@ func unionAll(sets ...*rowSet) *rowSet {
 }
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
-	// Early return for empty sets
-	if o == nil || len(s.m) == 0 || len(o.m) == 0 {
+	// Early return for empty sets (getM handles nil receiver)
+	if len(s.getM()) == 0 || len(o.getM()) == 0 {
 		return &rowSet{m: make(map[string]*Row)}
 	}
 
@@ -199,41 +206,30 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	return res
 }
 
-// intersectWith2 performs a three-way intersection (s ∩ o1 ∩ o2) in a single pass,
+// intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
 // avoiding the intermediate allocation of chained intersectWith calls.
-func (s *rowSet) intersectWith2(o1, o2 *rowSet) *rowSet {
-	// Early return for empty sets
-	if o1 == nil || o2 == nil || len(s.m) == 0 || len(o1.m) == 0 || len(o2.m) == 0 {
+func intersect3(a, b, c *rowSet) *rowSet {
+	// Early return for empty sets (getM handles nil receiver)
+	if len(a.getM()) == 0 || len(b.getM()) == 0 || len(c.getM()) == 0 {
 		return &rowSet{m: make(map[string]*Row)}
 	}
 
-	// Find the smallest set to iterate over.
-	// Note: Could use slices.SortFunc for cleaner code, but manual selection is ~10% faster.
-	sets := [3]*rowSet{s, o1, o2}
-	smallIdx := 0
-	for i := 1; i < 3; i++ {
-		if len(sets[i].m) < len(sets[smallIdx].m) {
-			smallIdx = i
+	// Sort sets by size: iterate over smallest, check smaller of remaining two first
+	// (checking smaller set first = faster short-circuit on miss)
+	sets := [3]*rowSet{a, b, c}
+	for i := 0; i < 2; i++ {
+		for j := i + 1; j < 3; j++ {
+			if len(sets[j].m) < len(sets[i].m) {
+				sets[i], sets[j] = sets[j], sets[i]
+			}
 		}
-	}
-	small := sets[smallIdx]
-
-	// The other two sets to check against
-	var check1, check2 *rowSet
-	switch smallIdx {
-	case 0:
-		check1, check2 = o1, o2
-	case 1:
-		check1, check2 = s, o2
-	case 2: //nolint:mnd
-		check1, check2 = s, o1
 	}
 
 	// Pre-allocate with capacity of smallest set
-	res := &rowSet{m: make(map[string]*Row, len(small.m))}
-	for _, r := range small.m {
-		if _, ok := check1.m[r.sum]; ok {
-			if _, ok := check2.m[r.sum]; ok {
+	res := &rowSet{m: make(map[string]*Row, len(sets[0].m))}
+	for _, r := range sets[0].m {
+		if _, ok := sets[1].m[r.sum]; ok {
+			if _, ok := sets[2].m[r.sum]; ok {
 				res.m[r.sum] = r
 			}
 		}
@@ -487,9 +483,9 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		if !ok {
 			continue
 		}
-		// intersectWith2 considers sizes of all three sets and iterates over the smallest,
+		// intersect3 considers sizes of all three sets and iterates over the smallest,
 		// so it performs well whether scope, version, or resource is most selective.
-		scopeSet = scopeSet.intersectWith2(versionSet, resourceSet)
+		scopeSet = intersect3(scopeSet, versionSet, resourceSet)
 
 		for _, role := range roles {
 			roleSet, ok := roleSets[role]
