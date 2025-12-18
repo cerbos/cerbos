@@ -367,7 +367,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 				panic(fmt.Errorf("unexpected import kind %s", kind))
 			}
 
-			pos, context := srcCtx.PositionAndContextForProtoPath(paths[i])
+			pos, context := srcCtx.PositionAndContextForValueAtProtoPath(paths[i])
 			idx.missing[depID] = append(idx.missing[depID], &runtimev1.IndexBuildErrors_MissingImport{
 				ImportingFile:   file,
 				ImportingPolicy: policyKey,

@@ -30,7 +30,7 @@ func compileCondition(modCtx *moduleCtx, path string, cond *policyv1.Condition, 
 	case *policyv1.Condition_Match:
 		return compileMatch(modCtx, path+".match", c.Match, markReferencedConstantsAndVariablesAsUsed)
 	default:
-		modCtx.addErrForProtoPath(path, errScriptsUnsupported, "Unsupported feature")
+		modCtx.addErrForValueAtProtoPath(path, errScriptsUnsupported, "Unsupported feature")
 		return nil
 	}
 }
@@ -54,7 +54,7 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 		exprList := compileMatchList(modCtx, path+".none.of", t.None.Of, markReferencedConstantsAndVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_None{None: exprList}}
 	default:
-		modCtx.addErrForProtoPath(path, errUnexpectedErr, "Unknown match operation: %T", t)
+		modCtx.addErrForValueAtProtoPath(path, errUnexpectedErr, "Unknown match operation: %T", t)
 		return nil
 	}
 }
@@ -66,13 +66,13 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstant
 		for i, ce := range issues.Errors() {
 			errList[i] = ce.Message
 		}
-		modCtx.addErrForProtoPath(path, newCELCompileError(expr, issues), "Invalid expression `%s`: [%s]", expr, strings.Join(errList, ", "))
+		modCtx.addErrForValueAtProtoPath(path, newCELCompileError(expr, issues), "Invalid expression `%s`: [%s]", expr, strings.Join(errList, ", "))
 		return nil
 	}
 
 	checkedExpr, err := cel.AstToCheckedExpr(celAST)
 	if err != nil {
-		modCtx.addErrForProtoPath(path, err, "Failed to convert AST of `%s`", expr)
+		modCtx.addErrForValueAtProtoPath(path, err, "Failed to convert AST of `%s`", expr)
 		return nil
 	}
 

@@ -8,6 +8,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -59,8 +60,17 @@ func (mc *moduleCtx) addErrWithDesc(err error, description string, params ...any
 	mc.errors.Add(newError(mc.sourceFile, fmt.Sprintf(description, params...), err))
 }
 
-func (mc *moduleCtx) addErrForProtoPath(path string, err error, description string, args ...any) {
-	pos, context := mc.srcCtx.PositionAndContextForProtoPath(path)
+func (mc *moduleCtx) addErrForMapKeyAtProtoPath(path string, err error, description string, args ...any) {
+	pos, context := mc.srcCtx.PositionAndContextForMapKeyAtProtoPath(path)
+	mc.addErrWithPositionAndContext(pos, context, err, description, args...)
+}
+
+func (mc *moduleCtx) addErrForValueAtProtoPath(path string, err error, description string, args ...any) {
+	pos, context := mc.srcCtx.PositionAndContextForValueAtProtoPath(path)
+	mc.addErrWithPositionAndContext(pos, context, err, description, args...)
+}
+
+func (mc *moduleCtx) addErrWithPositionAndContext(pos *sourcev1.Position, context string, err error, description string, args ...any) {
 	mc.errors.Add(&Error{
 		CompileErrors_Err: &runtimev1.CompileErrors_Err{
 			File:        mc.sourceFile,

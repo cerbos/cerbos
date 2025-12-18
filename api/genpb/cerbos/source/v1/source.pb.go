@@ -263,12 +263,13 @@ func (x *StartPosition) GetOffset() uint32 {
 }
 
 type SourceContext struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	StartPosition  *StartPosition         `protobuf:"bytes,1,opt,name=start_position,json=startPosition,proto3" json:"start_position,omitempty"`
-	FieldPositions map[string]*Position   `protobuf:"bytes,2,rep,name=field_positions,json=fieldPositions,proto3" json:"field_positions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Errors         []*Error               `protobuf:"bytes,3,rep,name=errors,proto3" json:"errors,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	StartPosition   *StartPosition         `protobuf:"bytes,1,opt,name=start_position,json=startPosition,proto3" json:"start_position,omitempty"`
+	FieldPositions  map[string]*Position   `protobuf:"bytes,2,rep,name=field_positions,json=fieldPositions,proto3" json:"field_positions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Errors          []*Error               `protobuf:"bytes,3,rep,name=errors,proto3" json:"errors,omitempty"`
+	MapKeyPositions map[string]*Position   `protobuf:"bytes,4,rep,name=map_key_positions,json=mapKeyPositions,proto3" json:"map_key_positions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *SourceContext) Reset() {
@@ -318,6 +319,13 @@ func (x *SourceContext) GetFieldPositions() map[string]*Position {
 func (x *SourceContext) GetErrors() []*Error {
 	if x != nil {
 		return x.Errors
+	}
+	return nil
+}
+
+func (x *SourceContext) GetMapKeyPositions() map[string]*Position {
+	if x != nil {
+		return x.MapKeyPositions
 	}
 	return nil
 }
@@ -435,12 +443,16 @@ const file_cerbos_source_v1_source_proto_rawDesc = "" +
 	"\rStartPosition\x12\x12\n" +
 	"\x04line\x18\x01 \x01(\rR\x04line\x12\x16\n" +
 	"\x06column\x18\x02 \x01(\rR\x06column\x12\x16\n" +
-	"\x06offset\x18\x03 \x01(\rR\x06offset\"\xc5\x02\n" +
+	"\x06offset\x18\x03 \x01(\rR\x06offset\"\x87\x04\n" +
 	"\rSourceContext\x12F\n" +
 	"\x0estart_position\x18\x01 \x01(\v2\x1f.cerbos.source.v1.StartPositionR\rstartPosition\x12\\\n" +
 	"\x0ffield_positions\x18\x02 \x03(\v23.cerbos.source.v1.SourceContext.FieldPositionsEntryR\x0efieldPositions\x12/\n" +
-	"\x06errors\x18\x03 \x03(\v2\x17.cerbos.source.v1.ErrorR\x06errors\x1a]\n" +
+	"\x06errors\x18\x03 \x03(\v2\x17.cerbos.source.v1.ErrorR\x06errors\x12`\n" +
+	"\x11map_key_positions\x18\x04 \x03(\v24.cerbos.source.v1.SourceContext.MapKeyPositionsEntryR\x0fmapKeyPositions\x1a]\n" +
 	"\x13FieldPositionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x120\n" +
+	"\x05value\x18\x02 \x01(\v2\x1a.cerbos.source.v1.PositionR\x05value:\x028\x01\x1a^\n" +
+	"\x14MapKeyPositionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x120\n" +
 	"\x05value\x18\x02 \x01(\v2\x1a.cerbos.source.v1.PositionR\x05value:\x028\x01\"\xd3\x01\n" +
 	"\rPolicyWrapper\x12\x0e\n" +
@@ -465,7 +477,7 @@ func file_cerbos_source_v1_source_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_source_v1_source_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cerbos_source_v1_source_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_cerbos_source_v1_source_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_cerbos_source_v1_source_proto_goTypes = []any{
 	(Error_Kind)(0),       // 0: cerbos.source.v1.Error.Kind
 	(*Position)(nil),      // 1: cerbos.source.v1.Position
@@ -474,23 +486,26 @@ var file_cerbos_source_v1_source_proto_goTypes = []any{
 	(*SourceContext)(nil), // 4: cerbos.source.v1.SourceContext
 	(*PolicyWrapper)(nil), // 5: cerbos.source.v1.PolicyWrapper
 	nil,                   // 6: cerbos.source.v1.SourceContext.FieldPositionsEntry
-	(*v1.Policy)(nil),     // 7: cerbos.policy.v1.Policy
-	(v1.Kind)(0),          // 8: cerbos.policy.v1.Kind
+	nil,                   // 7: cerbos.source.v1.SourceContext.MapKeyPositionsEntry
+	(*v1.Policy)(nil),     // 8: cerbos.policy.v1.Policy
+	(v1.Kind)(0),          // 9: cerbos.policy.v1.Kind
 }
 var file_cerbos_source_v1_source_proto_depIdxs = []int32{
-	0, // 0: cerbos.source.v1.Error.kind:type_name -> cerbos.source.v1.Error.Kind
-	1, // 1: cerbos.source.v1.Error.position:type_name -> cerbos.source.v1.Position
-	3, // 2: cerbos.source.v1.SourceContext.start_position:type_name -> cerbos.source.v1.StartPosition
-	6, // 3: cerbos.source.v1.SourceContext.field_positions:type_name -> cerbos.source.v1.SourceContext.FieldPositionsEntry
-	2, // 4: cerbos.source.v1.SourceContext.errors:type_name -> cerbos.source.v1.Error
-	7, // 5: cerbos.source.v1.PolicyWrapper.policy:type_name -> cerbos.policy.v1.Policy
-	8, // 6: cerbos.source.v1.PolicyWrapper.kind:type_name -> cerbos.policy.v1.Kind
-	1, // 7: cerbos.source.v1.SourceContext.FieldPositionsEntry.value:type_name -> cerbos.source.v1.Position
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0,  // 0: cerbos.source.v1.Error.kind:type_name -> cerbos.source.v1.Error.Kind
+	1,  // 1: cerbos.source.v1.Error.position:type_name -> cerbos.source.v1.Position
+	3,  // 2: cerbos.source.v1.SourceContext.start_position:type_name -> cerbos.source.v1.StartPosition
+	6,  // 3: cerbos.source.v1.SourceContext.field_positions:type_name -> cerbos.source.v1.SourceContext.FieldPositionsEntry
+	2,  // 4: cerbos.source.v1.SourceContext.errors:type_name -> cerbos.source.v1.Error
+	7,  // 5: cerbos.source.v1.SourceContext.map_key_positions:type_name -> cerbos.source.v1.SourceContext.MapKeyPositionsEntry
+	8,  // 6: cerbos.source.v1.PolicyWrapper.policy:type_name -> cerbos.policy.v1.Policy
+	9,  // 7: cerbos.source.v1.PolicyWrapper.kind:type_name -> cerbos.policy.v1.Kind
+	1,  // 8: cerbos.source.v1.SourceContext.FieldPositionsEntry.value:type_name -> cerbos.source.v1.Position
+	1,  // 9: cerbos.source.v1.SourceContext.MapKeyPositionsEntry.value:type_name -> cerbos.source.v1.Position
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_source_v1_source_proto_init() }
@@ -504,7 +519,7 @@ func file_cerbos_source_v1_source_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_source_v1_source_proto_rawDesc), len(file_cerbos_source_v1_source_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

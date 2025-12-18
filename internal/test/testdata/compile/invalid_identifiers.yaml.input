@@ -1,0 +1,38 @@
+-- resource_policies/example.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: example
+  version: default
+  constants:
+    import:
+      - example
+    local:
+      "true": true
+      "false": false
+  variables:
+    import:
+      - example
+    local:
+      "": |-
+        "this would never work"
+      why?: |-
+        "would you do this"
+
+-- constants.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: example
+  definitions:
+    "0xAAAAAA": wat
+    "null": null
+
+-- variables.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+exportVariables:
+  name: example
+  definitions:
+    "a.b.c": |-
+      "d.e.f"

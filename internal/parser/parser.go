@@ -617,7 +617,7 @@ func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd prot
 			continue
 		}
 
-		val, err := valueFn(uctx.forMapItem(keyVal.String(), items.Value()), items.Value())
+		val, err := valueFn(uctx.forMapItem(keyVal.String(), key, items.Value()), items.Value())
 		if err != nil {
 			return err
 		}
@@ -1085,21 +1085,51 @@ func (uc *unmarshalCtx) forListItem(i int, n ast.Node) *unmarshalCtx {
 	return uc.forPath(newPath)
 }
 
-func (uc *unmarshalCtx) forMapItem(key string, n ast.Node) *unmarshalCtx {
+func (uc *unmarshalCtx) forMapItem(key string, keyNode ast.MapKeyNode, valueNode ast.Node) *unmarshalCtx {
 	newPath := fmt.Sprintf("%s[%q]", uc.protoPath, key)
-	uc.recordFieldPosition(newPath, n)
+	uc.recordMapKeyPosition(newPath, keyNode)
+	uc.recordFieldPosition(newPath, valueNode)
 	return uc.forPath(newPath)
 }
 
+func (uc *unmarshalCtx) recordMapKeyPosition(path string, n ast.Node) {
+	if uc.srcCtx != nil {
+		if pos := nodePosition(n); pos != nil {
+			if uc.srcCtx.MapKeyPositions == nil {
+				uc.srcCtx.MapKeyPositions = make(map[string]*sourcev1.Position)
+			}
+
+			uc.srcCtx.MapKeyPositions[path] = pos
+		}
+	}
+}
+
 func (uc *unmarshalCtx) recordFieldPosition(path string, n ast.Node) {
-	if uc.srcCtx != nil && n != nil {
-		if tok := n.GetToken(); tok != nil && tok.Position != nil {
+	if uc.srcCtx != nil {
+		if pos := nodePosition(n); pos != nil {
 			if uc.srcCtx.FieldPositions == nil {
 				uc.srcCtx.FieldPositions = make(map[string]*sourcev1.Position)
 			}
 
-			uc.srcCtx.FieldPositions[path] = &sourcev1.Position{Line: uint32(tok.Position.Line), Column: uint32(tok.Position.Column), Path: n.GetPath()}
+			uc.srcCtx.FieldPositions[path] = pos
 		}
+	}
+}
+
+func nodePosition(n ast.Node) *sourcev1.Position {
+	if n == nil {
+		return nil
+	}
+
+	tok := n.GetToken()
+	if tok == nil || tok.Position == nil {
+		return nil
+	}
+
+	return &sourcev1.Position{
+		Line:   uint32(tok.Position.Line),
+		Column: uint32(tok.Position.Column),
+		Path:   n.GetPath(),
 	}
 }
 

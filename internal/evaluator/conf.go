@@ -5,12 +5,15 @@ package evaluator
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"strings"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
+	"go.uber.org/multierr"
 )
 
 const (
@@ -47,12 +50,18 @@ func (c *Conf) SetDefaults() {
 	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:mnd
 }
 
-func (c *Conf) Validate() error {
+func (c *Conf) Validate() (outErr error) {
 	if strings.TrimSpace(c.DefaultPolicyVersion) == "" {
-		return errEmptyDefaultVersion
+		multierr.AppendInto(&outErr, errEmptyDefaultVersion)
 	}
 
-	return nil
+	for identifier := range c.Globals {
+		if err := compile.ValidateIdentifier(identifier); err != nil {
+			multierr.AppendInto(&outErr, fmt.Errorf("engine.globals: %w", err))
+		}
+	}
+
+	return outErr
 }
 
 func GetConf() (*Conf, error) {

@@ -677,6 +677,17 @@ func cerbos_source_v1_SourceContext_hashpb_sum(m *SourceContext, hasher hash.Has
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.source.v1.SourceContext.map_key_positions"]; !ok {
+		if len(m.MapKeyPositions) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.MapKeyPositions)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.MapKeyPositions[k] != nil {
+					cerbos_source_v1_Position_hashpb_sum(m.MapKeyPositions[k], hasher, ignore)
+				}
+			}
+		}
+	}
 }
 
 func cerbos_source_v1_StartPosition_hashpb_sum(m *StartPosition, hasher hash.Hash, ignore map[string]struct{}) {

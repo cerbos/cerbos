@@ -4,6 +4,7 @@
 package compile
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 )
+
+var errInvalidConstantName = errors.New("invalid constant name")
 
 func compilePolicyConstants(modCtx *moduleCtx, constants *policyv1.Constants) {
 	if modCtx.constants != nil {
@@ -30,7 +33,7 @@ func compilePolicyConstants(modCtx *moduleCtx, constants *policyv1.Constants) {
 		ecModCtx := modCtx.moduleCtx(ecModID)
 		if ecModCtx == nil {
 			path := policy.ConstantsImportProtoPath(modCtx.def, i)
-			modCtx.addErrForProtoPath(path, errImportNotFound, "Constants import '%s' cannot be found", imp)
+			modCtx.addErrForValueAtProtoPath(path, errImportNotFound, "Constants import '%s' cannot be found", imp)
 			continue
 		}
 
@@ -76,7 +79,13 @@ func newConstantDefinitions(modCtx *moduleCtx) *constantDefinitions {
 
 func (cd *constantDefinitions) Compile(definitions map[string]*structpb.Value, path, source string) {
 	for name, value := range definitions {
-		cd.Add(name, value, cd.modCtx.constantCtx(source, fmt.Sprintf("%s[%q]", path, name)))
+		constPath := fmt.Sprintf("%s[%q]", path, name)
+
+		if err := ValidateIdentifier(name); err != nil {
+			cd.modCtx.addErrForMapKeyAtProtoPath(constPath, errInvalidConstantName, "%s", err)
+		}
+
+		cd.Add(name, value, cd.modCtx.constantCtx(source, constPath))
 	}
 }
 
@@ -123,7 +132,7 @@ func (cd *constantDefinitions) reportRedefinedConstants() {
 func constantDefinitionPlaces(contexts []*constantCtx) []string {
 	out := make([]string, len(contexts))
 	for i, cc := range contexts {
-		pos := cc.srcCtx.PositionForProtoPath(cc.path)
+		pos := cc.srcCtx.PositionOfValueAtProtoPath(cc.path)
 		if pos != nil {
 			out[i] = fmt.Sprintf("%s (%s:%d:%d)", cc.source, cc.sourceFile, pos.GetLine(), pos.GetColumn())
 		} else {
@@ -137,7 +146,7 @@ func constantDefinitionPlaces(contexts []*constantCtx) []string {
 func (cd *constantDefinitions) references(path string, expr *expr.CheckedExpr) map[string]struct{} {
 	exprAST, err := ast.ToAST(expr)
 	if err != nil {
-		cd.modCtx.addErrForProtoPath(path, err, "Failed to convert expression to AST")
+		cd.modCtx.addErrForValueAtProtoPath(path, err, "Failed to convert expression to AST")
 		return nil
 	}
 
@@ -171,7 +180,7 @@ func (cd *constantDefinitions) Use(path string, expr *expr.CheckedExpr) {
 		if defined {
 			cd.used[name] = struct{}{}
 		} else {
-			cd.modCtx.addErrForProtoPath(path, errUndefinedConstant, "Undefined constant '%s'", name)
+			cd.modCtx.addErrForValueAtProtoPath(path, errUndefinedConstant, "Undefined constant '%s'", name)
 		}
 	}
 }
