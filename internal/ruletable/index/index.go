@@ -151,24 +151,8 @@ func (l *rowSet) del(r *Row) {
 	delete(l.m, r.sum)
 }
 
-func (s *rowSet) unionWith(o *rowSet) *rowSet {
-	if o == nil {
-		return s
-	}
-
-	res := newRowSet()
-	for _, r := range s.m {
-		res.set(r)
-	}
-	for _, r := range o.m {
-		res.set(r)
-	}
-
-	return res
-}
-
 // unionAll creates a new rowSet containing all rows from the given rowSets.
-// More efficient than chained unionWith calls as it allocates only once.
+// Pre-allocates the map with the right capacity for efficiency.
 func unionAll(sets ...*rowSet) *rowSet {
 	// Calculate total capacity
 	total := 0
@@ -333,7 +317,7 @@ func (m *Impl) updateIndex(ctx context.Context, bw batchWriter, getFn func(conte
 		}
 
 		if newSet, ok := batch[k]; ok {
-			batch[k] = oldSet.unionWith(newSet)
+			batch[k] = unionAll(oldSet, newSet)
 		}
 	}
 
