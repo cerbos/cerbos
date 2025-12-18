@@ -389,11 +389,13 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 	if err != nil {
 		return nil, err
 	}
-	set, ok := sets[version]
+	versionSet, ok := sets[version]
 	if !ok {
 		return res, nil
 	}
 
+	// Fetch resource set but defer intersection until after scope filtering
+	// (scope is more selective than resource for multi-tenant scenarios)
 	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
 	if err != nil {
 		return nil, err
@@ -402,7 +404,6 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 	if !ok {
 		return res, nil
 	}
-	set = set.intersectWith(resourceSet)
 
 	scopeSets, err := m.scope.get(ctx, scopes...)
 	if err != nil {
@@ -439,7 +440,8 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		if !ok {
 			continue
 		}
-		scopeSet = scopeSet.intersectWith(set)
+		// Intersect in order of selectivity: scope first (most selective), then version, then resource
+		scopeSet = scopeSet.intersectWith(versionSet).intersectWith(resourceSet)
 
 		for _, role := range roles {
 			roleSet, ok := roleSets[role]
