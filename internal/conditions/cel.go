@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/decls"
-	celtypes "github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -46,15 +45,19 @@ var (
 		decls.NewVariable(CELPrincipalAbbrev, types.MessageType[*enginev1.Request_Principal]()),
 		decls.NewVariable(CELResourceAbbrev, types.MessageType[*enginev1.Request_Resource]()),
 		decls.NewVariable(CELRuntimeIdent, types.MessageType[*enginev1.Runtime]()),
-		decls.NewVariable(CELConstantsIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
-		decls.NewVariable(CELConstantsAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
-		decls.NewVariable(CELVariablesIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
-		decls.NewVariable(CELVariablesAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
-		decls.NewVariable(CELGlobalsIdent, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
-		decls.NewVariable(CELGlobalsAbbrev, celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		decls.NewVariable(CELConstantsIdent, types.VariablesType),
+		decls.NewVariable(CELConstantsAbbrev, types.VariablesType),
+		decls.NewVariable(CELVariablesIdent, types.VariablesType),
+		decls.NewVariable(CELVariablesAbbrev, types.VariablesType),
+		decls.NewVariable(CELGlobalsIdent, types.VariablesType),
+		decls.NewVariable(CELGlobalsAbbrev, types.VariablesType),
 	}
+)
 
-	StdEnvOptions = []cel.EnvOption{
+func init() {
+	var err error
+
+	StdEnv, err = cel.NewEnv(
 		ext.TwoVarComprehensions(),
 		cel.CrossTypeNumericComparisons(true),
 		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
@@ -65,13 +68,9 @@ var (
 		ext.Encoders(),
 		ext.Math(),
 		CerbosCELLib(),
-	}
-)
-
-func init() {
-	var err error
-
-	StdEnv, err = initEnv(StdEnvOptions)
+		types.JSONFields(),
+		types.Variables(),
+	)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
@@ -85,16 +84,6 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("failed to compile constant 'true': %w", err))
 	}
-}
-
-func initEnv(options []cel.EnvOption) (*cel.Env, error) {
-	env, err := cel.NewEnv(options...)
-	if err != nil {
-		return nil, err
-	}
-
-	cctp := types.NewCamelCaseFieldProvider(env.CELTypeProvider())
-	return env.Extend(cel.CustomTypeProvider(cctp))
 }
 
 func compileConstant(value string) (*exprpb.CheckedExpr, error) {
