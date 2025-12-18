@@ -72,7 +72,7 @@ func (lm *memLiteralMap) get(_ context.Context, keys ...string) (map[string]*row
 	for _, k := range keys {
 		if v, ok := lm.m[k]; ok {
 			// return a copy to prevent external mutation of the index
-			res[k] = newRowSet().unionWith(v)
+			res[k] = v.copy()
 		}
 	}
 	return res, nil
@@ -84,7 +84,7 @@ func (lm *memLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
 
 	res := make(map[string]*rowSet, len(lm.m))
 	for k, v := range lm.m {
-		res[k] = newRowSet().unionWith(v)
+		res[k] = v.copy()
 	}
 	return res, nil
 }
@@ -132,7 +132,7 @@ func (gl *memGlobMap) getWithLiteral(_ context.Context, keys ...string) (map[str
 	res := make(map[string]*rowSet, len(keys))
 	for _, k := range keys {
 		if v, ok := gl.m.GetWithLiteral(k); ok {
-			res[k] = newRowSet().unionWith(v)
+			res[k] = v.copy()
 		}
 	}
 	return res, nil
@@ -160,7 +160,7 @@ func (gl *memGlobMap) getAll(context.Context) (map[string]*rowSet, error) {
 	raw := gl.m.GetAll()
 	res := make(map[string]*rowSet, len(raw))
 	for k, v := range raw {
-		res[k] = newRowSet().unionWith(v)
+		res[k] = v.copy()
 	}
 	return res, nil
 }

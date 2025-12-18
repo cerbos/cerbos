@@ -107,7 +107,8 @@ func (r *Row) Matches(pt policyv1.Kind, scope, action, principalID string, roles
 }
 
 type rowSet struct {
-	m map[string]*Row
+	m   map[string]*Row
+	cow bool // copy-on-write: if true, copy map before mutation
 }
 
 func newRowSet() *rowSet {
@@ -116,7 +117,20 @@ func newRowSet() *rowSet {
 	}
 }
 
+// ensureUnique copies the map if it's shared (cow flag is set).
+func (s *rowSet) ensureUnique() {
+	if s.cow {
+		newM := make(map[string]*Row, len(s.m))
+		for k, v := range s.m {
+			newM[k] = v
+		}
+		s.m = newM
+		s.cow = false
+	}
+}
+
 func (l *rowSet) set(r *Row) {
+	l.ensureUnique()
 	if l.m == nil {
 		l.m = make(map[string]*Row)
 	}
@@ -133,6 +147,7 @@ func (l *rowSet) len() int {
 }
 
 func (l *rowSet) del(r *Row) {
+	l.ensureUnique()
 	delete(l.m, r.sum)
 }
 
@@ -165,6 +180,16 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	}
 
 	return res
+}
+
+func (s *rowSet) copy() *rowSet {
+	// Share the map with the copy. Only the copy is marked as COW because
+	// the original (in the index) is never mutated after creation.
+	// If the copy is mutated, ensureUnique() will make a private copy.
+	return &rowSet{
+		m:   s.m,
+		cow: true,
+	}
 }
 
 func (l *rowSet) rows() []*Row {
