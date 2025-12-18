@@ -222,7 +222,7 @@ func (s *rowSet) intersectWith2(o1, o2 *rowSet) *rowSet {
 		check1, check2 = o1, o2
 	case 1:
 		check1, check2 = s, o2
-	case 2:
+	case 2: //nolint:mnd
 		check1, check2 = s, o1
 	}
 
