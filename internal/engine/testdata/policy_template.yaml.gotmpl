@@ -1,0 +1,26 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "endpoint"
+  version: "1"
+  {{- if (gt $.N 0) }}
+  scope: "org_{{.N}}"
+  {{- end }}
+  rules:
+    {{- range $i := 10 }}
+    - roles:
+        - "role_{{$.N}}_{{$i}}"
+      effect: EFFECT_ALLOW
+      actions:
+        - ManageCatalogs
+        - ManageChannelConfiguration
+        - ManageIntegrations
+        - ManagePredictiveGoals
+        - ManageProjectSettings
+        - ManageReports
+        - ManageSnippets
+        - ManageUserProfiles
+        - ViewCatalogs
+        - ViewChannelConfiguration
+        - ViewPredictiveGoals
+        - ViewReports
+    {{- end }}

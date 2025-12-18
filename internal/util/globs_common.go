@@ -155,6 +155,15 @@ func (gm *GlobMap[T]) GetAll() map[string]T {
 }
 
 func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
+	// Fast path: no globs, just check literal
+	if len(gm.globs) == 0 {
+		if v, ok := gm.literals[k]; ok {
+			return map[string]T{k: v}
+		}
+		return make(map[string]T)
+	}
+
+	// Slow path: need to check all globs
 	merged := make(map[string]any)
 
 	if v, ok := gm.literals[k]; ok {
