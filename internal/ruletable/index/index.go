@@ -168,6 +168,28 @@ func (s *rowSet) unionWith(o *rowSet) *rowSet {
 	return res
 }
 
+// unionAll creates a new rowSet containing all rows from the given rowSets.
+// More efficient than chained unionWith calls as it allocates only once.
+func unionAll(sets ...*rowSet) *rowSet {
+	// Calculate total capacity
+	total := 0
+	for _, s := range sets {
+		if s != nil {
+			total += len(s.m)
+		}
+	}
+
+	res := &rowSet{m: make(map[string]*Row, total)}
+	for _, s := range sets {
+		if s != nil {
+			for _, r := range s.m {
+				res.m[r.sum] = r
+			}
+		}
+	}
+	return res
+}
+
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	res := newRowSet()
 	if o == nil {
@@ -728,21 +750,20 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 		return false, nil
 	}
 
-	scopeSet := newRowSet()
+	scopesToUnion := make([]*rowSet, 0, len(scopes))
 	for _, scope := range scopes {
 		scopeRss, err := m.scope.get(ctx, scope)
 		if err != nil {
 			return false, err
 		}
-		scopeRs, ok := scopeRss[scope]
-		if !ok {
-			continue
+		if scopeRs, ok := scopeRss[scope]; ok {
+			scopesToUnion = append(scopesToUnion, scopeRs)
 		}
-		scopeSet = scopeSet.unionWith(scopeRs)
 	}
-	if len(scopeSet.m) == 0 {
+	if len(scopesToUnion) == 0 {
 		return false, nil
 	}
+	scopeSet := unionAll(scopesToUnion...)
 	rs = rs.intersectWith(scopeSet)
 
 	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
@@ -777,21 +798,20 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 		return false, nil
 	}
 
-	scopeSet := newRowSet()
+	scopesToUnion := make([]*rowSet, 0, len(scopes))
 	for _, scope := range scopes {
 		scopeSets, err := m.scope.get(ctx, scope)
 		if err != nil {
 			return false, err
 		}
-		ss, ok := scopeSets[scope]
-		if !ok {
-			continue
+		if ss, ok := scopeSets[scope]; ok {
+			scopesToUnion = append(scopesToUnion, ss)
 		}
-		scopeSet = scopeSet.unionWith(ss)
 	}
-	if len(scopeSet.m) == 0 {
+	if len(scopesToUnion) == 0 {
 		return false, nil
 	}
+	scopeSet := unionAll(scopesToUnion...)
 	rs = rs.intersectWith(scopeSet)
 
 	if err := rs.resolve(ctx, m.idx); err != nil {

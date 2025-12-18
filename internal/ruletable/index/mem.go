@@ -144,11 +144,12 @@ func (gl *memGlobMap) getMerged(_ context.Context, keys ...string) (map[string]*
 
 	res := make(map[string]*rowSet, len(keys))
 	for _, k := range keys {
-		rs := newRowSet()
-		for _, s := range gl.m.GetMerged(k) {
-			rs = rs.unionWith(s)
+		merged := gl.m.GetMerged(k)
+		toUnion := make([]*rowSet, 0, len(merged))
+		for _, s := range merged {
+			toUnion = append(toUnion, s)
 		}
-		res[k] = rs
+		res[k] = unionAll(toUnion...)
 	}
 	return res, nil
 }
