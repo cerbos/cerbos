@@ -120,6 +120,19 @@ func newRowSet() *rowSet {
 	}
 }
 
+func newRowSetCap(capacity int) *rowSet {
+	return &rowSet{
+		m: make(map[string]*Row, capacity),
+	}
+}
+
+func (s *rowSet) getM() map[string]*Row {
+	if s == nil {
+		return nil
+	}
+	return s.m
+}
+
 // ensureUnique copies the map if it's shared (cow flag is set).
 func (s *rowSet) ensureUnique() {
 	s.mu.Lock()
@@ -154,9 +167,23 @@ func (l *rowSet) del(r *Row) {
 	delete(l.m, r.sum)
 }
 
+// rowSetsLen returns the total number of rows across multiple rowSet maps.
+func rowSetsLen(ms ...map[string]*rowSet) int {
+	total := 0
+	for _, m := range ms {
+		for _, rs := range m {
+			total += len(rs.m)
+		}
+	}
+	return total
+}
+
 // unionAll creates a new rowSet containing all rows from the given rowSets.
 // Pre-allocates the map with the right capacity for efficiency.
 func unionAll(sets ...*rowSet) *rowSet {
+	if len(sets) == 1 && sets[0] != nil {
+		return sets[0].copy()
+	}
 	// Calculate total capacity
 	total := 0
 	for _, s := range sets {
@@ -165,7 +192,7 @@ func unionAll(sets ...*rowSet) *rowSet {
 		}
 	}
 
-	res := &rowSet{m: make(map[string]*Row, total)}
+	res := newRowSetCap(total)
 	for _, s := range sets {
 		if s != nil {
 			for _, r := range s.m {
@@ -177,9 +204,9 @@ func unionAll(sets ...*rowSet) *rowSet {
 }
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
-	// Early return for empty sets
-	if o == nil || len(s.m) == 0 || len(o.m) == 0 {
-		return &rowSet{m: make(map[string]*Row)}
+	// Early return for empty sets (getM handles nil receiver)
+	if len(s.getM()) == 0 || len(o.getM()) == 0 {
+		return newRowSet()
 	}
 
 	// Iterate over the smaller set for efficiency
@@ -189,7 +216,7 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	}
 
 	// Pre-allocate with capacity of smaller set (maximum possible result size)
-	res := &rowSet{m: make(map[string]*Row, len(small.m))}
+	res := newRowSetCap(len(small.m))
 	for _, r := range small.m {
 		if _, ok := large.m[r.sum]; ok {
 			res.m[r.sum] = r
@@ -199,41 +226,51 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	return res
 }
 
-// intersectWith2 performs a three-way intersection (s ∩ o1 ∩ o2) in a single pass,
-// avoiding the intermediate allocation of chained intersectWith calls.
-func (s *rowSet) intersectWith2(o1, o2 *rowSet) *rowSet {
-	// Early return for empty sets
-	if o1 == nil || o2 == nil || len(s.m) == 0 || len(o1.m) == 0 || len(o2.m) == 0 {
-		return &rowSet{m: make(map[string]*Row)}
+// hasIntersectionWith returns true if there is any overlap between two rowSets.
+// Returns early on first match, avoiding allocation when just checking for existence.
+func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
+	if len(s.getM()) == 0 || len(o.getM()) == 0 {
+		return false
 	}
 
-	// Find the smallest set to iterate over.
-	// Note: Could use slices.SortFunc for cleaner code, but manual selection is ~10% faster.
-	sets := [3]*rowSet{s, o1, o2}
-	smallIdx := 0
-	for i := 1; i < 3; i++ {
-		if len(sets[i].m) < len(sets[smallIdx].m) {
-			smallIdx = i
+	small, large := s, o
+	if len(o.m) < len(s.m) {
+		small, large = o, s
+	}
+
+	for _, r := range small.m {
+		if _, ok := large.m[r.sum]; ok {
+			return true
 		}
 	}
-	small := sets[smallIdx]
+	return false
+}
 
-	// The other two sets to check against
-	var check1, check2 *rowSet
-	switch smallIdx {
-	case 0:
-		check1, check2 = o1, o2
-	case 1:
-		check1, check2 = s, o2
-	case 2: //nolint:mnd
-		check1, check2 = s, o1
+// intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
+// avoiding the intermediate allocation of chained intersectWith calls.
+func intersect3(a, b, c *rowSet) *rowSet {
+	// Early return for empty sets (getM handles nil receiver)
+	if len(a.getM()) == 0 || len(b.getM()) == 0 || len(c.getM()) == 0 {
+		return newRowSet()
 	}
 
+	// Sort sets by size: iterate over smallest, check smaller of remaining two first
+	// (checking smaller set first = faster short-circuit on miss)
+	sets := [3]*rowSet{a, b, c}
+	for i := range 2 {
+		for j := i + 1; j < 3; j++ {
+			if len(sets[j].m) < len(sets[i].m) {
+				sets[i], sets[j] = sets[j], sets[i]
+			}
+		}
+	}
+
+	small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
 	// Pre-allocate with capacity of smallest set
-	res := &rowSet{m: make(map[string]*Row, len(small.m))}
+	res := newRowSetCap(len(small.m))
 	for _, r := range small.m {
-		if _, ok := check1.m[r.sum]; ok {
-			if _, ok := check2.m[r.sum]; ok {
+		if _, ok := mid.m[r.sum]; ok {
+			if _, ok := large.m[r.sum]; ok {
 				res.m[r.sum] = r
 			}
 		}
@@ -405,8 +442,9 @@ func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
 		return nil, err
 	}
 
-	resSet := newRowSet()
-	var res []*Row
+	capacity := rowSetsLen(versions, scopes, roles, resources, actions)
+	resSet := newRowSetCap(capacity)
+	res := make([]*Row, 0, capacity)
 	appendRows := func(rowSets map[string]*rowSet) {
 		for _, rowSet := range rowSets {
 			for _, row := range rowSet.rows() {
@@ -487,9 +525,9 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		if !ok {
 			continue
 		}
-		// intersectWith2 considers sizes of all three sets and iterates over the smallest,
+		// intersect3 considers sizes of all three sets and iterates over the smallest,
 		// so it performs well whether scope, version, or resource is most selective.
-		scopeSet = scopeSet.intersectWith2(versionSet, resourceSet)
+		scopeSet = intersect3(scopeSet, versionSet, resourceSet)
 
 		for _, role := range roles {
 			roleSet, ok := roleSets[role]
@@ -501,7 +539,8 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
 			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
-				if ars := literalActionSet.intersectWith(roleSet).rows(); len(ars) > 0 {
+				if literalActionSet.hasIntersectionWith(roleSet) {
+					ars := literalActionSet.intersectWith(roleSet).rows()
 					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 					// retrieve actions mapped to all effectual rows
 					resolved, err := m.idx.resolve(ctx, ars)
@@ -778,7 +817,7 @@ func (m *Impl) ScopedRoleGlobExists(ctx context.Context, scope, role string) (bo
 	if !ok {
 		return false, nil
 	}
-	return len(rs.intersectWith(scopeSet).m) > 0, nil
+	return rs.hasIntersectionWith(scopeSet), nil
 }
 
 func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource string, scopes []string) (bool, error) {
