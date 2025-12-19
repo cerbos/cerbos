@@ -265,11 +265,13 @@ func intersect3(a, b, c *rowSet) *rowSet {
 		}
 	}
 
+	// sets is a fixed-size [3] array, so indexing is always safe
+	small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
 	// Pre-allocate with capacity of smallest set
-	res := newRowSetCap(len(sets[0].m))
-	for _, r := range sets[0].m {
-		if _, ok := sets[1].m[r.sum]; ok {
-			if _, ok := sets[2].m[r.sum]; ok {
+	res := newRowSetCap(len(small.m))
+	for _, r := range small.m {
+		if _, ok := mid.m[r.sum]; ok {
+			if _, ok := large.m[r.sum]; ok {
 				res.m[r.sum] = r
 			}
 		}
