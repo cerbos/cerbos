@@ -181,6 +181,9 @@ func rowSetsLen(ms ...map[string]*rowSet) int {
 // unionAll creates a new rowSet containing all rows from the given rowSets.
 // Pre-allocates the map with the right capacity for efficiency.
 func unionAll(sets ...*rowSet) *rowSet {
+	if len(sets) == 1 && sets[0] != nil {
+		return sets[0].copy()
+	}
 	// Calculate total capacity
 	total := 0
 	for _, s := range sets {
@@ -254,7 +257,7 @@ func intersect3(a, b, c *rowSet) *rowSet {
 	// Sort sets by size: iterate over smallest, check smaller of remaining two first
 	// (checking smaller set first = faster short-circuit on miss)
 	sets := [3]*rowSet{a, b, c}
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		for j := i + 1; j < 3; j++ {
 			if len(sets[j].m) < len(sets[i].m) {
 				sets[i], sets[j] = sets[j], sets[i]
