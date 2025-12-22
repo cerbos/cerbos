@@ -19,7 +19,7 @@ require (
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools/gopls v0.21.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.0
-	google.golang.org/protobuf v1.36.10
+	google.golang.org/protobuf v1.36.11
 	gotest.tools/gotestsum v1.13.0
 )
 
