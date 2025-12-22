@@ -1,0 +1,56 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.50.0]
+= Cerbos v0.50.0
+
+== Highlights
+
+This release contains several changes that might affect how the Cerbos PDP behaves in your environment. We recommend that you test the new version in a non-production environment before upgrading. Notable changes are:
+
+- There are stricter rules around variable names and the (undocumented) ability to treat variable containers as maps is no longer supported.
+- Query plans on scoped resources might change slightly because the engine now considers the rules from parent scopes as well. This makes the plan API behave the same way as the check API when dealing with scopes.
+
+
+This release also includes performance improvements that makes the engine significantly faster and reduces the compute resources required for decisions.
+
+
+== Changelog
+
+=== Breaking changes
+
+- Prevent index lookup of constants, globals, and variables
++
+The top-level identifiers `constants`/`C`, `globals`/`G`, or `variables`/`V` do not support index lookup in CEL expressions, so accessing these values must be done using the `.` operator (`V.foo` instead of `V["foo"]`). Consequently, these values must be defined with names that are valid CEL identifiers (matching `[_a-zA-Z][_a-zA-Z0-9]*` and excluding the keywords `true`, `false`, `null`, and `in`). Policy compilation will now fail on expressions using index lookups to access constants, globals, or variables, and definitions with invalid names.
+
+
+=== Features
+
+- Ability to configure a default scope for requests
++
+It is now possible to configure the PDP with a default scope value. If `engine.DefaultScope` is set, any `CheckResources` or `PlanResources` requests without an explicit scope will default to the configured value.
+
+=== Enhancements
+
+- Add InspectPolicies support to rule table based stores
+
+- Add dot as an alias to empty scope
++
+It is now possible to set the scope '.' instead of '' in the check and plan resources requests for the same effect. This is particularly useful when engine.defaultScope is configured in Cerbos configuration.
+
+- Ruletable performance optimizations
++
+These optimizations significantly reduce the time and memory spent on decisions across the board.
+
+=== Bug fixes
+
+- Isolate role policy restrictions in query planner
++
+Fixes a regression introduced as a result of fixing how role policy effects are intersected for principals with multiple roles
+
+
+- Union conditions across scope boundaries in query planner
++
+WARNING: this changes query planner behaviour for evaluations across multiple scopes.
+Fixes a bug where the query planner exited early if a policy with scope permissions `OVERRIDE_PARENT` had a matching `ALLOW` or `DENY` condition, thus preventing ancestor scopes' conditions from being evaluated and potentially; logically or'd.
+
+
