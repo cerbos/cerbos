@@ -287,6 +287,18 @@ from = "/cerbos/0.49.0/:module/_images/*"
 to = "/cerbos/prerelease/:module/_images/:splat"
 status = 302
 force = true
+
+[[redirects]]
+from = "/cerbos/0.50.0/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.50.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
 # IMG_REDIRECTS_END
 
 # This has to be at the bottom for the above redirects to work
