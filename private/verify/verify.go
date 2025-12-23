@@ -29,7 +29,7 @@ import (
 )
 
 // Files runs tests using the policy files in the given file system.
-func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestResults, error) {
+func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*policyv1.TestResults, error) {
 	if idx == nil {
 		var err error
 		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
@@ -67,7 +67,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 
 	eng := internalengine.NewEphemeral(nil, ruletableMgr, schemaMgr)
 
-	results, err := verify.Verify(ctx, fsys, eng, verify.Config{Trace: true})
+	results, err := verify.Verify(ctx, fsys, eng, verify.Config{Trace: trace})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
@@ -76,13 +76,13 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index) (*policyv1.TestRe
 }
 
 // Bundle runs tests using the given policy bundle.
-func Bundle(ctx context.Context, params engine.BundleParams, testsDir string) (*policyv1.TestResults, error) {
+func Bundle(ctx context.Context, params engine.BundleParams, testsDir string, trace bool) (*policyv1.TestResults, error) {
 	eng, err := engine.FromBundle(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	results, err := verify.Verify(ctx, os.DirFS(testsDir), eng, verify.Config{Trace: true})
+	results, err := verify.Verify(ctx, os.DirFS(testsDir), eng, verify.Config{Trace: trace})
 	if err != nil {
 		return nil, fmt.Errorf("failed to run tests: %w", err)
 	}
