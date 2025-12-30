@@ -141,6 +141,10 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	return rows, nil
 }
 
+func (r *Redis) needsResolve() bool {
+	return true
+}
+
 func (r *Redis) rowKey(sum string) string {
 	// value is the serialised row
 	return r.nsKey + ":" + sum

@@ -39,6 +39,7 @@ type Index interface {
 	getLiteralMap(string) literalMap
 	getGlobMap(string) globMap
 	resolve(context.Context, []*Row) ([]*Row, error)
+	needsResolve() bool
 }
 
 type batchWriter interface {
@@ -323,6 +324,10 @@ func (l *rowSet) iter() iter.Seq[*Row] {
 }
 
 func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
+	if !idx.needsResolve() {
+		return nil
+	}
+
 	res, err := idx.resolve(ctx, rs.rows())
 	if err != nil {
 		return err
@@ -567,11 +572,14 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 					ars := literalActionSet.intersectWith(roleSet).rows()
 					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
 					// retrieve actions mapped to all effectual rows
-					resolved, err := m.idx.resolve(ctx, ars)
-					if err != nil {
-						return nil, err
+					if m.idx.needsResolve() {
+						var err error
+						ars, err = m.idx.resolve(ctx, ars)
+						if err != nil {
+							return nil, err
+						}
 					}
-					for _, ar := range resolved {
+					for _, ar := range ars {
 						for a := range ar.GetAllowActions().GetActions() {
 							rows, _ := actionMatchedRows.Get(a)
 							rows = append(rows, ar)
@@ -657,9 +665,11 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		}
 	}
 
-	res, err = m.idx.resolve(ctx, res)
-	if err != nil {
-		return nil, err
+	if m.idx.needsResolve() {
+		res, err = m.idx.resolve(ctx, res)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return res, nil

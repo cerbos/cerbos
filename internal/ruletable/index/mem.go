@@ -39,6 +39,10 @@ func (m *Mem) resolve(_ context.Context, rows []*Row) ([]*Row, error) {
 	return rows, nil
 }
 
+func (m *Mem) needsResolve() bool {
+	return false
+}
+
 type memLiteralMap struct {
 	m  map[string]*rowSet
 	mu sync.RWMutex
