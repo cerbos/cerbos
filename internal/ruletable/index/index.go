@@ -126,19 +126,12 @@ func newRowSetCap(capacity int) *rowSet {
 	}
 }
 
-func (s *rowSet) getM() map[string]*Row {
-	if s == nil {
-		return nil
-	}
-	return s.m
-}
-
 // ensureUnique copies the map if it's shared (cow flag is set).
 func (s *rowSet) ensureUnique() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.cow {
-		newM := make(map[string]*Row, len(s.m))
+		newM := make(map[string]*Row, s.len())
 		maps.Copy(newM, s.m)
 		s.m = newM
 		s.cow = false
@@ -159,6 +152,9 @@ func (l *rowSet) has(sum string) bool {
 }
 
 func (l *rowSet) len() int {
+	if l == nil {
+		return 0
+	}
 	return len(l.m)
 }
 
@@ -172,7 +168,7 @@ func rowSetsLen(ms ...map[string]*rowSet) int {
 	total := 0
 	for _, m := range ms {
 		for _, rs := range m {
-			total += len(rs.m)
+			total += rs.len()
 		}
 	}
 	return total
@@ -188,7 +184,7 @@ func unionAll(sets ...*rowSet) *rowSet {
 	total := 0
 	for _, s := range sets {
 		if s != nil {
-			total += len(s.m)
+			total += s.len()
 		}
 	}
 
@@ -204,19 +200,19 @@ func unionAll(sets ...*rowSet) *rowSet {
 }
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
-	// Early return for empty sets (getM handles nil receiver)
-	if len(s.getM()) == 0 || len(o.getM()) == 0 {
+	// Early return for empty sets (len() handles nil receiver)
+	if s.len() == 0 || o.len() == 0 {
 		return newRowSet()
 	}
 
 	// Iterate over the smaller set for efficiency
 	small, large := s, o
-	if len(o.m) < len(s.m) {
+	if o.len() < s.len() {
 		small, large = o, s
 	}
 
 	// Pre-allocate with capacity of smaller set (maximum possible result size)
-	res := newRowSetCap(len(small.m))
+	res := newRowSetCap(small.len())
 	for _, r := range small.m {
 		if _, ok := large.m[r.sum]; ok {
 			res.m[r.sum] = r
@@ -229,12 +225,12 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 // hasIntersectionWith returns true if there is any overlap between two rowSets.
 // Returns early on first match, avoiding allocation when just checking for existence.
 func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
-	if len(s.getM()) == 0 || len(o.getM()) == 0 {
+	if s.len() == 0 || o.len() == 0 {
 		return false
 	}
 
 	small, large := s, o
-	if len(o.m) < len(s.m) {
+	if o.len() < s.len() {
 		small, large = o, s
 	}
 
@@ -249,9 +245,9 @@ func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
 // intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
 // avoiding the intermediate allocation of chained intersectWith calls.
 func intersect3(a, b, c *rowSet) *rowSet {
-	// Early return for empty sets (getM handles nil receiver)
-	if len(a.getM()) == 0 || len(b.getM()) == 0 || len(c.getM()) == 0 {
-		return newRowSet()
+	// Early return for empty sets (len() handles nil receiver)
+	if a.len() == 0 || b.len() == 0 || c.len() == 0 {
+		return nil
 	}
 
 	// Sort sets by size: iterate over smallest, check smaller of remaining two first
@@ -259,7 +255,7 @@ func intersect3(a, b, c *rowSet) *rowSet {
 	sets := [3]*rowSet{a, b, c}
 	for i := range 2 {
 		for j := i + 1; j < 3; j++ {
-			if len(sets[j].m) < len(sets[i].m) {
+			if sets[j].len() < sets[i].len() {
 				sets[i], sets[j] = sets[j], sets[i]
 			}
 		}
@@ -267,7 +263,7 @@ func intersect3(a, b, c *rowSet) *rowSet {
 
 	small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
 	// Pre-allocate with capacity of smallest set
-	res := newRowSetCap(len(small.m))
+	res := newRowSetCap(small.len())
 	for _, r := range small.m {
 		if _, ok := mid.m[r.sum]; ok {
 			if _, ok := large.m[r.sum]; ok {
@@ -290,7 +286,7 @@ func (s *rowSet) copy() *rowSet {
 }
 
 func (l *rowSet) rows() []*Row {
-	res := make([]*Row, 0, len(l.m))
+	res := make([]*Row, 0, l.len())
 	for _, r := range l.m {
 		res = append(res, r)
 	}
@@ -844,7 +840,6 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 		return false, nil
 	}
 	scopeSet := unionAll(scopesToUnion...)
-	rs = rs.intersectWith(scopeSet)
 
 	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
 	if err != nil {
@@ -854,7 +849,8 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 	if !ok {
 		return false, nil
 	}
-	rs = rs.intersectWith(resourceSet)
+
+	rs = intersect3(rs, scopeSet, resourceSet)
 
 	if err := rs.resolve(ctx, m.idx); err != nil {
 		return false, err
