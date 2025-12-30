@@ -39,6 +39,7 @@ type Index interface {
 	getLiteralMap(string) literalMap
 	getGlobMap(string) globMap
 	resolve(context.Context, []*Row) ([]*Row, error)
+	resolveIter(context.Context, iter.Seq[*Row]) (iter.Seq[*Row], error)
 	needsResolve() bool
 }
 
@@ -569,17 +570,12 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 
 			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
 				if literalActionSet.hasIntersectionWith(roleSet) {
-					ars := literalActionSet.intersectWith(roleSet).rows()
-					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
-					// retrieve actions mapped to all effectual rows
-					if m.idx.needsResolve() {
-						var err error
-						ars, err = m.idx.resolve(ctx, ars)
-						if err != nil {
-							return nil, err
-						}
+					ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectRows(roleSet))
+					if err != nil {
+						return nil, err
 					}
-					for _, ar := range ars {
+					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+					for ar := range ars {
 						for a := range ar.GetAllowActions().GetActions() {
 							rows, _ := actionMatchedRows.Get(a)
 							rows = append(rows, ar)

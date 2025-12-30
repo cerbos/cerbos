@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"slices"
 	"strings"
 	"time"
 
@@ -143,6 +145,14 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 
 func (r *Redis) needsResolve() bool {
 	return true
+}
+
+func (r *Redis) resolveIter(ctx context.Context, rows iter.Seq[*Row]) (iter.Seq[*Row], error) {
+	resolved, err := r.resolve(ctx, slices.Collect(rows))
+	if err != nil {
+		return nil, err
+	}
+	return slices.Values(resolved), nil
 }
 
 func (r *Redis) rowKey(sum string) string {
