@@ -204,33 +204,10 @@ func unionAll(sets ...*rowSet) *rowSet {
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	res := newRowSetCap(min(s.len(), o.len()))
-	for r := range s.intersectRows(o) {
+	for r := range s.intersectWithIter(o) {
 		res.m[r.sum] = r
 	}
 	return res
-}
-
-// intersectRows returns an iterator over rows that exist in both sets.
-// This avoids allocating intermediate slices or maps.
-func (s *rowSet) intersectRows(o *rowSet) iter.Seq[*Row] {
-	return func(yield func(*Row) bool) {
-		if s.len() == 0 || o.len() == 0 {
-			return
-		}
-
-		small, large := s, o
-		if o.len() < s.len() {
-			small, large = o, s
-		}
-
-		for _, r := range small.m {
-			if _, ok := large.m[r.sum]; ok {
-				if !yield(r) {
-					return
-				}
-			}
-		}
-	}
 }
 
 // hasIntersectionWith returns true if there is any overlap between two rowSets.
@@ -585,7 +562,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
 			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
-				ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectRows(roleSet))
+				ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleSet))
 				if err != nil {
 					return nil, err
 				}
@@ -669,7 +646,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 				if !ok {
 					continue
 				}
-				for r := range actionSet.intersectRows(roleSet) {
+				for r := range actionSet.intersectWithIter(roleSet) {
 					if !resSet.has(r.sum) {
 						resSet.set(r)
 						res = append(res, r)
