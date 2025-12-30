@@ -316,7 +316,7 @@ jobs:
           cross_compiling: true
 
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@43a17d6e7add2b5535efe4dcae9952337c479a93 # v0.20.11
+        uses: anchore/sbom-action/download-syft@a930d0ac434e3182448fe678398ba5713717112a # v0.21.0
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0

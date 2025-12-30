@@ -9,7 +9,7 @@ require (
 	buf.build/go/protovalidate v1.1.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/adrg/xdg v0.5.3
-	github.com/alecthomas/chroma/v2 v2.21.0
+	github.com/alecthomas/chroma/v2 v2.21.1
 	github.com/alecthomas/kong v1.13.0
 	github.com/alecthomas/participle/v2 v2.1.4
 	github.com/alicebob/miniredis/v2 v2.35.0
@@ -17,12 +17,12 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.35.4
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.94.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.0
 	github.com/aws/smithy-go v1.24.0
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cerbos/cerbos-sdk-go v0.3.13
-	github.com/cerbos/cerbos/api/genpb v0.49.1-0.20251222085253-60f11a79a638
+	github.com/cerbos/cerbos/api/genpb v0.50.0
 	github.com/cerbos/cloud-api v0.1.69
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
@@ -30,7 +30,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/fatih/color v1.18.0
 	github.com/fergusstrange/embedded-postgres v1.33.0
-	github.com/gdamore/tcell/v2 v2.13.4
+	github.com/gdamore/tcell/v2 v2.13.5
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-andiamo/splitter v1.2.5
 	github.com/go-cmd/cmd v1.4.3
@@ -38,7 +38,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gobwas/glob v0.2.3
-	github.com/goccy/go-yaml v1.19.0
+	github.com/goccy/go-yaml v1.19.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-cmp v0.7.0
@@ -55,8 +55,8 @@ require (
 	github.com/jwalton/gchalk v1.3.0
 	github.com/jwalton/go-supportscolor v1.2.0
 	github.com/kavu/go_reuseport v1.5.0
-	github.com/keygen-sh/machineid v1.1.1
-	github.com/lestrrat-go/httprc/v3 v3.0.2
+	github.com/keygen-sh/machineid v1.1.2
+	github.com/lestrrat-go/httprc/v3 v3.0.3
 	github.com/lestrrat-go/jwx/v3 v3.0.12
 	github.com/mattn/go-isatty v0.0.20
 	github.com/minio/minio-go/v7 v7.0.97
@@ -85,7 +85,7 @@ require (
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/pretty v1.2.1
 	github.com/tidwall/sjson v1.2.5
-	github.com/twmb/franz-go v1.20.5
+	github.com/twmb/franz-go v1.20.6
 	github.com/twmb/franz-go/pkg/kadm v1.17.1
 	github.com/twmb/franz-go/plugin/kzap v1.1.2
 	go.elastic.co/ecszap v1.0.3
@@ -115,8 +115,8 @@ require (
 	golang.org/x/sync v0.19.0
 	golang.org/x/tools v0.40.0
 	gonum.org/v1/gonum v0.16.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2
-	google.golang.org/grpc v1.77.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b
+	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -221,7 +221,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
