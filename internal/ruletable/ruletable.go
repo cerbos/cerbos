@@ -69,16 +69,16 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 		return fmt.Errorf("failed to get all policies: %w", err)
 	}
 
-	allRules := make([][]*runtimev1.RuleTable_RuleRow, 0, len(rps))
-	totalLen := 0
+	m := make([][]*runtimev1.RuleTable_RuleRow, 0, len(rps))
+	total := 0
 	for _, p := range rps {
 		rules := AddPolicy(rt, p)
-		allRules = append(allRules, rules)
-		totalLen += len(rules)
+		m = append(m, rules)
+		total += len(rules)
 	}
 
-	rt.Rules = make([]*runtimev1.RuleTable_RuleRow, 0, totalLen)
-	for _, rules := range allRules {
+	rt.Rules = make([]*runtimev1.RuleTable_RuleRow, 0, total)
+	for _, rules := range m {
 		rt.Rules = append(rt.Rules, rules...)
 	}
 
