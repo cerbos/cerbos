@@ -203,25 +203,10 @@ func unionAll(sets ...*rowSet) *rowSet {
 }
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
-	// Early return for empty sets (len() handles nil receiver)
-	if s.len() == 0 || o.len() == 0 {
-		return newRowSet()
+	res := newRowSetCap(min(s.len(), o.len()))
+	for r := range s.intersectRows(o) {
+		res.m[r.sum] = r
 	}
-
-	// Iterate over the smaller set for efficiency
-	small, large := s, o
-	if o.len() < s.len() {
-		small, large = o, s
-	}
-
-	// Pre-allocate with capacity of smaller set (maximum possible result size)
-	res := newRowSetCap(small.len())
-	for _, r := range small.m {
-		if _, ok := large.m[r.sum]; ok {
-			res.m[r.sum] = r
-		}
-	}
-
 	return res
 }
 
@@ -271,33 +256,13 @@ func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
 // intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
 // avoiding the intermediate allocation of chained intersectWith calls.
 func intersect3(a, b, c *rowSet) *rowSet {
-	// Early return for empty sets (len() handles nil receiver)
-	if a.len() == 0 || b.len() == 0 || c.len() == 0 {
+	res := newRowSetCap(min(a.len(), b.len(), c.len()))
+	for r := range intersect3Iter(a, b, c) {
+		res.m[r.sum] = r
+	}
+	if res.len() == 0 {
 		return nil
 	}
-
-	// Sort sets by size: iterate over smallest, check smaller of remaining two first
-	// (checking smaller set first = faster short-circuit on miss)
-	sets := [3]*rowSet{a, b, c}
-	for i := range 2 {
-		for j := i + 1; j < 3; j++ {
-			if sets[j].len() < sets[i].len() {
-				sets[i], sets[j] = sets[j], sets[i]
-			}
-		}
-	}
-
-	small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
-	// Pre-allocate with capacity of smallest set
-	res := newRowSetCap(small.len())
-	for _, r := range small.m {
-		if _, ok := mid.m[r.sum]; ok {
-			if _, ok := large.m[r.sum]; ok {
-				res.m[r.sum] = r
-			}
-		}
-	}
-
 	return res
 }
 
