@@ -615,25 +615,26 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 			if !ok {
 				continue
 			}
-			roleSet = roleSet.intersectWith(scopeSet)
 
 			roleFqn := namer.RolePolicyFQN(role, scope)
 
 			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
-				if literalActionSet.hasIntersectionWith(roleSet) {
-					ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectRows(roleSet))
-					if err != nil {
-						return nil, err
+				ars, err := m.idx.resolveIter(ctx, intersect3Iter(literalActionSet, roleSet, scopeSet))
+				if err != nil {
+					return nil, err
+				}
+				actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+				hadMatches := false
+				for ar := range ars {
+					hadMatches = true
+					for a := range ar.GetAllowActions().GetActions() {
+						rows, _ := actionMatchedRows.Get(a)
+						rows = append(rows, ar)
+						actionMatchedRows.Set(a, rows)
 					}
-					actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
-					for ar := range ars {
-						for a := range ar.GetAllowActions().GetActions() {
-							rows, _ := actionMatchedRows.Get(a)
-							rows = append(rows, ar)
-							actionMatchedRows.Set(a, rows)
-						}
-					}
+				}
 
+				if hadMatches {
 					for _, action := range actions {
 						matchedRows := []*Row{}
 						for _, rows := range actionMatchedRows.GetMerged(action) {
@@ -702,7 +703,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 				if !ok {
 					continue
 				}
-				for r := range actionSet.intersectRows(roleSet) {
+				for r := range intersect3Iter(actionSet, roleSet, scopeSet) {
 					if !resSet.has(r.sum) {
 						resSet.set(r)
 						res = append(res, r)
@@ -712,9 +713,11 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		}
 	}
 
-	res, err = m.idx.resolve(ctx, res)
-	if err != nil {
-		return nil, err
+	if m.idx.needsResolve() {
+		res, err = m.idx.resolve(ctx, res)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return res, nil
