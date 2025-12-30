@@ -712,11 +712,9 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		}
 	}
 
-	if m.idx.needsResolve() {
-		res, err = m.idx.resolve(ctx, res)
-		if err != nil {
-			return nil, err
-		}
+	res, err = m.idx.resolve(ctx, res)
+	if err != nil {
+		return nil, err
 	}
 
 	return res, nil
