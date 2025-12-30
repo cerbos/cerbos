@@ -6,6 +6,7 @@ package index
 import (
 	"context"
 	"crypto/sha256"
+	"iter"
 	"maps"
 	"slices"
 	"sync"
@@ -222,6 +223,29 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	return res
 }
 
+// intersectRows returns an iterator over rows that exist in both sets.
+// This avoids allocating intermediate slices or maps.
+func (s *rowSet) intersectRows(o *rowSet) iter.Seq[*Row] {
+	return func(yield func(*Row) bool) {
+		if s.len() == 0 || o.len() == 0 {
+			return
+		}
+
+		small, large := s, o
+		if o.len() < s.len() {
+			small, large = o, s
+		}
+
+		for _, r := range small.m {
+			if _, ok := large.m[r.sum]; ok {
+				if !yield(r) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // hasIntersectionWith returns true if there is any overlap between two rowSets.
 // Returns early on first match, avoiding allocation when just checking for existence.
 func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
@@ -292,6 +316,10 @@ func (l *rowSet) rows() []*Row {
 	}
 
 	return res
+}
+
+func (l *rowSet) iter() iter.Seq[*Row] {
+	return maps.Values(l.m)
 }
 
 func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
@@ -443,7 +471,7 @@ func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
 	res := make([]*Row, 0, capacity)
 	appendRows := func(rowSets map[string]*rowSet) {
 		for _, rowSet := range rowSets {
-			for _, row := range rowSet.rows() {
+			for row := range rowSet.iter() {
 				if !resSet.has(row.sum) {
 					resSet.set(row)
 					res = append(res, row)
@@ -619,7 +647,7 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 				if !ok {
 					continue
 				}
-				for _, r := range actionSet.intersectWith(roleSet).rows() {
+				for r := range actionSet.intersectRows(roleSet) {
 					if !resSet.has(r.sum) {
 						resSet.set(r)
 						res = append(res, r)
@@ -855,7 +883,7 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 	if err := rs.resolve(ctx, m.idx); err != nil {
 		return false, err
 	}
-	for _, rule := range rs.rows() {
+	for rule := range rs.iter() {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE {
 			return true, nil
 		}
@@ -893,7 +921,7 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 	if err := rs.resolve(ctx, m.idx); err != nil {
 		return false, err
 	}
-	for _, rule := range rs.rows() {
+	for rule := range rs.iter() {
 		if rule.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
 			return true, nil
 		}
