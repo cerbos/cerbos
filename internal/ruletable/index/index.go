@@ -203,6 +203,9 @@ func unionAll(sets ...*rowSet) *rowSet {
 }
 
 func (s *rowSet) intersectWith(o *rowSet) *rowSet {
+	if s.len() == 0 || o.len() == 0 {
+		return newRowSet()
+	}
 	res := newRowSetCap(min(s.len(), o.len()))
 	for r := range s.intersectWithIter(o) {
 		res.m[r.sum] = r
@@ -233,12 +236,12 @@ func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
 // intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
 // avoiding the intermediate allocation of chained intersectWith calls.
 func intersect3(a, b, c *rowSet) *rowSet {
+	if a.len() == 0 || b.len() == 0 || c.len() == 0 {
+		return newRowSet()
+	}
 	res := newRowSetCap(min(a.len(), b.len(), c.len()))
 	for r := range intersect3Iter(a, b, c) {
 		res.m[r.sum] = r
-	}
-	if res.len() == 0 {
-		return nil
 	}
 	return res
 }
