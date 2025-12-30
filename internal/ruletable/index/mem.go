@@ -5,6 +5,7 @@ package index
 
 import (
 	"context"
+	"iter"
 	"maps"
 	"sync"
 
@@ -37,6 +38,14 @@ func (m *Mem) getGlobMap(string) globMap {
 
 func (m *Mem) resolve(_ context.Context, rows []*Row) ([]*Row, error) {
 	return rows, nil
+}
+
+func (m *Mem) resolveIter(_ context.Context, rows iter.Seq[*Row]) (iter.Seq[*Row], error) {
+	return rows, nil
+}
+
+func (m *Mem) needsResolve() bool {
+	return false
 }
 
 type memLiteralMap struct {
