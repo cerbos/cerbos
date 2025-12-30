@@ -301,6 +301,57 @@ func intersect3(a, b, c *rowSet) *rowSet {
 	return res
 }
 
+// intersectWithIter returns an iterator over the intersection of two rowSets.
+func (s *rowSet) intersectWithIter(o *rowSet) iter.Seq[*Row] {
+	return func(yield func(*Row) bool) {
+		if s.len() == 0 || o.len() == 0 {
+			return
+		}
+
+		small, large := s, o
+		if o.len() < s.len() {
+			small, large = o, s
+		}
+
+		for _, r := range small.m {
+			if _, ok := large.m[r.sum]; ok {
+				if !yield(r) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// intersect3Iter returns an iterator over the three-way intersection (a ∩ b ∩ c).
+func intersect3Iter(a, b, c *rowSet) iter.Seq[*Row] {
+	return func(yield func(*Row) bool) {
+		if a.len() == 0 || b.len() == 0 || c.len() == 0 {
+			return
+		}
+
+		sets := [3]*rowSet{a, b, c}
+		for i := range 2 {
+			for j := i + 1; j < 3; j++ {
+				if sets[j].len() < sets[i].len() {
+					sets[i], sets[j] = sets[j], sets[i]
+				}
+			}
+		}
+
+		small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
+		for _, r := range small.m {
+			if _, ok := mid.m[r.sum]; ok {
+				if _, ok := large.m[r.sum]; ok {
+					if !yield(r) {
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
 func (s *rowSet) copy() *rowSet {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -884,12 +935,11 @@ func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource strin
 		return false, nil
 	}
 
-	rs = intersect3(rs, scopeSet, resourceSet)
-
-	if err := rs.resolve(ctx, m.idx); err != nil {
+	resolved, err := m.idx.resolveIter(ctx, intersect3Iter(rs, scopeSet, resourceSet))
+	if err != nil {
 		return false, err
 	}
-	for rule := range rs.iter() {
+	for rule := range resolved {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE {
 			return true, nil
 		}
@@ -922,12 +972,12 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 		return false, nil
 	}
 	scopeSet := unionAll(scopesToUnion...)
-	rs = rs.intersectWith(scopeSet)
 
-	if err := rs.resolve(ctx, m.idx); err != nil {
+	resolved, err := m.idx.resolveIter(ctx, rs.intersectWithIter(scopeSet))
+	if err != nil {
 		return false, err
 	}
-	for rule := range rs.iter() {
+	for rule := range resolved {
 		if rule.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
 			return true, nil
 		}
