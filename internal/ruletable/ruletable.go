@@ -457,6 +457,15 @@ func NewASTCache() *ASTCache {
 	}
 }
 
+func (c *ASTCache) Clear() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	clear(c.m)
+	c.mu.Unlock()
+}
+
 func (c *ASTCache) GetOrCreate(expr *exprpb.CheckedExpr) (*celast.AST, error) {
 	if c == nil {
 		return celast.ToAST(expr)
@@ -512,6 +521,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
 	clear(rt.parentRoleAncestors)
+	rt.astCache.Clear()
 
 	rt.idx.Reset()
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
