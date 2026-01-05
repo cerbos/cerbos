@@ -1,4 +1,4 @@
-// Copyright 2021-2025 Zenauth Ltd.
+// Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 //go:build tests
@@ -36,7 +36,7 @@ func TestSatisfiesCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			tctx := tracer.Start(newTestTraceSink(t))
-			retVal, err := ruletable.NewEvalContext(eparams, tc.Request).SatisfiesCondition(t.Context(), tctx.StartCondition(), cond, nil, nil)
+			retVal, err := ruletable.NewEvalContext(eparams, tc.Request, nil).SatisfiesCondition(t.Context(), tctx.StartCondition(), cond, nil, nil)
 
 			if tc.WantError {
 				require.Error(t, err)
