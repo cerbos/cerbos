@@ -64,7 +64,7 @@ Please be respectful to maintainers and disclose AI assistance.
 - Make sure each source file contains the appropriate licence header:
 
     ```
-    Copyright 2021-2025 Zenauth Ltd.
+    Copyright 2021-2026 Zenauth Ltd.
     SPDX-License-Identifier: Apache-2.0
     ```
 
