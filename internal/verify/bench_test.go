@@ -20,7 +20,7 @@ import (
 )
 
 // BenchmarkVerify benchmarks the Verify function against policies and tests in a directory.
-// Usage: CERBOS_BENCH_DIR=/abspath/to/policies go test -bench=BenchmarkVerify -run='^$' ./internal/verify/
+// Usage: CERBOS_BENCH_DIR=/abspath/to/policies go test -bench=BenchmarkVerify -run='^$' ./internal/verify/.
 func BenchmarkVerify(b *testing.B) {
 	benchDir := os.Getenv("CERBOS_BENCH_DIR")
 	if benchDir == "" {
