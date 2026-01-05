@@ -36,8 +36,7 @@ func BenchmarkVerify(b *testing.B) {
 
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
-		cwd, _ := os.Getwd()
-		b.Fatalf("failed to build index: %v, cwd: %s", err, cwd)
+		b.Fatalf("failed to build index: %v", err)
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
