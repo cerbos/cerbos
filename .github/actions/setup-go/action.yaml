@@ -37,7 +37,7 @@ runs:
     - name: Cache dependencies
       id: cache_deps
       if: ${{ inputs.write_deps_cache == 'true' }}
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
       with:
         path: |
           ~/go/pkg/mod
@@ -49,7 +49,7 @@ runs:
     - name: Restore cached dependencies
       id: restore_deps
       if: ${{ inputs.write_deps_cache != 'true' }}
-      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
       with:
         path: |
           ~/go/pkg/mod
@@ -61,7 +61,7 @@ runs:
     - name: Cache build outputs
       id: cache_build
       if: ${{ inputs.write_build_cache == 'true' }}
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
       with:
         path: |
           ~/.cache/go-build
@@ -72,7 +72,7 @@ runs:
     - name: Restore cached build outputs
       id: restore_build
       if: ${{ inputs.write_build_cache != 'true' }}
-      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache/restore@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
       with:
         path: |
           ~/.cache/go-build
