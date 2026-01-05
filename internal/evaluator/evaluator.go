@@ -35,6 +35,16 @@ func WithNowFunc(nowFunc func() time.Time) CheckOpt {
 	}
 }
 
+// WithTrapNowFunc sets a trap function that detects time function usage.
+// Unlike WithNowFunc, this allows precomputed programs to be used for expressions
+// that don't use time functions, while still detecting when time functions are called.
+func WithTrapNowFunc(nowFunc func() time.Time) CheckOpt {
+	return func(co *CheckOptions) {
+		co.EvalParams.NowFunc = nowFunc
+		co.EvalParams.NowFuncIsTrap = true
+	}
+}
+
 // WithLenientScopeSearch enables lenient scope search.
 func WithLenientScopeSearch() CheckOpt {
 	return func(co *CheckOptions) {
@@ -91,6 +101,7 @@ func (co *CheckOptions) Globals() map[string]any {
 type EvalParams struct {
 	Globals              map[string]any
 	NowFunc              conditions.NowFunc
+	NowFuncIsTrap        bool
 	DefaultPolicyVersion string
 	DefaultScope         string
 	LenientScopeSearch   bool

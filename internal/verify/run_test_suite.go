@@ -358,7 +358,7 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 	if now := options.GetNow(); now != nil {
 		checkOpts = append(checkOpts, evaluator.WithNowFunc(now.AsTime))
 	} else {
-		checkOpts = append(checkOpts, evaluator.WithNowFunc(func() time.Time {
+		checkOpts = append(checkOpts, evaluator.WithTrapNowFunc(func() time.Time {
 			usedDefaultNow = true
 			return time.Time{}
 		}))
