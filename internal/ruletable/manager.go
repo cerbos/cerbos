@@ -206,6 +206,8 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		return nil
 	}
 
+	mgr.astCache.Clear()
+
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 
 	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
