@@ -101,9 +101,9 @@ func (co *CheckOptions) Globals() map[string]any {
 type EvalParams struct {
 	Globals              map[string]any
 	NowFunc              conditions.NowFunc
-	NowFuncIsTrap        bool
 	DefaultPolicyVersion string
 	DefaultScope         string
+	NowFuncIsTrap        bool
 	LenientScopeSearch   bool
 }
 
