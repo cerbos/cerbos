@@ -59,6 +59,7 @@ type Cmd struct { //betteralign:ignore
 	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
 	RunRegexp     string                            `help:"Run only tests that match this regex" name:"run"`
 	SkipTests     bool                              `help:"Skip tests"`
+	SkipBatching  bool                              `help:"Skip batching tests"`
 	Output        flagset.OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
 	TestOutput    *flagset.VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
 	Color         *outputcolor.Level                `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
@@ -132,6 +133,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		verifyConf := verify.Config{
 			IncludedTestNamesRegexp: c.RunRegexp,
 			Trace:                   c.Verbose,
+			SkipBatching:            c.SkipBatching,
 		}
 
 		compileMgr, err := compile.NewManager(ctx, store)
