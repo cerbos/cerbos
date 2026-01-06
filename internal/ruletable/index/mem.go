@@ -28,11 +28,11 @@ func NewMem() *Mem {
 	return &Mem{namespace: memNamespaceKey}
 }
 
-func (m *Mem) getLiteralMap(string) literalMap {
+func (m *Mem) getLiteralMap(CategoryKey) literalMap {
 	return newMemLiteralMap()
 }
 
-func (m *Mem) getGlobMap(string) globMap {
+func (m *Mem) getGlobMap(CategoryKey) globMap {
 	return newMemGlobMap()
 }
 
