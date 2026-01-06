@@ -22,7 +22,7 @@ import (
 
 var errUsedDefaultNow = errors.New("a policy used a time-based condition, but `now` was not provided in the test options")
 
-func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file string, suite *policyv1.TestSuite, fixture *TestFixture, trace bool) *policyv1.TestResults_Suite {
+func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file string, suite *policyv1.TestSuite, fixture *TestFixture, trace, skipBatching bool) *policyv1.TestResults_Suite {
 	summary := &policyv1.TestResults_Summary{}
 	results := &policyv1.TestResults_Suite{
 		File:        file,
@@ -70,6 +70,13 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 		return results
 	}
 
+	expectedOutput := false
+	for _, test := range tests {
+		if len(test.ExpectedOutputs) > 0 {
+			expectedOutput = true
+			break
+		}
+	}
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return results
@@ -83,8 +90,20 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 			continue
 		}
 
-		for _, action := range test.Input.Actions {
-			addResult(results, test.Name, action, runTest(ctx, eng, test, action, trace))
+		useBatching := !skipBatching &&
+			!expectedOutput &&
+			len(test.Input.Actions) > 1
+
+		if useBatching {
+			actionResults := runTest(ctx, eng, test, test.Input.Actions, trace)
+			for _, action := range test.Input.Actions {
+				addResult(results, test.Name, action, actionResults[action])
+			}
+		} else {
+			for _, action := range test.Input.Actions {
+				actionResults := runTest(ctx, eng, test, []string{action}, trace)
+				addResult(results, test.Name, action, actionResults[action])
+			}
 		}
 	}
 
@@ -252,103 +271,130 @@ func (r *testSuiteRun) lookupAuxData(name string) (*enginev1.AuxData, error) {
 	return nil, fmt.Errorf("auxData %q not found", name)
 }
 
-func runTest(ctx context.Context, eng Checker, test *policyv1.Test, action string, trace bool) *policyv1.TestResults_Details {
-	details := &policyv1.TestResults_Details{}
+func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []string, trace bool) map[string]*policyv1.TestResults_Details {
+	results := make(map[string]*policyv1.TestResults_Details, len(actions))
 
 	inputs := []*enginev1.CheckInput{{
 		RequestId: test.Input.RequestId,
 		Resource:  test.Input.Resource,
 		Principal: test.Input.Principal,
-		Actions:   []string{action},
+		Actions:   actions,
 		AuxData:   test.Input.AuxData,
 	}}
 
 	actual, traces, err := performCheck(ctx, eng, inputs, test.Options, trace)
-	details.EngineTrace = traces
-
 	if err != nil {
-		details.Result = policyv1.TestResults_RESULT_ERRORED
-		details.Outcome = &policyv1.TestResults_Details_Error{Error: err.Error()}
-		return details
+		for _, action := range actions {
+			results[action] = &policyv1.TestResults_Details{
+				Result:      policyv1.TestResults_RESULT_ERRORED,
+				EngineTrace: traces,
+				Outcome:     &policyv1.TestResults_Details_Error{Error: err.Error()},
+			}
+		}
+		return results
 	}
 
 	if len(actual) == 0 {
-		details.Result = policyv1.TestResults_RESULT_ERRORED
-		details.Outcome = &policyv1.TestResults_Details_Error{Error: "Empty response from server"}
-		return details
-	}
-
-	expectedEffect := test.Expected[action]
-	if expectedEffect == effectv1.Effect_EFFECT_UNSPECIFIED {
-		expectedEffect = effectv1.Effect_EFFECT_DENY
-	}
-
-	if expectedEffect != actual[0].Actions[action].Effect {
-		details.Result = policyv1.TestResults_RESULT_FAILED
-		details.Outcome = &policyv1.TestResults_Details_Failure{
-			Failure: &policyv1.TestResults_Failure{
-				Expected: expectedEffect,
-				Actual:   actual[0].Actions[action].Effect,
-			},
-		}
-		return details
-	}
-
-	if expectedOutputs, ok := test.ExpectedOutputs[action]; ok {
-		actualOutputs := make(map[string]*structpb.Value, len(actual[0].Outputs))
-		for _, output := range actual[0].Outputs {
-			actualOutputs[output.Src] = output.Val
-		}
-
-		var failures []*policyv1.TestResults_OutputFailure
-		for wantKey, wantValue := range expectedOutputs.Entries {
-			haveValue, ok := actualOutputs[wantKey]
-			if !ok {
-				failures = append(failures, &policyv1.TestResults_OutputFailure{
-					Src: wantKey,
-					Outcome: &policyv1.TestResults_OutputFailure_Missing{
-						Missing: &policyv1.TestResults_OutputFailure_MissingValue{
-							Expected: wantValue,
-						},
-					},
-				})
-				continue
-			}
-
-			if !cmp.Equal(wantValue, haveValue, protocmp.Transform()) {
-				failures = append(failures, &policyv1.TestResults_OutputFailure{
-					Src: wantKey,
-					Outcome: &policyv1.TestResults_OutputFailure_Mismatched{
-						Mismatched: &policyv1.TestResults_OutputFailure_MismatchedValue{
-							Actual:   haveValue,
-							Expected: wantValue,
-						},
-					},
-				})
+		for _, action := range actions {
+			results[action] = &policyv1.TestResults_Details{
+				Result:      policyv1.TestResults_RESULT_ERRORED,
+				EngineTrace: traces,
+				Outcome:     &policyv1.TestResults_Details_Error{Error: "Empty response from server"},
 			}
 		}
+		return results
+	}
 
-		if len(failures) > 0 {
+	actualOutputs := make(map[string]*structpb.Value, len(actual[0].Outputs))
+	for _, output := range actual[0].Outputs {
+		actualOutputs[output.Src] = output.Val
+	}
+
+	for _, action := range actions {
+		details := &policyv1.TestResults_Details{EngineTrace: traces}
+
+		expectedEffect := test.Expected[action]
+		if expectedEffect == effectv1.Effect_EFFECT_UNSPECIFIED {
+			expectedEffect = effectv1.Effect_EFFECT_DENY
+		}
+
+		actionResult := actual[0].Actions[action]
+		if actionResult == nil {
+			details.Result = policyv1.TestResults_RESULT_ERRORED
+			details.Outcome = &policyv1.TestResults_Details_Error{Error: fmt.Sprintf("no result for action %q", action)}
+			results[action] = details
+			continue
+		}
+
+		if expectedEffect != actionResult.Effect {
 			details.Result = policyv1.TestResults_RESULT_FAILED
 			details.Outcome = &policyv1.TestResults_Details_Failure{
 				Failure: &policyv1.TestResults_Failure{
 					Expected: expectedEffect,
-					Actual:   actual[0].Actions[action].Effect,
-					Outputs:  failures,
+					Actual:   actionResult.Effect,
 				},
 			}
-			return details
+			results[action] = details
+			continue
 		}
+
+		if expectedOutputs, ok := test.ExpectedOutputs[action]; ok {
+			var failures []*policyv1.TestResults_OutputFailure
+			for wantKey, wantValue := range expectedOutputs.Entries {
+				haveValue, ok := actualOutputs[wantKey]
+				if !ok {
+					failures = append(failures, &policyv1.TestResults_OutputFailure{
+						Src: wantKey,
+						Outcome: &policyv1.TestResults_OutputFailure_Missing{
+							Missing: &policyv1.TestResults_OutputFailure_MissingValue{
+								Expected: wantValue,
+							},
+						},
+					})
+					continue
+				}
+
+				if !cmp.Equal(wantValue, haveValue, protocmp.Transform()) {
+					failures = append(failures, &policyv1.TestResults_OutputFailure{
+						Src: wantKey,
+						Outcome: &policyv1.TestResults_OutputFailure_Mismatched{
+							Mismatched: &policyv1.TestResults_OutputFailure_MismatchedValue{
+								Actual:   haveValue,
+								Expected: wantValue,
+							},
+						},
+					})
+				}
+			}
+
+			if len(failures) > 0 {
+				details.Result = policyv1.TestResults_RESULT_FAILED
+				details.Outcome = &policyv1.TestResults_Details_Failure{
+					Failure: &policyv1.TestResults_Failure{
+						Expected: expectedEffect,
+						Actual:   actionResult.Effect,
+						Outputs:  failures,
+					},
+				}
+				results[action] = details
+				continue
+			}
+		}
+
+		details.Result = policyv1.TestResults_RESULT_PASSED
+		success := &policyv1.TestResults_Success{
+			Effect: actionResult.Effect,
+		}
+		details.Outcome = &policyv1.TestResults_Details_Success{
+			Success: success,
+		}
+		if len(actions) == 1 {
+			success.Outputs = actual[0].Outputs
+		}
+		results[action] = details
 	}
 
-	details.Result = policyv1.TestResults_RESULT_PASSED
-	details.Outcome = &policyv1.TestResults_Details_Success{
-		Success: &policyv1.TestResults_Success{
-			Effect:  actual[0].Actions[action].Effect,
-			Outputs: actual[0].Outputs,
-		},
-	}
-	return details
+	return results
 }
 
 func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInput, options *policyv1.TestOptions, trace bool) (_ []*enginev1.CheckOutput, traces []*enginev1.Trace, _ error) {
@@ -358,7 +404,7 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 	if now := options.GetNow(); now != nil {
 		checkOpts = append(checkOpts, evaluator.WithNowFunc(now.AsTime))
 	} else {
-		checkOpts = append(checkOpts, evaluator.WithTrapNowFunc(func() time.Time {
+		checkOpts = append(checkOpts, evaluator.WithNowFunc(func() time.Time {
 			usedDefaultNow = true
 			return time.Time{}
 		}))

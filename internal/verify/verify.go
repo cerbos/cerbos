@@ -23,6 +23,7 @@ type Config struct {
 	ExcludedPrincipalPolicyFQNs map[string]struct{}
 	IncludedTestNamesRegexp     string
 	Trace                       bool
+	SkipBatching                bool
 }
 
 type Checker interface {
@@ -129,7 +130,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 			}
 		}
 
-		return runTestSuite(ctx, eng, testFilter, file, suite, fixture, conf.Trace)
+		return runTestSuite(ctx, eng, testFilter, file, suite, fixture, conf.Trace, conf.SkipBatching)
 	}
 
 	results := &policyv1.TestResults{
