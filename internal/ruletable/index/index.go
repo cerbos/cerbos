@@ -79,6 +79,7 @@ type rowParams struct {
 type CelProgram struct {
 	Prog cel.Program
 	Name string
+	Expr string
 }
 
 func (r *Row) Matches(pt policyv1.Kind, scope, action, principalID string, roles []string) bool {
@@ -941,7 +942,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 			return progs, err
 		}
 
-		progs[i] = &CelProgram{Name: v.Name, Prog: p}
+		progs[i] = &CelProgram{Name: v.Name, Prog: p, Expr: v.Expr.Original}
 	}
 
 	return progs, nil

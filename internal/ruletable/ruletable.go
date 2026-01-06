@@ -1356,7 +1356,7 @@ func (ec *EvalContext) evaluateCELProgramsOrVariables(ctx context.Context, tctx 
 	// Use precomputed programs if no custom NowFunc, or if NowFunc is just a trap.
 	// A trap NowFunc is only used to detect time function usage, not to override time.
 	if ec.NowFunc == nil || ec.NowFuncIsTrap {
-		return ec.evaluatePrograms(constants, celPrograms)
+		return ec.evaluatePrograms(tctx.StartVariables(), constants, celPrograms)
 	}
 
 	// Fall back to recomputing programs with time decorator for real time overrides.
@@ -1397,7 +1397,7 @@ func (ec *EvalContext) buildEvalVars(constants, variables map[string]any) map[st
 	}
 }
 
-func (ec *EvalContext) evaluatePrograms(constants map[string]any, celPrograms []*index.CelProgram) (map[string]any, error) {
+func (ec *EvalContext) evaluatePrograms(tctx tracer.Context, constants map[string]any, celPrograms []*index.CelProgram) (map[string]any, error) {
 	var errs error
 
 	evalVars := make(map[string]any, len(celPrograms))
@@ -1405,18 +1405,23 @@ func (ec *EvalContext) evaluatePrograms(constants map[string]any, celPrograms []
 		if prg == nil {
 			continue
 		}
+		vctx := tctx.StartVariable(prg.Name, prg.Expr)
 		result, _, err := prg.Prog.Eval(ec.buildEvalVars(constants, evalVars))
 		if err != nil {
 			// Ignore errors for expressions that evaluate to an error value (e.g., missing keys).
 			// This matches the behavior of evaluateCELExpr which returns nil for such cases.
 			if types.IsError(result) {
+				vctx.ComputedResult(nil)
 				continue
 			}
+			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s`: %w", prg.Name, err))
 			continue
 		}
 
-		evalVars[prg.Name] = result.Value()
+		val := result.Value()
+		evalVars[prg.Name] = val
+		vctx.ComputedResult(val)
 	}
 
 	return evalVars, errs
