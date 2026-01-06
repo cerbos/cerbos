@@ -90,9 +90,7 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 			continue
 		}
 
-		useBatching := !skipBatching &&
-			!expectedOutput &&
-			len(test.Input.Actions) > 1
+		useBatching := !skipBatching && !expectedOutput
 
 		if useBatching {
 			actionResults := runTest(ctx, eng, test, test.Input.Actions, trace)
