@@ -1,20 +1,9 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "configMigration": true,
-    "commitMessageLowerCase": "never",
-    "minimumReleaseAge": "5 days",
-    "internalChecksFilter": "strict",
     "extends": [
+        "github>cerbos/renovate",
         "group:allNonMajor",
-        "helpers:pinGitHubActionDigests",
-        "schedule:weekly",
-        ":automergeDisabled",
-        ":combinePatchMinorReleases",
-        ":dependencyDashboard",
-        ":gitSignOff",
-        ":renovatePrefix",
-        ":semanticCommitTypeAll(chore)",
-        ":separateMultipleMajorReleases"
+        ":combinePatchMinorReleases"
     ],
     "ignoreDeps": [
         "github.com/cerbos/go-yaml"
@@ -49,11 +38,7 @@
                 "gomod"
             ],
             "groupName": "Go deps",
-            "groupSlug": "go-deps",
-            "postUpdateOptions": [
-                "gomodTidy",
-                "gomodUpdateImportPaths"
-            ]
+            "groupSlug": "go-deps"
         },
         {
             "matchManagers": [
