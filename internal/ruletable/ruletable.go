@@ -1083,7 +1083,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								variables = c
 							} else {
 								var err error
-								variables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, pctx, constants, row.Params.CelPrograms, row.Params.Variables)
+								variables, err = evalCtx.evaluatePrograms(pctx.StartVariables(), constants, row.Params.CelPrograms)
 								if err != nil {
 									pctx.Skipped(err, "Error evaluating variables")
 									return nil, err
@@ -1107,7 +1107,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										derivedRoleVariables = c
 									} else {
 										var err error
-										derivedRoleVariables, err = evalCtx.evaluateCELProgramsOrVariables(ctx, drctx, derivedRoleConstants, row.DerivedRoleParams.CelPrograms, row.DerivedRoleParams.Variables)
+										derivedRoleVariables, err = evalCtx.evaluatePrograms(drctx.StartVariables(), derivedRoleConstants, row.DerivedRoleParams.CelPrograms)
 										if err != nil {
 											drctx.Skipped(err, "Error evaluating derived role variables")
 											return nil, err
@@ -1358,10 +1358,6 @@ func (ec *EvalContext) lazyRuntime() any { // We have to return `any` rather tha
 	}
 
 	return ec.runtime
-}
-
-func (ec *EvalContext) evaluateCELProgramsOrVariables(_ context.Context, tctx tracer.Context, constants map[string]any, celPrograms []*index.CelProgram, _ []*runtimev1.Variable) (map[string]any, error) {
-	return ec.evaluatePrograms(tctx.StartVariables(), constants, celPrograms)
 }
 
 func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Context, constants map[string]any, variables []*runtimev1.Variable) (map[string]any, error) {
