@@ -36,7 +36,7 @@ func TestSatisfiesCondition(t *testing.T) {
 			require.NoError(t, err)
 
 			tctx := tracer.Start(newTestTraceSink(t))
-			retVal, err := ruletable.NewEvalContext(eparams, tc.Request, nil, nil).SatisfiesCondition(t.Context(), tctx.StartCondition(), cond, nil, nil)
+			retVal, err := ruletable.NewEvalContext(eparams, tc.Request, nil).SatisfiesCondition(t.Context(), tctx.StartCondition(), cond, nil, nil)
 
 			if tc.WantError {
 				require.Error(t, err)

@@ -206,7 +206,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		return nil
 	}
 
-	mgr.astCache.Clear()
+	mgr.programCache.Clear()
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 

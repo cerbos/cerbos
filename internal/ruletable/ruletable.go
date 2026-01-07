@@ -438,57 +438,12 @@ type RuleTable struct {
 	scopeScopePermissions map[string]policyv1.ScopePermissions
 	parentRoleAncestors   map[string]map[string][]string
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	astCache              *ASTCache
 	programCache          *ProgramCache
 }
 
 type WrappedRunnableDerivedRole struct {
 	*runtimev1.RunnableDerivedRole
 	Constants map[string]any
-}
-
-// ASTCache caches CEL ASTs keyed by CheckedExpr pointer to avoid repeated ToAST conversions.
-type ASTCache struct {
-	m  map[*exprpb.CheckedExpr]*celast.AST
-	mu sync.RWMutex
-}
-
-func NewASTCache() *ASTCache {
-	return &ASTCache{
-		m: make(map[*exprpb.CheckedExpr]*celast.AST),
-	}
-}
-
-func (c *ASTCache) Clear() {
-	if c == nil {
-		return
-	}
-	c.mu.Lock()
-	clear(c.m)
-	c.mu.Unlock()
-}
-
-func (c *ASTCache) GetOrCreate(expr *exprpb.CheckedExpr) (*celast.AST, error) {
-	if c == nil {
-		return celast.ToAST(expr)
-	}
-
-	c.mu.RLock()
-	if ast, ok := c.m[expr]; ok {
-		c.mu.RUnlock()
-		return ast, nil
-	}
-	c.mu.RUnlock()
-
-	ast, err := celast.ToAST(expr)
-	if err != nil {
-		return nil, err
-	}
-
-	c.mu.Lock()
-	c.m[expr] = ast
-	c.mu.Unlock()
-	return ast, nil
 }
 
 // ProgramCache caches compiled CEL programs keyed by CheckedExpr pointer to avoid repeated compilation.
@@ -555,7 +510,6 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 func NewRuleTable(idx index.Index, protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
 		idx:          index.NewImpl(idx),
-		astCache:     NewASTCache(),
 		programCache: NewProgramCache(),
 	}
 
@@ -575,7 +529,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
 	clear(rt.parentRoleAncestors)
-	rt.astCache.Clear()
 	rt.programCache.Clear()
 
 	rt.idx.Reset()
@@ -977,7 +930,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	}
 
 	request := checkInputToRequest(input)
-	evalCtx := NewEvalContext(evalParams, request, rt.astCache, rt.programCache)
+	evalCtx := NewEvalContext(evalParams, request, rt.programCache)
 
 	actionsToResolve := result.unresolvedActions()
 	if len(actionsToResolve) == 0 {
@@ -1374,16 +1327,14 @@ type EvalContext struct {
 	request               *enginev1.Request
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
-	astCache              *ASTCache
 	programCache          *ProgramCache
 	evaluator.EvalParams
 }
 
-func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request, astCache *ASTCache, programCache *ProgramCache) *EvalContext {
+func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request, programCache *ProgramCache) *EvalContext {
 	return &EvalContext{
 		EvalParams:   ep,
 		request:      request,
-		astCache:     astCache,
 		programCache: programCache,
 	}
 }
@@ -1393,7 +1344,6 @@ func (ec *EvalContext) withEffectiveDerivedRoles(effectiveDerivedRoles internal.
 		EvalParams:            ec.EvalParams,
 		request:               ec.request,
 		effectiveDerivedRoles: effectiveDerivedRoles,
-		astCache:              ec.astCache,
 		programCache:          ec.programCache,
 	}
 }
