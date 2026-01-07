@@ -202,8 +202,8 @@ func (n *nowInterp) Eval(activation interpreter.Activation) ref.Val {
 
 // timeSinceInterp is a custom Interpretable that looks up NowFunc from the activation at eval time.
 type timeSinceInterp struct {
-	id  int64
 	arg interpreter.Interpretable
+	id  int64
 }
 
 func (t *timeSinceInterp) ID() int64 { return t.id }
