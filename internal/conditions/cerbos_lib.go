@@ -31,6 +31,7 @@ const (
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
 	IDFn                        = "id"
+	CELNowFnActivationKey       = "_cerbos_now_fn"
 )
 
 // CerbosCELLib returns the custom CEL functions provided by Cerbos.
@@ -160,6 +161,79 @@ func ContextEval(ctx context.Context, env *cel.Env, ast *celast.AST, vars any, n
 	return prg.ContextEval(ctx, vars)
 }
 
+func CacheFriendlyTimeDecorator() interpreter.InterpretableDecorator {
+	return cacheFriendlyTimeDecorate
+}
+
+func cacheFriendlyTimeDecorate(in interpreter.Interpretable) (interpreter.Interpretable, error) {
+	call, ok := in.(interpreter.InterpretableCall)
+	if !ok {
+		return in, nil
+	}
+
+	switch call.Function() {
+	case nowFn:
+		return &nowInterp{id: call.ID()}, nil
+	case timeSinceFn:
+		return &timeSinceInterp{id: call.ID(), arg: call.Args()[0]}, nil
+	default:
+		return in, nil
+	}
+}
+
+// nowInterp is a custom Interpretable that looks up NowFunc from the activation at eval time.
+type nowInterp struct {
+	id int64
+}
+
+func (n *nowInterp) ID() int64 { return n.id }
+
+func (n *nowInterp) Eval(activation interpreter.Activation) ref.Val {
+	nowFn, found := activation.ResolveName(CELNowFnActivationKey)
+	if !found {
+		return types.NewErr("now() called but %s not found in activation", CELNowFnActivationKey)
+	}
+	fn, ok := nowFn.(NowFunc)
+	if !ok {
+		return types.NewErr("now() called but %s is not a NowFunc", CELNowFnActivationKey)
+	}
+	return types.DefaultTypeAdapter.NativeToValue(fn())
+}
+
+// timeSinceInterp is a custom Interpretable that looks up NowFunc from the activation at eval time.
+type timeSinceInterp struct {
+	id  int64
+	arg interpreter.Interpretable
+}
+
+func (t *timeSinceInterp) ID() int64 { return t.id }
+
+func (t *timeSinceInterp) Eval(activation interpreter.Activation) ref.Val {
+	nowFn, found := activation.ResolveName(CELNowFnActivationKey)
+	if !found {
+		return types.NewErr("timeSince() called but %s not found in activation", CELNowFnActivationKey)
+	}
+	fn, ok := nowFn.(NowFunc)
+	if !ok {
+		return types.NewErr("timeSince() called but %s is not a NowFunc", CELNowFnActivationKey)
+	}
+
+	argVal := t.arg.Eval(activation)
+	if types.IsError(argVal) {
+		return argVal
+	}
+
+	tsVal := argVal.Value()
+	ts, ok := tsVal.(time.Time)
+	if !ok {
+		return types.NoSuchOverloadErr()
+	}
+
+	return types.DefaultTypeAdapter.NativeToValue(fn().Sub(ts))
+}
+
+// newTimeDecorator creates a decorator that bakes in the nowFunc at compile time.
+// This is used for backward compatibility with ContextEval.
 func newTimeDecorator(nowFunc NowFunc) interpreter.InterpretableDecorator {
 	td := timeDecorator{nowFunc: nowFunc}
 	return td.decorate

@@ -962,7 +962,10 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 			continue
 		}
 
-		p, err := conditions.StdEnv.Program(cel.CheckedExprToAst(v.Expr.Checked))
+		p, err := conditions.StdEnv.Program(
+			cel.CheckedExprToAst(v.Expr.Checked),
+			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
+		)
 		if err != nil {
 			return progs, err
 		}

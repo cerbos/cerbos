@@ -18,6 +18,7 @@ import (
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/google/cel-go/cel"
 	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -438,6 +439,7 @@ type RuleTable struct {
 	parentRoleAncestors   map[string]map[string][]string
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	astCache              *ASTCache
+	programCache          *ProgramCache
 }
 
 type WrappedRunnableDerivedRole struct {
@@ -489,6 +491,57 @@ func (c *ASTCache) GetOrCreate(expr *exprpb.CheckedExpr) (*celast.AST, error) {
 	return ast, nil
 }
 
+// ProgramCache caches compiled CEL programs keyed by CheckedExpr pointer to avoid repeated compilation.
+// Programs are compiled with CacheFriendlyTimeDecorator which looks up NowFunc from activation at eval time.
+type ProgramCache struct {
+	m  map[*exprpb.CheckedExpr]cel.Program
+	mu sync.RWMutex
+}
+
+func NewProgramCache() *ProgramCache {
+	return &ProgramCache{
+		m: make(map[*exprpb.CheckedExpr]cel.Program),
+	}
+}
+
+func (c *ProgramCache) Clear() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	clear(c.m)
+	c.mu.Unlock()
+}
+
+func (c *ProgramCache) GetOrCreate(expr *exprpb.CheckedExpr) (cel.Program, error) {
+	if c == nil {
+		return conditions.StdEnv.Program(
+			cel.CheckedExprToAst(expr),
+			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
+		)
+	}
+
+	c.mu.RLock()
+	if prg, ok := c.m[expr]; ok {
+		c.mu.RUnlock()
+		return prg, nil
+	}
+	c.mu.RUnlock()
+
+	prg, err := conditions.StdEnv.Program(
+		cel.CheckedExprToAst(expr),
+		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	c.mu.Lock()
+	c.m[expr] = prg
+	c.mu.Unlock()
+	return prg, nil
+}
+
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
 	protoRT := NewProtoRuletable()
 
@@ -501,8 +554,9 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 
 func NewRuleTable(idx index.Index, protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
-		idx:      index.NewImpl(idx),
-		astCache: NewASTCache(),
+		idx:          index.NewImpl(idx),
+		astCache:     NewASTCache(),
+		programCache: NewProgramCache(),
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -522,6 +576,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.scopeScopePermissions)
 	clear(rt.parentRoleAncestors)
 	rt.astCache.Clear()
+	rt.programCache.Clear()
 
 	rt.idx.Reset()
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
@@ -922,7 +977,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	}
 
 	request := checkInputToRequest(input)
-	evalCtx := NewEvalContext(evalParams, request, rt.astCache)
+	evalCtx := NewEvalContext(evalParams, request, rt.astCache, rt.programCache)
 
 	actionsToResolve := result.unresolvedActions()
 	if len(actionsToResolve) == 0 {
@@ -1320,14 +1375,16 @@ type EvalContext struct {
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
 	astCache              *ASTCache
+	programCache          *ProgramCache
 	evaluator.EvalParams
 }
 
-func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request, astCache *ASTCache) *EvalContext {
+func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request, astCache *ASTCache, programCache *ProgramCache) *EvalContext {
 	return &EvalContext{
-		EvalParams: ep,
-		request:    request,
-		astCache:   astCache,
+		EvalParams:   ep,
+		request:      request,
+		astCache:     astCache,
+		programCache: programCache,
 	}
 }
 
@@ -1337,6 +1394,7 @@ func (ec *EvalContext) withEffectiveDerivedRoles(effectiveDerivedRoles internal.
 		request:               ec.request,
 		effectiveDerivedRoles: effectiveDerivedRoles,
 		astCache:              ec.astCache,
+		programCache:          ec.programCache,
 	}
 }
 
@@ -1352,15 +1410,8 @@ func (ec *EvalContext) lazyRuntime() any { // We have to return `any` rather tha
 	return ec.runtime
 }
 
-func (ec *EvalContext) evaluateCELProgramsOrVariables(ctx context.Context, tctx tracer.Context, constants map[string]any, celPrograms []*index.CelProgram, variables []*runtimev1.Variable) (map[string]any, error) {
-	// Use precomputed programs if no custom NowFunc, or if NowFunc is just a trap.
-	// A trap NowFunc is only used to detect time function usage, not to override time.
-	if ec.NowFunc == nil || ec.NowFuncIsTrap {
-		return ec.evaluatePrograms(tctx.StartVariables(), constants, celPrograms)
-	}
-
-	// Fall back to recomputing programs with time decorator for real time overrides.
-	return ec.evaluateVariables(ctx, tctx.StartVariables(), constants, variables)
+func (ec *EvalContext) evaluateCELProgramsOrVariables(_ context.Context, tctx tracer.Context, constants map[string]any, celPrograms []*index.CelProgram, _ []*runtimev1.Variable) (map[string]any, error) {
+	return ec.evaluatePrograms(tctx.StartVariables(), constants, celPrograms)
 }
 
 func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Context, constants map[string]any, variables []*runtimev1.Variable) (map[string]any, error) {
@@ -1384,16 +1435,17 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 
 func (ec *EvalContext) buildEvalVars(constants, variables map[string]any) map[string]any {
 	return map[string]any{
-		conditions.CELRequestIdent:    ec.request,
-		conditions.CELResourceAbbrev:  ec.request.Resource,
-		conditions.CELPrincipalAbbrev: ec.request.Principal,
-		conditions.CELRuntimeIdent:    ec.lazyRuntime,
-		conditions.CELConstantsIdent:  constants,
-		conditions.CELConstantsAbbrev: constants,
-		conditions.CELVariablesIdent:  variables,
-		conditions.CELVariablesAbbrev: variables,
-		conditions.CELGlobalsIdent:    ec.Globals,
-		conditions.CELGlobalsAbbrev:   ec.Globals,
+		conditions.CELRequestIdent:       ec.request,
+		conditions.CELResourceAbbrev:     ec.request.Resource,
+		conditions.CELPrincipalAbbrev:    ec.request.Principal,
+		conditions.CELRuntimeIdent:       ec.lazyRuntime,
+		conditions.CELConstantsIdent:     constants,
+		conditions.CELConstantsAbbrev:    constants,
+		conditions.CELVariablesIdent:     variables,
+		conditions.CELVariablesAbbrev:    variables,
+		conditions.CELGlobalsIdent:       ec.Globals,
+		conditions.CELGlobalsAbbrev:      ec.Globals,
+		conditions.CELNowFnActivationKey: ec.NowFunc,
 	}
 }
 
@@ -1553,20 +1605,19 @@ func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *exprpb.Checked
 		return nil, nil
 	}
 
-	ast, err := ec.astCache.GetOrCreate(expr)
+	prg, err := ec.programCache.GetOrCreate(expr)
 	if err != nil {
 		return nil, err
 	}
-	result, _, err := conditions.ContextEval(ctx, conditions.StdEnv, ast, ec.buildEvalVars(constants, variables), ec.NowFunc)
+
+	result, _, err := prg.ContextEval(ctx, ec.buildEvalVars(constants, variables))
 	if err != nil {
 		// ignore expressions that are invalid
 		if types.IsError(result) {
 			return nil, nil
 		}
-
 		return nil, err
 	}
-
 	return result, nil
 }
 
