@@ -926,7 +926,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		includingParentRoles[r] = struct{}{}
 	}
 
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{sanitizedResource}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve)
+	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{sanitizedResource}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve, false)
 	if err != nil {
 		return nil, err
 	}
@@ -1603,7 +1603,7 @@ func (rt *RuleTable) planWithAuditTrail(
 
 	allRoles := rt.AddParentRoles(resourceScope, input.Principal.Roles)
 	scopes := rt.CombineScopes(principalScopes, resourceScopes)
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, scopes, allRoles, input.Actions)
+	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, scopes, allRoles, input.Actions, false)
 	if err != nil {
 		return nil, nil, err
 	}

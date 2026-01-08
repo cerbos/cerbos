@@ -61,7 +61,7 @@ func TestRedisIndex(t *testing.T) {
 
 	readerImpl := index.NewImpl(readerIdx)
 
-	rows, err := readerImpl.GetRows(ctx, []string{"default"}, []string{"document"}, []string{"alpha"}, []string{"user"}, []string{"view"})
+	rows, err := readerImpl.GetRows(ctx, []string{"default"}, []string{"document"}, []string{"alpha"}, []string{"user"}, []string{"view"}, false)
 	require.NoError(t, err)
 
 	require.Len(t, rows, 1)
