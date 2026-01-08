@@ -298,13 +298,13 @@
         ]
       },
       "delete": {
-        "summary": "Disable policy",
-        "operationId": "CerbosAdminService_DisablePolicy3",
+        "summary": "Delete policy",
+        "operationId": "CerbosAdminService_DeletePolicy3",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1DisablePolicyResponse"
+              "$ref": "#/definitions/v1DeletePolicyResponse"
             }
           },
           "default": {
@@ -398,6 +398,84 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/v1AddOrUpdatePolicyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/policy/delete": {
+      "post": {
+        "summary": "Delete policy",
+        "operationId": "CerbosAdminService_DeletePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the policy",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Delete policy",
+        "operationId": "CerbosAdminService_DeletePolicy2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "description": "Delete policy request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1DeletePolicyRequest"
             }
           }
         ],
@@ -2280,6 +2358,33 @@
           "type": "string"
         }
       }
+    },
+    "v1DeletePolicyRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "array",
+          "example": "principal.sarah.vdefault",
+          "items": {
+            "type": "string"
+          },
+          "description": "Unique identifier for the policy"
+        }
+      },
+      "description": "Delete policy request",
+      "required": [
+        "id"
+      ]
+    },
+    "v1DeletePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "deletedPolicies": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "description": "Delete policy response"
     },
     "v1DeleteSchemaResponse": {
       "type": "object",

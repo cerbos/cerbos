@@ -610,6 +610,27 @@ message GetPolicyRequest {
   ];
 }
 
+message DeletePolicyRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Delete policy request"}
+  };
+  repeated string id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated = {
+      unique: true
+      min_items: 1
+      items: {
+        string: {min_len: 1}
+      }
+    },
+    (buf.validate.field).required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Unique identifier for the policy"
+      example: "\"principal.sarah.vdefault\""
+    }
+  ];
+}
+
 message DisablePolicyRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Disable policy request"}

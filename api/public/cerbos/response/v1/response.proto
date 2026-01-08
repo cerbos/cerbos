@@ -427,6 +427,13 @@ message GetPolicyResponse {
   repeated cerbos.policy.v1.Policy policies = 1;
 }
 
+message DeletePolicyResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Delete policy response"}
+  };
+  uint32 deleted_policies = 1;
+}
+
 message DisablePolicyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Disable policy response"}
