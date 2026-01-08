@@ -341,22 +341,24 @@ func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
 }
 
 type Impl struct {
-	idx          Index
-	version      literalMap
-	scope        literalMap
-	roleGlob     globMap
-	actionGlob   globMap
-	resourceGlob globMap
+	idx                 Index
+	version             literalMap
+	scope               literalMap
+	roleGlob            globMap
+	actionGlob          globMap
+	resourceGlob        globMap
+	parentRoleAncestors map[string]map[string][]string
 }
 
 func NewImpl(idx Index) *Impl {
 	return &Impl{
-		idx:          idx,
-		version:      idx.getLiteralMap(CategoryKeyVersion),
-		scope:        idx.getLiteralMap(CategoryKeyScope),
-		roleGlob:     idx.getGlobMap(CategoryKeyRoleGlob),
-		actionGlob:   idx.getGlobMap(CategoryKeyActionGlob),
-		resourceGlob: idx.getGlobMap(CategoryKeyResourceGlob),
+		idx:                 idx,
+		version:             idx.getLiteralMap(CategoryKeyVersion),
+		scope:               idx.getLiteralMap(CategoryKeyScope),
+		roleGlob:            idx.getGlobMap(CategoryKeyRoleGlob),
+		actionGlob:          idx.getGlobMap(CategoryKeyActionGlob),
+		resourceGlob:        idx.getGlobMap(CategoryKeyResourceGlob),
+		parentRoleAncestors: make(map[string]map[string][]string),
 	}
 }
 
@@ -802,7 +804,76 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 	return res, nil
 }
 
-func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
+func (m *Impl) AddParentRoles(scopes []string, roles []string) []string {
+	parentRoles := make([]string, len(roles))
+	copy(parentRoles, roles)
+
+	scopeCache := make(map[string][]string)
+	for _, scope := range scopes {
+		c, ok := m.parentRoleAncestors[scope]
+		if !ok {
+			continue
+		}
+		maps.Copy(scopeCache, c)
+	}
+
+	if len(scopeCache) == 0 {
+		return parentRoles
+	}
+
+	for _, role := range roles {
+		if roleParents, ok := scopeCache[role]; ok {
+			parentRoles = append(parentRoles, roleParents...) //nolint:makezero
+		}
+	}
+
+	return parentRoles
+}
+
+func (m *Impl) PrecompileParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) {
+	for scope, parentRoles := range scopeParentRoles {
+		if parentRoles == nil {
+			continue
+		}
+
+		if _, ok := m.parentRoleAncestors[scope]; !ok {
+			m.parentRoleAncestors[scope] = make(map[string][]string)
+		}
+
+		scopeCache := m.parentRoleAncestors[scope]
+
+		for role := range parentRoles.RoleParentRoles {
+			visited := make(map[string]struct{})
+			roleParentsSet := make(map[string]struct{})
+			m.collectParentRoles(scopeParentRoles, scope, role, roleParentsSet, visited)
+
+			roleParents := make([]string, 0, len(roleParentsSet))
+			for rp := range roleParentsSet {
+				roleParents = append(roleParents, rp)
+			}
+
+			scopeCache[role] = roleParents
+		}
+	}
+}
+
+func (m *Impl) collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, parentRoleSet, visited map[string]struct{}) {
+	if _, seen := visited[role]; seen {
+		return
+	}
+	visited[role] = struct{}{}
+
+	if parentRoles, ok := scopeParentRoles[scope]; ok {
+		if prs, ok := parentRoles.RoleParentRoles[role]; ok {
+			for _, pr := range prs.Roles {
+				parentRoleSet[pr] = struct{}{}
+				m.collectParentRoles(scopeParentRoles, scope, pr, parentRoleSet, visited)
+			}
+		}
+	}
+}
+
+func (m *Impl) DeletePolicy(ctx context.Context, fqn string, activeScopes map[string]struct{}) error {
 	if fqn == "" {
 		return nil
 	}
@@ -928,6 +999,21 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		} else if rs.len() != initialLen {
 			if err := m.resourceGlob.set(ctx, cat, rs); err != nil {
 				return err
+			}
+		}
+	}
+
+	for scope := range m.parentRoleAncestors {
+		if _, ok := activeScopes[scope]; !ok {
+			delete(m.parentRoleAncestors, scope)
+			continue
+		}
+
+		existingRoles := m.parentRoleAncestors[scope]
+		for role := range existingRoles {
+			exists, _ := m.ScopedRoleGlobExists(ctx, scope, role)
+			if !exists {
+				delete(existingRoles, role)
 			}
 		}
 	}
@@ -1072,6 +1158,7 @@ func (m *Impl) Reset() {
 	m.roleGlob = m.idx.getGlobMap(CategoryKeyRoleGlob)
 	m.actionGlob = m.idx.getGlobMap(CategoryKeyActionGlob)
 	m.resourceGlob = m.idx.getGlobMap(CategoryKeyResourceGlob)
+	m.parentRoleAncestors = make(map[string]map[string][]string)
 }
 
 func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {

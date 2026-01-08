@@ -438,7 +438,6 @@ type RuleTable struct {
 	principalScopeMap     map[string]struct{}
 	resourceScopeMap      map[string]struct{}
 	scopeScopePermissions map[string]policyv1.ScopePermissions
-	parentRoleAncestors   map[string]map[string][]string
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	programCache          *ProgramCache
 }
@@ -530,7 +529,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.principalScopeMap)
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
-	clear(rt.parentRoleAncestors)
 	rt.programCache.Clear()
 
 	rt.idx.Reset()
@@ -538,13 +536,12 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.principalScopeMap = make(map[string]struct{})
 	rt.resourceScopeMap = make(map[string]struct{})
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
-	rt.parentRoleAncestors = make(map[string]map[string][]string)
 
 	if err := rt.indexRules(rt.Rules); err != nil {
 		return err
 	}
 
-	rt.precompileParentRoles()
+	rt.idx.PrecompileParentRoles(rt.ScopeParentRoles)
 
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
@@ -686,67 +683,6 @@ func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []s
 	dfs(root)
 
 	return result
-}
-
-func (rt *RuleTable) AddParentRoles(scope string, roles []string) []string {
-	parentRoles := make([]string, len(roles))
-	copy(parentRoles, roles)
-
-	scopeCache, ok := rt.parentRoleAncestors[scope]
-	if !ok {
-		return parentRoles
-	}
-
-	for _, role := range roles {
-		if roleParents, ok := scopeCache[role]; ok {
-			parentRoles = append(parentRoles, roleParents...) //nolint:makezero
-		}
-	}
-
-	return parentRoles
-}
-
-func (rt *RuleTable) precompileParentRoles() {
-	for scope, parentRoles := range rt.ScopeParentRoles {
-		if parentRoles == nil {
-			continue
-		}
-
-		if _, ok := rt.parentRoleAncestors[scope]; !ok {
-			rt.parentRoleAncestors[scope] = make(map[string][]string)
-		}
-
-		scopeCache := rt.parentRoleAncestors[scope]
-
-		for role := range parentRoles.RoleParentRoles {
-			visited := make(map[string]struct{})
-			roleParentsSet := make(map[string]struct{})
-			rt.collectParentRoles(scope, role, roleParentsSet, visited)
-
-			roleParents := make([]string, 0, len(roleParentsSet))
-			for rp := range roleParentsSet {
-				roleParents = append(roleParents, rp)
-			}
-
-			scopeCache[role] = roleParents
-		}
-	}
-}
-
-func (rt *RuleTable) collectParentRoles(scope, role string, parentRoleSet, visited map[string]struct{}) {
-	if _, seen := visited[role]; seen {
-		return
-	}
-	visited[role] = struct{}{}
-
-	if parentRoles, ok := rt.ScopeParentRoles[scope]; ok {
-		if prs, ok := parentRoles.RoleParentRoles[role]; ok {
-			for _, pr := range prs.Roles {
-				parentRoleSet[pr] = struct{}{}
-				rt.collectParentRoles(scope, pr, parentRoleSet, visited)
-			}
-		}
-	}
 }
 
 func (rt *RuleTable) ScopeExists(pt policy.Kind, scope string) bool {
@@ -920,7 +856,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	allRoles := rt.AddParentRoles(resourceScope, input.Principal.Roles)
+	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -976,7 +912,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := rt.AddParentRoles(resourceScope, []string{role})
+				parentRoles := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1601,7 +1537,7 @@ func (rt *RuleTable) planWithAuditTrail(
 		}
 	}
 
-	allRoles := rt.AddParentRoles(resourceScope, input.Principal.Roles)
+	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 	scopes := rt.CombineScopes(principalScopes, resourceScopes)
 	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, scopes, allRoles, input.Actions, false)
 	if err != nil {
@@ -1644,7 +1580,7 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents := rt.AddParentRoles(resourceScope, []string{role})
+				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
 				for _, scope := range scopes {
 					var scopeAllowNode *planner.QpN
