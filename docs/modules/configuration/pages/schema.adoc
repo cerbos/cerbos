@@ -11,7 +11,7 @@ See xref:policies:schemas.adoc[] for more information about schemas.
 
 `enforcement` can be set to one of the following three values:
 
-- `none`: Do not validate requests using schemas
+- `none` (default): Do not validate requests using schemas
 - `warn`: Validate requests and log warnings when there are validation failures
 - `reject`: Deny the request if it fails validation
 
