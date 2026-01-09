@@ -41,6 +41,9 @@ type Checker interface {
 }
 
 func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv1.TestResults, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	n, ch, err := VerifyStream(ctx, fsys, eng, conf)
 	if err != nil {
 		return nil, err
@@ -60,6 +63,10 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 	return results, nil
 }
 
+// VerifyStream runs test suites and streams results as each suite completes.
+// It returns the number of test suites, a channel of results, and any setup error.
+// Callers must either consume all results from the channel or cancel the context
+// to avoid goroutine leaks.
 func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan SuiteResult, error) {
 	suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
 	if err != nil {
