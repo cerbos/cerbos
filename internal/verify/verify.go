@@ -41,11 +41,16 @@ type Checker interface {
 }
 
 func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv1.TestResults, error) {
-	results := &policyv1.TestResults{
-		Summary: &policyv1.TestResults_Summary{},
+	n, ch, err := VerifyStream(ctx, fsys, eng, conf)
+	if err != nil {
+		return nil, err
 	}
 
-	for sr := range VerifyStream(ctx, fsys, eng, conf) {
+	results := &policyv1.TestResults{
+		Summary: &policyv1.TestResults_Summary{},
+		Suites:  make([]*policyv1.TestResults_Suite, 0, n),
+	}
+	for sr := range ch {
 		if sr.Err != nil {
 			return nil, sr.Err
 		}
@@ -55,27 +60,26 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 	return results, nil
 }
 
-func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) <-chan SuiteResult {
+func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan SuiteResult, error) {
+	suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	testFilter, err := newTestFilter(&conf)
+	if err != nil {
+		return 0, nil, err
+	}
+
 	results := make(chan SuiteResult)
+
+	if len(suiteDefs) == 0 {
+		close(results)
+		return 0, results, nil
+	}
 
 	go func() {
 		defer close(results)
-
-		testFilter, err := newTestFilter(&conf)
-		if err != nil {
-			results <- SuiteResult{Err: err}
-			return
-		}
-
-		suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
-		if err != nil {
-			results <- SuiteResult{Err: err}
-			return
-		}
-
-		if len(suiteDefs) == 0 {
-			return
-		}
 
 		fixtures := newFixtureCache(fsys, fixtureDefs)
 
@@ -141,7 +145,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) <-c
 		}
 	}()
 
-	return results
+	return len(suiteDefs), results, nil
 }
 
 func discoverTestFiles(ctx context.Context, fsys fs.FS) (suiteDefs []string, fixtureDefs map[string]struct{}, err error) {
