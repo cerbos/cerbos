@@ -224,7 +224,7 @@ func resolveWorkerCount(configured uint, numSuites int) int {
 	}
 
 	if configured == 0 {
-		return runtime.NumCPU() + 4
+		return runtime.NumCPU() + 4 //nolint:mnd
 	}
 
 	if int(configured) > numSuites {
