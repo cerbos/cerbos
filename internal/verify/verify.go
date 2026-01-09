@@ -246,9 +246,7 @@ func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuit
 	var wg sync.WaitGroup
 
 	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for file := range jobs {
 				select {
 				case <-ctx.Done():
