@@ -804,7 +804,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 	return res, nil
 }
 
-func (m *Impl) AddParentRoles(scopes []string, roles []string) []string {
+func (m *Impl) AddParentRoles(scopes, roles []string) []string {
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
 

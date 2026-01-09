@@ -37,7 +37,7 @@ var (
 	ErrReadOnly  = errors.New("redis instance is read only")
 )
 
-// Cmdable is a subset of the builtin redis.Cmdable interface
+// Cmdable is a subset of the builtin redis.Cmdable interface.
 type Cmdable interface {
 	Exists(ctx context.Context, keys ...string) *redis.IntCmd
 	MGet(ctx context.Context, keys ...string) *redis.SliceCmd
