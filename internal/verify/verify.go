@@ -78,7 +78,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 		return 0, nil, err
 	}
 
-	results := make(chan SuiteResult)
+	results := make(chan SuiteResult, 1)
 
 	if len(suiteDefs) == 0 {
 		close(results)
