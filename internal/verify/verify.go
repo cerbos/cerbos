@@ -28,7 +28,7 @@ type Config struct {
 	IncludedTestNamesRegexp     string
 	Trace                       bool
 	SkipBatching                bool
-	Workers                     int
+	Workers                     uint
 }
 
 type SuiteResult struct {
@@ -214,7 +214,7 @@ func (c *fixtureCache) get(path string) (*TestFixture, error) {
 	return f, nil
 }
 
-func resolveWorkerCount(configured, numSuites int) int {
+func resolveWorkerCount(configured uint, numSuites int) int {
 	if numSuites < parallelismThreshold {
 		return 1
 	}
@@ -223,15 +223,15 @@ func resolveWorkerCount(configured, numSuites int) int {
 		return 1
 	}
 
-	if configured <= 0 {
+	if configured == 0 {
 		return runtime.NumCPU() + 4
 	}
 
-	if configured > numSuites {
+	if int(configured) > numSuites {
 		return numSuites
 	}
 
-	return configured
+	return int(configured)
 }
 
 func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuite func(string) *policyv1.TestResults_Suite, results chan<- SuiteResult) {
