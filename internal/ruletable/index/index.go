@@ -63,6 +63,7 @@ type globMap interface {
 	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
 	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
+	getAllKeys(context.Context) (map[string]struct{}, error)
 	delete(context.Context, ...string) error
 }
 

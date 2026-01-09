@@ -186,6 +186,13 @@ func (gl *memGlobMap) getAll(context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
+func (gl *memGlobMap) getAllKeys(context.Context) (map[string]struct{}, error) {
+	gl.mu.RLock()
+	defer gl.mu.RUnlock()
+
+	return gl.m.GetAllKeys(), nil
+}
+
 func (gl *memGlobMap) delete(_ context.Context, keys ...string) error {
 	gl.mu.Lock()
 	defer gl.mu.Unlock()

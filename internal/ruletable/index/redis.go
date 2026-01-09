@@ -389,6 +389,20 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
+func (rm *redisMap) getAllKeys(ctx context.Context) (map[string]struct{}, error) {
+	catsKeys, err := rm.db.SMembers(ctx, rm.catKey).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]struct{}, len(catsKeys))
+	for _, catKey := range catsKeys {
+		res[catKey] = struct{}{}
+	}
+
+	return res, nil
+}
+
 func (rm *redisMap) delete(ctx context.Context, cats ...string) error {
 	if len(cats) == 0 {
 		return nil

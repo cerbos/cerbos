@@ -154,6 +154,20 @@ func (gm *GlobMap[T]) GetAll() map[string]T {
 	return res
 }
 
+func (gm *GlobMap[T]) GetAllKeys() map[string]struct{} {
+	res := make(map[string]struct{}, gm.Len())
+
+	for k := range gm.literals {
+		res[k] = struct{}{}
+	}
+
+	for k := range gm.globs {
+		res[k] = struct{}{}
+	}
+
+	return res
+}
+
 func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 	// Fast path: no globs, just check literal
 	if len(gm.globs) == 0 {
