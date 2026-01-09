@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+	"runtime"
 	"sort"
+	"sync"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -18,26 +20,132 @@ import (
 	"github.com/cerbos/cerbos/internal/validator"
 )
 
+const parallelismThreshold = 5
+
 type Config struct {
 	ExcludedResourcePolicyFQNs  map[string]struct{}
 	ExcludedPrincipalPolicyFQNs map[string]struct{}
 	IncludedTestNamesRegexp     string
 	Trace                       bool
 	SkipBatching                bool
+	Workers                     int
+}
+
+type SuiteResult struct {
+	Suite *policyv1.TestResults_Suite
+	Err   error
 }
 
 type Checker interface {
 	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error)
 }
 
-// Verify runs the test suites from the provided directory.
 func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv1.TestResults, error) {
-	testFilter, err := newTestFilter(&conf)
-	if err != nil {
-		return nil, err
+	results := &policyv1.TestResults{
+		Summary: &policyv1.TestResults_Summary{},
 	}
-	var suiteDefs []string
-	fixtureDefs := make(map[string]struct{})
+
+	for sr := range VerifyStream(ctx, fsys, eng, conf) {
+		if sr.Err != nil {
+			return nil, sr.Err
+		}
+		appendSuiteResult(results, sr.Suite)
+	}
+
+	return results, nil
+}
+
+func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) <-chan SuiteResult {
+	results := make(chan SuiteResult)
+
+	go func() {
+		defer close(results)
+
+		testFilter, err := newTestFilter(&conf)
+		if err != nil {
+			results <- SuiteResult{Err: err}
+			return
+		}
+
+		suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
+		if err != nil {
+			results <- SuiteResult{Err: err}
+			return
+		}
+
+		if len(suiteDefs) == 0 {
+			return
+		}
+
+		fixtures := newFixtureCache(fsys, fixtureDefs)
+
+		workers := resolveWorkerCount(conf.Workers, len(suiteDefs))
+
+		runSuite := func(file string) *policyv1.TestResults_Suite {
+			if err := internaljsonschema.ValidateTest(fsys, file); err != nil {
+				return &policyv1.TestResults_Suite{
+					File: file,
+					Name: "Unknown",
+					Summary: &policyv1.TestResults_Summary{
+						OverallResult: policyv1.TestResults_RESULT_ERRORED,
+					},
+					Error: err.Error(),
+				}
+			}
+
+			suite := &policyv1.TestSuite{}
+			err := util.LoadFromJSONOrYAML(fsys, file, suite)
+			if err == nil {
+				err = validator.Validate(suite)
+			}
+			if err != nil {
+				return &policyv1.TestResults_Suite{
+					File: file,
+					Name: "Unknown",
+					Summary: &policyv1.TestResults_Summary{
+						OverallResult: policyv1.TestResults_RESULT_ERRORED,
+					},
+					Error: fmt.Sprintf("failed to load test suite: %v", err),
+				}
+			}
+
+			fixtureDir := filepath.Join(filepath.Dir(file), util.TestDataDirectory)
+			fixture, err := fixtures.get(fixtureDir)
+			if err != nil {
+				return &policyv1.TestResults_Suite{
+					File:        file,
+					Name:        suite.Name,
+					Description: suite.Description,
+					Summary: &policyv1.TestResults_Summary{
+						OverallResult: policyv1.TestResults_RESULT_ERRORED,
+					},
+					Error: fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
+				}
+			}
+
+			return runTestSuite(ctx, eng, testFilter, file, suite, fixture, conf.Trace, conf.SkipBatching)
+		}
+
+		if workers == 1 {
+			for _, file := range suiteDefs {
+				suite := runSuite(file)
+				select {
+				case results <- SuiteResult{Suite: suite}:
+				case <-ctx.Done():
+					results <- SuiteResult{Err: ctx.Err()}
+					return
+				}
+			}
+		} else {
+			runConcurrent(ctx, suiteDefs, workers, runSuite, results)
+		}
+	}()
+
+	return results
+}
+
+func discoverTestFiles(ctx context.Context, fsys fs.FS) (suiteDefs []string, fixtureDefs map[string]struct{}, err error) {
+	fixtureDefs = make(map[string]struct{})
 
 	err = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err := ctx.Err(); err != nil {
@@ -53,7 +161,6 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 				fixtureDefs[path] = struct{}{}
 				return fs.SkipDir
 			}
-
 			return nil
 		}
 
@@ -63,97 +170,115 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 
 		return nil
 	})
+
+	return suiteDefs, fixtureDefs, err
+}
+
+type fixtureCache struct {
+	fsys     fs.FS
+	defs     map[string]struct{}
+	fixtures map[string]*TestFixture
+	mu       sync.Mutex
+}
+
+func newFixtureCache(fsys fs.FS, defs map[string]struct{}) *fixtureCache {
+	return &fixtureCache{
+		fsys:     fsys,
+		defs:     defs,
+		fixtures: make(map[string]*TestFixture, len(defs)),
+	}
+}
+
+func (c *fixtureCache) get(path string) (*TestFixture, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if f, ok := c.fixtures[path]; ok {
+		return f, nil
+	}
+
+	if _, exists := c.defs[path]; !exists {
+		return nil, nil
+	}
+
+	f, err := LoadTestFixture(c.fsys, path, false)
 	if err != nil {
 		return nil, err
 	}
 
-	fixtures := make(map[string]*TestFixture, len(fixtureDefs))
+	c.fixtures[path] = f
+	return f, nil
+}
 
-	getFixture := func(path string) (*TestFixture, error) {
-		f, ok := fixtures[path]
-		if ok {
-			return f, nil
-		}
-
-		if _, exists := fixtureDefs[path]; exists {
-			f, err := LoadTestFixture(fsys, path, false)
-			if err != nil {
-				return nil, err
-			}
-
-			fixtures[path] = f
-			return f, nil
-		}
-
-		return nil, nil
+func resolveWorkerCount(configured, numSuites int) int {
+	if numSuites < parallelismThreshold {
+		return 1
 	}
 
-	runTestSuite := func(file string) *policyv1.TestResults_Suite {
-		if err := internaljsonschema.ValidateTest(fsys, file); err != nil {
-			return &policyv1.TestResults_Suite{
-				File: file,
-				Name: "Unknown",
-				Summary: &policyv1.TestResults_Summary{
-					OverallResult: policyv1.TestResults_RESULT_ERRORED,
-				},
-				Error: err.Error(),
-			}
-		}
-
-		suite := &policyv1.TestSuite{}
-		err := util.LoadFromJSONOrYAML(fsys, file, suite)
-		if err == nil {
-			err = validator.Validate(suite)
-		}
-		if err != nil {
-			return &policyv1.TestResults_Suite{
-				File: file,
-				Name: "Unknown",
-				Summary: &policyv1.TestResults_Summary{
-					OverallResult: policyv1.TestResults_RESULT_ERRORED,
-				},
-				Error: fmt.Sprintf("failed to load test suite: %v", err),
-			}
-		}
-
-		fixtureDir := filepath.Join(filepath.Dir(file), util.TestDataDirectory)
-		fixture, err := getFixture(fixtureDir)
-		if err != nil {
-			return &policyv1.TestResults_Suite{
-				File:        file,
-				Name:        suite.Name,
-				Description: suite.Description,
-				Summary: &policyv1.TestResults_Summary{
-					OverallResult: policyv1.TestResults_RESULT_ERRORED,
-				},
-				Error: fmt.Sprintf("failed to load test fixtures from %s: %v", fixtureDir, err),
-			}
-		}
-
-		return runTestSuite(ctx, eng, testFilter, file, suite, fixture, conf.Trace, conf.SkipBatching)
+	if configured == 1 {
+		return 1
 	}
 
-	results := &policyv1.TestResults{
-		Summary: &policyv1.TestResults_Summary{},
+	if configured <= 0 {
+		return runtime.NumCPU() + 4
 	}
 
-	for _, sd := range suiteDefs {
-		suiteResult := runTestSuite(sd)
-
-		results.Suites = append(results.Suites, suiteResult)
-
-		results.Summary.TestsCount += suiteResult.Summary.TestsCount
-
-		for _, tally := range suiteResult.Summary.ResultCounts {
-			incrementTally(results.Summary, tally.Result, tally.Count)
-		}
-
-		if suiteResult.Summary.OverallResult > results.Summary.OverallResult {
-			results.Summary.OverallResult = suiteResult.Summary.OverallResult
-		}
+	if configured > numSuites {
+		return numSuites
 	}
 
-	return results, err
+	return configured
+}
+
+func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuite func(string) *policyv1.TestResults_Suite, results chan<- SuiteResult) {
+	jobs := make(chan string, len(suiteDefs))
+	var wg sync.WaitGroup
+
+	for range workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file := range jobs {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
+				suite := runSuite(file)
+				select {
+				case results <- SuiteResult{Suite: suite}:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+	}
+
+loop:
+	for _, file := range suiteDefs {
+		select {
+		case jobs <- file:
+		case <-ctx.Done():
+			break loop
+		}
+	}
+	close(jobs)
+
+	wg.Wait()
+}
+
+func appendSuiteResult(results *policyv1.TestResults, suite *policyv1.TestResults_Suite) {
+	results.Suites = append(results.Suites, suite)
+	results.Summary.TestsCount += suite.Summary.TestsCount
+
+	for _, tally := range suite.Summary.ResultCounts {
+		incrementTally(results.Summary, tally.Result, tally.Count)
+	}
+
+	if suite.Summary.OverallResult > results.Summary.OverallResult {
+		results.Summary.OverallResult = suite.Summary.OverallResult
+	}
 }
 
 func incrementTally(summary *policyv1.TestResults_Summary, result policyv1.TestResults_Result, delta uint32) {
