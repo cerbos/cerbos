@@ -65,8 +65,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 
 // VerifyStream runs test suites and streams results as each suite completes.
 // It returns the number of test suites, a channel of results, and any setup error.
-// Callers must either consume all results from the channel or cancel the context
-// to avoid goroutine leaks.
+// Callers may cancel the context to stop workers early and avoid unnecessary work.
 func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan SuiteResult, error) {
 	suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
 	if err != nil {
