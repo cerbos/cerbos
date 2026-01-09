@@ -567,10 +567,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		versionSets, err = m.version.get(ctx, versions...)
 	} else {
 		versionSets, err = m.version.getAll(ctx)
-		versions = make([]string, 0, len(versionSets))
-		for v := range versionSets {
-			versions = append(versions, v)
-		}
+		versions = slices.Collect(maps.Keys(versionSets))
 	}
 	if err != nil {
 		return nil, err
@@ -586,10 +583,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		resourceSets, err = m.resourceGlob.getMerged(ctx, resources...)
 	} else {
 		resourceSets, err = m.resourceGlob.getAll(ctx)
-		resources = make([]string, 0, len(resourceSets))
-		for v := range resourceSets {
-			resources = append(resources, v)
-		}
+		resources = slices.Collect(maps.Keys(resourceSets))
 	}
 	if err != nil {
 		return nil, err
@@ -603,10 +597,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		scopeSets, err = m.scope.get(ctx, scopes...)
 	} else {
 		scopeSets, err = m.scope.getAll(ctx)
-		scopes = make([]string, 0, len(scopeSets))
-		for v := range scopeSets {
-			scopes = append(scopes, v)
-		}
+		scopes = slices.Collect(maps.Keys(scopeSets))
 	}
 	if err != nil {
 		return nil, err
@@ -620,10 +611,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		roleSets, err = m.roleGlob.getMerged(ctx, roles...)
 	} else {
 		roleSets, err = m.roleGlob.getAll(ctx)
-		roles = make([]string, 0, len(roleSets))
-		for v := range roleSets {
-			roles = append(roles, v)
-		}
+		roles = slices.Collect(maps.Keys(roleSets))
 	}
 	if err != nil {
 		return nil, err
@@ -644,10 +632,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		actionSets, err = m.actionGlob.getAll(ctx)
 		if len(actionSets) > 0 {
 			delete(actionSets, allowActionsIdxKey)
-			actions = make([]string, 0, len(actionSets))
-			for v := range actionSets {
-				actions = append(actions, v)
-			}
+			actions = slices.Collect(maps.Keys(actionSets))
 		}
 	}
 	if err != nil {
