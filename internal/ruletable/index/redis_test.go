@@ -33,55 +33,51 @@ func TestRedisIndex(t *testing.T) {
 
 	namespace := "test"
 
-	_, err := index.GetExisting(ctx, client, namespace)
+	_, err := index.GetExistingRedis(ctx, client, namespace)
 	require.ErrorIs(t, err, index.ErrCacheMiss)
 
-	writerIdx := index.New(client, namespace, time.Minute, time.Second)
+	writerIdx := index.NewRedis(client, namespace, time.Minute, time.Second)
 	writerImpl := index.NewImpl(writerIdx)
 
-	testRow := &index.Row{
-		RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-			PolicyKind: policyv1.Kind_KIND_RESOURCE,
-			Resource:   "document",
-			Role:       "user",
-			ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
-			Effect:     effectv1.Effect_EFFECT_ALLOW,
-			Scope:      "alpha",
-			Version:    "default",
-			Params: &runtimev1.RuleTable_RuleRow_Params{
-				OrderedVariables: []*runtimev1.Variable{},
-				Constants:        map[string]*structpb.Value{},
-			},
+	testRow := &runtimev1.RuleTable_RuleRow{
+		PolicyKind: policyv1.Kind_KIND_RESOURCE,
+		Resource:   "document",
+		Role:       "user",
+		ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
+		Effect:     effectv1.Effect_EFFECT_ALLOW,
+		Scope:      "alpha",
+		Version:    "default",
+		Params: &runtimev1.RuleTable_RuleRow_Params{
+			OrderedVariables: []*runtimev1.Variable{},
+			Constants:        map[string]*structpb.Value{},
 		},
 	}
 
-	require.NoError(t, writerImpl.IndexRules(ctx, []*index.Row{testRow}))
+	require.NoError(t, writerImpl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{testRow}))
 
-	readerIdx, err := index.GetExisting(ctx, client, namespace)
+	readerIdx, err := index.GetExistingRedis(ctx, client, namespace)
 	require.NoError(t, err)
 	require.NotNil(t, readerIdx)
 
 	readerImpl := index.NewImpl(readerIdx)
 
-	rows, err := readerImpl.GetRows(ctx, "default", "document", []string{"alpha"}, []string{"user"}, []string{"view"})
+	rows, err := readerImpl.GetRows(ctx, []string{"default"}, []string{"document"}, []string{"alpha"}, []string{"user"}, []string{"view"}, false)
 	require.NoError(t, err)
 
 	require.Len(t, rows, 1)
 
-	newRow := &index.Row{
-		RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-			PolicyKind: policyv1.Kind_KIND_RESOURCE,
-			Resource:   "document",
-			ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
-			Effect:     effectv1.Effect_EFFECT_DENY,
-			Scope:      "alpha",
-			Version:    "default",
-			Params: &runtimev1.RuleTable_RuleRow_Params{
-				OrderedVariables: []*runtimev1.Variable{},
-				Constants:        map[string]*structpb.Value{},
-			},
+	newRow := &runtimev1.RuleTable_RuleRow{
+		PolicyKind: policyv1.Kind_KIND_RESOURCE,
+		Resource:   "document",
+		ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
+		Effect:     effectv1.Effect_EFFECT_DENY,
+		Scope:      "alpha",
+		Version:    "default",
+		Params: &runtimev1.RuleTable_RuleRow_Params{
+			OrderedVariables: []*runtimev1.Variable{},
+			Constants:        map[string]*structpb.Value{},
 		},
 	}
 
-	require.ErrorIs(t, readerImpl.IndexRules(ctx, []*index.Row{newRow}), index.ErrReadOnly)
+	require.ErrorIs(t, readerImpl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{newRow}), index.ErrReadOnly)
 }

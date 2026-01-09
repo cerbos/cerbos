@@ -78,7 +78,7 @@ func TestCheck(t *testing.T) {
 				test.SkipIfGHActions(t)
 
 				if eval == nil {
-					redIdx := index.New(client, "test", 0, 0)
+					redIdx := index.NewRedis(client, "test", 0, 0)
 					var rtRedisCancelFunc context.CancelFunc
 					eval, rtRedisCancelFunc = mkRuleTable(t, params, redIdx)
 					t.Cleanup(rtRedisCancelFunc)
