@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	connectrpc.com/connect v1.19.1
-	github.com/bufbuild/buf v1.62.1
+	github.com/bufbuild/buf v1.63.0
 	github.com/cerbos/protoc-gen-go-hashpb v0.4.2
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20251117191428-c1ed61225ecc
@@ -155,7 +155,7 @@ require (
 	github.com/breml/bidichk v0.3.3 // indirect
 	github.com/breml/errchkjson v0.4.1 // indirect
 	github.com/brunoga/deep v1.2.4 // indirect
-	github.com/bufbuild/protocompile v0.14.2-0.20251223142729-db46c1b9d34e // indirect
+	github.com/bufbuild/protocompile v0.14.2-0.20260105175043-4d8d90b1c6b8 // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20250218205857-750e09ce93e1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/butuzov/ireturn v0.4.0 // indirect

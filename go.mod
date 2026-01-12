@@ -42,7 +42,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/cel-go v0.26.1
 	github.com/google/go-cmp v0.7.0
-	github.com/google/gops v0.3.28
+	github.com/google/gops v0.3.29
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
@@ -76,7 +76,7 @@ require (
 	github.com/rs/cors v1.11.1
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/sony/gobreaker/v2 v2.3.0
+	github.com/sony/gobreaker/v2 v2.4.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/afero v1.15.0
 	github.com/spiffe/go-spiffe/v2 v2.6.0
@@ -114,7 +114,7 @@ require (
 	golang.org/x/net v0.48.0
 	golang.org/x/sync v0.19.0
 	golang.org/x/tools v0.40.0
-	gonum.org/v1/gonum v0.16.0
+	gonum.org/v1/gonum v0.17.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20251222181119-0a764e51fe1b
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
