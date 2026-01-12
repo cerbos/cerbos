@@ -397,7 +397,7 @@ func (rm *redisMap) getAllKeys(ctx context.Context) (map[string]struct{}, error)
 
 	res := make(map[string]struct{}, len(catsKeys))
 	for _, catKey := range catsKeys {
-		res[catKey] = struct{}{}
+		res[rm.catFromSumsKey(catKey)] = struct{}{}
 	}
 
 	return res, nil
