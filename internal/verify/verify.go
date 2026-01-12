@@ -31,11 +31,6 @@ type Config struct {
 	Workers                     uint
 }
 
-type SuiteResult struct {
-	Suite *policyv1.TestResults_Suite
-	Err   error
-}
-
 type Checker interface {
 	Check(ctx context.Context, inputs []*enginev1.CheckInput, opts ...evaluator.CheckOpt) ([]*enginev1.CheckOutput, error)
 }
@@ -53,23 +48,21 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		Summary: &policyv1.TestResults_Summary{},
 		Suites:  make([]*policyv1.TestResults_Suite, 0, n),
 	}
-	for sr := range ch {
-		if sr.Err != nil {
-			return nil, sr.Err
-		}
-		appendSuiteResult(results, sr.Suite)
+	for suite := range ch {
+		appendSuiteResult(results, suite)
 	}
 
 	sort.Slice(results.Suites, func(i, j int) bool {
 		return results.Suites[i].File < results.Suites[j].File
 	})
+
 	return results, nil
 }
 
 // VerifyStream runs test suites and streams results as each suite completes.
 // It returns the number of test suites, a channel of results, and any setup error.
 // Callers may cancel the context to stop workers early and avoid unnecessary work.
-func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan SuiteResult, error) {
+func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan *policyv1.TestResults_Suite, error) {
 	suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
 	if err != nil {
 		return 0, nil, err
@@ -80,7 +73,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 		return 0, nil, err
 	}
 
-	results := make(chan SuiteResult, len(suiteDefs))
+	results := make(chan *policyv1.TestResults_Suite, len(suiteDefs))
 
 	if len(suiteDefs) == 0 {
 		close(results)
@@ -143,7 +136,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 			for _, file := range suiteDefs {
 				suite := runSuite(file)
 				select {
-				case results <- SuiteResult{Suite: suite}:
+				case results <- suite:
 				case <-ctx.Done():
 					return
 				}
@@ -242,7 +235,7 @@ func resolveWorkerCount(configured uint, numSuites int) int {
 	return int(configured)
 }
 
-func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuite func(string) *policyv1.TestResults_Suite, results chan<- SuiteResult) {
+func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuite func(string) *policyv1.TestResults_Suite, results chan<- *policyv1.TestResults_Suite) {
 	jobs := make(chan string, len(suiteDefs))
 	var wg sync.WaitGroup
 
@@ -259,7 +252,7 @@ func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuit
 
 				suite := runSuite(file)
 				select {
-				case results <- SuiteResult{Suite: suite}:
+				case results <- suite:
 				case <-ctx.Done():
 					return
 				}
