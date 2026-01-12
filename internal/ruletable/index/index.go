@@ -54,6 +54,7 @@ type literalMap interface {
 	set(context.Context, string, *rowSet) error
 	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
+	getAllKeys(context.Context) (map[string]struct{}, error)
 	delete(context.Context, ...string) error
 }
 
@@ -449,19 +450,19 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 }
 
 func (m *Impl) ListKeys(ctx context.Context, cat CategoryKey) ([]string, error) {
-	var all map[string]*rowSet
+	var all map[string]struct{}
 	var err error
 	switch cat {
 	case CategoryKeyActionGlob:
-		all, err = m.actionGlob.getAll(ctx)
+		all, err = m.actionGlob.getAllKeys(ctx)
 	case CategoryKeyResourceGlob:
-		all, err = m.resourceGlob.getAll(ctx)
+		all, err = m.resourceGlob.getAllKeys(ctx)
 	case CategoryKeyRoleGlob:
-		all, err = m.roleGlob.getAll(ctx)
+		all, err = m.roleGlob.getAllKeys(ctx)
 	case CategoryKeyScope:
-		all, err = m.scope.getAll(ctx)
+		all, err = m.scope.getAllKeys(ctx)
 	case CategoryKeyVersion:
-		all, err = m.version.getAll(ctx)
+		all, err = m.version.getAllKeys(ctx)
 	}
 	if err != nil {
 		return nil, err

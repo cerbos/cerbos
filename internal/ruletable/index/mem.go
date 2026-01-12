@@ -98,6 +98,17 @@ func (lm *memLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
+func (lm *memLiteralMap) getAllKeys(context.Context) (map[string]struct{}, error) {
+	lm.mu.RLock()
+	defer lm.mu.RUnlock()
+
+	res := make(map[string]struct{}, len(lm.m))
+	for k := range lm.m {
+		res[k] = struct{}{}
+	}
+	return res, nil
+}
+
 func (lm *memLiteralMap) delete(_ context.Context, keys ...string) error {
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
