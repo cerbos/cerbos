@@ -154,15 +154,15 @@ func (gm *GlobMap[T]) GetAll() map[string]T {
 	return res
 }
 
-func (gm *GlobMap[T]) GetAllKeys() map[string]struct{} {
-	res := make(map[string]struct{}, gm.Len())
+func (gm *GlobMap[T]) GetAllKeys() []string {
+	res := make([]string, 0, gm.Len())
 
 	for k := range gm.literals {
-		res[k] = struct{}{}
+		res = append(res, k)
 	}
 
 	for k := range gm.globs {
-		res[k] = struct{}{}
+		res = append(res, k)
 	}
 
 	return res
