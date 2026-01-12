@@ -20,6 +20,7 @@ const (
 	confKey = "engine"
 
 	defaultPolicyLoaderTimeout = 2 * time.Second
+	extraWorkersOverCPUs       = 4
 )
 
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
@@ -47,7 +48,7 @@ func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
 	c.DefaultScope = namer.DefaultScope
 	c.PolicyLoaderTimeout = defaultPolicyLoaderTimeout
-	c.NumWorkers = uint(runtime.NumCPU() + 4) //nolint:mnd
+	c.NumWorkers = uint(runtime.NumCPU() + extraWorkersOverCPUs)
 }
 
 func (c *Conf) Validate() (outErr error) {

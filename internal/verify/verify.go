@@ -20,7 +20,10 @@ import (
 	"github.com/cerbos/cerbos/internal/validator"
 )
 
-const parallelismThreshold = 5
+const (
+	parallelismThreshold = 5
+	extraWorkersOverCPUs = 4
+)
 
 type Config struct {
 	ExcludedResourcePolicyFQNs  map[string]struct{}
@@ -229,7 +232,7 @@ func resolveWorkerCount(configured uint, numSuites int) int {
 	}
 
 	if configured == 0 {
-		return runtime.NumCPU() + 4 //nolint:mnd
+		return runtime.NumCPU() + extraWorkersOverCPUs
 	}
 
 	if int(configured) > numSuites {
