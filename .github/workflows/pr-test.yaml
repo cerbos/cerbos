@@ -116,7 +116,7 @@ jobs:
         uses: ./.github/actions/setup-just
 
       - name: Download previous test times
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: previous-test-times
 
@@ -182,7 +182,7 @@ jobs:
         uses: ./.github/actions/setup-just
 
       - name: Download JUnit reports
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
 
       - name: Combine JUnit reports
         run: |-
@@ -359,7 +359,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Download npm packages
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: npm-packages
 
