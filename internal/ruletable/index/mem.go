@@ -98,13 +98,13 @@ func (lm *memLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
-func (lm *memLiteralMap) getAllKeys(context.Context) (map[string]struct{}, error) {
+func (lm *memLiteralMap) getAllKeys(context.Context) ([]string, error) {
 	lm.mu.RLock()
 	defer lm.mu.RUnlock()
 
-	res := make(map[string]struct{}, len(lm.m))
+	res := make([]string, 0, len(lm.m))
 	for k := range lm.m {
-		res[k] = struct{}{}
+		res = append(res, k)
 	}
 	return res, nil
 }
@@ -197,7 +197,7 @@ func (gl *memGlobMap) getAll(context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
-func (gl *memGlobMap) getAllKeys(context.Context) (map[string]struct{}, error) {
+func (gl *memGlobMap) getAllKeys(context.Context) ([]string, error) {
 	gl.mu.RLock()
 	defer gl.mu.RUnlock()
 

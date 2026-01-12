@@ -54,7 +54,7 @@ type literalMap interface {
 	set(context.Context, string, *rowSet) error
 	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
-	getAllKeys(context.Context) (map[string]struct{}, error)
+	getAllKeys(context.Context) ([]string, error)
 	delete(context.Context, ...string) error
 }
 
@@ -64,7 +64,7 @@ type globMap interface {
 	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
 	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
-	getAllKeys(context.Context) (map[string]struct{}, error)
+	getAllKeys(context.Context) ([]string, error)
 	delete(context.Context, ...string) error
 }
 
@@ -450,30 +450,20 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 }
 
 func (m *Impl) ListKeys(ctx context.Context, cat CategoryKey) ([]string, error) {
-	var all map[string]struct{}
-	var err error
 	switch cat {
 	case CategoryKeyActionGlob:
-		all, err = m.actionGlob.getAllKeys(ctx)
+		return m.actionGlob.getAllKeys(ctx)
 	case CategoryKeyResourceGlob:
-		all, err = m.resourceGlob.getAllKeys(ctx)
+		return m.resourceGlob.getAllKeys(ctx)
 	case CategoryKeyRoleGlob:
-		all, err = m.roleGlob.getAllKeys(ctx)
+		return m.roleGlob.getAllKeys(ctx)
 	case CategoryKeyScope:
-		all, err = m.scope.getAllKeys(ctx)
+		return m.scope.getAllKeys(ctx)
 	case CategoryKeyVersion:
-		all, err = m.version.getAllKeys(ctx)
+		return m.version.getAllKeys(ctx)
+	default:
+		return nil, nil
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	keys := make([]string, 0, len(all))
-	for k := range all {
-		keys = append(keys, k)
-	}
-
-	return keys, nil
 }
 
 // updateIndex fetches existing rows for the keys in the batch, resolves them if necessary,

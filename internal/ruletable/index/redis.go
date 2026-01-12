@@ -389,15 +389,15 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
-func (rm *redisMap) getAllKeys(ctx context.Context) (map[string]struct{}, error) {
+func (rm *redisMap) getAllKeys(ctx context.Context) ([]string, error) {
 	catsKeys, err := rm.db.SMembers(ctx, rm.catKey).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	res := make(map[string]struct{}, len(catsKeys))
-	for _, catKey := range catsKeys {
-		res[rm.catFromSumsKey(catKey)] = struct{}{}
+	res := make([]string, len(catsKeys))
+	for i, catKey := range catsKeys {
+		res[i] = rm.catFromSumsKey(catKey)
 	}
 
 	return res, nil
