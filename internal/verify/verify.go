@@ -142,7 +142,6 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 				select {
 				case results <- SuiteResult{Suite: suite}:
 				case <-ctx.Done():
-					results <- SuiteResult{Err: ctx.Err()}
 					return
 				}
 			}
