@@ -20,7 +20,10 @@ import (
 	"github.com/cerbos/cerbos/internal/validator"
 )
 
-const parallelismThreshold = 5
+const (
+	parallelismThreshold = 5
+	extraWorkersOverCPUs = 4
+)
 
 type Config struct {
 	ExcludedResourcePolicyFQNs  map[string]struct{}
@@ -29,11 +32,6 @@ type Config struct {
 	Trace                       bool
 	SkipBatching                bool
 	Workers                     uint
-}
-
-type SuiteResult struct {
-	Suite *policyv1.TestResults_Suite
-	Err   error
 }
 
 type Checker interface {
@@ -53,12 +51,17 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		Summary: &policyv1.TestResults_Summary{},
 		Suites:  make([]*policyv1.TestResults_Suite, 0, n),
 	}
-	for sr := range ch {
-		if sr.Err != nil {
-			return nil, sr.Err
-		}
-		appendSuiteResult(results, sr.Suite)
+	for suite := range ch {
+		appendSuiteResult(results, suite)
 	}
+
+	if len(results.Suites) != n {
+		return nil, fmt.Errorf("unexpected number of results: %w", ctx.Err())
+	}
+
+	sort.Slice(results.Suites, func(i, j int) bool {
+		return results.Suites[i].File < results.Suites[j].File
+	})
 
 	return results, nil
 }
@@ -66,7 +69,7 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 // VerifyStream runs test suites and streams results as each suite completes.
 // It returns the number of test suites, a channel of results, and any setup error.
 // Callers may cancel the context to stop workers early and avoid unnecessary work.
-func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan SuiteResult, error) {
+func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (int, <-chan *policyv1.TestResults_Suite, error) {
 	suiteDefs, fixtureDefs, err := discoverTestFiles(ctx, fsys)
 	if err != nil {
 		return 0, nil, err
@@ -77,7 +80,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 		return 0, nil, err
 	}
 
-	results := make(chan SuiteResult, len(suiteDefs))
+	results := make(chan *policyv1.TestResults_Suite, len(suiteDefs))
 
 	if len(suiteDefs) == 0 {
 		close(results)
@@ -140,9 +143,8 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 			for _, file := range suiteDefs {
 				suite := runSuite(file)
 				select {
-				case results <- SuiteResult{Suite: suite}:
+				case results <- suite:
 				case <-ctx.Done():
-					results <- SuiteResult{Err: ctx.Err()}
 					return
 				}
 			}
@@ -230,7 +232,7 @@ func resolveWorkerCount(configured uint, numSuites int) int {
 	}
 
 	if configured == 0 {
-		return runtime.NumCPU() + 4 //nolint:mnd
+		return runtime.NumCPU() + extraWorkersOverCPUs
 	}
 
 	if int(configured) > numSuites {
@@ -240,7 +242,7 @@ func resolveWorkerCount(configured uint, numSuites int) int {
 	return int(configured)
 }
 
-func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuite func(string) *policyv1.TestResults_Suite, results chan<- SuiteResult) {
+func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuite func(string) *policyv1.TestResults_Suite, results chan<- *policyv1.TestResults_Suite) {
 	jobs := make(chan string, len(suiteDefs))
 	var wg sync.WaitGroup
 
@@ -257,7 +259,7 @@ func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuit
 
 				suite := runSuite(file)
 				select {
-				case results <- SuiteResult{Suite: suite}:
+				case results <- suite:
 				case <-ctx.Done():
 					return
 				}
