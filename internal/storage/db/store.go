@@ -10,10 +10,18 @@ import (
 	"strings"
 )
 
-type ErrBreaksScopeChain struct {
+type BreaksScopeChainErr struct {
 	PolicyKeys []string
 }
 
-func (e ErrBreaksScopeChain) Error() string {
+func (e BreaksScopeChainErr) Error() string {
 	return fmt.Sprintf("removing the following scoped policies will break the scope chain: %s", strings.Join(e.PolicyKeys, ", "))
+}
+
+type BreaksDependentsErr struct {
+	PolicyKeys []string
+}
+
+func (e BreaksDependentsErr) Error() string {
+	return fmt.Sprintf("removing the following policies will break the dependent policies: %s", strings.Join(e.PolicyKeys, ", "))
 }

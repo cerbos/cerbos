@@ -54,11 +54,11 @@ type DBStorage interface {
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
 	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
-	Delete(ctx context.Context, ids ...namer.ModuleID) error
 	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
 	AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error
+	Delete(ctx context.Context, policyKey ...string) (uint32, error)
 	Disable(ctx context.Context, policyKey ...string) (uint32, error)
 	Enable(ctx context.Context, policyKey ...string) (uint32, error)
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
@@ -654,44 +654,142 @@ func (s *dbStorage) HasDescendants(ctx context.Context, ids ...namer.ModuleID) (
 	return out, nil
 }
 
-func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, error) {
+func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, error) {
 	mIDs := make([]namer.ModuleID, len(policyKey))
+	mIDPolicyKey := make(map[namer.ModuleID]string)
 	for idx, pk := range policyKey {
-		mIDs[idx] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-	}
-
-	hasDescendants, err := s.HasDescendants(ctx, mIDs...)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get descendants for policies: %w", err)
-	}
-
-	var brokenChainPolicies []string
-	for _, pk := range policyKey {
 		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
-		if has, ok := hasDescendants[mID]; ok && has {
-			brokenChainPolicies = append(brokenChainPolicies, pk)
-		}
+		mIDs[idx] = mID
+		mIDPolicyKey[mID] = pk
 	}
 
-	if len(brokenChainPolicies) > 0 {
-		return 0, db.ErrBreaksScopeChain{PolicyKeys: brokenChainPolicies}
-	}
-
-	events := make([]storage.Event, len(policyKey))
-	for i, pk := range policyKey {
-		events[i] = storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
-	}
-	res, err := s.db.Update(PolicyTbl).Prepared(true).
-		Set(goqu.Record{PolicyTblDisabledCol: true}).
-		Where(goqu.C(PolicyTblIDCol).In(mIDs)).
-		Executor().ExecContext(ctx)
-	if err != nil {
+	if err := s.validateScopeChain(ctx, mIDPolicyKey, mIDs); err != nil {
 		return 0, err
 	}
 
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("failed to discover whether the policies got disabled or not: %w", err)
+	var affected int64
+	var events []storage.Event
+	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		dependents, err := s.getDependents(ctx, tx, mIDs...)
+		if err != nil {
+			return err
+		}
+
+		if err := s.validateDependents(mIDPolicyKey, dependents); err != nil {
+			return err
+		}
+
+		if len(mIDs) == 1 {
+			res, err := tx.Delete(PolicyTbl).Prepared(true).
+				Where(goqu.C(PolicyTblIDCol).Eq(mIDs[0])).
+				Executor().ExecContext(ctx)
+			if err != nil {
+				return err
+			}
+
+			if affected, err = res.RowsAffected(); err != nil {
+				return fmt.Errorf("failed to discover whether the policies got deleted or not: %w", err)
+			}
+
+			ev := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, mIDs[0])
+
+			if deps, ok := dependents[mIDs[0]]; ok && len(deps) > 0 {
+				ev.Dependents = deps
+			}
+
+			events = []storage.Event{ev}
+
+			return nil
+		}
+
+		events = make([]storage.Event, 0, len(mIDs)+1)
+		mIDSet := make(map[namer.ModuleID]struct{}, len(mIDs))
+		for _, mID := range mIDs {
+			events = append(events, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: mID})
+			mIDSet[mID] = struct{}{}
+		}
+
+		res, err := tx.Delete(PolicyTbl).Prepared(true).
+			Where(goqu.C(PolicyTblIDCol).In(mIDs)).
+			Executor().ExecContext(ctx)
+		if err != nil {
+			return err
+		}
+
+		if affected, err = res.RowsAffected(); err != nil {
+			return fmt.Errorf("failed to discover whether the policies got deleted or not: %w", err)
+		}
+
+		// Build a deduplicated union of dependents across the whole batch,
+		// excluding policies deleted in this batch.
+		depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
+		for _, deps := range dependents {
+			for _, d := range deps {
+				if _, ok := mIDSet[d]; !ok {
+					depEvent.Dependents = append(depEvent.Dependents, d)
+					mIDSet[d] = struct{}{}
+				}
+			}
+		}
+
+		if len(depEvent.Dependents) > 0 {
+			events = append(events, depEvent)
+		}
+
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+
+	s.NotifySubscribers(events...)
+
+	return uint32(affected), nil
+}
+
+func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, error) {
+	mIDs := make([]namer.ModuleID, len(policyKey))
+	mIDPolicyKey := make(map[namer.ModuleID]string)
+	for idx, pk := range policyKey {
+		mID := namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk))
+		mIDs[idx] = mID
+		mIDPolicyKey[mID] = pk
+	}
+
+	if err := s.validateScopeChain(ctx, mIDPolicyKey, mIDs); err != nil {
+		return 0, err
+	}
+
+	var affected int64
+	events := make([]storage.Event, len(policyKey))
+	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		dependents, err := s.getDependents(ctx, tx, mIDs...)
+		if err != nil {
+			return err
+		}
+
+		if err := s.validateDependents(mIDPolicyKey, dependents); err != nil {
+			return err
+		}
+
+		for i, pk := range policyKey {
+			events[i] = storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
+		}
+
+		res, err := s.db.Update(PolicyTbl).Prepared(true).
+			Set(goqu.Record{PolicyTblDisabledCol: true}).
+			Where(goqu.C(PolicyTblIDCol).In(mIDs)).
+			Executor().ExecContext(ctx)
+		if err != nil {
+			return err
+		}
+
+		if affected, err = res.RowsAffected(); err != nil {
+			return fmt.Errorf("failed to discover whether the policies got disabled or not: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return 0, err
 	}
 
 	s.NotifySubscribers(events...)
@@ -723,70 +821,39 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 	return uint32(affected), nil
 }
 
-func (s *dbStorage) Delete(ctx context.Context, ids ...namer.ModuleID) error {
-	var events []storage.Event
-	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
-		dependents, err := s.getDependents(ctx, tx, ids...)
-		if err != nil {
-			return err
+// validateScopeChain validates whether deleting or disabling the given policies breaks dependents. (Ex: deleting a derived_role imported by any policy).
+func (s *dbStorage) validateDependents(mIDPolicyKey map[namer.ModuleID]string, dependents map[namer.ModuleID][]namer.ModuleID) error {
+	var policyKeys []string
+	for mID, deps := range dependents {
+		if len(deps) > 0 {
+			policyKeys = append(policyKeys, mIDPolicyKey[mID])
 		}
-
-		if len(ids) == 1 {
-			_, err := tx.Delete(PolicyTbl).Prepared(true).
-				Where(goqu.C(PolicyTblIDCol).Eq(ids[0])).
-				Executor().ExecContext(ctx)
-			if err != nil {
-				return err
-			}
-
-			ev := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, ids[0])
-
-			if deps, ok := dependents[ids[0]]; ok && len(deps) > 0 {
-				ev.Dependents = deps
-			}
-
-			events = []storage.Event{ev}
-
-			return nil
-		}
-
-		events = make([]storage.Event, 0, len(ids)+1)
-		idList := make([]any, len(ids))
-		idSet := make(map[namer.ModuleID]struct{}, len(ids))
-
-		for i, id := range ids {
-			events = append(events, storage.Event{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: id})
-			idList[i] = id
-			idSet[id] = struct{}{}
-		}
-		if _, err := tx.Delete(PolicyTbl).Prepared(true).
-			Where(goqu.C(PolicyTblIDCol).In(idList...)).
-			Executor().ExecContext(ctx); err != nil {
-			return err
-		}
-
-		// Build a deduplicated union of dependents across the whole batch,
-		// excluding policies deleted in this batch.
-		depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
-		for _, deps := range dependents {
-			for _, d := range deps {
-				if _, ok := idSet[d]; !ok {
-					depEvent.Dependents = append(depEvent.Dependents, d)
-					idSet[d] = struct{}{}
-				}
-			}
-		}
-
-		if len(depEvent.Dependents) > 0 {
-			events = append(events, depEvent)
-		}
-
-		return nil
-	}); err != nil {
-		return err
 	}
 
-	s.NotifySubscribers(events...)
+	if len(policyKeys) > 0 {
+		return &db.BreaksDependentsErr{PolicyKeys: policyKeys}
+	}
+
+	return nil
+}
+
+// validateScopeChain validates whether deleting or disabling the given policies breaks the scope chain.
+func (s *dbStorage) validateScopeChain(ctx context.Context, mIDPolicyKey map[namer.ModuleID]string, mIDs []namer.ModuleID) error {
+	hasDescendants, err := s.HasDescendants(ctx, mIDs...)
+	if err != nil {
+		return fmt.Errorf("failed to get descendants for policies: %w", err)
+	}
+
+	var brokenChainPolicies []string
+	for mID, policyKey := range mIDPolicyKey {
+		if has, ok := hasDescendants[mID]; ok && has {
+			brokenChainPolicies = append(brokenChainPolicies, policyKey)
+		}
+	}
+
+	if len(brokenChainPolicies) > 0 {
+		return &db.BreaksScopeChainErr{PolicyKeys: brokenChainPolicies}
+	}
 
 	return nil
 }

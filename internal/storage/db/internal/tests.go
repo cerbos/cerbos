@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -336,19 +337,29 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		t.Run("delete", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 
-			err := store.Delete(ctx, rpx.ID, dr.ID)
+			_, err := store.Delete(ctx, namer.PolicyKeyFromFQN(rpx.FQN))
 			require.NoError(t, err)
 
-			have, err := store.GetCompilationUnits(ctx, rpx.ID, dr.ID)
+			have, err := store.GetCompilationUnits(ctx, rpx.ID)
 			require.NoError(t, err)
 			require.Empty(t, have)
 
 			wantEvents := []storage.Event{
 				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: rpx.ID},
-				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: dr.ID},
-				{Kind: storage.EventAddOrUpdatePolicy, Dependents: []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
 			}
 			checkEvents(t, timeout, wantEvents...)
+
+			_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(dr.FQN))
+			var breaksDependentsErr *db.BreaksDependentsErr
+			require.ErrorAs(t, err, &breaksDependentsErr)
+			require.Len(t, breaksDependentsErr.PolicyKeys, 1)
+			require.Equal(t, breaksDependentsErr.PolicyKeys[0], namer.PolicyKeyFromFQN(dr.FQN))
+
+			_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(rpAcmeHR.FQN))
+			var breaksScopeChainErr *db.BreaksScopeChainErr
+			require.ErrorAs(t, err, &breaksScopeChainErr)
+			require.Len(t, breaksScopeChainErr.PolicyKeys, 1)
+			require.Equal(t, breaksScopeChainErr.PolicyKeys[0], namer.PolicyKeyFromFQN(rpAcmeHR.FQN))
 		})
 
 		t.Run("add_schema", func(t *testing.T) {
