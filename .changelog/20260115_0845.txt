@@ -1,0 +1,3 @@
+type:feature
+Add DeletePolicies RPC
+It is now possible to delete policies from mutable stores. If the to be deleted policies breaks the scope chain or there are dependents to those policies, the API rejects the request with gRPC invalid argument status.
