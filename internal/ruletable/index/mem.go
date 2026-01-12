@@ -28,11 +28,11 @@ func NewMem() *Mem {
 	return &Mem{namespace: memNamespaceKey}
 }
 
-func (m *Mem) getLiteralMap(string) literalMap {
+func (m *Mem) getLiteralMap(CategoryKey) literalMap {
 	return newMemLiteralMap()
 }
 
-func (m *Mem) getGlobMap(string) globMap {
+func (m *Mem) getGlobMap(CategoryKey) globMap {
 	return newMemGlobMap()
 }
 
@@ -94,6 +94,17 @@ func (lm *memLiteralMap) getAll(context.Context) (map[string]*rowSet, error) {
 	res := make(map[string]*rowSet, len(lm.m))
 	for k, v := range lm.m {
 		res[k] = v.copy()
+	}
+	return res, nil
+}
+
+func (lm *memLiteralMap) getAllKeys(context.Context) (map[string]struct{}, error) {
+	lm.mu.RLock()
+	defer lm.mu.RUnlock()
+
+	res := make(map[string]struct{}, len(lm.m))
+	for k := range lm.m {
+		res[k] = struct{}{}
 	}
 	return res, nil
 }
@@ -184,6 +195,13 @@ func (gl *memGlobMap) getAll(context.Context) (map[string]*rowSet, error) {
 		res[k] = v.copy()
 	}
 	return res, nil
+}
+
+func (gl *memGlobMap) getAllKeys(context.Context) (map[string]struct{}, error) {
+	gl.mu.RLock()
+	defer gl.mu.RUnlock()
+
+	return gl.m.GetAllKeys(), nil
 }
 
 func (gl *memGlobMap) delete(_ context.Context, keys ...string) error {

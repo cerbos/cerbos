@@ -21,7 +21,7 @@ import (
 
 const (
 	// expirationBuffer is the safety margin between the sentinel expiring and the data expiring.
-	// This guarantees that if GetExisting() returns successfully, the data keys will persist for at least
+	// This guarantees that if `GetExistingRedis` returns successfully, the data keys will persist for at least
 	// this long, covering the duration of the read operation.
 	defaultKeyTTL           = time.Minute * 5
 	defaultExpirationBuffer = time.Minute * 1
@@ -37,20 +37,30 @@ var (
 	ErrReadOnly  = errors.New("redis instance is read only")
 )
 
+// Cmdable is a subset of the builtin redis.Cmdable interface.
+type Cmdable interface {
+	Exists(ctx context.Context, keys ...string) *redis.IntCmd
+	MGet(ctx context.Context, keys ...string) *redis.SliceCmd
+	SMembers(ctx context.Context, key string) *redis.StringSliceCmd
+
+	Pipelined(ctx context.Context, fn func(redis.Pipeliner) error) ([]redis.Cmder, error)
+	TxPipelined(ctx context.Context, fn func(redis.Pipeliner) error) ([]redis.Cmder, error)
+}
+
 type Redis struct {
 	sentinelDeadline time.Time
 	dataDeadline     time.Time
-	db               *redis.Client
+	db               Cmdable
 	nsKey            string
 	sentKey          string
 	readOnly         bool
 }
 
-// GetExisting checks if a valid index exists for the given namespace.
+// GetExistingRedis checks if a valid index exists for the given namespace.
 // It checks for the presence of the sentinel key.
 //   - If the sentinel exists, it returns a valid *Redis adapter ready for reading.
 //   - If the sentinel is missing, it returns (nil, ErrCacheMiss), signaling the caller to use New().
-func GetExisting(ctx context.Context, client *redis.Client, namespace string) (*Redis, error) {
+func GetExistingRedis(ctx context.Context, client Cmdable, namespace string) (*Redis, error) {
 	sentKey := namespace + ":" + sentinelSuffix
 	exists, err := client.Exists(ctx, sentKey).Result()
 	if err != nil {
@@ -69,12 +79,12 @@ func GetExisting(ctx context.Context, client *redis.Client, namespace string) (*
 	}, nil
 }
 
-// New creates a new index generation.
+// NewRedis creates a new index generation.
 // All data written via this instance will share these exact timestamps, ensuring the entire
 // batch expires consistently with no time drift.
 //
 // Usage: Call this when GetExisting returns ErrCacheMiss.
-func New(client *redis.Client, namespace string, ttl, expirationBuffer time.Duration) *Redis {
+func NewRedis(client Cmdable, namespace string, ttl, expirationBuffer time.Duration) *Redis {
 	if ttl <= 0 {
 		ttl = defaultKeyTTL
 	}
@@ -95,12 +105,16 @@ func New(client *redis.Client, namespace string, ttl, expirationBuffer time.Dura
 	}
 }
 
-func (r *Redis) getLiteralMap(category string) literalMap {
-	return newRedisLiteralMap(r.db, r.nsKey, category, r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
+func (r *Redis) GetExpiresAt() time.Time {
+	return r.dataDeadline
 }
 
-func (r *Redis) getGlobMap(category string) globMap {
-	return newRedisGlobMap(r.db, r.nsKey, category, r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
+func (r *Redis) getLiteralMap(category CategoryKey) literalMap {
+	return newRedisLiteralMap(r.db, r.nsKey, string(category), r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
+}
+
+func (r *Redis) getGlobMap(category CategoryKey) globMap {
+	return newRedisGlobMap(r.db, r.nsKey, string(category), r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
 }
 
 func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
@@ -163,14 +177,14 @@ func (r *Redis) rowKey(sum string) string {
 type redisMap struct {
 	sentinelDeadline time.Time
 	dataDeadline     time.Time
-	db               *redis.Client
+	db               Cmdable
 	nsKey            string
 	catKey           string
 	sentKey          string
 	readOnly         bool
 }
 
-func newRedisMap(db *redis.Client, namespace, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
+func newRedisMap(db Cmdable, namespace, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
 	return &redisMap{
 		db:               db,
 		nsKey:            namespace,
@@ -375,6 +389,20 @@ func (rm *redisMap) getAll(ctx context.Context) (map[string]*rowSet, error) {
 	return res, nil
 }
 
+func (rm *redisMap) getAllKeys(ctx context.Context) (map[string]struct{}, error) {
+	catsKeys, err := rm.db.SMembers(ctx, rm.catKey).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make(map[string]struct{}, len(catsKeys))
+	for _, catKey := range catsKeys {
+		res[catKey] = struct{}{}
+	}
+
+	return res, nil
+}
+
 func (rm *redisMap) delete(ctx context.Context, cats ...string) error {
 	if len(cats) == 0 {
 		return nil
@@ -402,7 +430,7 @@ type RedisLiteralMap struct {
 	*redisMap
 }
 
-func newRedisLiteralMap(db *redis.Client, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
+func newRedisLiteralMap(db Cmdable, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
 	return &RedisLiteralMap{
 		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
@@ -412,7 +440,7 @@ type RedisGlobMap struct {
 	*redisMap
 }
 
-func newRedisGlobMap(db *redis.Client, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
+func newRedisGlobMap(db Cmdable, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
 	return &RedisGlobMap{
 		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
@@ -476,13 +504,13 @@ func hydrateParams(r *Row) error {
 	var err error
 	if (r.PolicyKind == policyv1.Kind_KIND_RESOURCE && !r.FromRolePolicy) ||
 		r.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
-		r.Params, err = GenerateRowParams(r.OriginFqn, r.RuleTable_RuleRow.Params.OrderedVariables, r.RuleTable_RuleRow.Params.Constants)
+		r.Params, err = generateRowParams(r.OriginFqn, r.RuleTable_RuleRow.Params.OrderedVariables, r.RuleTable_RuleRow.Params.Constants)
 		if err != nil {
 			return err
 		}
 	}
 	if r.RuleTable_RuleRow.DerivedRoleParams != nil {
-		r.DerivedRoleParams, err = GenerateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.RuleTable_RuleRow.DerivedRoleParams.OrderedVariables, r.RuleTable_RuleRow.DerivedRoleParams.Constants)
+		r.DerivedRoleParams, err = generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.RuleTable_RuleRow.DerivedRoleParams.OrderedVariables, r.RuleTable_RuleRow.DerivedRoleParams.Constants)
 		if err != nil {
 			return err
 		}

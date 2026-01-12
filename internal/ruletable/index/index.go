@@ -21,14 +21,16 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-const (
-	allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
+type CategoryKey string
 
-	versionKey      = "version"
-	scopeKey        = "scope"
-	roleGlobKey     = "roleGlob"
-	actionGlobKey   = "actionGlob"
-	resourceGlobKey = "resourceGlob"
+const (
+	CategoryKeyVersion      CategoryKey = "version"
+	CategoryKeyScope        CategoryKey = "scope"
+	CategoryKeyRoleGlob     CategoryKey = "roleGlob"
+	CategoryKeyActionGlob   CategoryKey = "actionGlob"
+	CategoryKeyResourceGlob CategoryKey = "resourceGlob"
+
+	allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 )
 
 var ignoredRuleTableProtoFields = map[string]struct{}{
@@ -36,8 +38,8 @@ var ignoredRuleTableProtoFields = map[string]struct{}{
 }
 
 type Index interface {
-	getLiteralMap(string) literalMap
-	getGlobMap(string) globMap
+	getLiteralMap(CategoryKey) literalMap
+	getGlobMap(CategoryKey) globMap
 	resolve(context.Context, []*Row) ([]*Row, error)
 	resolveIter(context.Context, iter.Seq[*Row]) (iter.Seq[*Row], error)
 	needsResolve() bool
@@ -52,6 +54,7 @@ type literalMap interface {
 	set(context.Context, string, *rowSet) error
 	get(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
+	getAllKeys(context.Context) (map[string]struct{}, error)
 	delete(context.Context, ...string) error
 }
 
@@ -61,6 +64,7 @@ type globMap interface {
 	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
 	getMerged(context.Context, ...string) (map[string]*rowSet, error)
 	getAll(context.Context) (map[string]*rowSet, error)
+	getAllKeys(context.Context) (map[string]struct{}, error)
 	delete(context.Context, ...string) error
 }
 
@@ -339,26 +343,32 @@ func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
 }
 
 type Impl struct {
-	idx          Index
-	version      literalMap
-	scope        literalMap
-	roleGlob     globMap
-	actionGlob   globMap
-	resourceGlob globMap
+	idx                 Index
+	version             literalMap
+	scope               literalMap
+	roleGlob            globMap
+	actionGlob          globMap
+	resourceGlob        globMap
+	parentRoleAncestors map[string]map[string][]string
 }
 
 func NewImpl(idx Index) *Impl {
 	return &Impl{
-		idx:          idx,
-		version:      idx.getLiteralMap(versionKey),
-		scope:        idx.getLiteralMap(scopeKey),
-		roleGlob:     idx.getGlobMap(roleGlobKey),
-		actionGlob:   idx.getGlobMap(actionGlobKey),
-		resourceGlob: idx.getGlobMap(resourceGlobKey),
+		idx:                 idx,
+		version:             idx.getLiteralMap(CategoryKeyVersion),
+		scope:               idx.getLiteralMap(CategoryKeyScope),
+		roleGlob:            idx.getGlobMap(CategoryKeyRoleGlob),
+		actionGlob:          idx.getGlobMap(CategoryKeyActionGlob),
+		resourceGlob:        idx.getGlobMap(CategoryKeyResourceGlob),
+		parentRoleAncestors: make(map[string]map[string][]string),
 	}
 }
 
-func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
+func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_RuleRow) error {
+	if len(rules) == 0 {
+		return nil
+	}
+
 	versions := make(map[string]*rowSet)
 	scopes := make(map[string]*rowSet)
 	roleGlobs := make(map[string]*rowSet)
@@ -372,7 +382,35 @@ func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
 		m[key].set(r)
 	}
 
-	for _, r := range rows {
+	for _, rule := range rules {
+		r := &Row{
+			RuleTable_RuleRow: rule,
+		}
+
+		switch rule.PolicyKind { //nolint:exhaustive
+		case policyv1.Kind_KIND_RESOURCE:
+			if !rule.FromRolePolicy { //nolint:nestif
+				params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
+				if err != nil {
+					return err
+				}
+				r.Params = params
+				if rule.OriginDerivedRole != "" {
+					drParams, err := generateRowParams(namer.DerivedRolesFQN(rule.OriginDerivedRole), rule.DerivedRoleParams.OrderedVariables, rule.DerivedRoleParams.Constants)
+					if err != nil {
+						return err
+					}
+					r.DerivedRoleParams = drParams
+				}
+			}
+		case policyv1.Kind_KIND_PRINCIPAL:
+			params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
+			if err != nil {
+				return err
+			}
+			r.Params = params
+		}
+
 		h := sha256.New()
 		r.HashPB(h, ignoredRuleTableProtoFields)
 		r.sum = string(h.Sum(nil))
@@ -409,6 +447,33 @@ func (m *Impl) IndexRules(ctx context.Context, rows []*Row) error {
 	}
 
 	return nil
+}
+
+func (m *Impl) ListKeys(ctx context.Context, cat CategoryKey) ([]string, error) {
+	var all map[string]struct{}
+	var err error
+	switch cat {
+	case CategoryKeyActionGlob:
+		all, err = m.actionGlob.getAllKeys(ctx)
+	case CategoryKeyResourceGlob:
+		all, err = m.resourceGlob.getAllKeys(ctx)
+	case CategoryKeyRoleGlob:
+		all, err = m.roleGlob.getAllKeys(ctx)
+	case CategoryKeyScope:
+		all, err = m.scope.getAllKeys(ctx)
+	case CategoryKeyVersion:
+		all, err = m.version.getAllKeys(ctx)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	keys := make([]string, 0, len(all))
+	for k := range all {
+		keys = append(keys, k)
+	}
+
+	return keys, nil
 }
 
 // updateIndex fetches existing rows for the keys in the batch, resolves them if necessary,
@@ -492,32 +557,49 @@ func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
 	return res, nil
 }
 
-func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, roles, actions []string) ([]*Row, error) {
+func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, actions []string, matchLiteral bool) ([]*Row, error) {
 	// we need the determinism of a slice, so track results in that and use the resSet to prevent dupes
 	resSet := newRowSet()
 	res := []*Row{}
 
-	sets, err := m.version.get(ctx, version)
+	var versionSets map[string]*rowSet
+	var err error
+	if len(versions) > 0 {
+		versionSets, err = m.version.get(ctx, versions...)
+	} else {
+		versionSets, err = m.version.getAll(ctx)
+		versions = slices.Collect(maps.Keys(versionSets))
+	}
 	if err != nil {
 		return nil, err
 	}
-	versionSet, ok := sets[version]
-	if !ok {
+	if len(versionSets) == 0 {
 		return res, nil
 	}
 
 	// Fetch resource set but defer intersection until after scope filtering
 	// (scope is more selective than resource for multi-tenant scenarios)
-	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
+	var resourceSets map[string]*rowSet
+	if len(resources) > 0 {
+		resourceSets, err = m.resourceGlob.getMerged(ctx, resources...)
+	} else {
+		resourceSets, err = m.resourceGlob.getAll(ctx)
+		resources = slices.Collect(maps.Keys(resourceSets))
+	}
 	if err != nil {
 		return nil, err
 	}
-	resourceSet, ok := resourceSets[resource]
-	if !ok {
+	if len(resourceSets) == 0 {
 		return res, nil
 	}
 
-	scopeSets, err := m.scope.get(ctx, scopes...)
+	var scopeSets map[string]*rowSet
+	if len(scopes) > 0 {
+		scopeSets, err = m.scope.get(ctx, scopes...)
+	} else {
+		scopeSets, err = m.scope.getAll(ctx)
+		scopes = slices.Collect(maps.Keys(scopeSets))
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -525,7 +607,13 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		return res, nil
 	}
 
-	roleSets, err := m.roleGlob.getMerged(ctx, roles...)
+	var roleSets map[string]*rowSet
+	if len(roles) > 0 {
+		roleSets, err = m.roleGlob.getMerged(ctx, roles...)
+	} else {
+		roleSets, err = m.roleGlob.getAll(ctx)
+		roles = slices.Collect(maps.Keys(roleSets))
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -538,7 +626,16 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		return nil, err
 	}
 
-	actionSets, err := m.actionGlob.getMerged(ctx, actions...)
+	var actionSets map[string]*rowSet
+	if len(actions) > 0 {
+		actionSets, err = m.actionGlob.getMerged(ctx, actions...)
+	} else {
+		actionSets, err = m.actionGlob.getAll(ctx)
+		if len(actionSets) > 0 {
+			delete(actionSets, allowActionsIdxKey)
+			actions = slices.Collect(maps.Keys(actionSets))
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -547,113 +644,139 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 		return res, nil
 	}
 
-	for _, scope := range scopes {
-		scopeSet, ok := scopeSets[scope]
+	for _, version := range versions {
+		versionSet, ok := versionSets[version]
 		if !ok {
 			continue
 		}
-		// intersect3 considers sizes of all three sets and iterates over the smallest,
-		// so it performs well whether scope, version, or resource is most selective.
-		scopeSet = intersect3(scopeSet, versionSet, resourceSet)
-
-		for _, role := range roles {
-			roleSet, ok := roleSets[role]
+		for _, resource := range resources {
+			resourceSet, ok := resourceSets[resource]
 			if !ok {
 				continue
 			}
-			roleSet = roleSet.intersectWith(scopeSet)
-
-			roleFqn := namer.RolePolicyFQN(role, scope)
-
-			if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
-				ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleSet))
-				if err != nil {
-					return nil, err
+			for _, scope := range scopes {
+				scopeSet, ok := scopeSets[scope]
+				if !ok {
+					continue
 				}
-				actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
-				hadMatches := false
-				for ar := range ars {
-					hadMatches = true
-					for a := range ar.GetAllowActions().GetActions() {
-						rows, _ := actionMatchedRows.Get(a)
-						rows = append(rows, ar)
-						actionMatchedRows.Set(a, rows)
+				// intersect3 considers sizes of all three sets and iterates over the smallest,
+				// so it performs well whether scope, version, or resource is most selective.
+				scopeSet = intersect3(scopeSet, versionSet, resourceSet)
+
+				for _, role := range roles {
+					roleSet, ok := roleSets[role]
+					if !ok {
+						continue
 					}
-				}
+					roleSet = roleSet.intersectWith(scopeSet)
 
-				if hadMatches {
-					for _, action := range actions {
-						matchedRows := []*Row{}
-						for _, rows := range actionMatchedRows.GetMerged(action) {
-							matchedRows = append(matchedRows, rows...)
+					roleFqn := namer.RolePolicyFQN(role, scope)
+
+					if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
+						ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleSet))
+						if err != nil {
+							return nil, err
 						}
-						if len(matchedRows) == 0 {
-							// add a blanket DENY for non matching actions
-							newRow := &Row{
-								RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-									ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-										Action: action,
-									},
-									OriginFqn:      roleFqn,
-									Resource:       resource,
-									Role:           role,
-									Effect:         effectv1.Effect_EFFECT_DENY,
-									Scope:          scope,
-									Version:        version,
-									PolicyKind:     policyv1.Kind_KIND_RESOURCE,
-									FromRolePolicy: true,
-								},
-								NoMatchForScopePermissions: true,
+						actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+						hadMatches := false
+						for ar := range ars {
+							hadMatches = true
+							for a := range ar.GetAllowActions().GetActions() {
+								rows, _ := actionMatchedRows.Get(a)
+								rows = append(rows, ar)
+								actionMatchedRows.Set(a, rows)
 							}
-							resSet.set(newRow)
-							res = append(res, newRow)
-						} else {
-							for _, ar := range matchedRows {
-								// Don't bother adding a rule if there's no condition.
-								// Otherwise, we invert the condition and set a DENY
-								if ar.Condition != nil {
-									newRow := &Row{
-										RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-											ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-												Action: action,
-											},
-											OriginFqn: ar.OriginFqn,
-											Resource:  resource,
-											Condition: &runtimev1.Condition{
-												Op: &runtimev1.Condition_None{
-													None: &runtimev1.Condition_ExprList{
-														Expr: []*runtimev1.Condition{ar.Condition},
-													},
-												},
-											},
-											Role:             ar.Role,
-											Effect:           effectv1.Effect_EFFECT_DENY,
-											Scope:            scope,
-											ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
-											Version:          version,
-											EvaluationKey:    ar.EvaluationKey,
-											PolicyKind:       policyv1.Kind_KIND_RESOURCE,
-											FromRolePolicy:   true,
-										},
+						}
+
+						if hadMatches {
+							for _, action := range actions {
+								matchedRows := []*Row{}
+								for _, rows := range actionMatchedRows.GetMerged(action) {
+									matchedRows = append(matchedRows, rows...)
+								}
+								if matchLiteral {
+									for _, rows := range actionMatchedRows.GetMerged(action) {
+										for _, r := range rows {
+											if !resSet.has(r.sum) {
+												resSet.set(r)
+												res = append(res, r)
+											}
+										}
 									}
-									resSet.set(newRow)
-									res = append(res, newRow)
+								} else {
+									for _, rows := range actionMatchedRows.GetMerged(action) {
+										matchedRows = append(matchedRows, rows...)
+									}
+									if len(matchedRows) == 0 {
+										// add a blanket DENY for non matching actions
+										newRow := &Row{
+											RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+												ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+													Action: action,
+												},
+												OriginFqn:      roleFqn,
+												Resource:       resource,
+												Role:           role,
+												Effect:         effectv1.Effect_EFFECT_DENY,
+												Scope:          scope,
+												Version:        version,
+												PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+												FromRolePolicy: true,
+											},
+											NoMatchForScopePermissions: true,
+										}
+										resSet.set(newRow)
+										res = append(res, newRow)
+									} else {
+										for _, ar := range matchedRows {
+											// Don't bother adding a rule if there's no condition.
+											// Otherwise, we invert the condition and set a DENY
+											if ar.Condition != nil {
+												newRow := &Row{
+													RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
+														ActionSet: &runtimev1.RuleTable_RuleRow_Action{
+															Action: action,
+														},
+														OriginFqn: ar.OriginFqn,
+														Resource:  resource,
+														Condition: &runtimev1.Condition{
+															Op: &runtimev1.Condition_None{
+																None: &runtimev1.Condition_ExprList{
+																	Expr: []*runtimev1.Condition{ar.Condition},
+																},
+															},
+														},
+														Role:             ar.Role,
+														Effect:           effectv1.Effect_EFFECT_DENY,
+														Scope:            scope,
+														ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+														Version:          version,
+														EvaluationKey:    ar.EvaluationKey,
+														PolicyKind:       policyv1.Kind_KIND_RESOURCE,
+														FromRolePolicy:   true,
+													},
+												}
+												resSet.set(newRow)
+												res = append(res, newRow)
+											}
+										}
+									}
 								}
 							}
 						}
 					}
-				}
-			}
 
-			for _, action := range actions {
-				actionSet, ok := actionSets[action]
-				if !ok {
-					continue
-				}
-				for r := range actionSet.intersectWithIter(roleSet) {
-					if !resSet.has(r.sum) {
-						resSet.set(r)
-						res = append(res, r)
+					for _, action := range actions {
+						actionSet, ok := actionSets[action]
+						if !ok {
+							continue
+						}
+						for r := range actionSet.intersectWithIter(roleSet) {
+							if !resSet.has(r.sum) {
+								resSet.set(r)
+								res = append(res, r)
+							}
+						}
 					}
 				}
 			}
@@ -668,7 +791,76 @@ func (m *Impl) GetRows(ctx context.Context, version, resource string, scopes, ro
 	return res, nil
 }
 
-func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
+func (m *Impl) AddParentRoles(scopes, roles []string) []string {
+	parentRoles := make([]string, len(roles))
+	copy(parentRoles, roles)
+
+	scopeCache := make(map[string][]string)
+	for _, scope := range scopes {
+		c, ok := m.parentRoleAncestors[scope]
+		if !ok {
+			continue
+		}
+		maps.Copy(scopeCache, c)
+	}
+
+	if len(scopeCache) == 0 {
+		return parentRoles
+	}
+
+	for _, role := range roles {
+		if roleParents, ok := scopeCache[role]; ok {
+			parentRoles = append(parentRoles, roleParents...) //nolint:makezero
+		}
+	}
+
+	return parentRoles
+}
+
+func (m *Impl) PrecompileParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) {
+	for scope, parentRoles := range scopeParentRoles {
+		if parentRoles == nil {
+			continue
+		}
+
+		if _, ok := m.parentRoleAncestors[scope]; !ok {
+			m.parentRoleAncestors[scope] = make(map[string][]string)
+		}
+
+		scopeCache := m.parentRoleAncestors[scope]
+
+		for role := range parentRoles.RoleParentRoles {
+			visited := make(map[string]struct{})
+			roleParentsSet := make(map[string]struct{})
+			m.collectParentRoles(scopeParentRoles, scope, role, roleParentsSet, visited)
+
+			roleParents := make([]string, 0, len(roleParentsSet))
+			for rp := range roleParentsSet {
+				roleParents = append(roleParents, rp)
+			}
+
+			scopeCache[role] = roleParents
+		}
+	}
+}
+
+func (m *Impl) collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, parentRoleSet, visited map[string]struct{}) {
+	if _, seen := visited[role]; seen {
+		return
+	}
+	visited[role] = struct{}{}
+
+	if parentRoles, ok := scopeParentRoles[scope]; ok {
+		if prs, ok := parentRoles.RoleParentRoles[role]; ok {
+			for _, pr := range prs.Roles {
+				parentRoleSet[pr] = struct{}{}
+				m.collectParentRoles(scopeParentRoles, scope, pr, parentRoleSet, visited)
+			}
+		}
+	}
+}
+
+func (m *Impl) DeletePolicy(ctx context.Context, fqn string, activeScopes map[string]struct{}) error {
 	if fqn == "" {
 		return nil
 	}
@@ -794,6 +986,21 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string) error {
 		} else if rs.len() != initialLen {
 			if err := m.resourceGlob.set(ctx, cat, rs); err != nil {
 				return err
+			}
+		}
+	}
+
+	for scope := range m.parentRoleAncestors {
+		if _, ok := activeScopes[scope]; !ok {
+			delete(m.parentRoleAncestors, scope)
+			continue
+		}
+
+		existingRoles := m.parentRoleAncestors[scope]
+		for role := range existingRoles {
+			exists, _ := m.ScopedRoleGlobExists(ctx, scope, role)
+			if !exists {
+				delete(existingRoles, role)
 			}
 		}
 	}
@@ -933,14 +1140,15 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 }
 
 func (m *Impl) Reset() {
-	m.version = m.idx.getLiteralMap(versionKey)
-	m.scope = m.idx.getLiteralMap(scopeKey)
-	m.roleGlob = m.idx.getGlobMap(roleGlobKey)
-	m.actionGlob = m.idx.getGlobMap(actionGlobKey)
-	m.resourceGlob = m.idx.getGlobMap(resourceGlobKey)
+	m.version = m.idx.getLiteralMap(CategoryKeyVersion)
+	m.scope = m.idx.getLiteralMap(CategoryKeyScope)
+	m.roleGlob = m.idx.getGlobMap(CategoryKeyRoleGlob)
+	m.actionGlob = m.idx.getGlobMap(CategoryKeyActionGlob)
+	m.resourceGlob = m.idx.getGlobMap(CategoryKeyResourceGlob)
+	m.parentRoleAncestors = make(map[string]map[string][]string)
 }
 
-func GenerateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
+func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
 	progs, err := getCelProgramsFromExpressions(orderedVariables)
 	if err != nil {
 		return nil, err

@@ -213,10 +213,6 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
 	defer cancelFn()
 
-	if err := mgr.idx.DeletePolicy(ctx, meta.GetFqn()); err != nil {
-		return err
-	}
-
 	activeScopes, err := mgr.idx.GetScopes(ctx)
 	if err != nil {
 		return err
@@ -226,21 +222,11 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		activeScopeSet[s] = struct{}{}
 	}
 
-	for scope := range mgr.parentRoleAncestors {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.parentRoleAncestors, scope)
-			continue
-		}
-
-		existingRoles := mgr.parentRoleAncestors[scope]
-		for role := range existingRoles {
-			exists, _ := mgr.idx.ScopedRoleGlobExists(ctx, scope, role)
-			if !exists {
-				delete(existingRoles, role)
-			}
-		}
+	if err := mgr.idx.DeletePolicy(ctx, meta.GetFqn(), activeScopeSet); err != nil {
+		return err
 	}
 
+	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer (for example: we shouldn't have to pass `activeScopes` to `idx.DeletePolicy`. That function should carry out all of this housekeeping).
 	for scope := range mgr.principalScopeMap {
 		if _, ok := activeScopeSet[scope]; !ok {
 			delete(mgr.principalScopeMap, scope)
