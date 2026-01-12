@@ -52,6 +52,10 @@ func Verify(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (*policyv
 		appendSuiteResult(results, suite)
 	}
 
+	if len(results.Suites) != n {
+		return nil, fmt.Errorf("unexpected number of results: %w", ctx.Err())
+	}
+
 	sort.Slice(results.Suites, func(i, j int) bool {
 		return results.Suites[i].File < results.Suites[j].File
 	})
