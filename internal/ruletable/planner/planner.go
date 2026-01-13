@@ -435,11 +435,6 @@ func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, exp
 		return nil, err
 	}
 
-	e, err = replaceCamelCaseFields(e)
-	if err != nil {
-		return nil, err
-	}
-
 	val, residual, err := p.evalPartially(ctx, e)
 	if err != nil {
 		// ignore expressions that are invalid
@@ -874,24 +869,4 @@ func memoize[T any](f func() (T, error)) func() (T, error) {
 		memoized = true
 		return result, err
 	}
-}
-
-func replaceCamelCaseFields(expr celast.Expr) (celast.Expr, error) {
-	// For some reason, the JSONFieldProvider is ignored in the planner. It _should_ work, and I haven't been able to work out why it doesn't.
-	// For now, work around the issue by rewriting camel case fields to snake case.
-	// We don't need to rewrite `runtime.effectiveDerivedRoles`, because that is handled in replaceRuntimeEffectiveDerivedRoles.
-	return replaceVarsGen(expr, func(input celast.Expr) (celast.Expr, bool, error) {
-		if input.Kind() != celast.SelectKind {
-			return nil, false, nil
-		}
-		sel := input.AsSelect()
-		ident := sel.Operand().AsIdent()
-
-		if sel.Operand().Kind() == celast.IdentKind && ident == conditions.CELRequestIdent && sel.FieldName() == "auxData" {
-			fact := celast.NewExprFactory()
-			return fact.NewSelect(0, sel.Operand(), "aux_data"), true, nil
-		}
-
-		return nil, false, nil
-	})
 }
