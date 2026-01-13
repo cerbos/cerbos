@@ -25,6 +25,7 @@ type FS interface {
 	fs.StatFS
 	Remove(name string) error
 	RemoveAll(name string) error
+	Rename(name, newName string) error
 	Create(name string) (io.WriteCloser, error)
 	MkdirAll(path string, perm fs.FileMode) error
 }
@@ -59,6 +60,10 @@ func (s blobFS) Remove(name string) error {
 
 func (s blobFS) RemoveAll(name string) error {
 	return os.RemoveAll(filepath.Join(s.dir, name))
+}
+
+func (s blobFS) Rename(name, newName string) error {
+	return os.Rename(filepath.Join(s.dir, name), filepath.Join(s.dir, newName))
 }
 
 func (s blobFS) Stat(name string) (fs.FileInfo, error) {

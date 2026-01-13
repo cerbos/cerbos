@@ -140,30 +140,24 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	}, nil
 }
 
-func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
+func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	dir := filepath.Dir(file)
 	if err := c.fs.MkdirAll(dir, perm775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %s: %w", dir, err)
 	}
 
-	fd, err := c.fs.Create(file)
+	underscoreFile := "_" + file
+	fd, err := c.fs.Create(underscoreFile)
 	if err != nil {
-		return fmt.Errorf("failed to create a file %s: %w", file, err)
+		return fmt.Errorf("failed to create a file %s: %w", underscoreFile, err)
 	}
 	defer func() {
 		if err := fd.Close(); err != nil {
 			c.log.Errorw(
 				"Failed to close file",
 				"error", err,
-				"file", file,
+				"file", underscoreFile,
 			)
-		}
-
-		if err != nil {
-			c.log.Debug("Deleting temporary file on disk", "file", file)
-			if err := c.fs.Remove(file); err != nil {
-				c.log.Warnw("Failed to delete temporary file", "file", file, "error", err)
-			}
 		}
 	}()
 
@@ -183,6 +177,10 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 
 	if _, err = io.Copy(fd, r); err != nil {
 		return fmt.Errorf("failed to read the object %s: %w", key, err)
+	}
+
+	if err := c.fs.Rename(underscoreFile, file); err != nil {
+		return fmt.Errorf("failed to rename file %s to %s: %w", underscoreFile, file, err)
 	}
 
 	return nil
