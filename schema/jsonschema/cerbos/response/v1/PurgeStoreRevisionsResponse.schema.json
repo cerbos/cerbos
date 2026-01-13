@@ -1,0 +1,12 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/PurgeStoreRevisionsResponse.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "affectedRows": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

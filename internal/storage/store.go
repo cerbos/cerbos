@@ -173,6 +173,7 @@ type MutableStore interface {
 	Enable(context.Context, ...string) (uint32, error)
 	DeleteSchema(context.Context, ...string) (uint32, error)
 	Delete(context.Context, ...string) (uint32, error)
+	PurgeRevisions(context.Context, uint32) (uint32, error)
 }
 
 // Verifiable stores allow querying whether the requirements for the store are met.
