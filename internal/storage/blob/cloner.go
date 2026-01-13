@@ -101,9 +101,9 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if _, err := c.fs.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if fi, err := c.fs.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("failed to check if file %s with etag %s exists: %w", file, etag, err)
-		} else if errors.Is(err, os.ErrNotExist) {
+		} else if errors.Is(err, os.ErrNotExist) || fi.Size() != obj.Size {
 			if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
 				return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
 			}
