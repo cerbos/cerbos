@@ -151,20 +151,19 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 		return fmt.Errorf("failed to create a file %s: %w", file, err)
 	}
 	defer func() {
-		if err != nil {
-			c.log.Debug("Deleting temporary file on disk", "file", file)
-			if err := c.fs.Remove(file); err != nil {
-				c.log.Warnw("Failed to delete temporary file", "file", file, "error", err)
-			}
-		}
-	}()
-	defer func() {
 		if err := fd.Close(); err != nil {
 			c.log.Errorw(
 				"Failed to close file",
 				"error", err,
 				"file", file,
 			)
+		}
+
+		if err != nil {
+			c.log.Debug("Deleting temporary file on disk", "file", file)
+			if err := c.fs.Remove(file); err != nil {
+				c.log.Warnw("Failed to delete temporary file", "file", file, "error", err)
+			}
 		}
 	}()
 
