@@ -8,6 +8,7 @@ package internal
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -64,6 +65,7 @@ type DBStorage interface {
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
+	PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
@@ -1319,4 +1321,60 @@ func (s *dbStorage) CheckSchema(ctx context.Context) error {
 
 	logger.Info("Database schema check completed")
 	return nil
+}
+
+// PurgeRevisions deletes all revisions from the relevant table.
+func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error) {
+	var res sql.Result
+	switch keepLast {
+	case 0:
+		var err error
+		// DELETE
+		// FROM policy_revision
+		if res, err = s.db.Delete(PolicyRevisionTbl).
+			Prepared(true).
+			Executor().
+			ExecContext(ctx); err != nil {
+			return 0, fmt.Errorf("failed to delete revisions: %w", err)
+		}
+	default:
+		// SELECT revision_id
+		// FROM policy_revision
+		// ORDER BY policy_revision DESC
+		// LIMIT <>
+		innerQuery := s.db.
+			Select(PolicyRevisionTblRevisionIDCol).
+			From(PolicyRevisionTbl).
+			Order(goqu.C(PolicyRevisionTblRevisionIDCol).Desc()).
+			Limit(uint(keepLast))
+
+		// This is for MySQL compatibility (not allowed to use LIMIT within NOT IN)
+		// SELECT revision_id FROM (<innerQuery>) AS compat
+		compat := s.db.
+			Select(PolicyRevisionTblRevisionIDCol).
+			From(innerQuery.As("compat"))
+
+		// DELETE FROM policy_revision
+		// WHERE revision_id NOT IN (<innerQuery>)
+		query := s.db.
+			Delete(PolicyRevisionTbl).
+			Where(
+				goqu.C(PolicyRevisionTblRevisionIDCol).NotIn(compat),
+			)
+
+		var err error
+		if res, err = query.
+			Prepared(true).
+			Executor().
+			ExecContext(ctx); err != nil {
+			return 0, fmt.Errorf("failed to delete revisions: %w", err)
+		}
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to discover whether the revisions got deleted or not: %w", err)
+	}
+
+	return uint32(affected), nil
 }

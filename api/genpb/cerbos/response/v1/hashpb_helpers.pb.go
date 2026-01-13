@@ -2471,6 +2471,12 @@ func cerbos_response_v1_PlaygroundValidateResponse_hashpb_sum(m *PlaygroundValid
 	}
 }
 
+func cerbos_response_v1_PurgeStoreRevisionsResponse_hashpb_sum(m *PurgeStoreRevisionsResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PurgeStoreRevisionsResponse.affected_rows"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetAffectedRows())))
+	}
+}
+
 func cerbos_response_v1_ReloadStoreResponse_hashpb_sum(m *ReloadStoreResponse, hasher hash.Hash, ignore map[string]struct{}) {
 }
 

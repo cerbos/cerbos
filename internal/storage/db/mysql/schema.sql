@@ -67,4 +67,4 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.attr_schema_defs TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy_dependency TO cerbos_user;
 GRANT SELECT,INSERT,UPDATE,DELETE ON cerbos.policy_ancestor TO cerbos_user;
-GRANT SELECT,INSERT ON cerbos.policy_revision TO cerbos_user;
+GRANT SELECT,INSERT,DELETE ON cerbos.policy_revision TO cerbos_user;

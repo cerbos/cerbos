@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -21,6 +20,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -545,6 +545,16 @@ func TestSuite(store DBStorage) func(*testing.T) {
 					})
 				})
 			})
+		})
+
+		t.Run("purge_revisions", func(t *testing.T) {
+			affectedRows, err := store.PurgeRevisions(ctx, 2)
+			require.NoError(t, err)
+			require.Equal(t, uint32(49), affectedRows)
+
+			affectedRows, err = store.PurgeRevisions(ctx, 0)
+			require.NoError(t, err)
+			require.Equal(t, uint32(2), affectedRows)
 		})
 	}
 }

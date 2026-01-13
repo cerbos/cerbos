@@ -35,7 +35,8 @@ const (
 	PolicyAncestorTblPolicyIDCol   = "policy_id"
 	PolicyAncestorTblAncestorIDCol = "ancestor_id"
 
-	PolicyRevisionTbl = "policy_revision"
+	PolicyRevisionTbl              = "policy_revision"
+	PolicyRevisionTblRevisionIDCol = "revision_id"
 
 	SchemaTbl              = "attr_schema_defs"
 	SchemaTblIDCol         = "id"
