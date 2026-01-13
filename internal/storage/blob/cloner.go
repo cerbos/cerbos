@@ -149,15 +149,11 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	underscoreFile := "_" + file
 	fd, err := c.fs.Create(underscoreFile)
 	if err != nil {
-		return fmt.Errorf("failed to create a file %s: %w", underscoreFile, err)
+		return fmt.Errorf("failed to create temporary file %s: %w", underscoreFile, err)
 	}
 	defer func() {
 		if err := fd.Close(); err != nil {
-			c.log.Errorw(
-				"Failed to close file",
-				"error", err,
-				"file", underscoreFile,
-			)
+			c.log.Warnw("Failed to close file", "error", err, "file", underscoreFile)
 		}
 	}()
 
@@ -167,11 +163,7 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	}
 	defer func() {
 		if err := r.Close(); err != nil {
-			c.log.Errorw(
-				"Failed to close bucket reader for the object",
-				"error", err,
-				"key", key,
-			)
+			c.log.Warnw("Failed to close bucket reader for the object", "error", err, "key", key)
 		}
 	}()
 
@@ -180,7 +172,7 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	}
 
 	if err := c.fs.Rename(underscoreFile, file); err != nil {
-		return fmt.Errorf("failed to rename file %s to %s: %w", underscoreFile, file, err)
+		return fmt.Errorf("failed to rename temporary file %s to %s: %w", underscoreFile, file, err)
 	}
 
 	return nil
