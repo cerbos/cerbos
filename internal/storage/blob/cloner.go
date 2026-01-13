@@ -152,9 +152,9 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	}
 	defer func() {
 		if err != nil {
-			c.log.Info("Deleting the file created in disk for writing the blob object due to download failing", "file", file)
+			c.log.Debug("Deleting temporary file on disk", "file", file)
 			if err := c.fs.Remove(file); err != nil {
-				c.log.Errorw("Failed to delete the file created in disk for writing the blob object", "file", file, "error", err)
+				c.log.Warnw("Failed to delete temporary file", "file", file, "error", err)
 			}
 		}
 	}()

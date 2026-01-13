@@ -1,3 +1,3 @@
 type:fix
-Correctly handle file lifetime in failed downloads from blob storage
-If an error occurs during the process of cloning of a blob storage, Cerbos left an empty policy file in the disk which led to errors when Cerbos is restarted.
+Correctly handle failed downloads in the blob storage driver
+Removes empty files left on disk due to errors or interruptions received during the blob sync process.
