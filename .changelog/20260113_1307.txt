@@ -1,0 +1,3 @@
+type:fix
+Correctly handle failed downloads in the blob storage driver
+Removes empty files left on disk due to errors or interruptions received during the blob sync process.

@@ -17,7 +17,6 @@ import (
 	"slices"
 	"strings"
 
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -102,9 +101,9 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 			continue
 		}
 
-		if _, err := c.fs.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if fi, err := c.fs.Stat(etag); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("failed to check if file %s with etag %s exists: %w", file, etag, err)
-		} else if errors.Is(err, os.ErrNotExist) {
+		} else if errors.Is(err, os.ErrNotExist) || fi.Size() != obj.Size {
 			if err := c.downloadToFile(ctx, obj.Key, etag); err != nil {
 				return nil, fmt.Errorf("failed to download file %s with etag %s: %w", file, etag, err)
 			}
@@ -141,27 +140,39 @@ func (c *Cloner) Clone(ctx context.Context) (*CloneResult, error) {
 	}, nil
 }
 
-func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err error) {
+func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 	dir := filepath.Dir(file)
 	if err := c.fs.MkdirAll(dir, perm775); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to make dir %s: %w", dir, err)
 	}
 
-	fd, err := c.fs.Create(file)
+	underscoreFile := "_" + file
+	fd, err := c.fs.Create(underscoreFile)
 	if err != nil {
-		return fmt.Errorf("failed to create a file %s: %w", file, err)
+		return fmt.Errorf("failed to create temporary file %s: %w", underscoreFile, err)
 	}
-	defer multierr.AppendInvoke(&err, multierr.Close(fd))
+	defer func() {
+		if err := fd.Close(); err != nil {
+			c.log.Warnw("Failed to close file", "error", err, "file", underscoreFile)
+		}
+	}()
 
 	r, err := c.bucket.NewReader(ctx, key, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create a reader for the object %s: %w", key, err)
 	}
-	// defer multierr.AppendInvoke(&err, multierr.Close(r))
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			c.log.Warnw("Failed to close bucket reader for the object", "error", err, "key", key)
+		}
+	}()
 
 	if _, err = io.Copy(fd, r); err != nil {
 		return fmt.Errorf("failed to read the object %s: %w", key, err)
+	}
+
+	if err := c.fs.Rename(underscoreFile, file); err != nil {
+		return fmt.Errorf("failed to rename temporary file %s to %s: %w", underscoreFile, file, err)
 	}
 
 	return nil
