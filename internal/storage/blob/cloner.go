@@ -17,7 +17,6 @@ import (
 	"slices"
 	"strings"
 
-	"go.uber.org/multierr"
 	"go.uber.org/zap"
 	"gocloud.dev/blob"
 
@@ -151,14 +150,29 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) (err erro
 	if err != nil {
 		return fmt.Errorf("failed to create a file %s: %w", file, err)
 	}
-	defer multierr.AppendInvoke(&err, multierr.Close(fd))
+	defer func() {
+		if err := fd.Close(); err != nil {
+			c.log.Errorw(
+				"Failed to close file",
+				"error", err,
+				"file", file,
+			)
+		}
+	}()
 
 	r, err := c.bucket.NewReader(ctx, key, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create a reader for the object %s: %w", key, err)
 	}
-	// defer multierr.AppendInvoke(&err, multierr.Close(r))
-	defer r.Close()
+	defer func() {
+		if err := r.Close(); err != nil {
+			c.log.Errorw(
+				"Failed to close bucket reader for the object",
+				"error", err,
+				"key", key,
+			)
+		}
+	}()
 
 	if _, err = io.Copy(fd, r); err != nil {
 		return fmt.Errorf("failed to read the object %s: %w", key, err)
