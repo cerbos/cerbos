@@ -1057,8 +1057,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							if outputExpr != nil {
 								octx := rulectx.StartOutput(row.Name)
 								output := &enginev1.OutputEntry{
-									Src: namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
-									Val: evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, row.Params.Constants, variables),
+									Src:    namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, row.Params.Constants, variables),
+									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
@@ -1082,8 +1083,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
 								octx := rulectx.StartOutput(row.Name)
 								output := &enginev1.OutputEntry{
-									Src: namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
-									Val: evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
+									Src:    namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
+									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
