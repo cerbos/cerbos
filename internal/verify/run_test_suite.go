@@ -70,13 +70,6 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 		return results
 	}
 
-	expectedOutput := false
-	for _, test := range tests {
-		if len(test.ExpectedOutputs) > 0 {
-			expectedOutput = true
-			break
-		}
-	}
 	for _, test := range tests {
 		if err := ctx.Err(); err != nil {
 			return results
@@ -90,9 +83,7 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 			continue
 		}
 
-		useBatching := !skipBatching && !expectedOutput
-
-		if useBatching {
+		if !skipBatching {
 			actionResults := runTest(ctx, eng, test, test.Input.Actions, trace)
 			for _, action := range test.Input.Actions {
 				addResult(results, test.Name, action, actionResults[action])
@@ -304,13 +295,15 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 	}
 
 	actualOutputs := make(map[string]*structpb.Value, len(actual[0].Outputs))
-	for _, output := range actual[0].Outputs {
-		actualOutputs[output.Src] = output.Val
-	}
-
 	for _, action := range actions {
-		details := &policyv1.TestResults_Details{EngineTrace: traces}
+		clear(actualOutputs)
+		for _, output := range actual[0].Outputs {
+			if output.Action == action {
+				actualOutputs[output.Src] = output.Val
+			}
+		}
 
+		details := &policyv1.TestResults_Details{EngineTrace: traces}
 		expectedEffect := test.Expected[action]
 		if expectedEffect == effectv1.Effect_EFFECT_UNSPECIFIED {
 			expectedEffect = effectv1.Effect_EFFECT_DENY
@@ -383,11 +376,13 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		success := &policyv1.TestResults_Success{
 			Effect: actionResult.Effect,
 		}
+		for _, output := range actual[0].Outputs {
+			if output.Action == action {
+				success.Outputs = append(success.Outputs, output)
+			}
+		}
 		details.Outcome = &policyv1.TestResults_Details_Success{
 			Success: success,
-		}
-		if len(actions) == 1 {
-			success.Outputs = actual[0].Outputs
 		}
 		results[action] = details
 	}

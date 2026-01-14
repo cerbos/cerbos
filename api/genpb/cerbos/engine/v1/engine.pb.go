@@ -747,6 +747,7 @@ type OutputEntry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Src           string                 `protobuf:"bytes,1,opt,name=src,proto3" json:"src,omitempty"`
 	Val           *structpb.Value        `protobuf:"bytes,2,opt,name=val,proto3" json:"val,omitempty"`
+	Action        string                 `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -793,6 +794,13 @@ func (x *OutputEntry) GetVal() *structpb.Value {
 		return x.Val
 	}
 	return nil
+}
+
+func (x *OutputEntry) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
 }
 
 type Resource struct {
@@ -2193,10 +2201,11 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\x05scope\x18\x03 \x01(\tR\x05scope\x1af\n" +
 	"\fActionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
-	"\x05value\x18\x02 \x01(\v2*.cerbos.engine.v1.CheckOutput.ActionEffectR\x05value:\x028\x01\"\xeb\x01\n" +
+	"\x05value\x18\x02 \x01(\v2*.cerbos.engine.v1.CheckOutput.ActionEffectR\x05value:\x028\x01\"\xd0\x02\n" +
 	"\vOutputEntry\x12e\n" +
 	"\x03src\x18\x01 \x01(\tBS\x92AP2)Rule that matched to produce this output.J#\"resource.expense.v1/acme#rule-001\"R\x03src\x12u\n" +
-	"\x03val\x18\x02 \x01(\v2\x16.google.protobuf.ValueBK\x92AH27Dynamic output, determined by user defined rule output.J\r\"some_string\"R\x03val\"\xb2\a\n" +
+	"\x03val\x18\x02 \x01(\v2\x16.google.protobuf.ValueBK\x92AH27Dynamic output, determined by user defined rule output.J\r\"some_string\"R\x03val\x12c\n" +
+	"\x06action\x18\x03 \x01(\tBK\x92AH2>Action that was being evaluated when this output was produced.J\x06\"view\"R\x06action\"\xb2\a\n" +
 	"\bResource\x12^\n" +
 	"\x04kind\x18\x01 \x01(\tBJ\x92A:2)Name of the resource kind being accessed.J\r\"album:photo\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04kind\x12\xd0\x01\n" +
 	"\x0epolicy_version\x18\x02 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12F\n" +

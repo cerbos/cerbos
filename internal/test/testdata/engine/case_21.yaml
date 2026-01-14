@@ -31,10 +31,12 @@ wantOutputs:
         val:
           - one
           - two
+        action: camelCase
       - src: resource.runtime_effective_derived_roles.vdefault#snake_case
         val:
           - one
           - two
+        action: snake_case
 wantDecisionLogs:
   [
     {
@@ -76,10 +78,12 @@ wantDecisionLogs:
                     {
                       "src": "resource.runtime_effective_derived_roles.vdefault#camelCase",
                       "val": ["one", "two"],
+                      "action": "camelCase",
                     },
                     {
                       "src": "resource.runtime_effective_derived_roles.vdefault#snake_case",
                       "val": ["one", "two"],
+                      "action": "snake_case",
                     },
                   ],
               },

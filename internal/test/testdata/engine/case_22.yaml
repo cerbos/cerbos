@@ -91,6 +91,7 @@ wantOutputs:
     outputs:
       - src: resource.equipment_request.vdefault#output-assign
         val: assign_rule_activated
+        action: assign
 
   - requestId: both-expr-and-when-defined-cond-not-met
     resourceId: equipment_request_2
@@ -103,6 +104,7 @@ wantOutputs:
     outputs:
       - src: resource.equipment_request.vdefault#output-assign
         val: assign_condition_not_met
+        action: assign
 
   - requestId: only-cond-not-met-defined-rule-activated
     resourceId: equipment_request_3
@@ -124,6 +126,7 @@ wantOutputs:
     outputs:
       - src: resource.equipment_request.vdefault#output-cancel
         val: cancel_condition_not_met
+        action: cancel
 
   - requestId: both-cond-not-met-and-rule-activated-defined-but-cond-never-satisfied
     resourceId: equipment_request_5
@@ -143,6 +146,7 @@ wantOutputs:
     outputs:
       - src: resource.equipment_request.vdefault#output-deprecated
         val: deprecated_rule_activated
+        action: deprecated
 
 wantDecisionLogs:
   - callId: 01HKA8W61K5D3SHQSKC4ANEMSZ
@@ -245,6 +249,7 @@ wantDecisionLogs:
           outputs:
             - src: resource.equipment_request.vdefault#output-assign
               val: assign_rule_activated
+              action: assign
 
         - requestId: both-expr-and-when-defined-cond-not-met
           resourceId: equipment_request_2
@@ -257,6 +262,7 @@ wantDecisionLogs:
           outputs:
             - src: resource.equipment_request.vdefault#output-assign
               val: assign_condition_not_met
+              action: assign
 
         - requestId: only-cond-not-met-defined-rule-activated
           resourceId: equipment_request_3
@@ -278,6 +284,7 @@ wantDecisionLogs:
           outputs:
             - src: resource.equipment_request.vdefault#output-cancel
               val: cancel_condition_not_met
+              action: cancel
 
         - requestId: both-cond-not-met-and-rule-activated-defined-but-cond-never-satisfied
           resourceId: equipment_request_5
@@ -297,3 +304,4 @@ wantDecisionLogs:
           outputs:
             - src: resource.equipment_request.vdefault#output-deprecated
               val: deprecated_rule_activated
+              action: deprecated

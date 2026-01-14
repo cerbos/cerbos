@@ -78,7 +78,8 @@ checkResources:
         "outputs": [
           {
             "src": "resource.equipment_request.vdefault/acme#rule-001",
-            "val": "create_allowed:john"
+            "val": "create_allowed:john",
+            "action": "create"
           },
           {
             "src": "resource.equipment_request.vdefault#public-view",
@@ -94,7 +95,8 @@ checkResources:
                 "nested_list": ["nest_foo", 1.01],
                 "nested_formatted_string": "id:john"
               },
-            }
+            },
+            "action": "view:public"
           }
         ]
       },
@@ -123,7 +125,8 @@ checkResources:
                 "nested_list": ["nest_foo", 1.01],
                 "nested_formatted_string": "id:john"
               },
-            }
+            },
+            "action": "view:public"
           }
         ]
       }
