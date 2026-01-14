@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -122,7 +123,7 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for _, row := range rows {
 		var sum string
 		if row.RuleTable_RuleRow != nil {
-			sum = row.sum
+			sum = strconv.FormatUint(row.sum, 10)
 		} else {
 			sum = r.rowKey(row.sum)
 		}
@@ -169,9 +170,9 @@ func (r *Redis) resolveIter(ctx context.Context, rows iter.Seq[*Row]) (iter.Seq[
 	return slices.Values(resolved), nil
 }
 
-func (r *Redis) rowKey(sum string) string {
+func (r *Redis) rowKey(sum uint64) string {
 	// value is the serialised row
-	return r.nsKey + ":" + sum
+	return fmt.Sprintf("%s:%d", r.nsKey, sum)
 }
 
 type redisMap struct {
@@ -219,13 +220,15 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 	return sums, raws, nil
 }
 
-func (rm *redisMap) rowKey(sum string) string {
+func (rm *redisMap) rowKey(sum uint64) string {
 	// value is the serialised row
-	return rm.nsKey + ":" + sum
+	return fmt.Sprintf("%s:%d", rm.nsKey, sum)
 }
 
-func (rm *redisMap) sumFromRowKey(key string) string {
-	return strings.TrimPrefix(key, rm.nsKey+":")
+func (rm *redisMap) sumFromRowKey(key string) uint64 {
+	s := strings.TrimPrefix(key, rm.nsKey+":")
+	sum, _ := strconv.ParseUint(s, 10, 64)
+	return sum
 }
 
 func (rm *redisMap) getRowSetWithSums(sums []string) *rowSet {
