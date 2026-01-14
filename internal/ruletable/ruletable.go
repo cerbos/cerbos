@@ -38,12 +38,23 @@ import (
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
+)
+
+type compilerVersionMigration func(*runtimev1.RuleTable) error
+
+var (
+	compilerVersionMigrations = []compilerVersionMigration{
+		migrateFromCompilerVersion0To1,
+	}
+
+	compilerVersion = uint32(len(compilerVersionMigrations))
 )
 
 const (
@@ -62,6 +73,7 @@ func NewProtoRuletable() *runtimev1.RuleTable {
 		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
 		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
 		JsonSchemas:        make(map[string]*runtimev1.RuleTable_JSONSchema),
+		CompilerVersion:    compilerVersion,
 	}
 }
 
@@ -523,6 +535,10 @@ func NewRuleTable(idx index.Index, protoRT *runtimev1.RuleTable) (*RuleTable, er
 
 func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.RuleTable = protoRT
+
+	if err := migrate(rt.RuleTable); err != nil {
+		return err
+	}
 
 	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
 	clear(rt.policyDerivedRoles)
@@ -1051,7 +1067,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						if satisfiesCondition { //nolint:nestif
 							var outputExpr *exprpb.CheckedExpr
 							if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
-								outputExpr = row.EmitOutput.When.RuleActivated.Checked
+								outputExpr = row.EmitOutput.When.RuleActivated.CheckedV2
 							}
 
 							if outputExpr != nil {
@@ -1084,7 +1100,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								octx := rulectx.StartOutput(row.Name)
 								output := &enginev1.OutputEntry{
 									Src:    namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.CheckedV2, row.Params.Constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
@@ -1272,7 +1288,7 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 	evalVars := make(map[string]any, len(variables))
 	for _, variable := range variables {
 		vctx := tctx.StartVariable(variable.Name, variable.Expr.Original)
-		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr.Checked, constants, evalVars)
+		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr.CheckedV2, constants, evalVars)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
@@ -1307,9 +1323,6 @@ func (ec *EvalContext) evaluatePrograms(tctx tracer.Context, constants map[strin
 
 	evalVars := make(map[string]any, len(celPrograms))
 	for _, prg := range celPrograms {
-		if prg == nil {
-			continue
-		}
 		vctx := tctx.StartVariable(prg.Name, prg.Expr)
 		result, _, err := prg.Prog.Eval(ec.buildEvalVars(constants, evalVars))
 		if err != nil {
@@ -1341,7 +1354,7 @@ func (ec *EvalContext) SatisfiesCondition(ctx context.Context, tctx tracer.Conte
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
 		ectx := tctx.StartExpr(t.Expr.Original)
-		val, err := ec.evaluateBoolCELExpr(ctx, t.Expr.Checked, constants, variables)
+		val, err := ec.evaluateBoolCELExpr(ctx, t.Expr.CheckedV2, constants, variables)
 		if err != nil {
 			ectx.ComputedBoolResult(false, err, "Failed to evaluate expression")
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
@@ -1945,4 +1958,41 @@ func ListRuleTableRowVariables(row *index.Row) []*responsev1.InspectPoliciesResp
 	}
 
 	return variables
+}
+
+func migrate(rt *runtimev1.RuleTable) error {
+	if rt.CompilerVersion == compilerVersion {
+		return nil
+	}
+
+	log := logging.NewLogger("compiler")
+
+	if rt.CompilerVersion > compilerVersion {
+		log.Warnw(
+			"Loading policies that were compiled by a newer version of Cerbos",
+			"current_compiler_version", compilerVersion,
+			"policies_compiler_version", rt.CompilerVersion,
+		)
+		return nil
+	}
+
+	log.Debugw(
+		"Migrating compiled policies",
+		logging.Uint32("from_compiler_version", rt.CompilerVersion),
+		logging.Uint32("to_compiler_version", compilerVersion),
+	)
+
+	for version := rt.CompilerVersion; version < compilerVersion; version++ {
+		err := compilerVersionMigrations[version](rt)
+		if err != nil {
+			return fmt.Errorf("failed to migrate compiled policies from v%d to v%d: %w", version, version+1, err)
+		}
+	}
+
+	return nil
+}
+
+func migrateFromCompilerVersion0To1(rt *runtimev1.RuleTable) error {
+	conditions.WalkExprs(rt, conditions.MigrateExprToCheckedV2)
+	return nil
 }

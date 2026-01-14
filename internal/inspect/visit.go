@@ -261,7 +261,7 @@ func visitCompiledExpr(expr *runtimev1.Expr, visitor ast.Visitor) error {
 		return nil
 	}
 
-	exprAST, err := ast.ToAST(expr.Checked)
+	exprAST, err := ast.ToAST(expr.CheckedV2)
 	if err != nil {
 		return fmt.Errorf("failed to convert checked expression %q to AST: %w", expr.Original, err)
 	}

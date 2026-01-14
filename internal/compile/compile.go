@@ -13,6 +13,7 @@ import (
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -27,6 +28,7 @@ var (
 
 	compilerVersionMigrations = []compilerVersionMigration{
 		migrateFromCompilerVersion0To1,
+		migrateFromCompilerVersion1To2,
 	}
 
 	compilerVersion = uint32(len(compilerVersionMigrations))
@@ -408,24 +410,15 @@ func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.Resource
 		// TODO: Remove this block when output.expr field no longer exists
 		//nolint:staticcheck
 		if rule.Output.Expr != "" {
-			when.RuleActivated = &runtimev1.Expr{
-				Original: rule.Output.Expr, //nolint:staticcheck
-				Checked:  compileCELExpr(modCtx, path+".output.expr", rule.Output.Expr, true),
-			}
+			when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", rule.Output.Expr, true)
 		}
 
 		if rule.Output.When != nil && rule.Output.When.RuleActivated != "" {
-			when.RuleActivated = &runtimev1.Expr{
-				Original: rule.Output.When.RuleActivated,
-				Checked:  compileCELExpr(modCtx, path+".output.when.rule_activated", rule.Output.When.RuleActivated, true),
-			}
+			when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", rule.Output.When.RuleActivated, true)
 		}
 
 		if rule.Output.When != nil && rule.Output.When.ConditionNotMet != "" {
-			when.ConditionNotMet = &runtimev1.Expr{
-				Original: rule.Output.When.ConditionNotMet,
-				Checked:  compileCELExpr(modCtx, path+".output.when.condition_not_met", rule.Output.When.ConditionNotMet, true),
-			}
+			when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", rule.Output.When.ConditionNotMet, true)
 		}
 
 		cr.EmitOutput = &runtimev1.Output{When: when}
@@ -521,24 +514,15 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 				// TODO: Remove this block when output.expr field no longer exists
 				//nolint:staticcheck
 				if action.Output.Expr != "" {
-					when.RuleActivated = &runtimev1.Expr{
-						Original: action.Output.Expr, //nolint:staticcheck
-						Checked:  compileCELExpr(modCtx, path+".output.expr", action.Output.Expr, true),
-					}
+					when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", action.Output.Expr, true)
 				}
 
 				if action.Output.When != nil && action.Output.When.RuleActivated != "" {
-					when.RuleActivated = &runtimev1.Expr{
-						Original: action.Output.When.RuleActivated,
-						Checked:  compileCELExpr(modCtx, path+".output.when.rule_activated", action.Output.When.RuleActivated, true),
-					}
+					when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", action.Output.When.RuleActivated, true)
 				}
 
 				if action.Output.When != nil && action.Output.When.ConditionNotMet != "" {
-					when.ConditionNotMet = &runtimev1.Expr{
-						Original: action.Output.When.ConditionNotMet,
-						Checked:  compileCELExpr(modCtx, path+".output.when.condition_not_met", action.Output.When.ConditionNotMet, true),
-					}
+					when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", action.Output.When.ConditionNotMet, true)
 				}
 
 				actionRule.EmitOutput = &runtimev1.Output{When: when}
@@ -637,5 +621,10 @@ func migrateFromCompilerVersion0To1(policies *runtimev1.RunnablePolicySet) error
 		return fmt.Errorf("unknown policy set type %T", set)
 	}
 
+	return nil
+}
+
+func migrateFromCompilerVersion1To2(policies *runtimev1.RunnablePolicySet) error {
+	conditions.WalkExprs(policies, conditions.MigrateExprToCheckedV2)
 	return nil
 }

@@ -52,6 +52,9 @@ var (
 		decls.NewVariable(CELGlobalsIdent, types.VariablesType),
 		decls.NewVariable(CELGlobalsAbbrev, types.VariablesType),
 	}
+
+	mapStringDynType *exprpb.Type
+	variablesType    *exprpb.Type
 )
 
 func init() {
@@ -83,6 +86,16 @@ func init() {
 	TrueExpr, err = compileConstant("true")
 	if err != nil {
 		panic(fmt.Errorf("failed to compile constant 'true': %w", err))
+	}
+
+	mapStringDynType, err = cel.TypeToExprType(cel.MapType(cel.StringType, cel.DynType))
+	if err != nil {
+		panic(fmt.Errorf("failed to convert map<string, dyn> type to proto: %w", err))
+	}
+
+	variablesType, err = cel.TypeToExprType(types.VariablesType)
+	if err != nil {
+		panic(fmt.Errorf("failed to convert cerbos.Variables type to proto: %w", err))
 	}
 }
 
