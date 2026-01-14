@@ -11,17 +11,31 @@ import (
 )
 
 type BreaksScopeChainErr struct {
-	PolicyKeys []string
+	Policies map[string][]string
 }
 
 func (e BreaksScopeChainErr) Error() string {
-	return fmt.Sprintf("removing the following scoped policies will break the scope chain: %s", strings.Join(e.PolicyKeys, ", "))
+	policyKeys := make([]string, len(e.Policies))
+	i := 0
+	for pk := range e.Policies {
+		policyKeys[i] = pk
+		i++
+	}
+
+	return fmt.Sprintf("removing the following scoped policies will break the scope chain: %s", strings.Join(policyKeys, ", "))
 }
 
-type BreaksDependentsErr struct {
-	PolicyKeys []string
+type RequiredByOtherPoliciesErr struct {
+	Policies map[string][]string
 }
 
-func (e BreaksDependentsErr) Error() string {
-	return fmt.Sprintf("removing the following policies will break the dependent policies: %s", strings.Join(e.PolicyKeys, ", "))
+func (e RequiredByOtherPoliciesErr) Error() string {
+	policyKeys := make([]string, len(e.Policies))
+	i := 0
+	for pk := range e.Policies {
+		policyKeys[i] = pk
+		i++
+	}
+
+	return fmt.Sprintf("removing the following policies will break the dependent policies: %s", strings.Join(policyKeys, ", "))
 }

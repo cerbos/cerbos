@@ -606,6 +606,101 @@ func (s *dbStorage) getDependents(ctx context.Context, tx *goqu.TxDatabase, ids 
 	return out, nil
 }
 
+func (s *dbStorage) getDependentsWithNames(ctx context.Context, tx *goqu.TxDatabase, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.Policy, error) {
+	// Rather than writing a proper recursive query (which is pretty much impossible to do in a database-agnostic way), we're
+	// exploiting the fact that we have a maximum of two levels of dependency (resourcePolicy -> derivedRoles -> exportVariables).
+
+	// SELECT
+	//	policy_dependency.dependency_id AS policy_id,
+	//	policy_dependency.policy_id AS dependent_id
+	//  policy.kind
+	//  policy.name
+	//  policy.version
+	//  policy.scope
+	// FROM policy_dependency
+	// JOIN policy ON (policy.id = policy_dependency.policy_id)
+	// WHERE policy_dependency.dependency_id IN (?)
+	directDependentsQuery := tx.
+		Select(
+			goqu.T(PolicyDepTbl).Col(PolicyDepTblDepIDCol).As("policy_id"),
+			goqu.T(PolicyDepTbl).Col(PolicyDepTblPolicyIDCol).As("dependent_id"),
+			goqu.T(PolicyTbl).Col(PolicyTblKindCol),
+			goqu.T(PolicyTbl).Col(PolicyTblNameCol),
+			goqu.T(PolicyTbl).Col(PolicyTblVerCol),
+			goqu.COALESCE(goqu.T(PolicyTbl).Col(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+		).
+		From(PolicyDepTbl).
+		Join(
+			goqu.T(PolicyTbl),
+			goqu.On(
+				goqu.T(PolicyTbl).Col(PolicyTblIDCol).Eq(goqu.T(PolicyDepTbl).Col(PolicyDepTblPolicyIDCol)),
+			),
+		).
+		Where(goqu.T(PolicyDepTbl).Col(PolicyDepTblDepIDCol).In(ids))
+
+	// SELECT
+	//  child.dependency_id AS policy_id,
+	//  parent.policy_id AS dependent_id
+	//  policy.kind
+	//  policy.name
+	//  policy.version
+	//  policy.scope
+	// FROM policy_dependency AS parent
+	// JOIN policy_dependency AS child ON child.policy_id = parent.dependency_id
+	// JOIN policy ON (policy.id = parent.policy_id)
+	// WHERE child.dependency_id IN (?)
+	transitiveDependentsQuery := tx.
+		Select(
+			goqu.T("child").Col(PolicyDepTblDepIDCol).As("policy_id"),
+			goqu.T("parent").Col(PolicyDepTblPolicyIDCol).As("dependent_id"),
+			goqu.T(PolicyTbl).Col(PolicyTblKindCol),
+			goqu.T(PolicyTbl).Col(PolicyTblNameCol),
+			goqu.T(PolicyTbl).Col(PolicyTblVerCol),
+			goqu.COALESCE(goqu.T(PolicyTbl).Col(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+		).
+		From(goqu.T(PolicyDepTbl).As("parent")).
+		Join(
+			goqu.T(PolicyDepTbl).As("child"),
+			goqu.On(goqu.T("child").Col(PolicyDepTblPolicyIDCol).Eq(goqu.T("parent").Col(PolicyDepTblDepIDCol))),
+		).
+		Join(
+			goqu.T(PolicyTbl),
+			goqu.On(
+				goqu.T(PolicyTbl).Col(PolicyTblIDCol).Eq(goqu.T("parent").Col(PolicyDepTblPolicyIDCol)),
+			),
+		).
+		Where(goqu.T("child").Col(PolicyDepTblDepIDCol).In(ids))
+
+	query := directDependentsQuery.Union(transitiveDependentsQuery)
+
+	results, err := query.Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not execute %q query: %w", "getDependentsWithNames", err)
+	}
+
+	defer results.Close()
+
+	out := make(map[namer.ModuleID][]namer.Policy, len(ids))
+	for results.Next() {
+		var row struct {
+			namer.PolicyCoords
+			PolicyID    namer.ModuleID `db:"policy_id"`
+			DependentID namer.ModuleID `db:"dependent_id"`
+		}
+
+		if err := results.ScanStruct(&row); err != nil {
+			return nil, err
+		}
+
+		out[row.PolicyID] = append(out[row.PolicyID], namer.Policy{
+			ID:           row.DependentID,
+			PolicyCoords: row.PolicyCoords,
+		})
+	}
+
+	return out, nil
+}
+
 func (s *dbStorage) GetDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.Policy, error) {
 	// SELECT
 	//  policy_ancestor.ancestor_id AS id,
@@ -690,7 +785,7 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 	var affected int64
 	var events []storage.Event
 	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
-		dependents, err := s.getDependents(ctx, tx, mIDs...)
+		dependents, err := s.getDependentsWithNames(ctx, tx, mIDs...)
 		if err != nil {
 			return err
 		}
@@ -714,7 +809,12 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 			ev := storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, mIDs[0])
 
 			if deps, ok := dependents[mIDs[0]]; ok && len(deps) > 0 {
-				ev.Dependents = deps
+				d := make([]namer.ModuleID, len(deps))
+				for idx, dep := range deps {
+					d[idx] = dep.ID
+				}
+
+				ev.Dependents = d
 			}
 
 			events = []storage.Event{ev}
@@ -745,9 +845,9 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 		depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
 		for _, deps := range dependents {
 			for _, d := range deps {
-				if _, ok := mIDSet[d]; !ok {
-					depEvent.Dependents = append(depEvent.Dependents, d)
-					mIDSet[d] = struct{}{}
+				if _, ok := mIDSet[d.ID]; !ok {
+					depEvent.Dependents = append(depEvent.Dependents, d.ID)
+					mIDSet[d.ID] = struct{}{}
 				}
 			}
 		}
@@ -782,7 +882,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 	var affected int64
 	events := make([]storage.Event, len(policyKey))
 	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
-		dependents, err := s.getDependents(ctx, tx, mIDs...)
+		dependents, err := s.getDependentsWithNames(ctx, tx, mIDs...)
 		if err != nil {
 			return err
 		}
@@ -842,7 +942,7 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 }
 
 // validateScopeChain validates whether deleting or disabling the given policies breaks dependents. (Ex: deleting a derived_role imported by any policy).
-func (s *dbStorage) validateDependents(mIDPolicyKey map[namer.ModuleID]string, dependents map[namer.ModuleID][]namer.ModuleID) error {
+func (s *dbStorage) validateDependents(mIDPolicyKey map[namer.ModuleID]string, dependents map[namer.ModuleID][]namer.Policy) error {
 	var policyKeys []string
 	for mID, deps := range dependents {
 		if len(deps) > 0 {
