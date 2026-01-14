@@ -54,7 +54,6 @@ jobs:
         with:
           path-to-profile: unit.cover
           flag-name: unit-main
-          fail-on-error: false
 
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
@@ -62,7 +61,6 @@ jobs:
         with:
           path-to-profile: integration.cover
           flag-name: integration-main
-          fail-on-error: false
 
   publishContainers:
     name: Publish Dev Containers

@@ -147,7 +147,6 @@ jobs:
           path-to-profile: unit.cover
           flag-name: unit-${{ strategy.job-index }}
           parallel: true
-          fail-on-error: false
 
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
@@ -156,7 +155,6 @@ jobs:
           path-to-profile: integration.cover
           flag-name: integration-${{ strategy.job-index }}
           parallel: true
-          fail-on-error: false
 
   upload-test-times:
     needs: test
@@ -200,7 +198,6 @@ jobs:
         continue-on-error: true
         with:
           parallel-finished: true
-          fail-on-error: false
 
   docs:
     needs: changes
