@@ -50,7 +50,8 @@
                                   ],
                                   "nested_str": "foo"
                                 }
-                              }
+                              },
+                              "action": "view:public"
                             }
                           ]
                         }
@@ -74,7 +75,8 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault/acme#rule-001",
-                              "val": "create_allowed:john"
+                              "val": "create_allowed:john",
+                              "action": "create"
                             }
                           ]
                         }
@@ -112,7 +114,8 @@
                                   ],
                                   "nested_str": "foo"
                                 }
-                              }
+                              },
+                              "action": "view:public"
                             }
                           ]
                         }
@@ -136,7 +139,8 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault/acme#rule-001",
-                              "val": "create_allowed:john"
+                              "val": "create_allowed:john",
+                              "action": "create"
                             }
                           ]
                         }
@@ -179,7 +183,8 @@
                                   ],
                                   "nested_str": "foo"
                                 }
-                              }
+                              },
+                              "action": "view:public"
                             }
                           ]
                         }
@@ -194,7 +199,8 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "condition_not_met"
+                              "val": "condition_not_met",
+                              "action": "approve"
                             }
                           ]
                         }
@@ -209,7 +215,8 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault/acme#rule-001",
-                              "val": "create_allowed:bev"
+                              "val": "create_allowed:bev",
+                              "action": "create"
                             }
                           ]
                         }
@@ -247,7 +254,8 @@
                                   ],
                                   "nested_str": "foo"
                                 }
-                              }
+                              },
+                              "action": "view:public"
                             }
                           ]
                         }
@@ -262,7 +270,8 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault#rule-002",
-                              "val": "approval_status:bev:PENDING_APPROVAL"
+                              "val": "approval_status:bev:PENDING_APPROVAL",
+                              "action": "approve"
                             }
                           ]
                         }
@@ -277,7 +286,8 @@
                           "outputs": [
                             {
                               "src": "resource.equipment_request.vdefault/acme#rule-001",
-                              "val": "create_allowed:bev"
+                              "val": "create_allowed:bev",
+                              "action": "create"
                             }
                           ]
                         }
@@ -320,7 +330,8 @@
                                   ],
                                   "nested_str": "foo"
                                 }
-                              }
+                              },
+                              "action": "view:public"
                             }
                           ]
                         }
@@ -350,7 +361,8 @@
                                   "bar",
                                   true
                                 ]
-                              ]
+                              ],
+                              "action": "create"
                             }
                           ]
                         }
@@ -388,7 +400,8 @@
                                   ],
                                   "nested_str": "foo"
                                 }
-                              }
+                              },
+                              "action": "view:public"
                             }
                           ]
                         }
@@ -418,7 +431,8 @@
                                   "bar",
                                   true
                                 ]
-                              ]
+                              ],
+                              "action": "create"
                             }
                           ]
                         }
