@@ -441,6 +441,10 @@ func cerbos_engine_v1_OutputEntry_hashpb_sum(m *v11.OutputEntry, hasher hash.Has
 			google_protobuf_Value_hashpb_sum(m.GetVal(), hasher, ignore)
 		}
 	}
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetAction()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAction()), len(m.GetAction())))
+	}
 }
 
 func cerbos_engine_v1_PlanResourcesFilter_Expression_Operand_hashpb_sum(m *v11.PlanResourcesFilter_Expression_Operand, hasher hash.Hash, ignore map[string]struct{}) {
