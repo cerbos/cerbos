@@ -293,13 +293,14 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		}
 		return results
 	}
-
 	actualOutputs := make(map[string]*structpb.Value, len(actual[0].Outputs))
 	for _, action := range actions {
 		clear(actualOutputs)
+		var outputs []*enginev1.OutputEntry
 		for _, output := range actual[0].Outputs {
 			if output.Action == action {
 				actualOutputs[output.Src] = output.Val
+				outputs = append(outputs, output)
 			}
 		}
 
@@ -373,16 +374,11 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		}
 
 		details.Result = policyv1.TestResults_RESULT_PASSED
-		success := &policyv1.TestResults_Success{
-			Effect: actionResult.Effect,
-		}
-		for _, output := range actual[0].Outputs {
-			if output.Action == action {
-				success.Outputs = append(success.Outputs, output)
-			}
-		}
 		details.Outcome = &policyv1.TestResults_Details_Success{
-			Success: success,
+			Success: &policyv1.TestResults_Success{
+				Effect:  actionResult.Effect,
+				Outputs: outputs,
+			},
 		}
 		results[action] = details
 	}
