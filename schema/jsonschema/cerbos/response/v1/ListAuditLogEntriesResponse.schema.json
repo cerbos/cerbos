@@ -409,6 +409,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "action": {
+          "type": "string"
+        },
         "src": {
           "type": "string"
         },

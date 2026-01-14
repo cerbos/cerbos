@@ -2659,6 +2659,11 @@
         "val": {
           "example": "some_string",
           "description": "Dynamic output, determined by user defined rule output."
+        },
+        "action": {
+          "type": "string",
+          "example": "view",
+          "description": "Action that was being evaluated when this output was produced."
         }
       }
     },
