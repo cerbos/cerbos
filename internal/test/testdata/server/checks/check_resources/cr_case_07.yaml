@@ -58,7 +58,8 @@ checkResources:
         "outputs": [
           {
             "src": "principal.terry_tibbs.vdefault#create-rule",
-            "val": ["foo", ["bar", true]]
+            "val": ["foo", ["bar", true]],
+            "action": "create"
           },
           {
             "src": "resource.equipment_request.vdefault#public-view",
@@ -74,7 +75,8 @@ checkResources:
                 "nested_list": ["nest_foo", 1.01],
                 "nested_formatted_string": "id:terry_tibbs"
               },
-            }
+            },
+            "action": "view:public"
           }
         ]
       }

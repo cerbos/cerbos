@@ -62,7 +62,8 @@ playgroundEvaluate:
       "outputs": [
         {
           "src": "resource.equipment_request.vdefault/acme#rule-001",
-          "val": "create_allowed:alicia"
+          "val": "create_allowed:alicia",
+          "action": "create"
         },
         {
           "src": "resource.equipment_request.vdefault#public-view",
@@ -78,7 +79,8 @@ playgroundEvaluate:
               "nested_list": ["nest_foo", 1.01],
               "nested_formatted_string": "id:alicia"
             },
-          }
+          },
+          "action": "view:public"
         }
       ]
     }
