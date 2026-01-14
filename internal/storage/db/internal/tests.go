@@ -413,12 +413,19 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			var integrityErr *db.IntegrityErr
 			require.ErrorAs(t, err, &integrityErr)
 			require.Contains(t, integrityErr.Errors, namer.PolicyKey(dr.Policy))
-			require.Len(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, 1)
+			require.Len(t, integrityErr.Errors, 1)
+			require.Len(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, 4)
+			require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rp.Policy))
+			require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rpAcme.Policy))
+			require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rpAcmeHR.Policy))
+			require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rpAcmeHRUK.Policy))
 
 			_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(rpAcmeHR.FQN))
 			require.ErrorAs(t, err, &integrityErr)
 			require.Contains(t, integrityErr.Errors, namer.PolicyKey(rpAcmeHR.Policy))
+			require.Len(t, integrityErr.Errors, 1)
 			require.Len(t, integrityErr.Errors[namer.PolicyKey(rpAcmeHR.Policy)].BreaksScopeChain.Descendants, 1)
+			require.Contains(t, integrityErr.Errors[namer.PolicyKey(rpAcmeHR.Policy)].BreaksScopeChain.Descendants, namer.PolicyKey(rpAcmeHRUK.Policy))
 		})
 
 		t.Run("add_schema", func(t *testing.T) {

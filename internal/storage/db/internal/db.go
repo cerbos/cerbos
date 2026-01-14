@@ -975,8 +975,6 @@ func (s *dbStorage) writeBreaksScopeChainErrors(
 				out[policyKey] = &responsev1.IntegrityErrors{}
 			}
 
-			out[policyKey].BreaksScopeChain.Descendants = make([]string, len(descs))
-
 			out[policyKey].BreaksScopeChain = &responsev1.IntegrityErrors_BreaksScopeChain{
 				Descendants: make([]string, len(descs)),
 			}
