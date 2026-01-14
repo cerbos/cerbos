@@ -778,10 +778,6 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 		mIDPolicyKey[mID] = pk
 	}
 
-	if err := s.validateScopeChain(ctx, mIDPolicyKey, mIDs); err != nil {
-		return 0, err
-	}
-
 	var affected int64
 	var events []storage.Event
 	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
@@ -790,7 +786,7 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 			return err
 		}
 
-		if err := s.validateDependents(mIDPolicyKey, dependents); err != nil {
+		if err := s.validateIntegrity(ctx, mIDPolicyKey, dependents, mIDs); err != nil {
 			return err
 		}
 
@@ -875,10 +871,6 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 		mIDPolicyKey[mID] = pk
 	}
 
-	if err := s.validateScopeChain(ctx, mIDPolicyKey, mIDs); err != nil {
-		return 0, err
-	}
-
 	var affected int64
 	events := make([]storage.Event, len(policyKey))
 	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
@@ -887,7 +879,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 			return err
 		}
 
-		if err := s.validateDependents(mIDPolicyKey, dependents); err != nil {
+		if err := s.validateIntegrity(ctx, mIDPolicyKey, dependents, mIDs); err != nil {
 			return err
 		}
 
@@ -941,38 +933,88 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 	return uint32(affected), nil
 }
 
-// validateScopeChain validates whether deleting or disabling the given policies breaks dependents. (Ex: deleting a derived_role imported by any policy).
-func (s *dbStorage) validateDependents(mIDPolicyKey map[namer.ModuleID]string, dependents map[namer.ModuleID][]namer.Policy) error {
-	var policyKeys []string
-	for mID, deps := range dependents {
-		if len(deps) > 0 {
-			policyKeys = append(policyKeys, mIDPolicyKey[mID])
-		}
+func (s *dbStorage) validateIntegrity(
+	ctx context.Context,
+	mIDPolicyKey map[namer.ModuleID]string,
+	dependents map[namer.ModuleID][]namer.Policy,
+	mIDs []namer.ModuleID,
+) error {
+	out := make(map[string]*responsev1.IntegrityErrors)
+	if err := s.writeBreaksScopeChainErrors(ctx, out, mIDPolicyKey, mIDs); err != nil {
+		return fmt.Errorf("failed to write 'breaks scope chain' errors: %w", err)
 	}
 
-	if len(policyKeys) > 0 {
-		return &db.BreaksDependentsErr{PolicyKeys: policyKeys}
+	if err := s.writeRequiredByOtherPoliciesErrors(out, mIDPolicyKey, dependents); err != nil {
+		return fmt.Errorf("failed to write 'required by other policies' errors: %w", err)
+	}
+
+	if len(out) > 0 {
+		return &db.IntegrityErr{
+			Errors: out,
+		}
 	}
 
 	return nil
 }
 
-// validateScopeChain validates whether deleting or disabling the given policies breaks the scope chain.
-func (s *dbStorage) validateScopeChain(ctx context.Context, mIDPolicyKey map[namer.ModuleID]string, mIDs []namer.ModuleID) error {
+// writeBreaksScopeChainErrors checks whether deleting or disabling the given policies breaks the scope chain and writes the relevant information to out map.
+func (s *dbStorage) writeBreaksScopeChainErrors(
+	ctx context.Context,
+	out map[string]*responsev1.IntegrityErrors,
+	mIDPolicyKey map[namer.ModuleID]string,
+	mIDs []namer.ModuleID,
+) error {
 	descendants, err := s.GetDescendants(ctx, mIDs...)
 	if err != nil {
 		return fmt.Errorf("failed to get descendants for policies: %w", err)
 	}
 
-	var brokenChainPolicies []string
 	for mID, policyKey := range mIDPolicyKey {
-		if d, ok := descendants[mID]; ok && len(d) > 0 {
-			brokenChainPolicies = append(brokenChainPolicies, policyKey)
+		if descs, ok := descendants[mID]; ok && len(descs) > 0 {
+			if out[policyKey] == nil {
+				out[policyKey] = &responsev1.IntegrityErrors{}
+			}
+
+			out[policyKey].BreaksScopeChain.Descendants = make([]string, len(descs))
+
+			out[policyKey].BreaksScopeChain = &responsev1.IntegrityErrors_BreaksScopeChain{
+				Descendants: make([]string, len(descs)),
+			}
+
+			for idx, descendant := range descs {
+				out[policyKey].BreaksScopeChain.Descendants[idx] = descendant.PolicyKey()
+			}
 		}
 	}
 
-	if len(brokenChainPolicies) > 0 {
-		return &db.BreaksScopeChainErr{PolicyKeys: brokenChainPolicies}
+	return nil
+}
+
+// writeRequiredByOtherPoliciesErrors checks whether deleting or disabling the given policies break dependents and writes the relevant information to out map.
+func (s *dbStorage) writeRequiredByOtherPoliciesErrors(
+	out map[string]*responsev1.IntegrityErrors,
+	mIDPolicyKey map[namer.ModuleID]string,
+	dependents map[namer.ModuleID][]namer.Policy,
+) error {
+	for mID, deps := range dependents {
+		if len(deps) > 0 {
+			policyKey, ok := mIDPolicyKey[mID]
+			if !ok {
+				return fmt.Errorf("failed to find policy key for policy %s", mID.String())
+			}
+
+			if out[policyKey] == nil {
+				out[policyKey] = &responsev1.IntegrityErrors{}
+			}
+
+			out[policyKey].RequiredByOtherPolicies = &responsev1.IntegrityErrors_RequiredByOtherPolicies{
+				Dependents: make([]string, len(deps)),
+			}
+
+			for idx, dep := range deps {
+				out[policyKey].RequiredByOtherPolicies.Dependents[idx] = dep.PolicyKey()
+			}
+		}
 	}
 
 	return nil

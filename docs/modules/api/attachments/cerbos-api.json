@@ -1264,6 +1264,37 @@
       ],
       "default": "DRIVER_UNSPECIFIED"
     },
+    "DeleteOrDisableErrorBreaksScopeChainErrorDetails": {
+      "type": "object",
+      "properties": {
+        "descendants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "DeleteOrDisableErrorReason": {
+      "type": "string",
+      "enum": [
+        "REASON_UNSPECIFIED",
+        "REASON_BREAKS_SCOPE_CHAIN",
+        "REASON_REQUIRED_BY_OTHER_POLICIES"
+      ],
+      "default": "REASON_UNSPECIFIED"
+    },
+    "DeleteOrDisableErrorRequiredByOtherPoliciesErrorDetails": {
+      "type": "object",
+      "properties": {
+        "dependents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -2359,6 +2390,21 @@
         }
       }
     },
+    "v1DeleteOrDisableError": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "$ref": "#/definitions/DeleteOrDisableErrorReason",
+          "description": "The reason why deleting or disabling the policy with policy_id didn't work."
+        },
+        "breaksScopeChainErrorDetails": {
+          "$ref": "#/definitions/DeleteOrDisableErrorBreaksScopeChainErrorDetails"
+        },
+        "requiredByOtherPoliciesErrorDetails": {
+          "$ref": "#/definitions/DeleteOrDisableErrorRequiredByOtherPoliciesErrorDetails"
+        }
+      }
+    },
     "v1DeletePolicyRequest": {
       "type": "object",
       "properties": {
@@ -2382,6 +2428,12 @@
         "deletedPolicies": {
           "type": "integer",
           "format": "int64"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1DeleteOrDisableError"
+          }
         }
       },
       "description": "Delete policy response"
@@ -2440,6 +2492,12 @@
         "disabledPolicies": {
           "type": "integer",
           "format": "int64"
+        },
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1DeleteOrDisableError"
+          }
         }
       },
       "description": "Disable policy response"

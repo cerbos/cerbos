@@ -427,18 +427,35 @@ message GetPolicyResponse {
   repeated cerbos.policy.v1.Policy policies = 1;
 }
 
+message IntegrityErrors {
+  message BreaksScopeChain {
+    repeated string descendants = 1;
+  }
+
+  message RequiredByOtherPolicies {
+    repeated string dependents = 1;
+  }
+
+  BreaksScopeChain breaks_scope_chain = 1;
+  RequiredByOtherPolicies required_by_other_policies = 2;
+}
+
 message DeletePolicyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Delete policy response"}
   };
+
   uint32 deleted_policies = 1;
+  map<string, IntegrityErrors> errors = 2;
 }
 
 message DisablePolicyResponse {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Disable policy response"}
   };
+
   uint32 disabled_policies = 1;
+  map<string, IntegrityErrors> errors = 2;
 }
 
 message EnablePolicyResponse {

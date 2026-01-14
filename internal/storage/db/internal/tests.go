@@ -410,16 +410,15 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			checkEvents(t, timeout, wantEvents...)
 
 			_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(dr.FQN))
-			var breaksDependentsErr *db.BreaksDependentsErr
-			require.ErrorAs(t, err, &breaksDependentsErr)
-			require.Len(t, breaksDependentsErr.PolicyKeys, 1)
-			require.Equal(t, breaksDependentsErr.PolicyKeys[0], namer.PolicyKeyFromFQN(dr.FQN))
+			var integrityErr *db.IntegrityErr
+			require.ErrorAs(t, err, &integrityErr)
+			require.Contains(t, integrityErr.Errors, namer.PolicyKey(dr.Policy))
+			require.Len(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, 1)
 
 			_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(rpAcmeHR.FQN))
-			var breaksScopeChainErr *db.BreaksScopeChainErr
-			require.ErrorAs(t, err, &breaksScopeChainErr)
-			require.Len(t, breaksScopeChainErr.PolicyKeys, 1)
-			require.Equal(t, breaksScopeChainErr.PolicyKeys[0], namer.PolicyKeyFromFQN(rpAcmeHR.FQN))
+			require.ErrorAs(t, err, &integrityErr)
+			require.Contains(t, integrityErr.Errors, namer.PolicyKey(rpAcmeHR.Policy))
+			require.Len(t, integrityErr.Errors[namer.PolicyKey(rpAcmeHR.Policy)].BreaksScopeChain.Descendants, 1)
 		})
 
 		t.Run("add_schema", func(t *testing.T) {

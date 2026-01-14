@@ -78,7 +78,7 @@ func (x InspectPoliciesResponse_Attribute_Kind) Number() protoreflect.EnumNumber
 
 // Deprecated: Use InspectPoliciesResponse_Attribute_Kind.Descriptor instead.
 func (InspectPoliciesResponse_Attribute_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 0, 0}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 0, 0}
 }
 
 type InspectPoliciesResponse_DerivedRole_Kind int32
@@ -130,7 +130,7 @@ func (x InspectPoliciesResponse_DerivedRole_Kind) Number() protoreflect.EnumNumb
 
 // Deprecated: Use InspectPoliciesResponse_DerivedRole_Kind.Descriptor instead.
 func (InspectPoliciesResponse_DerivedRole_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 1, 0}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 1, 0}
 }
 
 type InspectPoliciesResponse_Constant_Kind int32
@@ -188,7 +188,7 @@ func (x InspectPoliciesResponse_Constant_Kind) Number() protoreflect.EnumNumber 
 
 // Deprecated: Use InspectPoliciesResponse_Constant_Kind.Descriptor instead.
 func (InspectPoliciesResponse_Constant_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 2, 0}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 2, 0}
 }
 
 type InspectPoliciesResponse_Variable_Kind int32
@@ -246,7 +246,7 @@ func (x InspectPoliciesResponse_Variable_Kind) Number() protoreflect.EnumNumber 
 
 // Deprecated: Use InspectPoliciesResponse_Variable_Kind.Descriptor instead.
 func (InspectPoliciesResponse_Variable_Kind) EnumDescriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 3, 0}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 3, 0}
 }
 
 type PlanResourcesResponse struct {
@@ -1259,16 +1259,69 @@ func (x *GetPolicyResponse) GetPolicies() []*v13.Policy {
 	return nil
 }
 
+type IntegrityErrors struct {
+	state                   protoimpl.MessageState                   `protogen:"open.v1"`
+	BreaksScopeChain        *IntegrityErrors_BreaksScopeChain        `protobuf:"bytes,1,opt,name=breaks_scope_chain,json=breaksScopeChain,proto3" json:"breaks_scope_chain,omitempty"`
+	RequiredByOtherPolicies *IntegrityErrors_RequiredByOtherPolicies `protobuf:"bytes,2,opt,name=required_by_other_policies,json=requiredByOtherPolicies,proto3" json:"required_by_other_policies,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *IntegrityErrors) Reset() {
+	*x = IntegrityErrors{}
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntegrityErrors) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntegrityErrors) ProtoMessage() {}
+
+func (x *IntegrityErrors) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntegrityErrors.ProtoReflect.Descriptor instead.
+func (*IntegrityErrors) Descriptor() ([]byte, []int) {
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *IntegrityErrors) GetBreaksScopeChain() *IntegrityErrors_BreaksScopeChain {
+	if x != nil {
+		return x.BreaksScopeChain
+	}
+	return nil
+}
+
+func (x *IntegrityErrors) GetRequiredByOtherPolicies() *IntegrityErrors_RequiredByOtherPolicies {
+	if x != nil {
+		return x.RequiredByOtherPolicies
+	}
+	return nil
+}
+
 type DeletePolicyResponse struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	DeletedPolicies uint32                 `protobuf:"varint,1,opt,name=deleted_policies,json=deletedPolicies,proto3" json:"deleted_policies,omitempty"`
+	state           protoimpl.MessageState      `protogen:"open.v1"`
+	DeletedPolicies uint32                      `protobuf:"varint,1,opt,name=deleted_policies,json=deletedPolicies,proto3" json:"deleted_policies,omitempty"`
+	Errors          map[string]*IntegrityErrors `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *DeletePolicyResponse) Reset() {
 	*x = DeletePolicyResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[14]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1280,7 +1333,7 @@ func (x *DeletePolicyResponse) String() string {
 func (*DeletePolicyResponse) ProtoMessage() {}
 
 func (x *DeletePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[14]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1293,7 +1346,7 @@ func (x *DeletePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletePolicyResponse.ProtoReflect.Descriptor instead.
 func (*DeletePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{14}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *DeletePolicyResponse) GetDeletedPolicies() uint32 {
@@ -1303,16 +1356,24 @@ func (x *DeletePolicyResponse) GetDeletedPolicies() uint32 {
 	return 0
 }
 
+func (x *DeletePolicyResponse) GetErrors() map[string]*IntegrityErrors {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
+}
+
 type DisablePolicyResponse struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	DisabledPolicies uint32                 `protobuf:"varint,1,opt,name=disabled_policies,json=disabledPolicies,proto3" json:"disabled_policies,omitempty"`
+	state            protoimpl.MessageState      `protogen:"open.v1"`
+	DisabledPolicies uint32                      `protobuf:"varint,1,opt,name=disabled_policies,json=disabledPolicies,proto3" json:"disabled_policies,omitempty"`
+	Errors           map[string]*IntegrityErrors `protobuf:"bytes,2,rep,name=errors,proto3" json:"errors,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *DisablePolicyResponse) Reset() {
 	*x = DisablePolicyResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[15]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1324,7 +1385,7 @@ func (x *DisablePolicyResponse) String() string {
 func (*DisablePolicyResponse) ProtoMessage() {}
 
 func (x *DisablePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[15]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1337,7 +1398,7 @@ func (x *DisablePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisablePolicyResponse.ProtoReflect.Descriptor instead.
 func (*DisablePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{15}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DisablePolicyResponse) GetDisabledPolicies() uint32 {
@@ -1345,6 +1406,13 @@ func (x *DisablePolicyResponse) GetDisabledPolicies() uint32 {
 		return x.DisabledPolicies
 	}
 	return 0
+}
+
+func (x *DisablePolicyResponse) GetErrors() map[string]*IntegrityErrors {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
 }
 
 type EnablePolicyResponse struct {
@@ -1356,7 +1424,7 @@ type EnablePolicyResponse struct {
 
 func (x *EnablePolicyResponse) Reset() {
 	*x = EnablePolicyResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[16]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1368,7 +1436,7 @@ func (x *EnablePolicyResponse) String() string {
 func (*EnablePolicyResponse) ProtoMessage() {}
 
 func (x *EnablePolicyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[16]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1381,7 +1449,7 @@ func (x *EnablePolicyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnablePolicyResponse.ProtoReflect.Descriptor instead.
 func (*EnablePolicyResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{16}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *EnablePolicyResponse) GetEnabledPolicies() uint32 {
@@ -1400,7 +1468,7 @@ type InspectPoliciesResponse struct {
 
 func (x *InspectPoliciesResponse) Reset() {
 	*x = InspectPoliciesResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[17]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1412,7 +1480,7 @@ func (x *InspectPoliciesResponse) String() string {
 func (*InspectPoliciesResponse) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[17]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1425,7 +1493,7 @@ func (x *InspectPoliciesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPoliciesResponse.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *InspectPoliciesResponse) GetResults() map[string]*InspectPoliciesResponse_Result {
@@ -1443,7 +1511,7 @@ type AddOrUpdateSchemaResponse struct {
 
 func (x *AddOrUpdateSchemaResponse) Reset() {
 	*x = AddOrUpdateSchemaResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[18]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1455,7 +1523,7 @@ func (x *AddOrUpdateSchemaResponse) String() string {
 func (*AddOrUpdateSchemaResponse) ProtoMessage() {}
 
 func (x *AddOrUpdateSchemaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[18]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1468,7 +1536,7 @@ func (x *AddOrUpdateSchemaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddOrUpdateSchemaResponse.ProtoReflect.Descriptor instead.
 func (*AddOrUpdateSchemaResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{19}
 }
 
 type ListSchemasResponse struct {
@@ -1480,7 +1548,7 @@ type ListSchemasResponse struct {
 
 func (x *ListSchemasResponse) Reset() {
 	*x = ListSchemasResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[19]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1492,7 +1560,7 @@ func (x *ListSchemasResponse) String() string {
 func (*ListSchemasResponse) ProtoMessage() {}
 
 func (x *ListSchemasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[19]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1505,7 +1573,7 @@ func (x *ListSchemasResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSchemasResponse.ProtoReflect.Descriptor instead.
 func (*ListSchemasResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{19}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ListSchemasResponse) GetSchemaIds() []string {
@@ -1524,7 +1592,7 @@ type GetSchemaResponse struct {
 
 func (x *GetSchemaResponse) Reset() {
 	*x = GetSchemaResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[20]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1536,7 +1604,7 @@ func (x *GetSchemaResponse) String() string {
 func (*GetSchemaResponse) ProtoMessage() {}
 
 func (x *GetSchemaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[20]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1549,7 +1617,7 @@ func (x *GetSchemaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSchemaResponse.ProtoReflect.Descriptor instead.
 func (*GetSchemaResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{20}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *GetSchemaResponse) GetSchemas() []*v11.Schema {
@@ -1568,7 +1636,7 @@ type DeleteSchemaResponse struct {
 
 func (x *DeleteSchemaResponse) Reset() {
 	*x = DeleteSchemaResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[21]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1580,7 +1648,7 @@ func (x *DeleteSchemaResponse) String() string {
 func (*DeleteSchemaResponse) ProtoMessage() {}
 
 func (x *DeleteSchemaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[21]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1593,7 +1661,7 @@ func (x *DeleteSchemaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSchemaResponse.ProtoReflect.Descriptor instead.
 func (*DeleteSchemaResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{21}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteSchemaResponse) GetDeletedSchemas() uint32 {
@@ -1611,7 +1679,7 @@ type ReloadStoreResponse struct {
 
 func (x *ReloadStoreResponse) Reset() {
 	*x = ReloadStoreResponse{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[22]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1623,7 +1691,7 @@ func (x *ReloadStoreResponse) String() string {
 func (*ReloadStoreResponse) ProtoMessage() {}
 
 func (x *ReloadStoreResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[22]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1636,7 +1704,7 @@ func (x *ReloadStoreResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReloadStoreResponse.ProtoReflect.Descriptor instead.
 func (*ReloadStoreResponse) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{22}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{23}
 }
 
 type PlanResourcesResponse_Meta struct {
@@ -1651,7 +1719,7 @@ type PlanResourcesResponse_Meta struct {
 
 func (x *PlanResourcesResponse_Meta) Reset() {
 	*x = PlanResourcesResponse_Meta{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[23]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1663,7 +1731,7 @@ func (x *PlanResourcesResponse_Meta) String() string {
 func (*PlanResourcesResponse_Meta) ProtoMessage() {}
 
 func (x *PlanResourcesResponse_Meta) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[23]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1711,7 +1779,7 @@ type CheckResourceSetResponse_ActionEffectMap struct {
 
 func (x *CheckResourceSetResponse_ActionEffectMap) Reset() {
 	*x = CheckResourceSetResponse_ActionEffectMap{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[25]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1723,7 +1791,7 @@ func (x *CheckResourceSetResponse_ActionEffectMap) String() string {
 func (*CheckResourceSetResponse_ActionEffectMap) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_ActionEffectMap) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[25]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1762,7 +1830,7 @@ type CheckResourceSetResponse_Meta struct {
 
 func (x *CheckResourceSetResponse_Meta) Reset() {
 	*x = CheckResourceSetResponse_Meta{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[26]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1774,7 +1842,7 @@ func (x *CheckResourceSetResponse_Meta) String() string {
 func (*CheckResourceSetResponse_Meta) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_Meta) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[26]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1807,7 +1875,7 @@ type CheckResourceSetResponse_Meta_EffectMeta struct {
 
 func (x *CheckResourceSetResponse_Meta_EffectMeta) Reset() {
 	*x = CheckResourceSetResponse_Meta_EffectMeta{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[29]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1819,7 +1887,7 @@ func (x *CheckResourceSetResponse_Meta_EffectMeta) String() string {
 func (*CheckResourceSetResponse_Meta_EffectMeta) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_Meta_EffectMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[29]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1859,7 +1927,7 @@ type CheckResourceSetResponse_Meta_ActionMeta struct {
 
 func (x *CheckResourceSetResponse_Meta_ActionMeta) Reset() {
 	*x = CheckResourceSetResponse_Meta_ActionMeta{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[30]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1871,7 +1939,7 @@ func (x *CheckResourceSetResponse_Meta_ActionMeta) String() string {
 func (*CheckResourceSetResponse_Meta_ActionMeta) ProtoMessage() {}
 
 func (x *CheckResourceSetResponse_Meta_ActionMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[30]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1912,7 +1980,7 @@ type CheckResourceBatchResponse_ActionEffectMap struct {
 
 func (x *CheckResourceBatchResponse_ActionEffectMap) Reset() {
 	*x = CheckResourceBatchResponse_ActionEffectMap{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[33]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1924,7 +1992,7 @@ func (x *CheckResourceBatchResponse_ActionEffectMap) String() string {
 func (*CheckResourceBatchResponse_ActionEffectMap) ProtoMessage() {}
 
 func (x *CheckResourceBatchResponse_ActionEffectMap) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[33]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1974,7 +2042,7 @@ type CheckResourcesResponse_ResultEntry struct {
 
 func (x *CheckResourcesResponse_ResultEntry) Reset() {
 	*x = CheckResourcesResponse_ResultEntry{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[35]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1986,7 +2054,7 @@ func (x *CheckResourcesResponse_ResultEntry) String() string {
 func (*CheckResourcesResponse_ResultEntry) ProtoMessage() {}
 
 func (x *CheckResourcesResponse_ResultEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[35]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2049,7 +2117,7 @@ type CheckResourcesResponse_ResultEntry_Resource struct {
 
 func (x *CheckResourcesResponse_ResultEntry_Resource) Reset() {
 	*x = CheckResourcesResponse_ResultEntry_Resource{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[36]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2061,7 +2129,7 @@ func (x *CheckResourcesResponse_ResultEntry_Resource) String() string {
 func (*CheckResourcesResponse_ResultEntry_Resource) ProtoMessage() {}
 
 func (x *CheckResourcesResponse_ResultEntry_Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[36]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2115,7 +2183,7 @@ type CheckResourcesResponse_ResultEntry_Meta struct {
 
 func (x *CheckResourcesResponse_ResultEntry_Meta) Reset() {
 	*x = CheckResourcesResponse_ResultEntry_Meta{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[37]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2127,7 +2195,7 @@ func (x *CheckResourcesResponse_ResultEntry_Meta) String() string {
 func (*CheckResourcesResponse_ResultEntry_Meta) ProtoMessage() {}
 
 func (x *CheckResourcesResponse_ResultEntry_Meta) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[37]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2167,7 +2235,7 @@ type CheckResourcesResponse_ResultEntry_Meta_EffectMeta struct {
 
 func (x *CheckResourcesResponse_ResultEntry_Meta_EffectMeta) Reset() {
 	*x = CheckResourcesResponse_ResultEntry_Meta_EffectMeta{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[39]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2179,7 +2247,7 @@ func (x *CheckResourcesResponse_ResultEntry_Meta_EffectMeta) String() string {
 func (*CheckResourcesResponse_ResultEntry_Meta_EffectMeta) ProtoMessage() {}
 
 func (x *CheckResourcesResponse_ResultEntry_Meta_EffectMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[39]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2220,7 +2288,7 @@ type PlaygroundFailure_ErrorDetails struct {
 
 func (x *PlaygroundFailure_ErrorDetails) Reset() {
 	*x = PlaygroundFailure_ErrorDetails{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[41]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2232,7 +2300,7 @@ func (x *PlaygroundFailure_ErrorDetails) String() string {
 func (*PlaygroundFailure_ErrorDetails) ProtoMessage() {}
 
 func (x *PlaygroundFailure_ErrorDetails) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[41]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2280,7 +2348,7 @@ type PlaygroundFailure_Error struct {
 
 func (x *PlaygroundFailure_Error) Reset() {
 	*x = PlaygroundFailure_Error{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[42]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2292,7 +2360,7 @@ func (x *PlaygroundFailure_Error) String() string {
 func (*PlaygroundFailure_Error) ProtoMessage() {}
 
 func (x *PlaygroundFailure_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[42]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2338,7 +2406,7 @@ type PlaygroundTestResponse_TestResults struct {
 
 func (x *PlaygroundTestResponse_TestResults) Reset() {
 	*x = PlaygroundTestResponse_TestResults{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[43]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2350,7 +2418,7 @@ func (x *PlaygroundTestResponse_TestResults) String() string {
 func (*PlaygroundTestResponse_TestResults) ProtoMessage() {}
 
 func (x *PlaygroundTestResponse_TestResults) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[43]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2388,7 +2456,7 @@ type PlaygroundEvaluateResponse_EvalResult struct {
 
 func (x *PlaygroundEvaluateResponse_EvalResult) Reset() {
 	*x = PlaygroundEvaluateResponse_EvalResult{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2400,7 +2468,7 @@ func (x *PlaygroundEvaluateResponse_EvalResult) String() string {
 func (*PlaygroundEvaluateResponse_EvalResult) ProtoMessage() {}
 
 func (x *PlaygroundEvaluateResponse_EvalResult) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[44]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2465,7 +2533,7 @@ type PlaygroundEvaluateResponse_EvalResultList struct {
 
 func (x *PlaygroundEvaluateResponse_EvalResultList) Reset() {
 	*x = PlaygroundEvaluateResponse_EvalResultList{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[45]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2477,7 +2545,7 @@ func (x *PlaygroundEvaluateResponse_EvalResultList) String() string {
 func (*PlaygroundEvaluateResponse_EvalResultList) ProtoMessage() {}
 
 func (x *PlaygroundEvaluateResponse_EvalResultList) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[45]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2521,6 +2589,94 @@ func (x *PlaygroundEvaluateResponse_EvalResultList) GetOutputs() []*v1.OutputEnt
 	return nil
 }
 
+type IntegrityErrors_BreaksScopeChain struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Descendants   []string               `protobuf:"bytes,1,rep,name=descendants,proto3" json:"descendants,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntegrityErrors_BreaksScopeChain) Reset() {
+	*x = IntegrityErrors_BreaksScopeChain{}
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntegrityErrors_BreaksScopeChain) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntegrityErrors_BreaksScopeChain) ProtoMessage() {}
+
+func (x *IntegrityErrors_BreaksScopeChain) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntegrityErrors_BreaksScopeChain.ProtoReflect.Descriptor instead.
+func (*IntegrityErrors_BreaksScopeChain) Descriptor() ([]byte, []int) {
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{14, 0}
+}
+
+func (x *IntegrityErrors_BreaksScopeChain) GetDescendants() []string {
+	if x != nil {
+		return x.Descendants
+	}
+	return nil
+}
+
+type IntegrityErrors_RequiredByOtherPolicies struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Dependents    []string               `protobuf:"bytes,1,rep,name=dependents,proto3" json:"dependents,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntegrityErrors_RequiredByOtherPolicies) Reset() {
+	*x = IntegrityErrors_RequiredByOtherPolicies{}
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntegrityErrors_RequiredByOtherPolicies) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntegrityErrors_RequiredByOtherPolicies) ProtoMessage() {}
+
+func (x *IntegrityErrors_RequiredByOtherPolicies) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[48]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntegrityErrors_RequiredByOtherPolicies.ProtoReflect.Descriptor instead.
+func (*IntegrityErrors_RequiredByOtherPolicies) Descriptor() ([]byte, []int) {
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{14, 1}
+}
+
+func (x *IntegrityErrors_RequiredByOtherPolicies) GetDependents() []string {
+	if x != nil {
+		return x.Dependents
+	}
+	return nil
+}
+
 type InspectPoliciesResponse_Attribute struct {
 	state         protoimpl.MessageState                 `protogen:"open.v1"`
 	Kind          InspectPoliciesResponse_Attribute_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=cerbos.response.v1.InspectPoliciesResponse_Attribute_Kind" json:"kind,omitempty"`
@@ -2531,7 +2687,7 @@ type InspectPoliciesResponse_Attribute struct {
 
 func (x *InspectPoliciesResponse_Attribute) Reset() {
 	*x = InspectPoliciesResponse_Attribute{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[46]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2543,7 +2699,7 @@ func (x *InspectPoliciesResponse_Attribute) String() string {
 func (*InspectPoliciesResponse_Attribute) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse_Attribute) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[46]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2556,7 +2712,7 @@ func (x *InspectPoliciesResponse_Attribute) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use InspectPoliciesResponse_Attribute.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse_Attribute) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 0}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 0}
 }
 
 func (x *InspectPoliciesResponse_Attribute) GetKind() InspectPoliciesResponse_Attribute_Kind {
@@ -2584,7 +2740,7 @@ type InspectPoliciesResponse_DerivedRole struct {
 
 func (x *InspectPoliciesResponse_DerivedRole) Reset() {
 	*x = InspectPoliciesResponse_DerivedRole{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[47]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2596,7 +2752,7 @@ func (x *InspectPoliciesResponse_DerivedRole) String() string {
 func (*InspectPoliciesResponse_DerivedRole) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse_DerivedRole) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[47]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2609,7 +2765,7 @@ func (x *InspectPoliciesResponse_DerivedRole) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use InspectPoliciesResponse_DerivedRole.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse_DerivedRole) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 1}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 1}
 }
 
 func (x *InspectPoliciesResponse_DerivedRole) GetName() string {
@@ -2646,7 +2802,7 @@ type InspectPoliciesResponse_Constant struct {
 
 func (x *InspectPoliciesResponse_Constant) Reset() {
 	*x = InspectPoliciesResponse_Constant{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[48]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2658,7 +2814,7 @@ func (x *InspectPoliciesResponse_Constant) String() string {
 func (*InspectPoliciesResponse_Constant) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse_Constant) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[48]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2671,7 +2827,7 @@ func (x *InspectPoliciesResponse_Constant) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPoliciesResponse_Constant.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse_Constant) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 2}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 2}
 }
 
 func (x *InspectPoliciesResponse_Constant) GetName() string {
@@ -2722,7 +2878,7 @@ type InspectPoliciesResponse_Variable struct {
 
 func (x *InspectPoliciesResponse_Variable) Reset() {
 	*x = InspectPoliciesResponse_Variable{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[49]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2734,7 +2890,7 @@ func (x *InspectPoliciesResponse_Variable) String() string {
 func (*InspectPoliciesResponse_Variable) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse_Variable) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[49]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2747,7 +2903,7 @@ func (x *InspectPoliciesResponse_Variable) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPoliciesResponse_Variable.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse_Variable) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 3}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 3}
 }
 
 func (x *InspectPoliciesResponse_Variable) GetName() string {
@@ -2799,7 +2955,7 @@ type InspectPoliciesResponse_Result struct {
 
 func (x *InspectPoliciesResponse_Result) Reset() {
 	*x = InspectPoliciesResponse_Result{}
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[50]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2811,7 +2967,7 @@ func (x *InspectPoliciesResponse_Result) String() string {
 func (*InspectPoliciesResponse_Result) ProtoMessage() {}
 
 func (x *InspectPoliciesResponse_Result) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_response_v1_response_proto_msgTypes[50]
+	mi := &file_cerbos_response_v1_response_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2824,7 +2980,7 @@ func (x *InspectPoliciesResponse_Result) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InspectPoliciesResponse_Result.ProtoReflect.Descriptor instead.
 func (*InspectPoliciesResponse_Result) Descriptor() ([]byte, []int) {
-	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{17, 4}
+	return file_cerbos_response_v1_response_proto_rawDescGZIP(), []int{18, 4}
 }
 
 func (x *InspectPoliciesResponse_Result) GetActions() []string {
@@ -3046,12 +3202,29 @@ const file_cerbos_response_v1_response_proto_rawDesc = "" +
 	".2,List of policies stored in the Cerbos server\"e\n" +
 	"\x11GetPolicyResponse\x124\n" +
 	"\bpolicies\x18\x01 \x03(\v2\x18.cerbos.policy.v1.PolicyR\bpolicies:\x1a\x92A\x17\n" +
-	"\x152\x13Get policy response\"`\n" +
+	"\x152\x13Get policy response\"\xe0\x02\n" +
+	"\x0fIntegrityErrors\x12b\n" +
+	"\x12breaks_scope_chain\x18\x01 \x01(\v24.cerbos.response.v1.IntegrityErrors.BreaksScopeChainR\x10breaksScopeChain\x12x\n" +
+	"\x1arequired_by_other_policies\x18\x02 \x01(\v2;.cerbos.response.v1.IntegrityErrors.RequiredByOtherPoliciesR\x17requiredByOtherPolicies\x1a4\n" +
+	"\x10BreaksScopeChain\x12 \n" +
+	"\vdescendants\x18\x01 \x03(\tR\vdescendants\x1a9\n" +
+	"\x17RequiredByOtherPolicies\x12\x1e\n" +
+	"\n" +
+	"dependents\x18\x01 \x03(\tR\n" +
+	"dependents\"\x8e\x02\n" +
 	"\x14DeletePolicyResponse\x12)\n" +
-	"\x10deleted_policies\x18\x01 \x01(\rR\x0fdeletedPolicies:\x1d\x92A\x1a\n" +
-	"\x182\x16Delete policy response\"d\n" +
+	"\x10deleted_policies\x18\x01 \x01(\rR\x0fdeletedPolicies\x12L\n" +
+	"\x06errors\x18\x02 \x03(\v24.cerbos.response.v1.DeletePolicyResponse.ErrorsEntryR\x06errors\x1a^\n" +
+	"\vErrorsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x129\n" +
+	"\x05value\x18\x02 \x01(\v2#.cerbos.response.v1.IntegrityErrorsR\x05value:\x028\x01:\x1d\x92A\x1a\n" +
+	"\x182\x16Delete policy response\"\x93\x02\n" +
 	"\x15DisablePolicyResponse\x12+\n" +
-	"\x11disabled_policies\x18\x01 \x01(\rR\x10disabledPolicies:\x1e\x92A\x1b\n" +
+	"\x11disabled_policies\x18\x01 \x01(\rR\x10disabledPolicies\x12M\n" +
+	"\x06errors\x18\x02 \x03(\v25.cerbos.response.v1.DisablePolicyResponse.ErrorsEntryR\x06errors\x1a^\n" +
+	"\vErrorsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x129\n" +
+	"\x05value\x18\x02 \x01(\v2#.cerbos.response.v1.IntegrityErrorsR\x05value:\x028\x01:\x1e\x92A\x1b\n" +
 	"\x192\x17Disable policy response\"`\n" +
 	"\x14EnablePolicyResponse\x12)\n" +
 	"\x10enabled_policies\x18\x01 \x01(\rR\x0fenabledPolicies:\x1d\x92A\x1a\n" +
@@ -3144,7 +3317,7 @@ func file_cerbos_response_v1_response_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_response_v1_response_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cerbos_response_v1_response_proto_msgTypes = make([]protoimpl.MessageInfo, 52)
+var file_cerbos_response_v1_response_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
 var file_cerbos_response_v1_response_proto_goTypes = []any{
 	(InspectPoliciesResponse_Attribute_Kind)(0),      // 0: cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind
 	(InspectPoliciesResponse_DerivedRole_Kind)(0),    // 1: cerbos.response.v1.InspectPoliciesResponse.DerivedRole.Kind
@@ -3164,124 +3337,135 @@ var file_cerbos_response_v1_response_proto_goTypes = []any{
 	(*ServerInfoResponse)(nil),                       // 15: cerbos.response.v1.ServerInfoResponse
 	(*ListPoliciesResponse)(nil),                     // 16: cerbos.response.v1.ListPoliciesResponse
 	(*GetPolicyResponse)(nil),                        // 17: cerbos.response.v1.GetPolicyResponse
-	(*DeletePolicyResponse)(nil),                     // 18: cerbos.response.v1.DeletePolicyResponse
-	(*DisablePolicyResponse)(nil),                    // 19: cerbos.response.v1.DisablePolicyResponse
-	(*EnablePolicyResponse)(nil),                     // 20: cerbos.response.v1.EnablePolicyResponse
-	(*InspectPoliciesResponse)(nil),                  // 21: cerbos.response.v1.InspectPoliciesResponse
-	(*AddOrUpdateSchemaResponse)(nil),                // 22: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*ListSchemasResponse)(nil),                      // 23: cerbos.response.v1.ListSchemasResponse
-	(*GetSchemaResponse)(nil),                        // 24: cerbos.response.v1.GetSchemaResponse
-	(*DeleteSchemaResponse)(nil),                     // 25: cerbos.response.v1.DeleteSchemaResponse
-	(*ReloadStoreResponse)(nil),                      // 26: cerbos.response.v1.ReloadStoreResponse
-	(*PlanResourcesResponse_Meta)(nil),               // 27: cerbos.response.v1.PlanResourcesResponse.Meta
-	nil,                                              // 28: cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntry
-	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 29: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
-	(*CheckResourceSetResponse_Meta)(nil),            // 30: cerbos.response.v1.CheckResourceSetResponse.Meta
-	nil,                                              // 31: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
-	nil,                                              // 32: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	(*CheckResourceSetResponse_Meta_EffectMeta)(nil), // 33: cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	(*CheckResourceSetResponse_Meta_ActionMeta)(nil), // 34: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	nil, // 35: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	nil, // 36: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	(*CheckResourceBatchResponse_ActionEffectMap)(nil), // 37: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
-	nil, // 38: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	(*CheckResourcesResponse_ResultEntry)(nil),          // 39: cerbos.response.v1.CheckResourcesResponse.ResultEntry
-	(*CheckResourcesResponse_ResultEntry_Resource)(nil), // 40: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
-	(*CheckResourcesResponse_ResultEntry_Meta)(nil),     // 41: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
-	nil, // 42: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
-	(*CheckResourcesResponse_ResultEntry_Meta_EffectMeta)(nil), // 43: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
-	nil,                                    // 44: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
-	(*PlaygroundFailure_ErrorDetails)(nil), // 45: cerbos.response.v1.PlaygroundFailure.ErrorDetails
-	(*PlaygroundFailure_Error)(nil),        // 46: cerbos.response.v1.PlaygroundFailure.Error
-	(*PlaygroundTestResponse_TestResults)(nil),        // 47: cerbos.response.v1.PlaygroundTestResponse.TestResults
-	(*PlaygroundEvaluateResponse_EvalResult)(nil),     // 48: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
-	(*PlaygroundEvaluateResponse_EvalResultList)(nil), // 49: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
-	(*InspectPoliciesResponse_Attribute)(nil),         // 50: cerbos.response.v1.InspectPoliciesResponse.Attribute
-	(*InspectPoliciesResponse_DerivedRole)(nil),       // 51: cerbos.response.v1.InspectPoliciesResponse.DerivedRole
-	(*InspectPoliciesResponse_Constant)(nil),          // 52: cerbos.response.v1.InspectPoliciesResponse.Constant
-	(*InspectPoliciesResponse_Variable)(nil),          // 53: cerbos.response.v1.InspectPoliciesResponse.Variable
-	(*InspectPoliciesResponse_Result)(nil),            // 54: cerbos.response.v1.InspectPoliciesResponse.Result
-	nil,                                               // 55: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
-	(*v1.PlanResourcesFilter)(nil),                    // 56: cerbos.engine.v1.PlanResourcesFilter
-	(*v11.ValidationError)(nil),                       // 57: cerbos.schema.v1.ValidationError
-	(*emptypb.Empty)(nil),                             // 58: google.protobuf.Empty
-	(*v12.AccessLogEntry)(nil),                        // 59: cerbos.audit.v1.AccessLogEntry
-	(*v12.DecisionLogEntry)(nil),                      // 60: cerbos.audit.v1.DecisionLogEntry
-	(*v13.Policy)(nil),                                // 61: cerbos.policy.v1.Policy
-	(*v11.Schema)(nil),                                // 62: cerbos.schema.v1.Schema
-	(v14.Effect)(0),                                   // 63: cerbos.effect.v1.Effect
-	(*v1.OutputEntry)(nil),                            // 64: cerbos.engine.v1.OutputEntry
-	(*v13.TestResults)(nil),                           // 65: cerbos.policy.v1.TestResults
-	(*structpb.Value)(nil),                            // 66: google.protobuf.Value
+	(*IntegrityErrors)(nil),                          // 18: cerbos.response.v1.IntegrityErrors
+	(*DeletePolicyResponse)(nil),                     // 19: cerbos.response.v1.DeletePolicyResponse
+	(*DisablePolicyResponse)(nil),                    // 20: cerbos.response.v1.DisablePolicyResponse
+	(*EnablePolicyResponse)(nil),                     // 21: cerbos.response.v1.EnablePolicyResponse
+	(*InspectPoliciesResponse)(nil),                  // 22: cerbos.response.v1.InspectPoliciesResponse
+	(*AddOrUpdateSchemaResponse)(nil),                // 23: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*ListSchemasResponse)(nil),                      // 24: cerbos.response.v1.ListSchemasResponse
+	(*GetSchemaResponse)(nil),                        // 25: cerbos.response.v1.GetSchemaResponse
+	(*DeleteSchemaResponse)(nil),                     // 26: cerbos.response.v1.DeleteSchemaResponse
+	(*ReloadStoreResponse)(nil),                      // 27: cerbos.response.v1.ReloadStoreResponse
+	(*PlanResourcesResponse_Meta)(nil),               // 28: cerbos.response.v1.PlanResourcesResponse.Meta
+	nil,                                              // 29: cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntry
+	(*CheckResourceSetResponse_ActionEffectMap)(nil), // 30: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
+	(*CheckResourceSetResponse_Meta)(nil),            // 31: cerbos.response.v1.CheckResourceSetResponse.Meta
+	nil,                                              // 32: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
+	nil,                                              // 33: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	(*CheckResourceSetResponse_Meta_EffectMeta)(nil), // 34: cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	(*CheckResourceSetResponse_Meta_ActionMeta)(nil), // 35: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	nil, // 36: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	nil, // 37: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	(*CheckResourceBatchResponse_ActionEffectMap)(nil), // 38: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
+	nil, // 39: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	(*CheckResourcesResponse_ResultEntry)(nil),          // 40: cerbos.response.v1.CheckResourcesResponse.ResultEntry
+	(*CheckResourcesResponse_ResultEntry_Resource)(nil), // 41: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
+	(*CheckResourcesResponse_ResultEntry_Meta)(nil),     // 42: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
+	nil, // 43: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
+	(*CheckResourcesResponse_ResultEntry_Meta_EffectMeta)(nil), // 44: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
+	nil,                                    // 45: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
+	(*PlaygroundFailure_ErrorDetails)(nil), // 46: cerbos.response.v1.PlaygroundFailure.ErrorDetails
+	(*PlaygroundFailure_Error)(nil),        // 47: cerbos.response.v1.PlaygroundFailure.Error
+	(*PlaygroundTestResponse_TestResults)(nil),        // 48: cerbos.response.v1.PlaygroundTestResponse.TestResults
+	(*PlaygroundEvaluateResponse_EvalResult)(nil),     // 49: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
+	(*PlaygroundEvaluateResponse_EvalResultList)(nil), // 50: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
+	(*IntegrityErrors_BreaksScopeChain)(nil),          // 51: cerbos.response.v1.IntegrityErrors.BreaksScopeChain
+	(*IntegrityErrors_RequiredByOtherPolicies)(nil),   // 52: cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies
+	nil, // 53: cerbos.response.v1.DeletePolicyResponse.ErrorsEntry
+	nil, // 54: cerbos.response.v1.DisablePolicyResponse.ErrorsEntry
+	(*InspectPoliciesResponse_Attribute)(nil),   // 55: cerbos.response.v1.InspectPoliciesResponse.Attribute
+	(*InspectPoliciesResponse_DerivedRole)(nil), // 56: cerbos.response.v1.InspectPoliciesResponse.DerivedRole
+	(*InspectPoliciesResponse_Constant)(nil),    // 57: cerbos.response.v1.InspectPoliciesResponse.Constant
+	(*InspectPoliciesResponse_Variable)(nil),    // 58: cerbos.response.v1.InspectPoliciesResponse.Variable
+	(*InspectPoliciesResponse_Result)(nil),      // 59: cerbos.response.v1.InspectPoliciesResponse.Result
+	nil,                                         // 60: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
+	(*v1.PlanResourcesFilter)(nil),              // 61: cerbos.engine.v1.PlanResourcesFilter
+	(*v11.ValidationError)(nil),                 // 62: cerbos.schema.v1.ValidationError
+	(*emptypb.Empty)(nil),                       // 63: google.protobuf.Empty
+	(*v12.AccessLogEntry)(nil),                  // 64: cerbos.audit.v1.AccessLogEntry
+	(*v12.DecisionLogEntry)(nil),                // 65: cerbos.audit.v1.DecisionLogEntry
+	(*v13.Policy)(nil),                          // 66: cerbos.policy.v1.Policy
+	(*v11.Schema)(nil),                          // 67: cerbos.schema.v1.Schema
+	(v14.Effect)(0),                             // 68: cerbos.effect.v1.Effect
+	(*v1.OutputEntry)(nil),                      // 69: cerbos.engine.v1.OutputEntry
+	(*v13.TestResults)(nil),                     // 70: cerbos.policy.v1.TestResults
+	(*structpb.Value)(nil),                      // 71: google.protobuf.Value
 }
 var file_cerbos_response_v1_response_proto_depIdxs = []int32{
-	56, // 0: cerbos.response.v1.PlanResourcesResponse.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	27, // 1: cerbos.response.v1.PlanResourcesResponse.meta:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta
-	57, // 2: cerbos.response.v1.PlanResourcesResponse.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	31, // 3: cerbos.response.v1.CheckResourceSetResponse.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
-	30, // 4: cerbos.response.v1.CheckResourceSetResponse.meta:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta
-	37, // 5: cerbos.response.v1.CheckResourceBatchResponse.results:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
-	39, // 6: cerbos.response.v1.CheckResourcesResponse.results:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry
-	46, // 7: cerbos.response.v1.PlaygroundFailure.errors:type_name -> cerbos.response.v1.PlaygroundFailure.Error
+	61, // 0: cerbos.response.v1.PlanResourcesResponse.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	28, // 1: cerbos.response.v1.PlanResourcesResponse.meta:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta
+	62, // 2: cerbos.response.v1.PlanResourcesResponse.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	32, // 3: cerbos.response.v1.CheckResourceSetResponse.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry
+	31, // 4: cerbos.response.v1.CheckResourceSetResponse.meta:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta
+	38, // 5: cerbos.response.v1.CheckResourceBatchResponse.results:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap
+	40, // 6: cerbos.response.v1.CheckResourcesResponse.results:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry
+	47, // 7: cerbos.response.v1.PlaygroundFailure.errors:type_name -> cerbos.response.v1.PlaygroundFailure.Error
 	8,  // 8: cerbos.response.v1.PlaygroundValidateResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	58, // 9: cerbos.response.v1.PlaygroundValidateResponse.success:type_name -> google.protobuf.Empty
+	63, // 9: cerbos.response.v1.PlaygroundValidateResponse.success:type_name -> google.protobuf.Empty
 	8,  // 10: cerbos.response.v1.PlaygroundTestResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	47, // 11: cerbos.response.v1.PlaygroundTestResponse.success:type_name -> cerbos.response.v1.PlaygroundTestResponse.TestResults
+	48, // 11: cerbos.response.v1.PlaygroundTestResponse.success:type_name -> cerbos.response.v1.PlaygroundTestResponse.TestResults
 	8,  // 12: cerbos.response.v1.PlaygroundEvaluateResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
-	49, // 13: cerbos.response.v1.PlaygroundEvaluateResponse.success:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
+	50, // 13: cerbos.response.v1.PlaygroundEvaluateResponse.success:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList
 	8,  // 14: cerbos.response.v1.PlaygroundProxyResponse.failure:type_name -> cerbos.response.v1.PlaygroundFailure
 	5,  // 15: cerbos.response.v1.PlaygroundProxyResponse.check_resource_set:type_name -> cerbos.response.v1.CheckResourceSetResponse
 	6,  // 16: cerbos.response.v1.PlaygroundProxyResponse.check_resource_batch:type_name -> cerbos.response.v1.CheckResourceBatchResponse
 	4,  // 17: cerbos.response.v1.PlaygroundProxyResponse.plan_resources:type_name -> cerbos.response.v1.PlanResourcesResponse
 	7,  // 18: cerbos.response.v1.PlaygroundProxyResponse.check_resources:type_name -> cerbos.response.v1.CheckResourcesResponse
-	58, // 19: cerbos.response.v1.AddOrUpdatePolicyResponse.success:type_name -> google.protobuf.Empty
-	59, // 20: cerbos.response.v1.ListAuditLogEntriesResponse.access_log_entry:type_name -> cerbos.audit.v1.AccessLogEntry
-	60, // 21: cerbos.response.v1.ListAuditLogEntriesResponse.decision_log_entry:type_name -> cerbos.audit.v1.DecisionLogEntry
-	61, // 22: cerbos.response.v1.GetPolicyResponse.policies:type_name -> cerbos.policy.v1.Policy
-	55, // 23: cerbos.response.v1.InspectPoliciesResponse.results:type_name -> cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
-	62, // 24: cerbos.response.v1.GetSchemaResponse.schemas:type_name -> cerbos.schema.v1.Schema
-	28, // 25: cerbos.response.v1.PlanResourcesResponse.Meta.matched_scopes:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntry
-	32, // 26: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
-	57, // 27: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	35, // 28: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
-	29, // 29: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
-	63, // 30: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	36, // 31: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
-	34, // 32: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
-	33, // 33: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
-	38, // 34: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
-	57, // 35: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	63, // 36: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	40, // 37: cerbos.response.v1.CheckResourcesResponse.ResultEntry.resource:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
-	42, // 38: cerbos.response.v1.CheckResourcesResponse.ResultEntry.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
-	57, // 39: cerbos.response.v1.CheckResourcesResponse.ResultEntry.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	41, // 40: cerbos.response.v1.CheckResourcesResponse.ResultEntry.meta:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
-	64, // 41: cerbos.response.v1.CheckResourcesResponse.ResultEntry.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	44, // 42: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
-	63, // 43: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	43, // 44: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
-	45, // 45: cerbos.response.v1.PlaygroundFailure.Error.details:type_name -> cerbos.response.v1.PlaygroundFailure.ErrorDetails
-	65, // 46: cerbos.response.v1.PlaygroundTestResponse.TestResults.results:type_name -> cerbos.policy.v1.TestResults
-	63, // 47: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> cerbos.effect.v1.Effect
-	57, // 48: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	48, // 49: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
-	57, // 50: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	64, // 51: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	0,  // 52: cerbos.response.v1.InspectPoliciesResponse.Attribute.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind
-	1,  // 53: cerbos.response.v1.InspectPoliciesResponse.DerivedRole.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.DerivedRole.Kind
-	66, // 54: cerbos.response.v1.InspectPoliciesResponse.Constant.value:type_name -> google.protobuf.Value
-	2,  // 55: cerbos.response.v1.InspectPoliciesResponse.Constant.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Constant.Kind
-	3,  // 56: cerbos.response.v1.InspectPoliciesResponse.Variable.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Variable.Kind
-	53, // 57: cerbos.response.v1.InspectPoliciesResponse.Result.variables:type_name -> cerbos.response.v1.InspectPoliciesResponse.Variable
-	51, // 58: cerbos.response.v1.InspectPoliciesResponse.Result.derived_roles:type_name -> cerbos.response.v1.InspectPoliciesResponse.DerivedRole
-	50, // 59: cerbos.response.v1.InspectPoliciesResponse.Result.attributes:type_name -> cerbos.response.v1.InspectPoliciesResponse.Attribute
-	52, // 60: cerbos.response.v1.InspectPoliciesResponse.Result.constants:type_name -> cerbos.response.v1.InspectPoliciesResponse.Constant
-	54, // 61: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
-	62, // [62:62] is the sub-list for method output_type
-	62, // [62:62] is the sub-list for method input_type
-	62, // [62:62] is the sub-list for extension type_name
-	62, // [62:62] is the sub-list for extension extendee
-	0,  // [0:62] is the sub-list for field type_name
+	63, // 19: cerbos.response.v1.AddOrUpdatePolicyResponse.success:type_name -> google.protobuf.Empty
+	64, // 20: cerbos.response.v1.ListAuditLogEntriesResponse.access_log_entry:type_name -> cerbos.audit.v1.AccessLogEntry
+	65, // 21: cerbos.response.v1.ListAuditLogEntriesResponse.decision_log_entry:type_name -> cerbos.audit.v1.DecisionLogEntry
+	66, // 22: cerbos.response.v1.GetPolicyResponse.policies:type_name -> cerbos.policy.v1.Policy
+	51, // 23: cerbos.response.v1.IntegrityErrors.breaks_scope_chain:type_name -> cerbos.response.v1.IntegrityErrors.BreaksScopeChain
+	52, // 24: cerbos.response.v1.IntegrityErrors.required_by_other_policies:type_name -> cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies
+	53, // 25: cerbos.response.v1.DeletePolicyResponse.errors:type_name -> cerbos.response.v1.DeletePolicyResponse.ErrorsEntry
+	54, // 26: cerbos.response.v1.DisablePolicyResponse.errors:type_name -> cerbos.response.v1.DisablePolicyResponse.ErrorsEntry
+	60, // 27: cerbos.response.v1.InspectPoliciesResponse.results:type_name -> cerbos.response.v1.InspectPoliciesResponse.ResultsEntry
+	67, // 28: cerbos.response.v1.GetSchemaResponse.schemas:type_name -> cerbos.schema.v1.Schema
+	29, // 29: cerbos.response.v1.PlanResourcesResponse.Meta.matched_scopes:type_name -> cerbos.response.v1.PlanResourcesResponse.Meta.MatchedScopesEntry
+	33, // 30: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry
+	62, // 31: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	36, // 32: cerbos.response.v1.CheckResourceSetResponse.Meta.resource_instances:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry
+	30, // 33: cerbos.response.v1.CheckResourceSetResponse.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap
+	68, // 34: cerbos.response.v1.CheckResourceSetResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	37, // 35: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.actions:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry
+	35, // 36: cerbos.response.v1.CheckResourceSetResponse.Meta.ResourceInstancesEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta
+	34, // 37: cerbos.response.v1.CheckResourceSetResponse.Meta.ActionMeta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourceSetResponse.Meta.EffectMeta
+	39, // 38: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.actions:type_name -> cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry
+	62, // 39: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	68, // 40: cerbos.response.v1.CheckResourceBatchResponse.ActionEffectMap.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	41, // 41: cerbos.response.v1.CheckResourcesResponse.ResultEntry.resource:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Resource
+	43, // 42: cerbos.response.v1.CheckResourcesResponse.ResultEntry.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry
+	62, // 43: cerbos.response.v1.CheckResourcesResponse.ResultEntry.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	42, // 44: cerbos.response.v1.CheckResourcesResponse.ResultEntry.meta:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta
+	69, // 45: cerbos.response.v1.CheckResourcesResponse.ResultEntry.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	45, // 46: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.actions:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry
+	68, // 47: cerbos.response.v1.CheckResourcesResponse.ResultEntry.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	44, // 48: cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.ActionsEntry.value:type_name -> cerbos.response.v1.CheckResourcesResponse.ResultEntry.Meta.EffectMeta
+	46, // 49: cerbos.response.v1.PlaygroundFailure.Error.details:type_name -> cerbos.response.v1.PlaygroundFailure.ErrorDetails
+	70, // 50: cerbos.response.v1.PlaygroundTestResponse.TestResults.results:type_name -> cerbos.policy.v1.TestResults
+	68, // 51: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.effect:type_name -> cerbos.effect.v1.Effect
+	62, // 52: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	49, // 53: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.results:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse.EvalResult
+	62, // 54: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	69, // 55: cerbos.response.v1.PlaygroundEvaluateResponse.EvalResultList.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	18, // 56: cerbos.response.v1.DeletePolicyResponse.ErrorsEntry.value:type_name -> cerbos.response.v1.IntegrityErrors
+	18, // 57: cerbos.response.v1.DisablePolicyResponse.ErrorsEntry.value:type_name -> cerbos.response.v1.IntegrityErrors
+	0,  // 58: cerbos.response.v1.InspectPoliciesResponse.Attribute.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Attribute.Kind
+	1,  // 59: cerbos.response.v1.InspectPoliciesResponse.DerivedRole.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.DerivedRole.Kind
+	71, // 60: cerbos.response.v1.InspectPoliciesResponse.Constant.value:type_name -> google.protobuf.Value
+	2,  // 61: cerbos.response.v1.InspectPoliciesResponse.Constant.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Constant.Kind
+	3,  // 62: cerbos.response.v1.InspectPoliciesResponse.Variable.kind:type_name -> cerbos.response.v1.InspectPoliciesResponse.Variable.Kind
+	58, // 63: cerbos.response.v1.InspectPoliciesResponse.Result.variables:type_name -> cerbos.response.v1.InspectPoliciesResponse.Variable
+	56, // 64: cerbos.response.v1.InspectPoliciesResponse.Result.derived_roles:type_name -> cerbos.response.v1.InspectPoliciesResponse.DerivedRole
+	55, // 65: cerbos.response.v1.InspectPoliciesResponse.Result.attributes:type_name -> cerbos.response.v1.InspectPoliciesResponse.Attribute
+	57, // 66: cerbos.response.v1.InspectPoliciesResponse.Result.constants:type_name -> cerbos.response.v1.InspectPoliciesResponse.Constant
+	59, // 67: cerbos.response.v1.InspectPoliciesResponse.ResultsEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
+	68, // [68:68] is the sub-list for method output_type
+	68, // [68:68] is the sub-list for method input_type
+	68, // [68:68] is the sub-list for extension type_name
+	68, // [68:68] is the sub-list for extension extendee
+	0,  // [0:68] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_response_v1_response_proto_init() }
@@ -3318,7 +3502,7 @@ func file_cerbos_response_v1_response_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_response_v1_response_proto_rawDesc), len(file_cerbos_response_v1_response_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   52,
+			NumMessages:   57,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
