@@ -382,3 +382,8 @@ func (pc PolicyCoords) PolicyKey() string {
 func ScopeValue(scope string) string {
 	return strings.TrimPrefix(scope, ".")
 }
+
+type Policy struct {
+	PolicyCoords
+	ID ModuleID
+}

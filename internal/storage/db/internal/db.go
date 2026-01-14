@@ -53,7 +53,7 @@ type DBStorage interface {
 	GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error)
 	GetCompilationUnits(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]*policy.CompilationUnit, error)
 	GetDependents(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.ModuleID, error)
-	HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error)
+	GetDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.Policy, error)
 	InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(ctx context.Context, params storage.ListPolicyIDsParams) ([]string, error)
 	ListSchemaIDs(ctx context.Context) ([]string, error)
@@ -606,49 +606,69 @@ func (s *dbStorage) getDependents(ctx context.Context, tx *goqu.TxDatabase, ids 
 	return out, nil
 }
 
-func (s *dbStorage) HasDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]bool, error) {
-	// SELECT 1
-	// FROM policy_ancestor pa1 JOIN policy p1 ON (pa1.policy_id = p1.id AND p1.disabled = false)
-	// WHERE pa1.ancestor_id = p.id;
-	innerQuery := s.db.Select(goqu.L("1")).
-		From(goqu.T(PolicyAncestorTbl).As("pa1")).
-		Join(
-			goqu.T(PolicyTbl).As("p1"),
-			goqu.On(
-				goqu.And(
-					goqu.C(PolicyAncestorTblPolicyIDCol).Table("pa1").Eq(goqu.C(PolicyTblIDCol).Table("p1")),
-					goqu.C(PolicyTblDisabledCol).Table("p1").Eq(goqu.V(false)),
-				),
-			),
+func (s *dbStorage) GetDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.Policy, error) {
+	// SELECT
+	//  policy_ancestor.ancestor_id AS id,
+	//  policy.id AS descendant_id,
+	//  policy.kind,
+	//  policy.name,
+	//  policy.version,
+	//  COALESCE(policy.scope, '') AS scope
+	// FROM policy_ancestor
+	// JOIN policy ON (policy_ancestor.policy_id = policy.id AND policy.disabled = false)
+	// WHERE policy_ancestor.ancestor_id IN (?)
+	// ORDER BY
+	//  kind ASC,
+	//  name ASC,
+	//  version ASC,
+	//  scope ASC
+	query := s.db.
+		Select(
+			goqu.T(PolicyAncestorTbl).Col(PolicyAncestorTblAncestorIDCol).As("id"),
+			goqu.T(PolicyTbl).Col(PolicyTblIDCol).As("descendant_id"),
+			goqu.T(PolicyTbl).Col(PolicyTblKindCol),
+			goqu.T(PolicyTbl).Col(PolicyTblNameCol),
+			goqu.T(PolicyTbl).Col(PolicyTblVerCol),
+			goqu.COALESCE(goqu.T(PolicyTbl).Col(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
 		).
-		Where(goqu.C(PolicyAncestorTblAncestorIDCol).Table("pa1").Eq(goqu.C(PolicyTblIDCol).Table("p")))
+		From(goqu.T(PolicyAncestorTbl)).
+		Join(
+			goqu.T(PolicyTbl),
+			goqu.On(
+				goqu.T(PolicyAncestorTbl).Col(PolicyAncestorTblPolicyIDCol).Eq(goqu.T(PolicyTbl).Col(PolicyTblIDCol)),
+				goqu.T(PolicyTbl).Col(PolicyTblDisabledCol).Eq(goqu.V(false)),
+			),
+		).Where(
+		goqu.T(PolicyAncestorTbl).Col(PolicyAncestorTblAncestorIDCol).In(ids),
+	).Order(
+		goqu.T(PolicyTbl).Col(PolicyTblKindCol).Asc(),
+		goqu.T(PolicyTbl).Col(PolicyTblNameCol).Asc(),
+		goqu.T(PolicyTbl).Col(PolicyTblVerCol).Asc(),
+		goqu.T(PolicyTbl).Col(PolicyTblScopeCol).Asc(),
+	)
 
-	// SELECT p.id, EXISTS(<innerQuery>) AS has_descendants
-	// FROM policy p
-	// WHERE p.id IN (?);
-	query := s.db.Select(
-		goqu.C(PolicyTblIDCol).Table("p"),
-		goqu.L("EXISTS ?", innerQuery).As("has_descendants"),
-	).
-		From(goqu.T(PolicyTbl).As("p")).
-		Where(goqu.C(PolicyTblIDCol).Table("p").In(ids))
-	result, err := query.Executor().ScannerContext(ctx)
+	results, err := query.Executor().ScannerContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute %q query: %w", "HasDescendants", err)
+		return nil, fmt.Errorf("could not execute %q query: %w", "GetDescendants", err)
 	}
-	defer result.Close()
+	defer results.Close()
 
-	out := make(map[namer.ModuleID]bool)
-	for result.Next() {
-		var rec struct {
-			ID             namer.ModuleID `db:"id"`
-			HasDescendants bool           `db:"has_descendants"`
+	out := make(map[namer.ModuleID][]namer.Policy, len(ids))
+	for results.Next() {
+		var row struct {
+			namer.PolicyCoords
+			PolicyID     namer.ModuleID `db:"id"`
+			DescendantID namer.ModuleID `db:"descendant_id"`
 		}
-		if err := result.ScanStruct(&rec); err != nil {
+
+		if err := results.ScanStruct(&row); err != nil {
 			return nil, err
 		}
 
-		out[rec.ID] = rec.HasDescendants
+		out[row.PolicyID] = append(out[row.PolicyID], namer.Policy{
+			ID:           row.DescendantID,
+			PolicyCoords: row.PolicyCoords,
+		})
 	}
 
 	return out, nil
@@ -839,14 +859,14 @@ func (s *dbStorage) validateDependents(mIDPolicyKey map[namer.ModuleID]string, d
 
 // validateScopeChain validates whether deleting or disabling the given policies breaks the scope chain.
 func (s *dbStorage) validateScopeChain(ctx context.Context, mIDPolicyKey map[namer.ModuleID]string, mIDs []namer.ModuleID) error {
-	hasDescendants, err := s.HasDescendants(ctx, mIDs...)
+	descendants, err := s.GetDescendants(ctx, mIDs...)
 	if err != nil {
 		return fmt.Errorf("failed to get descendants for policies: %w", err)
 	}
 
 	var brokenChainPolicies []string
 	for mID, policyKey := range mIDPolicyKey {
-		if has, ok := hasDescendants[mID]; ok && has {
+		if d, ok := descendants[mID]; ok && len(d) > 0 {
 			brokenChainPolicies = append(brokenChainPolicies, policyKey)
 		}
 	}

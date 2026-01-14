@@ -228,6 +228,66 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.ElementsMatch(t, []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID, pp.ID, ppAcme.ID, ppAcmeHR.ID, drImportVariables.ID, rpImportDerivedRolesThatImportVariables.ID}, have[ev.ID])
 		})
 
+		t.Run("get_descendants", func(t *testing.T) {
+			have, err := store.GetDescendants(ctx, rp.ID, rpAcme.ID)
+			require.NoError(t, err)
+
+			require.Len(t, have, 2)
+
+			require.Contains(t, have, rp.ID)
+			require.ElementsMatch(t, []namer.Policy{
+				{
+					ID: rpAcme.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcme.Kind.String(),
+						Name:    rpAcme.Name,
+						Version: rpAcme.Version,
+						Scope:   rpAcme.Scope,
+					},
+				},
+				{
+					ID: rpAcmeHR.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHR.Kind.String(),
+						Name:    rpAcmeHR.Name,
+						Version: rpAcmeHR.Version,
+						Scope:   rpAcmeHR.Scope,
+					},
+				},
+				{
+					ID: rpAcmeHRUK.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHRUK.Kind.String(),
+						Name:    rpAcmeHRUK.Name,
+						Version: rpAcmeHRUK.Version,
+						Scope:   rpAcmeHRUK.Scope,
+					},
+				},
+			}, have[rp.ID])
+
+			require.Contains(t, have, rpAcme.ID)
+			require.ElementsMatch(t, []namer.Policy{
+				{
+					ID: rpAcmeHR.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHR.Kind.String(),
+						Name:    rpAcmeHR.Name,
+						Version: rpAcmeHR.Version,
+						Scope:   rpAcmeHR.Scope,
+					},
+				},
+				{
+					ID: rpAcmeHRUK.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHRUK.Kind.String(),
+						Name:    rpAcmeHRUK.Name,
+						Version: rpAcmeHRUK.Version,
+						Scope:   rpAcmeHRUK.Scope,
+					},
+				},
+			}, have[rpAcme.ID])
+		})
+
 		t.Run("get_policy", func(t *testing.T) {
 			for _, want := range policyList {
 				t.Run(want.FQN, func(t *testing.T) {
