@@ -99,7 +99,7 @@ func NewRedis(client Cmdable, namespace string, ttl, expirationBuffer time.Durat
 
 	return &Redis{
 		db:               client,
-		nsKey:            namespace,
+		nsKey:            namespace + ":",
 		sentKey:          namespace + ":" + sentinelSuffix,
 		sentinelDeadline: sentinelDeadline,
 		dataDeadline:     dataDeadline,
@@ -188,7 +188,7 @@ type redisMap struct {
 func newRedisMap(db Cmdable, namespace, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
 	return &redisMap{
 		db:               db,
-		nsKey:            namespace,
+		nsKey:            namespace + ":",
 		catKey:           namespace + ":" + categoryKey,
 		sentKey:          sentKey,
 		sentinelDeadline: sentinelDeadline,
@@ -222,11 +222,11 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 
 func (rm *redisMap) rowKey(sum uint64) string {
 	// value is the serialised row
-	return rm.nsKey + ":" + strconv.FormatUint(sum, 10)
+	return rm.nsKey + strconv.FormatUint(sum, 10)
 }
 
 func (rm *redisMap) sumFromRowKey(key string) uint64 {
-	s := strings.TrimPrefix(key, rm.nsKey+":")
+	s := strings.TrimPrefix(key, rm.nsKey)
 	sum, _ := strconv.ParseUint(s, 10, 64)
 	return sum
 }
