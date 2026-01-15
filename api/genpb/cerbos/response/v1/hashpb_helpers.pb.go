@@ -1904,11 +1904,8 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 	}
 }
 
-func cerbos_response_v1_DeletePolicyResponse_hashpb_sum(m *DeletePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.DeletePolicyResponse.deleted_policies"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDeletedPolicies())))
-	}
-	if _, ok := ignore["cerbos.response.v1.DeletePolicyResponse.errors"]; !ok {
+func cerbos_response_v1_DeletePolicyErrorDetails_hashpb_sum(m *DeletePolicyErrorDetails, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DeletePolicyErrorDetails.errors"]; !ok {
 		if len(m.Errors) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.Errors)) {
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
@@ -1918,6 +1915,12 @@ func cerbos_response_v1_DeletePolicyResponse_hashpb_sum(m *DeletePolicyResponse,
 				}
 			}
 		}
+	}
+}
+
+func cerbos_response_v1_DeletePolicyResponse_hashpb_sum(m *DeletePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DeletePolicyResponse.deleted_policies"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDeletedPolicies())))
 	}
 }
 
@@ -1927,11 +1930,8 @@ func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse,
 	}
 }
 
-func cerbos_response_v1_DisablePolicyResponse_hashpb_sum(m *DisablePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.response.v1.DisablePolicyResponse.disabled_policies"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDisabledPolicies())))
-	}
-	if _, ok := ignore["cerbos.response.v1.DisablePolicyResponse.errors"]; !ok {
+func cerbos_response_v1_DisablePolicyErrorDetails_hashpb_sum(m *DisablePolicyErrorDetails, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DisablePolicyErrorDetails.errors"]; !ok {
 		if len(m.Errors) > 0 {
 			for _, k := range slices.Sorted(maps.Keys(m.Errors)) {
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
@@ -1941,6 +1941,12 @@ func cerbos_response_v1_DisablePolicyResponse_hashpb_sum(m *DisablePolicyRespons
 				}
 			}
 		}
+	}
+}
+
+func cerbos_response_v1_DisablePolicyResponse_hashpb_sum(m *DisablePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DisablePolicyResponse.disabled_policies"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDisabledPolicies())))
 	}
 }
 

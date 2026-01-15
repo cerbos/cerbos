@@ -247,13 +247,11 @@ func (cas *CerbosAdminService) DeletePolicy(ctx context.Context, req *requestv1.
 		logging.ReqScopeLog(ctx).Error("Failed to delete policies", zap.Error(err))
 		var integrityErr *db.IntegrityErr
 		if errors.As(err, &integrityErr) {
-			resp := &responsev1.DeletePolicyResponse{
-				Errors: integrityErr.Errors,
-			}
-
 			st := status.New(codes.InvalidArgument, "Failed to delete policies")
 			var setDetailsErr error
-			if st, setDetailsErr = st.WithDetails(resp); setDetailsErr != nil {
+			if st, setDetailsErr = st.WithDetails(&responsev1.DeletePolicyErrorDetails{
+				Errors: integrityErr.Errors,
+			}); setDetailsErr != nil {
 				logging.ReqScopeLog(ctx).Error("Failed to set details in status", zap.Error(setDetailsErr))
 			}
 
@@ -288,13 +286,11 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 		logging.ReqScopeLog(ctx).Error("Failed to disable policies", zap.Error(err))
 		var integrityErr *db.IntegrityErr
 		if errors.As(err, &integrityErr) {
-			resp := &responsev1.DisablePolicyResponse{
-				Errors: integrityErr.Errors,
-			}
-
 			st := status.New(codes.InvalidArgument, "Failed to disable policies")
 			var setDetailsErr error
-			if st, setDetailsErr = st.WithDetails(resp); setDetailsErr != nil {
+			if st, setDetailsErr = st.WithDetails(&responsev1.DisablePolicyErrorDetails{
+				Errors: integrityErr.Errors,
+			}); setDetailsErr != nil {
 				logging.ReqScopeLog(ctx).Error("Failed to set details in status", zap.Error(setDetailsErr))
 			}
 

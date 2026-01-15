@@ -1371,28 +1371,6 @@
       ],
       "default": "KIND_UNSPECIFIED"
     },
-    "IntegrityErrorsBreaksScopeChain": {
-      "type": "object",
-      "properties": {
-        "descendants": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "IntegrityErrorsRequiredByOtherPolicies": {
-      "type": "object",
-      "properties": {
-        "dependents": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
       "properties": {
@@ -2404,12 +2382,6 @@
         "deletedPolicies": {
           "type": "integer",
           "format": "int64"
-        },
-        "errors": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1IntegrityErrors"
-          }
         }
       },
       "description": "Delete policy response"
@@ -2468,12 +2440,6 @@
         "disabledPolicies": {
           "type": "integer",
           "format": "int64"
-        },
-        "errors": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/v1IntegrityErrors"
-          }
         }
       },
       "description": "Disable policy response"
@@ -2673,17 +2639,6 @@
         "used": {
           "type": "boolean",
           "description": "Whether the variable is used in a condition."
-        }
-      }
-    },
-    "v1IntegrityErrors": {
-      "type": "object",
-      "properties": {
-        "breaksScopeChain": {
-          "$ref": "#/definitions/IntegrityErrorsBreaksScopeChain"
-        },
-        "requiredByOtherPolicies": {
-          "$ref": "#/definitions/IntegrityErrorsRequiredByOtherPolicies"
         }
       }
     },
