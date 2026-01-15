@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -73,7 +74,7 @@ func GetExistingRedis(ctx context.Context, client Cmdable, namespace string) (*R
 
 	return &Redis{
 		db:       client,
-		nsKey:    namespace,
+		nsKey:    namespace + ":",
 		sentKey:  sentKey,
 		readOnly: true,
 	}, nil
@@ -98,7 +99,7 @@ func NewRedis(client Cmdable, namespace string, ttl, expirationBuffer time.Durat
 
 	return &Redis{
 		db:               client,
-		nsKey:            namespace,
+		nsKey:            namespace + ":",
 		sentKey:          namespace + ":" + sentinelSuffix,
 		sentinelDeadline: sentinelDeadline,
 		dataDeadline:     dataDeadline,
@@ -122,7 +123,7 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for _, row := range rows {
 		var sum string
 		if row.RuleTable_RuleRow != nil {
-			sum = row.sum
+			sum = strconv.FormatUint(row.sum, 10)
 		} else {
 			sum = r.rowKey(row.sum)
 		}
@@ -169,9 +170,9 @@ func (r *Redis) resolveIter(ctx context.Context, rows iter.Seq[*Row]) (iter.Seq[
 	return slices.Values(resolved), nil
 }
 
-func (r *Redis) rowKey(sum string) string {
+func (r *Redis) rowKey(sum uint64) string {
 	// value is the serialised row
-	return r.nsKey + ":" + sum
+	return r.nsKey + strconv.FormatUint(sum, 10)
 }
 
 type redisMap struct {
@@ -184,11 +185,11 @@ type redisMap struct {
 	readOnly         bool
 }
 
-func newRedisMap(db Cmdable, namespace, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
+func newRedisMap(db Cmdable, nsKey, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
 	return &redisMap{
 		db:               db,
-		nsKey:            namespace,
-		catKey:           namespace + ":" + categoryKey,
+		nsKey:            nsKey,
+		catKey:           nsKey + categoryKey,
 		sentKey:          sentKey,
 		sentinelDeadline: sentinelDeadline,
 		dataDeadline:     dataDeadline,
@@ -219,13 +220,15 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 	return sums, raws, nil
 }
 
-func (rm *redisMap) rowKey(sum string) string {
+func (rm *redisMap) rowKey(sum uint64) string {
 	// value is the serialised row
-	return rm.nsKey + ":" + sum
+	return rm.nsKey + strconv.FormatUint(sum, 10)
 }
 
-func (rm *redisMap) sumFromRowKey(key string) string {
-	return strings.TrimPrefix(key, rm.nsKey+":")
+func (rm *redisMap) sumFromRowKey(key string) uint64 {
+	s := strings.TrimPrefix(key, rm.nsKey)
+	sum, _ := strconv.ParseUint(s, 10, 64)
+	return sum
 }
 
 func (rm *redisMap) getRowSetWithSums(sums []string) *rowSet {
@@ -430,9 +433,9 @@ type RedisLiteralMap struct {
 	*redisMap
 }
 
-func newRedisLiteralMap(db Cmdable, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
+func newRedisLiteralMap(db Cmdable, nsKey, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
 	return &RedisLiteralMap{
-		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
+		redisMap: newRedisMap(db, nsKey, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
 }
 
@@ -440,9 +443,9 @@ type RedisGlobMap struct {
 	*redisMap
 }
 
-func newRedisGlobMap(db Cmdable, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
+func newRedisGlobMap(db Cmdable, nsKey, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
 	return &RedisGlobMap{
-		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
+		redisMap: newRedisMap(db, nsKey, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
 }
 

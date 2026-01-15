@@ -5,7 +5,6 @@ package index
 
 import (
 	"context"
-	"crypto/sha256"
 	"iter"
 	"maps"
 	"slices"
@@ -72,7 +71,7 @@ type Row struct {
 	*runtimev1.RuleTable_RuleRow
 	Params                     *rowParams
 	DerivedRoleParams          *rowParams
-	sum                        string
+	sum                        uint64
 	NoMatchForScopePermissions bool
 }
 
@@ -117,20 +116,20 @@ func (r *Row) Matches(pt policyv1.Kind, scope, action, principalID string, roles
 }
 
 type rowSet struct {
-	m   map[string]*Row
+	m   map[uint64]*Row
 	cow bool       // copy-on-write: if true, copy map before mutation
 	mu  sync.Mutex // protects cow flag and m pointer during copy operations
 }
 
 func newRowSet() *rowSet {
 	return &rowSet{
-		m: make(map[string]*Row),
+		m: make(map[uint64]*Row),
 	}
 }
 
 func newRowSetCap(capacity int) *rowSet {
 	return &rowSet{
-		m: make(map[string]*Row, capacity),
+		m: make(map[uint64]*Row, capacity),
 	}
 }
 
@@ -139,7 +138,7 @@ func (s *rowSet) ensureUnique() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.cow {
-		newM := make(map[string]*Row, s.len())
+		newM := make(map[uint64]*Row, s.len())
 		maps.Copy(newM, s.m)
 		s.m = newM
 		s.cow = false
@@ -149,12 +148,12 @@ func (s *rowSet) ensureUnique() {
 func (l *rowSet) set(r *Row) {
 	l.ensureUnique()
 	if l.m == nil {
-		l.m = make(map[string]*Row)
+		l.m = make(map[uint64]*Row)
 	}
 	l.m[r.sum] = r
 }
 
-func (l *rowSet) has(sum string) bool {
+func (l *rowSet) has(sum uint64) bool {
 	_, exists := l.m[sum]
 	return exists
 }
@@ -411,10 +410,7 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 			r.Params = params
 		}
 
-		h := sha256.New()
-		r.HashPB(h, ignoredRuleTableProtoFields)
-		r.sum = string(h.Sum(nil))
-
+		r.sum = util.HashPB(r, ignoredRuleTableProtoFields)
 		addToSet(versions, r.Version, r)
 		addToSet(scopes, r.Scope, r)
 		addToSet(roleGlobs, r.Role, r)
