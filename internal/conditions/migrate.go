@@ -5,7 +5,6 @@ package conditions
 
 import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -51,27 +50,14 @@ func walkExprs(message protoreflect.Message, f func(*runtimev1.Expr)) {
 	})
 }
 
-// MigrateExprToCheckedV2 moves the `checked` field to `checked_v2`, changing the type of all references
+// MigrateVariablesType rewrites the `checked` field, changing the type of all references
 // to constants, globals, and variables from `map<string, dyn>` to `cerbos.Variables`.
-func MigrateExprToCheckedV2(expr *runtimev1.Expr) {
-	expr.CheckedV2 = expr.Checked //nolint:staticcheck
-	setVariablesType(expr.CheckedV2, variablesType)
-	expr.Checked = nil //nolint:staticcheck
-}
-
-// MakeExprBackwardsCompatible copies the `checked_v2` field to `checked`, changing the type of all references
-// to constants, globals, and variables from `cerbos.Variables` to `map<string, dyn>`.
-func MakeExprBackwardsCompatible(expr *runtimev1.Expr) {
-	expr.Checked = proto.CloneOf(expr.CheckedV2)     //nolint:staticcheck
-	setVariablesType(expr.Checked, mapStringDynType) //nolint:staticcheck
-}
-
-func setVariablesType(checkedExpr *expr.CheckedExpr, variablesType *expr.Type) {
-	if checkedExpr != nil {
-		for id, ref := range checkedExpr.ReferenceMap {
+func MigrateVariablesType(expr *runtimev1.Expr) {
+	if expr.Checked != nil {
+		for id, ref := range expr.Checked.ReferenceMap {
 			switch ref.Name {
 			case CELConstantsAbbrev, CELConstantsIdent, CELGlobalsAbbrev, CELGlobalsIdent, CELVariablesAbbrev, CELVariablesIdent:
-				checkedExpr.TypeMap[id] = variablesType
+				expr.Checked.TypeMap[id] = variablesType
 			}
 		}
 	}

@@ -1153,7 +1153,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 
 	for i, v := range vars {
 		p, err := conditions.StdEnv.Program(
-			cel.CheckedExprToAst(v.Expr.CheckedV2),
+			cel.CheckedExprToAst(v.Expr.Checked),
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {

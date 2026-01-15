@@ -81,8 +81,8 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstant
 	}
 
 	return &runtimev1.Expr{
-		Original:  expr,
-		CheckedV2: checkedExpr,
+		Original: expr,
+		Checked:  checkedExpr,
 	}
 }
 

@@ -390,7 +390,7 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 			res.Node = &qpNLO{LogicalOperation: MkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		expr := t.Expr.GetCheckedV2().GetExpr()
+		expr := t.Expr.GetChecked().GetExpr()
 		ex, err := celast.ProtoToExpr(expr)
 		if err != nil {
 			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
@@ -713,7 +713,7 @@ func VariableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, err
 
 	exprs := make(map[string]celast.Expr, len(variables))
 	for _, variable := range variables {
-		e, err := celast.ProtoToExpr(variable.Expr.GetCheckedV2().GetExpr())
+		e, err := celast.ProtoToExpr(variable.Expr.GetChecked().GetExpr())
 		if err != nil {
 			return nil, err
 		}

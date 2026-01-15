@@ -24,7 +24,7 @@
         "variables": {
           "a": {
             "original": "constants.a",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "constants"
@@ -64,7 +64,7 @@
           },
           "ab": {
             "original": "V.a + V.b",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "V"
@@ -152,7 +152,7 @@
           },
           "b": {
             "original": "C.b",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "C"
@@ -192,7 +192,7 @@
           },
           "j": {
             "original": "constants.j",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "constants"
@@ -240,7 +240,7 @@
                 "condition": {
                   "expr": {
                     "original": "V.ab < V.j && V.ab > C.z",
-                    "checkedV2": {
+                    "checked": {
                       "referenceMap": {
                         "1": {
                           "name": "V"
@@ -435,7 +435,7 @@
             "name": "a",
             "expr": {
               "original": "constants.a",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "constants"
@@ -478,7 +478,7 @@
             "name": "b",
             "expr": {
               "original": "C.b",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "C"
@@ -521,7 +521,7 @@
             "name": "ab",
             "expr": {
               "original": "V.a + V.b",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "V"
@@ -612,7 +612,7 @@
             "name": "j",
             "expr": {
               "original": "constants.j",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "constants"
@@ -664,7 +664,7 @@
         "variables": {
           "a": {
             "original": "constants.a",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "constants"
@@ -704,7 +704,7 @@
           },
           "ab": {
             "original": "V.a + V.b",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "V"
@@ -792,7 +792,7 @@
           },
           "abc": {
             "original": "variables.ab + variables.c",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "variables"
@@ -880,7 +880,7 @@
           },
           "abce": {
             "original": "variables.abc + variables.e",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "variables"
@@ -968,7 +968,7 @@
           },
           "b": {
             "original": "C.b",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "C"
@@ -1008,7 +1008,7 @@
           },
           "c": {
             "original": "constants.c",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "constants"
@@ -1048,7 +1048,7 @@
           },
           "e": {
             "original": "constants.e",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "constants"
@@ -1088,7 +1088,7 @@
           },
           "f": {
             "original": "C.f",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "C"
@@ -1128,7 +1128,7 @@
           },
           "h": {
             "original": "C.h",
-            "checkedV2": {
+            "checked": {
               "referenceMap": {
                 "1": {
                   "name": "C"
@@ -1176,7 +1176,7 @@
                 "condition": {
                   "expr": {
                     "original": "V.abce > C.z",
-                    "checkedV2": {
+                    "checked": {
                       "referenceMap": {
                         "1": {
                           "name": "V"
@@ -1273,7 +1273,7 @@
                   "when": {
                     "ruleActivated": {
                       "original": "variables.f",
-                      "checkedV2": {
+                      "checked": {
                         "referenceMap": {
                           "1": {
                             "name": "variables"
@@ -1324,7 +1324,7 @@
                 "condition": {
                   "expr": {
                     "original": "variables.h > constants.z",
-                    "checkedV2": {
+                    "checked": {
                       "referenceMap": {
                         "1": {
                           "name": "variables"
@@ -1426,7 +1426,7 @@
             "name": "a",
             "expr": {
               "original": "constants.a",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "constants"
@@ -1469,7 +1469,7 @@
             "name": "b",
             "expr": {
               "original": "C.b",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "C"
@@ -1512,7 +1512,7 @@
             "name": "ab",
             "expr": {
               "original": "V.a + V.b",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "V"
@@ -1603,7 +1603,7 @@
             "name": "c",
             "expr": {
               "original": "constants.c",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "constants"
@@ -1646,7 +1646,7 @@
             "name": "abc",
             "expr": {
               "original": "variables.ab + variables.c",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "variables"
@@ -1737,7 +1737,7 @@
             "name": "e",
             "expr": {
               "original": "constants.e",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "constants"
@@ -1780,7 +1780,7 @@
             "name": "abce",
             "expr": {
               "original": "variables.abc + variables.e",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "variables"
@@ -1871,7 +1871,7 @@
             "name": "f",
             "expr": {
               "original": "C.f",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "C"
@@ -1914,7 +1914,7 @@
             "name": "h",
             "expr": {
               "original": "C.h",
-              "checkedV2": {
+              "checked": {
                 "referenceMap": {
                   "1": {
                     "name": "C"

@@ -1067,7 +1067,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						if satisfiesCondition { //nolint:nestif
 							var outputExpr *exprpb.CheckedExpr
 							if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
-								outputExpr = row.EmitOutput.When.RuleActivated.CheckedV2
+								outputExpr = row.EmitOutput.When.RuleActivated.Checked
 							}
 
 							if outputExpr != nil {
@@ -1100,7 +1100,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								octx := rulectx.StartOutput(row.Name)
 								output := &enginev1.OutputEntry{
 									Src:    namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.CheckedV2, row.Params.Constants, variables),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
@@ -1288,7 +1288,7 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 	evalVars := make(map[string]any, len(variables))
 	for _, variable := range variables {
 		vctx := tctx.StartVariable(variable.Name, variable.Expr.Original)
-		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr.CheckedV2, constants, evalVars)
+		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr.Checked, constants, evalVars)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
@@ -1354,7 +1354,7 @@ func (ec *EvalContext) SatisfiesCondition(ctx context.Context, tctx tracer.Conte
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
 		ectx := tctx.StartExpr(t.Expr.Original)
-		val, err := ec.evaluateBoolCELExpr(ctx, t.Expr.CheckedV2, constants, variables)
+		val, err := ec.evaluateBoolCELExpr(ctx, t.Expr.Checked, constants, variables)
 		if err != nil {
 			ectx.ComputedBoolResult(false, err, "Failed to evaluate expression")
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
@@ -1993,6 +1993,6 @@ func migrate(rt *runtimev1.RuleTable) error {
 }
 
 func migrateFromCompilerVersion0To1(rt *runtimev1.RuleTable) error {
-	conditions.WalkExprs(rt, conditions.MigrateExprToCheckedV2)
+	conditions.WalkExprs(rt, conditions.MigrateVariablesType)
 	return nil
 }

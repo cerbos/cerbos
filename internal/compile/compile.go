@@ -625,6 +625,6 @@ func migrateFromCompilerVersion0To1(policies *runtimev1.RunnablePolicySet) error
 }
 
 func migrateFromCompilerVersion1To2(policies *runtimev1.RunnablePolicySet) error {
-	conditions.WalkExprs(policies, conditions.MigrateExprToCheckedV2)
+	conditions.WalkExprs(policies, conditions.MigrateVariablesType)
 	return nil
 }

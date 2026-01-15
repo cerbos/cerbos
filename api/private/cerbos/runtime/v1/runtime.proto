@@ -253,8 +253,7 @@ message RunnablePrincipalPolicySet {
 
 message Expr {
   string original = 1;
-  google.api.expr.v1alpha1.CheckedExpr checked = 2 [deprecated = true];
-  google.api.expr.v1alpha1.CheckedExpr checked_v2 = 3;
+  google.api.expr.v1alpha1.CheckedExpr checked = 2;
 }
 
 message Output {
