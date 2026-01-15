@@ -74,7 +74,7 @@ func GetExistingRedis(ctx context.Context, client Cmdable, namespace string) (*R
 
 	return &Redis{
 		db:       client,
-		nsKey:    namespace,
+		nsKey:    namespace + ":",
 		sentKey:  sentKey,
 		readOnly: true,
 	}, nil
@@ -185,11 +185,11 @@ type redisMap struct {
 	readOnly         bool
 }
 
-func newRedisMap(db Cmdable, namespace, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
+func newRedisMap(db Cmdable, nsKey, categoryKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *redisMap {
 	return &redisMap{
 		db:               db,
-		nsKey:            namespace + ":",
-		catKey:           namespace + ":" + categoryKey,
+		nsKey:            nsKey,
+		catKey:           nsKey + categoryKey,
 		sentKey:          sentKey,
 		sentinelDeadline: sentinelDeadline,
 		dataDeadline:     dataDeadline,
@@ -433,9 +433,9 @@ type RedisLiteralMap struct {
 	*redisMap
 }
 
-func newRedisLiteralMap(db Cmdable, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
+func newRedisLiteralMap(db Cmdable, nsKey, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisLiteralMap {
 	return &RedisLiteralMap{
-		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
+		redisMap: newRedisMap(db, nsKey, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
 }
 
@@ -443,9 +443,9 @@ type RedisGlobMap struct {
 	*redisMap
 }
 
-func newRedisGlobMap(db Cmdable, namespace, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
+func newRedisGlobMap(db Cmdable, nsKey, category, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisGlobMap {
 	return &RedisGlobMap{
-		redisMap: newRedisMap(db, namespace, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
+		redisMap: newRedisMap(db, nsKey, category, sentKey, readOnly, sentinelDeadline, dataDeadline),
 	}
 }
 
