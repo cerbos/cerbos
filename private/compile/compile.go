@@ -14,7 +14,6 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -128,7 +127,6 @@ func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMa
 					}
 				}
 			} else {
-				conditions.WalkExprs(artefact.PolicySet, conditions.MakeExprBackwardsCompatible)
 				log.Debug("Compilation succeeded")
 			}
 

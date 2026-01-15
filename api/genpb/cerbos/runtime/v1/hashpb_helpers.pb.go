@@ -169,11 +169,6 @@ func cerbos_runtime_v1_Expr_hashpb_sum(m *Expr, hasher hash.Hash, ignore map[str
 			google_api_expr_v1alpha1_CheckedExpr_hashpb_sum(m.GetChecked(), hasher, ignore)
 		}
 	}
-	if _, ok := ignore["cerbos.runtime.v1.Expr.checked_v2"]; !ok {
-		if m.GetCheckedV2() != nil {
-			google_api_expr_v1alpha1_CheckedExpr_hashpb_sum(m.GetCheckedV2(), hasher, ignore)
-		}
-	}
 }
 
 func cerbos_runtime_v1_IndexBuildErrors_Disabled_hashpb_sum(m *IndexBuildErrors_Disabled, hasher hash.Hash, ignore map[string]struct{}) {

@@ -185,7 +185,7 @@ func variableDefinitionPlaces(contexts []*variableCtx) []string {
 func (vd *variableDefinitions) resolveReferences() {
 	for referrerName, referrerID := range vd.ids {
 		referrer := vd.graph.Node(referrerID).(*variableNode) //nolint:forcetypeassert
-		constants, variables := vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.CheckedV2)
+		constants, variables := vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked)
 
 		for referencedConstName := range constants {
 			if !vd.modCtx.constants.IsDefined(referencedConstName) {
@@ -267,7 +267,7 @@ func (vd *variableDefinitions) use(id int64, name string) {
 	vd.used[name] = struct{}{}
 
 	node := vd.graph.Node(id).(*variableNode) //nolint:forcetypeassert
-	vd.modCtx.constants.Use(node.varCtx.path, node.Expr.CheckedV2)
+	vd.modCtx.constants.Use(node.varCtx.path, node.Expr.Checked)
 
 	references := vd.graph.To(id)
 	for references.Next() {
