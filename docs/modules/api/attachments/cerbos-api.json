@@ -1264,37 +1264,6 @@
       ],
       "default": "DRIVER_UNSPECIFIED"
     },
-    "DeleteOrDisableErrorBreaksScopeChainErrorDetails": {
-      "type": "object",
-      "properties": {
-        "descendants": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "DeleteOrDisableErrorReason": {
-      "type": "string",
-      "enum": [
-        "REASON_UNSPECIFIED",
-        "REASON_BREAKS_SCOPE_CHAIN",
-        "REASON_REQUIRED_BY_OTHER_POLICIES"
-      ],
-      "default": "REASON_UNSPECIFIED"
-    },
-    "DeleteOrDisableErrorRequiredByOtherPoliciesErrorDetails": {
-      "type": "object",
-      "properties": {
-        "dependents": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -1401,6 +1370,28 @@
         "KIND_UNKNOWN"
       ],
       "default": "KIND_UNSPECIFIED"
+    },
+    "IntegrityErrorsBreaksScopeChain": {
+      "type": "object",
+      "properties": {
+        "descendants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "IntegrityErrorsRequiredByOtherPolicies": {
+      "type": "object",
+      "properties": {
+        "dependents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "ListAuditLogEntriesRequestTimeRange": {
       "type": "object",
@@ -2390,21 +2381,6 @@
         }
       }
     },
-    "v1DeleteOrDisableError": {
-      "type": "object",
-      "properties": {
-        "reason": {
-          "$ref": "#/definitions/DeleteOrDisableErrorReason",
-          "description": "The reason why deleting or disabling the policy with policy_id didn't work."
-        },
-        "breaksScopeChainErrorDetails": {
-          "$ref": "#/definitions/DeleteOrDisableErrorBreaksScopeChainErrorDetails"
-        },
-        "requiredByOtherPoliciesErrorDetails": {
-          "$ref": "#/definitions/DeleteOrDisableErrorRequiredByOtherPoliciesErrorDetails"
-        }
-      }
-    },
     "v1DeletePolicyRequest": {
       "type": "object",
       "properties": {
@@ -2432,7 +2408,7 @@
         "errors": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/v1DeleteOrDisableError"
+            "$ref": "#/definitions/v1IntegrityErrors"
           }
         }
       },
@@ -2496,7 +2472,7 @@
         "errors": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/v1DeleteOrDisableError"
+            "$ref": "#/definitions/v1IntegrityErrors"
           }
         }
       },
@@ -2697,6 +2673,17 @@
         "used": {
           "type": "boolean",
           "description": "Whether the variable is used in a condition."
+        }
+      }
+    },
+    "v1IntegrityErrors": {
+      "type": "object",
+      "properties": {
+        "breaksScopeChain": {
+          "$ref": "#/definitions/IntegrityErrorsBreaksScopeChain"
+        },
+        "requiredByOtherPolicies": {
+          "$ref": "#/definitions/IntegrityErrorsRequiredByOtherPolicies"
         }
       }
     },

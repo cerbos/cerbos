@@ -2,22 +2,19 @@
   "$id": "https://api.cerbos.dev/cerbos/response/v1/DeletePolicyResponse.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.DeleteOrDisableError": {
+    "cerbos.response.v1.IntegrityErrors": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "breaksScopeChainErrorDetails": {
-          "$ref": "#/definitions/cerbos.response.v1.DeleteOrDisableError.BreaksScopeChainErrorDetails"
+        "breaksScopeChain": {
+          "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.BreaksScopeChain"
         },
-        "reason": {
-          "$ref": "#/definitions/cerbos.response.v1.DeleteOrDisableError.Reason"
-        },
-        "requiredByOtherPoliciesErrorDetails": {
-          "$ref": "#/definitions/cerbos.response.v1.DeleteOrDisableError.RequiredByOtherPoliciesErrorDetails"
+        "requiredByOtherPolicies": {
+          "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies"
         }
       }
     },
-    "cerbos.response.v1.DeleteOrDisableError.BreaksScopeChainErrorDetails": {
+    "cerbos.response.v1.IntegrityErrors.BreaksScopeChain": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -29,15 +26,7 @@
         }
       }
     },
-    "cerbos.response.v1.DeleteOrDisableError.Reason": {
-      "type": "string",
-      "enum": [
-        "REASON_UNSPECIFIED",
-        "REASON_BREAKS_SCOPE_CHAIN",
-        "REASON_REQUIRED_BY_OTHER_POLICIES"
-      ]
-    },
-    "cerbos.response.v1.DeleteOrDisableError.RequiredByOtherPoliciesErrorDetails": {
+    "cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -60,7 +49,7 @@
     "errors": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/cerbos.response.v1.DeleteOrDisableError"
+        "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors"
       }
     }
   }

@@ -1,19 +1,7 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/DisablePolicyResponse.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/IntegrityErrors.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "cerbos.response.v1.IntegrityErrors": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "breaksScopeChain": {
-          "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.BreaksScopeChain"
-        },
-        "requiredByOtherPolicies": {
-          "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies"
-        }
-      }
-    },
     "cerbos.response.v1.IntegrityErrors.BreaksScopeChain": {
       "type": "object",
       "additionalProperties": false,
@@ -42,15 +30,11 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "disabledPolicies": {
-      "type": "integer",
-      "minimum": 0
+    "breaksScopeChain": {
+      "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.BreaksScopeChain"
     },
-    "errors": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors"
-      }
+    "requiredByOtherPolicies": {
+      "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies"
     }
   }
 }

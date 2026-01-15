@@ -1,10 +1,10 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/response/v1/DeleteOrDisableError/BreaksScopeChainErrorDetails.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/IntegrityErrors/RequiredByOtherPolicies.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "descendants": {
+    "dependents": {
       "type": "array",
       "items": {
         "type": "string"
