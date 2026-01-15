@@ -31,7 +31,9 @@ clean:
     @ rm -rf {{ genpb_dir }}/cerbos {{ genmocks_dir }}  {{ json_schema_dir }} {{ openapi_dir }}
 
 compile:
-    @ CGO_ENABLED=0 go build ./... && CGO_ENABLED=0 go test -tags=e2e,tests,integration -run=ignore  ./... > /dev/null
+    @ CGO_ENABLED=0 go build ./...
+    @ CGO_ENABLED=0 go test -tags=e2e,tests,integration -run=ignore  ./... > /dev/null
+    @ GOOS=js GOARCH=wasm go build ./private/ruletable
 
 cover PKG='./...' TEST='.*': _cover
     #!/usr/bin/env bash

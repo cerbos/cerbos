@@ -10,6 +10,7 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/private/compile"
@@ -37,6 +38,8 @@ func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) 
 	if err := ruletable.LoadSchemas(ctx, rt, idx); err != nil {
 		return nil, fmt.Errorf("failed to load schemas: %w", err)
 	}
+
+	conditions.WalkExprs(rt, conditions.MakeExprBackwardsCompatible)
 
 	return rt, nil
 }

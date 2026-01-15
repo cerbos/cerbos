@@ -57,8 +57,8 @@ func Test_evaluateCondition(t *testing.T) {
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
 		require.NoError(t, err)
 		c := &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{
-			Original: expr,
-			Checked:  checkedExpr,
+			Original:  expr,
+			CheckedV2: checkedExpr,
 		}}}
 		return args{
 			expr:      expr,

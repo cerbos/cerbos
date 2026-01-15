@@ -24,7 +24,7 @@
                 "condition": {
                   "expr": {
                     "original": "request.resource.attr.dev_record == true",
-                    "checked": {
+                    "checkedV2": {
                       "referenceMap": {
                         "1": {
                           "name": "request"
@@ -122,7 +122,7 @@
                   "when": {
                     "ruleActivated": {
                       "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "2": {
                             "overloadId": [
@@ -275,5 +275,5 @@
       }
     ]
   },
-  "compilerVersion": 1
+  "compilerVersion": 2
 }

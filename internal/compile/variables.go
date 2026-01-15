@@ -121,10 +121,7 @@ func (vd *variableDefinitions) Compile(definitions map[string]string, path, sour
 
 		variable := &runtimev1.Variable{
 			Name: name,
-			Expr: &runtimev1.Expr{
-				Original: expr,
-				Checked:  compileCELExpr(vd.modCtx, varPath, expr, false),
-			},
+			Expr: compileCELExpr(vd.modCtx, varPath, expr, false),
 		}
 
 		vd.Add(variable, vd.modCtx.variableCtx(source, varPath))
@@ -188,7 +185,7 @@ func variableDefinitionPlaces(contexts []*variableCtx) []string {
 func (vd *variableDefinitions) resolveReferences() {
 	for referrerName, referrerID := range vd.ids {
 		referrer := vd.graph.Node(referrerID).(*variableNode) //nolint:forcetypeassert
-		constants, variables := vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.Checked)
+		constants, variables := vd.references(fmt.Sprintf("variable '%s'", referrerName), referrer.Expr.CheckedV2)
 
 		for referencedConstName := range constants {
 			if !vd.modCtx.constants.IsDefined(referencedConstName) {
@@ -270,7 +267,7 @@ func (vd *variableDefinitions) use(id int64, name string) {
 	vd.used[name] = struct{}{}
 
 	node := vd.graph.Node(id).(*variableNode) //nolint:forcetypeassert
-	vd.modCtx.constants.Use(node.varCtx.path, node.Expr.Checked)
+	vd.modCtx.constants.Use(node.varCtx.path, node.Expr.CheckedV2)
 
 	references := vd.graph.To(id)
 	for references.Next() {

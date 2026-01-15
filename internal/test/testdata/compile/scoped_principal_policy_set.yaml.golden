@@ -70,7 +70,7 @@
                 "condition": {
                   "expr": {
                     "original": "request.resource.attr.dev_record == true",
-                    "checked": {
+                    "checkedV2": {
                       "referenceMap": {
                         "1": {
                           "name": "request"
@@ -195,5 +195,5 @@
       }
     ]
   },
-  "compilerVersion": 1
+  "compilerVersion": 2
 }

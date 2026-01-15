@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -42,7 +41,7 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 
 	switch t := match.Op.(type) {
 	case *policyv1.Match_Expr:
-		expr := &runtimev1.Expr{Original: t.Expr, Checked: compileCELExpr(modCtx, path+".expr", t.Expr, markReferencedConstantsAndVariablesAsUsed)}
+		expr := compileCELExpr(modCtx, path+".expr", t.Expr, markReferencedConstantsAndVariablesAsUsed)
 		return &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: expr}}
 	case *policyv1.Match_All:
 		exprList := compileMatchList(modCtx, path+".all.of", t.All.Of, markReferencedConstantsAndVariablesAsUsed)
@@ -59,7 +58,7 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 	}
 }
 
-func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstantsAndVariablesAsUsed bool) *exprpb.CheckedExpr {
+func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstantsAndVariablesAsUsed bool) *runtimev1.Expr {
 	celAST, issues := conditions.StdEnv.Compile(expr)
 	if issues != nil && issues.Err() != nil {
 		errList := make([]string, len(issues.Errors()))
@@ -81,7 +80,10 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstant
 		modCtx.variables.Use(path, checkedExpr)
 	}
 
-	return checkedExpr
+	return &runtimev1.Expr{
+		Original:  expr,
+		CheckedV2: checkedExpr,
+	}
 }
 
 func compileMatchList(modCtx *moduleCtx, path string, matches []*policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition_ExprList {

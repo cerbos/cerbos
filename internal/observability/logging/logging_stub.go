@@ -26,13 +26,17 @@ func (*Logger) Warnw(string, ...any)  {}
 func (*Logger) Info(...any)           {}
 
 func String(string, string) any {
-	return struct{}{}
+	return nil
 }
 
 func Strings(string, []string) any {
-	return struct{}{}
+	return nil
 }
 
-func Error(err error) any {
-	return struct{}{}
+func Error(error) any {
+	return nil
+}
+
+func Uint32(string, uint32) any {
+	return nil
 }

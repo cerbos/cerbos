@@ -43,7 +43,7 @@
                   {
                     "expr": {
                       "original": "request.resource.attr.geography == request.principal.attr.geography",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "1": {
                             "name": "request"
@@ -179,7 +179,7 @@
                   {
                     "expr": {
                       "original": "request.resource.attr.geography == request.principal.attr.managed_geographies",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "1": {
                             "name": "request"
@@ -333,7 +333,7 @@
             "condition": {
               "expr": {
                 "original": "request.resource.attr.status == \"PENDING_APPROVAL\"",
-                "checked": {
+                "checkedV2": {
                   "referenceMap": {
                     "1": {
                       "name": "request"
@@ -469,7 +469,7 @@
                   {
                     "expr": {
                       "original": "request.resource.attr.geography == request.principal.attr.geography",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "1": {
                             "name": "request"
@@ -605,7 +605,7 @@
                   {
                     "expr": {
                       "original": "request.resource.attr.geography == request.principal.attr.managed_geographies",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "1": {
                             "name": "request"
@@ -751,7 +751,7 @@
             "condition": {
               "expr": {
                 "original": "R.attr.owner == P.id",
-                "checked": {
+                "checkedV2": {
                   "referenceMap": {
                     "1": {
                       "name": "R"
@@ -893,7 +893,7 @@
             "condition": {
               "expr": {
                 "original": "request.resource.attr.status == \"PENDING_APPROVAL\"",
-                "checked": {
+                "checkedV2": {
                   "referenceMap": {
                     "1": {
                       "name": "request"
@@ -1032,5 +1032,5 @@
       }
     }
   },
-  "compilerVersion": 1
+  "compilerVersion": 2
 }

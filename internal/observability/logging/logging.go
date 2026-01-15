@@ -45,6 +45,7 @@ var (
 	String  = zap.String
 	Strings = zap.Strings
 	Error   = zap.Error
+	Uint32  = zap.Uint32
 )
 
 // InitLogging initializes the global logger.

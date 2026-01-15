@@ -34,7 +34,7 @@
                   {
                     "expr": {
                       "original": "request.resource.attr.geography == request.principal.attr.geography",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "1": {
                             "name": "request"
@@ -170,7 +170,7 @@
                   {
                     "expr": {
                       "original": "request.resource.attr.geography == request.principal.attr.managed_geographies",
-                      "checked": {
+                      "checkedV2": {
                         "referenceMap": {
                           "1": {
                             "name": "request"
@@ -316,7 +316,7 @@
             "condition": {
               "expr": {
                 "original": "R.attr.owner == P.id",
-                "checked": {
+                "checkedV2": {
                   "referenceMap": {
                     "1": {
                       "name": "R"
@@ -429,7 +429,7 @@
               "when": {
                 "ruleActivated": {
                   "original": "\"wildcard:%s\".format([request.principal.id])",
-                  "checked": {
+                  "checkedV2": {
                     "referenceMap": {
                       "2": {
                         "overloadId": [
@@ -521,7 +521,7 @@
                 },
                 "conditionNotMet": {
                   "original": "\"condition_not_met:wildcard:%s\".format([request.principal.id])",
-                  "checked": {
+                  "checkedV2": {
                     "referenceMap": {
                       "2": {
                         "overloadId": [
@@ -627,7 +627,7 @@
               "when": {
                 "ruleActivated": {
                   "original": "\"create:%s\".format([request.principal.id])",
-                  "checked": {
+                  "checkedV2": {
                     "referenceMap": {
                       "2": {
                         "overloadId": [
@@ -734,7 +734,7 @@
               "when": {
                 "conditionNotMet": {
                   "original": "\"something_arbitrary\"",
-                  "checked": {
+                  "checkedV2": {
                     "typeMap": {
                       "1": {
                         "primitive": "STRING"
@@ -781,7 +781,7 @@
             "condition": {
               "expr": {
                 "original": "// Comment\nrequest.resource.attr.status == \"PENDING_APPROVAL\"",
-                "checked": {
+                "checkedV2": {
                   "referenceMap": {
                     "1": {
                       "name": "request"
@@ -880,7 +880,7 @@
               "when": {
                 "ruleActivated": {
                   "original": "\"pending_approval:%s\".format([request.resource.attr.status == \"PENDING_APPROVAL\"])",
-                  "checked": {
+                  "checkedV2": {
                     "referenceMap": {
                       "2": {
                         "overloadId": [
@@ -1038,5 +1038,5 @@
       }
     }
   },
-  "compilerVersion": 1
+  "compilerVersion": 2
 }

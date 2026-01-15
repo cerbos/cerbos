@@ -88,6 +88,7 @@ message RuleTable {
   map<uint64, PolicyDerivedRoles> policy_derived_roles = 5;
   map<string, JSONSchema> json_schemas = 6;
   Manifest manifest = 7;
+  uint32 compiler_version = 8;
 }
 
 message RuleTableMetadata {
@@ -252,7 +253,8 @@ message RunnablePrincipalPolicySet {
 
 message Expr {
   string original = 1;
-  google.api.expr.v1alpha1.CheckedExpr checked = 2;
+  google.api.expr.v1alpha1.CheckedExpr checked = 2 [deprecated = true];
+  google.api.expr.v1alpha1.CheckedExpr checked_v2 = 3;
 }
 
 message Output {
