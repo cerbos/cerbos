@@ -172,7 +172,7 @@ func (r *Redis) resolveIter(ctx context.Context, rows iter.Seq[*Row]) (iter.Seq[
 
 func (r *Redis) rowKey(sum uint64) string {
 	// value is the serialised row
-	return r.nsKey + strconv.FormatUint(sum ,10) 
+	return r.nsKey + strconv.FormatUint(sum, 10)
 }
 
 type redisMap struct {
@@ -222,7 +222,7 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 
 func (rm *redisMap) rowKey(sum uint64) string {
 	// value is the serialised row
-	return fmt.Sprintf("%s:%d", rm.nsKey, sum)
+	return rm.nsKey + ":" + strconv.FormatUint(sum, 10)
 }
 
 func (rm *redisMap) sumFromRowKey(key string) uint64 {
