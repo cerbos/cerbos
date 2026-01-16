@@ -111,6 +111,14 @@ func (gm *GlobMap[T]) Len() int {
 	return len(gm.literals) + len(gm.globs)
 }
 
+// Clear resets the map for reuse, preserving compiled globs to avoid re-fetching from global cache.
+func (gm *GlobMap[T]) Clear() {
+	clear(gm.literals)
+	clear(gm.globs)
+	clear(gm.matchCache)
+	// Keep gm.compiled - same patterns likely to be reused
+}
+
 func (gm *GlobMap[T]) Set(k string, v T) {
 	if strings.ContainsRune(k, wildcardAny) {
 		if _, exists := gm.globs[k]; !exists {
