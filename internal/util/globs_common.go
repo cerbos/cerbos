@@ -126,9 +126,11 @@ func (gm *GlobMap[T]) Clear() {
 func (gm *GlobMap[T]) Set(k string, v T) {
 	if strings.ContainsRune(k, wildcardAny) {
 		if _, exists := gm.globs[k]; !exists {
-			if g := globs.getOrCompile(fixGlob(k)); g != nil {
-				gm.compiled[k] = g
+			g := globs.getOrCompile(fixGlob(k))
+			if g == nil {
+				return // invalid glob pattern, skip, the error is logged by the callee
 			}
+			gm.compiled[k] = g
 			gm.cacheMu.Lock()
 			clear(gm.matchCache)
 			gm.cacheMu.Unlock()
