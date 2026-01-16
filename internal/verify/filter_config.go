@@ -44,6 +44,20 @@ func toFilterDimension(s string) FilterDimension {
 	return FilterDimension(strings.TrimSpace(strings.ToLower(s)))
 }
 
+func parseDimension(s string) (FilterDimension, []string, error) {
+	parts := strings.SplitN(s, "=", expectedKeyValueParts)
+	if len(parts) != expectedKeyValueParts {
+		return "", nil, fmt.Errorf("invalid filter dimension format %q: expected 'dimension=glob1,glob2'", s)
+	}
+	name := toFilterDimension(parts[0])
+	if _, ok := validDimensions[name]; !ok {
+		return "", nil, fmt.Errorf("unknown filter dimension %q: valid dimensions are test, principal, resource, action", parts[0])
+	}
+	globs := parseGlobs(parts[1])
+
+	return name, globs, nil
+}
+
 // ParseFilterConfig parses a filter string in the format:
 // "test=glob1,glob2;principal=glob3;resource=glob4;action=glob5"
 func ParseFilterConfig(filter string) (*FilterConfig, error) {
@@ -53,25 +67,16 @@ func ParseFilterConfig(filter string) (*FilterConfig, error) {
 	}
 
 	fc := &FilterConfig{}
-	dimensions := strings.SplitSeq(filter, ";")
 
-	for dim := range dimensions {
-		dim = strings.TrimSpace(dim)
-		if dim == "" {
+	for dimension := range strings.SplitSeq(filter, ";") {
+		dimension = strings.TrimSpace(dimension)
+		if dimension == "" {
 			continue
 		}
-
-		parts := strings.SplitN(dim, "=", expectedKeyValueParts)
-		if len(parts) != expectedKeyValueParts {
-			return nil, fmt.Errorf("invalid filter dimension format %q: expected 'dimension=glob1,glob2'", dim)
+		name, globs, err := parseDimension(dimension)
+		if err != nil {
+			return nil, err
 		}
-
-		name := toFilterDimension(parts[0])
-		if _, ok := validDimensions[name]; !ok {
-			return nil, fmt.Errorf("unknown filter dimension %q: valid dimensions are test, principal, resource, action", parts[0])
-		}
-
-		globs := parseGlobs(parts[1])
 		if len(globs) == 0 {
 			continue
 		}
