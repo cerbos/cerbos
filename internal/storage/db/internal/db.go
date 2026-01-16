@@ -618,7 +618,7 @@ func (s *dbStorage) getDependentsWithNames(ctx context.Context, tx *goqu.TxDatab
 	//  policy.version
 	//  policy.scope
 	// FROM policy_dependency
-	// JOIN policy ON (policy.id = policy_dependency.policy_id)
+	// JOIN policy ON (policy.id = policy_dependency.policy_id AND policy.disabled = false)
 	// WHERE policy_dependency.dependency_id IN (?)
 	directDependentsQuery := tx.
 		Select(
@@ -634,6 +634,7 @@ func (s *dbStorage) getDependentsWithNames(ctx context.Context, tx *goqu.TxDatab
 			goqu.T(PolicyTbl),
 			goqu.On(
 				goqu.T(PolicyTbl).Col(PolicyTblIDCol).Eq(goqu.T(PolicyDepTbl).Col(PolicyDepTblPolicyIDCol)),
+				goqu.T(PolicyTbl).Col(PolicyTblDisabledCol).Eq(goqu.V(false)),
 			),
 		).
 		Where(goqu.T(PolicyDepTbl).Col(PolicyDepTblDepIDCol).In(ids))
@@ -971,6 +972,11 @@ func (s *dbStorage) writeBreaksScopeChainErrors(
 
 	for mID, policyKey := range mIDPolicyKey {
 		if descs, ok := descendants[mID]; ok && len(descs) > 0 {
+			// we are not breaking the chain if the request includes all the descendants.
+			if s.hasAllPolicies(mIDPolicyKey, descs) {
+				continue
+			}
+
 			if out[policyKey] == nil {
 				out[policyKey] = &responsev1.IntegrityErrors{}
 			}
@@ -1001,6 +1007,11 @@ func (s *dbStorage) writeRequiredByOtherPoliciesErrors(
 				return fmt.Errorf("failed to find policy key for policy %s", mID.String())
 			}
 
+			// we are not breaking the dependents if the request includes all the dependents.
+			if s.hasAllPolicies(mIDPolicyKey, deps) {
+				continue
+			}
+
 			if out[policyKey] == nil {
 				out[policyKey] = &responsev1.IntegrityErrors{}
 			}
@@ -1016,6 +1027,18 @@ func (s *dbStorage) writeRequiredByOtherPoliciesErrors(
 	}
 
 	return nil
+}
+
+// hasAllPolicies checks if mIDPolicyKey includes all the elements from the policies slice.
+// Policies slice could be a list of descendants or dependents issued to be deleted or disabled.
+func (s *dbStorage) hasAllPolicies(mIDPolicyKey map[namer.ModuleID]string, policies []namer.Policy) bool {
+	for _, pol := range policies {
+		if _, ok := mIDPolicyKey[pol.ID]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (s *dbStorage) InspectPolicies(ctx context.Context, listParams storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {
