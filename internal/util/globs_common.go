@@ -6,6 +6,7 @@ package util
 import (
 	"maps"
 	"strings"
+	"sync"
 
 	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/gobwas/glob"
@@ -90,6 +91,7 @@ type GlobMap[T any] struct {
 	globs      map[string]T
 	compiled   map[string]glob.Glob // to avoid sync overhead store local refs to globally compiled globs.
 	matchCache map[string][]string  // cache: lookup key -> matching glob patterns
+	cacheMu    sync.RWMutex         // protects matchCache
 }
 
 func NewGlobMap[T any](m map[string]T) *GlobMap[T] {
@@ -115,7 +117,9 @@ func (gm *GlobMap[T]) Len() int {
 func (gm *GlobMap[T]) Clear() {
 	clear(gm.literals)
 	clear(gm.globs)
+	gm.cacheMu.Lock()
 	clear(gm.matchCache)
+	gm.cacheMu.Unlock()
 	// Keep gm.compiled - same patterns likely to be reused
 }
 
@@ -125,7 +129,9 @@ func (gm *GlobMap[T]) Set(k string, v T) {
 			if g := globs.getOrCompile(fixGlob(k)); g != nil {
 				gm.compiled[k] = g
 			}
+			gm.cacheMu.Lock()
 			clear(gm.matchCache)
+			gm.cacheMu.Unlock()
 		}
 		gm.globs[k] = v
 	} else {
@@ -218,9 +224,12 @@ func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 
 // getMatchingGlobs returns all glob patterns that match the given key, using cache.
 func (gm *GlobMap[T]) getMatchingGlobs(k string) []string {
+	gm.cacheMu.RLock()
 	if cached, ok := gm.matchCache[k]; ok {
+		gm.cacheMu.RUnlock()
 		return cached
 	}
+	gm.cacheMu.RUnlock()
 
 	var matches []string
 	for pattern, compiled := range gm.compiled {
@@ -229,6 +238,13 @@ func (gm *GlobMap[T]) getMatchingGlobs(k string) []string {
 		}
 	}
 
+	gm.cacheMu.Lock()
+	if cached, ok := gm.matchCache[k]; ok {
+		gm.cacheMu.Unlock()
+		return cached
+	}
 	gm.matchCache[k] = matches
+	gm.cacheMu.Unlock()
+
 	return matches
 }
