@@ -20,19 +20,27 @@ type globCache struct {
 }
 
 func (gc *globCache) matches(globExpr, val string) bool {
+	g := gc.getOrCompile(globExpr)
+	if g == nil {
+		return false
+	}
+	return g.Match(val)
+}
+
+func (gc *globCache) getOrCompile(globExpr string) glob.Glob {
 	cachedGlob, ok := gc.cache.Get(globExpr)
 	if ok {
-		return cachedGlob.Match(val)
+		return cachedGlob
 	}
 
 	g, err := glob.Compile(globExpr, ':')
 	if err != nil {
 		logError(globExpr, err)
-		return false
+		return nil
 	}
 
 	gc.cache.Set(globExpr, g)
-	return g.Match(val)
+	return g
 }
 
 // MatchesGlob returns true if the given glob expression matches the given string.
@@ -78,22 +86,22 @@ func fixGlob(g string) string {
 }
 
 type GlobMap[T any] struct {
-	literals map[string]T
-	globs    map[string]T
+	literals   map[string]T
+	globs      map[string]T
+	compiled   map[string]glob.Glob // to avoid sync overhead store local refs to globally compiled globs.
+	matchCache map[string][]string  // cache: lookup key -> matching glob patterns
 }
 
 func NewGlobMap[T any](m map[string]T) *GlobMap[T] {
 	gm := &GlobMap[T]{
-		literals: make(map[string]T),
-		globs:    make(map[string]T),
+		literals:   make(map[string]T),
+		globs:      make(map[string]T),
+		compiled:   make(map[string]glob.Glob),
+		matchCache: make(map[string][]string),
 	}
 
 	for k, v := range m {
-		if strings.ContainsRune(k, wildcardAny) {
-			gm.globs[k] = v
-		} else {
-			gm.literals[k] = v
-		}
+		gm.Set(k, v)
 	}
 
 	return gm
@@ -105,6 +113,12 @@ func (gm *GlobMap[T]) Len() int {
 
 func (gm *GlobMap[T]) Set(k string, v T) {
 	if strings.ContainsRune(k, wildcardAny) {
+		if _, exists := gm.globs[k]; !exists {
+			if g := globs.getOrCompile(fixGlob(k)); g != nil {
+				gm.compiled[k] = g
+			}
+			clear(gm.matchCache)
+		}
 		gm.globs[k] = v
 	} else {
 		gm.literals[k] = v
@@ -116,10 +130,9 @@ func (gm *GlobMap[T]) Get(k string) (T, bool) {
 		return v, true
 	}
 
-	for g, v := range gm.globs {
-		if MatchesGlob(g, k) {
-			return v, true
-		}
+	matches := gm.getMatchingGlobs(k)
+	if len(matches) > 0 {
+		return gm.globs[matches[0]], true
 	}
 
 	var zero T
@@ -141,7 +154,11 @@ func (gm *GlobMap[T]) GetWithLiteral(k string) (T, bool) {
 
 func (gm *GlobMap[T]) DeleteLiteral(k string) {
 	delete(gm.literals, k)
-	delete(gm.globs, k)
+	if _, hadGlob := gm.globs[k]; hadGlob {
+		delete(gm.globs, k)
+		delete(gm.compiled, k)
+		clear(gm.matchCache)
+	}
 }
 
 func (gm *GlobMap[T]) GetAll() map[string]T {
@@ -177,41 +194,33 @@ func (gm *GlobMap[T]) GetMerged(k string) map[string]T {
 		return make(map[string]T)
 	}
 
-	// Slow path: need to check all globs
-	merged := make(map[string]any)
+	// Slow path
+	matches := gm.getMatchingGlobs(k)
 
+	res := make(map[string]T, len(matches)+1)
 	if v, ok := gm.literals[k]; ok {
-		merged = map[string]any{k: v}
+		res[k] = v
 	}
-
-	for g, v := range gm.globs {
-		if MatchesGlob(g, k) {
-			merged = mergeMaps(merged, map[string]any{g: v})
-		}
-	}
-
-	res := make(map[string]T)
-	for key, val := range merged {
-		if typedVal, ok := val.(T); ok {
-			res[key] = typedVal
-		}
+	for _, pattern := range matches {
+		res[pattern] = gm.globs[pattern]
 	}
 
 	return res
 }
 
-// mergeMaps recursively merges the values of key collisions between two maps.
-func mergeMaps(m1, m2 map[string]any) map[string]any {
-	for k, v2 := range m2 {
-		if v1, ok := m1[k]; ok {
-			if sub1, ok1 := v1.(map[string]any); ok1 {
-				if sub2, ok2 := v2.(map[string]any); ok2 {
-					m1[k] = mergeMaps(sub1, sub2)
-					continue
-				}
-			}
-		}
-		m1[k] = v2
+// getMatchingGlobs returns all glob patterns that match the given key, using cache.
+func (gm *GlobMap[T]) getMatchingGlobs(k string) []string {
+	if cached, ok := gm.matchCache[k]; ok {
+		return cached
 	}
-	return m1
+
+	var matches []string
+	for pattern, compiled := range gm.compiled {
+		if compiled.Match(k) {
+			matches = append(matches, pattern)
+		}
+	}
+
+	gm.matchCache[k] = matches
+	return matches
 }
