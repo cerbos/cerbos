@@ -6,7 +6,6 @@
 package db
 
 import (
-	"fmt"
 	"strings"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -30,15 +29,19 @@ func (e *IntegrityErr) Error() string {
 		}
 	}
 
-	if len(policiesBreakingScopeChain) > 0 && len(policiesRequiredByOtherPolicies) > 0 {
-		return fmt.Sprintf(
-			"removing the scoped policies [%s] will break the scope chain(s) and removing the policies [%s] will break the dependent policies",
-			strings.Join(policiesBreakingScopeChain, ", "),
-			strings.Join(policiesRequiredByOtherPolicies, ", "),
-		)
-	} else if len(policiesBreakingScopeChain) != 0 {
-		return fmt.Sprintf("removing the following scoped policies will break the scope chain: %s", strings.Join(policiesBreakingScopeChain, ", "))
+	sb := new(strings.Builder)
+	sb.WriteString("cannot perform delete operation")
+	if len(policiesBreakingScopeChain) > 0 {
+		sb.WriteString(": breaks scope chains [")
+		sb.WriteString(strings.Join(policiesBreakingScopeChain, ","))
+		sb.WriteString("]")
 	}
 
-	return fmt.Sprintf("removing the following policies will break the dependent policies: %s", strings.Join(policiesRequiredByOtherPolicies, ", "))
+	if len(policiesRequiredByOtherPolicies) > 0 {
+		sb.WriteString(": required by other policies [")
+		sb.WriteString(strings.Join(policiesRequiredByOtherPolicies, ","))
+		sb.WriteString("]")
+	}
+
+	return sb.String()
 }
