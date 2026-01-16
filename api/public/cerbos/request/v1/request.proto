@@ -619,6 +619,7 @@ message DeletePolicyRequest {
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
+      max_items: 20
       items: {
         string: {min_len: 1}
       }
@@ -640,6 +641,7 @@ message DisablePolicyRequest {
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
+      max_items: 20
       items: {
         string: {min_len: 1}
       }
