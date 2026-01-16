@@ -41,7 +41,7 @@ const file_cerbos_svc_v1_svc_proto_rawDesc = "" +
 	"\x0eCheckResources\x12(.cerbos.request.v1.CheckResourcesRequest\x1a*.cerbos.response.v1.CheckResourcesResponse\"\x87\x01\x92Ae\x12\x0fCheck resources\x1aRCheck a principal's permissions to a batch of heterogeneous resources and actions.\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/check/resources\x12\xc5\x01\n" +
 	"\n" +
 	"ServerInfo\x12$.cerbos.request.v1.ServerInfoRequest\x1a&.cerbos.response.v1.ServerInfoResponse\"i\x92AN\x12\x16Get server information\x1a4Get information about the server e.g. server version\x82\xd3\xe4\x93\x02\x12\x12\x10/api/server_info\x12\x83\x02\n" +
-	"\rPlanResources\x12'.cerbos.request.v1.PlanResourcesRequest\x1a).cerbos.response.v1.PlanResourcesResponse\"\x9d\x01\x92A|\x12\x0ePlan resources\x1ajProduce a query plan with conditions that must be satisfied for accessing a set of instances of a resource\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/plan/resources\x1a!\x92A\x1e\x12\x1cCerbos Policy Decision Point2\xb7\x12\n" +
+	"\rPlanResources\x12'.cerbos.request.v1.PlanResourcesRequest\x1a).cerbos.response.v1.PlanResourcesResponse\"\x9d\x01\x92A|\x12\x0ePlan resources\x1ajProduce a query plan with conditions that must be satisfied for accessing a set of instances of a resource\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/plan/resources\x1a!\x92A\x1e\x12\x1cCerbos Policy Decision Point2\x9c\x12\n" +
 	"\x12CerbosAdminService\x12\xc9\x01\n" +
 	"\x11AddOrUpdatePolicy\x12+.cerbos.request.v1.AddOrUpdatePolicyRequest\x1a-.cerbos.response.v1.AddOrUpdatePolicyResponse\"X\x92A)\x12\x16Add or update policiesb\x0f\n" +
 	"\r\n" +
@@ -55,10 +55,10 @@ const file_cerbos_svc_v1_svc_proto_rawDesc = "" +
 	"\tGetPolicy\x12#.cerbos.request.v1.GetPolicyRequest\x1a%.cerbos.response.v1.GetPolicyResponse\"5\x92A\x1d\x12\n" +
 	"Get policyb\x0f\n" +
 	"\r\n" +
-	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/admin/policy\x12\xcd\x01\n" +
-	"\fDeletePolicy\x12&.cerbos.request.v1.DeletePolicyRequest\x1a(.cerbos.response.v1.DeletePolicyResponse\"k\x92A \x12\rDelete policyb\x0f\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/admin/policy\x12\xb2\x01\n" +
+	"\fDeletePolicy\x12&.cerbos.request.v1.DeletePolicyRequest\x1a(.cerbos.response.v1.DeletePolicyResponse\"P\x92A \x12\rDelete policyb\x0f\n" +
 	"\r\n" +
-	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02BZ\x19:\x01*\x1a\x14/admin/policy/deleteZ\x0f*\r/admin/policy\"\x14/admin/policy/delete\x12\xc2\x01\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02'Z\x0f*\r/admin/policy\"\x14/admin/policy/delete\x12\xc2\x01\n" +
 	"\rDisablePolicy\x12'.cerbos.request.v1.DisablePolicyRequest\x1a).cerbos.response.v1.DisablePolicyResponse\"]\x92A!\x12\x0eDisable policyb\x0f\n" +
 	"\r\n" +
 	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x023Z\x1a:\x01*\x1a\x15/admin/policy/disable\"\x15/admin/policy/disable\x12\xbc\x01\n" +

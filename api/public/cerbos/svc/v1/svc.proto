@@ -158,10 +158,6 @@ service CerbosAdminService {
   rpc DeletePolicy(cerbos.request.v1.DeletePolicyRequest) returns (cerbos.response.v1.DeletePolicyResponse) {
     option (google.api.http) = {
       post: "/admin/policy/delete"
-      additional_bindings: {
-        put: "/admin/policy/delete"
-        body: "*"
-      }
       additional_bindings: {delete: "/admin/policy"}
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

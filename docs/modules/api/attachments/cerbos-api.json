@@ -299,7 +299,7 @@
       },
       "delete": {
         "summary": "Delete policy",
-        "operationId": "CerbosAdminService_DeletePolicy3",
+        "operationId": "CerbosAdminService_DeletePolicy2",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -440,43 +440,6 @@
               "type": "string"
             },
             "collectionFormat": "multi"
-          }
-        ],
-        "tags": [
-          "CerbosAdminService"
-        ],
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ]
-      },
-      "put": {
-        "summary": "Delete policy",
-        "operationId": "CerbosAdminService_DeletePolicy2",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1DeletePolicyResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "description": "Delete policy request",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/v1DeletePolicyRequest"
-            }
           }
         ],
         "tags": [
@@ -2358,23 +2321,6 @@
           "type": "string"
         }
       }
-    },
-    "v1DeletePolicyRequest": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "array",
-          "example": "principal.sarah.vdefault",
-          "items": {
-            "type": "string"
-          },
-          "description": "Unique identifier for the policy"
-        }
-      },
-      "description": "Delete policy request",
-      "required": [
-        "id"
-      ]
     },
     "v1DeletePolicyResponse": {
       "type": "object",
