@@ -3,20 +3,23 @@
 apiVersion: api.cerbos.dev/v1
 derivedRoles:
   name: runtime_effective_derived_roles
+  variables:
+    local:
+      tautology: runtime.effectiveDerivedRoles == [] && runtime.effective_derived_roles == []
   definitions:
     - name: one
       parentRoles:
         - user
       condition:
         match:
-          expr: R.attr.one
+          expr: R.attr.one && V.tautology
 
     - name: two
       parentRoles:
         - user
       condition:
         match:
-          expr: R.attr.two
+          expr: R.attr.two && V.tautology
 
     - name: three
       parentRoles:
@@ -30,6 +33,7 @@ derivedRoles:
                   of:
                     - expr: R.attr.trois
                     - expr: R.attr.tres
+              - expr: V.tautology
 
     - name: not_referenced
       parentRoles:
