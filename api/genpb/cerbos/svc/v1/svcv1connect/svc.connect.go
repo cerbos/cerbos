@@ -96,6 +96,9 @@ const (
 	// CerbosAdminServiceReloadStoreProcedure is the fully-qualified name of the CerbosAdminService's
 	// ReloadStore RPC.
 	CerbosAdminServiceReloadStoreProcedure = "/cerbos.svc.v1.CerbosAdminService/ReloadStore"
+	// CerbosAdminServicePurgeStoreRevisionsProcedure is the fully-qualified name of the
+	// CerbosAdminService's PurgeStoreRevisions RPC.
+	CerbosAdminServicePurgeStoreRevisionsProcedure = "/cerbos.svc.v1.CerbosAdminService/PurgeStoreRevisions"
 	// CerbosPlaygroundServicePlaygroundValidateProcedure is the fully-qualified name of the
 	// CerbosPlaygroundService's PlaygroundValidate RPC.
 	CerbosPlaygroundServicePlaygroundValidateProcedure = "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"
@@ -299,6 +302,7 @@ type CerbosAdminServiceClient interface {
 	GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error)
 	DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error)
 	ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error)
+	PurgeStoreRevisions(context.Context, *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error)
 }
 
 // NewCerbosAdminServiceClient constructs a client for the cerbos.svc.v1.CerbosAdminService service.
@@ -390,6 +394,12 @@ func NewCerbosAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(cerbosAdminServiceMethods.ByName("ReloadStore")),
 			connect.WithClientOptions(opts...),
 		),
+		purgeStoreRevisions: connect.NewClient[v1.PurgeStoreRevisionsRequest, v11.PurgeStoreRevisionsResponse](
+			httpClient,
+			baseURL+CerbosAdminServicePurgeStoreRevisionsProcedure,
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("PurgeStoreRevisions")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -408,6 +418,7 @@ type cerbosAdminServiceClient struct {
 	getSchema           *connect.Client[v1.GetSchemaRequest, v11.GetSchemaResponse]
 	deleteSchema        *connect.Client[v1.DeleteSchemaRequest, v11.DeleteSchemaResponse]
 	reloadStore         *connect.Client[v1.ReloadStoreRequest, v11.ReloadStoreResponse]
+	purgeStoreRevisions *connect.Client[v1.PurgeStoreRevisionsRequest, v11.PurgeStoreRevisionsResponse]
 }
 
 // AddOrUpdatePolicy calls cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy.
@@ -475,6 +486,11 @@ func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, req *connect
 	return c.reloadStore.CallUnary(ctx, req)
 }
 
+// PurgeStoreRevisions calls cerbos.svc.v1.CerbosAdminService.PurgeStoreRevisions.
+func (c *cerbosAdminServiceClient) PurgeStoreRevisions(ctx context.Context, req *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error) {
+	return c.purgeStoreRevisions.CallUnary(ctx, req)
+}
+
 // CerbosAdminServiceHandler is an implementation of the cerbos.svc.v1.CerbosAdminService service.
 type CerbosAdminServiceHandler interface {
 	AddOrUpdatePolicy(context.Context, *connect.Request[v1.AddOrUpdatePolicyRequest]) (*connect.Response[v11.AddOrUpdatePolicyResponse], error)
@@ -490,6 +506,7 @@ type CerbosAdminServiceHandler interface {
 	GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error)
 	DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error)
 	ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error)
+	PurgeStoreRevisions(context.Context, *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error)
 }
 
 // NewCerbosAdminServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -577,6 +594,12 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 		connect.WithSchema(cerbosAdminServiceMethods.ByName("ReloadStore")),
 		connect.WithHandlerOptions(opts...),
 	)
+	cerbosAdminServicePurgeStoreRevisionsHandler := connect.NewUnaryHandler(
+		CerbosAdminServicePurgeStoreRevisionsProcedure,
+		svc.PurgeStoreRevisions,
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("PurgeStoreRevisions")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cerbos.svc.v1.CerbosAdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CerbosAdminServiceAddOrUpdatePolicyProcedure:
@@ -605,6 +628,8 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 			cerbosAdminServiceDeleteSchemaHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceReloadStoreProcedure:
 			cerbosAdminServiceReloadStoreHandler.ServeHTTP(w, r)
+		case CerbosAdminServicePurgeStoreRevisionsProcedure:
+			cerbosAdminServicePurgeStoreRevisionsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -664,6 +689,10 @@ func (UnimplementedCerbosAdminServiceHandler) DeleteSchema(context.Context, *con
 
 func (UnimplementedCerbosAdminServiceHandler) ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.ReloadStore is not implemented"))
+}
+
+func (UnimplementedCerbosAdminServiceHandler) PurgeStoreRevisions(context.Context, *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.PurgeStoreRevisions is not implemented"))
 }
 
 // CerbosPlaygroundServiceClient is a client for the cerbos.svc.v1.CerbosPlaygroundService service.

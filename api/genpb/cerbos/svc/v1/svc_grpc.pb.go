@@ -291,6 +291,7 @@ const (
 	CerbosAdminService_GetSchema_FullMethodName           = "/cerbos.svc.v1.CerbosAdminService/GetSchema"
 	CerbosAdminService_DeleteSchema_FullMethodName        = "/cerbos.svc.v1.CerbosAdminService/DeleteSchema"
 	CerbosAdminService_ReloadStore_FullMethodName         = "/cerbos.svc.v1.CerbosAdminService/ReloadStore"
+	CerbosAdminService_PurgeStoreRevisions_FullMethodName = "/cerbos.svc.v1.CerbosAdminService/PurgeStoreRevisions"
 )
 
 // CerbosAdminServiceClient is the client API for CerbosAdminService service.
@@ -310,6 +311,7 @@ type CerbosAdminServiceClient interface {
 	GetSchema(ctx context.Context, in *v1.GetSchemaRequest, opts ...grpc.CallOption) (*v11.GetSchemaResponse, error)
 	DeleteSchema(ctx context.Context, in *v1.DeleteSchemaRequest, opts ...grpc.CallOption) (*v11.DeleteSchemaResponse, error)
 	ReloadStore(ctx context.Context, in *v1.ReloadStoreRequest, opts ...grpc.CallOption) (*v11.ReloadStoreResponse, error)
+	PurgeStoreRevisions(ctx context.Context, in *v1.PurgeStoreRevisionsRequest, opts ...grpc.CallOption) (*v11.PurgeStoreRevisionsResponse, error)
 }
 
 type cerbosAdminServiceClient struct {
@@ -459,6 +461,16 @@ func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, in *v1.Reloa
 	return out, nil
 }
 
+func (c *cerbosAdminServiceClient) PurgeStoreRevisions(ctx context.Context, in *v1.PurgeStoreRevisionsRequest, opts ...grpc.CallOption) (*v11.PurgeStoreRevisionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v11.PurgeStoreRevisionsResponse)
+	err := c.cc.Invoke(ctx, CerbosAdminService_PurgeStoreRevisions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CerbosAdminServiceServer is the server API for CerbosAdminService service.
 // All implementations must embed UnimplementedCerbosAdminServiceServer
 // for forward compatibility.
@@ -476,6 +488,7 @@ type CerbosAdminServiceServer interface {
 	GetSchema(context.Context, *v1.GetSchemaRequest) (*v11.GetSchemaResponse, error)
 	DeleteSchema(context.Context, *v1.DeleteSchemaRequest) (*v11.DeleteSchemaResponse, error)
 	ReloadStore(context.Context, *v1.ReloadStoreRequest) (*v11.ReloadStoreResponse, error)
+	PurgeStoreRevisions(context.Context, *v1.PurgeStoreRevisionsRequest) (*v11.PurgeStoreRevisionsResponse, error)
 	mustEmbedUnimplementedCerbosAdminServiceServer()
 }
 
@@ -524,6 +537,9 @@ func (UnimplementedCerbosAdminServiceServer) DeleteSchema(context.Context, *v1.D
 }
 func (UnimplementedCerbosAdminServiceServer) ReloadStore(context.Context, *v1.ReloadStoreRequest) (*v11.ReloadStoreResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReloadStore not implemented")
+}
+func (UnimplementedCerbosAdminServiceServer) PurgeStoreRevisions(context.Context, *v1.PurgeStoreRevisionsRequest) (*v11.PurgeStoreRevisionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method PurgeStoreRevisions not implemented")
 }
 func (UnimplementedCerbosAdminServiceServer) mustEmbedUnimplementedCerbosAdminServiceServer() {}
 func (UnimplementedCerbosAdminServiceServer) testEmbeddedByValue()                            {}
@@ -773,6 +789,24 @@ func _CerbosAdminService_ReloadStore_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CerbosAdminService_PurgeStoreRevisions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.PurgeStoreRevisionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CerbosAdminServiceServer).PurgeStoreRevisions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CerbosAdminService_PurgeStoreRevisions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CerbosAdminServiceServer).PurgeStoreRevisions(ctx, req.(*v1.PurgeStoreRevisionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CerbosAdminService_ServiceDesc is the grpc.ServiceDesc for CerbosAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -827,6 +861,10 @@ var CerbosAdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReloadStore",
 			Handler:    _CerbosAdminService_ReloadStore_Handler,
+		},
+		{
+			MethodName: "PurgeStoreRevisions",
+			Handler:    _CerbosAdminService_PurgeStoreRevisions_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

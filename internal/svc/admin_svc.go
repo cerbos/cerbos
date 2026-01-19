@@ -406,6 +406,27 @@ func (cas *CerbosAdminService) DeleteSchema(ctx context.Context, req *requestv1.
 	return &responsev1.DeleteSchemaResponse{DeletedSchemas: deletedSchemas}, nil
 }
 
+func (cas *CerbosAdminService) PurgeStoreRevisions(ctx context.Context, req *requestv1.PurgeStoreRevisionsRequest) (*responsev1.PurgeStoreRevisionsResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	affectedRows, err := ms.PurgeRevisions(ctx, req.GetKeepLast())
+	if err != nil {
+		logging.ReqScopeLog(ctx).Error("Failed to purge store revisions", zap.Error(err))
+		return nil, status.Error(codes.Internal, "failed to purge store revisions")
+	}
+
+	return &responsev1.PurgeStoreRevisionsResponse{
+		AffectedRows: affectedRows,
+	}, nil
+}
+
 func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.ReloadStoreRequest) (*responsev1.ReloadStoreResponse, error) {
 	log := logging.ReqScopeLog(ctx)
 	if err := cas.checkCredentials(ctx); err != nil {
