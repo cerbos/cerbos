@@ -124,10 +124,8 @@ func (gm *GlobMap[T]) Len() int {
 func (gm *GlobMap[T]) Clear() {
 	clear(gm.literals)
 	clear(gm.globs)
-	// Locking is defensive; writes are expected to be externally serialized.
-	// gm.cacheMu.Lock()
+	// No lock needed: writes are externally serialized.
 	clear(gm.matchCache)
-	// gm.cacheMu.Unlock()
 	// Keep gm.compiled - same patterns likely to be reused
 }
 
@@ -139,10 +137,8 @@ func (gm *GlobMap[T]) Set(k string, v T) {
 				return // invalid glob pattern, skip, the error is logged by the callee
 			}
 			gm.compiled[k] = g
-			// Locking is defensive; writes are expected to be externally serialized.
-			// gm.cacheMu.Lock()
+			// No lock needed: writes are externally serialized.
 			clear(gm.matchCache)
-			// gm.cacheMu.Unlock()
 		}
 		gm.globs[k] = v
 	} else {
@@ -182,10 +178,8 @@ func (gm *GlobMap[T]) DeleteLiteral(k string) {
 	if _, hadGlob := gm.globs[k]; hadGlob {
 		delete(gm.globs, k)
 		delete(gm.compiled, k)
-		// Locking is defensive; writes are expected to be externally serialized.
-		// gm.cacheMu.Lock()
+		// No lock needed: writes are externally serialized.
 		clear(gm.matchCache)
-		// gm.cacheMu.Unlock()
 	}
 }
 
