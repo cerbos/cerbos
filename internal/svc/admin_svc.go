@@ -14,10 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/sync/singleflight"
-
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/sync/singleflight"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -228,6 +227,46 @@ func (cas *CerbosAdminService) GetPolicy(ctx context.Context, req *requestv1.Get
 	}, nil
 }
 
+//nolint:dupl
+func (cas *CerbosAdminService) DeletePolicy(ctx context.Context, req *requestv1.DeletePolicyRequest) (*responsev1.DeletePolicyResponse, error) {
+	if err := cas.checkCredentials(ctx); err != nil {
+		return nil, err
+	}
+
+	if cas.store == nil {
+		return nil, status.Error(codes.NotFound, "store is not configured")
+	}
+
+	ms, ok := cas.store.(storage.MutableStore)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "Configured store is not mutable")
+	}
+
+	deletedPolicies, err := ms.Delete(ctx, req.Id...)
+	if err != nil {
+		logging.ReqScopeLog(ctx).Error("Failed to delete policies", zap.Error(err))
+		var integrityErr *db.IntegrityErr
+		if errors.As(err, &integrityErr) {
+			st := status.New(codes.InvalidArgument, "Failed to delete policies")
+			var setDetailsErr error
+			if st, setDetailsErr = st.WithDetails(&responsev1.DeletePolicyErrorDetails{
+				Errors: integrityErr.Errors,
+			}); setDetailsErr != nil {
+				logging.ReqScopeLog(ctx).Error("Failed to set details in status", zap.Error(setDetailsErr))
+			}
+
+			return nil, st.Err()
+		}
+
+		return nil, status.Error(codes.Internal, "Failed to delete policies")
+	}
+
+	return &responsev1.DeletePolicyResponse{
+		DeletedPolicies: deletedPolicies,
+	}, nil
+}
+
+//nolint:dupl
 func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1.DisablePolicyRequest) (*responsev1.DisablePolicyResponse, error) {
 	if err := cas.checkCredentials(ctx); err != nil {
 		return nil, err
@@ -245,9 +284,19 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 	disabledPolicies, err := ms.Disable(ctx, req.Id...)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to disable policies", zap.Error(err))
-		if errors.As(err, &db.ErrBreaksScopeChain{}) {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+		var integrityErr *db.IntegrityErr
+		if errors.As(err, &integrityErr) {
+			st := status.New(codes.InvalidArgument, "Failed to disable policies")
+			var setDetailsErr error
+			if st, setDetailsErr = st.WithDetails(&responsev1.DisablePolicyErrorDetails{
+				Errors: integrityErr.Errors,
+			}); setDetailsErr != nil {
+				logging.ReqScopeLog(ctx).Error("Failed to set details in status", zap.Error(setDetailsErr))
+			}
+
+			return nil, st.Err()
 		}
+
 		return nil, status.Error(codes.Internal, "Failed to disable policies")
 	}
 
