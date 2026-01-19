@@ -369,6 +369,68 @@ func (_c *Index_GetAllCompilationUnits_Call) RunAndReturn(run func(context1 cont
 	return _c
 }
 
+// GetAllCompilationUnitsWithCount provides a mock function for the type Index
+func (_mock *Index) GetAllCompilationUnitsWithCount(context1 context.Context) (int, <-chan *policy.CompilationUnit) {
+	ret := _mock.Called(context1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllCompilationUnitsWithCount")
+	}
+
+	var r0 int
+	var r1 <-chan *policy.CompilationUnit
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (int, <-chan *policy.CompilationUnit)); ok {
+		return returnFunc(context1)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) int); ok {
+		r0 = returnFunc(context1)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) <-chan *policy.CompilationUnit); ok {
+		r1 = returnFunc(context1)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(<-chan *policy.CompilationUnit)
+		}
+	}
+	return r0, r1
+}
+
+// Index_GetAllCompilationUnitsWithCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllCompilationUnitsWithCount'
+type Index_GetAllCompilationUnitsWithCount_Call struct {
+	*mock.Call
+}
+
+// GetAllCompilationUnitsWithCount is a helper method to define mock.On call
+//   - context1 context.Context
+func (_e *Index_Expecter) GetAllCompilationUnitsWithCount(context1 interface{}) *Index_GetAllCompilationUnitsWithCount_Call {
+	return &Index_GetAllCompilationUnitsWithCount_Call{Call: _e.mock.On("GetAllCompilationUnitsWithCount", context1)}
+}
+
+func (_c *Index_GetAllCompilationUnitsWithCount_Call) Run(run func(context1 context.Context)) *Index_GetAllCompilationUnitsWithCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Index_GetAllCompilationUnitsWithCount_Call) Return(n int, compilationUnitCh <-chan *policy.CompilationUnit) *Index_GetAllCompilationUnitsWithCount_Call {
+	_c.Call.Return(n, compilationUnitCh)
+	return _c
+}
+
+func (_c *Index_GetAllCompilationUnitsWithCount_Call) RunAndReturn(run func(context1 context.Context) (int, <-chan *policy.CompilationUnit)) *Index_GetAllCompilationUnitsWithCount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllMatching provides a mock function for the type Index
 func (_mock *Index) GetAllMatching(moduleIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	ret := _mock.Called(moduleIDs)
