@@ -921,7 +921,7 @@ func createGitRepo(t *testing.T, dir string, policyCount int) []string {
 	})
 	require.NoError(t, err, "Failed to checkout branch")
 
-	var allFiles []string
+	var allFiles []string //nolint:prealloc
 
 	// write policies
 	for i := range policyCount {
