@@ -86,6 +86,13 @@ func fixGlob(g string) string {
 	return g
 }
 
+// GlobMap is a map that supports glob pattern matching for keys.
+//
+// Thread safety: GlobMap requires external synchronization for write operations
+// (Set, Clear, DeleteLiteral). Read operations (Get, GetMerged, GetAll, etc.) may
+// run concurrently with each other but not with writes. The internal cacheMu only
+// protects matchCache, which can be written during read operations when populating
+// the cache on a miss.
 type GlobMap[T any] struct {
 	literals   map[string]T
 	globs      map[string]T
@@ -117,9 +124,8 @@ func (gm *GlobMap[T]) Len() int {
 func (gm *GlobMap[T]) Clear() {
 	clear(gm.literals)
 	clear(gm.globs)
-	gm.cacheMu.Lock()
+	// No lock needed: writes are externally serialized.
 	clear(gm.matchCache)
-	gm.cacheMu.Unlock()
 	// Keep gm.compiled - same patterns likely to be reused
 }
 
@@ -131,9 +137,8 @@ func (gm *GlobMap[T]) Set(k string, v T) {
 				return // invalid glob pattern, skip, the error is logged by the callee
 			}
 			gm.compiled[k] = g
-			gm.cacheMu.Lock()
+			// No lock needed: writes are externally serialized.
 			clear(gm.matchCache)
-			gm.cacheMu.Unlock()
 		}
 		gm.globs[k] = v
 	} else {
@@ -173,6 +178,7 @@ func (gm *GlobMap[T]) DeleteLiteral(k string) {
 	if _, hadGlob := gm.globs[k]; hadGlob {
 		delete(gm.globs, k)
 		delete(gm.compiled, k)
+		// No lock needed: writes are externally serialized.
 		clear(gm.matchCache)
 	}
 }
