@@ -1,8 +1,0 @@
-goos: linux
-goarch: arm64
-pkg: github.com/cerbos/cerbos/internal/util
-BenchmarkGlobMap/Get-5         	38042116	        31.57 ns/op	       0 B/op	       0 allocs/op
-BenchmarkGlobMap/GetMerged-5   	 9671036	       124.5 ns/op	     214 B/op	       1 allocs/op
-BenchmarkGlobMap/SetThenGet-5  	 6449379	       182.8 ns/op	      94 B/op	       1 allocs/op
-PASS
-ok  	github.com/cerbos/cerbos/internal/util	3.956s
