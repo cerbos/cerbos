@@ -57,6 +57,7 @@ type Index interface {
 	Delete(Entry) (storage.Event, error)
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
+	GetAllCompilationUnitsWithCount(context.Context) (int, <-chan *policy.CompilationUnit)
 	Clear() error
 	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(context.Context, ...string) ([]string, error)
@@ -113,9 +114,10 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 }
 
 func (idx *index) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
-	res := []*policy.CompilationUnit{} //nolint:prealloc
+	n, ch := idx.GetAllCompilationUnitsWithCount(ctx)
+	res := make([]*policy.CompilationUnit, 0, n)
 
-	for cu := range idx.GetAllCompilationUnits(ctx) {
+	for cu := range ch {
 		res = append(res, cu)
 	}
 
@@ -390,6 +392,11 @@ func (idx *index) Delete(entry Entry) (storage.Event, error) {
 }
 
 func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.CompilationUnit {
+	_, ch := idx.GetAllCompilationUnitsWithCount(ctx)
+	return ch
+}
+
+func (idx *index) GetAllCompilationUnitsWithCount(ctx context.Context) (int, <-chan *policy.CompilationUnit) {
 	idx.mu.RLock()
 	toCompile := make([]namer.ModuleID, 0, len(idx.executables))
 	for modID := range idx.modIDToFile {
@@ -426,7 +433,7 @@ func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.Com
 		}
 	}()
 
-	return outChan
+	return len(toCompile), outChan
 }
 
 func (idx *index) Clear() error {
