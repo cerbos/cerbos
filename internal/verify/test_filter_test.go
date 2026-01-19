@@ -116,3 +116,176 @@ func TestParseFilterConfig(t *testing.T) {
 		})
 	}
 }
+
+type filterOption func(*FilterConfig)
+
+func withTestFilter(globs ...string) filterOption {
+	return func(fc *FilterConfig) { fc.Test = append(fc.Test, globs...) }
+}
+
+func withPrincipalFilter(globs ...string) filterOption {
+	return func(fc *FilterConfig) { fc.Principal = append(fc.Principal, globs...) }
+}
+
+func withResourceFilter(globs ...string) filterOption {
+	return func(fc *FilterConfig) { fc.Resource = append(fc.Resource, globs...) }
+}
+
+func withActionFilter(globs ...string) filterOption {
+	return func(fc *FilterConfig) { fc.Action = append(fc.Action, globs...) }
+}
+
+func mkFilter(opts ...filterOption) *FilterConfig {
+	fc := &FilterConfig{}
+	for _, opt := range opts {
+		opt(fc)
+	}
+	return fc
+}
+
+func TestTestFilterApply(t *testing.T) {
+	makeTest := func(testName, principalKey, resourceKey string, actions []string) *policyv1.Test {
+		return &policyv1.Test{
+			Name: &policyv1.Test_TestName{
+				TestTableName: testName,
+				PrincipalKey:  principalKey,
+				ResourceKey:   resourceKey,
+			},
+			Input: &enginev1.CheckInput{
+				Principal: &enginev1.Principal{Id: principalKey},
+				Resource:  &enginev1.Resource{Kind: "album", Id: resourceKey},
+				Actions:   actions,
+			},
+		}
+	}
+
+	suite := &policyv1.TestSuite{Name: "TestSuite"}
+	defaultTest := makeTest("TestAlbum", "alice", "my_album", []string{"view"})
+
+	testCases := []struct {
+		name       string
+		filter     *FilterConfig
+		test       *policyv1.Test
+		skipReason string
+	}{
+		{
+			name:   "no filter - test runs",
+			filter: nil,
+			test:   defaultTest,
+		},
+		{
+			name:   "empty filter - test runs",
+			filter: mkFilter(),
+			test:   defaultTest,
+		},
+		{
+			name:   "test filter matches",
+			filter: mkFilter(withTestFilter("**TestAlbum**")),
+			test:   defaultTest,
+		},
+		{
+			name:       "test filter does not match",
+			filter:     mkFilter(withTestFilter("**OtherTest**")),
+			test:       defaultTest,
+			skipReason: SkipReasonFilterTest,
+		},
+		{
+			name:   "principal filter matches",
+			filter: mkFilter(withPrincipalFilter("alice")),
+			test:   defaultTest,
+		},
+		{
+			name:   "principal filter matches with glob",
+			filter: mkFilter(withPrincipalFilter("ali*")),
+			test:   defaultTest,
+		},
+		{
+			name:       "principal filter does not match",
+			filter:     mkFilter(withPrincipalFilter("bob")),
+			test:       defaultTest,
+			skipReason: SkipReasonFilterPrincipal,
+		},
+		{
+			name:   "resource filter matches",
+			filter: mkFilter(withResourceFilter("my_album")),
+			test:   defaultTest,
+		},
+		{
+			name:   "resource filter matches with glob",
+			filter: mkFilter(withResourceFilter("*_album")),
+			test:   defaultTest,
+		},
+		{
+			name:       "resource filter does not match",
+			filter:     mkFilter(withResourceFilter("other_resource")),
+			test:       defaultTest,
+			skipReason: SkipReasonFilterResource,
+		},
+		{
+			name:   "action filter matches single action",
+			filter: mkFilter(withActionFilter("view")),
+			test:   defaultTest,
+		},
+		{
+			name:   "action filter matches one of multiple actions",
+			filter: mkFilter(withActionFilter("edit")),
+			test:   makeTest("TestAlbum", "alice", "my_album", []string{"view", "edit", "delete"}),
+		},
+		{
+			name:   "action filter matches with glob",
+			filter: mkFilter(withActionFilter("view*")),
+			test:   makeTest("TestAlbum", "alice", "my_album", []string{"view_all"}),
+		},
+		{
+			name:       "action filter does not match any action",
+			filter:     mkFilter(withActionFilter("admin*")),
+			test:       makeTest("TestAlbum", "alice", "my_album", []string{"view", "edit"}),
+			skipReason: SkipReasonFilterAction,
+		},
+		{
+			name:   "multiple filters all match",
+			filter: mkFilter(withPrincipalFilter("alice"), withResourceFilter("*_album"), withActionFilter("view", "edit")),
+			test:   defaultTest,
+		},
+		{
+			name:       "multiple filters - principal fails",
+			filter:     mkFilter(withPrincipalFilter("bob"), withResourceFilter("*_album"), withActionFilter("view")),
+			test:       defaultTest,
+			skipReason: SkipReasonFilterPrincipal,
+		},
+		{
+			name:   "wildcard matches everything",
+			filter: mkFilter(withPrincipalFilter("*"), withResourceFilter("*"), withActionFilter("*")),
+			test:   defaultTest,
+		},
+		{
+			name:   "multiple globs in one dimension - one matches",
+			filter: mkFilter(withPrincipalFilter("bob", "alice", "carol")),
+			test:   defaultTest,
+		},
+		{
+			name:       "multiple globs in one dimension - none match",
+			filter:     mkFilter(withPrincipalFilter("bob", "carol", "dave")),
+			test:       defaultTest,
+			skipReason: SkipReasonFilterPrincipal,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			filter, err := newTestFilter(&Config{Filter: tc.filter})
+			require.NoError(t, err)
+
+			result := filter.Apply(tc.test, suite)
+
+			if tc.skipReason != "" {
+				require.NotNil(t, result)
+				assert.Equal(t, policyv1.TestResults_RESULT_SKIPPED, result.Result)
+				skipReason := result.Outcome.(*policyv1.TestResults_Details_SkipReason)
+				assert.Equal(t, tc.skipReason, skipReason.SkipReason)
+			} else {
+				assert.Nil(t, result)
+			}
+		})
+	}
+}

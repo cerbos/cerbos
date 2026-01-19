@@ -59,7 +59,7 @@ func parseDimension(s string) (FilterDimension, []string, error) {
 }
 
 // ParseFilterConfig parses a filter string in the format:
-// "test=glob1,glob2;principal=glob3;resource=glob4;action=glob5"
+// "test=glob1,glob2;principal=glob3;resource=glob4;action=glob5".
 func ParseFilterConfig(filter string) (*FilterConfig, error) {
 	filter = strings.TrimSpace(filter)
 	if filter == "" {
