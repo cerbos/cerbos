@@ -2103,9 +2103,9 @@ const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\x1a2\x18Delete schema(s) request\"x\n" +
 	"\x12ReloadStoreRequest\x12E\n" +
 	"\x04wait\x18\x01 \x01(\bB1\x92A+2)Wait until the reloading process finishes\xe0A\x01R\x04wait:\x1b\x92A\x18\n" +
-	"\x162\x14Reload store request\"\xb4\x01\n" +
-	"\x1aPurgeStoreRevisionsRequest\x12p\n" +
-	"\tkeep_last\x18\x01 \x01(\rBS\x92AP2NKeep last N revisions. If not specified all revisions are going to be deleted.R\bkeepLast:$\x92A!\n" +
+	"\x162\x14Reload store request\"\xbc\x01\n" +
+	"\x1aPurgeStoreRevisionsRequest\x12x\n" +
+	"\tkeep_last\x18\x01 \x01(\rB[\x92AX2VKeep last N revisions. If not specified or set to zero, all revisions will be deleted.R\bkeepLast:$\x92A!\n" +
 	"\x1f2\x1dPurge store revisions requestBs\n" +
 	"\x19dev.cerbos.api.v1.requestZ>github.com/cerbos/cerbos/api/genpb/cerbos/request/v1;requestv1\xaa\x02\x15Cerbos.Api.V1.Requestb\x06proto3"
 

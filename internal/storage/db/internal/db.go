@@ -65,6 +65,7 @@ type DBStorage interface {
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
+	ListRevisions(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]int, error)
 	PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error)
 }
 
@@ -1323,7 +1324,50 @@ func (s *dbStorage) CheckSchema(ctx context.Context) error {
 	return nil
 }
 
-// PurgeRevisions deletes all revisions from the relevant table.
+// ListRevisions list number of revisions for policies in the store.
+func (s *dbStorage) ListRevisions(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]int, error) {
+	// SELECT
+	//  id,
+	//  COUNT(*) AS count
+	// FROM policy_revision
+	// GROUP BY id
+	query := s.db.
+		Select(
+			PolicyRevisionTblIDCol,
+			goqu.COUNT("*").As("count"),
+		).
+		From(PolicyRevisionTbl).
+		GroupBy(goqu.C(PolicyRevisionTblIDCol))
+
+	if len(ids) != 0 {
+		// WHERE id IN (<>)
+		query = query.Where(goqu.C(PolicyRevisionTblIDCol).In(ids))
+	}
+
+	results, err := query.Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer results.Close()
+
+	out := make(map[namer.ModuleID]int)
+	for results.Next() {
+		var row struct {
+			PolicyID namer.ModuleID `db:"id"`
+			Count    int            `db:"count"`
+		}
+
+		if err := results.ScanStruct(&row); err != nil {
+			return nil, err
+		}
+
+		out[row.PolicyID] = row.Count
+	}
+
+	return out, nil
+}
+
+// PurgeRevisions deletes revisions from the relevant table.
 func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error) {
 	var res sql.Result
 	switch keepLast {
@@ -1335,33 +1379,29 @@ func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32
 			Prepared(true).
 			Executor().
 			ExecContext(ctx); err != nil {
-			return 0, fmt.Errorf("failed to delete revisions: %w", err)
+			return 0, fmt.Errorf("failed to delete all revisions: %w", err)
 		}
 	default:
+		const revisionCol = "revision"
+		rankedQuery := s.policyRevisionsRankedQuery(revisionCol)
+
 		// SELECT revision_id
-		// FROM policy_revision
-		// ORDER BY policy_revision DESC
-		// LIMIT <>
+		// FROM <rankedQuery>
+		// WHERE revision > <>
 		innerQuery := s.db.
 			Select(PolicyRevisionTblRevisionIDCol).
-			From(PolicyRevisionTbl).
-			Order(goqu.C(PolicyRevisionTblRevisionIDCol).Desc()).
-			Limit(uint(keepLast))
-
-		// This is for MySQL compatibility (not allowed to use LIMIT within NOT IN)
-		// SELECT revision_id FROM (<innerQuery>) AS compat
-		compat := s.db.
-			Select(PolicyRevisionTblRevisionIDCol).
-			From(innerQuery.As("compat"))
+			From(rankedQuery).
+			Where(
+				goqu.C(revisionCol).Gt(keepLast),
+			)
 
 		// DELETE FROM policy_revision
-		// WHERE revision_id NOT IN (<innerQuery>)
+		// WHERE revision_id IN (<innerQuery>)
 		query := s.db.
 			Delete(PolicyRevisionTbl).
 			Where(
-				goqu.C(PolicyRevisionTblRevisionIDCol).NotIn(compat),
+				goqu.C(PolicyRevisionTblRevisionIDCol).In(innerQuery),
 			)
-
 		var err error
 		if res, err = query.
 			Prepared(true).
@@ -1377,4 +1417,54 @@ func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32
 	}
 
 	return uint32(affected), nil
+}
+
+func (s *dbStorage) policyRevisionsRankedQuery(revisionCol string) *goqu.SelectDataset {
+	switch s.db.Dialect() {
+	case "sqlite3", "mysql":
+		const policyRevisionTbl1 = "pr1"
+		const policyRevisionTbl2 = "pr2"
+
+		// SELECT
+		//  pr1.revision_id,
+		//  (
+		//   SELECT COUNT(*)
+		//   FROM policy_revision pr2
+		//   WHERE pr2.id = pr1.id AND pr2.update_timestamp >= pr1.update_timestamp
+		//  ) AS revision
+		// FROM policy_revision pr1
+		// ORDER BY pr1.id, pr1.update_timestamp DESC
+		return s.db.
+			Select(
+				goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblRevisionIDCol),
+				s.db.
+					Select(
+						goqu.COUNT("*"),
+					).
+					From(goqu.T(PolicyRevisionTbl).As(policyRevisionTbl2)).
+					Where(
+						goqu.T(policyRevisionTbl2).Col(PolicyRevisionTblIDCol).Eq(goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblIDCol)),
+						goqu.T(policyRevisionTbl2).Col(PolicyRevisionTblUpdateTimestampCol).Gte(goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblUpdateTimestampCol)),
+					).
+					As(revisionCol),
+			).
+			From(goqu.T(PolicyRevisionTbl).As(policyRevisionTbl1)).
+			Order(
+				goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblIDCol).Desc(),
+				goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblUpdateTimestampCol).Desc(),
+			)
+	default:
+		// SELECT
+		//  revision_id,
+		//  ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_timestamp DESC) AS revision
+		// FROM policy_revision
+		return s.db.
+			Select(
+				PolicyRevisionTblRevisionIDCol,
+				goqu.ROW_NUMBER().Over(
+					goqu.W().PartitionBy(PolicyRevisionTblIDCol).OrderBy(goqu.I(PolicyRevisionTblUpdateTimestampCol).Desc()),
+				).As(revisionCol),
+			).
+			From(PolicyRevisionTbl)
+	}
 }

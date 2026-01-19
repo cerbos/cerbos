@@ -35,12 +35,13 @@ const (
 	PolicyAncestorTblPolicyIDCol   = "policy_id"
 	PolicyAncestorTblAncestorIDCol = "ancestor_id"
 
-	PolicyRevisionTbl              = "policy_revision"
-	PolicyRevisionTblRevisionIDCol = "revision_id"
+	PolicyRevisionTbl                   = "policy_revision"
+	PolicyRevisionTblIDCol              = "id"
+	PolicyRevisionTblRevisionIDCol      = "revision_id"
+	PolicyRevisionTblUpdateTimestampCol = "update_timestamp"
 
-	SchemaTbl              = "attr_schema_defs"
-	SchemaTblIDCol         = "id"
-	SchemaTblDefinitionCol = "definition"
+	SchemaTbl      = "attr_schema_defs"
+	SchemaTblIDCol = "id"
 )
 
 var requiredTables = []string{PolicyTbl, PolicyDepTbl, PolicyAncestorTbl, PolicyRevisionTbl, SchemaTbl}

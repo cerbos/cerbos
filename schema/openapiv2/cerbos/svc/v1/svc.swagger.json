@@ -848,7 +848,7 @@
         "parameters": [
           {
             "name": "keepLast",
-            "description": "Keep last N revisions. If not specified all revisions are going to be deleted.",
+            "description": "Keep last N revisions. If not specified or set to zero, all revisions will be deleted.",
             "in": "query",
             "required": false,
             "type": "integer",

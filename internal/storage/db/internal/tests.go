@@ -547,14 +547,74 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			})
 		})
 
-		t.Run("purge_revisions", func(t *testing.T) {
-			affectedRows, err := store.PurgeRevisions(ctx, 2)
-			require.NoError(t, err)
-			require.Equal(t, uint32(49), affectedRows)
+		t.Run("list_revisions", func(t *testing.T) {
+			t.Run("all", func(t *testing.T) {
+				revisions, err := store.ListRevisions(ctx)
+				require.NoError(t, err)
+				require.Len(t, revisions, 24)
+			})
 
-			affectedRows, err = store.PurgeRevisions(ctx, 0)
+			t.Run("specific", func(t *testing.T) {
+				revisions, err := store.ListRevisions(ctx, rpAcme.ID)
+				require.NoError(t, err)
+				require.Len(t, revisions, 1)
+			})
+		})
+
+		t.Run("purge_revisions", func(t *testing.T) {
+			affectedRows, err := store.PurgeRevisions(ctx, 0)
 			require.NoError(t, err)
-			require.Equal(t, uint32(2), affectedRows)
+			require.Equal(t, uint32(51), affectedRows)
+
+			t.Run("keep_last", func(t *testing.T) {
+				rpWithOneRevision := test.GenResourcePolicy(test.Suffix("one_revision"))
+				rpWithTwoRevisions := test.GenResourcePolicy(test.Suffix("two_revisions"))
+				rpWithThreeRevisions := test.GenResourcePolicy(test.Suffix("three_revisions"))
+				require.NoError(t, store.AddOrUpdate(t.Context(), policy.Wrap(rpWithOneRevision), policy.Wrap(rpWithTwoRevisions), policy.Wrap(rpWithThreeRevisions)), "setup failed for keep last test case")
+
+				mID := policy.Wrap(rpWithOneRevision).ID
+				mID2 := policy.Wrap(rpWithTwoRevisions).ID
+				mID3 := policy.Wrap(rpWithThreeRevisions).ID
+
+				revisions, err := store.ListRevisions(ctx)
+				require.NoError(t, err)
+				require.Len(t, revisions, 3)
+				require.Equal(t, revisions[mID], 1)
+				require.Equal(t, revisions[mID2], 1)
+				require.Equal(t, revisions[mID3], 1)
+
+				rpWithTwoRevisions.GetResourcePolicy().Variables.Local = map[string]string{"test": "test"}
+				rpWithThreeRevisions.GetResourcePolicy().Variables.Local = map[string]string{"test": "test"}
+				require.NoError(t, store.AddOrUpdate(t.Context(), policy.Wrap(rpWithTwoRevisions), policy.Wrap(rpWithThreeRevisions)), "setup (2) failed for keep last test case")
+
+				revisions, err = store.ListRevisions(ctx)
+				require.NoError(t, err)
+				require.Len(t, revisions, 3)
+				require.Equal(t, revisions[mID], 1)
+				require.Equal(t, revisions[mID2], 2)
+				require.Equal(t, revisions[mID3], 2)
+
+				rpWithThreeRevisions.GetResourcePolicy().Variables.Local["test"] = "test1"
+				require.NoError(t, store.AddOrUpdate(t.Context(), policy.Wrap(rpWithThreeRevisions)), "setup (3) failed for keep last test case")
+
+				revisions, err = store.ListRevisions(ctx)
+				require.NoError(t, err)
+				require.Len(t, revisions, 3)
+				require.Equal(t, revisions[mID], 1)
+				require.Equal(t, revisions[mID2], 2)
+				require.Equal(t, revisions[mID3], 3)
+
+				affectedRows, err = store.PurgeRevisions(ctx, 1)
+				require.NoError(t, err)
+				require.Equal(t, uint32(3), affectedRows)
+
+				revisions, err = store.ListRevisions(ctx)
+				require.NoError(t, err)
+				require.Len(t, revisions, 3)
+				require.Equal(t, revisions[mID], 1)
+				require.Equal(t, revisions[mID2], 1)
+				require.Equal(t, revisions[mID3], 1)
+			})
 		})
 	}
 }
