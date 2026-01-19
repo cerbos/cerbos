@@ -70,8 +70,7 @@ func init() {
 		ext.Encoders(),
 		ext.Math(),
 		CerbosCELLib(),
-		types.JSONFields(),
-		types.Variables(),
+		types.Provider(),
 	)
 	if err != nil {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
