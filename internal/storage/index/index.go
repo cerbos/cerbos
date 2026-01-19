@@ -113,7 +113,7 @@ func (idx *index) GetFirstMatch(candidates []namer.ModuleID) (*policy.Compilatio
 }
 
 func (idx *index) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
-	res := []*policy.CompilationUnit{}
+	res := []*policy.CompilationUnit{} //nolint:prealloc
 
 	for cu := range idx.GetAllCompilationUnits(ctx) {
 		res = append(res, cu)
