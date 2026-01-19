@@ -83,16 +83,25 @@ func runTestSuite(ctx context.Context, eng Checker, filter *testFilter, file str
 			continue
 		}
 
+		actions, skippedActions := filter.partitionActions(test.Input.Actions)
+
 		if !skipBatching {
-			actionResults := runTest(ctx, eng, test, test.Input.Actions, trace)
-			for _, action := range test.Input.Actions {
+			actionResults := runTest(ctx, eng, test, actions, trace)
+			for _, action := range actions {
 				addResult(results, test.Name, action, actionResults[action])
 			}
 		} else {
-			for _, action := range test.Input.Actions {
+			for _, action := range actions {
 				actionResults := runTest(ctx, eng, test, []string{action}, trace)
 				addResult(results, test.Name, action, actionResults[action])
 			}
+		}
+
+		for _, action := range skippedActions {
+			addResult(results, test.Name, action, &policyv1.TestResults_Details{
+				Result:  policyv1.TestResults_RESULT_SKIPPED,
+				Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonFilterAction},
+			})
 		}
 	}
 

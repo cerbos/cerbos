@@ -176,15 +176,25 @@ func (f *testFilter) matchesFilterResource(resourceKey string) bool {
 }
 
 func (f *testFilter) matchesFilterActions(actions []string) bool {
+	matched, _ := f.partitionActions(actions)
+	return len(matched) > 0
+}
+
+// partitionActions returns actions split into matched and skipped slices.
+// If no action filter is configured, all actions are returned as matched.
+func (f *testFilter) partitionActions(actions []string) (matched, skipped []string) {
 	if f.filter == nil || len(f.filter.Action) == 0 {
-		return true
+		return actions, nil
 	}
+	matched = make([]string, 0, len(actions))
 	for _, action := range actions {
 		if matchesAnyGlob(f.filter.Action, action) {
-			return true
+			matched = append(matched, action)
+		} else {
+			skipped = append(skipped, action)
 		}
 	}
-	return false
+	return matched, skipped
 }
 
 // matchesAnyGlob checks if the value matches any of the provided glob patterns.
