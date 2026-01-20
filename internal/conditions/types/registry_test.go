@@ -4,6 +4,8 @@
 package types_test
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -16,14 +18,7 @@ import (
 )
 
 func TestJSONFields(t *testing.T) {
-	env, err := cel.NewEnv(
-		cel.Types(&enginev1.Request{}),
-		cel.VariableDecls(decls.NewVariable("request", types.MessageType[*enginev1.Request]())),
-		types.Registry(),
-	)
-	require.NoError(t, err, "Failed to create CEL environment")
-
-	vars := map[string]any{
+	bindings := map[string]any{
 		"request": &enginev1.Request{
 			AuxData: &enginev1.AuxData{
 				Jwt: map[string]*structpb.Value{
@@ -33,31 +28,33 @@ func TestJSONFields(t *testing.T) {
 		},
 	}
 
-	testCases := []struct {
-		name           string
-		expr           string
-		wantResult     any
-		wantCompileErr string
-		wantEvalErr    string
-	}{
+	testCEL(t, []cel.EnvOption{
+		cel.Types(&enginev1.Request{}),
+		cel.VariableDecls(decls.NewVariable("request", types.MessageType[*enginev1.Request]())),
+		types.Registry(),
+	}, []celTestCase{
 		{
 			name:       "isSet snake case",
 			expr:       "has(request.aux_data)",
+			bindings:   bindings,
 			wantResult: true,
 		},
 		{
 			name:       "get snake case",
 			expr:       "request.aux_data.jwt.fooBar",
+			bindings:   bindings,
 			wantResult: "baz",
 		},
 		{
 			name:       "isSet camel case",
 			expr:       "has(request.auxData)",
+			bindings:   bindings,
 			wantResult: true,
 		},
 		{
 			name:       "get camel case",
 			expr:       "request.auxData.jwt.fooBar",
+			bindings:   bindings,
 			wantResult: "baz",
 		},
 		{
@@ -70,7 +67,109 @@ func TestJSONFields(t *testing.T) {
 			expr:           "request.wat",
 			wantCompileErr: "undefined field 'wat'",
 		},
+	})
+}
+
+type lazyFoo struct {
+	value any
+	err   error
+}
+
+var _ types.Variables = lazyFoo{}
+
+func (lf lazyFoo) IsSet(name string) bool {
+	return name == "foo"
+}
+
+func (lf lazyFoo) Get(name string) (any, error) {
+	if name == "foo" {
+		return lf.value, lf.err
 	}
+	return nil, fmt.Errorf("undefined field '%s'", name)
+}
+
+func TestVariables(t *testing.T) {
+	eager := map[string]any{"V": types.VariablesMap(map[string]any{"foo": "bar"})}
+
+	lazy := func(value any, err error) map[string]any {
+		return map[string]any{"V": lazyFoo{value, err}}
+	}
+
+	testCEL(t, []cel.EnvOption{
+		cel.VariableDecls(decls.NewVariable("V", types.VariablesType)),
+		types.Registry(),
+	}, []celTestCase{
+		{
+			name:       "eager isSet present",
+			bindings:   eager,
+			expr:       "has(V.foo)",
+			wantResult: true,
+		},
+		{
+			name:       "eager isSet absent",
+			bindings:   eager,
+			expr:       "has(V.bar)",
+			wantResult: false,
+		},
+		{
+			name:       "eager get present",
+			bindings:   eager,
+			expr:       "V.foo",
+			wantResult: "bar",
+		},
+		{
+			name:        "eager get absent",
+			bindings:    eager,
+			expr:        "V.bar",
+			wantEvalErr: "undefined field 'bar'",
+		},
+		{
+			name:       "lazy isSet present",
+			bindings:   lazy("bar", nil),
+			expr:       "has(V.foo)",
+			wantResult: true,
+		},
+		{
+			name:       "lazy isSet absent",
+			bindings:   lazy("bar", nil),
+			expr:       "has(V.bar)",
+			wantResult: false,
+		},
+		{
+			name:       "lazy get success",
+			bindings:   lazy("bar", nil),
+			expr:       "V.foo",
+			wantResult: "bar",
+		},
+		{
+			name:        "lazy get failure",
+			bindings:    lazy(nil, errors.New("💥")),
+			expr:        "V.foo",
+			wantEvalErr: "💥",
+		},
+		{
+			name:        "lazy get absent",
+			bindings:    lazy("bar", nil),
+			expr:        "V.bar",
+			wantEvalErr: "undefined field 'bar'",
+		},
+	})
+}
+
+type celTestCase struct {
+	name           string
+	expr           string
+	bindings       map[string]any
+	wantCompileErr string
+	wantResult     any
+	wantEvalErr    string
+}
+
+func testCEL(t *testing.T, envOptions []cel.EnvOption, testCases []celTestCase) {
+	t.Helper()
+
+	env, err := cel.NewEnv(envOptions...)
+	require.NoError(t, err, "Failed to create CEL environment")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -85,7 +184,7 @@ func TestJSONFields(t *testing.T) {
 			program, err := env.Program(ast)
 			require.NoError(t, err, "Failed to create CEL program")
 
-			out, _, err := program.ContextEval(t.Context(), vars)
+			out, _, err := program.ContextEval(t.Context(), tc.bindings)
 			if tc.wantEvalErr == "" {
 				require.NoError(t, err, "Failed to evaluate CEL program")
 			} else {

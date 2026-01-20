@@ -4,8 +4,6 @@
 package types
 
 import (
-	"fmt"
-
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -14,10 +12,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
-
-const variablesTypeName = "cerbos.Variables"
-
-var VariablesType = types.NewObjectType(variablesTypeName)
 
 type typeRegistry struct {
 	types.Adapter
@@ -125,29 +119,4 @@ func (o *protoMessageObject) resolveField(method func(ref.Val) ref.Val, field re
 	}
 
 	return method(types.String(fieldDesc.Name()))
-}
-
-func variablesFieldType(fieldName string) (*types.FieldType, bool) {
-	return &types.FieldType{
-		Type: types.DynType,
-		IsSet: func(target any) bool {
-			if m, ok := target.(map[string]any); ok {
-				_, ok := m[fieldName]
-				return ok
-			}
-			return false
-		},
-		GetFrom: func(target any) (any, error) {
-			m, ok := target.(map[string]any)
-			if !ok {
-				return nil, fmt.Errorf("failed to get field '%s' from target %T (expected %T)", fieldName, target, m)
-			}
-
-			if v, ok := m[fieldName]; ok {
-				return v, nil
-			}
-
-			return nil, fmt.Errorf("undefined field '%s'", fieldName)
-		},
-	}, true
 }

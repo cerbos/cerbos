@@ -14,9 +14,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/conditions/types"
 	"github.com/google/cel-go/cel"
 	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/types"
+	celtypes "github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -1306,12 +1307,12 @@ func (ec *EvalContext) buildEvalVars(constants, variables map[string]any) map[st
 		conditions.CELResourceAbbrev:     ec.request.Resource,
 		conditions.CELPrincipalAbbrev:    ec.request.Principal,
 		conditions.CELRuntimeIdent:       ec.lazyRuntime,
-		conditions.CELConstantsIdent:     constants,
-		conditions.CELConstantsAbbrev:    constants,
-		conditions.CELVariablesIdent:     variables,
-		conditions.CELVariablesAbbrev:    variables,
-		conditions.CELGlobalsIdent:       ec.Globals,
-		conditions.CELGlobalsAbbrev:      ec.Globals,
+		conditions.CELConstantsIdent:     types.VariablesMap(constants),
+		conditions.CELConstantsAbbrev:    types.VariablesMap(constants),
+		conditions.CELVariablesIdent:     types.VariablesMap(variables),
+		conditions.CELVariablesAbbrev:    types.VariablesMap(variables),
+		conditions.CELGlobalsIdent:       types.VariablesMap(ec.Globals),
+		conditions.CELGlobalsAbbrev:      types.VariablesMap(ec.Globals),
 		conditions.CELNowFnActivationKey: ec.NowFunc,
 	}
 }
@@ -1326,7 +1327,7 @@ func (ec *EvalContext) evaluatePrograms(tctx tracer.Context, constants map[strin
 		if err != nil {
 			// Ignore errors for expressions that evaluate to an error value (e.g., missing keys).
 			// This matches the behavior of evaluateCELExpr which returns nil for such cases.
-			if types.IsError(result) {
+			if celtypes.IsError(result) {
 				vctx.ComputedResult(nil)
 				continue
 			}
@@ -1477,7 +1478,7 @@ func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *exprpb.Checked
 	result, _, err := prg.ContextEval(ctx, ec.buildEvalVars(constants, variables))
 	if err != nil {
 		// ignore expressions that are invalid
-		if types.IsError(result) {
+		if celtypes.IsError(result) {
 			return nil, nil
 		}
 		return nil, err
