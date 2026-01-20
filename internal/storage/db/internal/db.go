@@ -703,6 +703,19 @@ func (s *dbStorage) getDependentsWithNames(ctx context.Context, tx *goqu.TxDatab
 }
 
 func (s *dbStorage) GetDescendants(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.Policy, error) {
+	var descendants map[namer.ModuleID][]namer.Policy
+	if err := s.db.WithTx(func(tx *goqu.TxDatabase) error {
+		var err error
+		descendants, err = s.getDescendants(ctx, tx, ids...)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+
+	return descendants, nil
+}
+
+func (s *dbStorage) getDescendants(ctx context.Context, tx *goqu.TxDatabase, ids ...namer.ModuleID) (map[namer.ModuleID][]namer.Policy, error) {
 	// SELECT
 	//  policy_ancestor.ancestor_id AS id,
 	//  policy.id AS descendant_id,
@@ -718,7 +731,7 @@ func (s *dbStorage) GetDescendants(ctx context.Context, ids ...namer.ModuleID) (
 	//  name ASC,
 	//  version ASC,
 	//  scope ASC
-	query := s.db.
+	query := tx.
 		Select(
 			goqu.T(PolicyAncestorTbl).Col(PolicyAncestorTblAncestorIDCol).As("id"),
 			goqu.T(PolicyTbl).Col(PolicyTblIDCol).As("descendant_id"),
@@ -787,7 +800,7 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 			return err
 		}
 
-		if err := s.validateIntegrity(ctx, mIDPolicyKey, dependents, mIDs); err != nil {
+		if err := s.validateIntegrity(ctx, tx, mIDPolicyKey, mIDs, dependents); err != nil {
 			return err
 		}
 
@@ -880,7 +893,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 			return err
 		}
 
-		if err := s.validateIntegrity(ctx, mIDPolicyKey, dependents, mIDs); err != nil {
+		if err := s.validateIntegrity(ctx, tx, mIDPolicyKey, mIDs, dependents); err != nil {
 			return err
 		}
 
@@ -888,7 +901,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 			events[i] = storage.NewPolicyEvent(storage.EventDeleteOrDisablePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
 		}
 
-		res, err := s.db.Update(PolicyTbl).Prepared(true).
+		res, err := tx.Update(PolicyTbl).Prepared(true).
 			Set(goqu.Record{PolicyTblDisabledCol: true}).
 			Where(goqu.C(PolicyTblIDCol).In(mIDs)).
 			Executor().ExecContext(ctx)
@@ -936,12 +949,13 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 
 func (s *dbStorage) validateIntegrity(
 	ctx context.Context,
+	tx *goqu.TxDatabase,
 	mIDPolicyKey map[namer.ModuleID]string,
-	dependents map[namer.ModuleID][]namer.Policy,
 	mIDs []namer.ModuleID,
+	dependents map[namer.ModuleID][]namer.Policy,
 ) error {
 	out := make(map[string]*responsev1.IntegrityErrors)
-	if err := s.writeBreaksScopeChainErrors(ctx, out, mIDPolicyKey, mIDs); err != nil {
+	if err := s.writeBreaksScopeChainErrors(ctx, out, tx, mIDPolicyKey, mIDs); err != nil {
 		return fmt.Errorf("failed to write 'breaks scope chain' errors: %w", err)
 	}
 
@@ -962,10 +976,11 @@ func (s *dbStorage) validateIntegrity(
 func (s *dbStorage) writeBreaksScopeChainErrors(
 	ctx context.Context,
 	out map[string]*responsev1.IntegrityErrors,
+	tx *goqu.TxDatabase,
 	mIDPolicyKey map[namer.ModuleID]string,
 	mIDs []namer.ModuleID,
 ) error {
-	descendants, err := s.GetDescendants(ctx, mIDs...)
+	descendants, err := s.getDescendants(ctx, tx, mIDs...)
 	if err != nil {
 		return fmt.Errorf("failed to get descendants for policies: %w", err)
 	}
