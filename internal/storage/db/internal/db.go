@@ -22,6 +22,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jackc/pgtype"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -1334,7 +1335,7 @@ func (s *dbStorage) ListRevisions(ctx context.Context, ids ...namer.ModuleID) (m
 	query := s.db.
 		Select(
 			PolicyRevisionTblIDCol,
-			goqu.COUNT("*").As("count"),
+			goqu.COUNT(goqu.L("1")).As("count"),
 		).
 		From(PolicyRevisionTbl).
 		GroupBy(goqu.C(PolicyRevisionTblIDCol))
@@ -1382,31 +1383,23 @@ func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32
 			return 0, fmt.Errorf("failed to delete all revisions: %w", err)
 		}
 	default:
-		const revisionCol = "revision"
-		rankedQuery := s.policyRevisionsRankedQuery(revisionCol)
+		db, ok := s.db.Db.(*sqlx.DB)
+		if !ok {
+			return 0, fmt.Errorf("failed to get database")
+		}
 
-		// SELECT revision_id
-		// FROM <rankedQuery>
-		// WHERE revision > <>
-		innerQuery := s.db.
-			Select(PolicyRevisionTblRevisionIDCol).
-			From(rankedQuery).
-			Where(
-				goqu.C(revisionCol).Gt(keepLast),
-			)
+		query := `DELETE FROM policy_revision
+WHERE revision_id IN (
+    SELECT revision_id
+    FROM (
+        SELECT revision_id, ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_timestamp DESC) AS revision
+        FROM policy_revision
+    ) AS ranked
+    WHERE revision > :keepLast
+);`
 
-		// DELETE FROM policy_revision
-		// WHERE revision_id IN (<innerQuery>)
-		query := s.db.
-			Delete(PolicyRevisionTbl).
-			Where(
-				goqu.C(PolicyRevisionTblRevisionIDCol).In(innerQuery),
-			)
 		var err error
-		if res, err = query.
-			Prepared(true).
-			Executor().
-			ExecContext(ctx); err != nil {
+		if res, err = db.NamedExecContext(ctx, query, map[string]any{"keepLast": keepLast}); err != nil {
 			return 0, fmt.Errorf("failed to delete revisions: %w", err)
 		}
 	}
@@ -1417,54 +1410,4 @@ func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32
 	}
 
 	return uint32(affected), nil
-}
-
-func (s *dbStorage) policyRevisionsRankedQuery(revisionCol string) *goqu.SelectDataset {
-	switch s.db.Dialect() {
-	case "sqlite3", "mysql":
-		const policyRevisionTbl1 = "pr1"
-		const policyRevisionTbl2 = "pr2"
-
-		// SELECT
-		//  pr1.revision_id,
-		//  (
-		//   SELECT COUNT(*)
-		//   FROM policy_revision pr2
-		//   WHERE pr2.id = pr1.id AND pr2.update_timestamp >= pr1.update_timestamp
-		//  ) AS revision
-		// FROM policy_revision pr1
-		// ORDER BY pr1.id, pr1.update_timestamp DESC
-		return s.db.
-			Select(
-				goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblRevisionIDCol),
-				s.db.
-					Select(
-						goqu.COUNT("*"),
-					).
-					From(goqu.T(PolicyRevisionTbl).As(policyRevisionTbl2)).
-					Where(
-						goqu.T(policyRevisionTbl2).Col(PolicyRevisionTblIDCol).Eq(goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblIDCol)),
-						goqu.T(policyRevisionTbl2).Col(PolicyRevisionTblUpdateTimestampCol).Gte(goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblUpdateTimestampCol)),
-					).
-					As(revisionCol),
-			).
-			From(goqu.T(PolicyRevisionTbl).As(policyRevisionTbl1)).
-			Order(
-				goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblIDCol).Desc(),
-				goqu.T(policyRevisionTbl1).Col(PolicyRevisionTblUpdateTimestampCol).Desc(),
-			)
-	default:
-		// SELECT
-		//  revision_id,
-		//  ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_timestamp DESC) AS revision
-		// FROM policy_revision
-		return s.db.
-			Select(
-				PolicyRevisionTblRevisionIDCol,
-				goqu.ROW_NUMBER().Over(
-					goqu.W().PartitionBy(PolicyRevisionTblIDCol).OrderBy(goqu.I(PolicyRevisionTblUpdateTimestampCol).Desc()),
-				).As(revisionCol),
-			).
-			From(PolicyRevisionTbl)
-	}
 }

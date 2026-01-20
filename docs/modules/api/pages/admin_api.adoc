@@ -406,7 +406,7 @@ DELETE /admin/store/revisions
 
 Issue a DELETE request to the endpoint to delete all rows in the `policy_revisions` table.
 
-Use `keepLast=N` query parameter to keep the last N revisions. If not specified all revisions are going to be deleted.
+Use `keepLast=N` query parameter to keep the last N revisions for each policy. If not specified, the entire table will be truncated.
 
 .Purge the store revisions
 [source,shell]
