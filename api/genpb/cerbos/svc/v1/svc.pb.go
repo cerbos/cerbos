@@ -55,13 +55,13 @@ const file_cerbos_svc_v1_svc_proto_rawDesc = "" +
 	"\tGetPolicy\x12#.cerbos.request.v1.GetPolicyRequest\x1a%.cerbos.response.v1.GetPolicyResponse\"5\x92A\x1d\x12\n" +
 	"Get policyb\x0f\n" +
 	"\r\n" +
-	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/admin/policy\x12\xb2\x01\n" +
-	"\fDeletePolicy\x12&.cerbos.request.v1.DeletePolicyRequest\x1a(.cerbos.response.v1.DeletePolicyResponse\"P\x92A \x12\rDelete policyb\x0f\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/admin/policy\x12\xa1\x01\n" +
+	"\fDeletePolicy\x12&.cerbos.request.v1.DeletePolicyRequest\x1a(.cerbos.response.v1.DeletePolicyResponse\"?\x92A \x12\rDelete policyb\x0f\n" +
 	"\r\n" +
-	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02'Z\x0f*\r/admin/policy\"\x14/admin/policy/delete\x12\xc2\x01\n" +
-	"\rDisablePolicy\x12'.cerbos.request.v1.DisablePolicyRequest\x1a).cerbos.response.v1.DisablePolicyResponse\"]\x92A!\x12\x0eDisable policyb\x0f\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x16\"\x14/admin/policy/delete\x12\xd3\x01\n" +
+	"\rDisablePolicy\x12'.cerbos.request.v1.DisablePolicyRequest\x1a).cerbos.response.v1.DisablePolicyResponse\"n\x92A!\x12\x0eDisable policyb\x0f\n" +
 	"\r\n" +
-	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x023Z\x1a:\x01*\x1a\x15/admin/policy/disable\"\x15/admin/policy/disable\x12\xbc\x01\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02DZ\x1a:\x01*\x1a\x15/admin/policy/disableZ\x0f*\r/admin/policy\"\x15/admin/policy/disable\x12\xbc\x01\n" +
 	"\fEnablePolicy\x12&.cerbos.request.v1.EnablePolicyRequest\x1a(.cerbos.response.v1.EnablePolicyResponse\"Z\x92A \x12\rEnable policyb\x0f\n" +
 	"\r\n" +
 	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x021Z\x19:\x01*\x1a\x14/admin/policy/enable\"\x14/admin/policy/enable\x12\xc8\x01\n" +
