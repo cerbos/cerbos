@@ -156,10 +156,7 @@ service CerbosAdminService {
   }
 
   rpc DeletePolicy(cerbos.request.v1.DeletePolicyRequest) returns (cerbos.response.v1.DeletePolicyResponse) {
-    option (google.api.http) = {
-      post: "/admin/policy/delete"
-      additional_bindings: {delete: "/admin/policy"}
-    };
+    option (google.api.http) = {post: "/admin/policy/delete"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Delete policy"
       security: {
@@ -178,6 +175,7 @@ service CerbosAdminService {
         put: "/admin/policy/disable"
         body: "*"
       }
+      additional_bindings: {delete: "/admin/policy"}
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Disable policy"

@@ -298,13 +298,13 @@
         ]
       },
       "delete": {
-        "summary": "Delete policy",
-        "operationId": "CerbosAdminService_DeletePolicy2",
+        "summary": "Disable policy",
+        "operationId": "CerbosAdminService_DisablePolicy3",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1DeletePolicyResponse"
+              "$ref": "#/definitions/v1DisablePolicyResponse"
             }
           },
           "default": {
