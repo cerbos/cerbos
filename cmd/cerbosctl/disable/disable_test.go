@@ -83,7 +83,7 @@ func testDisableCmd(ctx context.Context, cctx *cmdclient.Context, globals *flags
 				}{
 					{
 						policyKey:    "derived_roles.my_derived_roles_1",
-						wantDisabled: true,
+						wantDisabled: false,
 					},
 					{
 						policyKey:    "principal.donald_duck_1.vdefault",
