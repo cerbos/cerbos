@@ -44,7 +44,7 @@ var (
 		decls.NewVariable(CELRequestIdent, types.MessageType[*enginev1.Request]()),
 		decls.NewVariable(CELPrincipalAbbrev, types.MessageType[*enginev1.Request_Principal]()),
 		decls.NewVariable(CELResourceAbbrev, types.MessageType[*enginev1.Request_Resource]()),
-		decls.NewVariable(CELRuntimeIdent, types.MessageType[*enginev1.Runtime]()),
+		decls.NewVariable(CELRuntimeIdent, types.RuntimeType),
 		decls.NewVariable(CELConstantsIdent, types.VariablesType),
 		decls.NewVariable(CELConstantsAbbrev, types.VariablesType),
 		decls.NewVariable(CELVariablesIdent, types.VariablesType),

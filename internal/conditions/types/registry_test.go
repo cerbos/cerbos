@@ -70,6 +70,84 @@ func TestJSONFields(t *testing.T) {
 	})
 }
 
+type testRuntime struct{}
+
+var _ types.Runtime = testRuntime{}
+
+func (testRuntime) GetEffectiveDerivedRoles() []string {
+	return []string{"foo", "bar"}
+}
+
+func TestRuntime(t *testing.T) {
+	eager := map[string]any{"runtime": &enginev1.Runtime{EffectiveDerivedRoles: []string{"foo", "bar"}}}
+	lazy := map[string]any{"runtime": testRuntime{}}
+
+	testCEL(t, []cel.EnvOption{
+		cel.Types(&enginev1.Runtime{}),
+		cel.VariableDecls(decls.NewVariable("runtime", types.RuntimeType)),
+		types.Registry(),
+	}, []celTestCase{
+		{
+			name:       "eager isSet effective_derived_roles",
+			bindings:   eager,
+			expr:       "has(runtime.effective_derived_roles)",
+			wantResult: true,
+		},
+		{
+			name:       "eager isSet effectiveDerivedRoles",
+			bindings:   eager,
+			expr:       "has(runtime.effectiveDerivedRoles)",
+			wantResult: true,
+		},
+		{
+			name:       "eager get effective_derived_roles",
+			bindings:   eager,
+			expr:       "runtime.effective_derived_roles",
+			wantResult: []string{"foo", "bar"},
+		},
+		{
+			name:       "eager get effectiveDerivedRoles",
+			bindings:   eager,
+			expr:       "runtime.effectiveDerivedRoles",
+			wantResult: []string{"foo", "bar"},
+		},
+		{
+			name:       "lazy isSet effective_derived_roles",
+			bindings:   lazy,
+			expr:       "has(runtime.effective_derived_roles)",
+			wantResult: true,
+		},
+		{
+			name:       "lazy isSet effectiveDerivedRoles",
+			bindings:   lazy,
+			expr:       "has(runtime.effectiveDerivedRoles)",
+			wantResult: true,
+		},
+		{
+			name:       "lazy get effective_derived_roles",
+			bindings:   lazy,
+			expr:       "runtime.effective_derived_roles",
+			wantResult: []string{"foo", "bar"},
+		},
+		{
+			name:       "lazy get effectiveDerivedRoles",
+			bindings:   lazy,
+			expr:       "runtime.effectiveDerivedRoles",
+			wantResult: []string{"foo", "bar"},
+		},
+		{
+			name:           "isSet missing",
+			expr:           "has(runtime.wat)",
+			wantCompileErr: "undefined field 'wat'",
+		},
+		{
+			name:           "get missing",
+			expr:           "runtime.wat",
+			wantCompileErr: "undefined field 'wat'",
+		},
+	})
+}
+
 type lazyFoo struct {
 	value any
 	err   error

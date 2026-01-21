@@ -48,7 +48,10 @@ func (r *typeRegistry) FindStructType(structType string) (*types.Type, bool) {
 }
 
 func (r *typeRegistry) FindStructFieldType(structType, fieldName string) (*types.FieldType, bool) {
-	if structType == variablesTypeName {
+	switch structType {
+	case runtimeTypeName:
+		return runtimeFieldType(fieldName)
+	case variablesTypeName:
 		return variablesFieldType(fieldName)
 	}
 
