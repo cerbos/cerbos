@@ -400,7 +400,7 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 				Condition:      rule.Condition,
 				Scope:          p.Scope,
 				Version:        p.Meta.Version,
-				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope, p.Meta.Version)), p.Role, idx),
+				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Meta.Version, p.Scope)), p.Role, idx),
 				PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 				FromRolePolicy: true,
 			})

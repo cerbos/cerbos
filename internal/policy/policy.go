@@ -776,7 +776,7 @@ func Wrap(p *policyv1.Policy) Wrapper {
 			version = namer.DefaultVersion
 		}
 		w.Kind = RolePolicyKind
-		w.FQN = namer.RolePolicyFQN(role, pt.RolePolicy.Scope, version)
+		w.FQN = namer.RolePolicyFQN(role, version, pt.RolePolicy.Scope)
 		w.ID = namer.GenModuleIDFromFQN(w.FQN)
 		w.Name = role
 		w.Version = version

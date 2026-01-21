@@ -96,7 +96,7 @@ func FQN(p *policyv1.Policy) string {
 	case *policyv1.Policy_PrincipalPolicy:
 		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
 	case *policyv1.Policy_RolePolicy:
-		return RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Scope, pt.RolePolicy.Version)
+		return RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Version, pt.RolePolicy.Scope)
 	case *policyv1.Policy_DerivedRoles:
 		return DerivedRolesFQN(pt.DerivedRoles.Name)
 	case *policyv1.Policy_ExportConstants:
@@ -127,7 +127,7 @@ func FQNTree(p *policyv1.Policy) []string {
 		scope = pt.PrincipalPolicy.Scope
 	case *policyv1.Policy_RolePolicy:
 		// role policies don't functionally have ancestors
-		fqn = RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Scope, pt.RolePolicy.Version)
+		fqn = RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Version, pt.RolePolicy.Scope)
 		return []string{fqn}
 	case *policyv1.Policy_DerivedRoles:
 		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
@@ -231,7 +231,7 @@ func PrincipalPolicyModuleID(principal, version, scope string) ModuleID {
 
 // RolePolicyFQN returns the fully-qualified module name for the role policies with the given scope.
 // If version is empty, it defaults to DefaultVersion.
-func RolePolicyFQN(role, scope, version string) string {
+func RolePolicyFQN(role, version, scope string) string {
 	if version == "" {
 		version = DefaultVersion
 	}
@@ -240,8 +240,8 @@ func RolePolicyFQN(role, scope, version string) string {
 }
 
 // RolePolicyModuleID returns the module ID for the role policies with the given scope.
-func RolePolicyModuleID(role, scope, version string) ModuleID {
-	return GenModuleIDFromFQN(RolePolicyFQN(role, scope, version))
+func RolePolicyModuleID(role, version, scope string) ModuleID {
+	return GenModuleIDFromFQN(RolePolicyFQN(role, version, scope))
 }
 
 // ScopedPrincipalPolicyModuleIDs returns a list of module IDs for each scope segment if `strict` is false.
@@ -343,7 +343,7 @@ func RuleFQN(rpsMeta any, scope, ruleName string) string {
 		case *runtimev1.RuleTableMetadata_Resource:
 			policyFqn = ResourcePolicyFQN(t.Resource, m.Version, scope)
 		case *runtimev1.RuleTableMetadata_Role:
-			policyFqn = RolePolicyFQN(t.Role, scope, m.Version)
+			policyFqn = RolePolicyFQN(t.Role, m.Version, scope)
 		}
 	default:
 		panic(fmt.Errorf("unknown runnable policy set meta type %T", m))
@@ -373,7 +373,7 @@ func (pc PolicyCoords) FQN() string {
 	case ResourcePoliciesPrefix:
 		return ResourcePolicyFQN(pc.Name, pc.Version, pc.Scope)
 	case RolePoliciesPrefix:
-		return RolePolicyFQN(pc.Name, pc.Scope, pc.Version)
+		return RolePolicyFQN(pc.Name, pc.Version, pc.Scope)
 	default:
 		panic(fmt.Errorf("unknown kind %q", pc.Kind))
 	}

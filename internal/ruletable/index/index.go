@@ -658,7 +658,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 					}
 					roleSet = roleSet.intersectWith(scopeSet)
 
-					roleFqn := namer.RolePolicyFQN(role, scope, version)
+					roleFqn := namer.RolePolicyFQN(role, version, scope)
 
 					if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
 						ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleSet))
