@@ -128,6 +128,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.variables_referencing_variables.vdefault",
+					"role.20210210_admin.v20210210",
 					"role.acme_assistant.vdefault/acme.hr.uk",
 					"role.acme_creator.vdefault/acme.hr.uk.brighton",
 					"role.acme_jr_admin.vdefault/acme.hr.uk.brighton",
