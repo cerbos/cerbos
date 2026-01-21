@@ -200,6 +200,32 @@ curl -k -u cerbos:cerbosAdmin \
     'https://localhost:3592/admin/policies/inspect?includeDisabled=true&nameRegexp=%5Efoo&scopeRegexp=bar%24&versionRegexp=default'
 ----
 
+[#delete-policies]
+=== Delete Policies
+
+----
+POST   /admin/policy/delete?id=policy_id
+----
+
+NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
+
+Issue a POST request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to delete.
+IDs follow the same format as the output of `ListPolicies` (`<kind>.<name>.v<version>/<scope>`). For example, a resource policy for `leave_request` with version `default` and scope `acme.hr` would have the ID `resource.leave_request.vdefault/acme.hr`.
+
+----
+curl -k -u cerbos:cerbosAdmin -X POST \
+    'https://localhost:3592/admin/policy/delete?id=principal.donald_duck.vdefault&id=derived_roles.my_derived_roles'
+----
+
+.Response
+[source,json,linenums]
+----
+{
+  "deletedPolicies": 2 <1>
+}
+----
+<1> Number of policies deleted
+
 [#disable-policies]
 === Disable Policies
 
@@ -212,7 +238,7 @@ DELETE /admin/policy?id=policy_id [DEPRECATED]
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
 
 Issue a POST request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to disable.
-The ID is of the form `<kind>.<name>.v<version>/<scope>`. A resource policy for `leave_request` with version `default` and scope `acme.hr` would therefore have the ID `resource.leave_request.vdefault/acme.hr`.
+IDs follow the same format as the output of `ListPolicies` (`<kind>.<name>.v<version>/<scope>`). For example, a resource policy for `leave_request` with version `default` and scope `acme.hr` would have the ID `resource.leave_request.vdefault/acme.hr`.
 
 ----
 curl -k -u cerbos:cerbosAdmin -X POST \
@@ -239,7 +265,7 @@ PUT  /admin/policy/enable?id=policy_id
 NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
 
 Issue a POST request to the endpoint with the list of IDs (the `id` query parameter can be repeated multiple times) to enable.
-The ID is of the form `<kind>.<name>.v<version>/<scope>`. A resource policy for `leave_request` with version `default` and scope `acme.hr` would therefore have the ID `resource.leave_request.vdefault/acme.hr`.
+IDs follow the same format as the output of `ListPolicies` (`<kind>.<name>.v<version>/<scope>`). For example, a resource policy for `leave_request` with version `default` and scope `acme.hr` would have the ID `resource.leave_request.vdefault/acme.hr`.
 
 ----
 curl -k -u cerbos:cerbosAdmin -X POST \

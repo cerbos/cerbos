@@ -860,6 +860,17 @@ func cerbos_request_v1_CheckResourcesRequest_hashpb_sum(m *CheckResourcesRequest
 	}
 }
 
+func cerbos_request_v1_DeletePolicyRequest_hashpb_sum(m *DeletePolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.DeletePolicyRequest.id"]; !ok {
+		if len(m.Id) > 0 {
+			for _, v := range m.Id {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
 func cerbos_request_v1_DeleteSchemaRequest_hashpb_sum(m *DeleteSchemaRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.DeleteSchemaRequest.id"]; !ok {
 		if len(m.Id) > 0 {

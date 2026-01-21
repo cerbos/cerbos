@@ -630,6 +630,8 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		return res, nil
 	}
 
+	actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+
 	for _, version := range versions {
 		versionSet, ok := versionSets[version]
 		if !ok {
@@ -663,7 +665,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 						if err != nil {
 							return nil, err
 						}
-						actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+						actionMatchedRows.Clear()
 						hadMatches := false
 						for ar := range ars {
 							hadMatches = true

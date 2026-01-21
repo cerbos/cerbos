@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/request/v1/DisablePolicyRequest.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/request/v1/DeletePolicyRequest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "required": [

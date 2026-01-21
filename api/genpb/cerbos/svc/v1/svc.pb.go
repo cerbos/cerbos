@@ -41,7 +41,7 @@ const file_cerbos_svc_v1_svc_proto_rawDesc = "" +
 	"\x0eCheckResources\x12(.cerbos.request.v1.CheckResourcesRequest\x1a*.cerbos.response.v1.CheckResourcesResponse\"\x87\x01\x92Ae\x12\x0fCheck resources\x1aRCheck a principal's permissions to a batch of heterogeneous resources and actions.\x82\xd3\xe4\x93\x02\x19:\x01*\"\x14/api/check/resources\x12\xc5\x01\n" +
 	"\n" +
 	"ServerInfo\x12$.cerbos.request.v1.ServerInfoRequest\x1a&.cerbos.response.v1.ServerInfoResponse\"i\x92AN\x12\x16Get server information\x1a4Get information about the server e.g. server version\x82\xd3\xe4\x93\x02\x12\x12\x10/api/server_info\x12\x83\x02\n" +
-	"\rPlanResources\x12'.cerbos.request.v1.PlanResourcesRequest\x1a).cerbos.response.v1.PlanResourcesResponse\"\x9d\x01\x92A|\x12\x0ePlan resources\x1ajProduce a query plan with conditions that must be satisfied for accessing a set of instances of a resource\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/plan/resources\x1a!\x92A\x1e\x12\x1cCerbos Policy Decision Point2\xf8\x10\n" +
+	"\rPlanResources\x12'.cerbos.request.v1.PlanResourcesRequest\x1a).cerbos.response.v1.PlanResourcesResponse\"\x9d\x01\x92A|\x12\x0ePlan resources\x1ajProduce a query plan with conditions that must be satisfied for accessing a set of instances of a resource\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/plan/resources\x1a!\x92A\x1e\x12\x1cCerbos Policy Decision Point2\x9c\x12\n" +
 	"\x12CerbosAdminService\x12\xc9\x01\n" +
 	"\x11AddOrUpdatePolicy\x12+.cerbos.request.v1.AddOrUpdatePolicyRequest\x1a-.cerbos.response.v1.AddOrUpdatePolicyResponse\"X\x92A)\x12\x16Add or update policiesb\x0f\n" +
 	"\r\n" +
@@ -55,7 +55,10 @@ const file_cerbos_svc_v1_svc_proto_rawDesc = "" +
 	"\tGetPolicy\x12#.cerbos.request.v1.GetPolicyRequest\x1a%.cerbos.response.v1.GetPolicyResponse\"5\x92A\x1d\x12\n" +
 	"Get policyb\x0f\n" +
 	"\r\n" +
-	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/admin/policy\x12\xd3\x01\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x0f\x12\r/admin/policy\x12\xa1\x01\n" +
+	"\fDeletePolicy\x12&.cerbos.request.v1.DeletePolicyRequest\x1a(.cerbos.response.v1.DeletePolicyResponse\"?\x92A \x12\rDelete policyb\x0f\n" +
+	"\r\n" +
+	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02\x16\"\x14/admin/policy/delete\x12\xd3\x01\n" +
 	"\rDisablePolicy\x12'.cerbos.request.v1.DisablePolicyRequest\x1a).cerbos.response.v1.DisablePolicyResponse\"n\x92A!\x12\x0eDisable policyb\x0f\n" +
 	"\r\n" +
 	"\tBasicAuth\x12\x00\x82\xd3\xe4\x93\x02DZ\x1a:\x01*\x1a\x15/admin/policy/disableZ\x0f*\r/admin/policy\"\x15/admin/policy/disable\x12\xbc\x01\n" +
@@ -103,39 +106,41 @@ var file_cerbos_svc_v1_svc_proto_goTypes = []any{
 	(*v1.InspectPoliciesRequest)(nil),       // 6: cerbos.request.v1.InspectPoliciesRequest
 	(*v1.ListPoliciesRequest)(nil),          // 7: cerbos.request.v1.ListPoliciesRequest
 	(*v1.GetPolicyRequest)(nil),             // 8: cerbos.request.v1.GetPolicyRequest
-	(*v1.DisablePolicyRequest)(nil),         // 9: cerbos.request.v1.DisablePolicyRequest
-	(*v1.EnablePolicyRequest)(nil),          // 10: cerbos.request.v1.EnablePolicyRequest
-	(*v1.ListAuditLogEntriesRequest)(nil),   // 11: cerbos.request.v1.ListAuditLogEntriesRequest
-	(*v1.AddOrUpdateSchemaRequest)(nil),     // 12: cerbos.request.v1.AddOrUpdateSchemaRequest
-	(*v1.ListSchemasRequest)(nil),           // 13: cerbos.request.v1.ListSchemasRequest
-	(*v1.GetSchemaRequest)(nil),             // 14: cerbos.request.v1.GetSchemaRequest
-	(*v1.DeleteSchemaRequest)(nil),          // 15: cerbos.request.v1.DeleteSchemaRequest
-	(*v1.ReloadStoreRequest)(nil),           // 16: cerbos.request.v1.ReloadStoreRequest
-	(*v1.PlaygroundValidateRequest)(nil),    // 17: cerbos.request.v1.PlaygroundValidateRequest
-	(*v1.PlaygroundTestRequest)(nil),        // 18: cerbos.request.v1.PlaygroundTestRequest
-	(*v1.PlaygroundEvaluateRequest)(nil),    // 19: cerbos.request.v1.PlaygroundEvaluateRequest
-	(*v1.PlaygroundProxyRequest)(nil),       // 20: cerbos.request.v1.PlaygroundProxyRequest
-	(*v11.CheckResourceSetResponse)(nil),    // 21: cerbos.response.v1.CheckResourceSetResponse
-	(*v11.CheckResourceBatchResponse)(nil),  // 22: cerbos.response.v1.CheckResourceBatchResponse
-	(*v11.CheckResourcesResponse)(nil),      // 23: cerbos.response.v1.CheckResourcesResponse
-	(*v11.ServerInfoResponse)(nil),          // 24: cerbos.response.v1.ServerInfoResponse
-	(*v11.PlanResourcesResponse)(nil),       // 25: cerbos.response.v1.PlanResourcesResponse
-	(*v11.AddOrUpdatePolicyResponse)(nil),   // 26: cerbos.response.v1.AddOrUpdatePolicyResponse
-	(*v11.InspectPoliciesResponse)(nil),     // 27: cerbos.response.v1.InspectPoliciesResponse
-	(*v11.ListPoliciesResponse)(nil),        // 28: cerbos.response.v1.ListPoliciesResponse
-	(*v11.GetPolicyResponse)(nil),           // 29: cerbos.response.v1.GetPolicyResponse
-	(*v11.DisablePolicyResponse)(nil),       // 30: cerbos.response.v1.DisablePolicyResponse
-	(*v11.EnablePolicyResponse)(nil),        // 31: cerbos.response.v1.EnablePolicyResponse
-	(*v11.ListAuditLogEntriesResponse)(nil), // 32: cerbos.response.v1.ListAuditLogEntriesResponse
-	(*v11.AddOrUpdateSchemaResponse)(nil),   // 33: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*v11.ListSchemasResponse)(nil),         // 34: cerbos.response.v1.ListSchemasResponse
-	(*v11.GetSchemaResponse)(nil),           // 35: cerbos.response.v1.GetSchemaResponse
-	(*v11.DeleteSchemaResponse)(nil),        // 36: cerbos.response.v1.DeleteSchemaResponse
-	(*v11.ReloadStoreResponse)(nil),         // 37: cerbos.response.v1.ReloadStoreResponse
-	(*v11.PlaygroundValidateResponse)(nil),  // 38: cerbos.response.v1.PlaygroundValidateResponse
-	(*v11.PlaygroundTestResponse)(nil),      // 39: cerbos.response.v1.PlaygroundTestResponse
-	(*v11.PlaygroundEvaluateResponse)(nil),  // 40: cerbos.response.v1.PlaygroundEvaluateResponse
-	(*v11.PlaygroundProxyResponse)(nil),     // 41: cerbos.response.v1.PlaygroundProxyResponse
+	(*v1.DeletePolicyRequest)(nil),          // 9: cerbos.request.v1.DeletePolicyRequest
+	(*v1.DisablePolicyRequest)(nil),         // 10: cerbos.request.v1.DisablePolicyRequest
+	(*v1.EnablePolicyRequest)(nil),          // 11: cerbos.request.v1.EnablePolicyRequest
+	(*v1.ListAuditLogEntriesRequest)(nil),   // 12: cerbos.request.v1.ListAuditLogEntriesRequest
+	(*v1.AddOrUpdateSchemaRequest)(nil),     // 13: cerbos.request.v1.AddOrUpdateSchemaRequest
+	(*v1.ListSchemasRequest)(nil),           // 14: cerbos.request.v1.ListSchemasRequest
+	(*v1.GetSchemaRequest)(nil),             // 15: cerbos.request.v1.GetSchemaRequest
+	(*v1.DeleteSchemaRequest)(nil),          // 16: cerbos.request.v1.DeleteSchemaRequest
+	(*v1.ReloadStoreRequest)(nil),           // 17: cerbos.request.v1.ReloadStoreRequest
+	(*v1.PlaygroundValidateRequest)(nil),    // 18: cerbos.request.v1.PlaygroundValidateRequest
+	(*v1.PlaygroundTestRequest)(nil),        // 19: cerbos.request.v1.PlaygroundTestRequest
+	(*v1.PlaygroundEvaluateRequest)(nil),    // 20: cerbos.request.v1.PlaygroundEvaluateRequest
+	(*v1.PlaygroundProxyRequest)(nil),       // 21: cerbos.request.v1.PlaygroundProxyRequest
+	(*v11.CheckResourceSetResponse)(nil),    // 22: cerbos.response.v1.CheckResourceSetResponse
+	(*v11.CheckResourceBatchResponse)(nil),  // 23: cerbos.response.v1.CheckResourceBatchResponse
+	(*v11.CheckResourcesResponse)(nil),      // 24: cerbos.response.v1.CheckResourcesResponse
+	(*v11.ServerInfoResponse)(nil),          // 25: cerbos.response.v1.ServerInfoResponse
+	(*v11.PlanResourcesResponse)(nil),       // 26: cerbos.response.v1.PlanResourcesResponse
+	(*v11.AddOrUpdatePolicyResponse)(nil),   // 27: cerbos.response.v1.AddOrUpdatePolicyResponse
+	(*v11.InspectPoliciesResponse)(nil),     // 28: cerbos.response.v1.InspectPoliciesResponse
+	(*v11.ListPoliciesResponse)(nil),        // 29: cerbos.response.v1.ListPoliciesResponse
+	(*v11.GetPolicyResponse)(nil),           // 30: cerbos.response.v1.GetPolicyResponse
+	(*v11.DeletePolicyResponse)(nil),        // 31: cerbos.response.v1.DeletePolicyResponse
+	(*v11.DisablePolicyResponse)(nil),       // 32: cerbos.response.v1.DisablePolicyResponse
+	(*v11.EnablePolicyResponse)(nil),        // 33: cerbos.response.v1.EnablePolicyResponse
+	(*v11.ListAuditLogEntriesResponse)(nil), // 34: cerbos.response.v1.ListAuditLogEntriesResponse
+	(*v11.AddOrUpdateSchemaResponse)(nil),   // 35: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*v11.ListSchemasResponse)(nil),         // 36: cerbos.response.v1.ListSchemasResponse
+	(*v11.GetSchemaResponse)(nil),           // 37: cerbos.response.v1.GetSchemaResponse
+	(*v11.DeleteSchemaResponse)(nil),        // 38: cerbos.response.v1.DeleteSchemaResponse
+	(*v11.ReloadStoreResponse)(nil),         // 39: cerbos.response.v1.ReloadStoreResponse
+	(*v11.PlaygroundValidateResponse)(nil),  // 40: cerbos.response.v1.PlaygroundValidateResponse
+	(*v11.PlaygroundTestResponse)(nil),      // 41: cerbos.response.v1.PlaygroundTestResponse
+	(*v11.PlaygroundEvaluateResponse)(nil),  // 42: cerbos.response.v1.PlaygroundEvaluateResponse
+	(*v11.PlaygroundProxyResponse)(nil),     // 43: cerbos.response.v1.PlaygroundProxyResponse
 }
 var file_cerbos_svc_v1_svc_proto_depIdxs = []int32{
 	0,  // 0: cerbos.svc.v1.CerbosService.CheckResourceSet:input_type -> cerbos.request.v1.CheckResourceSetRequest
@@ -147,41 +152,43 @@ var file_cerbos_svc_v1_svc_proto_depIdxs = []int32{
 	6,  // 6: cerbos.svc.v1.CerbosAdminService.InspectPolicies:input_type -> cerbos.request.v1.InspectPoliciesRequest
 	7,  // 7: cerbos.svc.v1.CerbosAdminService.ListPolicies:input_type -> cerbos.request.v1.ListPoliciesRequest
 	8,  // 8: cerbos.svc.v1.CerbosAdminService.GetPolicy:input_type -> cerbos.request.v1.GetPolicyRequest
-	9,  // 9: cerbos.svc.v1.CerbosAdminService.DisablePolicy:input_type -> cerbos.request.v1.DisablePolicyRequest
-	10, // 10: cerbos.svc.v1.CerbosAdminService.EnablePolicy:input_type -> cerbos.request.v1.EnablePolicyRequest
-	11, // 11: cerbos.svc.v1.CerbosAdminService.ListAuditLogEntries:input_type -> cerbos.request.v1.ListAuditLogEntriesRequest
-	12, // 12: cerbos.svc.v1.CerbosAdminService.AddOrUpdateSchema:input_type -> cerbos.request.v1.AddOrUpdateSchemaRequest
-	13, // 13: cerbos.svc.v1.CerbosAdminService.ListSchemas:input_type -> cerbos.request.v1.ListSchemasRequest
-	14, // 14: cerbos.svc.v1.CerbosAdminService.GetSchema:input_type -> cerbos.request.v1.GetSchemaRequest
-	15, // 15: cerbos.svc.v1.CerbosAdminService.DeleteSchema:input_type -> cerbos.request.v1.DeleteSchemaRequest
-	16, // 16: cerbos.svc.v1.CerbosAdminService.ReloadStore:input_type -> cerbos.request.v1.ReloadStoreRequest
-	17, // 17: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundValidate:input_type -> cerbos.request.v1.PlaygroundValidateRequest
-	18, // 18: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundTest:input_type -> cerbos.request.v1.PlaygroundTestRequest
-	19, // 19: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundEvaluate:input_type -> cerbos.request.v1.PlaygroundEvaluateRequest
-	20, // 20: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundProxy:input_type -> cerbos.request.v1.PlaygroundProxyRequest
-	21, // 21: cerbos.svc.v1.CerbosService.CheckResourceSet:output_type -> cerbos.response.v1.CheckResourceSetResponse
-	22, // 22: cerbos.svc.v1.CerbosService.CheckResourceBatch:output_type -> cerbos.response.v1.CheckResourceBatchResponse
-	23, // 23: cerbos.svc.v1.CerbosService.CheckResources:output_type -> cerbos.response.v1.CheckResourcesResponse
-	24, // 24: cerbos.svc.v1.CerbosService.ServerInfo:output_type -> cerbos.response.v1.ServerInfoResponse
-	25, // 25: cerbos.svc.v1.CerbosService.PlanResources:output_type -> cerbos.response.v1.PlanResourcesResponse
-	26, // 26: cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy:output_type -> cerbos.response.v1.AddOrUpdatePolicyResponse
-	27, // 27: cerbos.svc.v1.CerbosAdminService.InspectPolicies:output_type -> cerbos.response.v1.InspectPoliciesResponse
-	28, // 28: cerbos.svc.v1.CerbosAdminService.ListPolicies:output_type -> cerbos.response.v1.ListPoliciesResponse
-	29, // 29: cerbos.svc.v1.CerbosAdminService.GetPolicy:output_type -> cerbos.response.v1.GetPolicyResponse
-	30, // 30: cerbos.svc.v1.CerbosAdminService.DisablePolicy:output_type -> cerbos.response.v1.DisablePolicyResponse
-	31, // 31: cerbos.svc.v1.CerbosAdminService.EnablePolicy:output_type -> cerbos.response.v1.EnablePolicyResponse
-	32, // 32: cerbos.svc.v1.CerbosAdminService.ListAuditLogEntries:output_type -> cerbos.response.v1.ListAuditLogEntriesResponse
-	33, // 33: cerbos.svc.v1.CerbosAdminService.AddOrUpdateSchema:output_type -> cerbos.response.v1.AddOrUpdateSchemaResponse
-	34, // 34: cerbos.svc.v1.CerbosAdminService.ListSchemas:output_type -> cerbos.response.v1.ListSchemasResponse
-	35, // 35: cerbos.svc.v1.CerbosAdminService.GetSchema:output_type -> cerbos.response.v1.GetSchemaResponse
-	36, // 36: cerbos.svc.v1.CerbosAdminService.DeleteSchema:output_type -> cerbos.response.v1.DeleteSchemaResponse
-	37, // 37: cerbos.svc.v1.CerbosAdminService.ReloadStore:output_type -> cerbos.response.v1.ReloadStoreResponse
-	38, // 38: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundValidate:output_type -> cerbos.response.v1.PlaygroundValidateResponse
-	39, // 39: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundTest:output_type -> cerbos.response.v1.PlaygroundTestResponse
-	40, // 40: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundEvaluate:output_type -> cerbos.response.v1.PlaygroundEvaluateResponse
-	41, // 41: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundProxy:output_type -> cerbos.response.v1.PlaygroundProxyResponse
-	21, // [21:42] is the sub-list for method output_type
-	0,  // [0:21] is the sub-list for method input_type
+	9,  // 9: cerbos.svc.v1.CerbosAdminService.DeletePolicy:input_type -> cerbos.request.v1.DeletePolicyRequest
+	10, // 10: cerbos.svc.v1.CerbosAdminService.DisablePolicy:input_type -> cerbos.request.v1.DisablePolicyRequest
+	11, // 11: cerbos.svc.v1.CerbosAdminService.EnablePolicy:input_type -> cerbos.request.v1.EnablePolicyRequest
+	12, // 12: cerbos.svc.v1.CerbosAdminService.ListAuditLogEntries:input_type -> cerbos.request.v1.ListAuditLogEntriesRequest
+	13, // 13: cerbos.svc.v1.CerbosAdminService.AddOrUpdateSchema:input_type -> cerbos.request.v1.AddOrUpdateSchemaRequest
+	14, // 14: cerbos.svc.v1.CerbosAdminService.ListSchemas:input_type -> cerbos.request.v1.ListSchemasRequest
+	15, // 15: cerbos.svc.v1.CerbosAdminService.GetSchema:input_type -> cerbos.request.v1.GetSchemaRequest
+	16, // 16: cerbos.svc.v1.CerbosAdminService.DeleteSchema:input_type -> cerbos.request.v1.DeleteSchemaRequest
+	17, // 17: cerbos.svc.v1.CerbosAdminService.ReloadStore:input_type -> cerbos.request.v1.ReloadStoreRequest
+	18, // 18: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundValidate:input_type -> cerbos.request.v1.PlaygroundValidateRequest
+	19, // 19: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundTest:input_type -> cerbos.request.v1.PlaygroundTestRequest
+	20, // 20: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundEvaluate:input_type -> cerbos.request.v1.PlaygroundEvaluateRequest
+	21, // 21: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundProxy:input_type -> cerbos.request.v1.PlaygroundProxyRequest
+	22, // 22: cerbos.svc.v1.CerbosService.CheckResourceSet:output_type -> cerbos.response.v1.CheckResourceSetResponse
+	23, // 23: cerbos.svc.v1.CerbosService.CheckResourceBatch:output_type -> cerbos.response.v1.CheckResourceBatchResponse
+	24, // 24: cerbos.svc.v1.CerbosService.CheckResources:output_type -> cerbos.response.v1.CheckResourcesResponse
+	25, // 25: cerbos.svc.v1.CerbosService.ServerInfo:output_type -> cerbos.response.v1.ServerInfoResponse
+	26, // 26: cerbos.svc.v1.CerbosService.PlanResources:output_type -> cerbos.response.v1.PlanResourcesResponse
+	27, // 27: cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy:output_type -> cerbos.response.v1.AddOrUpdatePolicyResponse
+	28, // 28: cerbos.svc.v1.CerbosAdminService.InspectPolicies:output_type -> cerbos.response.v1.InspectPoliciesResponse
+	29, // 29: cerbos.svc.v1.CerbosAdminService.ListPolicies:output_type -> cerbos.response.v1.ListPoliciesResponse
+	30, // 30: cerbos.svc.v1.CerbosAdminService.GetPolicy:output_type -> cerbos.response.v1.GetPolicyResponse
+	31, // 31: cerbos.svc.v1.CerbosAdminService.DeletePolicy:output_type -> cerbos.response.v1.DeletePolicyResponse
+	32, // 32: cerbos.svc.v1.CerbosAdminService.DisablePolicy:output_type -> cerbos.response.v1.DisablePolicyResponse
+	33, // 33: cerbos.svc.v1.CerbosAdminService.EnablePolicy:output_type -> cerbos.response.v1.EnablePolicyResponse
+	34, // 34: cerbos.svc.v1.CerbosAdminService.ListAuditLogEntries:output_type -> cerbos.response.v1.ListAuditLogEntriesResponse
+	35, // 35: cerbos.svc.v1.CerbosAdminService.AddOrUpdateSchema:output_type -> cerbos.response.v1.AddOrUpdateSchemaResponse
+	36, // 36: cerbos.svc.v1.CerbosAdminService.ListSchemas:output_type -> cerbos.response.v1.ListSchemasResponse
+	37, // 37: cerbos.svc.v1.CerbosAdminService.GetSchema:output_type -> cerbos.response.v1.GetSchemaResponse
+	38, // 38: cerbos.svc.v1.CerbosAdminService.DeleteSchema:output_type -> cerbos.response.v1.DeleteSchemaResponse
+	39, // 39: cerbos.svc.v1.CerbosAdminService.ReloadStore:output_type -> cerbos.response.v1.ReloadStoreResponse
+	40, // 40: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundValidate:output_type -> cerbos.response.v1.PlaygroundValidateResponse
+	41, // 41: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundTest:output_type -> cerbos.response.v1.PlaygroundTestResponse
+	42, // 42: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundEvaluate:output_type -> cerbos.response.v1.PlaygroundEvaluateResponse
+	43, // 43: cerbos.svc.v1.CerbosPlaygroundService.PlaygroundProxy:output_type -> cerbos.response.v1.PlaygroundProxyResponse
+	22, // [22:44] is the sub-list for method output_type
+	0,  // [0:22] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

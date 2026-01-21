@@ -60,7 +60,7 @@ func (AuthCreds) RequireTransportSecurity() bool {
 
 func LoadTestCases(tb testing.TB, suiteSleeps map[string]time.Duration, dirs ...string) *TestRunner {
 	tb.Helper()
-	var testCases []*privatev1.ServerTestCase
+	var testCases []*privatev1.ServerTestCase //nolint:prealloc
 
 	totalTestCases := 0
 	testCaseSleeps := make(map[int]time.Duration)

@@ -69,6 +69,9 @@ const (
 	// CerbosAdminServiceGetPolicyProcedure is the fully-qualified name of the CerbosAdminService's
 	// GetPolicy RPC.
 	CerbosAdminServiceGetPolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/GetPolicy"
+	// CerbosAdminServiceDeletePolicyProcedure is the fully-qualified name of the CerbosAdminService's
+	// DeletePolicy RPC.
+	CerbosAdminServiceDeletePolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/DeletePolicy"
 	// CerbosAdminServiceDisablePolicyProcedure is the fully-qualified name of the CerbosAdminService's
 	// DisablePolicy RPC.
 	CerbosAdminServiceDisablePolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/DisablePolicy"
@@ -287,6 +290,7 @@ type CerbosAdminServiceClient interface {
 	InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error)
 	ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error)
 	GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error)
+	DeletePolicy(context.Context, *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error)
 	DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error)
 	EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error)
 	ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest]) (*connect.ServerStreamForClient[v11.ListAuditLogEntriesResponse], error)
@@ -330,6 +334,12 @@ func NewCerbosAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			httpClient,
 			baseURL+CerbosAdminServiceGetPolicyProcedure,
 			connect.WithSchema(cerbosAdminServiceMethods.ByName("GetPolicy")),
+			connect.WithClientOptions(opts...),
+		),
+		deletePolicy: connect.NewClient[v1.DeletePolicyRequest, v11.DeletePolicyResponse](
+			httpClient,
+			baseURL+CerbosAdminServiceDeletePolicyProcedure,
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("DeletePolicy")),
 			connect.WithClientOptions(opts...),
 		),
 		disablePolicy: connect.NewClient[v1.DisablePolicyRequest, v11.DisablePolicyResponse](
@@ -389,6 +399,7 @@ type cerbosAdminServiceClient struct {
 	inspectPolicies     *connect.Client[v1.InspectPoliciesRequest, v11.InspectPoliciesResponse]
 	listPolicies        *connect.Client[v1.ListPoliciesRequest, v11.ListPoliciesResponse]
 	getPolicy           *connect.Client[v1.GetPolicyRequest, v11.GetPolicyResponse]
+	deletePolicy        *connect.Client[v1.DeletePolicyRequest, v11.DeletePolicyResponse]
 	disablePolicy       *connect.Client[v1.DisablePolicyRequest, v11.DisablePolicyResponse]
 	enablePolicy        *connect.Client[v1.EnablePolicyRequest, v11.EnablePolicyResponse]
 	listAuditLogEntries *connect.Client[v1.ListAuditLogEntriesRequest, v11.ListAuditLogEntriesResponse]
@@ -417,6 +428,11 @@ func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, req *connec
 // GetPolicy calls cerbos.svc.v1.CerbosAdminService.GetPolicy.
 func (c *cerbosAdminServiceClient) GetPolicy(ctx context.Context, req *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error) {
 	return c.getPolicy.CallUnary(ctx, req)
+}
+
+// DeletePolicy calls cerbos.svc.v1.CerbosAdminService.DeletePolicy.
+func (c *cerbosAdminServiceClient) DeletePolicy(ctx context.Context, req *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error) {
+	return c.deletePolicy.CallUnary(ctx, req)
 }
 
 // DisablePolicy calls cerbos.svc.v1.CerbosAdminService.DisablePolicy.
@@ -465,6 +481,7 @@ type CerbosAdminServiceHandler interface {
 	InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error)
 	ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error)
 	GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error)
+	DeletePolicy(context.Context, *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error)
 	DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error)
 	EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error)
 	ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest], *connect.ServerStream[v11.ListAuditLogEntriesResponse]) error
@@ -504,6 +521,12 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 		CerbosAdminServiceGetPolicyProcedure,
 		svc.GetPolicy,
 		connect.WithSchema(cerbosAdminServiceMethods.ByName("GetPolicy")),
+		connect.WithHandlerOptions(opts...),
+	)
+	cerbosAdminServiceDeletePolicyHandler := connect.NewUnaryHandler(
+		CerbosAdminServiceDeletePolicyProcedure,
+		svc.DeletePolicy,
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("DeletePolicy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceDisablePolicyHandler := connect.NewUnaryHandler(
@@ -564,6 +587,8 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 			cerbosAdminServiceListPoliciesHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceGetPolicyProcedure:
 			cerbosAdminServiceGetPolicyHandler.ServeHTTP(w, r)
+		case CerbosAdminServiceDeletePolicyProcedure:
+			cerbosAdminServiceDeletePolicyHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceDisablePolicyProcedure:
 			cerbosAdminServiceDisablePolicyHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceEnablePolicyProcedure:
@@ -603,6 +628,10 @@ func (UnimplementedCerbosAdminServiceHandler) ListPolicies(context.Context, *con
 
 func (UnimplementedCerbosAdminServiceHandler) GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.GetPolicy is not implemented"))
+}
+
+func (UnimplementedCerbosAdminServiceHandler) DeletePolicy(context.Context, *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.DeletePolicy is not implemented"))
 }
 
 func (UnimplementedCerbosAdminServiceHandler) DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error) {

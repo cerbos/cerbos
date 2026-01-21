@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -227,6 +228,66 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.ElementsMatch(t, []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID, pp.ID, ppAcme.ID, ppAcmeHR.ID, drImportVariables.ID, rpImportDerivedRolesThatImportVariables.ID}, have[ev.ID])
 		})
 
+		t.Run("get_descendants", func(t *testing.T) {
+			have, err := store.GetDescendants(ctx, rp.ID, rpAcme.ID)
+			require.NoError(t, err)
+
+			require.Len(t, have, 2)
+
+			require.Contains(t, have, rp.ID)
+			require.ElementsMatch(t, []namer.Policy{
+				{
+					ID: rpAcme.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcme.Kind.String(),
+						Name:    rpAcme.Name,
+						Version: rpAcme.Version,
+						Scope:   rpAcme.Scope,
+					},
+				},
+				{
+					ID: rpAcmeHR.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHR.Kind.String(),
+						Name:    rpAcmeHR.Name,
+						Version: rpAcmeHR.Version,
+						Scope:   rpAcmeHR.Scope,
+					},
+				},
+				{
+					ID: rpAcmeHRUK.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHRUK.Kind.String(),
+						Name:    rpAcmeHRUK.Name,
+						Version: rpAcmeHRUK.Version,
+						Scope:   rpAcmeHRUK.Scope,
+					},
+				},
+			}, have[rp.ID])
+
+			require.Contains(t, have, rpAcme.ID)
+			require.ElementsMatch(t, []namer.Policy{
+				{
+					ID: rpAcmeHR.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHR.Kind.String(),
+						Name:    rpAcmeHR.Name,
+						Version: rpAcmeHR.Version,
+						Scope:   rpAcmeHR.Scope,
+					},
+				},
+				{
+					ID: rpAcmeHRUK.ID,
+					PolicyCoords: namer.PolicyCoords{
+						Kind:    rpAcmeHRUK.Kind.String(),
+						Name:    rpAcmeHRUK.Name,
+						Version: rpAcmeHRUK.Version,
+						Scope:   rpAcmeHRUK.Scope,
+					},
+				},
+			}, have[rpAcme.ID])
+		})
+
 		t.Run("get_policy", func(t *testing.T) {
 			for _, want := range policyList {
 				t.Run(want.FQN, func(t *testing.T) {
@@ -333,24 +394,6 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			}
 		})
 
-		t.Run("delete", func(t *testing.T) {
-			checkEvents := storage.TestSubscription(store)
-
-			err := store.Delete(ctx, rpx.ID, dr.ID)
-			require.NoError(t, err)
-
-			have, err := store.GetCompilationUnits(ctx, rpx.ID, dr.ID)
-			require.NoError(t, err)
-			require.Empty(t, have)
-
-			wantEvents := []storage.Event{
-				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: rpx.ID},
-				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: dr.ID},
-				{Kind: storage.EventAddOrUpdatePolicy, Dependents: []namer.ModuleID{rp.ID, rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
-			}
-			checkEvents(t, timeout, wantEvents...)
-		})
-
 		t.Run("add_schema", func(t *testing.T) {
 			checkEvents := storage.TestSubscription(store)
 			require.NoError(t, store.AddOrUpdateSchema(ctx, &schemav1.Schema{Id: schID, Definition: sch}))
@@ -385,6 +428,123 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			require.Empty(t, have)
 
 			checkEvents(t, timeout, storage.NewSchemaEvent(storage.EventDeleteSchema, schID))
+		})
+
+		t.Run("delete", func(t *testing.T) {
+			checkEvents := storage.TestSubscription(store)
+
+			_, err := store.Delete(ctx, namer.PolicyKeyFromFQN(rpx.FQN))
+			require.NoError(t, err)
+
+			have, err := store.GetCompilationUnits(ctx, rpx.ID)
+			require.NoError(t, err)
+			require.Empty(t, have)
+
+			wantEvents := []storage.Event{
+				{Kind: storage.EventDeleteOrDisablePolicy, PolicyID: rpx.ID},
+			}
+			checkEvents(t, timeout, wantEvents...)
+
+			t.Run("integrity_error", func(t *testing.T) {
+				t.Run("required_by_other_policies", func(t *testing.T) {
+					_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(dr.FQN))
+
+					var integrityErr *db.IntegrityErr
+					require.ErrorAs(t, err, &integrityErr)
+
+					require.Len(t, integrityErr.Errors, 1)
+					require.Contains(t, integrityErr.Errors, namer.PolicyKey(dr.Policy))
+
+					require.Len(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, 4)
+					require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rp.Policy))
+					require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rpAcme.Policy))
+					require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rpAcmeHR.Policy))
+					require.Contains(t, integrityErr.Errors[namer.PolicyKey(dr.Policy)].RequiredByOtherPolicies.Dependents, namer.PolicyKey(rpAcmeHRUK.Policy))
+				})
+
+				t.Run("breaks_scope_chain", func(t *testing.T) {
+					_, err = store.Delete(ctx, namer.PolicyKeyFromFQN(rpAcmeHR.FQN))
+
+					var integrityErr *db.IntegrityErr
+					require.ErrorAs(t, err, &integrityErr)
+
+					require.Len(t, integrityErr.Errors, 1)
+					require.Contains(t, integrityErr.Errors, namer.PolicyKey(rpAcmeHR.Policy))
+
+					require.Len(t, integrityErr.Errors[namer.PolicyKey(rpAcmeHR.Policy)].BreaksScopeChain.Descendants, 1)
+					require.Contains(t, integrityErr.Errors[namer.PolicyKey(rpAcmeHR.Policy)].BreaksScopeChain.Descendants, namer.PolicyKey(rpAcmeHRUK.Policy))
+				})
+
+				t.Run("transient", func(t *testing.T) {
+					e := policy.Wrap(test.GenExportVariables(test.Suffix("integrity_error")))
+					d := policy.Wrap(test.GenDerivedRoles(test.Suffix("integrity_error")))
+					d.GetDerivedRoles().Variables = &policyv1.Variables{Import: []string{e.Name}}
+
+					r1 := policy.Wrap(test.GenResourcePolicy(test.Suffix("integrity_error_1")))
+					r1.GetResourcePolicy().ImportDerivedRoles = []string{d.Name}
+
+					r2 := policy.Wrap(test.GenResourcePolicy(test.Suffix("integrity_error_2")))
+					r2.GetResourcePolicy().ImportDerivedRoles = []string{d.Name}
+
+					require.NoError(t, store.AddOrUpdate(t.Context(), e, d, r1, r2), "setup failed for transient test case")
+
+					t.Run("case_1", func(t *testing.T) {
+						_, err = store.Delete(ctx,
+							namer.PolicyKeyFromFQN(e.FQN),
+							namer.PolicyKeyFromFQN(d.FQN),
+							namer.PolicyKeyFromFQN(r1.FQN),
+						)
+
+						var integrityErr *db.IntegrityErr
+						require.ErrorAs(t, err, &integrityErr)
+
+						require.Len(t, integrityErr.Errors, 2)
+						require.Contains(t, integrityErr.Errors, namer.PolicyKey(e.Policy))
+
+						require.Len(t, integrityErr.Errors[namer.PolicyKey(d.Policy)].RequiredByOtherPolicies.Dependents, 2)
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(d.Policy)].RequiredByOtherPolicies.Dependents, "resource.leave_request_integrity_error_1.vdefault")
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(d.Policy)].RequiredByOtherPolicies.Dependents, "resource.leave_request_integrity_error_2.vdefault")
+
+						require.Len(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, 3)
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, "derived_roles.my_derived_roles_integrity_error")
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, "resource.leave_request_integrity_error_1.vdefault")
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, "resource.leave_request_integrity_error_2.vdefault")
+					})
+
+					t.Run("case_2", func(t *testing.T) {
+						_, err = store.Delete(ctx,
+							namer.PolicyKeyFromFQN(e.FQN),
+							namer.PolicyKeyFromFQN(r1.FQN),
+							namer.PolicyKeyFromFQN(r2.FQN),
+						)
+
+						var integrityErr *db.IntegrityErr
+						require.ErrorAs(t, err, &integrityErr)
+
+						require.Len(t, integrityErr.Errors, 1)
+						require.Contains(t, integrityErr.Errors, namer.PolicyKey(e.Policy))
+
+						require.Len(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, 3)
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, "derived_roles.my_derived_roles_integrity_error")
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, "resource.leave_request_integrity_error_1.vdefault")
+						require.Contains(t, integrityErr.Errors[namer.PolicyKey(e.Policy)].RequiredByOtherPolicies.Dependents, "resource.leave_request_integrity_error_2.vdefault")
+					})
+
+					t.Run("case_3", func(t *testing.T) {
+						_, err = store.Delete(ctx,
+							namer.PolicyKeyFromFQN(d.FQN),
+							namer.PolicyKeyFromFQN(r1.FQN),
+							namer.PolicyKeyFromFQN(r2.FQN),
+						)
+						require.NoError(t, err)
+
+						_, err = store.Delete(ctx,
+							namer.PolicyKeyFromFQN(e.FQN),
+						)
+						require.NoError(t, err)
+					})
+				})
+			})
 		})
 	}
 }
