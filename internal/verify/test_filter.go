@@ -17,7 +17,8 @@ const (
 	SkipReasonName            = "Test name did not match the provided pattern"
 	SkipReasonResource        = "Resource matched a policy that was excluded from the bundle"
 	SkipReasonPrincipal       = "Principal matched a policy that was excluded from the bundle"
-	SkipReasonFilterTest      = "Test name did not match the test filter"
+	SkipReasonFilterSuite     = "Suite did not match the test filter"
+	SkipReasonFilterTest      = "Test did not match the test filter"
 	SkipReasonFilterPrincipal = "Principal did not match the test filter"
 	SkipReasonFilterResource  = "Resource did not match the test filter"
 	SkipReasonFilterAction    = "No actions matched the test filter"
@@ -69,7 +70,13 @@ func (f *testFilter) Apply(test *policyv1.Test, suite *policyv1.TestSuite) *poli
 			Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonPrincipal},
 		}
 
-	case !f.matchesFilterTest(fmt.Sprintf("%s/%s", suite.Name, test.Name.String())):
+	case !f.matchesFilterSuite(suite.Name):
+		return &policyv1.TestResults_Details{
+			Result:  policyv1.TestResults_RESULT_SKIPPED,
+			Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonFilterSuite},
+		}
+
+	case !f.matchesFilterTest(test.Name.TestTableName):
 		return &policyv1.TestResults_Details{
 			Result:  policyv1.TestResults_RESULT_SKIPPED,
 			Outcome: &policyv1.TestResults_Details_SkipReason{SkipReason: SkipReasonFilterTest},
@@ -152,6 +159,13 @@ func scope(fixture interface{ GetScope() string }, options *policyv1.TestOptions
 	}
 
 	return namer.DefaultScope
+}
+
+func (f *testFilter) matchesFilterSuite(name string) bool {
+	if f.filter == nil || len(f.filter.Suite) == 0 {
+		return true
+	}
+	return matchesAnyGlob(f.filter.Suite, name)
 }
 
 func (f *testFilter) matchesFilterTest(name string) bool {

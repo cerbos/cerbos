@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-// FilterDimension represents the valid filter dimensions for test filtering.
 type FilterDimension string
 
 const (
+	FilterDimensionSuite     FilterDimension = "suite"
 	FilterDimensionTest      FilterDimension = "test"
 	FilterDimensionPrincipal FilterDimension = "principal"
 	FilterDimensionResource  FilterDimension = "resource"
@@ -21,15 +21,15 @@ const (
 )
 
 var validDimensions = map[FilterDimension]struct{}{
+	FilterDimensionSuite:     {},
 	FilterDimensionTest:      {},
 	FilterDimensionPrincipal: {},
 	FilterDimensionResource:  {},
 	FilterDimensionAction:    {},
 }
 
-// FilterConfig holds the parsed test filter configuration.
-// Each dimension contains a list of glob patterns that must match for a test to be included.
 type FilterConfig struct {
+	Suite     []string
 	Test      []string
 	Principal []string
 	Resource  []string
@@ -37,7 +37,7 @@ type FilterConfig struct {
 }
 
 func (fc *FilterConfig) IsEmpty() bool {
-	return len(fc.Test) == 0 && len(fc.Principal) == 0 && len(fc.Resource) == 0 && len(fc.Action) == 0
+	return len(fc.Suite) == 0 && len(fc.Test) == 0 && len(fc.Principal) == 0 && len(fc.Resource) == 0 && len(fc.Action) == 0
 }
 
 func toFilterDimension(s string) FilterDimension {
@@ -51,7 +51,7 @@ func parseDimension(s string) (FilterDimension, []string, error) {
 	}
 	name := toFilterDimension(parts[0])
 	if _, ok := validDimensions[name]; !ok {
-		return "", nil, fmt.Errorf("unknown filter dimension %q: valid dimensions are test, principal, resource, action", parts[0])
+		return "", nil, fmt.Errorf("unknown filter dimension %q: valid dimensions are suite, test, principal, resource, action", parts[0])
 	}
 	globs := parseGlobs(parts[1])
 
@@ -82,6 +82,8 @@ func ParseFilterConfig(filter string) (*FilterConfig, error) {
 		}
 
 		switch name {
+		case FilterDimensionSuite:
+			fc.Suite = append(fc.Suite, globs...)
 		case FilterDimensionTest:
 			fc.Test = append(fc.Test, globs...)
 		case FilterDimensionPrincipal:
@@ -119,6 +121,7 @@ func (fc *FilterConfig) Merge(other *FilterConfig) *FilterConfig {
 		return other
 	}
 	return &FilterConfig{
+		Suite:     append(fc.Suite, other.Suite...),
 		Test:      append(fc.Test, other.Test...),
 		Principal: append(fc.Principal, other.Principal...),
 		Resource:  append(fc.Resource, other.Resource...),

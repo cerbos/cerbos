@@ -119,6 +119,10 @@ func TestParseFilterConfig(t *testing.T) {
 
 type filterOption func(*FilterConfig)
 
+func withSuiteFilter(globs ...string) filterOption {
+	return func(fc *FilterConfig) { fc.Suite = append(fc.Suite, globs...) }
+}
+
 func withTestFilter(globs ...string) filterOption {
 	return func(fc *FilterConfig) { fc.Test = append(fc.Test, globs...) }
 }
@@ -179,13 +183,34 @@ func TestTestFilterApply(t *testing.T) {
 			test:   defaultTest,
 		},
 		{
+			name:   "suite filter matches",
+			filter: mkFilter(withSuiteFilter("TestSuite")),
+			test:   defaultTest,
+		},
+		{
+			name:   "suite filter matches with glob",
+			filter: mkFilter(withSuiteFilter("Test*")),
+			test:   defaultTest,
+		},
+		{
+			name:       "suite filter does not match",
+			filter:     mkFilter(withSuiteFilter("OtherSuite")),
+			test:       defaultTest,
+			skipReason: SkipReasonFilterSuite,
+		},
+		{
 			name:   "test filter matches",
-			filter: mkFilter(withTestFilter("**TestAlbum**")),
+			filter: mkFilter(withTestFilter("TestAlbum")),
+			test:   defaultTest,
+		},
+		{
+			name:   "test filter matches with glob",
+			filter: mkFilter(withTestFilter("Test*")),
 			test:   defaultTest,
 		},
 		{
 			name:       "test filter does not match",
-			filter:     mkFilter(withTestFilter("**OtherTest**")),
+			filter:     mkFilter(withTestFilter("OtherTest")),
 			test:       defaultTest,
 			skipReason: SkipReasonFilterTest,
 		},
