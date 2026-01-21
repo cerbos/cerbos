@@ -726,10 +726,12 @@ type RolePolicy struct {
 	// Types that are valid to be assigned to PolicyType:
 	//
 	//	*RolePolicy_Role
-	PolicyType  isRolePolicy_PolicyType `protobuf_oneof:"policy_type"`
-	ParentRoles []string                `protobuf:"bytes,5,rep,name=parent_roles,json=parentRoles,proto3" json:"parent_roles,omitempty"`
-	Scope       string                  `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
-	Rules       []*RoleRule             `protobuf:"bytes,3,rep,name=rules,proto3" json:"rules,omitempty"`
+	PolicyType isRolePolicy_PolicyType `protobuf_oneof:"policy_type"`
+	// Optional for now; will become required in a future version. Defaults to "default" if not specified.
+	Version     string      `protobuf:"bytes,6,opt,name=version,proto3" json:"version,omitempty"`
+	ParentRoles []string    `protobuf:"bytes,5,rep,name=parent_roles,json=parentRoles,proto3" json:"parent_roles,omitempty"`
+	Scope       string      `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
+	Rules       []*RoleRule `protobuf:"bytes,3,rep,name=rules,proto3" json:"rules,omitempty"`
 	// Deprecated: no-op.
 	//
 	// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
@@ -780,6 +782,13 @@ func (x *RolePolicy) GetRole() string {
 		if x, ok := x.PolicyType.(*RolePolicy_Role); ok {
 			return x.Role
 		}
+	}
+	return ""
+}
+
+func (x *RolePolicy) GetVersion() string {
+	if x != nil {
+		return x.Version
 	}
 	return ""
 }
@@ -3970,10 +3979,11 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x06effect\x18\x05 \x01(\x0e2\x18.cerbos.effect.v1.EffectB\r\xbaH\n" +
 	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x123\n" +
 	"\x04name\x18\x06 \x01(\tB\x1f\xbaH\x1cr\x1a2\x18^([a-zA-Z][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
-	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xdd\x02\n" +
+	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\x87\x03\n" +
 	"\n" +
 	"RolePolicy\x12,\n" +
-	"\x04role\x18\x01 \x01(\tB\x16\xbaH\x13r\x112\x0f^[^!*?\\[\\]{}]+$H\x00R\x04role\x121\n" +
+	"\x04role\x18\x01 \x01(\tB\x16\xbaH\x13r\x112\x0f^[^!*?\\[\\]{}]+$H\x00R\x04role\x12(\n" +
+	"\aversion\x18\x06 \x01(\tB\x0e\xbaH\vr\t2\a^[\\w]*$R\aversion\x121\n" +
 	"\fparent_roles\x18\x05 \x03(\tB\x0e\xbaH\v\x92\x01\b\x18\x01\"\x04r\x02\x10\x01R\vparentRoles\x12G\n" +
 	"\x05scope\x18\x02 \x01(\tB1\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x120\n" +
 	"\x05rules\x18\x03 \x03(\v2\x1a.cerbos.policy.v1.RoleRuleR\x05rules\x12]\n" +

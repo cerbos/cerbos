@@ -195,13 +195,13 @@ func TestIndexGetFirstMatch(t *testing.T) {
 		},
 		{
 			name:   "role_policy/strict/non_existent",
-			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_super_admin", "acme.hr.uk")},
+			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_super_admin", "acme.hr.uk", "default")},
 		},
 		{
 			name:   "role_policy/strict/existent",
-			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_jr_admin", "acme.hr.uk.brighton")},
+			modIDs: []namer.ModuleID{namer.RolePolicyModuleID("acme_jr_admin", "acme.hr.uk.brighton", "default")},
 			want: func() namer.ModuleID {
-				return namer.GenModuleIDFromFQN(namer.RolePolicyFQN("acme_jr_admin", "acme.hr.uk.brighton"))
+				return namer.GenModuleIDFromFQN(namer.RolePolicyFQN("acme_jr_admin", "acme.hr.uk.brighton", "default"))
 			},
 		},
 	}

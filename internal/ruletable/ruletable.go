@@ -378,12 +378,11 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 }
 
 func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
-	version := "default" //nolint:goconst
 	moduleID := namer.GenModuleIDFromFQN(p.Meta.Fqn)
 	rt.Meta[moduleID.RawValue()] = &runtimev1.RuleTableMetadata{
 		Fqn:              p.Meta.Fqn,
 		Name:             &runtimev1.RuleTableMetadata_Role{Role: p.Role},
-		Version:          version,
+		Version:          p.Meta.Version,
 		SourceAttributes: p.Meta.SourceAttributes,
 		Annotations:      p.Meta.Annotations,
 	}
@@ -400,8 +399,8 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 				},
 				Condition:      rule.Condition,
 				Scope:          p.Scope,
-				Version:        version,
-				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope)), p.Role, idx),
+				Version:        p.Meta.Version,
+				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Scope, p.Meta.Version)), p.Role, idx),
 				PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 				FromRolePolicy: true,
 			})

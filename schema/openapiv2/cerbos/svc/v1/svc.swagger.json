@@ -3312,6 +3312,10 @@
         "role": {
           "type": "string"
         },
+        "version": {
+          "type": "string",
+          "description": "Optional for now; will become required in a future version. Defaults to \"default\" if not specified."
+        },
         "parentRoles": {
           "type": "array",
           "items": {

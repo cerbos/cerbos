@@ -341,6 +341,6 @@ wantCompilationUnits:
       - cerbos.export_constants.my_constants
       - cerbos.export_variables.my_variables
 
-  - mainFqn: cerbos.role.acme_admin/acme.hr.uk
+  - mainFqn: cerbos.role.acme_admin.vdefault/acme.hr.uk
     definitionFqns:
-      - cerbos.role.acme_admin/acme.hr.uk
+      - cerbos.role.acme_admin.vdefault/acme.hr.uk
