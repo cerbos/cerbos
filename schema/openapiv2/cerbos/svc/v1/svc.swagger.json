@@ -3312,6 +3312,9 @@
         "role": {
           "type": "string"
         },
+        "version": {
+          "type": "string"
+        },
         "parentRoles": {
           "type": "array",
           "items": {

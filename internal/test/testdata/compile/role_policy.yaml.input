@@ -3,6 +3,7 @@
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: leave_request
+  version: "default"
   scope: "acme"
   rules:
     - resource: acme_admin

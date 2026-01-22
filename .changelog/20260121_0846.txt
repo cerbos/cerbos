@@ -1,0 +1,3 @@
+type:enhancement
+Add `version` to role policies
+Role policies now accept explicit versions, rather than implicitly assuming version as "default". This is an optional field for the time being. In a future release, it'll be made a required field. If not provided, role policies assume version as "default" as before.

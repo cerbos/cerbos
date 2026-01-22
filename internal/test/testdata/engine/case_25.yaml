@@ -65,19 +65,19 @@ wantOutputs:
           "view:public":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr.uk.brighton",
             },
           "delete":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr.uk.brighton",
             },
           "deny":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr.uk.brighton",
             },
           "block":
@@ -89,19 +89,19 @@ wantOutputs:
           "defer":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr.uk.brighton",
             },
           "party_plan":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_creator/acme.hr.uk.brighton",
+              "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr.uk.brighton",
             },
           "make":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+              "policy": "role.acme_jr_admin.vdefault/acme.hr.uk.brighton",
               "scope": "acme.hr.uk.brighton",
             },
         },
@@ -165,19 +165,19 @@ wantDecisionLogs:
                     "delete":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "view:public":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "deny":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "block":
@@ -189,19 +189,19 @@ wantDecisionLogs:
                     "defer":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "party_plan":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_creator/acme.hr.uk.brighton",
+                        "policy": "role.acme_creator.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                     "make":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_jr_admin/acme.hr.uk.brighton",
+                        "policy": "role.acme_jr_admin.vdefault/acme.hr.uk.brighton",
                         "scope": "acme.hr.uk.brighton",
                       },
                   },
@@ -254,7 +254,7 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.uk.brighton.yaml",
                     },
                 },
-              "role.acme_creator/acme.hr.uk.brighton":
+              "role.acme_creator.vdefault/acme.hr.uk.brighton":
                 {
                   "attributes":
                     {
@@ -262,7 +262,7 @@ wantDecisionLogs:
                       "source": "role_policies/policy_02_acme.hr.uk.brighton.yaml",
                     },
                 },
-              "role.acme_jr_admin/acme.hr.uk.brighton":
+              "role.acme_jr_admin.vdefault/acme.hr.uk.brighton":
                 {
                   "attributes":
                     {

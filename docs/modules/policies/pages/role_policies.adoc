@@ -18,30 +18,32 @@ A parent role can be either an arbitrary IdP role or the name of another role po
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: "acme_admin" <1>
-  scope: "acme.hr.uk" <2>
-  parentRoles: <3>
+  version: "default" <2>
+  scope: "acme.hr.uk" <3>
+  parentRoles: <4>
     - admin
   rules:
-    - resource: leave_request <4>
-      allowActions: <5>
-        - view:* <6>
+    - resource: leave_request <5>
+      allowActions: <6>
+        - view:* <7>
         - deny
 
     - resource: salary_record
       allowActions:
         - edit
-      condition: <7>
+      condition: <8>
         match:
           expr: R.attr.owner == P.id
 
-    - resource: "*" <8>
+    - resource: "*" <9>
       allowActions: ["create"]
 ----
 <1> The role to which this policy applies.
-<2> Optional principal xref:scoped_policies.adoc[scope] for this policy.
-<3> The list of parent roles that the custom role inherits.
-<4> The resource to which the following rule applies.
-<5> The list of allowable actions that the role can carry out on the given resource.
-<6> Wildcard actions are supported.
-<7> A condition that must be met for the action to be allowed.
-<8> Wildcard resources are also supported.
+<2> Version of this policy. Policies are uniquely identified by the role name and version pair. You can have multiple policy versions for the same role (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request. 
+<3> Optional principal xref:scoped_policies.adoc[scope] for this policy.
+<4> The list of parent roles that the custom role inherits.
+<5> The resource to which the following rule applies.
+<6> The list of allowable actions that the role can carry out on the given resource.
+<7> Wildcard actions are supported.
+<8> A condition that must be met for the action to be allowed.
+<9> Wildcard resources are also supported.

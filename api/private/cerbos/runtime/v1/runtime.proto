@@ -106,6 +106,7 @@ message RuleTableMetadata {
 message RunnableRolePolicySet {
   message Metadata {
     string fqn = 1;
+    string version = 4;
     map<string, cerbos.policy.v1.SourceAttributes> source_attributes = 2;
     map<string, string> annotations = 3;
   }

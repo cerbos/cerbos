@@ -1,0 +1,118 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Role policy versions"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": [
+        "view",
+        "create",
+      ],
+      "principal":
+        {
+          "id": "john",
+          "roles": ["20210210_admin"],
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "id": "XX125",
+          "policyVersion": "20210210",
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.leave_request.v20210210",
+            },
+          "create":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.20210210_admin.v20210210",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
+      "timestamp": "2023-12-01T14:51:39.204970988Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "id": "XX125",
+                    "policyVersion": "20210210",
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "roles": ["20210210_admin"],
+                  },
+                "actions": ["view", "create"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.leave_request.v20210210",
+                      },
+                    "create":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.20210210_admin.v20210210",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.leave_request.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_01.yaml",
+                    },
+                },
+              "role.20210210_admin.v20210210":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_07.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]
