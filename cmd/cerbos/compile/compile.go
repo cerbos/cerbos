@@ -42,10 +42,6 @@ Examples:
 
 cerbos compile /path/to/policy/repo
 
-# Compile and run tests that contain "Delete" in their name
-
-cerbos compile --run=Delete /path/to/policy/repo
-
 # Compile but skip tests
 
 cerbos compile --skip-tests /path/to/policy/repo
@@ -64,8 +60,8 @@ cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,ed
 type Cmd struct { //betteralign:ignore
 	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
-	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
-	RunRegexp     string                            `help:"Run only tests that match this regex" name:"run"`
+	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path" hidden:""`
+	RunRegexp     string                            `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
 	TestFilter    flagset.TestFilter                `help:"Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times." name:"test-filter"`
 	SkipTests     bool                              `help:"Skip tests"`
 	SkipBatching  bool                              `help:"Skip batching tests"`

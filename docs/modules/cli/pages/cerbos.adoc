@@ -57,10 +57,6 @@ Examples:
 
 cerbos compile /path/to/policy/repo
 
-# Compile and run tests that contain "Delete" in their name
-
-cerbos compile --run=Delete /path/to/policy/repo
-
 # Compile but skip tests
 
 cerbos compile --skip-tests /path/to/policy/repo
@@ -81,8 +77,6 @@ Flags:
       --version                    Show cerbos version
 
       --ignore-schemas             Ignore schemas during compilation
-      --tests=STRING               [Deprecated] Path to the directory containing tests. Defaults to policy directory.
-      --run=STRING                 Run only tests that match this regex
       --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action).
                                    Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
       --skip-tests                 Skip tests
