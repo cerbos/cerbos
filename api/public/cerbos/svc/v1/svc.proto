@@ -291,6 +291,19 @@ service CerbosAdminService {
       }
     };
   }
+
+  rpc PurgeStoreRevisions(cerbos.request.v1.PurgeStoreRevisionsRequest) returns (cerbos.response.v1.PurgeStoreRevisionsResponse) {
+    option (google.api.http) = {delete: "/admin/store/revisions"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Purge store revisions"
+      security: {
+        security_requirement: {
+          key: "BasicAuth"
+          value: {}
+        }
+      }
+    };
+  }
 }
 
 service CerbosPlaygroundService {

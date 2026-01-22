@@ -1176,6 +1176,12 @@ func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidat
 	}
 }
 
+func cerbos_request_v1_PurgeStoreRevisionsRequest_hashpb_sum(m *PurgeStoreRevisionsRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PurgeStoreRevisionsRequest.keep_last"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetKeepLast())))
+	}
+}
+
 func cerbos_request_v1_ReloadStoreRequest_hashpb_sum(m *ReloadStoreRequest, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.request.v1.ReloadStoreRequest.wait"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, protowire.EncodeBool(m.GetWait())))

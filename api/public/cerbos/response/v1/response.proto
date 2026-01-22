@@ -581,3 +581,11 @@ message ReloadStoreResponse {
     json_schema: {description: "Reload store response"}
   };
 }
+
+message PurgeStoreRevisionsResponse {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Purge store revisions response"}
+  };
+
+  uint32 affected_rows = 1;
+}
