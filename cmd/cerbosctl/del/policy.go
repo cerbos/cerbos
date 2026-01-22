@@ -13,13 +13,19 @@ import (
 )
 
 const policyCmdHelp = `# Delete policies
+
 cerbosctl delete policies derived_roles.my_derived_roles
+
 cerbosctl delete policy derived_roles.my_derived_roles
+
 cerbosctl delete p derived_roles.my_derived_roles
 
 # Delete multiple policies
+
 cerbosctl delete policies derived_roles.my_derived_roles resource.leave_request.default
+
 cerbosctl delete policy derived_roles.my_derived_roles resource.leave_request.default
+
 cerbosctl delete p derived_roles.my_derived_roles resource.leave_request.default`
 
 type PolicyCmd struct { //betteralign:ignore

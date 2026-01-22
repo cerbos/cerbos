@@ -13,13 +13,19 @@ import (
 )
 
 const schemaCmdHelp = `# Delete schemas
+
 cerbosctl delete schemas principal.json
+
 cerbosctl delete schema principal.json
+
 cerbosctl delete s principal.json
 
 # Delete multiple schemas
+
 cerbosctl delete schemas principal.json leave_request.json
+
 cerbosctl delete schema principal.json leave_request.json
+
 cerbosctl delete s principal.json leave_request.json`
 
 type SchemaCmd struct { //betteralign:ignore
