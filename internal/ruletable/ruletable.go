@@ -947,9 +947,11 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										continue
 									}
 
+									// we only store a subset of the derived role set variables against each derived role, so we need to cache
+									// against the named derived role, inside the derived role set, specifically.
+									cacheKey := dr.OriginFqn + "#" + name
 									var variables map[string]any
-									key := namer.DerivedRolesFQN(name)
-									if c, ok := varCache[key]; ok {
+									if c, ok := varCache[cacheKey]; ok {
 										variables = c
 									} else {
 										var err error
@@ -957,7 +959,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										if err != nil {
 											return nil, err
 										}
-										varCache[key] = variables
+										varCache[cacheKey] = variables
 									}
 
 									// we don't use `conditionCache` as we don't do any evaluations scoped solely to derived role conditions
