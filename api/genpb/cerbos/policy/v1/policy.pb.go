@@ -726,12 +726,11 @@ type RolePolicy struct {
 	// Types that are valid to be assigned to PolicyType:
 	//
 	//	*RolePolicy_Role
-	PolicyType isRolePolicy_PolicyType `protobuf_oneof:"policy_type"`
-	// Optional for now; will become required in a future version. Defaults to "default" if not specified.
-	Version     string      `protobuf:"bytes,6,opt,name=version,proto3" json:"version,omitempty"`
-	ParentRoles []string    `protobuf:"bytes,5,rep,name=parent_roles,json=parentRoles,proto3" json:"parent_roles,omitempty"`
-	Scope       string      `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
-	Rules       []*RoleRule `protobuf:"bytes,3,rep,name=rules,proto3" json:"rules,omitempty"`
+	PolicyType  isRolePolicy_PolicyType `protobuf_oneof:"policy_type"`
+	Version     string                  `protobuf:"bytes,6,opt,name=version,proto3" json:"version,omitempty"`
+	ParentRoles []string                `protobuf:"bytes,5,rep,name=parent_roles,json=parentRoles,proto3" json:"parent_roles,omitempty"`
+	Scope       string                  `protobuf:"bytes,2,opt,name=scope,proto3" json:"scope,omitempty"`
+	Rules       []*RoleRule             `protobuf:"bytes,3,rep,name=rules,proto3" json:"rules,omitempty"`
 	// Deprecated: no-op.
 	//
 	// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
