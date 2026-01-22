@@ -4,5 +4,6 @@
 package del
 
 type Cmd struct { //betteralign:ignore
+	Policy PolicyCmd `cmd:"" aliases:"policies,p"`
 	Schema SchemaCmd `cmd:"" aliases:"schemas,s"`
 }
