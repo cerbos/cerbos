@@ -259,7 +259,8 @@ func (o *testOutput) shouldAddAction(action *policyv1.TestResults_Action) bool {
 		return o.verbose
 
 	case policyv1.TestResults_RESULT_SKIPPED:
-		return action.Details.GetSkipReason() != verify.SkipReasonName
+		reason := action.Details.GetSkipReason()
+		return reason != verify.SkipReasonName && !verify.IsFilterSkipReason(reason)
 
 	default:
 		return true

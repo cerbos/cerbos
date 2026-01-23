@@ -24,6 +24,15 @@ const (
 	SkipReasonFilterAction    = "No actions matched the test filter"
 )
 
+func IsFilterSkipReason(reason string) bool {
+	switch reason {
+	case SkipReasonFilterSuite, SkipReasonFilterTest, SkipReasonFilterPrincipal, SkipReasonFilterResource, SkipReasonFilterAction:
+		return true
+	default:
+		return false
+	}
+}
+
 type testFilter struct {
 	excludedResourcePolicyFQNs  map[string]struct{}
 	excludedPrincipalPolicyFQNs map[string]struct{}
