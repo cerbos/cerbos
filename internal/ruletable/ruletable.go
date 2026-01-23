@@ -804,19 +804,22 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
-	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalScopes, principalPolicyKey, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceScopes, resourcePolicyKey, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
 		return result, nil
 	}
 
+	fqn := resourcePolicyFQN
+	if fqn == "" {
+		fqn = principalPolicyFQN
+	}
 	span.SetAttributes(tracing.PolicyFQN(fqn))
-
 	pctx := tctx.StartPolicy(fqn)
 
 	// validate the input
-	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(fqn), input)
+	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 
@@ -1511,14 +1514,17 @@ func (rt *RuleTable) planWithAuditTrail(
 	principalScope, principalVersion, resourceScope, resourceVersion string,
 	nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool,
 ) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
-	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, resourceScope)
-
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
-	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
-	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
+	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
+	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
+
+	fqn := resourcePolicyFQN
+	if fqn == "" {
+		fqn = principalPolicyFQN
+	}
+	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
@@ -1528,7 +1534,7 @@ func (rt *RuleTable) planWithAuditTrail(
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
-	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(fqn), input)
+	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
 	}
