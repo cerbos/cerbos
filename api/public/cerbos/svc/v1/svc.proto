@@ -155,6 +155,19 @@ service CerbosAdminService {
     };
   }
 
+  rpc DeletePolicy(cerbos.request.v1.DeletePolicyRequest) returns (cerbos.response.v1.DeletePolicyResponse) {
+    option (google.api.http) = {post: "/admin/policy/delete"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete policy"
+      security: {
+        security_requirement: {
+          key: "BasicAuth"
+          value: {}
+        }
+      }
+    };
+  }
+
   rpc DisablePolicy(cerbos.request.v1.DisablePolicyRequest) returns (cerbos.response.v1.DisablePolicyResponse) {
     option (google.api.http) = {
       post: "/admin/policy/disable"
@@ -270,6 +283,19 @@ service CerbosAdminService {
     option (google.api.http) = {get: "/admin/store/reload"};
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Reload store"
+      security: {
+        security_requirement: {
+          key: "BasicAuth"
+          value: {}
+        }
+      }
+    };
+  }
+
+  rpc PurgeStoreRevisions(cerbos.request.v1.PurgeStoreRevisionsRequest) returns (cerbos.response.v1.PurgeStoreRevisionsResponse) {
+    option (google.api.http) = {delete: "/admin/store/revisions"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Purge store revisions"
       security: {
         security_requirement: {
           key: "BasicAuth"

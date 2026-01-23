@@ -302,7 +302,7 @@ func testGetCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					{
 						policy: withMeta(test.GenRolePolicy(test.Suffix("1"))),
 						kind:   policy.RolePolicyKind,
-						name:   "role.acme_admin_1",
+						name:   "role.acme_admin_1.vdefault",
 					},
 				}
 				for _, tc := range testCases {

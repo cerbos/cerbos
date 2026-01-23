@@ -590,6 +590,10 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *v11.RolePolicy, hasher hash.Hash,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetVersion()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetVersion()), len(m.GetVersion())))
+	}
 }
 
 func cerbos_policy_v1_RoleRule_hashpb_sum(m *v11.RoleRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -856,6 +860,17 @@ func cerbos_request_v1_CheckResourcesRequest_hashpb_sum(m *CheckResourcesRequest
 	if _, ok := ignore["cerbos.request.v1.CheckResourcesRequest.aux_data"]; !ok {
 		if m.GetAuxData() != nil {
 			cerbos_request_v1_AuxData_hashpb_sum(m.GetAuxData(), hasher, ignore)
+		}
+	}
+}
+
+func cerbos_request_v1_DeletePolicyRequest_hashpb_sum(m *DeletePolicyRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.DeletePolicyRequest.id"]; !ok {
+		if len(m.Id) > 0 {
+			for _, v := range m.Id {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
 		}
 	}
 }
@@ -1162,6 +1177,12 @@ func cerbos_request_v1_PlaygroundValidateRequest_hashpb_sum(m *PlaygroundValidat
 				}
 			}
 		}
+	}
+}
+
+func cerbos_request_v1_PurgeStoreRevisionsRequest_hashpb_sum(m *PurgeStoreRevisionsRequest, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.request.v1.PurgeStoreRevisionsRequest.keep_last"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetKeepLast())))
 	}
 }
 

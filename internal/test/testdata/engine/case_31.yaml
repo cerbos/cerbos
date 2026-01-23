@@ -38,7 +38,7 @@ wantOutputs:
           "beach_stroll":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.party_person/acme.hr.uk.brighton.kemptown",
+              "policy": "role.party_person.vdefault/acme.hr.uk.brighton.kemptown",
               "scope": "acme.hr.uk.brighton.kemptown",
             },
         },
@@ -85,7 +85,7 @@ wantDecisionLogs:
                     "beach_stroll":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.party_person/acme.hr.uk.brighton.kemptown",
+                        "policy": "role.party_person.vdefault/acme.hr.uk.brighton.kemptown",
                         "scope": "acme.hr.uk.brighton.kemptown",
                       },
                   },
@@ -144,7 +144,7 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.uk.brighton.kemptown.yaml",
                     },
                 },
-              "role.party_person/acme.hr.uk.brighton.kemptown":
+              "role.party_person.vdefault/acme.hr.uk.brighton.kemptown":
                 {
                   "attributes":
                     {

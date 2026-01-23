@@ -1296,6 +1296,10 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *v12.RolePolicy, hasher hash.Hash,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetVersion()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetVersion()), len(m.GetVersion())))
+	}
 }
 
 func cerbos_policy_v1_RoleRule_hashpb_sum(m *v12.RoleRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -1904,9 +1908,43 @@ func cerbos_response_v1_CheckResourcesResponse_hashpb_sum(m *CheckResourcesRespo
 	}
 }
 
+func cerbos_response_v1_DeletePolicyErrorDetails_hashpb_sum(m *DeletePolicyErrorDetails, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DeletePolicyErrorDetails.errors"]; !ok {
+		if len(m.Errors) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Errors)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Errors[k] != nil {
+					cerbos_response_v1_IntegrityErrors_hashpb_sum(m.Errors[k], hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_DeletePolicyResponse_hashpb_sum(m *DeletePolicyResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DeletePolicyResponse.deleted_policies"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDeletedPolicies())))
+	}
+}
+
 func cerbos_response_v1_DeleteSchemaResponse_hashpb_sum(m *DeleteSchemaResponse, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.response.v1.DeleteSchemaResponse.deleted_schemas"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetDeletedSchemas())))
+	}
+}
+
+func cerbos_response_v1_DisablePolicyErrorDetails_hashpb_sum(m *DisablePolicyErrorDetails, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.DisablePolicyErrorDetails.errors"]; !ok {
+		if len(m.Errors) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Errors)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Errors[k] != nil {
+					cerbos_response_v1_IntegrityErrors_hashpb_sum(m.Errors[k], hasher, ignore)
+				}
+			}
+		}
 	}
 }
 
@@ -2074,6 +2112,41 @@ func cerbos_response_v1_InspectPoliciesResponse_hashpb_sum(m *InspectPoliciesRes
 					cerbos_response_v1_InspectPoliciesResponse_Result_hashpb_sum(m.Results[k], hasher, ignore)
 				}
 			}
+		}
+	}
+}
+
+func cerbos_response_v1_IntegrityErrors_BreaksScopeChain_hashpb_sum(m *IntegrityErrors_BreaksScopeChain, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.IntegrityErrors.BreaksScopeChain.descendants"]; !ok {
+		if len(m.Descendants) > 0 {
+			for _, v := range m.Descendants {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_IntegrityErrors_RequiredByOtherPolicies_hashpb_sum(m *IntegrityErrors_RequiredByOtherPolicies, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies.dependents"]; !ok {
+		if len(m.Dependents) > 0 {
+			for _, v := range m.Dependents {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
+func cerbos_response_v1_IntegrityErrors_hashpb_sum(m *IntegrityErrors, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.IntegrityErrors.breaks_scope_chain"]; !ok {
+		if m.GetBreaksScopeChain() != nil {
+			cerbos_response_v1_IntegrityErrors_BreaksScopeChain_hashpb_sum(m.GetBreaksScopeChain(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.response.v1.IntegrityErrors.required_by_other_policies"]; !ok {
+		if m.GetRequiredByOtherPolicies() != nil {
+			cerbos_response_v1_IntegrityErrors_RequiredByOtherPolicies_hashpb_sum(m.GetRequiredByOtherPolicies(), hasher, ignore)
 		}
 	}
 }
@@ -2399,6 +2472,12 @@ func cerbos_response_v1_PlaygroundValidateResponse_hashpb_sum(m *PlaygroundValid
 				}
 			}
 		}
+	}
+}
+
+func cerbos_response_v1_PurgeStoreRevisionsResponse_hashpb_sum(m *PurgeStoreRevisionsResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PurgeStoreRevisionsResponse.affected_rows"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetAffectedRows())))
 	}
 }
 

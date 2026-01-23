@@ -41,13 +41,13 @@ wantOutputs:
           "aid":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_travel_agent/acme.hr.uk",
+              "policy": "role.acme_travel_agent.vdefault/acme.hr.uk",
               "scope": "acme.hr.uk",
             },
           "suggest":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_assistant/acme.hr.uk",
+              "policy": "role.acme_assistant.vdefault/acme.hr.uk",
               "scope": "acme.hr.uk",
             },
           "redirect":
@@ -107,13 +107,13 @@ wantDecisionLogs:
                     "aid":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_travel_agent/acme.hr.uk",
+                        "policy": "role.acme_travel_agent.vdefault/acme.hr.uk",
                         "scope": "acme.hr.uk",
                       },
                     "suggest":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_assistant/acme.hr.uk",
+                        "policy": "role.acme_assistant.vdefault/acme.hr.uk",
                         "scope": "acme.hr.uk",
                       },
                     "redirect":
@@ -169,7 +169,7 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.uk.yaml",
                     },
                 },
-              "role.acme_assistant/acme.hr.uk":
+              "role.acme_assistant.vdefault/acme.hr.uk":
                 {
                   "attributes":
                     {
@@ -177,7 +177,7 @@ wantDecisionLogs:
                       "source": "role_policies/policy_03_acme.hr.uk.yaml",
                     },
                 },
-              "role.acme_travel_agent/acme.hr.uk":
+              "role.acme_travel_agent.vdefault/acme.hr.uk":
                 {
                   "attributes":
                     {

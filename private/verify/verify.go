@@ -127,6 +127,12 @@ func WithExcludedPrincipalPolicyFQNs(fqns ...string) Opt {
 	}
 }
 
+func WithWorkers(count uint) Opt {
+	return func(config *verify.Config) {
+		config.Workers = count
+	}
+}
+
 func WithCustomChecker(ctx context.Context, fsys fs.FS, eng Checker, opts ...Opt) (*policyv1.TestResults, error) {
 	config := new(verify.Config)
 	for _, opt := range opts {

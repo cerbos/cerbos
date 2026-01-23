@@ -1,0 +1,40 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/response/v1/IntegrityErrors.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.response.v1.IntegrityErrors.BreaksScopeChain": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "descendants": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "breaksScopeChain": {
+      "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.BreaksScopeChain"
+    },
+    "requiredByOtherPolicies": {
+      "$ref": "#/definitions/cerbos.response.v1.IntegrityErrors.RequiredByOtherPolicies"
+    }
+  }
+}

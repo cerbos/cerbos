@@ -411,6 +411,47 @@
         ]
       }
     },
+    "/admin/policy/delete": {
+      "post": {
+        "summary": "Delete policy",
+        "operationId": "CerbosAdminService_DeletePolicy",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePolicyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Unique identifier for the policy",
+            "in": "query",
+            "required": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/admin/policy/disable": {
       "post": {
         "summary": "Disable policy",
@@ -774,6 +815,44 @@
             "in": "query",
             "required": false,
             "type": "boolean"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
+    "/admin/store/revisions": {
+      "delete": {
+        "summary": "Purge store revisions",
+        "operationId": "CerbosAdminService_PurgeStoreRevisions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PurgeStoreRevisionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keepLast",
+            "description": "Keep last N revisions. If not specified or set to zero, all revisions will be deleted.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
           }
         ],
         "tags": [
@@ -2281,6 +2360,16 @@
         }
       }
     },
+    "v1DeletePolicyResponse": {
+      "type": "object",
+      "properties": {
+        "deletedPolicies": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "description": "Delete policy response"
+    },
     "v1DeleteSchemaResponse": {
       "type": "object",
       "properties": {
@@ -3062,6 +3151,16 @@
         }
       }
     },
+    "v1PurgeStoreRevisionsResponse": {
+      "type": "object",
+      "properties": {
+        "affectedRows": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "description": "Purge store revisions response"
+    },
     "v1ReloadStoreResponse": {
       "type": "object",
       "description": "Reload store response"
@@ -3211,6 +3310,9 @@
       "type": "object",
       "properties": {
         "role": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "parentRoles": {

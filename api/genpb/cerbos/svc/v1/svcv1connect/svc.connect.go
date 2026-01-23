@@ -69,6 +69,9 @@ const (
 	// CerbosAdminServiceGetPolicyProcedure is the fully-qualified name of the CerbosAdminService's
 	// GetPolicy RPC.
 	CerbosAdminServiceGetPolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/GetPolicy"
+	// CerbosAdminServiceDeletePolicyProcedure is the fully-qualified name of the CerbosAdminService's
+	// DeletePolicy RPC.
+	CerbosAdminServiceDeletePolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/DeletePolicy"
 	// CerbosAdminServiceDisablePolicyProcedure is the fully-qualified name of the CerbosAdminService's
 	// DisablePolicy RPC.
 	CerbosAdminServiceDisablePolicyProcedure = "/cerbos.svc.v1.CerbosAdminService/DisablePolicy"
@@ -93,6 +96,9 @@ const (
 	// CerbosAdminServiceReloadStoreProcedure is the fully-qualified name of the CerbosAdminService's
 	// ReloadStore RPC.
 	CerbosAdminServiceReloadStoreProcedure = "/cerbos.svc.v1.CerbosAdminService/ReloadStore"
+	// CerbosAdminServicePurgeStoreRevisionsProcedure is the fully-qualified name of the
+	// CerbosAdminService's PurgeStoreRevisions RPC.
+	CerbosAdminServicePurgeStoreRevisionsProcedure = "/cerbos.svc.v1.CerbosAdminService/PurgeStoreRevisions"
 	// CerbosPlaygroundServicePlaygroundValidateProcedure is the fully-qualified name of the
 	// CerbosPlaygroundService's PlaygroundValidate RPC.
 	CerbosPlaygroundServicePlaygroundValidateProcedure = "/cerbos.svc.v1.CerbosPlaygroundService/PlaygroundValidate"
@@ -287,6 +293,7 @@ type CerbosAdminServiceClient interface {
 	InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error)
 	ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error)
 	GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error)
+	DeletePolicy(context.Context, *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error)
 	DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error)
 	EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error)
 	ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest]) (*connect.ServerStreamForClient[v11.ListAuditLogEntriesResponse], error)
@@ -295,6 +302,7 @@ type CerbosAdminServiceClient interface {
 	GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error)
 	DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error)
 	ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error)
+	PurgeStoreRevisions(context.Context, *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error)
 }
 
 // NewCerbosAdminServiceClient constructs a client for the cerbos.svc.v1.CerbosAdminService service.
@@ -330,6 +338,12 @@ func NewCerbosAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			httpClient,
 			baseURL+CerbosAdminServiceGetPolicyProcedure,
 			connect.WithSchema(cerbosAdminServiceMethods.ByName("GetPolicy")),
+			connect.WithClientOptions(opts...),
+		),
+		deletePolicy: connect.NewClient[v1.DeletePolicyRequest, v11.DeletePolicyResponse](
+			httpClient,
+			baseURL+CerbosAdminServiceDeletePolicyProcedure,
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("DeletePolicy")),
 			connect.WithClientOptions(opts...),
 		),
 		disablePolicy: connect.NewClient[v1.DisablePolicyRequest, v11.DisablePolicyResponse](
@@ -380,6 +394,12 @@ func NewCerbosAdminServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(cerbosAdminServiceMethods.ByName("ReloadStore")),
 			connect.WithClientOptions(opts...),
 		),
+		purgeStoreRevisions: connect.NewClient[v1.PurgeStoreRevisionsRequest, v11.PurgeStoreRevisionsResponse](
+			httpClient,
+			baseURL+CerbosAdminServicePurgeStoreRevisionsProcedure,
+			connect.WithSchema(cerbosAdminServiceMethods.ByName("PurgeStoreRevisions")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -389,6 +409,7 @@ type cerbosAdminServiceClient struct {
 	inspectPolicies     *connect.Client[v1.InspectPoliciesRequest, v11.InspectPoliciesResponse]
 	listPolicies        *connect.Client[v1.ListPoliciesRequest, v11.ListPoliciesResponse]
 	getPolicy           *connect.Client[v1.GetPolicyRequest, v11.GetPolicyResponse]
+	deletePolicy        *connect.Client[v1.DeletePolicyRequest, v11.DeletePolicyResponse]
 	disablePolicy       *connect.Client[v1.DisablePolicyRequest, v11.DisablePolicyResponse]
 	enablePolicy        *connect.Client[v1.EnablePolicyRequest, v11.EnablePolicyResponse]
 	listAuditLogEntries *connect.Client[v1.ListAuditLogEntriesRequest, v11.ListAuditLogEntriesResponse]
@@ -397,6 +418,7 @@ type cerbosAdminServiceClient struct {
 	getSchema           *connect.Client[v1.GetSchemaRequest, v11.GetSchemaResponse]
 	deleteSchema        *connect.Client[v1.DeleteSchemaRequest, v11.DeleteSchemaResponse]
 	reloadStore         *connect.Client[v1.ReloadStoreRequest, v11.ReloadStoreResponse]
+	purgeStoreRevisions *connect.Client[v1.PurgeStoreRevisionsRequest, v11.PurgeStoreRevisionsResponse]
 }
 
 // AddOrUpdatePolicy calls cerbos.svc.v1.CerbosAdminService.AddOrUpdatePolicy.
@@ -417,6 +439,11 @@ func (c *cerbosAdminServiceClient) ListPolicies(ctx context.Context, req *connec
 // GetPolicy calls cerbos.svc.v1.CerbosAdminService.GetPolicy.
 func (c *cerbosAdminServiceClient) GetPolicy(ctx context.Context, req *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error) {
 	return c.getPolicy.CallUnary(ctx, req)
+}
+
+// DeletePolicy calls cerbos.svc.v1.CerbosAdminService.DeletePolicy.
+func (c *cerbosAdminServiceClient) DeletePolicy(ctx context.Context, req *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error) {
+	return c.deletePolicy.CallUnary(ctx, req)
 }
 
 // DisablePolicy calls cerbos.svc.v1.CerbosAdminService.DisablePolicy.
@@ -459,12 +486,18 @@ func (c *cerbosAdminServiceClient) ReloadStore(ctx context.Context, req *connect
 	return c.reloadStore.CallUnary(ctx, req)
 }
 
+// PurgeStoreRevisions calls cerbos.svc.v1.CerbosAdminService.PurgeStoreRevisions.
+func (c *cerbosAdminServiceClient) PurgeStoreRevisions(ctx context.Context, req *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error) {
+	return c.purgeStoreRevisions.CallUnary(ctx, req)
+}
+
 // CerbosAdminServiceHandler is an implementation of the cerbos.svc.v1.CerbosAdminService service.
 type CerbosAdminServiceHandler interface {
 	AddOrUpdatePolicy(context.Context, *connect.Request[v1.AddOrUpdatePolicyRequest]) (*connect.Response[v11.AddOrUpdatePolicyResponse], error)
 	InspectPolicies(context.Context, *connect.Request[v1.InspectPoliciesRequest]) (*connect.Response[v11.InspectPoliciesResponse], error)
 	ListPolicies(context.Context, *connect.Request[v1.ListPoliciesRequest]) (*connect.Response[v11.ListPoliciesResponse], error)
 	GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error)
+	DeletePolicy(context.Context, *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error)
 	DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error)
 	EnablePolicy(context.Context, *connect.Request[v1.EnablePolicyRequest]) (*connect.Response[v11.EnablePolicyResponse], error)
 	ListAuditLogEntries(context.Context, *connect.Request[v1.ListAuditLogEntriesRequest], *connect.ServerStream[v11.ListAuditLogEntriesResponse]) error
@@ -473,6 +506,7 @@ type CerbosAdminServiceHandler interface {
 	GetSchema(context.Context, *connect.Request[v1.GetSchemaRequest]) (*connect.Response[v11.GetSchemaResponse], error)
 	DeleteSchema(context.Context, *connect.Request[v1.DeleteSchemaRequest]) (*connect.Response[v11.DeleteSchemaResponse], error)
 	ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error)
+	PurgeStoreRevisions(context.Context, *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error)
 }
 
 // NewCerbosAdminServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -504,6 +538,12 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 		CerbosAdminServiceGetPolicyProcedure,
 		svc.GetPolicy,
 		connect.WithSchema(cerbosAdminServiceMethods.ByName("GetPolicy")),
+		connect.WithHandlerOptions(opts...),
+	)
+	cerbosAdminServiceDeletePolicyHandler := connect.NewUnaryHandler(
+		CerbosAdminServiceDeletePolicyProcedure,
+		svc.DeletePolicy,
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("DeletePolicy")),
 		connect.WithHandlerOptions(opts...),
 	)
 	cerbosAdminServiceDisablePolicyHandler := connect.NewUnaryHandler(
@@ -554,6 +594,12 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 		connect.WithSchema(cerbosAdminServiceMethods.ByName("ReloadStore")),
 		connect.WithHandlerOptions(opts...),
 	)
+	cerbosAdminServicePurgeStoreRevisionsHandler := connect.NewUnaryHandler(
+		CerbosAdminServicePurgeStoreRevisionsProcedure,
+		svc.PurgeStoreRevisions,
+		connect.WithSchema(cerbosAdminServiceMethods.ByName("PurgeStoreRevisions")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cerbos.svc.v1.CerbosAdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CerbosAdminServiceAddOrUpdatePolicyProcedure:
@@ -564,6 +610,8 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 			cerbosAdminServiceListPoliciesHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceGetPolicyProcedure:
 			cerbosAdminServiceGetPolicyHandler.ServeHTTP(w, r)
+		case CerbosAdminServiceDeletePolicyProcedure:
+			cerbosAdminServiceDeletePolicyHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceDisablePolicyProcedure:
 			cerbosAdminServiceDisablePolicyHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceEnablePolicyProcedure:
@@ -580,6 +628,8 @@ func NewCerbosAdminServiceHandler(svc CerbosAdminServiceHandler, opts ...connect
 			cerbosAdminServiceDeleteSchemaHandler.ServeHTTP(w, r)
 		case CerbosAdminServiceReloadStoreProcedure:
 			cerbosAdminServiceReloadStoreHandler.ServeHTTP(w, r)
+		case CerbosAdminServicePurgeStoreRevisionsProcedure:
+			cerbosAdminServicePurgeStoreRevisionsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -603,6 +653,10 @@ func (UnimplementedCerbosAdminServiceHandler) ListPolicies(context.Context, *con
 
 func (UnimplementedCerbosAdminServiceHandler) GetPolicy(context.Context, *connect.Request[v1.GetPolicyRequest]) (*connect.Response[v11.GetPolicyResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.GetPolicy is not implemented"))
+}
+
+func (UnimplementedCerbosAdminServiceHandler) DeletePolicy(context.Context, *connect.Request[v1.DeletePolicyRequest]) (*connect.Response[v11.DeletePolicyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.DeletePolicy is not implemented"))
 }
 
 func (UnimplementedCerbosAdminServiceHandler) DisablePolicy(context.Context, *connect.Request[v1.DisablePolicyRequest]) (*connect.Response[v11.DisablePolicyResponse], error) {
@@ -635,6 +689,10 @@ func (UnimplementedCerbosAdminServiceHandler) DeleteSchema(context.Context, *con
 
 func (UnimplementedCerbosAdminServiceHandler) ReloadStore(context.Context, *connect.Request[v1.ReloadStoreRequest]) (*connect.Response[v11.ReloadStoreResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.ReloadStore is not implemented"))
+}
+
+func (UnimplementedCerbosAdminServiceHandler) PurgeStoreRevisions(context.Context, *connect.Request[v1.PurgeStoreRevisionsRequest]) (*connect.Response[v11.PurgeStoreRevisionsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cerbos.svc.v1.CerbosAdminService.PurgeStoreRevisions is not implemented"))
 }
 
 // CerbosPlaygroundServiceClient is a client for the cerbos.svc.v1.CerbosPlaygroundService service.

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: 20210210_admin
+  version: "20210210"
+  parentRoles:
+    - admin
+  rules:
+    - resource: leave_request
+      allowActions:
+        - view

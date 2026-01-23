@@ -610,6 +610,28 @@ message GetPolicyRequest {
   ];
 }
 
+message DeletePolicyRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Delete policy request"}
+  };
+  repeated string id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (buf.validate.field).repeated = {
+      unique: true
+      min_items: 1
+      max_items: 20
+      items: {
+        string: {min_len: 1}
+      }
+    },
+    (buf.validate.field).required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Unique identifier for the policy"
+      example: "\"principal.sarah.vdefault\""
+    }
+  ];
+}
+
 message DisablePolicyRequest {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Disable policy request"}
@@ -619,6 +641,7 @@ message DisablePolicyRequest {
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
+      max_items: 20
       items: {
         string: {min_len: 1}
       }
@@ -770,4 +793,12 @@ message ReloadStoreRequest {
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Wait until the reloading process finishes"}
   ];
+}
+
+message PurgeStoreRevisionsRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Purge store revisions request"}
+  };
+
+  uint32 keep_last = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Keep last N revisions. If not specified or set to zero, all revisions will be deleted."}];
 }

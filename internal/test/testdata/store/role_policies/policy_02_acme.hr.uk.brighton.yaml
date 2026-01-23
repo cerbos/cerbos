@@ -4,6 +4,7 @@ apiVersion: api.cerbos.dev/v1
 rolePolicy:
   role: acme_creator
   scope: acme.hr.uk.brighton
+  version: default
   parentRoles:
     - "acme_jr_admin"
   rules:
