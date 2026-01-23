@@ -24,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
@@ -141,12 +142,17 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return err
 		}
 
-		ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compileMgr)
+		evalConf, err := evaluator.GetConf()
+		if err != nil {
+			return fmt.Errorf("failed to read engine configuration: %w", err)
+		}
+
+		ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compileMgr, evalConf.DefaultPolicyVersion)
 		if err != nil {
 			return fmt.Errorf("failed to create rule table from loader: %w", err)
 		}
 
-		ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compileMgr, schemaMgr)
+		ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, compileMgr, schemaMgr, evalConf)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}

@@ -103,15 +103,15 @@ func mkRuleTable(b *testing.B, policyDir string) evaluator.Evaluator {
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(b, err)
 
-	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
+	evalConf := &evaluator.Conf{}
+	evalConf.SetDefaults()
+	evalConf.Globals = map[string]any{"environment": "test"}
+
+	err = ruletable.LoadPolicies(ctx, protoRT, compiler, evalConf.DefaultPolicyVersion)
 	require.NoError(b, err)
 
 	err = ruletable.LoadSchemas(ctx, protoRT, store)
 	require.NoError(b, err)
-
-	evalConf := &evaluator.Conf{}
-	evalConf.SetDefaults()
-	evalConf.Globals = map[string]any{"environment": "test"}
 
 	idx := index.NewMem()
 	rt, err := ruletable.NewRuleTable(idx, protoRT)

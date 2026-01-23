@@ -379,16 +379,16 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	schemaConf := schema.NewConf(p.schemaEnforcement)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
-	require.NoError(tb, err)
-
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
-	require.NoError(tb, err)
-
 	evalConf := &evaluator.Conf{}
 	evalConf.SetDefaults()
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
+
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, evalConf.DefaultPolicyVersion)
+	require.NoError(tb, err)
+
+	ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, compiler, schemaMgr, evalConf)
+	require.NoError(tb, err)
 
 	eng := NewFromConf(ctx, evalConf, Components{
 		PolicyLoader:      compiler,
@@ -419,16 +419,16 @@ func mkRuleTable(tb testing.TB, p param, idx index.Index) (evaluator.Evaluator, 
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(tb, err)
 
-	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
-	require.NoError(tb, err)
-
-	err = ruletable.LoadSchemas(ctx, protoRT, store)
-	require.NoError(tb, err)
-
 	evalConf := &evaluator.Conf{}
 	evalConf.SetDefaults()
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
+
+	err = ruletable.LoadPolicies(ctx, protoRT, compiler, evalConf.DefaultPolicyVersion)
+	require.NoError(tb, err)
+
+	err = ruletable.LoadSchemas(ctx, protoRT, store)
+	require.NoError(tb, err)
 
 	rt, err := ruletable.NewRuleTable(idx, protoRT)
 	require.NoError(tb, err)

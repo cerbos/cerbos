@@ -230,12 +230,14 @@ func PrincipalPolicyModuleID(principal, version, scope string) ModuleID {
 }
 
 // RolePolicyFQN returns the fully-qualified module name for the role policies with the given scope.
-// If version is empty, it defaults to DefaultVersion.
+// If version is empty, we omit the version suffix from the FQN; it'll be injected dynamically at runtime.
 func RolePolicyFQN(role, version, scope string) string {
+	var fqn string
 	if version == "" {
-		version = DefaultVersion
+		fqn = fmt.Sprintf("%s.%s", RolePoliciesPrefix, sanitize(role))
+	} else {
+		fqn = fmt.Sprintf("%s.%s.v%s", RolePoliciesPrefix, sanitize(role), sanitize(version))
 	}
-	fqn := fmt.Sprintf("%s.%s.v%s", RolePoliciesPrefix, sanitize(role), sanitize(version))
 	return withScope(fqn, scope)
 }
 

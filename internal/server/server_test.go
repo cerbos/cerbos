@@ -27,6 +27,7 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable"
@@ -330,6 +331,9 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		},
 	}})
 
+	evalConf, err := evaluator.GetConf()
+	require.NoError(t, err)
+
 	var ruleTable *ruletable.RuleTable
 	//nolint:nestif
 	if rtStore, ok := tp.store.(ruletable.RuleTableStore); ok {
@@ -338,18 +342,18 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 			if !errors.Is(err, hubstore.ErrUnsupportedOperation) {
 				require.NoError(t, err, "Failed to get rule table")
 			}
-			ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
+			ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader, evalConf.DefaultPolicyVersion)
 			require.NoError(t, err)
 		} else {
 			ruleTable = rt
 		}
 	} else {
 		var err error
-		ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
+		ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader, evalConf.DefaultPolicyVersion)
 		require.NoError(t, err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, tp.policyLoader, tp.schemaMgr)
+	ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, tp.policyLoader, tp.schemaMgr, evalConf)
 	require.NoError(t, err)
 
 	if ss, ok := tp.store.(storage.Subscribable); ok {

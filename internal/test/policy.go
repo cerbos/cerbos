@@ -10,6 +10,7 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -212,6 +213,7 @@ func GenRolePolicy(mod NameMod) *policyv1.Policy {
 		ApiVersion: "api.cerbos.dev/v1",
 		PolicyType: &policyv1.Policy_RolePolicy{
 			RolePolicy: &policyv1.RolePolicy{
+				Version: namer.DefaultVersion,
 				PolicyType: &policyv1.RolePolicy_Role{
 					Role: mod("acme_admin"),
 				},

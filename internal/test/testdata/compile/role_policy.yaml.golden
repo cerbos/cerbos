@@ -1,30 +1,20 @@
 {
-  "fqn": "cerbos.role.leave_request.vdefault/acme",
+  "fqn": "cerbos.role.acme_admin.vdefault/acme",
   "rolePolicy": {
     "meta": {
-      "fqn": "cerbos.role.leave_request.vdefault/acme",
+      "fqn": "cerbos.role.acme_admin.vdefault/acme",
       "version": "default",
       "sourceAttributes": {
-        "role.leave_request.vdefault/acme": {
+        "role.acme_admin.vdefault/acme": {
           "attributes": {
             "source": "role_policies/acme_admin.yaml"
           }
         }
       }
     },
-    "role": "leave_request",
+    "role": "acme_admin",
     "scope": "acme",
     "resources": {
-      "acme_admin": {
-        "rules": [
-          {
-            "resource": "acme_admin",
-            "allowActions": {
-              "*": {}
-            }
-          }
-        ]
-      },
       "expenses_report": {
         "rules": [
           {
@@ -33,6 +23,16 @@
               "create": {},
               "delete": {},
               "view": {}
+            }
+          }
+        ]
+      },
+      "leave_request": {
+        "rules": [
+          {
+            "resource": "leave_request",
+            "allowActions": {
+              "*": {}
             }
           }
         ]

@@ -2,11 +2,11 @@
 ---
 apiVersion: api.cerbos.dev/v1
 rolePolicy:
-  role: leave_request
+  role: acme_admin
   version: "default"
   scope: "acme"
   rules:
-    - resource: acme_admin
+    - resource: leave_request
       allowActions: ['*']
     - resource: expenses_report
       allowActions:

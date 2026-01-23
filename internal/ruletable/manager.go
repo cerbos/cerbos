@@ -33,12 +33,17 @@ type Manager struct {
 	mu           sync.RWMutex
 }
 
+// TODO(saml) after changes, check if this still needs to be public.
 func NewRuleTableManager(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
 	conf, err := evaluator.GetConf()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
 	}
 
+	return NewRuleTableManagerFromConf(ruleTable, policyLoader, schemaMgr, conf)
+}
+
+func NewRuleTableManagerFromConf(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager, conf *evaluator.Conf) (*Manager, error) {
 	return &Manager{
 		conf:         conf,
 		log:          logging.NewLogger("ruletable"),
@@ -104,7 +109,7 @@ func (mgr *Manager) reload() error {
 
 		// If compilation fails, maintain the last valid rule table state.
 		// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-		if err := LoadPolicies(ctx, protoRT, mgr.policyLoader); err != nil {
+		if err := LoadPolicies(ctx, protoRT, mgr.policyLoader, mgr.conf.DefaultPolicyVersion); err != nil {
 			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
 		}
 
@@ -185,7 +190,7 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	if err := mgr.indexRules(AddPolicy(mgr.RuleTable.RuleTable, rps)); err != nil {
+	if err := mgr.indexRules(AddPolicy(mgr.RuleTable.RuleTable, rps, mgr.conf.DefaultPolicyVersion)); err != nil {
 		return fmt.Errorf("failed to index and purge rules: %w", err)
 	}
 
