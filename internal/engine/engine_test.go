@@ -387,7 +387,7 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, evalConf.DefaultPolicyVersion)
 	require.NoError(tb, err)
 
-	ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, compiler, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, evalConf)
 	require.NoError(tb, err)
 
 	eng := NewFromConf(ctx, evalConf, Components{

@@ -110,7 +110,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, policyLoader, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, policyLoader, schemaMgr, evalConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

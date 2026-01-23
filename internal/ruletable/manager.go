@@ -33,17 +33,7 @@ type Manager struct {
 	mu           sync.RWMutex
 }
 
-// TODO(saml) after changes, check if this still needs to be public.
-func NewRuleTableManager(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
-	conf, err := evaluator.GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
-	}
-
-	return NewRuleTableManagerFromConf(ruleTable, policyLoader, schemaMgr, conf)
-}
-
-func NewRuleTableManagerFromConf(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager, conf *evaluator.Conf) (*Manager, error) {
+func NewRuleTableManager(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager, conf *evaluator.Conf) (*Manager, error) {
 	return &Manager{
 		conf:         conf,
 		log:          logging.NewLogger("ruletable"),

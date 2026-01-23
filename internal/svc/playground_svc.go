@@ -466,7 +466,7 @@ func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, cm, c.schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, cm, c.schemaMgr, evalConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

@@ -152,7 +152,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to create rule table from loader: %w", err)
 		}
 
-		ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, compileMgr, schemaMgr, evalConf)
+		ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compileMgr, schemaMgr, evalConf)
 		if err != nil {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}

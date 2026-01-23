@@ -45,7 +45,7 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManagerFromConf(ruleTable, bundleSrc, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, bundleSrc, schemaMgr, evalConf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
