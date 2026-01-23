@@ -1545,8 +1545,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	}
 
 	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-	scopes := rt.CombineScopes(principalScopes, resourceScopes)
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, scopes, allRoles, input.Actions, false)
+	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1574,6 +1573,13 @@ func (rt *RuleTable) planWithAuditTrail(
 		// evaluate resource policies before principal policies
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
 			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+
+			var scopes []string
+			if pt == policyv1.Kind_KIND_PRINCIPAL {
+				scopes = principalScopes
+			} else {
+				scopes = resourceScopes
+			}
 
 			for i, role := range input.Principal.Roles {
 				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
