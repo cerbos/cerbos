@@ -13,15 +13,18 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
@@ -53,7 +56,10 @@ func TestRuleTableManager(t *testing.T) {
 	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), ruletable.NewProtoRuletable())
 	require.NoError(t, err)
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
+	evalConf, err := evaluator.GetConf()
+	require.NoError(t, err)
+
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, evalConf)
 	require.NoError(t, err)
 
 	store.Subscribe(ruletableMgr)
@@ -295,6 +301,68 @@ func TestRuleTableManager(t *testing.T) {
 			require.Contains(c, output.Actions, action)
 			require.Equal(c, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
 		}, 1*time.Second, 50*time.Millisecond)
+	})
+}
+
+func TestRolePolicyVersions(t *testing.T) {
+	engineDefaultVersion := "notdefault"
+
+	mkRolePolicySet := func(version string) *runtimev1.RunnablePolicySet {
+		fqn := namer.RolePolicyFQN("editor", version, "")
+		return &runtimev1.RunnablePolicySet{
+			PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
+				RolePolicy: &runtimev1.RunnableRolePolicySet{
+					Meta: &runtimev1.RunnableRolePolicySet_Metadata{
+						Fqn:              fqn,
+						Version:          version,
+						SourceAttributes: map[string]*policyv1.SourceAttributes{namer.PolicyKeyFromFQN(fqn): {}},
+					},
+					Role: "editor",
+					Resources: map[string]*runtimev1.RunnableRolePolicySet_RuleList{
+						"document": {
+							Rules: []*runtimev1.RunnableRolePolicySet_Rule{
+								{Resource: "document", AllowActions: map[string]*emptypb.Empty{"edit": {}}},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+
+	t.Run("no_version", func(t *testing.T) {
+		protoRT := ruletable.NewProtoRuletable()
+		rules := ruletable.AddPolicy(protoRT, mkRolePolicySet(""), engineDefaultVersion)
+
+		require.NotEmpty(t, rules)
+		require.Equal(t, engineDefaultVersion, rules[0].Version)
+
+		expectedFQN := namer.RolePolicyFQN("editor", engineDefaultVersion, "")
+		require.Equal(t, expectedFQN, rules[0].OriginFqn)
+
+		moduleID := namer.GenModuleIDFromFQN(expectedFQN)
+		meta, ok := protoRT.Meta[moduleID.RawValue()]
+		require.True(t, ok)
+		require.Equal(t, engineDefaultVersion, meta.Version)
+		require.Equal(t, expectedFQN, meta.Fqn)
+	})
+
+	t.Run("explicit_version", func(t *testing.T) {
+		protoRT := ruletable.NewProtoRuletable()
+		explicitVersion := "v2"
+		rules := ruletable.AddPolicy(protoRT, mkRolePolicySet(explicitVersion), engineDefaultVersion)
+
+		require.NotEmpty(t, rules)
+		require.Equal(t, explicitVersion, rules[0].Version, "explicit version should not be overridden")
+
+		expectedFQN := namer.RolePolicyFQN("editor", explicitVersion, "")
+		require.Equal(t, expectedFQN, rules[0].OriginFqn)
+
+		moduleID := namer.GenModuleIDFromFQN(expectedFQN)
+		meta, ok := protoRT.Meta[moduleID.RawValue()]
+		require.True(t, ok)
+		require.Equal(t, explicitVersion, meta.Version, "explicit version should not be overridden")
+		require.Equal(t, expectedFQN, meta.Fqn)
 	})
 }
 
