@@ -1520,6 +1520,13 @@ func (rt *RuleTable) planWithAuditTrail(
 	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
 	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
 
+	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
+	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
+
+	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
+		return noMatchPlanOutput(input, nil), auditTrail, nil
+	}
+
 	fqn := resourcePolicyFQN
 	if fqn == "" {
 		fqn = principalPolicyFQN
@@ -1528,9 +1535,6 @@ func (rt *RuleTable) planWithAuditTrail(
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
-
-	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
-	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
@@ -1556,10 +1560,7 @@ func (rt *RuleTable) planWithAuditTrail(
 		return nil, nil, err
 	}
 	if len(candidateRows) == 0 {
-		output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
-		output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
-		output.FilterDebug = noPolicyMatch
-		return output, auditTrail, nil
+		return noMatchPlanOutput(input, validationErrors), auditTrail, nil
 	}
 
 	includingParentRoles := make(map[string]struct{})
@@ -1835,6 +1836,13 @@ func (rt *RuleTable) planWithAuditTrail(
 	}
 
 	return output, auditTrail, nil
+}
+
+func noMatchPlanOutput(input *enginev1.PlanResourcesInput, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
+	output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
+	output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
+	output.FilterDebug = noPolicyMatch
+	return output
 }
 
 func addNode(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN) *planner.QpN {
