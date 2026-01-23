@@ -526,3 +526,23 @@ cerbosctl store reload
 ----
 cerbosctl store reload --wait`
 ----
+
+[#revisions]
+=== `revisions`
+
+Trigger operations on the policy store revisions
+
+[#purge]
+==== `purge`
+
+Deletes revisions from the `policy_revisions` table
+
+.Purge all revisions
+----
+cerbosctl store revisions purge
+----
+
+.Purge all revisions but keep last 2 revisions of each policy.
+----
+cerbosctl store revisions purge 2
+----
