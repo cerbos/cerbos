@@ -404,7 +404,7 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 DELETE /admin/store/revisions
 ----
 
-Issue a DELETE request to the endpoint to delete all rows in the `policy_revisions` table.
+Issue a DELETE request to the endpoint to delete rows from the `policy_revisions` table.
 
 Use `keepLast=N` query parameter to keep the last N revisions for each policy. If not specified, the entire table will be truncated.
 
