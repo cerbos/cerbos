@@ -70,7 +70,7 @@ checkResources:
               },
           },
         ],
-      "requestMetadata": { "annotations": { "cerbos.dev/foo": "bar" } },
+      "requestContext": { "annotations": { "cerbos.dev/foo": "bar" } },
     }
   wantResponse:
     {

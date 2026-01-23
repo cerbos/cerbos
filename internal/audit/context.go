@@ -62,25 +62,25 @@ func CallIDFromContext(ctx context.Context) (ID, bool) {
 	return id, true
 }
 
-func NewContextWithRequestContext(ctx context.Context, meta *auditv1.RequestContext) context.Context {
-	if meta == nil {
+func NewContextWithRequestContext(ctx context.Context, reqCtx *auditv1.RequestContext) context.Context {
+	if reqCtx == nil {
 		return ctx
 	}
-	return context.WithValue(ctx, requestContextKey, meta)
+	return context.WithValue(ctx, requestContextKey, reqCtx)
 }
 
 func RequestContextFromContext(ctx context.Context) *auditv1.RequestContext {
-	metaVal := ctx.Value(requestContextKey)
-	if metaVal == nil {
+	reqCtxVal := ctx.Value(requestContextKey)
+	if reqCtxVal == nil {
 		return nil
 	}
 
-	meta, ok := metaVal.(*auditv1.RequestContext)
+	reqCtx, ok := reqCtxVal.(*auditv1.RequestContext)
 	if !ok {
 		return nil
 	}
 
-	return meta
+	return reqCtx
 }
 
 func PeerFromContext(ctx context.Context) *auditv1.Peer {
