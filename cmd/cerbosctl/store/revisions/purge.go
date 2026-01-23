@@ -18,10 +18,10 @@ cerbosctl store revisions purge
 
 # Purge store revisions but keep last 2 revisions of each policy
 
-cerbosctl store revisions purge 2`
+cerbosctl store revisions purge --keep-last=2`
 
 type PurgeCmd struct { //betteralign:ignore
-	KeepLast uint32 `arg:"" name:"keep_last" optional:"" help:"Keep last N revisions. If not specified or set to zero, all revisions will be deleted."` //nolint:revive
+	KeepLast uint32 `help:"Keep last N revisions. If not specified or set to zero, all revisions will be deleted."` //nolint:revive
 }
 
 func (c *PurgeCmd) Run(k *kong.Kong, ctx *client.Context) error {

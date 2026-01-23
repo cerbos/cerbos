@@ -544,5 +544,5 @@ cerbosctl store revisions purge
 
 .Purge all revisions but keep last 2 revisions of each policy.
 ----
-cerbosctl store revisions purge 2
+cerbosctl store revisions purge --keep-last=2
 ----
