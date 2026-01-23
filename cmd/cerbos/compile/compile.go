@@ -61,7 +61,7 @@ type Cmd struct { //betteralign:ignore
 	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
 	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
-	RunRegexp     string                            `help:"[Deprecated] Run only tests that match this regex" name:"run"`
+	RunRegexp     string                            `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
 	TestFilter    flagset.TestFilter                `help:"Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times." name:"test-filter"`
 	SkipTests     bool                              `help:"Skip tests"`
 	SkipBatching  bool                              `help:"Skip batching tests"`
