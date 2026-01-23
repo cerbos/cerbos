@@ -190,6 +190,11 @@ func TestLog(t *testing.T) {
 			},
 			"method": "/cerbos.svc.v1.CerbosService/Check",
 			"peer":   map[string]any{"address": "1.1.1.1"},
+			"requestContext": map[string]any{
+				"annotations": map[string]any{
+					"cerbos.dev/foo": "bar",
+				},
+			},
 		}, haveAccessLogEntry)
 
 		haveDecisionLogEntry := make(map[string]any)
@@ -235,6 +240,11 @@ func TestLog(t *testing.T) {
 							"policy": "resource.test.v1",
 						},
 					},
+				},
+			},
+			"requestContext": map[string]any{
+				"annotations": map[string]any{
+					"cerbos.dev/foo": "bar",
 				},
 			},
 		}, haveDecisionLogEntry)
