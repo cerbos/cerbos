@@ -70,6 +70,7 @@ func TestCheck(t *testing.T) {
 	}
 
 	testCases := test.LoadTestCases(t, "engine")
+	testCases = append(testCases, test.LoadTestCases(t, "engine_strict_scope_search")...)
 
 	for evalName, eval := range evaluators {
 		t.Run(evalName, func(t *testing.T) {

@@ -611,26 +611,31 @@ func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDeri
 	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
-func (rt *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string) ([]string, string, string) {
+func (rt *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string, lenient bool) ([]string, string, string) {
 	var firstPolicyKey, firstFqn string
 	var scopes []string
 
 	var fqnFn func(string, string, string) string
+	var scopeMap map[string]struct{}
 	switch pt { //nolint:exhaustive
 	case policy.PrincipalKind:
 		fqnFn = namer.PrincipalPolicyFQN
+		scopeMap = rt.principalScopeMap
 	case policy.ResourceKind:
 		fqnFn = namer.ResourcePolicyFQN
+		scopeMap = rt.resourceScopeMap
 	}
 
-	if rt.ScopeExists(pt, scope) {
+	if _, ok := scopeMap[scope]; ok {
 		firstFqn = fqnFn(name, version, scope)
 		firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
 		scopes = append(scopes, scope)
+	} else if !lenient {
+		return nil, "", ""
 	}
 
 	for s := range namer.ScopeParents(scope) {
-		if rt.ScopeExists(pt, s) {
+		if _, ok := scopeMap[s]; ok {
 			scopes = append(scopes, s)
 			if firstPolicyKey == "" {
 				firstFqn = fqnFn(name, version, s)
@@ -698,18 +703,6 @@ func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []s
 	dfs(root)
 
 	return result
-}
-
-func (rt *RuleTable) ScopeExists(pt policy.Kind, scope string) bool {
-	var ok bool
-	switch pt { //nolint:exhaustive
-	case policy.PrincipalKind:
-		_, ok = rt.principalScopeMap[scope]
-	case policy.ResourceKind:
-		_, ok = rt.resourceScopeMap[scope]
-	}
-
-	return ok
 }
 
 func (rt *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
@@ -811,14 +804,12 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	if !evalParams.LenientScopeSearch &&
-		!rt.ScopeExists(policy.PrincipalKind, principalScope) &&
-		!rt.ScopeExists(policy.ResourceKind, resourceScope) {
+	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+
+	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
 		return result, nil
 	}
-
-	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion)
-	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion)
 
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
@@ -1526,8 +1517,8 @@ func (rt *RuleTable) planWithAuditTrail(
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion)
-	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion)
+	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, true)
+	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, true)
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
