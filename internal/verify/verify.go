@@ -28,10 +28,11 @@ const (
 type Config struct {
 	ExcludedResourcePolicyFQNs  map[string]struct{}
 	ExcludedPrincipalPolicyFQNs map[string]struct{}
+	Filter                      *FilterConfig
 	IncludedTestNamesRegexp     string
+	Workers                     uint
 	Trace                       bool
 	SkipBatching                bool
-	Workers                     uint
 }
 
 type Checker interface {

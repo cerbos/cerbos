@@ -284,12 +284,12 @@ Create a new directory named `tests` and create a file named `album_object_test.
 include::example$photo-share/tests/album_object_test.yaml[]
 ----
 
-Now run the compiler, pointing it to the `tests` directory.
+Now run the compiler.
 
 [source,shell,subs="attributes"]
 ----
 docker run -it -v $(pwd):/photo-share {app-docker-img} \
-    compile --tests=/photo-share/tests /photo-share/policies
+    compile /photo-share/policies
 ----
 
 ----

@@ -57,13 +57,17 @@ Examples:
 
 cerbos compile /path/to/policy/repo
 
-# Compile and run tests that contain "Delete" in their name
-
-cerbos compile --run=Delete /path/to/policy/repo
-
 # Compile but skip tests
 
 cerbos compile --skip-tests /path/to/policy/repo
+
+# Compile and run tests matching a filter (globs for suite, test, principal, resource, action)
+
+cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource=my_album;action=view' /path/to/policy/repo
+
+# Multiple filters can be combined (all filter dimensions are merged)
+
+cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,edit' /path/to/policy/repo
 
 Arguments:
   <dir>    Policy directory
@@ -73,9 +77,10 @@ Flags:
       --version                    Show cerbos version
 
       --ignore-schemas             Ignore schemas during compilation
-      --tests=STRING               Path to the directory containing tests. Defaults to policy directory.
-      --run=STRING                 Run only tests that match this regex
+      --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action).
+                                   Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
       --skip-tests                 Skip tests
+      --skip-batching              Skip batching tests
   -o, --output="tree"              Output format (tree,list,json)
       --test-output=TEST-OUTPUT    Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)
       --color=COLOR                Output color level (auto,never,always,256,16m). Defaults to auto.
