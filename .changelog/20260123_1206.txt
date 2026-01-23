@@ -1,0 +1,3 @@
+type:fix
+Avoid activating lenient scope search when it is disabled
+This fixes a bug introduced in Cerbos v0.44 where the policy engine could behave as if lenient scope search was enabled even when it was not. To trigger this bug, the policy store needed to include a combination of principal policies and resource or role policies. In this case, the policy engine would perform lenient scope search on a missing resource scope as long as the principal scope existed (or vice versa).

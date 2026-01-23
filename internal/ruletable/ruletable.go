@@ -811,9 +811,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	if !evalParams.LenientScopeSearch &&
-		!rt.ScopeExists(policy.PrincipalKind, principalScope) &&
-		!rt.ScopeExists(policy.ResourceKind, resourceScope) {
+	scopesExist := rt.ScopeExists(policy.PrincipalKind, principalScope) && rt.ScopeExists(policy.ResourceKind, resourceScope)
+	if !scopesExist && !evalParams.LenientScopeSearch {
 		return result, nil
 	}
 

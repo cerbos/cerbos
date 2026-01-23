@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped policy: lenient search"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["create", "delete", "view:public"],
+      "principal":
+        {
+          "id": "john",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "ip_address": "10.20.0.13",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "scope": "acme.hr.uk.wales.cardiff",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH",
+            },
+          "create":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJYNWCWFE26QMESSWW1BH2R",
+      "timestamp": "2023-12-01T15:06:43.484602954Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                    "scope": "acme.hr.uk.wales.cardiff",
+                  },
+                "principal":
+                  {
+                    "id": "john",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "ip_address": "10.20.0.13",
+                        "team": "design",
+                      },
+                  },
+                "actions": ["create", "delete", "view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "create":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH",
+                      },
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail": {},
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]
