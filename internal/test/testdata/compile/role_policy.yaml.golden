@@ -1,10 +1,11 @@
 {
-  "fqn": "cerbos.role.leave_request/acme",
+  "fqn": "cerbos.role.leave_request.vdefault/acme",
   "rolePolicy": {
     "meta": {
-      "fqn": "cerbos.role.leave_request/acme",
+      "fqn": "cerbos.role.leave_request.vdefault/acme",
+      "version": "default",
       "sourceAttributes": {
-        "role.leave_request/acme": {
+        "role.leave_request.vdefault/acme": {
           "attributes": {
             "source": "role_policies/acme_admin.yaml"
           }

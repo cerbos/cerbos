@@ -85,11 +85,18 @@ Commands:
 
   get resource_policies (resource_policy,rp) [<id> ...]
 
+  get role_policies (role_policy,rlp) [<id> ...]
+
   get schemas (schema,s) [<id> ...]
+
+  inspect policies (p) [<id> ...]
+    Inspect policies in the store
 
   store export (e) <path>
 
   store reload (r)
+
+  delete policy (policies,p) <id> ...
 
   delete schema (schemas,s) <id> ...
 
@@ -189,7 +196,21 @@ cerbosctl decisions --tail=20
 [#delete]
 == `delete`
 
-This command deletes the schemas with the specified ids.
+This command deletes the polices and the schemas with the specified ids.
+
+.Delete policies
+----
+cerbosctl delete policies derived_roles.my_derived_roles
+cerbosctl delete policy derived_roles.my_derived_roles
+cerbosctl delete p derived_roles.my_derived_roles
+----
+
+.Delete multiple policies
+----
+cerbosctl delete policies derived_roles.my_derived_roles resource.leave_request.default
+cerbosctl delete policy derived_roles.my_derived_roles resource.leave_request.default
+cerbosctl delete p derived_roles.my_derived_roles resource.leave_request.default
+----
 
 .Delete schemas
 ----

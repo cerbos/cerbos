@@ -291,19 +291,18 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 
 		rp := p.GetRolePolicy()
 		for _, rule := range rp.GetRules() {
-			version := "default" // TODO(saml) add `version` to role policies
 			var resource string
 			var scopes map[string]map[string]struct{}
 			for resource, scopes = range idx.missingResourceScopes {
 				if util.MatchesGlob(rule.Resource, resource) {
 					var versions map[string]struct{}
 					var ok bool
-					if versions, ok = scopes[rp.Scope]; ok {
-						delete(idx.missingScopes, namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(resource, version, rp.Scope)))
-						delete(versions, version)
+					if versions, ok = scopes[p.Scope]; ok {
+						delete(idx.missingScopes, namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(resource, p.Version, p.Scope)))
+						delete(versions, p.Version)
 					}
 					if len(versions) == 0 {
-						delete(scopes, rp.Scope)
+						delete(scopes, p.Scope)
 					}
 				}
 			}
@@ -318,13 +317,13 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 				idx.foundRolePolicyResourceScopes[rule.Resource] = scopes
 			}
 
-			versions, ok := scopes[rp.Scope]
+			versions, ok := scopes[p.Scope]
 			if !ok {
 				versions = make(map[string]struct{})
-				scopes[rp.Scope] = versions
+				scopes[p.Scope] = versions
 			}
 
-			versions[version] = struct{}{}
+			versions[p.Version] = struct{}{}
 		}
 
 	case policy.DerivedRolesKind, policy.ExportConstantsKind, policy.ExportVariablesKind:

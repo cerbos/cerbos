@@ -1864,6 +1864,7 @@ func (x *RuleTable_RoleParentRoles_ParentRoles) GetRoles() []string {
 type RunnableRolePolicySet_Metadata struct {
 	state            protoimpl.MessageState          `protogen:"open.v1"`
 	Fqn              string                          `protobuf:"bytes,1,opt,name=fqn,proto3" json:"fqn,omitempty"`
+	Version          string                          `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
 	SourceAttributes map[string]*v1.SourceAttributes `protobuf:"bytes,2,rep,name=source_attributes,json=sourceAttributes,proto3" json:"source_attributes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Annotations      map[string]string               `protobuf:"bytes,3,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields    protoimpl.UnknownFields
@@ -1903,6 +1904,13 @@ func (*RunnableRolePolicySet_Metadata) Descriptor() ([]byte, []int) {
 func (x *RunnableRolePolicySet_Metadata) GetFqn() string {
 	if x != nil {
 		return x.Fqn
+	}
+	return ""
+}
+
+func (x *RunnableRolePolicySet_Metadata) GetVersion() string {
+	if x != nil {
+		return x.Version
 	}
 	return ""
 }
@@ -3360,16 +3368,17 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x06\n" +
-	"\x04name\"\xdd\t\n" +
+	"\x04name\"\xf7\t\n" +
 	"\x15RunnableRolePolicySet\x12E\n" +
 	"\x04meta\x18\x01 \x01(\v21.cerbos.runtime.v1.RunnableRolePolicySet.MetadataR\x04meta\x12\x12\n" +
 	"\x04role\x18\x02 \x01(\tR\x04role\x12\x14\n" +
 	"\x05scope\x18\x03 \x01(\tR\x05scope\x12S\n" +
 	"\x11scope_permissions\x18\x05 \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsB\x02\x18\x01R\x10scopePermissions\x12!\n" +
 	"\fparent_roles\x18\x06 \x03(\tR\vparentRoles\x12U\n" +
-	"\tresources\x18\a \x03(\v27.cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntryR\tresources\x1a\xa1\x03\n" +
+	"\tresources\x18\a \x03(\v27.cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntryR\tresources\x1a\xbb\x03\n" +
 	"\bMetadata\x12\x10\n" +
-	"\x03fqn\x18\x01 \x01(\tR\x03fqn\x12t\n" +
+	"\x03fqn\x18\x01 \x01(\tR\x03fqn\x12\x18\n" +
+	"\aversion\x18\x04 \x01(\tR\aversion\x12t\n" +
 	"\x11source_attributes\x18\x02 \x03(\v2G.cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntryR\x10sourceAttributes\x12d\n" +
 	"\vannotations\x18\x03 \x03(\v2B.cerbos.runtime.v1.RunnableRolePolicySet.Metadata.AnnotationsEntryR\vannotations\x1ag\n" +
 	"\x15SourceAttributesEntry\x12\x10\n" +

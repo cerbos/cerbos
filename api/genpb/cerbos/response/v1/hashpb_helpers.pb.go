@@ -1296,6 +1296,10 @@ func cerbos_policy_v1_RolePolicy_hashpb_sum(m *v12.RolePolicy, hasher hash.Hash,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.RolePolicy.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetVersion()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetVersion()), len(m.GetVersion())))
+	}
 }
 
 func cerbos_policy_v1_RoleRule_hashpb_sum(m *v12.RoleRule, hasher hash.Hash, ignore map[string]struct{}) {
@@ -2468,6 +2472,12 @@ func cerbos_response_v1_PlaygroundValidateResponse_hashpb_sum(m *PlaygroundValid
 				}
 			}
 		}
+	}
+}
+
+func cerbos_response_v1_PurgeStoreRevisionsResponse_hashpb_sum(m *PurgeStoreRevisionsResponse, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.response.v1.PurgeStoreRevisionsResponse.affected_rows"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(m.GetAffectedRows())))
 	}
 }
 

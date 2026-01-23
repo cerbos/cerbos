@@ -79,6 +79,11 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
+	version := rp.Version
+	if version == "" {
+		version = namer.DefaultVersion
+	}
+
 	resources := make(map[string]*runtimev1.RunnableRolePolicySet_RuleList)
 	for i, r := range rp.Rules {
 		if _, ok := resources[r.Resource]; !ok {
@@ -103,7 +108,8 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
 			RolePolicy: &runtimev1.RunnableRolePolicySet{
 				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
-					Fqn: modCtx.fqn,
+					Fqn:     modCtx.fqn,
+					Version: version,
 					SourceAttributes: map[string]*policyv1.SourceAttributes{
 						namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
 					},

@@ -398,6 +398,31 @@ curl -k -u cerbos:cerbosAdmin -X DELETE \
 [#store-management]
 == Store Management
 
+=== Purge store revisions
+
+----
+DELETE /admin/store/revisions
+----
+
+Issue a DELETE request to the endpoint to delete all rows in the `policy_revisions` table.
+
+Use `keepLast=N` query parameter to keep the last N revisions for each policy. If not specified, the entire table will be truncated.
+
+.Purge the store revisions
+[source,shell]
+----
+curl -k -u cerbos:cerbosAdmin -X DELETE \
+    'https://localhost:3592/admin/store/revisions'
+----
+
+.Response
+[source,json,linenums]
+----
+{}
+----
+
+NOTE: This endpoint requires a mutable storage driver such as xref:configuration:storage.adoc#sqlite3[sqlite3] to be configured.
+
 === Reload store
 
 ----

@@ -497,6 +497,10 @@
                 "SCOPE_PERMISSIONS_UNSPECIFIED",
                 "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
               ]
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9A-Z_a-z]*$"
             }
           }
         },

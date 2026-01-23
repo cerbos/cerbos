@@ -794,3 +794,11 @@ message ReloadStoreRequest {
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Wait until the reloading process finishes"}
   ];
 }
+
+message PurgeStoreRevisionsRequest {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Purge store revisions request"}
+  };
+
+  uint32 keep_last = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Keep last N revisions. If not specified or set to zero, all revisions will be deleted."}];
+}

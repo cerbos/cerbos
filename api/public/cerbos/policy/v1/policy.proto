@@ -131,6 +131,7 @@ message RolePolicy {
     option (buf.validate.oneof).required = true;
     string role = 1 [(buf.validate.field).string = {pattern: "^[^!*?\\[\\]{}]+$"}];
   }
+  string version = 6 [(buf.validate.field).string = {pattern: "^[\\w]*$"}];
   repeated string parent_roles = 5 [(buf.validate.field).repeated = {
     unique: true
     items: {

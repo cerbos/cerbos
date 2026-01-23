@@ -827,6 +827,44 @@
         ]
       }
     },
+    "/admin/store/revisions": {
+      "delete": {
+        "summary": "Purge store revisions",
+        "operationId": "CerbosAdminService_PurgeStoreRevisions",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1PurgeStoreRevisionsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "keepLast",
+            "description": "Keep last N revisions. If not specified or set to zero, all revisions will be deleted.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "CerbosAdminService"
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    },
     "/api/check": {
       "post": {
         "summary": "Check",
@@ -3113,6 +3151,16 @@
         }
       }
     },
+    "v1PurgeStoreRevisionsResponse": {
+      "type": "object",
+      "properties": {
+        "affectedRows": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "description": "Purge store revisions response"
+    },
     "v1ReloadStoreResponse": {
       "type": "object",
       "description": "Reload store response"
@@ -3262,6 +3310,9 @@
       "type": "object",
       "properties": {
         "role": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "parentRoles": {
