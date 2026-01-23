@@ -701,6 +701,10 @@ func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []s
 }
 
 func (rt *RuleTable) ScopeExists(pt policy.Kind, scope string) bool {
+	if scope == "" {
+		return true
+	}
+
 	var ok bool
 	switch pt { //nolint:exhaustive
 	case policy.PrincipalKind:
