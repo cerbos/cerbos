@@ -218,6 +218,22 @@
         }
       }
     },
+    "cerbos.audit.v1.RequestContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
     "cerbos.effect.v1.Effect": {
       "type": "string",
       "enum": [
@@ -655,6 +671,9 @@
     },
     "policySource": {
       "$ref": "#/definitions/cerbos.audit.v1.PolicySource"
+    },
+    "requestContext": {
+      "$ref": "#/definitions/cerbos.audit.v1.RequestContext"
     },
     "timestamp": {
       "$ref": "#/definitions/google.protobuf.Timestamp"

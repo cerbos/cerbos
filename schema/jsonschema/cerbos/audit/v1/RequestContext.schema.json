@@ -1,0 +1,24 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/RequestContext.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "annotations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/google.protobuf.Value"
+      },
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

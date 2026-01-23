@@ -170,11 +170,31 @@
         }
       }
     },
+    "cerbos.audit.v1.RequestContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
     "google.protobuf.Timestamp": {
       "title": "Timestamp",
       "description": "A point in time, independent of any time zone or calendar.",
       "type": "string",
       "format": "date-time"
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "type": "object",
@@ -200,6 +220,9 @@
     },
     "policySource": {
       "$ref": "#/definitions/cerbos.audit.v1.PolicySource"
+    },
+    "requestContext": {
+      "$ref": "#/definitions/cerbos.audit.v1.RequestContext"
     },
     "statusCode": {
       "type": "integer",

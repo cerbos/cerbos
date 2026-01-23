@@ -5,9 +5,12 @@ syntax = "proto3";
 
 package cerbos.audit.v1;
 
+import "buf/validate/validate.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option csharp_namespace = "Cerbos.Api.V1.Audit";
 option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1;auditv1";
@@ -22,6 +25,7 @@ message AccessLogEntry {
   uint32 status_code = 6;
   bool oversized = 7;
   PolicySource policy_source = 8;
+  optional RequestContext request_context = 9;
 }
 
 message DecisionLogEntry {
@@ -54,6 +58,7 @@ message DecisionLogEntry {
   AuditTrail audit_trail = 16;
   bool oversized = 17;
   PolicySource policy_source = 18;
+  optional RequestContext request_context = 19;
 }
 
 message MetaValues {
@@ -131,4 +136,21 @@ message PolicySource {
     Hub hub = 5;
     EmbeddedPDP embedded_pdp = 6;
   }
+}
+
+message RequestContext {
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Optional metadata to attach to the request. This information will be captured in the audit logs if audit logging is enabled."}
+  };
+  map<string, google.protobuf.Value> annotations = 1 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (buf.validate.field).map.values.required = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Key-value pairs of annotations."
+      min_properties: 1
+      example: "{\"app-name\": \"awesome-app\", \"app-version\": \"1.2.3\"}"
+    }
+  ];
 }

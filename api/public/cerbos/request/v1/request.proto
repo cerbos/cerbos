@@ -6,6 +6,7 @@ syntax = "proto3";
 package cerbos.request.v1;
 
 import "buf/validate/validate.proto";
+import "cerbos/audit/v1/audit.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/schema/v1/schema.proto";
@@ -72,6 +73,7 @@ message PlanResourcesRequest {
   AuxData aux_data = 5 [(google.api.field_behavior) = OPTIONAL];
 
   bool include_meta = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Opt to receive request processing metadata in the response."}];
+  optional cerbos.audit.v1.RequestContext request_context = 8;
 }
 
 // Deprecated. See CheckResourcesRequest.
@@ -267,6 +269,7 @@ message CheckResourcesRequest {
     }
   ];
   AuxData aux_data = 5;
+  optional cerbos.audit.v1.RequestContext request_context = 6;
 }
 
 message AuxData {

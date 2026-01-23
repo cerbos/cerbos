@@ -253,6 +253,9 @@ func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.Acce
 			},
 			Metadata: map[string]*auditv1.MetaValues{"Num": {Values: []string{strconv.Itoa(i)}}},
 			Method:   "/cerbos.svc.v1.CerbosService/Check",
+			RequestContext: &auditv1.RequestContext{
+				Annotations: map[string]*structpb.Value{"cerbos.dev/foo": structpb.NewStringValue("bar")},
+			},
 		}, nil
 	}
 }
@@ -305,6 +308,9 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 						"a2": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
 					},
 				},
+			},
+			RequestContext: &auditv1.RequestContext{
+				Annotations: map[string]*structpb.Value{"cerbos.dev/foo": structpb.NewStringValue("bar")},
 			},
 		}, nil
 	}

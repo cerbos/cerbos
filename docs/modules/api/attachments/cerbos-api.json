@@ -1756,6 +1756,9 @@
         },
         "policySource": {
           "$ref": "#/definitions/v1PolicySource"
+        },
+        "requestContext": {
+          "$ref": "#/definitions/v1RequestContext"
         }
       }
     },
@@ -2199,6 +2202,9 @@
         },
         "auxData": {
           "$ref": "#/definitions/cerbosrequestv1AuxData"
+        },
+        "requestContext": {
+          "$ref": "#/definitions/v1RequestContext"
         }
       },
       "description": "Check resources request",
@@ -2321,6 +2327,9 @@
         },
         "policySource": {
           "$ref": "#/definitions/v1PolicySource"
+        },
+        "requestContext": {
+          "$ref": "#/definitions/v1RequestContext"
         }
       }
     },
@@ -2936,6 +2945,9 @@
         "includeMeta": {
           "type": "boolean",
           "description": "Opt to receive request processing metadata in the response."
+        },
+        "requestContext": {
+          "$ref": "#/definitions/v1RequestContext"
         }
       },
       "description": "PDP Resources Query Plan Request",
@@ -3164,6 +3176,22 @@
     "v1ReloadStoreResponse": {
       "type": "object",
       "description": "Reload store response"
+    },
+    "v1RequestContext": {
+      "type": "object",
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "example": {
+            "app-name": "awesome-app",
+            "app-version": "1.2.3"
+          },
+          "additionalProperties": {},
+          "description": "Key-value pairs of annotations.",
+          "minProperties": 1
+        }
+      },
+      "description": "Optional metadata to attach to the request. This information will be captured in the audit logs if audit logging is enabled."
     },
     "v1ResourcePolicy": {
       "type": "object",

@@ -61,6 +61,11 @@ func cerbos_audit_v1_AccessLogEntry_hashpb_sum(m *v1.AccessLogEntry, hasher hash
 			cerbos_audit_v1_PolicySource_hashpb_sum(m.GetPolicySource(), hasher, ignore)
 		}
 	}
+	if _, ok := ignore["cerbos.audit.v1.AccessLogEntry.request_context"]; !ok {
+		if m.GetRequestContext() != nil {
+			cerbos_audit_v1_RequestContext_hashpb_sum(m.GetRequestContext(), hasher, ignore)
+		}
+	}
 }
 
 func cerbos_audit_v1_AuditTrail_hashpb_sum(m *v1.AuditTrail, hasher hash.Hash, ignore map[string]struct{}) {
@@ -192,6 +197,11 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *v1.DecisionLogEntry, hasher 
 	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.policy_source"]; !ok {
 		if m.GetPolicySource() != nil {
 			cerbos_audit_v1_PolicySource_hashpb_sum(m.GetPolicySource(), hasher, ignore)
+		}
+	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.request_context"]; !ok {
+		if m.GetRequestContext() != nil {
+			cerbos_audit_v1_RequestContext_hashpb_sum(m.GetRequestContext(), hasher, ignore)
 		}
 	}
 }
@@ -356,6 +366,20 @@ func cerbos_audit_v1_PolicySource_hashpb_sum(m *v1.PolicySource, hasher hash.Has
 			case *v1.PolicySource_EmbeddedPdp:
 				if t.EmbeddedPdp != nil {
 					cerbos_audit_v1_PolicySource_EmbeddedPDP_hashpb_sum(t.EmbeddedPdp, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_audit_v1_RequestContext_hashpb_sum(m *v1.RequestContext, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.RequestContext.annotations"]; !ok {
+		if len(m.Annotations) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Annotations)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Annotations[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Annotations[k], hasher, ignore)
 				}
 			}
 		}
