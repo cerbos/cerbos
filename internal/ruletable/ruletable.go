@@ -1501,7 +1501,7 @@ func (rt *RuleTable) Plan(ctx context.Context, conf *evaluator.Conf, schemaMgr s
 	resourceScope := evaluator.Scope(input.Resource.Scope, checkOpts.EvalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
 
-	return rt.planWithAuditTrail(ctx, schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
+	return rt.planWithAuditTrail(ctx, schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals(), checkOpts.LenientScopeSearch())
 }
 
 func (rt *RuleTable) planWithAuditTrail(
@@ -1509,7 +1509,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	schemaMgr schema.Manager,
 	input *enginev1.PlanResourcesInput,
 	principalScope, principalVersion, resourceScope, resourceVersion string,
-	nowFunc conditions.NowFunc, globals map[string]any,
+	nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool,
 ) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, resourceScope)
 
@@ -1517,8 +1517,8 @@ func (rt *RuleTable) planWithAuditTrail(
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, true)
-	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, true)
+	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
+	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
 
 	request := planner.PlanResourcesInputToRequest(input)
 	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
