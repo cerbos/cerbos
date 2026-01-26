@@ -190,6 +190,11 @@ func TestLog(t *testing.T) {
 			},
 			"method": "/cerbos.svc.v1.CerbosService/Check",
 			"peer":   map[string]any{"address": "1.1.1.1"},
+			"requestContext": map[string]any{
+				"annotations": map[string]any{
+					"cerbos.dev/foo": "bar",
+				},
+			},
 		}, haveAccessLogEntry)
 
 		haveDecisionLogEntry := make(map[string]any)
@@ -237,6 +242,11 @@ func TestLog(t *testing.T) {
 					},
 				},
 			},
+			"requestContext": map[string]any{
+				"annotations": map[string]any{
+					"cerbos.dev/foo": "bar",
+				},
+			},
 		}, haveDecisionLogEntry)
 	})
 }
@@ -253,6 +263,9 @@ func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.Acce
 			},
 			Metadata: map[string]*auditv1.MetaValues{"Num": {Values: []string{strconv.Itoa(i)}}},
 			Method:   "/cerbos.svc.v1.CerbosService/Check",
+			RequestContext: &auditv1.RequestContext{
+				Annotations: map[string]*structpb.Value{"cerbos.dev/foo": structpb.NewStringValue("bar")},
+			},
 		}, nil
 	}
 }
@@ -305,6 +318,9 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 						"a2": {Effect: effectv1.Effect_EFFECT_ALLOW, Policy: "resource.test.v1"},
 					},
 				},
+			},
+			RequestContext: &auditv1.RequestContext{
+				Annotations: map[string]*structpb.Value{"cerbos.dev/foo": structpb.NewStringValue("bar")},
 			},
 		}, nil
 	}

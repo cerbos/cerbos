@@ -202,8 +202,9 @@ func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanR
 			Method: &auditv1.DecisionLogEntry_PlanResources_{
 				PlanResources: planRes,
 			},
-			AuditTrail:   trail,
-			PolicySource: engine.policyLoader.Source(),
+			AuditTrail:     trail,
+			PolicySource:   engine.policyLoader.Source(),
+			RequestContext: audit.RequestContextFromContext(ctx),
 		}
 
 		if engine.metadataExtractor != nil {
@@ -274,8 +275,9 @@ func (engine *Engine) logCheckDecision(ctx context.Context, inputs []*enginev1.C
 			Method: &auditv1.DecisionLogEntry_CheckResources_{
 				CheckResources: checkRes,
 			},
-			AuditTrail:   trail,
-			PolicySource: engine.policyLoader.Source(),
+			AuditTrail:     trail,
+			PolicySource:   engine.policyLoader.Source(),
+			RequestContext: audit.RequestContextFromContext(ctx),
 		}
 
 		if engine.metadataExtractor != nil {

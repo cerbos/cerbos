@@ -157,6 +157,11 @@ func cerbos_audit_v1_DecisionLogEntry_hashpb_sum(m *v1.DecisionLogEntry, hasher 
 			cerbos_audit_v1_PolicySource_hashpb_sum(m.GetPolicySource(), hasher, ignore)
 		}
 	}
+	if _, ok := ignore["cerbos.audit.v1.DecisionLogEntry.request_context"]; !ok {
+		if m.GetRequestContext() != nil {
+			cerbos_audit_v1_RequestContext_hashpb_sum(m.GetRequestContext(), hasher, ignore)
+		}
+	}
 }
 
 func cerbos_audit_v1_MetaValues_hashpb_sum(m *v1.MetaValues, hasher hash.Hash, ignore map[string]struct{}) {
@@ -319,6 +324,20 @@ func cerbos_audit_v1_PolicySource_hashpb_sum(m *v1.PolicySource, hasher hash.Has
 			case *v1.PolicySource_EmbeddedPdp:
 				if t.EmbeddedPdp != nil {
 					cerbos_audit_v1_PolicySource_EmbeddedPDP_hashpb_sum(t.EmbeddedPdp, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_audit_v1_RequestContext_hashpb_sum(m *v1.RequestContext, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.audit.v1.RequestContext.annotations"]; !ok {
+		if len(m.Annotations) > 0 {
+			for _, k := range slices.Sorted(maps.Keys(m.Annotations)) {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(k))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+				if m.Annotations[k] != nil {
+					google_protobuf_Value_hashpb_sum(m.Annotations[k], hasher, ignore)
 				}
 			}
 		}
@@ -3259,6 +3278,11 @@ func cerbos_request_v1_CheckResourcesRequest_hashpb_sum(m *v13.CheckResourcesReq
 			cerbos_request_v1_AuxData_hashpb_sum(m.GetAuxData(), hasher, ignore)
 		}
 	}
+	if _, ok := ignore["cerbos.request.v1.CheckResourcesRequest.request_context"]; !ok {
+		if m.GetRequestContext() != nil {
+			cerbos_audit_v1_RequestContext_hashpb_sum(m.GetRequestContext(), hasher, ignore)
+		}
+	}
 }
 
 func cerbos_request_v1_File_hashpb_sum(m *v13.File, hasher hash.Hash, ignore map[string]struct{}) {
@@ -3305,6 +3329,11 @@ func cerbos_request_v1_PlanResourcesRequest_hashpb_sum(m *v13.PlanResourcesReque
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(v))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.request.v1.PlanResourcesRequest.request_context"]; !ok {
+		if m.GetRequestContext() != nil {
+			cerbos_audit_v1_RequestContext_hashpb_sum(m.GetRequestContext(), hasher, ignore)
 		}
 	}
 }
