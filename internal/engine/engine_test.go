@@ -70,6 +70,7 @@ func TestCheck(t *testing.T) {
 	}
 
 	testCases := test.LoadTestCases(t, "engine")
+	testCases = append(testCases, test.LoadTestCases(t, "engine_strict_scope_search")...)
 
 	for evalName, eval := range evaluators {
 		t.Run(evalName, func(t *testing.T) {
@@ -455,50 +456,71 @@ func TestQueryPlan(t *testing.T) {
 	auxData := &enginev1.AuxData{Jwt: make(map[string]*structpb.Value)}
 	auxData.Jwt["customInt"] = structpb.NewNumberValue(42)
 
-	suites := test.LoadTestCases(t, "query_planner/suite")
-	timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
-	require.NoError(t, err)
-	for _, suite := range suites {
-		s := suite
-		t.Run(s.Name, func(t *testing.T) {
-			ts := readQPTestSuite(t, s.Input)
-			for _, tt := range ts.Tests {
-				actionName := tt.Action
-				if tt.Actions != nil {
-					actionName = strings.Join(tt.Actions, ", ")
-				}
-				t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, actionName), func(t *testing.T) {
-					is := require.New(t)
-					request := &enginev1.PlanResourcesInput{
-						RequestId: "requestId",
-						Principal: ts.Principal,
-						Resource: &enginev1.PlanResourcesInput_Resource{
-							Kind:          tt.Resource.Kind,
-							Attr:          tt.Resource.Attr,
-							PolicyVersion: tt.Resource.PolicyVersion,
-							Scope:         tt.Resource.Scope,
-						},
-						IncludeMeta: true,
-						AuxData:     auxData,
+	commonSuites := test.LoadTestCases(t, "query_planner/suite/common")
+
+	testCases := []struct {
+		name    string
+		options []evaluator.CheckOpt
+		suites  []test.Case
+	}{
+		{
+			name:   "strict scope search",
+			suites: test.LoadTestCases(t, "query_planner/suite/strict_scope_search"),
+		},
+		{
+			name:    "lenient scope search",
+			options: []evaluator.CheckOpt{evaluator.WithLenientScopeSearch()},
+			suites:  test.LoadTestCases(t, "query_planner/suite/lenient_scope_search"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			suites := slices.Concat(commonSuites, tc.suites)
+			timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
+			require.NoError(t, err)
+			for _, suite := range suites {
+				t.Run(suite.Name, func(t *testing.T) {
+					ts := readQPTestSuite(t, suite.Input)
+					for _, tt := range ts.Tests {
+						actionName := tt.Action
+						if tt.Actions != nil {
+							actionName = strings.Join(tt.Actions, ", ")
+						}
+						t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, actionName), func(t *testing.T) {
+							is := require.New(t)
+							request := &enginev1.PlanResourcesInput{
+								RequestId: "requestId",
+								Principal: ts.Principal,
+								Resource: &enginev1.PlanResourcesInput_Resource{
+									Kind:          tt.Resource.Kind,
+									Attr:          tt.Resource.Attr,
+									PolicyVersion: tt.Resource.PolicyVersion,
+									Scope:         tt.Resource.Scope,
+								},
+								IncludeMeta: true,
+								AuxData:     auxData,
+							}
+							if tt.Actions != nil {
+								request.Actions = tt.Actions
+							} else {
+								request.Actions = []string{tt.Action} //nolint:staticcheck
+							}
+							response, err := eng.Plan(t.Context(), request, slices.Concat(tc.options, []evaluator.CheckOpt{evaluator.WithNowFunc(func() time.Time { return timestamp })})...)
+							if tt.WantErr {
+								is.Error(err)
+							} else {
+								is.NoError(err)
+								is.NotNil(response)
+							}
+							filter, filterDebug := response.Filter, response.FilterDebug
+							require.NoError(t, err)
+							require.Empty(t, cmp.Diff(stabiliseFilter(tt.Want), stabiliseFilter(filter),
+								protocmp.Transform(),
+								protocmp.SortRepeatedFields(&enginev1.PlanResourcesFilter_Expression{}, "operands")),
+								"AST: %s\n%s\n", filterDebug, protojson.Format(filter))
+						})
 					}
-					if tt.Actions != nil {
-						request.Actions = tt.Actions
-					} else {
-						request.Actions = []string{tt.Action} //nolint:staticcheck
-					}
-					response, err := eng.Plan(t.Context(), request, evaluator.WithNowFunc(func() time.Time { return timestamp }))
-					if tt.WantErr {
-						is.Error(err)
-					} else {
-						is.NoError(err)
-						is.NotNil(response)
-					}
-					filter, filterDebug := response.Filter, response.FilterDebug
-					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(stabiliseFilter(tt.Want), stabiliseFilter(filter),
-						protocmp.Transform(),
-						protocmp.SortRepeatedFields(&enginev1.PlanResourcesFilter_Expression{}, "operands")),
-						"AST: %s\n%s\n", filterDebug, protojson.Format(filter))
 				})
 			}
 		})

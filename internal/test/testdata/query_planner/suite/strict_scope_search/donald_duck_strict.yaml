@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Donald duck tests with lenient scope search
+principal:
+  id: donald_duck
+  policyVersion: default
+  scope: nonexistent_principal
+  roles:
+    - employee
+    - user
+tests:
+  - action: read
+    resource:
+      kind: contact
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED
+  - action: update
+    resource:
+      kind: contact
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: eq
+          operands:
+            - variable: request.resource.attr.ownerId
+            - value: donald_duck
+  - action: handle_null
+    resource:
+      kind: contact
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.missing
+                  - value: null
+            - expression:
+                operator: ne
+                operands:
+                  - variable: request.resource.attr.present
+                  - value: null
+  - action: view
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: not
+                operands:
+                  - variable: request.resource.attr.hidden_from_employee
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.owner
+                  - value: donald_duck
+  - action: view-salary-record
+    resource:
+      kind: salary_record
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED
+  - action: non-existent-action
+    resource:
+      kind: non-existent-resource
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED

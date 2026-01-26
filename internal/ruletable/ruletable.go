@@ -611,26 +611,31 @@ func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDeri
 	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
-func (rt *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string) ([]string, string, string) {
+func (rt *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string, lenient bool) ([]string, string, string) {
 	var firstPolicyKey, firstFqn string
 	var scopes []string
 
 	var fqnFn func(string, string, string) string
+	var scopeMap map[string]struct{}
 	switch pt { //nolint:exhaustive
 	case policy.PrincipalKind:
 		fqnFn = namer.PrincipalPolicyFQN
+		scopeMap = rt.principalScopeMap
 	case policy.ResourceKind:
 		fqnFn = namer.ResourcePolicyFQN
+		scopeMap = rt.resourceScopeMap
 	}
 
-	if rt.ScopeExists(pt, scope) {
+	if _, ok := scopeMap[scope]; ok {
 		firstFqn = fqnFn(name, version, scope)
 		firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
 		scopes = append(scopes, scope)
+	} else if !lenient {
+		return nil, "", ""
 	}
 
 	for s := range namer.ScopeParents(scope) {
-		if rt.ScopeExists(pt, s) {
+		if _, ok := scopeMap[s]; ok {
 			scopes = append(scopes, s)
 			if firstPolicyKey == "" {
 				firstFqn = fqnFn(name, version, s)
@@ -698,18 +703,6 @@ func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []s
 	dfs(root)
 
 	return result
-}
-
-func (rt *RuleTable) ScopeExists(pt policy.Kind, scope string) bool {
-	var ok bool
-	switch pt { //nolint:exhaustive
-	case policy.PrincipalKind:
-		_, ok = rt.principalScopeMap[scope]
-	case policy.ResourceKind:
-		_, ok = rt.resourceScopeMap[scope]
-	}
-
-	return ok
 }
 
 func (rt *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
@@ -811,21 +804,22 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	if !evalParams.LenientScopeSearch &&
-		!rt.ScopeExists(policy.PrincipalKind, principalScope) &&
-		!rt.ScopeExists(policy.ResourceKind, resourceScope) {
+	principalScopes, principalPolicyKey, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceScopes, resourcePolicyKey, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+
+	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
 		return result, nil
 	}
 
-	principalScopes, principalPolicyKey, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion)
-	resourceScopes, resourcePolicyKey, fqn := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion)
-
+	fqn := resourcePolicyFQN
+	if fqn == "" {
+		fqn = principalPolicyFQN
+	}
 	span.SetAttributes(tracing.PolicyFQN(fqn))
-
 	pctx := tctx.StartPolicy(fqn)
 
 	// validate the input
-	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(fqn), input)
+	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 
@@ -1510,7 +1504,7 @@ func (rt *RuleTable) Plan(ctx context.Context, conf *evaluator.Conf, schemaMgr s
 	resourceScope := evaluator.Scope(input.Resource.Scope, checkOpts.EvalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
 
-	return rt.planWithAuditTrail(ctx, schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals())
+	return rt.planWithAuditTrail(ctx, schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals(), checkOpts.LenientScopeSearch())
 }
 
 func (rt *RuleTable) planWithAuditTrail(
@@ -1518,26 +1512,33 @@ func (rt *RuleTable) planWithAuditTrail(
 	schemaMgr schema.Manager,
 	input *enginev1.PlanResourcesInput,
 	principalScope, principalVersion, resourceScope, resourceVersion string,
-	nowFunc conditions.NowFunc, globals map[string]any,
+	nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool,
 ) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
-	fqn := namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, resourceScope)
-
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
-	span.SetAttributes(tracing.PolicyFQN(fqn))
 	defer span.End()
 
-	principalScopes, _, _ := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion)
-	resourceScopes, _, _ := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion)
-
-	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
+	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
+	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
 
 	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
 
+	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
+		return noMatchPlanOutput(input, nil), auditTrail, nil
+	}
+
+	fqn := resourcePolicyFQN
+	if fqn == "" {
+		fqn = principalPolicyFQN
+	}
+	span.SetAttributes(tracing.PolicyFQN(fqn))
+
+	request := planner.PlanResourcesInputToRequest(input)
+	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
+
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
-	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(fqn), input)
+	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
 	}
@@ -1554,16 +1555,12 @@ func (rt *RuleTable) planWithAuditTrail(
 	}
 
 	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-	scopes := rt.CombineScopes(principalScopes, resourceScopes)
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, scopes, allRoles, input.Actions, false)
+	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
 	if err != nil {
 		return nil, nil, err
 	}
 	if len(candidateRows) == 0 {
-		output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
-		output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
-		output.FilterDebug = noPolicyMatch
-		return output, auditTrail, nil
+		return noMatchPlanOutput(input, validationErrors), auditTrail, nil
 	}
 
 	includingParentRoles := make(map[string]struct{})
@@ -1583,6 +1580,13 @@ func (rt *RuleTable) planWithAuditTrail(
 		// evaluate resource policies before principal policies
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
 			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+
+			var scopes []string
+			if pt == policyv1.Kind_KIND_PRINCIPAL {
+				scopes = principalScopes
+			} else {
+				scopes = resourceScopes
+			}
 
 			for i, role := range input.Principal.Roles {
 				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
@@ -1832,6 +1836,13 @@ func (rt *RuleTable) planWithAuditTrail(
 	}
 
 	return output, auditTrail, nil
+}
+
+func noMatchPlanOutput(input *enginev1.PlanResourcesInput, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
+	output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
+	output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
+	output.FilterDebug = noPolicyMatch
+	return output
 }
 
 func addNode(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN) *planner.QpN {

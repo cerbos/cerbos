@@ -1,0 +1,245 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped principal policy: lenient scope search"
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["view:public", "delete"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "scope": "acme.hr.france.marseille",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "salary_record",
+          "id": "XX125",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "actions": ["approve", "view:public"],
+      "principal":
+        {
+          "id": "donald_duck",
+          "scope": "acme.hr",
+          "roles": ["employee"],
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+              "managed_geographies": "GB",
+            },
+        },
+      "resource":
+        {
+          "kind": "leave_request",
+          "id": "XX126",
+          "attr":
+            {
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "mickey_mouse",
+              "team": "design",
+              "dev_record": true,
+            },
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "XX125",
+      "actions":
+        {
+          "view:public":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH",
+            },
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "NO_MATCH",
+            },
+        },
+    },
+    {
+      "requestId": "test",
+      "resourceId": "XX126",
+      "actions":
+        {
+          "approve":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "principal.donald_duck.vdefault/acme.hr",
+              "scope": "acme",
+            },
+          "view:public":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "principal.donald_duck.vdefault/acme.hr",
+              "scope": "acme",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJYR1N9VAQ1WVVPAT16N6W8",
+      "timestamp": "2023-12-01T15:07:54.409667404Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "salary_record",
+                    "id": "XX125",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "john",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                    "scope": "acme.hr.france.marseille",
+                  },
+                "actions": ["view:public", "delete"],
+              },
+              {
+                "requestId": "test",
+                "resource":
+                  {
+                    "kind": "leave_request",
+                    "id": "XX126",
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "dev_record": true,
+                        "geography": "GB",
+                        "id": "XX125",
+                        "owner": "mickey_mouse",
+                        "team": "design",
+                      },
+                  },
+                "principal":
+                  {
+                    "id": "donald_duck",
+                    "roles": ["employee"],
+                    "attr":
+                      {
+                        "department": "marketing",
+                        "geography": "GB",
+                        "managed_geographies": "GB",
+                        "team": "design",
+                      },
+                    "scope": "acme.hr",
+                  },
+                "actions": ["approve", "view:public"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "XX125",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "NO_MATCH",
+                      },
+                  },
+              },
+              {
+                "requestId": "test",
+                "resourceId": "XX126",
+                "actions":
+                  {
+                    "approve":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "principal.donald_duck.vdefault/acme.hr",
+                        "scope": "acme",
+                      },
+                    "view:public":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "principal.donald_duck.vdefault/acme.hr",
+                        "scope": "acme",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "principal.donald_duck.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02.yaml",
+                    },
+                },
+              "principal.donald_duck.vdefault/acme":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "principal_policies/policy_02_acme.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]

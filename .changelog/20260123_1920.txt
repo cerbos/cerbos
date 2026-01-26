@@ -1,0 +1,3 @@
+type:fix
+Avoid activating lenient scope search in plans when it is disabled
+This fixes a bug introduced in Cerbos v0.41 where the policy engine would behave as if lenient scope search was enabled when evaluating `PlanResources` requests, even when it was not.
