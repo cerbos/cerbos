@@ -10,13 +10,12 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/private/compile"
 )
 
-func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) (*runtimev1.RuleTable, error) {
+func Compile(ctx context.Context, fsys fs.FS, defaultPolicyVersion string, attrs ...compile.SourceAttribute) (*runtimev1.RuleTable, error) {
 	idx, err := compile.BuildIndex(ctx, fsys, attrs...)
 	if err != nil {
 		return nil, err
@@ -31,8 +30,7 @@ func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) 
 
 	rt := ruletable.NewProtoRuletable()
 
-	// Default to version == "default" for now
-	if err := ruletable.LoadPolicies(ctx, rt, mgr, namer.DefaultVersion); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, mgr, defaultPolicyVersion); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 

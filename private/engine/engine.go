@@ -27,7 +27,7 @@ const (
 	BundleVersion2 = bundle.Version2
 )
 
-func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
+func FromBundle(ctx context.Context, conf *evaluator.Conf, params BundleParams) (*Engine, error) {
 	bundleSrc, err := hub.NewLocalSource(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create local bundle source from %q: %w", params.BundlePath, err)
@@ -35,17 +35,12 @@ func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
 
-	evalConf, err := evaluator.GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
-	}
-
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, bundleSrc, evalConf.DefaultPolicyVersion)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, bundleSrc, conf.DefaultPolicyVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, bundleSrc, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, bundleSrc, schemaMgr, conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

@@ -15,13 +15,17 @@ import (
 	"github.com/cerbos/cloud-api/bundle"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/private/engine"
 	"github.com/cerbos/cerbos/private/verify"
 )
 
 func TestFiles(t *testing.T) {
-	results, err := verify.Files(t.Context(), os.DirFS(test.PathToDir(t, "store")), nil, true)
+	conf, err := evaluator.GetConf()
+	require.NoError(t, err)
+
+	results, err := verify.Files(t.Context(), conf, os.DirFS(test.PathToDir(t, "store")), nil, true)
 	require.NoError(t, err)
 
 	require.Equal(t, results.Summary.OverallResult, policyv1.TestResults_RESULT_PASSED)
@@ -37,7 +41,10 @@ func TestBundle(t *testing.T) {
 	ctx, cancelFn := context.WithCancel(t.Context())
 	t.Cleanup(cancelFn)
 
-	results, err := verify.Bundle(ctx, params, test.PathToDir(t, "store"), true)
+	conf, err := evaluator.GetConf()
+	require.NoError(t, err)
+
+	results, err := verify.Bundle(ctx, conf, params, test.PathToDir(t, "store"), true)
 	require.NoError(t, err)
 	require.Equal(t, policyv1.TestResults_RESULT_FAILED, results.Summary.OverallResult)
 }

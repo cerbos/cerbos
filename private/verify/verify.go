@@ -29,7 +29,7 @@ import (
 )
 
 // Files runs tests using the policy files in the given file system.
-func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*policyv1.TestResults, error) {
+func Files(ctx context.Context, conf *evaluator.Conf, fsys fs.FS, idx compile.Index, trace bool) (*policyv1.TestResults, error) {
 	if idx == nil {
 		var err error
 		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
@@ -53,19 +53,14 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*pol
 		return nil, err
 	}
 
-	evalConf, err := evaluator.GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
-	}
-
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, evalConf.DefaultPolicyVersion)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, conf.DefaultPolicyVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
@@ -81,8 +76,8 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*pol
 }
 
 // Bundle runs tests using the given policy bundle.
-func Bundle(ctx context.Context, params engine.BundleParams, testsDir string, trace bool) (*policyv1.TestResults, error) {
-	eng, err := engine.FromBundle(ctx, params)
+func Bundle(ctx context.Context, conf *evaluator.Conf, params engine.BundleParams, testsDir string, trace bool) (*policyv1.TestResults, error) {
+	eng, err := engine.FromBundle(ctx, conf, params)
 	if err != nil {
 		return nil, err
 	}

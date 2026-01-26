@@ -24,19 +24,14 @@ func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, inp
 		return nil, err
 	}
 
-	evalConf, err := evaluator.GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
-	}
-
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, evalConf.DefaultPolicyVersion)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, conf.DefaultPolicyVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}
