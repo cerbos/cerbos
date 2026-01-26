@@ -14,7 +14,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	internalSchema "github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -79,11 +78,6 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, ErrInvalidStore
 	}
 
-	evalConf, err := evaluator.GetConf()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read engine configuration: %w", err)
-	}
-
 	var ruleTable *ruletable.RuleTable
 	//nolint:nestif
 	if ruleTableStore != nil {
@@ -93,14 +87,14 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 				return nil, fmt.Errorf("failed to load rule table: %w", err)
 			}
 
-			if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader, evalConf.DefaultPolicyVersion); err != nil {
+			if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader); err != nil {
 				return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 			}
 		} else {
 			ruleTable = rt
 		}
 	} else {
-		if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader, evalConf.DefaultPolicyVersion); err != nil {
+		if ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, policyLoader); err != nil {
 			return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 		}
 	}
@@ -110,7 +104,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		return nil, fmt.Errorf("failed to create schema manager: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, policyLoader, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, policyLoader, schemaMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

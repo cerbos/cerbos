@@ -77,7 +77,7 @@ func NewProtoRuletable() *runtimev1.RuleTable {
 	}
 }
 
-func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader, defaultVersion string) error {
+func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.PolicyLoader) error {
 	rps, err := pl.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get all policies: %w", err)
@@ -86,7 +86,7 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 	m := make([][]*runtimev1.RuleTable_RuleRow, 0, len(rps))
 	total := 0
 	for _, p := range rps {
-		rules := AddPolicy(rt, p, defaultVersion)
+		rules := AddPolicy(rt, p)
 		m = append(m, rules)
 		total += len(rules)
 	}
@@ -107,12 +107,12 @@ func LoadSchemas(ctx context.Context, rt *runtimev1.RuleTable, sl schema.Loader)
 	return nil
 }
 
-func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet, defaultVersion string) []*runtimev1.RuleTable_RuleRow {
+func AddPolicy(rt *runtimev1.RuleTable, rps *runtimev1.RunnablePolicySet) []*runtimev1.RuleTable_RuleRow {
 	switch rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		return addResourcePolicy(rt, rps.GetResourcePolicy())
 	case *runtimev1.RunnablePolicySet_RolePolicy:
-		return addRolePolicy(rt, rps.GetRolePolicy(), defaultVersion)
+		return addRolePolicy(rt, rps.GetRolePolicy())
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		return addPrincipalPolicy(rt, rps.GetPrincipalPolicy())
 	}
@@ -377,14 +377,14 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 	return res
 }
 
-func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet, defaultVersion string) (res []*runtimev1.RuleTable_RuleRow) {
+func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) (res []*runtimev1.RuleTable_RuleRow) {
 	// `version` is still an optional field for role policies, but given that we have configurable runtime engine version
 	// defaults, we need to inject the default at runtime rather than at compile time, hence; it happens here.
 	version := p.Meta.Version
 	fqn := p.Meta.Fqn
 	sourceAttributes := p.Meta.SourceAttributes
 	if version == "" {
-		version = defaultVersion
+		version = namer.DefaultVersion
 		fqn = namer.RolePolicyFQN(p.Role, version, p.Scope)
 
 		// add the newly injected version to the map key
@@ -523,10 +523,10 @@ func (c *ProgramCache) GetOrCreate(expr *exprpb.CheckedExpr) (cel.Program, error
 	return prg, nil
 }
 
-func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader, defaultVersion string) (*RuleTable, error) {
+func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
 	protoRT := NewProtoRuletable()
 
-	if err := LoadPolicies(ctx, protoRT, policyLoader, defaultVersion); err != nil {
+	if err := LoadPolicies(ctx, protoRT, policyLoader); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 

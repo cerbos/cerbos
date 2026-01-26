@@ -126,14 +126,14 @@ func newEngine(ctx context.Context, conf *evaluator.Conf, idx compile.Index) (*i
 		return nil, err
 	}
 
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, conf.DefaultPolicyVersion)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, conf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

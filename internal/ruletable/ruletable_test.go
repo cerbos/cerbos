@@ -56,10 +56,7 @@ func TestRuleTableManager(t *testing.T) {
 	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), ruletable.NewProtoRuletable())
 	require.NoError(t, err)
 
-	evalConf, err := evaluator.GetConf()
-	require.NoError(t, err)
-
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	require.NoError(t, err)
 
 	store.Subscribe(ruletableMgr)
@@ -305,8 +302,6 @@ func TestRuleTableManager(t *testing.T) {
 }
 
 func TestRolePolicyVersions(t *testing.T) {
-	engineDefaultVersion := "notdefault"
-
 	mkRolePolicySet := func(version string) *runtimev1.RunnablePolicySet {
 		fqn := namer.RolePolicyFQN("editor", version, "")
 		return &runtimev1.RunnablePolicySet{
@@ -332,25 +327,25 @@ func TestRolePolicyVersions(t *testing.T) {
 
 	t.Run("no_version", func(t *testing.T) {
 		protoRT := ruletable.NewProtoRuletable()
-		rules := ruletable.AddPolicy(protoRT, mkRolePolicySet(""), engineDefaultVersion)
+		rules := ruletable.AddPolicy(protoRT, mkRolePolicySet(""))
 
 		require.NotEmpty(t, rules)
-		require.Equal(t, engineDefaultVersion, rules[0].Version)
+		require.Equal(t, namer.DefaultVersion, rules[0].Version)
 
-		expectedFQN := namer.RolePolicyFQN("editor", engineDefaultVersion, "")
+		expectedFQN := namer.RolePolicyFQN("editor", namer.DefaultVersion, "")
 		require.Equal(t, expectedFQN, rules[0].OriginFqn)
 
 		moduleID := namer.GenModuleIDFromFQN(expectedFQN)
 		meta, ok := protoRT.Meta[moduleID.RawValue()]
 		require.True(t, ok)
-		require.Equal(t, engineDefaultVersion, meta.Version)
+		require.Equal(t, namer.DefaultVersion, meta.Version)
 		require.Equal(t, expectedFQN, meta.Fqn)
 	})
 
 	t.Run("explicit_version", func(t *testing.T) {
 		protoRT := ruletable.NewProtoRuletable()
 		explicitVersion := "v2"
-		rules := ruletable.AddPolicy(protoRT, mkRolePolicySet(explicitVersion), engineDefaultVersion)
+		rules := ruletable.AddPolicy(protoRT, mkRolePolicySet(explicitVersion))
 
 		require.NotEmpty(t, rules)
 		require.Equal(t, explicitVersion, rules[0].Version, "explicit version should not be overridden")

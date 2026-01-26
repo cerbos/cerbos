@@ -27,7 +27,7 @@ const (
 	BundleVersion2 = bundle.Version2
 )
 
-func FromBundle(ctx context.Context, conf *evaluator.Conf, params BundleParams) (*Engine, error) {
+func FromBundle(ctx context.Context, params BundleParams) (*Engine, error) {
 	bundleSrc, err := hub.NewLocalSource(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create local bundle source from %q: %w", params.BundlePath, err)
@@ -35,12 +35,12 @@ func FromBundle(ctx context.Context, conf *evaluator.Conf, params BundleParams) 
 
 	schemaMgr := schema.NewFromConf(ctx, bundleSrc, schema.NewConf(schema.EnforcementReject))
 
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, bundleSrc, conf.DefaultPolicyVersion)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, bundleSrc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table from loader: %w", err)
 	}
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, bundleSrc, schemaMgr, conf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, bundleSrc, schemaMgr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ruletable manager: %w", err)
 	}

@@ -95,7 +95,7 @@ func TestInspect(t *testing.T) {
 				require.NoError(t, err)
 
 				protoRT := ruletable.NewProtoRuletable()
-				err = ruletable.LoadPolicies(t.Context(), protoRT, compiler, namer.DefaultVersion)
+				err = ruletable.LoadPolicies(t.Context(), protoRT, compiler)
 				var haveCompileErrSet *compile.ErrorSet
 				if errors.As(err, &haveCompileErrSet) {
 					var wantCompileErrs []*runtimev1.CompileErrors_Err

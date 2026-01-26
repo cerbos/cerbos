@@ -15,7 +15,7 @@ import (
 	"github.com/cerbos/cerbos/private/compile"
 )
 
-func Compile(ctx context.Context, fsys fs.FS, defaultPolicyVersion string, attrs ...compile.SourceAttribute) (*runtimev1.RuleTable, error) {
+func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) (*runtimev1.RuleTable, error) {
 	idx, err := compile.BuildIndex(ctx, fsys, attrs...)
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func Compile(ctx context.Context, fsys fs.FS, defaultPolicyVersion string, attrs
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPolicies(ctx, rt, mgr, defaultPolicyVersion); err != nil {
+	if err := ruletable.LoadPolicies(ctx, rt, mgr); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 

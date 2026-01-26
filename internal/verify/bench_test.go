@@ -13,7 +13,6 @@ import (
 
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -47,19 +46,14 @@ func BenchmarkVerify(b *testing.B) {
 		b.Fatalf("failed to create compiler manager: %v", err)
 	}
 
-	evalConf, err := evaluator.GetConf()
-	if err != nil {
-		b.Fatalf("failed to read engine configuration: %v", err)
-	}
-
-	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler, evalConf.DefaultPolicyVersion)
+	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	if err != nil {
 		b.Fatalf("failed to create rule table: %v", err)
 	}
 
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementReject))
 
-	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr, evalConf)
+	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	if err != nil {
 		b.Fatalf("failed to create ruletable manager: %v", err)
 	}
