@@ -2,6 +2,6 @@ module github.com/cerbos/cerbos/deploy/awslambda
 
 go 1.24.0
 
-require github.com/aws/aws-lambda-go v1.51.2
+require github.com/aws/aws-lambda-go v1.52.0
 
 require go.uber.org/multierr v1.11.0
