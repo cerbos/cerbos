@@ -1,12 +1,10 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package util_test
+package internal
 
 import (
 	"testing"
-
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 // 30 action glob patterns.
@@ -59,7 +57,7 @@ var lookupActions = []string{
 
 func BenchmarkGlobMap(b *testing.B) {
 	b.Run("Get", func(b *testing.B) {
-		gm := util.NewGlobMap(make(map[string]int))
+		gm := NewGlobMap(make(map[string]int))
 		for i, g := range actionGlobs {
 			gm.Set(g, i)
 		}
@@ -73,7 +71,7 @@ func BenchmarkGlobMap(b *testing.B) {
 	})
 
 	b.Run("GetMerged", func(b *testing.B) {
-		gm := util.NewGlobMap(make(map[string]int))
+		gm := NewGlobMap(make(map[string]int))
 		for i, g := range actionGlobs {
 			gm.Set(g, i)
 		}
@@ -87,7 +85,7 @@ func BenchmarkGlobMap(b *testing.B) {
 	})
 
 	b.Run("SetThenGet", func(b *testing.B) {
-		gm := util.NewGlobMap(make(map[string]int))
+		gm := NewGlobMap(make(map[string]int))
 
 		b.ReportAllocs()
 		b.ResetTimer()

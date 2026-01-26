@@ -15,6 +15,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
+	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -630,7 +631,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		return res, nil
 	}
 
-	actionMatchedRows := util.NewGlobMap(make(map[string][]*Row))
+	actionMatchedRows := internal.NewGlobMap(make(map[string][]*Row))
 
 	for _, version := range versions {
 		versionSet, ok := versionSets[version]

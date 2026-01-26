@@ -9,7 +9,7 @@ import (
 	"maps"
 	"sync"
 
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/ruletable/internal"
 )
 
 const memNamespaceKey = "mem"
@@ -119,13 +119,13 @@ func (lm *memLiteralMap) delete(_ context.Context, keys ...string) error {
 }
 
 type memGlobMap struct {
-	m  *util.GlobMap[*rowSet]
+	m  *internal.GlobMap[*rowSet]
 	mu sync.RWMutex
 }
 
 func newMemGlobMap() *memGlobMap {
 	return &memGlobMap{
-		m: util.NewGlobMap(make(map[string]*rowSet)),
+		m: internal.NewGlobMap(make(map[string]*rowSet)),
 	}
 }
 
