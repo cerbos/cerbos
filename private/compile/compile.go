@@ -102,7 +102,13 @@ func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMa
 	outChan := make(chan Artefact, 1)
 
 	go func() {
-		defer close(outChan)
+		defer func() {
+			if panicReason := recover(); panicReason != nil {
+				outChan <- Artefact{Error: fmt.Errorf("panic during compilation: %+v", panicReason)}
+			}
+
+			close(outChan)
+		}()
 
 		schemaMgr := schema.NewEphemeral(schemaResolver)
 		logger := logging.FromContext(ctx).Named("compile")
