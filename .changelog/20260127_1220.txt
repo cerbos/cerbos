@@ -1,3 +1,3 @@
 type:fix
 Enforce exhaustive role policy allowActions
-Prevents parent role permissions from leaking when role policies omit a resource.
+This fixes a bug introduced in Cerbos v0.48 where roles defined in role policies would gain their parent roles' permissions on any resources not specified in `allowActions`, rather than the expected behaviour of having no permissions on the omitted resources.
