@@ -238,19 +238,6 @@ func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
 	return false
 }
 
-// intersect3 performs a three-way intersection (a ∩ b ∩ c) in a single pass,
-// avoiding the intermediate allocation of chained intersectWith calls.
-func intersect3(a, b, c *rowSet) *rowSet {
-	if a.len() == 0 || b.len() == 0 || c.len() == 0 {
-		return newRowSet()
-	}
-	res := newRowSetCap(min(a.len(), b.len(), c.len()))
-	for r := range intersect3Iter(a, b, c) {
-		res.m[r.sum] = r
-	}
-	return res
-}
-
 // intersectWithIter returns an iterator over the intersection of two rowSets.
 func (s *rowSet) intersectWithIter(o *rowSet) iter.Seq[*Row] {
 	return func(yield func(*Row) bool) {
@@ -654,9 +641,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 				if scopeVersionSet.len() == 0 {
 					continue
 				}
-				// intersect3 considers sizes of all three sets and iterates over the smallest,
-				// so it performs well whether scope, version, or resource is most selective.
-				scopeResourceSet := intersect3(scopeSet, versionSet, resourceSet)
+				scopeResourceSet := scopeVersionSet.intersectWith(resourceSet)
 				if scopeResourceSet.len() == 0 {
 					continue
 				}
