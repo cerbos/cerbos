@@ -503,7 +503,7 @@ require (
 	github.com/tetafro/godot v1.5.4 // indirect
 	github.com/tetratelabs/wazero v1.11.0 // indirect
 	github.com/theupdateframework/go-tuf v0.7.0 // indirect
-	github.com/theupdateframework/go-tuf/v2 v2.3.1 // indirect
+	github.com/theupdateframework/go-tuf/v2 v2.4.1 // indirect
 	github.com/tidwall/btree v1.8.1 // indirect
 	github.com/timakin/bodyclose v0.0.0-20241222091800-1db5c5ca4d67 // indirect
 	github.com/timonwong/loggercheck v0.11.0 // indirect
