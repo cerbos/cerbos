@@ -1,0 +1,3 @@
+type:fix
+Enforce exhaustive role policy allowActions
+Prevents parent role permissions from leaking when role policies omit a resource.
