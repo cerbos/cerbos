@@ -6,7 +6,7 @@ wantErrors:
     description: |-
       Undefined variable 'z'
     position:
-      line: 25
+      line: 27
       column: 11
       path: "$.resourcePolicy.rules[0].condition.match.expr"
   - file: resource_policies/example.yaml
@@ -49,4 +49,12 @@ wantErrors:
       line: 8
       column: 10
       path: "$.resourcePolicy.variables.local.a"
+  - file: resource_policies/example.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression `wat`: [undeclared reference to 'wat' (in container '')]
+    position:
+      line: 16
+      column: 10
+      path: "$.resourcePolicy.variables.local.i"
 mainDef: resource_policies/example.yaml
