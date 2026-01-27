@@ -42,8 +42,7 @@ func TestIDGen(t *testing.T) {
 
 	var wg sync.WaitGroup
 	for range 100 {
-		wg.Add(1)
-		go func() {
+		wg.Go(func() {
 			for range 10_000 {
 				id, err := audit.NewID()
 				if err != nil {
@@ -51,8 +50,7 @@ func TestIDGen(t *testing.T) {
 				}
 				out <- id
 			}
-			wg.Done()
-		}()
+		})
 	}
 
 	go func() {

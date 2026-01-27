@@ -256,11 +256,9 @@ func (c *Cmd) prepCommand(pdp *pdpInstance, stdout, stderr io.Writer) *cmd.Cmd {
 }
 
 func (c *Cmd) goroutine(fn func()) {
-	c.wg.Add(1)
-	go func() {
+	c.wg.Go(func() {
 		fn()
-		c.wg.Done()
-	}()
+	})
 }
 
 func (c *Cmd) Help() string {
