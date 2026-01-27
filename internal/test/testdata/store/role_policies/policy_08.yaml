@@ -1,0 +1,10 @@
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: relic_specialist
+  parentRoles:
+    - expedition_member
+  rules:
+    - resource: temple_relic
+      allowActions:
+        - view

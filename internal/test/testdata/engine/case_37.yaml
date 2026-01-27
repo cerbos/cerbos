@@ -1,0 +1,346 @@
+---
+description: "Role policy allowActions are exhaustive"
+inputs:
+  [
+    {
+      "requestId": "indy-relic",
+      "actions": ["delete", "edit", "view"],
+      "principal":
+        {
+          "id": "indy",
+          "roles": ["expedition_member"],
+        },
+      "resource":
+        {
+          "kind": "temple_relic",
+          "id": "idol-001",
+        },
+    },
+    {
+      "requestId": "indy-archive",
+      "actions": ["delete", "edit", "view"],
+      "principal":
+        {
+          "id": "indy",
+          "roles": ["expedition_member"],
+        },
+      "resource":
+        {
+          "kind": "archive_record",
+          "id": "archive-001",
+        },
+    },
+    {
+      "requestId": "marion-relic",
+      "actions": ["delete", "edit", "view"],
+      "principal":
+        {
+          "id": "marion",
+          "roles": ["relic_specialist"],
+        },
+      "resource":
+        {
+          "kind": "temple_relic",
+          "id": "idol-001",
+        },
+    },
+    {
+      "requestId": "marion-archive",
+      "actions": ["delete", "edit", "view"],
+      "principal":
+        {
+          "id": "marion",
+          "roles": ["relic_specialist"],
+        },
+      "resource":
+        {
+          "kind": "archive_record",
+          "id": "archive-001",
+        },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "indy-relic",
+      "resourceId": "idol-001",
+      "actions":
+        {
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.temple_relic.vdefault",
+            },
+          "edit":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.temple_relic.vdefault",
+            },
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.temple_relic.vdefault",
+            },
+        },
+    },
+    {
+      "requestId": "indy-archive",
+      "resourceId": "archive-001",
+      "actions":
+        {
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.archive_record.vdefault",
+            },
+          "edit":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.archive_record.vdefault",
+            },
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.archive_record.vdefault",
+            },
+        },
+    },
+    {
+      "requestId": "marion-relic",
+      "resourceId": "idol-001",
+      "actions":
+        {
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.relic_specialist.vdefault",
+            },
+          "edit":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.relic_specialist.vdefault",
+            },
+          "view":
+            {
+              "effect": "EFFECT_ALLOW",
+              "policy": "resource.temple_relic.vdefault",
+            },
+        },
+    },
+    {
+      "requestId": "marion-archive",
+      "resourceId": "archive-001",
+      "actions":
+        {
+          "delete":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.relic_specialist.vdefault",
+            },
+          "edit":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.relic_specialist.vdefault",
+            },
+          "view":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "role.relic_specialist.vdefault",
+            },
+        },
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
+      "timestamp": "2023-12-01T14:51:39.204970988Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "indy-relic",
+                "resource":
+                  {
+                    "kind": "temple_relic",
+                    "id": "idol-001",
+                  },
+                "principal":
+                  {
+                    "id": "indy",
+                    "roles": ["expedition_member"],
+                  },
+                "actions": ["delete", "edit", "view"],
+              },
+              {
+                "requestId": "indy-archive",
+                "resource":
+                  {
+                    "kind": "archive_record",
+                    "id": "archive-001",
+                  },
+                "principal":
+                  {
+                    "id": "indy",
+                    "roles": ["expedition_member"],
+                  },
+                "actions": ["delete", "edit", "view"],
+              },
+              {
+                "requestId": "marion-relic",
+                "resource":
+                  {
+                    "kind": "temple_relic",
+                    "id": "idol-001",
+                  },
+                "principal":
+                  {
+                    "id": "marion",
+                    "roles": ["relic_specialist"],
+                  },
+                "actions": ["delete", "edit", "view"],
+              },
+              {
+                "requestId": "marion-archive",
+                "resource":
+                  {
+                    "kind": "archive_record",
+                    "id": "archive-001",
+                  },
+                "principal":
+                  {
+                    "id": "marion",
+                    "roles": ["relic_specialist"],
+                  },
+                "actions": ["delete", "edit", "view"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "indy-relic",
+                "resourceId": "idol-001",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.temple_relic.vdefault",
+                      },
+                    "edit":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.temple_relic.vdefault",
+                      },
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.temple_relic.vdefault",
+                      },
+                  },
+              },
+              {
+                "requestId": "indy-archive",
+                "resourceId": "archive-001",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.archive_record.vdefault",
+                      },
+                    "edit":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.archive_record.vdefault",
+                      },
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.archive_record.vdefault",
+                      },
+                  },
+              },
+              {
+                "requestId": "marion-relic",
+                "resourceId": "idol-001",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.relic_specialist.vdefault",
+                      },
+                    "edit":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.relic_specialist.vdefault",
+                      },
+                    "view":
+                      {
+                        "effect": "EFFECT_ALLOW",
+                        "policy": "resource.temple_relic.vdefault",
+                      },
+                  },
+              },
+              {
+                "requestId": "marion-archive",
+                "resourceId": "archive-001",
+                "actions":
+                  {
+                    "delete":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.relic_specialist.vdefault",
+                      },
+                    "edit":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.relic_specialist.vdefault",
+                      },
+                    "view":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "role.relic_specialist.vdefault",
+                      },
+                  },
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.temple_relic.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_19.yaml",
+                    },
+                },
+              "resource.archive_record.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_20.yaml",
+                    },
+                },
+              "role.relic_specialist.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "role_policies/policy_08.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]

@@ -631,6 +631,8 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 		return res, nil
 	}
 
+	literalActionSet, hasRolePolicyRules := literalActionSets[allowActionsIdxKey]
+
 	actionMatchedRows := internal.NewGlobMap(make(map[string][]*Row))
 
 	for _, version := range versions {
@@ -648,36 +650,42 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 				if !ok {
 					continue
 				}
+				scopeVersionSet := scopeSet.intersectWith(versionSet)
+				if scopeVersionSet.len() == 0 {
+					continue
+				}
 				// intersect3 considers sizes of all three sets and iterates over the smallest,
 				// so it performs well whether scope, version, or resource is most selective.
-				scopeSet = intersect3(scopeSet, versionSet, resourceSet)
+				scopeResourceSet := intersect3(scopeSet, versionSet, resourceSet)
+				if scopeResourceSet.len() == 0 {
+					continue
+				}
 
 				for _, role := range roles {
 					roleSet, ok := roleSets[role]
 					if !ok {
 						continue
 					}
-					roleSet = roleSet.intersectWith(scopeSet)
+					roleResourceSet := roleSet.intersectWith(scopeResourceSet)
 
 					roleFqn := namer.RolePolicyFQN(role, version, scope)
 
-					if literalActionSet, ok := literalActionSets[allowActionsIdxKey]; ok { //nolint:nestif
-						ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleSet))
-						if err != nil {
-							return nil, err
-						}
-						actionMatchedRows.Clear()
-						hadMatches := false
-						for ar := range ars {
-							hadMatches = true
-							for a := range ar.GetAllowActions().GetActions() {
-								rows, _ := actionMatchedRows.Get(a)
-								rows = append(rows, ar)
-								actionMatchedRows.Set(a, rows)
+					if hasRolePolicyRules { //nolint:nestif
+						roleScopeSet := roleSet.intersectWith(scopeVersionSet)
+						if literalActionSet.hasIntersectionWith(roleScopeSet) { //nolint:nestif
+							ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleResourceSet))
+							if err != nil {
+								return nil, err
 							}
-						}
+							actionMatchedRows.Clear()
+							for ar := range ars {
+								for a := range ar.GetAllowActions().GetActions() {
+									rows, _ := actionMatchedRows.Get(a)
+									rows = append(rows, ar)
+									actionMatchedRows.Set(a, rows)
+								}
+							}
 
-						if hadMatches {
 							for _, action := range actions {
 								matchedRows := []*Row{}
 								for _, rows := range actionMatchedRows.GetMerged(action) {
@@ -693,9 +701,6 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 										}
 									}
 								} else {
-									for _, rows := range actionMatchedRows.GetMerged(action) {
-										matchedRows = append(matchedRows, rows...)
-									}
 									if len(matchedRows) == 0 {
 										// add a blanket DENY for non matching actions
 										newRow := &Row{
@@ -760,7 +765,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 						if !ok {
 							continue
 						}
-						for r := range actionSet.intersectWithIter(roleSet) {
+						for r := range actionSet.intersectWithIter(roleResourceSet) {
 							if !resSet.has(r.sum) {
 								resSet.set(r)
 								res = append(res, r)
