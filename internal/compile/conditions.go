@@ -59,6 +59,8 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 }
 
 func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstantsAndVariablesAsUsed bool) *runtimev1.Expr {
+	result := &runtimev1.Expr{Original: expr}
+
 	celAST, issues := conditions.StdEnv.Compile(expr)
 	if issues != nil && issues.Err() != nil {
 		errList := make([]string, len(issues.Errors()))
@@ -66,13 +68,13 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstant
 			errList[i] = ce.Message
 		}
 		modCtx.addErrForValueAtProtoPath(path, newCELCompileError(expr, issues), "Invalid expression `%s`: [%s]", expr, strings.Join(errList, ", "))
-		return nil
+		return result
 	}
 
 	checkedExpr, err := cel.AstToCheckedExpr(celAST)
 	if err != nil {
 		modCtx.addErrForValueAtProtoPath(path, err, "Failed to convert AST of `%s`", expr)
-		return nil
+		return result
 	}
 
 	if markReferencedConstantsAndVariablesAsUsed {
@@ -80,10 +82,8 @@ func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstant
 		modCtx.variables.Use(path, checkedExpr)
 	}
 
-	return &runtimev1.Expr{
-		Original: expr,
-		Checked:  checkedExpr,
-	}
+	result.Checked = checkedExpr
+	return result
 }
 
 func compileMatchList(modCtx *moduleCtx, path string, matches []*policyv1.Match, markReferencedVariablesAsUsed bool) *runtimev1.Condition_ExprList {
