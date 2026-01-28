@@ -102,6 +102,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.account.vdefault",
 					"resource.album_object.vdefault",
 					"resource.all_any_none.vdefault",
+					"resource.archive_record.vdefault",
 					"resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault",
 					"resource.calendar_entry.vdefault",
 					"resource.calendar_entry.vdefault/acme",
@@ -127,6 +128,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.products.vdefault",
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
+					"resource.temple_relic.vdefault",
 					"resource.variables_referencing_variables.vdefault",
 					"role.20210210_admin.v20210210",
 					"role.acme_assistant.vdefault/acme.hr.uk",
@@ -135,6 +137,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"role.acme_london_employee.vdefault/acme.hr.uk.london",
 					"role.acme_travel_agent.vdefault/acme.hr.uk",
 					"role.party_person.vdefault/acme.hr.uk.brighton.kemptown",
+					"role.relic_specialist.vdefault",
 				}, listPolicies(t, clientCtx))
 			})
 
