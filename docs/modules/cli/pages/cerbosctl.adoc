@@ -535,7 +535,7 @@ Trigger operations on the policy store revisions
 [#purge]
 ==== `purge`
 
-Deletes revisions from the `policy_revisions` table
+Deletes revisions from the `policy_revision` table
 
 .Purge all revisions
 ----

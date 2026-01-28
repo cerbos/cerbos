@@ -848,7 +848,7 @@
         "parameters": [
           {
             "name": "keepLast",
-            "description": "Keep last N revisions. If not specified or set to zero, all revisions will be deleted.",
+            "description": "Keep last N revisions for each policy. If not specified or set to zero, all revisions will be deleted.",
             "in": "query",
             "required": false,
             "type": "integer",

@@ -1369,6 +1369,8 @@ func (s *dbStorage) ListRevisions(ctx context.Context, ids ...namer.ModuleID) (m
 }
 
 // PurgeRevisions deletes revisions from the relevant table.
+// If keepLast parameter is not specified, deletes all revisions from the table.
+// If specified, it leaves the last N revisions for each policy.
 func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error) {
 	var res sql.Result
 	switch keepLast {
