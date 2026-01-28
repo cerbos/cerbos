@@ -803,5 +803,5 @@ message PurgeStoreRevisionsRequest {
     json_schema: {description: "Purge store revisions request"}
   };
 
-  uint32 keep_last = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Keep last N revisions. If not specified or set to zero, all revisions will be deleted."}];
+  uint32 keep_last = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Keep last N revisions for each policy. If not specified or set to zero, all revisions will be deleted."}];
 }
