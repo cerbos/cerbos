@@ -146,38 +146,38 @@ tests: <13>
         actions:
           download: EFFECT_DENY
 ----
-<1> Name of the test suite
-<2> Description of the test suite
+<1> Name of the test suite.
+<2> Description of the test suite.
 <3> Optional RFC3339 timestamp to be used as the return value of the `now` function. Applies to all tests in the suite unless overridden locally.
-<4> Optionally set xref:configuration:engine.adoc#default_policy_version[default policy version] for this test suite
-<5> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite
-<6> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test suite
-<7> Optionally set xref:configuration:engine.adoc#globals[globals] for this test suite
+<4> Optionally set xref:configuration:engine.adoc#default_policy_version[default policy version] for this test suite.
+<5> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite.
+<6> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test suite.
+<7> Optionally set xref:configuration:engine.adoc#globals[globals] for this test suite.
 <8> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
 <9> Map of principal groups. The key is a string that can be used to refer to the associated group of principal fixtures.
 <10> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
 <11> Map of resource groups. The key is a string that can be used to refer to the associated group of resource fixtures.
 <12> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
-<13> List of tests in this suite
-<14> Name of the test
+<13> List of tests in this suite.
+<14> Name of the test.
 <15> Optionally set options that apply to just this test. Test-specific options are not merged with suite-wide options, so any unspecified values revert to the default.
 <16> Optional RFC3339 timestamp to be used as the return value of the `now` function.
 <17> Optionally set xref:configuration:engine.adoc#default_policy_version[default policy version] for this test.
-<18> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite
+<18> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite.
 <19> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test.
 <20> Optionally set xref:configuration:engine.adoc#globals[globals] for this test.
-<21> Input to the policy engine
-<22> List of keys of principal fixtures to test
-<23> List of keys of resource fixtures to test
-<24> List of actions to test
-<25> Key of auxiliary data fixture to test (optional)
+<21> Input to the policy engine.
+<22> List of keys of principal fixtures to test.
+<23> List of keys of resource fixtures to test.
+<24> List of actions to test.
+<25> Key of auxiliary data fixture to test (optional).
 <26> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
 <27> Key of the principal fixture under test. Use `principals` instead of `principal` if you want to specify identical expectations for multiple principals.
 <28> Key of the resource fixture under test. Use `resources` instead of `resource` if you want to specify identical expectations for multiple resources.
 <29> Expected outcomes for each action for each principal+resource pair. If an action specified in `input` is not listed, then `EFFECT_DENY` is expected for that action.
-<30> Optional list of xref:outputs.adoc[output values] to match
-<31> Name of the action that would produce the output
-<32> List of expected output values
+<30> Optional list of xref:outputs.adoc[output values] to match.
+<31> Name of the action that would produce the output.
+<32> List of expected output values.
 <33> List of keys of principal groups to test. You can provide this instead of, or as well as, `principals`.
 <34> List of keys of resource groups to test. You can provide this instead of, or as well as, `resources`.
 <35> Key of the principal group under test. You can provide this instead of, or as well as, `principal` or `principals`.
@@ -335,11 +335,11 @@ By default, all discovered tests are run. Use the `--skip-tests` flag to skip al
 
 The `--test-filter` flag accepts a filter expression with the following dimensions:
 
-* `suite` - filter by test suite name
-* `test` - filter by test name
-* `principal` - filter by principal key
-* `resource` - filter by resource key
-* `action` - filter by action name
+* `suite` - filter by test suite name,
+* `test` - filter by test name,
+* `principal` - filter by principal key,
+* `resource` - filter by resource key,
+* `action` - filter by action name.
 
 Each dimension accepts one or more glob patterns. Multiple dimensions are separated by semicolons, and multiple values within a dimension are separated by commas.
 
