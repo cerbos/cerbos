@@ -1,2 +1,2 @@
 type:enhancement
-Deprecates the `--run` flag to `cerbos compile` command used to run a sub set of tests in favour of a new flag named `--filter`. It supports filtering tests using wildcards in five dimensions (suite, test, principal, resource and action) which provides much more control over which tests are run. See xref:policies:compile.adoc[] for details.   
+Deprecates the `--run` flag to `cerbos compile` command used to run a sub set of tests in favour of a new flag named `--test-filter`. It supports filtering tests using wildcards in five dimensions (suite, test, principal, resource and action) which provides much more control over which tests are run. See xref:policies:compile.adoc[] for details.   
