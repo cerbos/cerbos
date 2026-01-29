@@ -1,4 +1,2 @@
-type:feature
-Added a test filter to the `cerbos compile` command
-
-`cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource=my_album;action=view' /path/to/policy/repo`
+type:enhancement
+Deprecates the `--run` flag to `cerbos compile` command used to run a sub set of tests in favour of a new flag named `--filter`. It supports filtering tests using wildcards in five dimensions (suite, test, principal, resource and action) which provides much more control over which tests are run. See xref:policies:compile.adoc[] for details.   
