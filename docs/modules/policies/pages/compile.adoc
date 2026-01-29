@@ -331,14 +331,41 @@ docker run -i -t \
 The output format can be controlled using the `--output` flag, which accepts the values `tree` (default), `list` and `json`. The `--color` flag controls the coloring of the output. To produce machine readable output from the tests, pass `--output=json --color=never` to the command.
 
 
-By default, all discovered tests are run. Use the `--skip-tests` flag to skip all tests or use the `--run` flag to run a set of tests that match a regular expression.
+By default, all discovered tests are run. Use the `--skip-tests` flag to skip all tests or use `--test-filter` to run only tests matching specific criteria.
 
-.Example: Running only tests that contain 'Delete' in the name
+The `--test-filter` flag accepts a filter expression with the following dimensions:
+
+* `suite` - filter by test suite name
+* `test` - filter by test name
+* `principal` - filter by principal key
+* `resource` - filter by resource key
+* `action` - filter by action name
+
+Each dimension accepts one or more glob patterns. Multiple dimensions are separated by semicolons, and multiple values within a dimension are separated by commas.
+
+.Example: Running tests for a specific suite and principal
 [source,sh,subs="attributes"]
 ----
 docker run -i -t \
     -v /path/to/policy/dir:/policies \
-    {app-docker-img} compile --run=Delete /policies
+    {app-docker-img} compile --test-filter='suite=AlbumObjectTestSuite;principal=alicia' /policies
+----
+
+.Example: Running tests matching glob patterns
+[source,sh,subs="attributes"]
+----
+docker run -i -t \
+    -v /path/to/policy/dir:/policies \
+    {app-docker-img} compile --test-filter='test=*Delete*;action=view,edit' /policies
+----
+
+Multiple `--test-filter` flags can be combined. All filter dimensions are merged together.
+
+[source,sh,subs="attributes"]
+----
+docker run -i -t \
+    -v /path/to/policy/dir:/policies \
+    {app-docker-img} compile --test-filter='principal=alice,bob' --test-filter='action=view' /policies
 ----
 
 You can mark entire suites or individual tests in a suite with `skip: true` to skip them during test runs.
