@@ -1,0 +1,4 @@
+type:feature
+Added a test filter to the `cerbos compile` command
+
+`cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource=my_album;action=view' /path/to/policy/repo`
