@@ -2,6 +2,22 @@
   "$id": "https://api.cerbos.test/cerbos/private/v1/ServerTestCase.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.audit.v1.RequestContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
     "cerbos.effect.v1.Effect": {
       "type": "string",
       "enum": [
@@ -893,6 +909,10 @@
                 "SCOPE_PERMISSIONS_UNSPECIFIED",
                 "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
               ]
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9A-Z_a-z]*$"
             }
           }
         },
@@ -1567,6 +1587,9 @@
         "principal": {
           "$ref": "#/definitions/cerbos.engine.v1.Principal"
         },
+        "requestContext": {
+          "$ref": "#/definitions/cerbos.audit.v1.RequestContext"
+        },
         "requestId": {
           "type": "string"
         },
@@ -1659,6 +1682,9 @@
         },
         "principal": {
           "$ref": "#/definitions/cerbos.engine.v1.Principal"
+        },
+        "requestContext": {
+          "$ref": "#/definitions/cerbos.audit.v1.RequestContext"
         },
         "requestId": {
           "type": "string"

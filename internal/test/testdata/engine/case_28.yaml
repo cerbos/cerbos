@@ -37,13 +37,13 @@ wantOutputs:
           "create":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_london_employee/acme.hr.uk.london",
+              "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
               "scope": "acme.hr.uk.london",
             },
           "view":
             {
               "effect": "EFFECT_DENY",
-              "policy": "role.acme_london_employee/acme.hr.uk.london",
+              "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
               "scope": "acme.hr.uk.london",
             },
           "anonymise":
@@ -96,13 +96,13 @@ wantDecisionLogs:
                     "create":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_london_employee/acme.hr.uk.london",
+                        "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
                         "scope": "acme.hr.uk.london",
                       },
                     "view":
                       {
                         "effect": "EFFECT_DENY",
-                        "policy": "role.acme_london_employee/acme.hr.uk.london",
+                        "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
                         "scope": "acme.hr.uk.london",
                       },
                     "anonymise":
@@ -161,7 +161,7 @@ wantDecisionLogs:
                       "source": "resource_policies/policy_05_acme.hr.uk.london.yaml",
                     },
                 },
-              "role.acme_london_employee/acme.hr.uk.london":
+              "role.acme_london_employee.vdefault/acme.hr.uk.london":
                 {
                   "attributes":
                     {

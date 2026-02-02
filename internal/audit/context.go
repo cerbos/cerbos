@@ -39,6 +39,10 @@ type callIDCtxKeyType struct{}
 
 var callIDCtxKey = callIDCtxKeyType{}
 
+type requestContextKeyType struct{}
+
+var requestContextKey = requestContextKeyType{}
+
 func NewContextWithCallID(ctx context.Context, id ID) context.Context {
 	tagCtx := logging.InjectLogField(ctx, util.AppName, map[string]any{callIDTagKey: id})
 	return context.WithValue(tagCtx, callIDCtxKey, id)
@@ -56,6 +60,27 @@ func CallIDFromContext(ctx context.Context) (ID, bool) {
 	}
 
 	return id, true
+}
+
+func NewContextWithRequestContext(ctx context.Context, reqCtx *auditv1.RequestContext) context.Context {
+	if reqCtx == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, requestContextKey, reqCtx)
+}
+
+func RequestContextFromContext(ctx context.Context) *auditv1.RequestContext {
+	reqCtxVal := ctx.Value(requestContextKey)
+	if reqCtxVal == nil {
+		return nil
+	}
+
+	reqCtx, ok := reqCtxVal.(*auditv1.RequestContext)
+	if !ok {
+		return nil
+	}
+
+	return reqCtx
 }
 
 func PeerFromContext(ctx context.Context) *auditv1.Peer {

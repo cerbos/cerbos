@@ -11,7 +11,7 @@ planResources:
     action: approve
     principal:
       id: maggie
-      policyVersion: '20210210'
+      policyVersion: "20210210"
       roles:
         - manager
       attr:
@@ -22,16 +22,20 @@ planResources:
         team: design
     resource:
       kind: leave_request
-      policyVersion: '20210210'
+      policyVersion: "20210210"
     auxData:
       jwt:
         token: >-
           eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX
+
+    requestContext:
+      annotations:
+        "cerbos.dev/foo": "bar"
   wantResponse:
     requestId: test
     action: approve
     resourceKind: leave_request
-    policyVersion: '20210210'
+    policyVersion: "20210210"
     filter:
       kind: KIND_CONDITIONAL
       condition:
@@ -49,4 +53,4 @@ planResources:
                   - variable: request.resource.attr.geography
                   - value: GB
     meta:
-      filterDebug: "(and (eq request.resource.attr.status \"PENDING_APPROVAL\") (eq request.resource.attr.geography \"GB\"))"
+      filterDebug: '(and (eq request.resource.attr.status "PENDING_APPROVAL") (eq request.resource.attr.geography "GB"))'

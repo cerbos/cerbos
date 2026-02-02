@@ -11,7 +11,7 @@ Cerbos allows you to write xref:policies:compile.adoc[tests for policies] and ru
 
 A test suite defines a number of resources and principals and the expected result of actions for any combination of them.
 
-To define a test suite, create a `tests` folder alongside your policy folder. In this folder, any number of tests can be defined as YAML but the file must end with `_test`.
+To define a test suite, create a `tests` folder inside your policy folder. In this folder, any number of tests can be defined as YAML but the file must end with `_test`.
 
 As an example, the `contact` policy states that a `user` can create, read and update a contact, but only an `admin` can delete them - therefore you can create a test suite for this like the below:
 
@@ -28,10 +28,10 @@ With this defined, you can now extend the compile command to also run the tests 
 docker run --rm --name cerbos -t \
   -v /tutorial:/tutorial \
   -p 3592:3592 \
-  ghcr.io/cerbos/cerbos:latest compile --tests=/tutorial/tests /tutorial/policies
+  ghcr.io/cerbos/cerbos:latest compile /tutorial/policies
 
 # Using Binary
-./cerbos compile --tests=/tutorial/tests /tutorial/policies
+./cerbos compile /tutorial/policies
 ----
 
 If everything is as expected the output of the tests should be green:

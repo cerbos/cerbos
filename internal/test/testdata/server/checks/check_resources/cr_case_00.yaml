@@ -5,114 +5,111 @@ wantStatus:
   httpStatusCode: 200
   grpcStatusCode: 0
 checkResources:
-  input: {
-    "requestId": "test",
-    "principal": {
-      "id": "john",
-      "policyVersion": "20210210",
-      "roles": [
-        "employee"
-      ],
-      "attr": {
-        "department": "marketing",
-        "geography": "GB",
-        "team": "design"
-      }
-    },
-    "resources": [
-      {
-        "actions": [
-          "view:public",
-          "approve"
-        ],
-        "resource": {
-          "kind": "leave_request",
+  input:
+    {
+      "requestId": "test",
+      "principal":
+        {
+          "id": "john",
           "policyVersion": "20210210",
-          "id": "XX125",
-          "attr": {
-            "department": "marketing",
-            "geography": "GB",
-            "id": "XX125",
-            "owner": "john",
-            "team": "design"
-          }
-        }
-      },
-      {
-        "actions": [
-          "view:public",
-          "approve"
+          "roles": ["employee"],
+          "attr":
+            { "department": "marketing", "geography": "GB", "team": "design" },
+        },
+      "resources":
+        [
+          {
+            "actions": ["view:public", "approve"],
+            "resource":
+              {
+                "kind": "leave_request",
+                "policyVersion": "20210210",
+                "id": "XX125",
+                "attr":
+                  {
+                    "department": "marketing",
+                    "geography": "GB",
+                    "id": "XX125",
+                    "owner": "john",
+                    "team": "design",
+                  },
+              },
+          },
+          {
+            "actions": ["view:public", "approve"],
+            "resource":
+              {
+                "kind": "leave_request",
+                "policyVersion": "20210210",
+                "id": "YY125",
+                "attr":
+                  {
+                    "department": "engineering",
+                    "geography": "GB",
+                    "id": "YY125",
+                    "owner": "jenny",
+                    "team": "backend",
+                  },
+              },
+          },
+          {
+            "actions": ["view:public", "delete", "edit"],
+            "resource":
+              {
+                "kind": "salary_record",
+                "policyVersion": "20210210",
+                "id": "YY525",
+                "attr":
+                  {
+                    "department": "engineering",
+                    "geography": "GB",
+                    "id": "YY525",
+                    "owner": "mark",
+                    "team": "backend",
+                  },
+              },
+          },
         ],
-        "resource": {
-          "kind": "leave_request",
-          "policyVersion": "20210210",
-          "id": "YY125",
-          "attr": {
-            "department": "engineering",
-            "geography": "GB",
-            "id": "YY125",
-            "owner": "jenny",
-            "team": "backend"
-          }
-        }
-      },
-      {
-        "actions": [
-          "view:public",
-          "delete",
-          "edit"
+      "requestContext": { "annotations": { "cerbos.dev/foo": "bar" } },
+    }
+  wantResponse:
+    {
+      "requestId": "test",
+      "results":
+        [
+          {
+            "resource":
+              {
+                "id": "XX125",
+                "kind": "leave_request",
+                "policyVersion": "20210210",
+              },
+            "actions":
+              { "view:public": "EFFECT_ALLOW", "approve": "EFFECT_DENY" },
+          },
+          {
+            "resource":
+              {
+                "id": "YY125",
+                "kind": "leave_request",
+                "policyVersion": "20210210",
+              },
+            "actions":
+              { "view:public": "EFFECT_ALLOW", "approve": "EFFECT_DENY" },
+          },
+          {
+            "resource":
+              {
+                "id": "YY525",
+                "kind": "salary_record",
+                "policyVersion": "20210210",
+              },
+            "actions":
+              {
+                "view:public": "EFFECT_DENY",
+                "delete": "EFFECT_DENY",
+                "edit": "EFFECT_DENY",
+              },
+          },
         ],
-        "resource": {
-          "kind": "salary_record",
-          "policyVersion": "20210210",
-          "id": "YY525",
-          "attr": {
-            "department": "engineering",
-            "geography": "GB",
-            "id": "YY525",
-            "owner": "mark",
-            "team": "backend"
-          }
-        }
-      }
-    ]
-  }
-  wantResponse: {
-    "requestId": "test",
-    "results": [
-      {
-        "resource": {
-          "id": "XX125",
-          "kind": "leave_request",
-          "policyVersion": "20210210"
-        },
-        "actions": {
-          "view:public": "EFFECT_ALLOW",
-          "approve": "EFFECT_DENY"
-        }
-      },
-      {
-        "resource": {
-          "id": "YY125",
-          "kind": "leave_request",
-          "policyVersion": "20210210"
-        },
-        "actions": {
-          "view:public": "EFFECT_ALLOW",
-          "approve": "EFFECT_DENY"
-        }
-      },
-      {
-        "resource": {
-          "id": "YY525",
-          "kind": "salary_record",
-          "policyVersion": "20210210"
-        },
-        "actions": {
-          "view:public": "EFFECT_DENY",
-          "delete": "EFFECT_DENY",
-          "edit": "EFFECT_DENY"
-        }
-      }
-    ]
-  }
+    }

@@ -128,6 +128,10 @@ func buildTestOutput(results *policyv1.TestResults, verbose bool) *testOutput {
 }
 
 func (o *testOutput) addSuite(suite *policyv1.TestResults_Suite) {
+	if !o.shouldAddSuite(suite) {
+		return
+	}
+
 	suiteText := fmt.Sprintf("%s %s", colored.Suite(suite.Name), fmt.Sprintf("(%s)", colored.FileName(suite.File)))
 
 	if suite.Error != "" {
@@ -150,6 +154,34 @@ func (o *testOutput) addSuite(suite *policyv1.TestResults_Suite) {
 	for _, testCase := range suite.TestCases {
 		o.addTestCase(suite, testCase)
 	}
+}
+
+func (o *testOutput) shouldAddSuite(suite *policyv1.TestResults_Suite) bool {
+	if suite.Error != "" {
+		return true
+	}
+	if suite.Summary.OverallResult != policyv1.TestResults_RESULT_SKIPPED {
+		return true
+	}
+	return !o.allTestsSkippedDueToFilter(suite)
+}
+
+func (o *testOutput) allTestsSkippedDueToFilter(suite *policyv1.TestResults_Suite) bool {
+	for _, testCase := range suite.TestCases {
+		for _, principal := range testCase.Principals {
+			for _, resource := range principal.Resources {
+				for _, action := range resource.Actions {
+					if action.Details.Result == policyv1.TestResults_RESULT_SKIPPED {
+						reason := action.Details.GetSkipReason()
+						if reason != verify.SkipReasonName && !verify.IsFilterSkipReason(reason) {
+							return false
+						}
+					}
+				}
+			}
+		}
+	}
+	return true
 }
 
 func (o *testOutput) addTestCase(suite *policyv1.TestResults_Suite, testCase *policyv1.TestResults_TestCase) {
@@ -259,7 +291,8 @@ func (o *testOutput) shouldAddAction(action *policyv1.TestResults_Action) bool {
 		return o.verbose
 
 	case policyv1.TestResults_RESULT_SKIPPED:
-		return action.Details.GetSkipReason() != verify.SkipReasonName
+		reason := action.Details.GetSkipReason()
+		return reason != verify.SkipReasonName && !verify.IsFilterSkipReason(reason)
 
 	default:
 		return true

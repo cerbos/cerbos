@@ -7,8 +7,11 @@ import (
 	"errors"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/parser"
 )
 
@@ -42,7 +45,7 @@ func Validate(p *policyv1.Policy, sc parser.SourceCtx) error {
 	case *policyv1.Policy_PrincipalPolicy:
 		return validatePrincipalPolicy(pt.PrincipalPolicy, sc)
 	case *policyv1.Policy_RolePolicy:
-		return nil
+		return validateRolePolicy(pt.RolePolicy, sc)
 	case *policyv1.Policy_DerivedRoles:
 		return validateDerivedRoles(pt.DerivedRoles, sc)
 	case *policyv1.Policy_ExportConstants:
@@ -131,6 +134,19 @@ func validatePrincipalPolicy(rp *policyv1.PrincipalPolicy, sc parser.SourceCtx) 
 	}
 
 	return outErr
+}
+
+func validateRolePolicy(rp *policyv1.RolePolicy, sc parser.SourceCtx) error {
+	if rp.Version == "" {
+		pos := sc.PositionOfValueAtProtoPath("rolePolicy")
+		zap.L().Warn(
+			"rolePolicy.version is not specified: currently optional but will become required in a future version; defaulting to \""+namer.DefaultVersion+"\"",
+			zap.String("role", rp.GetRole()),
+			zap.String("file", pos.GetPath()),
+			zap.Uint32("line", pos.GetLine()),
+		)
+	}
+	return nil
 }
 
 func validateDerivedRoles(dr *policyv1.DerivedRoles, sc parser.SourceCtx) (outErr error) {

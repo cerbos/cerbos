@@ -1,0 +1,12 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: archive_record
+  rules:
+    - actions:
+        - edit
+        - view
+      effect: EFFECT_ALLOW
+      roles:
+        - expedition_member

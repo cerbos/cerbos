@@ -43,20 +43,22 @@ func NewUnaryInterceptor(log Log, store storage.Store, exclude ExcludeMethod) (g
 			return handler(ctx, req)
 		}
 
-		resp, err := handler(NewContextWithCallID(ctx, callID), req)
+		requestContext := extractRequestContext(req)
+		resp, err := handler(NewContextWithCallID(NewContextWithRequestContext(ctx, requestContext), callID), req)
 
 		if logErr := log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
 			ctx, span := tracing.StartSpan(ctx, "audit.WriteAccessLog")
 			defer span.End()
 
 			return &auditv1.AccessLogEntry{
-				CallId:       string(callID),
-				Timestamp:    timestamppb.New(ts),
-				Peer:         PeerFromContext(ctx),
-				Method:       info.FullMethod,
-				StatusCode:   uint32(status.Code(err)),
-				Metadata:     mdExtractor(ctx),
-				PolicySource: store.Source(),
+				CallId:         string(callID),
+				Timestamp:      timestamppb.New(ts),
+				Peer:           PeerFromContext(ctx),
+				Method:         info.FullMethod,
+				StatusCode:     uint32(status.Code(err)),
+				Metadata:       mdExtractor(ctx),
+				PolicySource:   store.Source(),
+				RequestContext: requestContext,
 			}, nil
 		}); logErr != nil {
 			logging.FromContext(ctx).Warn("Failed to write access log entry", zap.Error(logErr))
@@ -88,4 +90,20 @@ func setCerbosCallID(callID string, resp any) {
 			r.ProtoReflect().Set(fd, protoreflect.ValueOf(callID))
 		}
 	}
+}
+
+type cerbosRequestWithContext interface {
+	GetRequestContext() *auditv1.RequestContext
+}
+
+func extractRequestContext(req any) *auditv1.RequestContext {
+	if req == nil {
+		return nil
+	}
+
+	if cerbosReq, ok := req.(cerbosRequestWithContext); ok {
+		return cerbosReq.GetRequestContext()
+	}
+
+	return nil
 }

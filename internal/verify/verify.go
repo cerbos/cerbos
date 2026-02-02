@@ -28,10 +28,11 @@ const (
 type Config struct {
 	ExcludedResourcePolicyFQNs  map[string]struct{}
 	ExcludedPrincipalPolicyFQNs map[string]struct{}
+	Filter                      *FilterConfig
 	IncludedTestNamesRegexp     string
+	Workers                     uint
 	Trace                       bool
 	SkipBatching                bool
-	Workers                     uint
 }
 
 type Checker interface {
@@ -247,9 +248,7 @@ func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuit
 	var wg sync.WaitGroup
 
 	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for file := range jobs {
 				select {
 				case <-ctx.Done():
@@ -264,7 +263,7 @@ func runConcurrent(ctx context.Context, suiteDefs []string, workers int, runSuit
 					return
 				}
 			}
-		}()
+		})
 	}
 
 loop:

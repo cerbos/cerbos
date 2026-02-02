@@ -8,6 +8,7 @@ package internal
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
 	"github.com/jackc/pgtype"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -64,6 +66,8 @@ type DBStorage interface {
 	DeleteSchema(ctx context.Context, ids ...string) (uint32, error)
 	LoadSchema(ctx context.Context, url string) (io.ReadCloser, error)
 	LoadPolicy(ctx context.Context, policyKey ...string) ([]*policy.Wrapper, error)
+	ListRevisions(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]int, error)
+	PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error)
 }
 
 func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBStorage, error) {
@@ -1319,4 +1323,93 @@ func (s *dbStorage) CheckSchema(ctx context.Context) error {
 
 	logger.Info("Database schema check completed")
 	return nil
+}
+
+// ListRevisions list number of revisions for policies in the store.
+func (s *dbStorage) ListRevisions(ctx context.Context, ids ...namer.ModuleID) (map[namer.ModuleID]int, error) {
+	// SELECT
+	//  id,
+	//  COUNT(*) AS count
+	// FROM policy_revision
+	// GROUP BY id
+	query := s.db.
+		Select(
+			PolicyRevisionTblIDCol,
+			goqu.COUNT(goqu.L("1")).As("count"),
+		).
+		From(PolicyRevisionTbl).
+		GroupBy(goqu.C(PolicyRevisionTblIDCol))
+
+	if len(ids) != 0 {
+		// WHERE id IN (<>)
+		query = query.Where(goqu.C(PolicyRevisionTblIDCol).In(ids))
+	}
+
+	results, err := query.Executor().ScannerContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer results.Close()
+
+	out := make(map[namer.ModuleID]int)
+	for results.Next() {
+		var row struct {
+			PolicyID namer.ModuleID `db:"id"`
+			Count    int            `db:"count"`
+		}
+
+		if err := results.ScanStruct(&row); err != nil {
+			return nil, err
+		}
+
+		out[row.PolicyID] = row.Count
+	}
+
+	return out, nil
+}
+
+// PurgeRevisions deletes revisions from the relevant table.
+// If keepLast parameter is not specified, deletes all revisions from the table.
+// If specified, it leaves the last N revisions for each policy.
+func (s *dbStorage) PurgeRevisions(ctx context.Context, keepLast uint32) (uint32, error) {
+	var res sql.Result
+	switch keepLast {
+	case 0:
+		var err error
+		// DELETE
+		// FROM policy_revision
+		if res, err = s.db.Delete(PolicyRevisionTbl).
+			Prepared(true).
+			Executor().
+			ExecContext(ctx); err != nil {
+			return 0, fmt.Errorf("failed to delete all revisions: %w", err)
+		}
+	default:
+		db, ok := s.db.Db.(*sqlx.DB)
+		if !ok {
+			return 0, fmt.Errorf("failed to get database")
+		}
+
+		query := `DELETE FROM policy_revision
+WHERE revision_id IN (
+    SELECT revision_id
+    FROM (
+        SELECT revision_id, ROW_NUMBER() OVER (PARTITION BY id ORDER BY update_timestamp DESC) AS revision
+        FROM policy_revision
+    ) AS ranked
+    WHERE revision > :keepLast
+);`
+
+		var err error
+		if res, err = db.NamedExecContext(ctx, query, map[string]any{"keepLast": keepLast}); err != nil {
+			return 0, fmt.Errorf("failed to delete revisions: %w", err)
+		}
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("failed to discover whether the revisions got deleted or not: %w", err)
+	}
+
+	return uint32(affected), nil
 }

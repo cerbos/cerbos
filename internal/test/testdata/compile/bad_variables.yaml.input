@@ -14,6 +14,8 @@ resourcePolicy:
       f: 2 * V.g
       g: V.d
       h: V.x / variables.y
+      i: wat
+      j: V.i
   rules:
     - name: bad
       actions:

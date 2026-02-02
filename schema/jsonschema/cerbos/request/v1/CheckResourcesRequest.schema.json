@@ -2,6 +2,22 @@
   "$id": "https://api.cerbos.dev/cerbos/request/v1/CheckResourcesRequest.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.audit.v1.RequestContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
     "cerbos.engine.v1.Principal": {
       "type": "object",
       "required": [
@@ -146,6 +162,9 @@
     },
     "principal": {
       "$ref": "#/definitions/cerbos.engine.v1.Principal"
+    },
+    "requestContext": {
+      "$ref": "#/definitions/cerbos.audit.v1.RequestContext"
     },
     "requestId": {
       "type": "string"

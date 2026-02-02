@@ -1,0 +1,3 @@
+type:fix
+Traverse principal and resource scope chains independently in plans
+This fixes a bug introduced in Cerbos v0.44 where the policy engine could apply rules requests from policies that should not have been considered when evaluating `PlanResources` requests. To trigger this bug, the policy store needed to include scoped principal and resource or role policies, and `PlanResources` requests needed to be performed with differing principal and resource scopes. In this case, the policy engine would use both the principal and resource scopes to find policies, when the expected behaviour is to use the principal scope to find principal policies and the resource scope to find resource and role policies.
