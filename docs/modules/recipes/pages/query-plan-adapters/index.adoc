@@ -1,0 +1,39 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Query plan adapters
+
+include::ROOT:partial$version-check.adoc[]
+
+The Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources` API] returns a query plan describing which resources a principal can access for a given action. Cerbos provides reference implementations of query plan adapters that convert that response into native query filters for your data layer, so authorization conditions are evaluated at the database level rather than in application code. Use these adapters as-is or as a starting point to build your own.
+
+
+== Available adapters
+
+[cols="1,1,2", options="header"]
+|===
+| Adapter | Language | Target
+
+| xref:query-plan-adapters/prisma.adoc[Prisma]
+| TypeScript
+| Prisma ORM (PostgreSQL, MySQL, SQLite, SQL Server, MongoDB)
+
+| xref:query-plan-adapters/drizzle.adoc[Drizzle]
+| TypeScript
+| Drizzle ORM (PostgreSQL, MySQL, SQLite)
+
+| xref:query-plan-adapters/mongoose.adoc[Mongoose]
+| TypeScript
+| MongoDB via Mongoose
+
+| xref:query-plan-adapters/convex.adoc[Convex]
+| TypeScript
+| Convex reactive database
+
+| xref:query-plan-adapters/langchain-chromadb.adoc[LangChain / ChromaDB]
+| TypeScript
+| ChromaDB vector store via LangChain.js
+
+| xref:query-plan-adapters/sqlalchemy.adoc[SQLAlchemy]
+| Python
+| SQLAlchemy (PostgreSQL, MySQL, SQLite, Oracle, SQL Server)
+|===

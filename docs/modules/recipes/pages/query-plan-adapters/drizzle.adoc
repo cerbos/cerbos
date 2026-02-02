@@ -1,0 +1,142 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Drizzle adapter
+
+include::ROOT:partial$version-check.adoc[]
+
+The `@cerbos/orm-drizzle` package converts a Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources`] response into a Drizzle ORM SQL expression. The resulting filter can be composed with your existing query builder chain.
+
+== Requirements
+
+* Cerbos >= v0.16
+* `@cerbos/http` or `@cerbos/grpc` client
+* Drizzle ORM (SQLite, PostgreSQL, MySQL, PlanetScale)
+* Node.js >= 20.0.0
+
+== Installation
+
+[source,bash]
+----
+npm install @cerbos/orm-drizzle
+----
+
+== Supported operators
+
+* Logical: `and`, `or`, `not`
+* Comparison: `eq`, `ne`, `lt`, `gt`, `le`, `ge`, `in`
+* String: `contains`, `startsWith`, `endsWith`
+* Existence: `isSet`
+* Collection: `hasIntersection`, `exists`, `exists_one`, `all`, `filter`
+* Relation-aware mappings with `EXISTS` subqueries
+
+== Usage
+
+[source,typescript]
+----
+import { queryPlanToDrizzle, PlanKind } from "@cerbos/orm-drizzle";
+import { eq, and } from "drizzle-orm";
+import { resources } from "./schema";
+
+const plan = await cerbos.planResources({
+  principal,
+  resource: { kind: "document" },
+  action: "view",
+});
+
+const result = queryPlanToDrizzle({
+  queryPlan: plan,
+  mapper: {
+    "request.resource.attr.status": resources.status,
+    "request.resource.attr.owner": resources.ownerId,
+  },
+});
+
+switch (result.kind) {
+  case PlanKind.ALWAYS_DENIED:
+    return [];
+  case PlanKind.ALWAYS_ALLOWED:
+    return await db.select().from(resources);
+  case PlanKind.CONDITIONAL:
+    return await db
+      .select()
+      .from(resources)
+      .where(result.filter);
+}
+----
+
+== Field mapper
+
+The mapper associates Cerbos attribute references with Drizzle columns. It accepts:
+
+* A plain object with keys as Cerbos attribute references and values as Drizzle columns or SQL expressions
+* A function receiving the attribute reference and returning the column or expression
+* An object with a `column` property and an optional `transform` function for custom SQL translation
+
+[source,typescript]
+----
+const result = queryPlanToDrizzle({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.custom": {
+      column: sql`lower(${resources.title})`,
+      transform: ({ operator, value }) => {
+        if (operator !== "eq") throw new Error("Unsupported");
+        return eq(sql`lower(${resources.title})`, value.toLowerCase());
+      },
+    },
+  },
+});
+----
+
+== Relation mapping
+
+The adapter wraps relation comparisons in `EXISTS` subqueries, automatically inferring relation fields when they match column names on the related table.
+
+[source,typescript]
+----
+const result = queryPlanToDrizzle({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.owner": {
+      relation: {
+        type: "one",
+        table: owners,
+        sourceColumn: resources.ownerId,
+        targetColumn: owners.id,
+        fields: {
+          email: owners.email,
+        },
+      },
+    },
+    "request.resource.attr.tags": {
+      relation: {
+        type: "many",
+        table: resourceTags,
+        sourceColumn: resources.id,
+        targetColumn: resourceTags.resourceId,
+        fields: {
+          name: {
+            relation: {
+              type: "one",
+              table: tags,
+              sourceColumn: resourceTags.tagId,
+              targetColumn: tags.id,
+              field: tags.name,
+            },
+          },
+        },
+      },
+    },
+  },
+});
+----
+
+== Collection operators
+
+* `hasIntersection` -- translates to `column IN (...)` for multi-valued attributes mapped as nested relations
+* `exists`, `exists_one`, `all` -- generate correlated `EXISTS` subqueries with the lambda variable scoped to the relation
+* `filter` -- Cerbos uses this during plan construction; the adapter discards the lambda since the filter is applied in Drizzle
+
+== Source code
+
+link:https://github.com/cerbos/query-plan-adapters/tree/main/drizzle[cerbos/query-plan-adapters/drizzle]

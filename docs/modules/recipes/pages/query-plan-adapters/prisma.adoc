@@ -1,0 +1,439 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-orm-prisma]
+= Prisma adapter
+
+include::ROOT:partial$version-check.adoc[]
+
+:page-aliases: tutorials:orm/prisma/index.adoc, orm/prisma/index.adoc
+
+The `@cerbos/orm-prisma` package converts a Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources`] response into a Prisma `where` clause. The resulting filter object can be passed directly to `findMany`, `count`, or any Prisma method that accepts a `where` argument.
+
+== Requirements
+
+* Cerbos >= v0.40
+* `@cerbos/http` or `@cerbos/grpc` client
+* Prisma >= 6.0 (v7 supported)
+* Node.js >= 20.0.0
+
+== Installation
+
+[source,bash]
+----
+npm install @cerbos/orm-prisma
+----
+
+== Supported operators
+
+=== Scalar operators
+
+`and`, `or`, `not`, `eq`, `ne`, `lt`, `gt`, `lte`, `gte`, `in`, `startsWith`, `endsWith`, `contains`, `isSet`
+
+=== Relation operators
+
+`is`, `isNot`, `some`, `none`, `every`, `exists`, `exists_one`, `all`, `filter`, `except`, `hasIntersection`
+
+=== Advanced features
+
+* Deep nested relation support
+* Automatic field inference from attribute paths
+* Collection mapping and filtering
+* Lambda expression handling
+
+== Usage
+
+[source,typescript]
+----
+import { queryPlanToPrisma, PlanKind } from "@cerbos/orm-prisma";
+
+const queryPlan = await cerbos.planResources({
+  principal: { id: "user1", roles: ["USER"] },
+  resource: { kind: "contact" },
+  action: "read",
+});
+
+const result = queryPlanToPrisma({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.ownerId": { field: "ownerId" },
+    "request.resource.attr.status": { field: "status" },
+  },
+});
+
+switch (result.kind) {
+  case PlanKind.ALWAYS_DENIED:
+    return [];
+  case PlanKind.ALWAYS_ALLOWED:
+    return await prisma.contact.findMany();
+  case PlanKind.CONDITIONAL:
+    return await prisma.contact.findMany({
+      where: result.filters,
+    });
+}
+----
+
+== Field mapper
+
+The mapper translates Cerbos attribute references to Prisma field names. It accepts either an object or a function.
+
+[source,typescript]
+----
+// Object mapper
+const result = queryPlanToPrisma({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.status": { field: "status" },
+  },
+});
+
+// Function mapper
+const result = queryPlanToPrisma({
+  queryPlan,
+  mapper: (attr) => ({
+    field: attr.replace("request.resource.attr.", ""),
+  }),
+});
+----
+
+== Relation mapping
+
+Relations are declared with their type and optional field configuration. Fields not explicitly mapped are inferred from the attribute path.
+
+[source,typescript]
+----
+const result = queryPlanToPrisma({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.owner": {
+      relation: {
+        name: "owner",
+        type: "one",
+      },
+    },
+    "request.resource.attr.tags": {
+      relation: {
+        name: "tags",
+        type: "many",
+        field: "name",
+      },
+    },
+  },
+});
+----
+
+=== Nested relations
+
+Relations can be nested to arbitrary depth:
+
+[source,typescript]
+----
+const result = queryPlanToPrisma({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.categories": {
+      relation: {
+        name: "categories",
+        type: "many",
+        fields: {
+          subCategories: {
+            relation: {
+              name: "subCategories",
+              type: "many",
+              fields: {
+                name: { field: "name" },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+----
+
+The adapter generates the nested `NOT`, `some`, `every`, and `none` structures that Prisma requires for the full relation chain.
+
+=== Lambda expressions
+
+Collection operators such as `exists` and `all` produce lambda expressions in the query plan. The adapter translates these into the corresponding Prisma relation filters:
+
+[source,typescript]
+----
+const result = queryPlanToPrisma({
+  queryPlan,
+  mapper: {
+    "request.resource.attr.comments": {
+      relation: {
+        name: "comments",
+        type: "many",
+        fields: {
+          author: {
+            relation: {
+              name: "author",
+              type: "one",
+            },
+          },
+          status: { field: "status" },
+        },
+      },
+    },
+  },
+});
+----
+
+== `in` operator normalization
+
+The adapter normalizes `in` expressions to match Prisma conventions:
+
+* Single values become equality comparisons: `{ field: "value" }`
+* Arrays remain `{ field: { in: [...] } }`
+* Relation-backed fields retain their relation structure while applying the appropriate operator at the leaf
+
+== Types
+
+[source,typescript]
+----
+import { PlanKind, QueryPlanToPrismaResult } from "@cerbos/orm-prisma";
+
+type QueryPlanToPrismaResult =
+  | { kind: PlanKind.ALWAYS_ALLOWED | PlanKind.ALWAYS_DENIED }
+  | { kind: PlanKind.CONDITIONAL; filters: Record<string, any> };
+
+type MapperConfig = {
+  field?: string;
+  relation?: {
+    name: string;
+    type: "one" | "many";
+    field?: string;
+    fields?: { [key: string]: MapperConfig };
+  };
+};
+
+type Mapper =
+  | { [key: string]: MapperConfig }
+  | ((key: string) => MapperConfig);
+----
+
+== Source code
+
+link:https://github.com/cerbos/query-plan-adapters/tree/main/prisma[cerbos/query-plan-adapters/prisma]
+
+== Tutorial: Express + Prisma + Cerbos
+
+This walkthrough builds a CRM API using Express, Prisma, and Cerbos. The business rules:
+
+* Admins can perform all actions
+* Users in the Sales department can read and create contacts
+* Only the user who created the contact can update and delete it
+
+The full source code is available at https://github.com/cerbos/express-prisma-cerbos/[github.com/cerbos/express-prisma-cerbos].
+
+=== Prisma schema
+
+[source,bash]
+----
+mkdir express-prisma-cerbos
+cd express-prisma-cerbos
+
+npm i express @cerbos/grpc @prisma/client @cerbos/orm-prisma &&
+npm i --save-dev @types/express ts-node
+----
+
+Create `prisma/schema.prisma`:
+
+[source,prisma]
+----
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  firstName      String
+  lastName       String
+  ownerId        String
+  active         Boolean  @default(false)
+  marketingOptIn Boolean  @default(false)
+}
+----
+
+Initialize the database:
+
+[source,bash]
+----
+npx prisma migrate dev --name init
+----
+
+=== Cerbos policy
+
+Create `cerbos/policies/contacts.yaml`:
+
+[source,yaml]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: contact
+  rules:
+  - actions: ["*"]
+    effect: EFFECT_ALLOW
+    roles:
+      - admin
+
+  - actions: ["read", "create"]
+    effect: EFFECT_ALLOW
+    roles:
+      - user
+    condition:
+      match:
+        expr: request.principal.attr.department == "Sales"
+
+  - actions: ["update", "delete"]
+    effect: EFFECT_ALLOW
+    roles:
+      - user
+    condition:
+      match:
+        expr: request.resource.attr.ownerId == request.principal.id
+----
+
+Start the Cerbos PDP:
+
+[source,bash,subs="attributes"]
+----
+docker run -i -t -p 3592:3592 \
+  -v $(pwd)/cerbos/policies:/policies \
+  {app-docker-img} \
+  server
+----
+
+=== Authorizing individual resources
+
+Use `checkResource` to authorize access to a single contact:
+
+[source,typescript]
+----
+import { PrismaClient } from "@prisma/client";
+import express from "express";
+import { GRPC as Cerbos } from "@cerbos/grpc";
+
+const prisma = new PrismaClient();
+const cerbos = new Cerbos("localhost:3592", { tls: false });
+
+const user = {
+  id: "1",
+  role: "user",
+  department: "Sales",
+};
+
+app.get("/contacts/:id", async ({ params }, res) => {
+  const contact = await prisma.contact.findUnique({
+    where: { id: params.id },
+  });
+  if (!contact) return res.status(404).json({ error: "Contact not found" });
+
+  const decision = await cerbos.checkResource({
+    principal: {
+      id: `${user.id}`,
+      roles: [user.role],
+      attributes: { department: user.department },
+    },
+    resource: {
+      kind: "contact",
+      id: contact.id + "",
+      attributes: JSON.parse(JSON.stringify(contact)),
+    },
+    actions: ["read"],
+  });
+
+  if (decision.isAllowed("read")) {
+    return res.json(contact);
+  } else {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+});
+----
+
+=== Filtering with the query plan adapter
+
+Use `planResources` with the Prisma adapter to retrieve only the contacts the principal is authorized to access:
+
+[source,typescript]
+----
+import { queryPlanToPrisma, PlanKind } from "@cerbos/orm-prisma";
+
+app.get("/contacts", async (req, res) => {
+  const contactQueryPlan = await cerbos.planResources({
+    principal: {
+      id: `${user.id}`,
+      roles: [user.role],
+      attributes: { department: user.department },
+    },
+    resource: { kind: "contact" },
+    action: "read",
+  });
+
+  const queryPlanResult = queryPlanToPrisma({
+    queryPlan: contactQueryPlan,
+    mapper: {
+      "request.resource.attr.ownerId": { field: "ownerId" },
+      "request.resource.attr.department": { field: "department" },
+      "request.resource.attr.active": { field: "active" },
+      "request.resource.attr.marketingOptIn": { field: "marketingOptIn" },
+    },
+  });
+
+  let contacts;
+
+  if (queryPlanResult.kind === PlanKind.ALWAYS_DENIED) {
+    contacts = [];
+  } else if (queryPlanResult.kind === PlanKind.ALWAYS_ALLOWED) {
+    contacts = await prisma.contact.findMany({
+      select: {
+        firstName: true,
+        lastName: true,
+        active: true,
+        marketingOptIn: true,
+      },
+    });
+  } else if (queryPlanResult.kind === PlanKind.CONDITIONAL) {
+    contacts = await prisma.contact.findMany({
+      where: {
+        AND: [{ ...queryPlanResult.filters }],
+      },
+      select: {
+        firstName: true,
+        lastName: true,
+        active: true,
+        marketingOptIn: true,
+      },
+    });
+  }
+
+  return res.json({ contacts });
+});
+----
+
+=== Running the example
+
+Start the Cerbos PDP as described above, then start the Express server:
+
+[source,bash]
+----
+npx ts-node src/index.ts
+----
+
+Test the endpoints:
+
+[source,bash]
+----
+curl -i http://localhost:3000/contacts/1
+curl -i http://localhost:3000/contacts
+----
