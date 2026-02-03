@@ -9,14 +9,8 @@ import (
 
 type (
 	RedisIndex = index.Redis
-)
-
-const (
-	CategoryKeyVersion      = index.CategoryKeyVersion
-	CategoryKeyScope        = index.CategoryKeyScope
-	CategoryKeyRoleGlob     = index.CategoryKeyRoleGlob
-	CategoryKeyActionGlob   = index.CategoryKeyActionGlob
-	CategoryKeyResourceGlob = index.CategoryKeyResourceGlob
+	Row        = index.Row
+	Impl       = index.Impl
 )
 
 var (

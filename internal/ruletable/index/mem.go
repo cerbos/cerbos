@@ -9,6 +9,7 @@ import (
 	"maps"
 	"sync"
 
+	ruletablev1 "github.com/cerbos/cerbos/api/genpb/cerbos/ruletable/v1"
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 )
 
@@ -28,11 +29,11 @@ func NewMem() *Mem {
 	return &Mem{namespace: memNamespaceKey}
 }
 
-func (m *Mem) getLiteralMap(CategoryKey) literalMap {
+func (m *Mem) getLiteralMap(ruletablev1.CategoryKey) literalMap {
 	return newMemLiteralMap()
 }
 
-func (m *Mem) getGlobMap(CategoryKey) globMap {
+func (m *Mem) getGlobMap(ruletablev1.CategoryKey) globMap {
 	return newMemGlobMap()
 }
 
