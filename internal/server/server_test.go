@@ -335,7 +335,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 	if rtStore, ok := tp.store.(ruletable.RuleTableStore); ok {
 		rt, err := rtStore.GetRuleTable()
 		if err != nil {
-			if !errors.Is(err, hubstore.ErrUnsupportedOperation) {
+			if !errors.Is(err, storage.ErrUnsupportedOperation) {
 				require.NoError(t, err, "Failed to get rule table")
 			}
 			ruleTable, err = ruletable.NewRuleTableFromLoader(ctx, tp.policyLoader)
