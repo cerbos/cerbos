@@ -28,7 +28,7 @@ var (
 
 var (
 	ErrPolicyIDCollision    = errors.New("policy ID collision")
-	ErrUnsupportedOperation = errors.New("operation not supported by bundle")
+	ErrUnsupportedOperation = errors.New("operation not supported")
 )
 
 // InvalidPolicyError is a custom error to signal that a policy is invalid.
