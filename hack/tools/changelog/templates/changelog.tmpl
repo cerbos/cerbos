@@ -1,8 +1,9 @@
 {{- define "section" -}}
 === {{ .Title }}
 
+[unordered]
 {{ range .Entries -}}
-- {{ .Description }}
+{{ .Description }}
 {{ end -}}
 
 
