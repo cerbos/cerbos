@@ -6,7 +6,6 @@ package hub
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -27,8 +26,6 @@ import (
 	"github.com/cerbos/cloud-api/crypto"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 )
-
-var ErrUnsupportedOperation = errors.New("operation not supported by bundle")
 
 const cerbosSchemaPrefix = schema.URLScheme + ":///"
 
@@ -101,15 +98,15 @@ func (*RuleTableBundle) Type() bundlev2.BundleType {
 }
 
 func (*RuleTableBundle) GetFirstMatch(_ context.Context, _ []namer.ModuleID) (*runtimev1.RunnablePolicySet, error) {
-	return nil, ErrUnsupportedOperation
+	return nil, storage.ErrUnsupportedOperation
 }
 
 func (*RuleTableBundle) GetAll(_ context.Context) ([]*runtimev1.RunnablePolicySet, error) {
-	return nil, ErrUnsupportedOperation
+	return nil, storage.ErrUnsupportedOperation
 }
 
 func (*RuleTableBundle) GetAllMatching(_ context.Context, _ []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
-	return nil, ErrUnsupportedOperation
+	return nil, storage.ErrUnsupportedOperation
 }
 
 func (rtb *RuleTableBundle) InspectPolicies(ctx context.Context, _ storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

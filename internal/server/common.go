@@ -83,7 +83,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 	if ruleTableStore != nil {
 		rt, err := ruleTableStore.GetRuleTable()
 		if err != nil {
-			if !errors.Is(err, storagehub.ErrUnsupportedOperation) {
+			if !errors.Is(err, storage.ErrUnsupportedOperation) {
 				return nil, fmt.Errorf("failed to load rule table: %w", err)
 			}
 

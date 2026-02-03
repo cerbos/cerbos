@@ -610,7 +610,7 @@ func (s *RemoteSource) GetRuleTable() (*ruletable.RuleTable, error) {
 		return rtBundle.GetRuleTable()
 	}
 
-	return nil, ErrUnsupportedOperation
+	return nil, storage.ErrUnsupportedOperation
 }
 
 func (s *RemoteSource) IsHealthy() bool {
