@@ -14,6 +14,15 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+// Singleton components for stateless trace components to reduce allocations.
+var (
+	componentConditionAll  = &enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION_ALL}
+	componentConditionAny  = &enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION_ANY}
+	componentConditionNone = &enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION_NONE}
+	componentCondition     = &enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION}
+	componentVariables     = &enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_VARIABLES}
+)
+
 func Start(sink Sink) Context {
 	if sink == nil || !sink.Enabled() {
 		return noopContext{}
@@ -35,19 +44,19 @@ func (c *context) StartAction(action string) Context {
 }
 
 func (c *context) StartConditionAll() Context {
-	return c.start(&enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION_ALL})
+	return c.start(componentConditionAll)
 }
 
 func (c *context) StartConditionAny() Context {
-	return c.start(&enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION_ANY})
+	return c.start(componentConditionAny)
 }
 
 func (c *context) StartConditionNone() Context {
-	return c.start(&enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION_NONE})
+	return c.start(componentConditionNone)
 }
 
 func (c *context) StartCondition() Context {
-	return c.start(&enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_CONDITION})
+	return c.start(componentCondition)
 }
 
 func (c *context) StartDerivedRole(name string) Context {
@@ -123,7 +132,7 @@ func (c *context) StartVariable(name, expr string) Context {
 }
 
 func (c *context) StartVariables() Context {
-	return c.start(&enginev1.Trace_Component{Kind: enginev1.Trace_Component_KIND_VARIABLES})
+	return c.start(componentVariables)
 }
 
 func (c *context) StartOutput(ruleName string) Context {
@@ -182,18 +191,47 @@ func (c *context) ComputedResult(result any) {
 }
 
 func protobufValue(goValue any) *structpb.Value {
+	// Fast path for common primitive types to avoid JSON marshal/unmarshal overhead.
+	switch v := goValue.(type) {
+	case *structpb.Value:
+		return v
+	case nil:
+		return structpb.NewNullValue()
+	case bool:
+		return structpb.NewBoolValue(v)
+	case string:
+		return structpb.NewStringValue(v)
+	case float64:
+		return structpb.NewNumberValue(v)
+	case float32:
+		return structpb.NewNumberValue(float64(v))
+	case int:
+		return structpb.NewNumberValue(float64(v))
+	case int64:
+		return structpb.NewNumberValue(float64(v))
+	case int32:
+		return structpb.NewNumberValue(float64(v))
+	case uint:
+		return structpb.NewNumberValue(float64(v))
+	case uint64:
+		return structpb.NewNumberValue(float64(v))
+	case uint32:
+		return structpb.NewNumberValue(float64(v))
+	}
+
+	// Fall back to JSON for complex types (structs, slices, maps, proto messages).
 	data, err := json.Marshal(goValue)
 	if err != nil {
 		return structpb.NewStringValue("<failed to marshal value to JSON>")
 	}
 
-	var protobufValue structpb.Value
-	err = protojson.Unmarshal(data, &protobufValue)
+	var pbValue structpb.Value
+	err = protojson.Unmarshal(data, &pbValue)
 	if err != nil {
 		return structpb.NewStringValue("<failed to unmarshal value from JSON>")
 	}
 
-	return &protobufValue
+	return &pbValue
 }
 
 func (c *context) Failed(err error, message string) {
