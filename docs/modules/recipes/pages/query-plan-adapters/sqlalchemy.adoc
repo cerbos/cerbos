@@ -1,0 +1,310 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#tutorial-orm-sqlalchemy]
+= SQLAlchemy adapter
+
+include::ROOT:partial$version-check.adoc[]
+
+:page-aliases: tutorials:orm/sqlalchemy/index.adoc, orm/sqlalchemy/index.adoc
+
+The `cerbos-sqlalchemy` package converts a Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources`] response into a SQLAlchemy `Select` instance. The resulting query object can be extended with additional `where` clauses or column selections before execution.
+
+== Requirements
+
+* Cerbos >= v0.16
+* link:https://github.com/cerbos/cerbos-sdk-python[Cerbos Python SDK]
+* SQLAlchemy >= 1.4 / 2.0
+
+== Installation
+
+[source,bash]
+----
+pip install cerbos-sqlalchemy
+----
+
+== Supported operators
+
+`and`, `or`, `not`, `eq`, `ne`, `lt`, `gt`, `le` (`lte`), `ge` (`gte`), `in`
+
+Other operators (for example, math operators) can be handled programmatically and attached to the query via `query.where(...)`.
+
+== Usage
+
+[source,python]
+----
+from cerbos.sdk.client import CerbosClient
+from cerbos.sdk.model import Principal, ResourceDesc
+from cerbos_sqlalchemy import get_query
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import declarative_base
+
+Base = declarative_base()
+
+class LeaveRequest(Base):
+    __tablename__ = "leave_request"
+    id = Column(Integer, primary_key=True)
+    department = Column(String(225))
+    geography = Column(String(225))
+    team = Column(String(225))
+    priority = Column(Integer)
+
+with CerbosClient(host="http://localhost:3592") as c:
+    p = Principal(
+        "john",
+        roles={"employee"},
+        policy_version="20210210",
+        attr={
+            "department": "marketing",
+            "geography": "GB",
+            "team": "design",
+        },
+    )
+    rd = ResourceDesc("leave_request", policy_version="20210210")
+    plan = c.plan_resources("view", p, rd)
+
+attr_map = {
+    "request.resource.attr.department": LeaveRequest.department,
+    "request.resource.attr.geography": LeaveRequest.geography,
+    "request.resource.attr.team": LeaveRequest.team,
+    "request.resource.attr.priority": LeaveRequest.priority,
+}
+
+query = get_query(plan, LeaveRequest, attr_map)
+----
+
+=== Multi-table joins
+
+When the `attr_map` references columns from more than one table, pass the join mapping as the fourth positional argument:
+
+[source,python]
+----
+query = get_query(
+    plan,
+    Table1,
+    {
+        "request.resource.attr.foo": Table1.foo,
+        "request.resource.attr.bar": Table2.bar,
+        "request.resource.attr.bosh": Table3.bosh,
+    },
+    [
+        (Table2, Table1.table2_id == Table2.id),
+        (Table3, Table1.table3_id == Table3.id),
+    ],
+)
+----
+
+=== Extending the query
+
+[source,python]
+----
+query = query.where(LeaveRequest.priority < 5)
+
+query = query.with_only_columns(
+    LeaveRequest.department,
+    LeaveRequest.geography,
+)
+----
+
+== Overriding default operators
+
+Override specific operator implementations for database-specific alternatives:
+
+[source,python]
+----
+from sqlalchemy.sql.expression import any_
+
+query = get_query(
+    plan,
+    some_table,
+    attr_map={"request.resource.attr.foo": Table1.foo},
+    operator_override_fns={
+        "in": lambda c, v: c == any_(v),
+    },
+)
+----
+
+== Source code
+
+link:https://github.com/cerbos/query-plan-adapters/tree/main/sqlalchemy[cerbos/query-plan-adapters/sqlalchemy]
+
+== Tutorial: FastAPI + SQLAlchemy + Cerbos
+
+This walkthrough builds a contact directory API using FastAPI, SQLAlchemy, and Cerbos. The application demonstrates both `CheckResources` for individual resource authorization and `PlanResources` for query-level filtering.
+
+The full source code is available at https://github.com/cerbos/python-sqlalchemy-cerbos[github.com/cerbos/python-sqlalchemy-cerbos].
+
+=== Prerequisites
+
+* Python 3.10
+* https://docs.sqlalchemy.org/en/14/[SQLAlchemy] 1.4 / 2.0
+* https://www.docker.com/products/docker-desktop/[Docker]
+
+=== Data model
+
+The application has three entities:
+
+* `User` -- the person interacting with the application
+* `Contact` -- a person within a user's directory (a user can have many contacts)
+* `Company` -- the company a contact is employed with (a company can have many contacts)
+
+SQLAlchemy represents these as classes with column attributes and relationship declarations:
+
+[source,python,linenums]
+----
+from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy.orm import declarative_base, relationship
+
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "user"
+
+    id = Column(String, primary_key=True)
+    username = Column(String(255))
+    email = Column(String(255))
+    contacts = relationship("Contact", back_populates="owner")
+
+class Contact(Base):
+    __tablename__ = "contact"
+
+    id = Column(String, primary_key=True)
+    owner_id = Column(String, ForeignKey("user.id"))
+    owner = relationship("User", back_populates="contacts", lazy="joined")
+----
+
+The `ForeignKey` on the child table establishes the many-to-one side. `lazy="joined"` loads the related object at attribute access time. The full table definitions are in https://github.com/cerbos/python-sqlalchemy-cerbos/blob/main/app/models.py[`app/models.py`].
+
+=== Dependency injection
+
+FastAPI dependables retrieve the Cerbos `Principal` and database `Contact` from request context:
+
+[source,python,linenums]
+----
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+security = HTTPBasic()
+
+def get_principal(credentials: HTTPBasicCredentials = Depends(security)) -> Principal:
+    username = credentials.username
+    with Session() as s:
+        user = s.scalars(select(User).where(User.username == username)).first()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+    return Principal(user.id, roles={user.role}, attr={"department": user.department})
+
+def get_db_contact(contact_id: str) -> Contact:
+    with Session() as s:
+        contact = s.scalars(select(Contact).where(Contact.id == contact_id)).first()
+        if contact is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Contact not found",
+            )
+    return contact
+----
+
+=== Authorizing individual resources
+
+Use `CheckResources` via the `is_allowed` method for single-resource authorization:
+
+[source,python,linenums]
+----
+@app.get("/contacts/{contact_id}")
+def get_contact(
+    db_contact: Contact = Depends(get_db_contact),
+    p: Principal = Depends(get_principal),
+):
+    r = get_resource_from_contact(db_contact)
+
+    with CerbosClient(host="http://localhost:3592") as c:
+        if not c.is_allowed("read", p, r):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized"
+            )
+
+    return db_contact
+----
+
+=== Filtering with the query plan adapter
+
+Use `PlanResources` with the SQLAlchemy adapter to retrieve only the contacts the principal is authorized to access:
+
+[source,python,linenums]
+----
+@app.get("/contacts")
+def get_contacts(p: Principal = Depends(get_principal)):
+    with CerbosClient(host="http://localhost:3592") as c:
+        rd = ResourceDesc("contact")
+        plan = c.plan_resources("read", p, rd)
+
+    query = get_query(
+        plan,
+        Contact,
+        {
+            "request.resource.attr.owner_id": User.id,
+            "request.resource.attr.department": User.department,
+            "request.resource.attr.is_active": Contact.is_active,
+            "request.resource.attr.marketing_opt_in": Contact.marketing_opt_in,
+        },
+        [(User, Contact.owner_id == User.id)],
+    )
+
+    query = query.with_only_columns(
+        Contact.id,
+        Contact.first_name,
+        Contact.last_name,
+        Contact.is_active,
+        Contact.marketing_opt_in,
+    )
+
+    with Session() as s:
+        rows = s.execute(query).fetchall()
+
+    return rows
+----
+
+The `get_query` function accepts:
+
+. The query plan response
+. A primary SQLAlchemy `Table` or ORM entity (the `FROM` table)
+. The attribute map -- Cerbos resource attribute strings mapped to SQLAlchemy columns
+. (Optional) Explicit table joins -- required when the attribute map references columns from multiple tables
+
+=== Running the example
+
+Clone and start:
+
+[source,bash]
+----
+git clone git@github.com:cerbos/python-sqlalchemy-cerbos.git
+cd python-sqlalchemy-cerbos
+
+cd cerbos && ./start.sh && cd ..
+
+pdm install
+pdm run demo
+----
+
+Test the endpoints:
+
+[source,bash]
+----
+# Get all permitted contacts
+curl http://john@localhost:8000/contacts
+
+# Get a single contact (Sales user, owned contact)
+curl -i http://john@localhost:8000/contacts/1
+
+# Delete a contact (owner)
+curl -i http://john@localhost:8000/contacts/1 -X DELETE
+
+# Create a contact (Sales user)
+curl -i http://john@localhost:8000/contacts/new \
+  -H 'Content-Type: application/json' \
+  -X POST \
+  -d '{"first_name": "frodo", "last_name": "baggins", "owner_id": "2", "company_id": "2"}'
+----

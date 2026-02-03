@@ -1,0 +1,124 @@
+include::ROOT:partial$attributes.adoc[]
+
+= LangChain / ChromaDB adapter
+
+include::ROOT:partial$version-check.adoc[]
+
+The `@cerbos/langchain-chromadb` package converts a Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources`] response into a link:https://www.trychroma.com/[ChromaDB] `Where` filter object compatible with the LangChain.js Chroma vector store. This enables authorization-aware similarity searches where Cerbos policy conditions are pushed down as metadata filters.
+
+== Requirements
+
+* Cerbos >= v0.16
+* `@cerbos/http` or `@cerbos/grpc` client
+* ChromaDB 3.x
+* Node.js >= 20.0.0
+
+== Installation
+
+[source,bash]
+----
+npm install @cerbos/langchain-chromadb
+----
+
+== Supported operators
+
+[cols="1,2", options="header"]
+|===
+| Category | Operators
+
+| Logical
+| `and`, `or` -- `$and`, `$or`
+
+| Negation
+| `not` -- operator inversion via De Morgan's law (see below)
+
+| Comparison
+| `eq`, `ne`, `lt`, `le`, `gt`, `ge` -- `$eq`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`
+
+| Membership
+| `in` -- `$in`
+|===
+
+=== Negation handling
+
+ChromaDB has no `$not` or `$nor` filter. The adapter handles `not` expressions by inverting the inner operator:
+
+* `not(eq)` becomes `$ne`; `not(ne)` becomes `$eq`
+* `not(lt)` becomes `$gte`; `not(gt)` becomes `$lte`; `not(le)` becomes `$gt`; `not(ge)` becomes `$lt`
+* `not(in)` becomes `$nin`
+* `not(and(A, B))` becomes `$or[not(A), not(B)]` (De Morgan's law)
+* `not(or(A, B))` becomes `$and[not(A), not(B)]` (De Morgan's law)
+* `not(not(X))` becomes `X` (double negation elimination)
+
+=== Unsupported operators
+
+ChromaDB stores flat scalar metadata. The following operators cannot be mapped and cause `queryPlanToChromaDB` to throw an error:
+
+* String: `contains`, `startsWith`, `endsWith`
+* Existence: `isSet`
+* Collection: `hasIntersection`, `exists`, `exists_one`, `all`, `filter`, `map`, `lambda`, `size`
+
+== Usage
+
+[source,typescript]
+----
+import { queryPlanToChromaDB, PlanKind } from "@cerbos/langchain-chromadb";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
+import { OpenAIEmbeddings } from "@langchain/openai";
+
+const queryPlan = await cerbos.planResources({
+  principal: { id: "user1", roles: ["USER"] },
+  resource: { kind: "document" },
+  action: "view",
+});
+
+const result = queryPlanToChromaDB({
+  queryPlan,
+  fieldNameMapper: {
+    "request.resource.attr.department": "department",
+    "request.resource.attr.public": "public",
+  },
+});
+
+if (result.kind === PlanKind.ALWAYS_DENIED) {
+  return [];
+}
+
+const chroma = await Chroma.fromExistingCollection(
+  new OpenAIEmbeddings(),
+  { collectionName: "my_collection" },
+);
+
+const filters =
+  result.kind === PlanKind.CONDITIONAL ? result.filters : undefined;
+const matches = await chroma.similaritySearch("query", 10, filters);
+----
+
+== Field name mapper
+
+The mapper translates Cerbos attribute references to ChromaDB metadata field names. It accepts an object or a function.
+
+[source,typescript]
+----
+// Object mapper
+const result = queryPlanToChromaDB({
+  queryPlan,
+  fieldNameMapper: {
+    "request.resource.attr.aBool": "aBool",
+    "request.resource.attr.aString": "title",
+  },
+});
+
+// Function mapper
+const result = queryPlanToChromaDB({
+  queryPlan,
+  fieldNameMapper: (fieldName) =>
+    fieldName.replace("request.resource.attr.", ""),
+});
+----
+
+If a field is not found in the object mapper, the original Cerbos path is used as-is.
+
+== Source code
+
+link:https://github.com/cerbos/query-plan-adapters/tree/main/langchain-chromadb[cerbos/query-plan-adapters/langchain-chromadb]

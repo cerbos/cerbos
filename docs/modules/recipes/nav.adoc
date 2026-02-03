@@ -11,9 +11,14 @@
 ** xref:authentication/magic/index.adoc[Magic]
 ** xref:authentication/okta/index.adoc[Okta]
 ** xref:authentication/aws-cognito/index.adoc[AWS Cognito]
-* ORM integration
-** xref:orm/prisma/index.adoc[Prisma]
-** xref:orm/sqlalchemy/index.adoc[SQLAlchemy]
+* Query plan adapters
+** xref:query-plan-adapters/index.adoc[Overview]
+** xref:query-plan-adapters/prisma.adoc[Prisma]
+** xref:query-plan-adapters/drizzle.adoc[Drizzle]
+** xref:query-plan-adapters/mongoose.adoc[Mongoose]
+** xref:query-plan-adapters/convex.adoc[Convex]
+** xref:query-plan-adapters/langchain-chromadb.adoc[LangChain / ChromaDB]
+** xref:query-plan-adapters/sqlalchemy.adoc[SQLAlchemy]
 * xref:ui.adoc[Checking permissions in your UI]
 * AI integration
 ** xref:ai/rag-authorization/index.adoc[RAG authorization]

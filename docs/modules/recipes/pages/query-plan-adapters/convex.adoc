@@ -1,0 +1,132 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Convex adapter
+
+include::ROOT:partial$version-check.adoc[]
+
+The `@cerbos/orm-convex` package converts a Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources`] response into a link:https://convex.dev/[Convex] filter function. Authorization conditions are split between a database-level filter and an optional JavaScript post-filter for operators that Convex cannot express natively.
+
+== Requirements
+
+* Cerbos >= v0.16
+* `@cerbos/http` or `@cerbos/grpc` client
+* Convex 1.x
+* Node.js >= 20.0.0
+
+== Installation
+
+[source,bash]
+----
+npm install @cerbos/orm-convex
+----
+
+== Supported operators
+
+=== Database-level operators
+
+[cols="1,2", options="header"]
+|===
+| Category | Operators
+
+| Logical
+| `and`, `or`, `not` -- `q.and(...)`, `q.or(...)`, `q.not(...)`
+
+| Comparison
+| `eq`, `ne`, `lt`, `le`, `gt`, `ge` -- `q.eq`, `q.neq`, `q.lt`, `q.lte`, `q.gt`, `q.gte`
+
+| Membership
+| `in` -- composed as `q.or(q.eq(field, v1), q.eq(field, v2), ...)`
+
+| Existence
+| `isSet` -- `q.neq(field, undefined)` or `q.eq(field, undefined)`
+|===
+
+=== Post-filter operators
+
+The following operators cannot be expressed as Convex database filters. When encountered, the adapter returns a `postFilter` function that evaluates them in JavaScript:
+
+[cols="1,2", options="header"]
+|===
+| Category | Operators
+
+| String
+| `contains`, `startsWith`, `endsWith`
+
+| Collection
+| `hasIntersection`, `exists`, `exists_one`, `all`, `filter`, `map`, `lambda`
+|===
+
+For `and(...)` expressions with mixed operator types, the adapter splits the tree: database-pushable children go to `filter`, the rest go to `postFilter`. For `or(...)` with any unsupported child, the entire expression goes to `postFilter` to avoid missing results.
+
+=== `allowPostFilter` opt-in
+
+By default, `queryPlanToConvex` throws when the query plan requires a `postFilter`. This is because post-filter operators cause data to be fetched before authorization filtering is fully applied. To opt in:
+
+[source,typescript]
+----
+const { kind, filter, postFilter } = queryPlanToConvex({
+  queryPlan,
+  mapper,
+  allowPostFilter: true,
+});
+----
+
+If your policies only use operators that Convex supports natively, `filter` alone enforces the full policy at the database level and this flag is not needed.
+
+== Usage
+
+[source,typescript]
+----
+import { queryPlanToConvex, PlanKind } from "@cerbos/orm-convex";
+
+const queryPlan = await cerbos.planResources({
+  principal: { id: "user1", roles: ["USER"] },
+  resource: { kind: "document" },
+  action: "view",
+});
+
+const { kind, filter, postFilter } = queryPlanToConvex({
+  queryPlan,
+  mapper,
+  allowPostFilter: true,
+});
+
+if (kind === PlanKind.ALWAYS_DENIED) return [];
+
+if (kind === PlanKind.ALWAYS_ALLOWED && !postFilter) {
+  return await ctx.db.query("documents").collect();
+}
+
+let query = ctx.db.query("documents");
+if (filter) query = query.filter(filter);
+let results = await query.collect();
+if (postFilter) results = results.filter(postFilter);
+return results;
+----
+
+== Field mapper
+
+[source,typescript]
+----
+const mapper = {
+  "request.resource.attr.title": { field: "title" },
+  "request.resource.attr.status": { field: "status" },
+};
+
+// Or as a function:
+const mapper = (path) => ({
+  field: path.replace("request.resource.attr.", ""),
+});
+----
+
+The `field` property rewrites a Cerbos path to a Convex document field. Dot notation is supported for nested fields. If the mapper is omitted, the adapter uses query plan paths as-is.
+
+== Limitations
+
+* String and collection operators are evaluated as a JavaScript `postFilter` after the database query returns. These conditions do not reduce the number of documents read from the database.
+* For `or(...)` expressions where any child uses an unsupported operator, the entire OR is evaluated via `postFilter`.
+* The `in` operator is composed as multiple `eq` comparisons joined with `or`, which may be less efficient for large value lists.
+
+== Source code
+
+link:https://github.com/cerbos/query-plan-adapters/tree/main/convex[cerbos/query-plan-adapters/convex]
