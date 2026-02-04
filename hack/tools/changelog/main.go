@@ -257,9 +257,9 @@ func createEntry(fileName string) (entry, error) {
 	var description string
 	if len(lines) > 2 {
 		// Use Asciidoc continuation for complex Descriptions.
-		description = fmt.Sprintf("%s+\n%s\n", lines[1], strings.Join(lines[2:], ""))
+		description = fmt.Sprintf("%s:: %s\n", strings.TrimSpace(lines[1]), strings.Join(lines[2:], ""))
 	} else {
-		description = lines[1]
+		description = fmt.Sprintf("%s:: {empty}\n", strings.TrimSpace(lines[1]))
 	}
 
 	return entry{

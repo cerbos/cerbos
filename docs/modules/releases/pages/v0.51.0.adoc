@@ -1,0 +1,46 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.51.0]
+= Cerbos v0.51.0
+
+== Changelog
+
+=== Features
+
+[unordered]
+Add DeletePolicies RPC:: Allows safe deletion of policies from database stores via the Admin API. Any deletion that would leave the policy store in an invalid state is rejected.
+
+
+Add PurgeStoreRevisions RPC:: When Cerbos is configured with a database store and the Admin API is used to add/update policies, each operation creates a backup copy of the policies being modified. The `PurgeStoreRevisions` Admin RPC allows deleting those backups to reclaim space. Please note that this feature requires the database user used by the PDP to have `DELETE` privileges on the `policy_revision` table. If you have an existing deployment, this grant needs to be added manually by a database administrator.
+
+
+=== Enhancements
+
+[unordered]
+Add `version` to role policies:: Role policies now accept explicit versions, rather than implicitly assuming version as "default". This is an optional field for the time being. In a future release, it'll be made a required field. If not provided, role policies assume version as "default" as before.
+
+
+Ability to attach contextual information to requests:: Adds an optional `requestContext` field to `CheckResources` and `PlanResources` requests that can be used to attach application-specific metadata. This information is captured by the Cerbos audit logs and can be used to provide enhanced context during audit log analysis.
+
+
+Better way to define test filters:: Deprecates the `--run` flag to `cerbos compile` command used to run a sub set of tests in favour of a new flag named `--test-filter`. It supports filtering tests using wildcards in five dimensions (suite, test, principal, resource and action) which provides much more control over which tests are run. See xref:policies:compile.adoc[] for details.
+
+
+=== Bug fixes
+
+[unordered]
+Correctly handle failed downloads in the blob storage driver:: Removes empty files left on disk due to errors or interruptions received during the blob sync process.
+
+
+Avoid activating lenient scope search in checks when it is disabled:: This fixes a bug introduced in Cerbos v0.44 where the policy engine could behave as if lenient scope search was enabled when evaluating `CheckResources` requests, even when it was not. To trigger this bug, the policy store needed to include a combination of principal policies and resource or role policies. In this case, the policy engine would perform lenient scope search on a missing resource scope as long as the principal scope existed (or vice versa).
+
+
+Avoid activating lenient scope search in plans when it is disabled:: This fixes a bug introduced in Cerbos v0.41 where the policy engine would behave as if lenient scope search was enabled when evaluating `PlanResources` requests, even when it was not.
+
+
+Traverse principal and resource scope chains independently in plans:: This fixes a bug introduced in Cerbos v0.44 where the policy engine could apply rules requests from policies that should not have been considered when evaluating `PlanResources` requests. To trigger this bug, the policy store needed to include scoped principal and resource or role policies, and `PlanResources` requests needed to be performed with differing principal and resource scopes. In this case, the policy engine would use both the principal and resource scopes to find policies, when the expected behaviour is to use the principal scope to find principal policies and the resource scope to find resource and role policies.
+
+
+Enforce exhaustive role policy allowActions:: This fixes a bug introduced in Cerbos v0.48 where roles defined in role policies would gain their parent roles' permissions on any resources not specified in `allowActions`, rather than the expected behaviour of having no permissions on the omitted resources.
+
+
