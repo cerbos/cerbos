@@ -22,7 +22,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cerbos/cerbos-sdk-go v0.3.15
-	github.com/cerbos/cerbos/api/genpb v0.50.1-0.20260123125701-d2adbb524344
+	github.com/cerbos/cerbos/api/genpb v0.50.1-0.20260204090639-b45aa77804fa
 	github.com/cerbos/cloud-api v0.1.69
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
