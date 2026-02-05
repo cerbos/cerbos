@@ -41,3 +41,25 @@ func TestBundle(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, policyv1.TestResults_RESULT_FAILED, results.Summary.OverallResult)
 }
+
+func TestBundleStream(t *testing.T) {
+	params := engine.BundleParams{
+		BundlePath:    filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_legacy", bundle.Version2))), "bundle_unencrypted.crbp"),
+		BundleVersion: engine.BundleVersion2,
+		TempDir:       t.TempDir(),
+	}
+
+	ctx, cancelFn := context.WithCancel(t.Context())
+	t.Cleanup(cancelFn)
+
+	noOfSuites, suites, err := verify.BundleStream(ctx, params, test.PathToDir(t, "store"), true)
+	require.NoError(t, err)
+	require.Equal(t, 3, noOfSuites)
+
+	result := policyv1.TestResults_RESULT_PASSED
+	for suite := range suites {
+		result = suite.Summary.OverallResult
+	}
+
+	require.NotEqual(t, policyv1.TestResults_RESULT_PASSED, result)
+}
