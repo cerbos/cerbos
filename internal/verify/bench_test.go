@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"iter"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
@@ -66,6 +68,47 @@ func BenchmarkVerify(b *testing.B) {
 			}
 		}
 	})
+}
+
+// BenchmarkTracesToBatch benchmarks the TracesToBatch function.
+// Usage: go test -bench=BenchmarkTracesToBatch -run='^$' -benchmem ./internal/verify/
+// With custom policies: CERBOS_BENCH_DIR=/abspath/to/policies go test -bench=BenchmarkTracesToBatch -run='^$' -benchmem ./internal/verify/.
+func BenchmarkTracesToBatch(b *testing.B) {
+	var eng *engine.Engine
+	var fsys fs.FS
+	var dir string
+
+	ctx := context.Background()
+
+	if benchDir := os.Getenv("CERBOS_BENCH_DIR"); benchDir != "" {
+		if !filepath.IsAbs(benchDir) {
+			b.Fatalf("%s must be absolute path", benchDir)
+		}
+		dir = benchDir
+		fsys = os.DirFS(benchDir)
+		eng = mkBenchEngine(b, ctx, fsys)
+	} else {
+		dir = test.PathToDir(b, "store")
+		fsys = os.DirFS(dir)
+		eng = mkBenchEngine(b, ctx, fsys)
+	}
+
+	b.Logf("Using policies from: %s", dir)
+
+	// Run Verify with tracing to collect traces
+	results, err := Verify(ctx, fsys, eng, Config{Trace: true})
+	require.NoError(b, err, "verify failed")
+
+	// Collect all traces from results
+	allTraces := collectTraces(results)
+
+	b.Logf("Collected %d traces", len(allTraces))
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for b.Loop() {
+		_ = tracer.TracesToBatch(allTraces)
+	}
 }
 
 // mkBenchEngine creates an engine from an arbitrary filesystem for benchmarking.
@@ -149,31 +192,22 @@ func computeTraceMetrics(tb testing.TB, results *policyv1.TestResults) traceMetr
 	defer encoder.Close()
 
 	var m traceMetrics
-	for _, suite := range results.Suites {
-		for _, tc := range suite.TestCases {
-			for _, p := range tc.Principals {
-				for _, r := range p.Resources {
-					for _, a := range r.Actions {
-						traces := a.Details.EngineTrace
-						m.count += uint64(len(traces))
+	for traces := range iterActionTraces(results) {
+		m.count += uint64(len(traces))
 
-						tracesJSON := make([]byte, 0, len(traces)*256)
-						for _, t := range traces {
-							buf, _ := protojson.Marshal(t)
-							tracesJSON = append(tracesJSON, buf...)
-						}
-						m.bytes += uint64(len(tracesJSON))
-						m.compressedBytes += uint64(len(encoder.EncodeAll(tracesJSON, nil)))
+		tracesJSON := make([]byte, 0, len(traces)*256)
+		for _, t := range traces {
+			buf, _ := protojson.Marshal(t)
+			tracesJSON = append(tracesJSON, buf...)
+		}
+		m.bytes += uint64(len(tracesJSON))
+		m.compressedBytes += uint64(len(encoder.EncodeAll(tracesJSON, nil)))
 
-						// Batch metrics
-						if batch := tracer.TracesToBatch(traces); batch != nil {
-							batchBuf, _ := protojson.Marshal(batch)
-							m.batchBytes += uint64(len(batchBuf))
-							m.batchCompressed += uint64(len(encoder.EncodeAll(batchBuf, nil)))
-						}
-					}
-				}
-			}
+		// Batch metrics
+		if batch := tracer.TracesToBatch(traces); batch != nil {
+			batchBuf, _ := protojson.Marshal(batch)
+			m.batchBytes += uint64(len(batchBuf))
+			m.batchCompressed += uint64(len(encoder.EncodeAll(batchBuf, nil)))
 		}
 	}
 
@@ -194,4 +228,36 @@ func humanBytes(b uint64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), siPrefixes[exp])
+}
+
+func collectTraces(results *policyv1.TestResults) []*enginev1.Trace {
+	var count int
+	for traces := range iterActionTraces(results) {
+		count += len(traces)
+	}
+
+	allTraces := make([]*enginev1.Trace, 0, count)
+	for traces := range iterActionTraces(results) {
+		allTraces = append(allTraces, traces...)
+	}
+
+	return allTraces
+}
+
+func iterActionTraces(results *policyv1.TestResults) iter.Seq[[]*enginev1.Trace] {
+	return func(yield func([]*enginev1.Trace) bool) {
+		for _, suite := range results.Suites {
+			for _, tc := range suite.TestCases {
+				for _, p := range tc.Principals {
+					for _, r := range p.Resources {
+						for _, a := range r.Actions {
+							if !yield(a.Details.EngineTrace) {
+								return
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
