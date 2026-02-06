@@ -1,0 +1,62 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/TraceEntry.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.effect.v1.Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ]
+    },
+    "cerbos.engine.v1.Trace.Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "status": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Event.Status"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Event.Status": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_ACTIVATED",
+        "STATUS_SKIPPED"
+      ]
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "componentIndices": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "event": {
+      "$ref": "#/definitions/cerbos.engine.v1.Trace.Event"
+    }
+  }
+}

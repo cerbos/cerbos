@@ -357,6 +357,16 @@ message Trace {
   Event event = 2;
 }
 
+message TraceEntry {
+  repeated uint32 component_indices = 1;
+  Trace.Event event = 2;
+}
+
+message TraceBatch {
+  repeated Trace.Component definitions = 1;
+  repeated TraceEntry entries = 2;
+}
+
 // Data from the request, provided to expressions as the top-level `request` variable.
 message Request {
   message Principal {

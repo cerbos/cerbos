@@ -1,0 +1,160 @@
+{
+  "$id": "https://api.cerbos.dev/cerbos/engine/v1/TraceBatch.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.effect.v1.Effect": {
+      "type": "string",
+      "enum": [
+        "EFFECT_UNSPECIFIED",
+        "EFFECT_ALLOW",
+        "EFFECT_DENY",
+        "EFFECT_NO_MATCH"
+      ]
+    },
+    "cerbos.engine.v1.Trace.Component": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "derivedRole": {
+          "type": "string"
+        },
+        "expr": {
+          "type": "string"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "kind": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Kind"
+        },
+        "output": {
+          "type": "string"
+        },
+        "policy": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "rolePolicyScope": {
+          "type": "string"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "variable": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Component.Variable"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Component.Kind": {
+      "type": "string",
+      "enum": [
+        "KIND_UNSPECIFIED",
+        "KIND_ACTION",
+        "KIND_CONDITION_ALL",
+        "KIND_CONDITION_ANY",
+        "KIND_CONDITION_NONE",
+        "KIND_CONDITION",
+        "KIND_DERIVED_ROLE",
+        "KIND_EXPR",
+        "KIND_POLICY",
+        "KIND_RESOURCE",
+        "KIND_RULE",
+        "KIND_SCOPE",
+        "KIND_VARIABLE",
+        "KIND_VARIABLES",
+        "KIND_OUTPUT",
+        "KIND_ROLE_POLICY_SCOPE",
+        "KIND_ROLE"
+      ]
+    },
+    "cerbos.engine.v1.Trace.Component.Variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expr": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "effect": {
+          "$ref": "#/definitions/cerbos.effect.v1.Effect"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        },
+        "status": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Event.Status"
+        }
+      }
+    },
+    "cerbos.engine.v1.Trace.Event.Status": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_ACTIVATED",
+        "STATUS_SKIPPED"
+      ]
+    },
+    "cerbos.engine.v1.TraceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "componentIndices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "event": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Event"
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "definitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.Trace.Component"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.TraceEntry"
+      }
+    }
+  }
+}
