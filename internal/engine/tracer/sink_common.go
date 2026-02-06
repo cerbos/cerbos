@@ -77,9 +77,9 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 
 	defs := make([]*enginev1.Trace_Component, 0, defaultCapacity)
 
-	defIndex := defIndexPool.Get().(map[uint64]uint32)       //nolint:forcetypeassert
+	defIndex := defIndexPool.Get().(map[uint64]uint32)                    //nolint:forcetypeassert
 	ptrToHash := ptrHashPool.Get().(map[*enginev1.Trace_Component]uint64) //nolint:forcetypeassert
-	serBufPtr := serBufPool.Get().(*[]byte)                  //nolint:forcetypeassert
+	serBufPtr := serBufPool.Get().(*[]byte)                               //nolint:forcetypeassert
 	serBuf := *serBufPtr
 	hasher := hasherPool.Get().(*xxhash.Digest) //nolint:forcetypeassert
 
