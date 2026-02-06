@@ -1,12 +1,11 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build tests
-
 package verify
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -118,14 +117,14 @@ func TestTraceMetrics(t *testing.T) {
 
 	m := computeTraceMetrics(t, results)
 
-	// Sanity checks - no exact values to maintain
+	// Sanity checks
 	require.Greater(t, m.count, uint64(0), "expected traces to be generated")
 	require.Greater(t, m.bytes, uint64(0), "expected trace bytes > 0")
 
 	// Log metrics for visibility
 	t.Logf("Trace count: %d", m.count)
-	t.Logf("Trace:  bytes=%8d  compressed=%8d", m.bytes, m.compressedBytes)
-	t.Logf("Batch:  bytes=%8d  compressed=%8d", m.batchBytes, m.batchCompressed)
+	t.Logf("Trace:  bytes:%10s  compressed:%10s", humanBytes(m.bytes), humanBytes(m.compressedBytes))
+	t.Logf("Batch:  bytes:%10s  compressed:%10s", humanBytes(m.batchBytes), humanBytes(m.batchCompressed))
 
 	// Compression sanity check
 	if m.bytes > 0 {
@@ -179,4 +178,20 @@ func computeTraceMetrics(tb testing.TB, results *policyv1.TestResults) traceMetr
 	}
 
 	return m
+}
+
+func humanBytes(b uint64) string {
+	const (
+		unit       = 1024
+		siPrefixes = "KMG"
+	)
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := uint64(unit), 0
+	for n := b / unit; n >= unit && exp < len(siPrefixes); n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), siPrefixes[exp])
 }
