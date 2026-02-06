@@ -49,8 +49,18 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 	defs := make([]*enginev1.Trace_Component, 0, 256)
 	defIndex := make(map[uint64]uint32, 256)
 
+	// First-tier cache: pointer -> hash (avoids recomputing hash for same pointer)
+	ptrToHash := make(map[*enginev1.Trace_Component]uint64)
+
 	intern := func(comp *enginev1.Trace_Component) uint32 {
-		key := util.HashPB(comp, nil)
+		// Check pointer cache first
+		key, ok := ptrToHash[comp]
+		if !ok {
+			key = util.HashPB(comp, nil)
+			ptrToHash[comp] = key
+		}
+
+		// Check hash -> index cache
 		if idx, ok := defIndex[key]; ok {
 			return idx
 		}
