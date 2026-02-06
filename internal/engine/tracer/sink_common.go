@@ -45,38 +45,17 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		return nil
 	}
 
-	// Pre-size for typical unique component counts (usually small, ~100-500)
-	defs := make([]*enginev1.Trace_Component, 0, 256)
-	defIndex := make(map[uint64]uint32, 256)
-
-	// First-tier cache: pointer -> hash (avoids recomputing hash for same pointer)
-	ptrToHash := make(map[*enginev1.Trace_Component]uint64)
-
-	intern := func(comp *enginev1.Trace_Component) uint32 {
-		// Check pointer cache first
-		key, ok := ptrToHash[comp]
-		if !ok {
-			key = util.HashPB(comp, nil)
-			ptrToHash[comp] = key
-		}
-
-		// Check hash -> index cache
-		if idx, ok := defIndex[key]; ok {
-			return idx
-		}
-		idx := uint32(len(defs))
-		defs = append(defs, comp)
-		defIndex[key] = idx
-		return idx
-	}
-
-	// Count total components for batch allocation
 	totalComponents := 0
 	for _, trace := range traces {
 		totalComponents += len(trace.Components)
 	}
 
-	// Batch allocate all TraceEntry structs and indices to reduce allocations
+	defs := make([]*enginev1.Trace_Component, 0, 256)
+	defIndex := make(map[uint64]uint32, cap(defs))
+
+	// First-tier cache: pointer -> hash (avoids recomputing hash for same pointer)
+	ptrToHash := make(map[*enginev1.Trace_Component]uint64, cap(defs))
+
 	entryBuf := make([]enginev1.TraceEntry, len(traces))
 	entries := make([]*enginev1.TraceEntry, len(traces))
 	indicesBuf := make([]uint32, totalComponents)
@@ -86,7 +65,20 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		indices := indicesBuf[:n]
 		indicesBuf = indicesBuf[n:]
 		for j, comp := range trace.Components {
-			indices[j] = intern(comp)
+			// Inlined intern logic
+			key, ok := ptrToHash[comp]
+			if !ok {
+				key = util.HashPB(comp, nil)
+				ptrToHash[comp] = key
+			}
+			if idx, ok := defIndex[key]; ok {
+				indices[j] = idx
+			} else {
+				idx := uint32(len(defs))
+				defs = append(defs, comp)
+				defIndex[key] = idx
+				indices[j] = idx
+			}
 		}
 		entryBuf[i].ComponentIndices = indices
 		entryBuf[i].Event = trace.Event
