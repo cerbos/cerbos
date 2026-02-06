@@ -45,8 +45,9 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		return nil
 	}
 
-	var defs []*enginev1.Trace_Component
-	defIndex := make(map[uint64]uint32)
+	// Pre-size for typical unique component counts (usually small, ~100-500)
+	defs := make([]*enginev1.Trace_Component, 0, 256)
+	defIndex := make(map[uint64]uint32, 256)
 
 	intern := func(comp *enginev1.Trace_Component) uint32 {
 		key := util.HashPB(comp, nil)
@@ -59,16 +60,27 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		return idx
 	}
 
-	entries := make([]*enginev1.TraceEntry, 0, len(traces))
+	// Count total components for batch allocation
+	totalComponents := 0
 	for _, trace := range traces {
-		indices := make([]uint32, len(trace.Components))
-		for i, comp := range trace.Components {
-			indices[i] = intern(comp)
+		totalComponents += len(trace.Components)
+	}
+
+	// Batch allocate all TraceEntry structs and indices to reduce allocations
+	entryBuf := make([]enginev1.TraceEntry, len(traces))
+	entries := make([]*enginev1.TraceEntry, len(traces))
+	indicesBuf := make([]uint32, totalComponents)
+
+	for i, trace := range traces {
+		n := len(trace.Components)
+		indices := indicesBuf[:n]
+		indicesBuf = indicesBuf[n:]
+		for j, comp := range trace.Components {
+			indices[j] = intern(comp)
 		}
-		entries = append(entries, &enginev1.TraceEntry{
-			ComponentIndices: indices,
-			Event:            trace.Event,
-		})
+		entryBuf[i].ComponentIndices = indices
+		entryBuf[i].Event = trace.Event
+		entries[i] = &entryBuf[i]
 	}
 
 	return &enginev1.TraceBatch{
