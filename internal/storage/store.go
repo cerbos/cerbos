@@ -26,7 +26,10 @@ var (
 	drivers   = map[string]Constructor{}
 )
 
-var ErrPolicyIDCollision = errors.New("policy ID collision")
+var (
+	ErrPolicyIDCollision    = errors.New("policy ID collision")
+	ErrUnsupportedOperation = errors.New("operation not supported")
+)
 
 // InvalidPolicyError is a custom error to signal that a policy is invalid.
 type InvalidPolicyError struct {

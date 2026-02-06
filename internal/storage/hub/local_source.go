@@ -220,7 +220,7 @@ func (ls *LocalSource) GetRuleTable() (*ruletable.RuleTable, error) {
 		return rtBundle.GetRuleTable()
 	}
 
-	return nil, ErrUnsupportedOperation
+	return nil, storage.ErrUnsupportedOperation
 }
 
 func (ls *LocalSource) InspectPolicies(ctx context.Context, params storage.ListPolicyIDsParams) (map[string]*responsev1.InspectPoliciesResponse_Result, error) {

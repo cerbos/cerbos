@@ -1,6 +1,6 @@
 {
   "name": "cerbos",
-  "version": "0.51.0-prerelease",
+  "version": "0.52.0-prerelease",
   "description": "The cerbos binary",
   "repository": {
     "type": "git",
@@ -36,9 +36,9 @@
   ],
   "scripts": {},
   "optionalDependencies": {
-    "@cerbos/cerbos-darwin-arm64": "0.51.0-prerelease",
-    "@cerbos/cerbos-darwin-x64": "0.51.0-prerelease",
-    "@cerbos/cerbos-linux-arm64": "0.51.0-prerelease",
-    "@cerbos/cerbos-linux-x64": "0.51.0-prerelease"
+    "@cerbos/cerbos-darwin-arm64": "0.52.0-prerelease",
+    "@cerbos/cerbos-darwin-x64": "0.52.0-prerelease",
+    "@cerbos/cerbos-linux-arm64": "0.52.0-prerelease",
+    "@cerbos/cerbos-linux-x64": "0.52.0-prerelease"
   }
 }

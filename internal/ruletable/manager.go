@@ -7,6 +7,7 @@ package ruletable
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -92,10 +93,12 @@ func (mgr *Manager) reload() error {
 	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
 		var err error
 		newRuleTable, err = ruleTableStore.GetRuleTable()
-		if err != nil {
+		if err != nil && !errors.Is(err, storage.ErrUnsupportedOperation) {
 			return fmt.Errorf("failed to load the new rule table: %w", err)
 		}
-	} else {
+	}
+
+	if newRuleTable == nil {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
 		defer cancelFunc()
 

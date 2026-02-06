@@ -90,6 +90,21 @@ func Bundle(ctx context.Context, params engine.BundleParams, testsDir string, tr
 	return results, nil
 }
 
+// BundleStream runs tests using the given policy bundle and streams results.
+func BundleStream(ctx context.Context, params engine.BundleParams, testsDir string, trace bool) (int, <-chan *policyv1.TestResults_Suite, error) {
+	eng, err := engine.FromBundle(ctx, params)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	noOfSuites, suites, err := verify.VerifyStream(ctx, os.DirFS(testsDir), eng, verify.Config{Trace: trace})
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to run tests: %w", err)
+	}
+
+	return noOfSuites, suites, nil
+}
+
 type CheckOptions interface {
 	Globals() map[string]any
 	NowFunc() func() time.Time

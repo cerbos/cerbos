@@ -120,7 +120,7 @@ func (hs *HybridStore) GetRuleTable() (*ruletable.RuleTable, error) {
 		return rtStore.GetRuleTable()
 	}
 
-	return nil, ErrUnsupportedOperation
+	return nil, storage.ErrUnsupportedOperation
 }
 
 func (hs *HybridStore) withActiveSource() Source {

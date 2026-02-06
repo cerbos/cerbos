@@ -1,0 +1,130 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Mongoose adapter
+
+include::ROOT:partial$version-check.adoc[]
+
+The `@cerbos/orm-mongoose` package converts a Cerbos xref:api:index.adoc#resources-query-plan[`PlanResources`] response into a MongoDB filter compatible with Mongoose's `find()` method.
+
+== Requirements
+
+* Cerbos >= v0.16
+* `@cerbos/http` or `@cerbos/grpc` client
+* Mongoose 8.x or 9.x
+* MongoDB 5.0+
+* Node.js >= 20.0.0
+
+== Installation
+
+[source,bash]
+----
+npm install @cerbos/orm-mongoose
+----
+
+== Supported operators
+
+[cols="1,2", options="header"]
+|===
+| Category | Operators
+
+| Logical
+| `and`, `or`, `not` -- mapped to `$and`, `$or`, `$nor`
+
+| Comparison
+| `eq`, `ne`, `lt`, `le`, `gt`, `ge` -- mapped to `$eq`, `$ne`, `$lt`, `$lte`, `$gt`, `$gte`
+
+| Membership
+| `in`, `hasIntersection` -- `$in` for simple lists, `$elemMatch` for array relations
+
+| String
+| `contains`, `startsWith`, `endsWith` -- escaped regular expressions
+
+| Existence
+| `isSet`, `exists`, `exists_one` -- `$exists`/`$ne: null` for scalars, `$elemMatch` for collections
+
+| Collection
+| `filter`, `lambda`, `map`, `all` -- scoped `$elemMatch` filters with lambda variable resolution
+|===
+
+NOTE: `exists_one` behaves as "at least one element matches". Enforcing "exactly one" requires an aggregation pipeline, which is outside the scope of this adapter.
+
+== Usage
+
+[source,typescript]
+----
+import { queryPlanToMongoose, PlanKind } from "@cerbos/orm-mongoose";
+
+const queryPlan = await cerbos.planResources({
+  principal: { id: "user1", roles: ["USER"] },
+  resource: { kind: "document" },
+  action: "view",
+});
+
+const result = queryPlanToMongoose({ queryPlan, mapper });
+
+if (result.kind === PlanKind.ALWAYS_DENIED) {
+  return [];
+}
+
+const filters = result.kind === PlanKind.CONDITIONAL ? result.filters : {};
+const records = await MyModel.find(filters);
+----
+
+Combine with existing application filters using `$and`:
+
+[source,typescript]
+----
+await MyModel.find({ $and: [filters ?? {}, { archived: false }] });
+----
+
+== Field mapper
+
+[source,typescript]
+----
+const mapper = {
+  "request.resource.attr.title": { field: "title" },
+  "request.resource.attr.owner": {
+    relation: { name: "owner", type: "one", field: "id" },
+  },
+  "request.resource.attr.tags": {
+    relation: {
+      name: "tags",
+      type: "many",
+      fields: { name: { field: "name" } },
+    },
+  },
+};
+----
+
+* `field` -- rewrites a Cerbos path to a different field name in MongoDB
+* `valueParser` -- transforms leaf values during filter construction (for example, converting strings to `ObjectId`)
+* `relation` -- describes embedded documents (`type: "one"`) or arrays (`type: "many"`)
+* `fields` -- nested overrides for lambda expressions such as `tag.name`
+
+=== Value parsing
+
+Use `valueParser` to convert values from the query plan into types MongoDB expects:
+
+[source,typescript]
+----
+import { Types } from "mongoose";
+
+const mapper = {
+  "request.resource.attr.id": {
+    field: "_id",
+    valueParser: (value) => new Types.ObjectId(value),
+  },
+};
+----
+
+== Collection operators
+
+Collection-aware operators (`filter`, `exists`, `exists_one`, `hasIntersection`, `map`, `all`) require the mapper to declare the relation with `type: "many"`. The adapter scopes lambda variables and uses the `fields` map when translating expressions:
+
+* `exists`, `exists_one`, `filter` -- wrap the condition in `$elemMatch`
+* `hasIntersection` -- supports both scalar arrays and arrays of objects; projects nested paths via `$elemMatch`
+* `all` -- converts the lambda condition into a negated `$elemMatch` so all elements must satisfy the predicate
+
+== Source code
+
+link:https://github.com/cerbos/query-plan-adapters/tree/main/mongoose[cerbos/query-plan-adapters/mongoose]
