@@ -1429,9 +1429,9 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\vLocalBundle\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04pathB\b\n" +
 	"\x06sourceB\b\n" +
-	"\x06source\"\xb3\x03\n" +
-	"\x0eRequestContext\x12\xc1\x01\n" +
-	"\vannotations\x18\x01 \x03(\v20.cerbos.audit.v1.RequestContext.AnnotationsEntryBm\x92AY2\x1fKey-value pairs of annotations.J3{\"app-name\": \"awesome-app\", \"app-version\": \"1.2.3\"}\xc8\x01\x01\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\vannotations\x1aV\n" +
+	"\x06source\"\xae\x03\n" +
+	"\x0eRequestContext\x12\xbc\x01\n" +
+	"\vannotations\x18\x01 \x03(\v20.cerbos.audit.v1.RequestContext.AnnotationsEntryBh\x92AY2\x1fKey-value pairs of annotations.J3{\"app-name\": \"awesome-app\", \"app-version\": \"1.2.3\"}\xc8\x01\x01\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\vannotations\x1aV\n" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:\x84\x01\x92A\x80\x01\n" +

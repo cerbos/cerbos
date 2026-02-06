@@ -2205,22 +2205,22 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\vOutputEntry\x12e\n" +
 	"\x03src\x18\x01 \x01(\tBS\x92AP2)Rule that matched to produce this output.J#\"resource.expense.v1/acme#rule-001\"R\x03src\x12u\n" +
 	"\x03val\x18\x02 \x01(\v2\x16.google.protobuf.ValueBK\x92AH27Dynamic output, determined by user defined rule output.J\r\"some_string\"R\x03val\x12c\n" +
-	"\x06action\x18\x03 \x01(\tBK\x92AH2>Action that was being evaluated when this output was produced.J\x06\"view\"R\x06action\"\xb2\a\n" +
+	"\x06action\x18\x03 \x01(\tBK\x92AH2>Action that was being evaluated when this output was produced.J\x06\"view\"R\x06action\"\xad\a\n" +
 	"\bResource\x12^\n" +
 	"\x04kind\x18\x01 \x01(\tBJ\x92A:2)Name of the resource kind being accessed.J\r\"album:photo\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04kind\x12\xd0\x01\n" +
 	"\x0epolicy_version\x18\x02 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12F\n" +
-	"\x02id\x18\x03 \x01(\tB6\x92A&2\x1bID of the resource instanceJ\a\"XX125\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xce\x01\n" +
-	"\x04attr\x18\x04 \x03(\v2$.cerbos.engine.v1.Resource.AttrEntryB\x93\x01\x92A\x7f2dKay-value pairs of contextual data about this resource that should be used during policy evaluation.J\x17{\"owner\": \"bugs_bunny\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\x04attr\x12\x88\x02\n" +
+	"\x02id\x18\x03 \x01(\tB6\x92A&2\x1bID of the resource instanceJ\a\"XX125\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xc9\x01\n" +
+	"\x04attr\x18\x04 \x03(\v2$.cerbos.engine.v1.Resource.AttrEntryB\x8e\x01\x92A\x7f2dKay-value pairs of contextual data about this resource that should be used during policy evaluation.J\x17{\"owner\": \"bugs_bunny\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\x04attr\x12\x88\x02\n" +
 	"\x05scope\x18\x05 \x01(\tB\xf1\x01\x92A\xb9\x012}A dot-separated scope that describes the hierarchy this resource belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$\xe0A\x01\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1aO\n" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\xb6\b\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\xb1\b\n" +
 	"\tPrincipal\x12C\n" +
 	"\x02id\x18\x01 \x01(\tB3\x92A#2\x13ID of the principalJ\f\"bugs_bunny\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xd0\x01\n" +
 	"\x0epolicy_version\x18\x02 \x01(\tB\xa8\x01\x92A\x93\x012|The policy version to use to evaluate this request. If not specified, will default to the server-configured default version.J\t\"default\"\x8a\x01\a^[\\w]*$\xe0A\x01\xbaH\vr\t2\a^[\\w]*$R\rpolicyVersion\x12\x87\x01\n" +
 	"\x05roles\x18\x03 \x03(\tBq\x92AX2FRoles assigned to this principal from your identity management system.J\b[\"user\"]\xa8\x01\x01\xb0\x01\x01\xe0A\x02\xbaH\x10\xc8\x01\x01\x92\x01\n" +
-	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\x05roles\x12\xce\x01\n" +
-	"\x04attr\x18\x04 \x03(\v2%.cerbos.engine.v1.Principal.AttrEntryB\x92\x01\x92A~2eKey-value pairs of contextual data about this principal that should be used during policy evaluation.J\x15{\"beta_tester\": true}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\x04attr\x12\x89\x02\n" +
+	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\x05roles\x12\xc9\x01\n" +
+	"\x04attr\x18\x04 \x03(\v2%.cerbos.engine.v1.Principal.AttrEntryB\x8d\x01\x92A~2eKey-value pairs of contextual data about this principal that should be used during policy evaluation.J\x15{\"beta_tester\": true}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\x04attr\x12\x89\x02\n" +
 	"\x05scope\x18\x05 \x01(\tB\xf2\x01\x92A\xba\x012~A dot-separated scope that describes the hierarchy this principal belongs to. This is used for determining policy inheritance.J\v\"acme.corp\"\x8a\x01*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$\xe0A\x01\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x1aO\n" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +

@@ -44,7 +44,6 @@ message Subject {
     (buf.validate.field).map.keys = {
       string: {min_len: 1}
     },
-    (buf.validate.field).map.values.required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this subject that should be used during policy evaluation."
       example: "{\"department\": \"engineering\"}"
@@ -82,7 +81,6 @@ message Resource {
     (buf.validate.field).map.keys = {
       string: {min_len: 1}
     },
-    (buf.validate.field).map.values.required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this resource that should be used during policy evaluation."
       example: "{\"owner\": \"bugs_bunny\"}"
@@ -110,7 +108,6 @@ message Action {
     (buf.validate.field).map.keys = {
       string: {min_len: 1}
     },
-    (buf.validate.field).map.values.required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this action that should be used during policy evaluation."
       example: "{\"method\": \"GET\"}"
@@ -143,7 +140,6 @@ message AccessEvaluationRequest {
     (buf.validate.field).map.keys = {
       string: {min_len: 1}
     },
-    (buf.validate.field).map.values.required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
       example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
@@ -182,7 +178,6 @@ message AccessEvaluationBatchRequest {
     (buf.validate.field).map.keys = {
       string: {min_len: 1}
     },
-    (buf.validate.field).map.values.required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
       example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
@@ -202,7 +197,6 @@ message AccessEvaluationBatchRequest {
       (buf.validate.field).map.keys = {
         string: {min_len: 1}
       },
-      (buf.validate.field).map.values.required = true,
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
         example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
