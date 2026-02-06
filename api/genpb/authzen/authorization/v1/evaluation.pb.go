@@ -669,42 +669,42 @@ var File_authzen_authorization_v1_evaluation_proto protoreflect.FileDescriptor
 
 const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\n" +
-	")authzen/authorization/v1/evaluation.proto\x12\x18authzen.authorization.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x92\x04\n" +
+	")authzen/authorization/v1/evaluation.proto\x12\x18authzen.authorization.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x8d\x04\n" +
 	"\aSubject\x12B\n" +
 	"\x04type\x18\x01 \x01(\tB.\x92A\x1e2\x14Type of the subject.J\x06\"user\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04type\x12Z\n" +
-	"\x02id\x18\x02 \x01(\tBJ\x92A:2\"Unique identifier for the subject.J\x14\"alice@acmecorp.com\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xed\x01\n" +
+	"\x02id\x18\x02 \x01(\tBJ\x92A:2\"Unique identifier for the subject.J\x14\"alice@acmecorp.com\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xe8\x01\n" +
 	"\n" +
-	"properties\x18\x03 \x03(\v21.authzen.authorization.v1.Subject.PropertiesEntryB\x99\x01\x92A\x84\x012cKey-value pairs of contextual data about this subject that should be used during policy evaluation.J\x1d{\"department\": \"engineering\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\n" +
+	"properties\x18\x03 \x03(\v21.authzen.authorization.v1.Subject.PropertiesEntryB\x94\x01\x92A\x84\x012cKey-value pairs of contextual data about this subject that should be used during policy evaluation.J\x1d{\"department\": \"engineering\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\n" +
 	"properties\x1aU\n" +
 	"\x0fPropertiesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01: \x92A\x1d\n" +
-	"\x1b2\x19Subject requesting access\"\x82\x04\n" +
+	"\x1b2\x19Subject requesting access\"\xfd\x03\n" +
 	"\bResource\x12F\n" +
 	"\x04type\x18\x01 \x01(\tB2\x92A\"2\x15Type of the resource.J\t\"account\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04type\x12L\n" +
-	"\x02id\x18\x02 \x01(\tB<\x92A,2#Unique identifier for the resource.J\x05\"123\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xe8\x01\n" +
+	"\x02id\x18\x02 \x01(\tB<\x92A,2#Unique identifier for the resource.J\x05\"123\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x02id\x12\xe3\x01\n" +
 	"\n" +
-	"properties\x18\x03 \x03(\v22.authzen.authorization.v1.Resource.PropertiesEntryB\x93\x01\x92A\x7f2dKey-value pairs of contextual data about this resource that should be used during policy evaluation.J\x17{\"owner\": \"bugs_bunny\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\n" +
+	"properties\x18\x03 \x03(\v22.authzen.authorization.v1.Resource.PropertiesEntryB\x8e\x01\x92A\x7f2dKey-value pairs of contextual data about this resource that should be used during policy evaluation.J\x17{\"owner\": \"bugs_bunny\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\n" +
 	"properties\x1aU\n" +
 	"\x0fPropertiesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:\x1e\x92A\x1b\n" +
-	"\x192\x17Resource being accessed\"\xb6\x03\n" +
+	"\x192\x17Resource being accessed\"\xb1\x03\n" +
 	"\x06Action\x12U\n" +
 	"\x04name\x18\x01 \x01(\tBA\x92A12#Name of the action being performed.J\n" +
-	"\"can_read\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12\xde\x01\n" +
+	"\"can_read\"\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x04name\x12\xd9\x01\n" +
 	"\n" +
-	"properties\x18\x02 \x03(\v20.authzen.authorization.v1.Action.PropertiesEntryB\x8b\x01\x92Aw2bKey-value pairs of contextual data about this action that should be used during policy evaluation.J\x11{\"method\": \"GET\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\n" +
+	"properties\x18\x02 \x03(\v20.authzen.authorization.v1.Action.PropertiesEntryB\x86\x01\x92Aw2bKey-value pairs of contextual data about this action that should be used during policy evaluation.J\x11{\"method\": \"GET\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\n" +
 	"properties\x1aU\n" +
 	"\x0fPropertiesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:\x1d\x92A\x1a\n" +
-	"\x182\x16Action being performed\"\xe4\x04\n" +
+	"\x182\x16Action being performed\"\xdf\x04\n" +
 	"\x17AccessEvaluationRequest\x12F\n" +
 	"\asubject\x18\x01 \x01(\v2!.authzen.authorization.v1.SubjectB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\asubject\x12I\n" +
 	"\bresource\x18\x02 \x01(\v2\".authzen.authorization.v1.ResourceB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\bresource\x12C\n" +
-	"\x06action\x18\x03 \x01(\v2 .authzen.authorization.v1.ActionB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\x06action\x12\xf2\x01\n" +
-	"\acontext\x18\x04 \x03(\v2>.authzen.authorization.v1.AccessEvaluationRequest.ContextEntryB\x97\x01\x92A\x82\x012^Key-value pairs of environmental/contextual data that should be used during policy evaluation.J {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\acontext\x1aR\n" +
+	"\x06action\x18\x03 \x01(\v2 .authzen.authorization.v1.ActionB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\x06action\x12\xed\x01\n" +
+	"\acontext\x18\x04 \x03(\v2>.authzen.authorization.v1.AccessEvaluationRequest.ContextEntryB\x92\x01\x92A\x82\x012^Key-value pairs of environmental/contextual data that should be used during policy evaluation.J {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\acontext\x1aR\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:(\x92A%\n" +
@@ -716,23 +716,23 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:)\x92A&\n" +
 	"$2\"AuthZEN access evaluation responseB\v\n" +
-	"\t_decision\"\xae\x0f\n" +
+	"\t_decision\"\xa4\x0f\n" +
 	"\x1cAccessEvaluationBatchRequest\x12;\n" +
 	"\asubject\x18\x01 \x01(\v2!.authzen.authorization.v1.SubjectR\asubject\x12>\n" +
 	"\bresource\x18\x02 \x01(\v2\".authzen.authorization.v1.ResourceR\bresource\x128\n" +
-	"\x06action\x18\x03 \x01(\v2 .authzen.authorization.v1.ActionR\x06action\x12\xf7\x01\n" +
-	"\acontext\x18\x04 \x03(\v2C.authzen.authorization.v1.AccessEvaluationBatchRequest.ContextEntryB\x97\x01\x92A\x82\x012^Key-value pairs of environmental/contextual data that should be used during policy evaluation.J {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\acontext\x12m\n" +
+	"\x06action\x18\x03 \x01(\v2 .authzen.authorization.v1.ActionR\x06action\x12\xf2\x01\n" +
+	"\acontext\x18\x04 \x03(\v2C.authzen.authorization.v1.AccessEvaluationBatchRequest.ContextEntryB\x92\x01\x92A\x82\x012^Key-value pairs of environmental/contextual data that should be used during policy evaluation.J {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\acontext\x12m\n" +
 	"\vevaluations\x18\x05 \x03(\v2A.authzen.authorization.v1.AccessEvaluationBatchRequest.EvaluationB\b\xbaH\x05\x92\x01\x02\b\x01R\vevaluations\x12L\n" +
 	"\aoptions\x18\x06 \x01(\v22.authzen.authorization.v1.AccessEvaluationsOptionsR\aoptions\x1aR\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
-	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\x1a\xb2\x04\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\x1a\xad\x04\n" +
 	"\n" +
 	"Evaluation\x12;\n" +
 	"\asubject\x18\x01 \x01(\v2!.authzen.authorization.v1.SubjectR\asubject\x12>\n" +
 	"\bresource\x18\x02 \x01(\v2\".authzen.authorization.v1.ResourceR\bresource\x128\n" +
-	"\x06action\x18\x03 \x01(\v2 .authzen.authorization.v1.ActionR\x06action\x12\x82\x02\n" +
-	"\acontext\x18\x04 \x03(\v2N.authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.ContextEntryB\x97\x01\x92A\x82\x012^Key-value pairs of environmental/contextual data that should be used during policy evaluation.J {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\x0e\x9a\x01\v\"\x04r\x02\x10\x01*\x03\xc8\x01\x01R\acontext\x1aR\n" +
+	"\x06action\x18\x03 \x01(\v2 .authzen.authorization.v1.ActionR\x06action\x12\xfd\x01\n" +
+	"\acontext\x18\x04 \x03(\v2N.authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation.ContextEntryB\x92\x01\x92A\x82\x012^Key-value pairs of environmental/contextual data that should be used during policy evaluation.J {\"time\": \"2023-01-01T00:00:00Z\"}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\acontext\x1aR\n" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:\x14\x92A\x11\n" +
