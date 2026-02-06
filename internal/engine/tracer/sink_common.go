@@ -40,6 +40,11 @@ func (c *Collector) Traces() []*enginev1.Trace {
 	return c.traces
 }
 
+var (
+	defIndexPool = sync.Pool{New: func() any { return make(map[uint64]uint32, 256) }}
+	ptrHashPool  = sync.Pool{New: func() any { return make(map[*enginev1.Trace_Component]uint64, 256) }}
+)
+
 func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 	if len(traces) == 0 {
 		return nil
@@ -51,10 +56,9 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 	}
 
 	defs := make([]*enginev1.Trace_Component, 0, 256)
-	defIndex := make(map[uint64]uint32, cap(defs))
 
-	// First-tier cache: pointer -> hash (avoids recomputing hash for same pointer)
-	ptrToHash := make(map[*enginev1.Trace_Component]uint64, cap(defs))
+	defIndex := defIndexPool.Get().(map[uint64]uint32)
+	ptrToHash := ptrHashPool.Get().(map[*enginev1.Trace_Component]uint64)
 
 	entryBuf := make([]enginev1.TraceEntry, len(traces))
 	entries := make([]*enginev1.TraceEntry, len(traces))
@@ -65,7 +69,6 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		indices := indicesBuf[:n]
 		indicesBuf = indicesBuf[n:]
 		for j, comp := range trace.Components {
-			// Inlined intern logic
 			key, ok := ptrToHash[comp]
 			if !ok {
 				key = util.HashPB(comp, nil)
@@ -84,6 +87,11 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		entryBuf[i].Event = trace.Event
 		entries[i] = &entryBuf[i]
 	}
+
+	clear(defIndex)
+	clear(ptrToHash)
+	defIndexPool.Put(defIndex)
+	ptrHashPool.Put(ptrToHash)
 
 	return &enginev1.TraceBatch{
 		Definitions: defs,
