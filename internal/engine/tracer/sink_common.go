@@ -6,6 +6,8 @@ package tracer
 import (
 	"sync"
 
+	"github.com/cespare/xxhash/v2"
+
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
 
@@ -37,4 +39,88 @@ func (c *Collector) Traces() []*enginev1.Trace {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	return c.traces
+}
+
+const defaultCapacity = 256
+
+var (
+	defIndexPool = sync.Pool{New: func() any { return make(map[uint64]uint32, defaultCapacity) }}
+	ptrHashPool  = sync.Pool{New: func() any { return make(map[*enginev1.Trace_Component]uint64, defaultCapacity) }}
+	serBufPool   = sync.Pool{New: func() any { b := make([]byte, 0, defaultCapacity); return &b }}
+	hasherPool   = sync.Pool{New: func() any { return xxhash.New() }}
+)
+
+func hashComponentVT(comp *enginev1.Trace_Component, hasher *xxhash.Digest, buf []byte) (uint64, []byte) {
+	size := comp.SizeVT()
+	if cap(buf) < size {
+		buf = make([]byte, size)
+	} else {
+		buf = buf[:size]
+	}
+
+	_, _ = comp.MarshalToSizedBufferVT(buf)
+	hasher.Reset()
+	_, _ = hasher.Write(buf)
+
+	return hasher.Sum64(), buf
+}
+
+func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
+	if len(traces) == 0 {
+		return nil
+	}
+
+	totalComponents := 0
+	for _, trace := range traces {
+		totalComponents += len(trace.Components)
+	}
+
+	defs := make([]*enginev1.Trace_Component, 0, defaultCapacity)
+
+	defIndex := defIndexPool.Get().(map[uint64]uint32)                    //nolint:forcetypeassert
+	ptrToHash := ptrHashPool.Get().(map[*enginev1.Trace_Component]uint64) //nolint:forcetypeassert
+	serBufPtr := serBufPool.Get().(*[]byte)                               //nolint:forcetypeassert
+	serBuf := *serBufPtr
+	hasher := hasherPool.Get().(*xxhash.Digest) //nolint:forcetypeassert
+
+	entryBuf := make([]enginev1.TraceEntry, len(traces))
+	entries := make([]*enginev1.TraceEntry, len(traces))
+	indicesBuf := make([]uint32, totalComponents)
+
+	for i, trace := range traces {
+		n := len(trace.Components)
+		indices := indicesBuf[:n]
+		indicesBuf = indicesBuf[n:]
+		for j, comp := range trace.Components {
+			key, ok := ptrToHash[comp]
+			if !ok {
+				key, serBuf = hashComponentVT(comp, hasher, serBuf)
+				ptrToHash[comp] = key
+			}
+			if idx, ok := defIndex[key]; ok {
+				indices[j] = idx
+			} else {
+				idx := uint32(len(defs))
+				defs = append(defs, comp)
+				defIndex[key] = idx
+				indices[j] = idx
+			}
+		}
+		entryBuf[i].ComponentIndices = indices
+		entryBuf[i].Event = trace.Event
+		entries[i] = &entryBuf[i]
+	}
+
+	clear(defIndex)
+	clear(ptrToHash)
+	defIndexPool.Put(defIndex)
+	ptrHashPool.Put(ptrToHash)
+	*serBufPtr = serBuf[:0]
+	serBufPool.Put(serBufPtr)
+	hasherPool.Put(hasher)
+
+	return &enginev1.TraceBatch{
+		Definitions: defs,
+		Entries:     entries,
+	}
 }
