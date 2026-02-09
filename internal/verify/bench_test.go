@@ -5,13 +5,13 @@ package verify
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 	"iter"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/dustin/go-humanize"
 	"github.com/klauspost/compress/zstd"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -166,8 +166,8 @@ func TestTraceMetrics(t *testing.T) {
 
 	// Log metrics for visibility
 	t.Logf("Trace count: %d", m.count)
-	t.Logf("Trace:  bytes:%10s  compressed:%10s", humanBytes(m.bytes), humanBytes(m.compressedBytes))
-	t.Logf("Batch:  bytes:%10s  compressed:%10s", humanBytes(m.batchBytes), humanBytes(m.batchCompressed))
+	t.Logf("Trace:  bytes:%10s  compressed:%10s", humanize.IBytes(m.bytes), humanize.IBytes(m.compressedBytes))
+	t.Logf("Batch:  bytes:%10s  compressed:%10s", humanize.IBytes(m.batchBytes), humanize.IBytes(m.batchCompressed))
 
 	// Compression sanity check
 	if m.bytes > 0 {
@@ -212,22 +212,6 @@ func computeTraceMetrics(tb testing.TB, results *policyv1.TestResults) traceMetr
 	}
 
 	return m
-}
-
-func humanBytes(b uint64) string {
-	const (
-		unit       = 1024
-		siPrefixes = "KMG"
-	)
-	if b < unit {
-		return fmt.Sprintf("%d B", b)
-	}
-	div, exp := uint64(unit), 0
-	for n := b / unit; n >= unit && exp < len(siPrefixes); n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), siPrefixes[exp])
 }
 
 func collectTraces(results *policyv1.TestResults) []*enginev1.Trace {
