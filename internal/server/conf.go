@@ -67,6 +67,8 @@ type Conf struct {
 	PlaygroundEnabled bool `yaml:"playgroundEnabled" conf:",ignore"`
 	// APIExplorerEnabled defines whether the API explorer UI is enabled.
 	APIExplorerEnabled bool `yaml:"apiExplorerEnabled" conf:",example=true"`
+	// EmbeddedMode defines whether the service is embedded into another service.
+	EmbeddedMode bool `yaml:"embeddedMode" conf:",ignore"`
 	// Advanced server settings.
 	Advanced AdvancedConf `yaml:"advanced"`
 }
