@@ -284,9 +284,10 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 	if err != nil {
 		for _, action := range actions {
 			results[action] = &policyv1.TestResults_Details{
-				Result:      policyv1.TestResults_RESULT_ERRORED,
-				EngineTrace: traces,
-				Outcome:     &policyv1.TestResults_Details_Error{Error: err.Error()},
+				Result:           policyv1.TestResults_RESULT_ERRORED,
+				EngineTrace:      traces,
+				EngineTraceBatch: tracer.TracesToBatch(traces),
+				Outcome:          &policyv1.TestResults_Details_Error{Error: err.Error()},
 			}
 		}
 		return results
@@ -295,9 +296,10 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 	if len(actual) == 0 {
 		for _, action := range actions {
 			results[action] = &policyv1.TestResults_Details{
-				Result:      policyv1.TestResults_RESULT_ERRORED,
-				EngineTrace: traces,
-				Outcome:     &policyv1.TestResults_Details_Error{Error: "Empty response from server"},
+				Result:           policyv1.TestResults_RESULT_ERRORED,
+				EngineTrace:      traces,
+				EngineTraceBatch: tracer.TracesToBatch(traces),
+				Outcome:          &policyv1.TestResults_Details_Error{Error: "Empty response from server"},
 			}
 		}
 		return results
@@ -313,7 +315,10 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 			}
 		}
 
-		details := &policyv1.TestResults_Details{EngineTrace: traces}
+		details := &policyv1.TestResults_Details{
+			EngineTrace:      traces,
+			EngineTraceBatch: tracer.TracesToBatch(traces),
+		}
 		expectedEffect := test.Expected[action]
 		if expectedEffect == effectv1.Effect_EFFECT_UNSPECIFIED {
 			expectedEffect = effectv1.Effect_EFFECT_DENY

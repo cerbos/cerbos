@@ -150,6 +150,40 @@
         "STATUS_SKIPPED"
       ]
     },
+    "cerbos.engine.v1.TraceBatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.Trace.Component"
+          }
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.TraceEntry"
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.TraceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "componentIndices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "event": {
+          "$ref": "#/definitions/cerbos.engine.v1.Trace.Event"
+        }
+      }
+    },
     "cerbos.policy.v1.TestResults.Details": {
       "type": "object",
       "additionalProperties": false,
@@ -159,6 +193,9 @@
           "items": {
             "$ref": "#/definitions/cerbos.engine.v1.Trace"
           }
+        },
+        "engineTraceBatch": {
+          "$ref": "#/definitions/cerbos.engine.v1.TraceBatch"
         },
         "error": {
           "type": "string"

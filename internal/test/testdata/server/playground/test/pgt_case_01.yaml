@@ -203,6 +203,29 @@ playgroundTest:
                                                         },
                                                     },
                                                 ],
+                                                "engineTraceBatch": {
+                                                  "definitions": [
+                                                    { "kind": "KIND_POLICY", "policy": "cerbos.derived_roles.beta" },
+                                                    { "kind": "KIND_DERIVED_ROLE", "derivedRole": "direct_manager" },
+                                                    { "kind": "KIND_POLICY", "policy": "cerbos.derived_roles.alpha" },
+                                                    { "kind": "KIND_DERIVED_ROLE", "derivedRole":"employee_that_owns_the_record" },
+                                                    { "kind": "KIND_CONDITION" },
+                                                    { "kind": "KIND_EXPR", "expr": "R.attr.owner == P.id" },
+                                                    { "kind": "KIND_POLICY", "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk" },
+                                                    { "kind": "KIND_VARIABLES" },
+                                                    { "kind": "KIND_VARIABLE", "variable": { "expr": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")', "name": "principal_location" } },
+                                                    { "kind": "KIND_ACTION", "action": "assist" },
+                                                    { "kind": "KIND_SCOPE", "scope": "acme.hr.uk" },
+                                                    { "kind": "KIND_RULE", "rule": "rule-003" }
+                                                  ],
+                                                  "entries": [
+                                                    {"componentIndices": [0, 1], "event": {"status": "STATUS_SKIPPED", "message": "No matching roles"}},
+                                                    {"componentIndices": [6, 9], "event": {"status": "STATUS_ACTIVATED", "effect": "EFFECT_ALLOW"}},
+                                                    {"componentIndices": [6, 7, 8], "event": {"status": "STATUS_ACTIVATED", "result": null}},
+                                                    {"componentIndices": [2, 3, 4, 5], "event": {"status": "STATUS_ACTIVATED", "result": false}},
+                                                    {"componentIndices": [6, 9, 10, 11, 4], "event": {"status": "STATUS_ACTIVATED", "result": true}}
+                                                  ]
+                                                }
                                               },
                                           },
                                         ],

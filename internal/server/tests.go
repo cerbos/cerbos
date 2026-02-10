@@ -12,6 +12,8 @@ import (
 	"io"
 	"net/http"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -26,7 +28,6 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -417,14 +418,16 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourcesResponse_ResultEntry_Meta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResultList{}, "effective_derived_roles"),
-		protocmp.SortRepeatedFields(&policyv1.TestResults_Details{}, "engine_trace"),
 		protocmp.SortRepeated(cmpOutputs),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
+		protocmp.SortRepeated(cmpTraceComponent),
+		protocmp.SortRepeated(cmpTraceEntry),
 		protocmp.SortRepeated(cmpValidationError),
 		protocmp.IgnoreFields(&responsev1.CheckResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlanResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlaygroundFailure_ErrorDetails{}, "context"),
+		protocmp.IgnoreFields(&enginev1.TraceEntry{}, "component_indices"),
 	))
 
 	if h, ok := have.(interface{ GetCerbosCallId() string }); ok {
@@ -442,6 +445,115 @@ func cmpPlaygroundError(a, b *responsev1.PlaygroundFailure_Error) bool {
 	}
 
 	return a.File < b.File
+}
+
+func cmpTraceComponent(a, b *enginev1.Trace_Component) bool {
+	if a.GetDetails() != nil && b.GetDetails() != nil {
+		typeA := reflect.TypeOf(a.GetDetails()).String()
+		typeB := reflect.TypeOf(b.GetDetails()).String()
+		if typeA != typeB {
+			return typeA < typeB
+		}
+
+		return cmpTraceComponentDetails(a, b)
+	}
+
+	return a.GetKind() < b.GetKind()
+}
+
+func cmpTraceEntry(a, b *enginev1.TraceEntry) bool {
+	if len(a.GetComponentIndices()) != len(b.GetComponentIndices()) {
+		return len(a.GetComponentIndices()) < len(b.GetComponentIndices())
+	}
+
+	if len(a.GetComponentIndices()) > 0 && len(b.GetComponentIndices()) > 0 {
+		return slices.Min(a.GetComponentIndices()) < slices.Min(b.GetComponentIndices())
+	}
+
+	return a.GetEvent().GetStatus() < b.GetEvent().GetStatus()
+}
+
+func cmpTraceComponentDetails(a, b *enginev1.Trace_Component) bool {
+	switch a.Details.(type) {
+	case *enginev1.Trace_Component_Action:
+		if bAction, ok := b.Details.(*enginev1.Trace_Component_Action); ok {
+			return a.GetAction() < bAction.Action
+		}
+
+		return true
+	case *enginev1.Trace_Component_DerivedRole:
+		if bDerived, ok := b.Details.(*enginev1.Trace_Component_DerivedRole); ok {
+			return a.GetDerivedRole() < bDerived.DerivedRole
+		}
+
+		return true
+	case *enginev1.Trace_Component_Expr:
+		if bExpr, ok := b.Details.(*enginev1.Trace_Component_Expr); ok {
+			return a.GetExpr() < bExpr.Expr
+		}
+
+		return true
+	case *enginev1.Trace_Component_Index:
+		if bIndex, ok := b.Details.(*enginev1.Trace_Component_Index); ok {
+			return a.GetIndex() < bIndex.Index
+		}
+
+		return true
+	case *enginev1.Trace_Component_Policy:
+		if bPolicy, ok := b.Details.(*enginev1.Trace_Component_Policy); ok {
+			return a.GetPolicy() < bPolicy.Policy
+		}
+
+		return true
+	case *enginev1.Trace_Component_Resource:
+		if bResource, ok := b.Details.(*enginev1.Trace_Component_Resource); ok {
+			return a.GetResource() < bResource.Resource
+		}
+
+		return true
+	case *enginev1.Trace_Component_Rule:
+		if bRule, ok := b.Details.(*enginev1.Trace_Component_Rule); ok {
+			return a.GetRule() < bRule.Rule
+		}
+
+		return true
+	case *enginev1.Trace_Component_Scope:
+		if bScope, ok := b.Details.(*enginev1.Trace_Component_Scope); ok {
+			return a.GetScope() < bScope.Scope
+		}
+
+		return true
+	case *enginev1.Trace_Component_Variable_:
+		if bVar, ok := b.Details.(*enginev1.Trace_Component_Variable_); ok {
+			if a.GetVariable().Name != bVar.Variable.Name {
+				return a.GetVariable().Name < bVar.Variable.Name
+			}
+
+			return a.GetVariable().Expr < bVar.Variable.Expr
+		}
+
+		return true
+	case *enginev1.Trace_Component_Output:
+		if bOutput, ok := b.Details.(*enginev1.Trace_Component_Output); ok {
+			return a.GetOutput() < bOutput.Output
+		}
+
+		return true
+	case *enginev1.Trace_Component_RolePolicyScope:
+		if bRoleScope, ok := b.Details.(*enginev1.Trace_Component_RolePolicyScope); ok {
+			return a.GetRolePolicyScope() < bRoleScope.RolePolicyScope
+		}
+
+		return true
+	case *enginev1.Trace_Component_Role:
+		if bRole, ok := b.Details.(*enginev1.Trace_Component_Role); ok {
+			return a.GetRole() < bRole.Role
+		}
+
+		return true
+	default:
+		return false
+	}
 }
 
 func cmpValidationError(a, b *schemav1.ValidationError) bool {

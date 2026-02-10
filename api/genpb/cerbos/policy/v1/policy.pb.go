@@ -3496,10 +3496,12 @@ type TestResults_Details struct {
 	//	*TestResults_Details_Error
 	//	*TestResults_Details_Success
 	//	*TestResults_Details_SkipReason
-	Outcome       isTestResults_Details_Outcome `protobuf_oneof:"outcome"`
-	EngineTrace   []*v11.Trace                  `protobuf:"bytes,4,rep,name=engine_trace,json=engineTrace,proto3" json:"engine_trace,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Outcome isTestResults_Details_Outcome `protobuf_oneof:"outcome"`
+	// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
+	EngineTrace      []*v11.Trace    `protobuf:"bytes,4,rep,name=engine_trace,json=engineTrace,proto3" json:"engine_trace,omitempty"`
+	EngineTraceBatch *v11.TraceBatch `protobuf:"bytes,7,opt,name=engine_trace_batch,json=engineTraceBatch,proto3" json:"engine_trace_batch,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *TestResults_Details) Reset() {
@@ -3582,9 +3584,17 @@ func (x *TestResults_Details) GetSkipReason() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
 func (x *TestResults_Details) GetEngineTrace() []*v11.Trace {
 	if x != nil {
 		return x.EngineTrace
+	}
+	return nil
+}
+
+func (x *TestResults_Details) GetEngineTraceBatch() *v11.TraceBatch {
+	if x != nil {
+		return x.EngineTraceBatch
 	}
 	return nil
 }
@@ -4233,7 +4243,7 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\x0e2\x18.cerbos.effect.v1.EffectR\x05value:\x028\x01\x1ah\n" +
 	"\x14ExpectedOutputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12:\n" +
-	"\x05value\x18\x02 \x01(\v2$.cerbos.policy.v1.Test.OutputEntriesR\x05value:\x028\x01\"\xad\x12\n" +
+	"\x05value\x18\x02 \x01(\v2$.cerbos.policy.v1.Test.OutputEntriesR\x05value:\x028\x01\"\xfd\x12\n" +
 	"\vTestResults\x12;\n" +
 	"\x06suites\x18\x01 \x03(\v2#.cerbos.policy.v1.TestResults.SuiteR\x06suites\x12?\n" +
 	"\asummary\x18\x02 \x01(\v2%.cerbos.policy.v1.TestResults.SummaryR\asummary\x1a[\n" +
@@ -4271,15 +4281,16 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\aactions\x18\x02 \x03(\v2$.cerbos.policy.v1.TestResults.ActionR\aactions\x1a]\n" +
 	"\x06Action\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12?\n" +
-	"\adetails\x18\x02 \x01(\v2%.cerbos.policy.v1.TestResults.DetailsR\adetails\x1a\xcf\x02\n" +
+	"\adetails\x18\x02 \x01(\v2%.cerbos.policy.v1.TestResults.DetailsR\adetails\x1a\x9f\x03\n" +
 	"\aDetails\x12<\n" +
 	"\x06result\x18\x01 \x01(\x0e2$.cerbos.policy.v1.TestResults.ResultR\x06result\x12A\n" +
 	"\afailure\x18\x02 \x01(\v2%.cerbos.policy.v1.TestResults.FailureH\x00R\afailure\x12\x16\n" +
 	"\x05error\x18\x03 \x01(\tH\x00R\x05error\x12A\n" +
 	"\asuccess\x18\x05 \x01(\v2%.cerbos.policy.v1.TestResults.SuccessH\x00R\asuccess\x12!\n" +
 	"\vskip_reason\x18\x06 \x01(\tH\x00R\n" +
-	"skipReason\x12:\n" +
-	"\fengine_trace\x18\x04 \x03(\v2\x17.cerbos.engine.v1.TraceR\vengineTraceB\t\n" +
+	"skipReason\x12>\n" +
+	"\fengine_trace\x18\x04 \x03(\v2\x17.cerbos.engine.v1.TraceB\x02\x18\x01R\vengineTrace\x12J\n" +
+	"\x12engine_trace_batch\x18\a \x01(\v2\x1c.cerbos.engine.v1.TraceBatchR\x10engineTraceBatchB\t\n" +
 	"\aoutcome\x1a\x9c\x03\n" +
 	"\rOutputFailure\x12\x10\n" +
 	"\x03src\x18\x01 \x01(\tR\x03src\x12]\n" +
@@ -4424,6 +4435,7 @@ var file_cerbos_policy_v1_policy_proto_goTypes = []any{
 	(*v11.AuxData)(nil),                               // 86: cerbos.engine.v1.AuxData
 	(*v11.OutputEntry)(nil),                           // 87: cerbos.engine.v1.OutputEntry
 	(*v11.Trace)(nil),                                 // 88: cerbos.engine.v1.Trace
+	(*v11.TraceBatch)(nil),                            // 89: cerbos.engine.v1.TraceBatch
 }
 var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	5,   // 0: cerbos.policy.v1.Policy.metadata:type_name -> cerbos.policy.v1.Metadata
@@ -4534,21 +4546,22 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	75,  // 105: cerbos.policy.v1.TestResults.Details.failure:type_name -> cerbos.policy.v1.TestResults.Failure
 	76,  // 106: cerbos.policy.v1.TestResults.Details.success:type_name -> cerbos.policy.v1.TestResults.Success
 	88,  // 107: cerbos.policy.v1.TestResults.Details.engine_trace:type_name -> cerbos.engine.v1.Trace
-	77,  // 108: cerbos.policy.v1.TestResults.OutputFailure.mismatched:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue
-	78,  // 109: cerbos.policy.v1.TestResults.OutputFailure.missing:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MissingValue
-	80,  // 110: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
-	80,  // 111: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
-	74,  // 112: cerbos.policy.v1.TestResults.Failure.outputs:type_name -> cerbos.policy.v1.TestResults.OutputFailure
-	80,  // 113: cerbos.policy.v1.TestResults.Success.effect:type_name -> cerbos.effect.v1.Effect
-	87,  // 114: cerbos.policy.v1.TestResults.Success.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	83,  // 115: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected:type_name -> google.protobuf.Value
-	83,  // 116: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual:type_name -> google.protobuf.Value
-	83,  // 117: cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected:type_name -> google.protobuf.Value
-	118, // [118:118] is the sub-list for method output_type
-	118, // [118:118] is the sub-list for method input_type
-	118, // [118:118] is the sub-list for extension type_name
-	118, // [118:118] is the sub-list for extension extendee
-	0,   // [0:118] is the sub-list for field type_name
+	89,  // 108: cerbos.policy.v1.TestResults.Details.engine_trace_batch:type_name -> cerbos.engine.v1.TraceBatch
+	77,  // 109: cerbos.policy.v1.TestResults.OutputFailure.mismatched:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue
+	78,  // 110: cerbos.policy.v1.TestResults.OutputFailure.missing:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MissingValue
+	80,  // 111: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
+	80,  // 112: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
+	74,  // 113: cerbos.policy.v1.TestResults.Failure.outputs:type_name -> cerbos.policy.v1.TestResults.OutputFailure
+	80,  // 114: cerbos.policy.v1.TestResults.Success.effect:type_name -> cerbos.effect.v1.Effect
+	87,  // 115: cerbos.policy.v1.TestResults.Success.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	83,  // 116: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected:type_name -> google.protobuf.Value
+	83,  // 117: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual:type_name -> google.protobuf.Value
+	83,  // 118: cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected:type_name -> google.protobuf.Value
+	119, // [119:119] is the sub-list for method output_type
+	119, // [119:119] is the sub-list for method input_type
+	119, // [119:119] is the sub-list for extension type_name
+	119, // [119:119] is the sub-list for extension extendee
+	0,   // [0:119] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_policy_v1_policy_proto_init() }
