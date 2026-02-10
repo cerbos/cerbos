@@ -35,7 +35,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-andiamo/splitter v1.2.5
 	github.com/go-cmd/cmd v1.4.3
-	github.com/go-git/go-git/v5 v5.16.4
+	github.com/go-git/go-git/v5 v5.16.5
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gobwas/glob v0.2.3
