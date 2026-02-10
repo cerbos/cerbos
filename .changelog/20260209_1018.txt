@@ -1,3 +1,3 @@
 type:breaking
 Update OpenTelemetry Semantic Conventions to 1.39.0
-The latest version of the Semantic Conventions includes https://github.com/open-telemetry/opentelemetry-go-contrib/pull/8481[breaking changes] to span and metric attributes that may affect dashboards.
+The latest version of the Semantic Conventions includes https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.39.0[breaking changes] to span and metric attributes that may affect dashboards.
