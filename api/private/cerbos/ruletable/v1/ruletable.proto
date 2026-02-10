@@ -1,0 +1,17 @@
+// Copyright 2021-2026 Zenauth Ltd.
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package cerbos.ruletable.v1;
+
+option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/ruletable/v1;ruletablev1";
+
+enum CategoryKey {
+  CATEGORY_KEY_UNSPECIFIED = 0;
+  CATEGORY_KEY_VERSION = 1;
+  CATEGORY_KEY_SCOPE = 2;
+  CATEGORY_KEY_ROLE = 3;
+  CATEGORY_KEY_ACTION = 4;
+  CATEGORY_KEY_RESOURCE = 5;
+}

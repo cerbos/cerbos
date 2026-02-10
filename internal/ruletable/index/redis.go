@@ -14,6 +14,7 @@ import (
 	"time"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	ruletablev1 "github.com/cerbos/cerbos/api/genpb/cerbos/ruletable/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/util"
@@ -110,11 +111,11 @@ func (r *Redis) GetExpiresAt() time.Time {
 	return r.dataDeadline
 }
 
-func (r *Redis) getLiteralMap(category CategoryKey) literalMap {
+func (r *Redis) getLiteralMap(category ruletablev1.CategoryKey) literalMap {
 	return newRedisLiteralMap(r.db, r.nsKey, string(category), r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
 }
 
-func (r *Redis) getGlobMap(category CategoryKey) globMap {
+func (r *Redis) getGlobMap(category ruletablev1.CategoryKey) globMap {
 	return newRedisGlobMap(r.db, r.nsKey, string(category), r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
 }
 

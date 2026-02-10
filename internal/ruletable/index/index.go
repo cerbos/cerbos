@@ -12,6 +12,7 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	ruletablev1 "github.com/cerbos/cerbos/api/genpb/cerbos/ruletable/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -21,15 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-type CategoryKey string
-
 const (
-	CategoryKeyVersion      CategoryKey = "version"
-	CategoryKeyScope        CategoryKey = "scope"
-	CategoryKeyRoleGlob     CategoryKey = "roleGlob"
-	CategoryKeyActionGlob   CategoryKey = "actionGlob"
-	CategoryKeyResourceGlob CategoryKey = "resourceGlob"
-
 	allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 )
 
@@ -38,8 +31,8 @@ var ignoredRuleTableProtoFields = map[string]struct{}{
 }
 
 type Index interface {
-	getLiteralMap(CategoryKey) literalMap
-	getGlobMap(CategoryKey) globMap
+	getLiteralMap(ruletablev1.CategoryKey) literalMap
+	getGlobMap(ruletablev1.CategoryKey) globMap
 	resolve(context.Context, []*Row) ([]*Row, error)
 	resolveIter(context.Context, iter.Seq[*Row]) (iter.Seq[*Row], error)
 	needsResolve() bool
@@ -342,11 +335,11 @@ type Impl struct {
 func NewImpl(idx Index) *Impl {
 	return &Impl{
 		idx:                 idx,
-		version:             idx.getLiteralMap(CategoryKeyVersion),
-		scope:               idx.getLiteralMap(CategoryKeyScope),
-		roleGlob:            idx.getGlobMap(CategoryKeyRoleGlob),
-		actionGlob:          idx.getGlobMap(CategoryKeyActionGlob),
-		resourceGlob:        idx.getGlobMap(CategoryKeyResourceGlob),
+		version:             idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_VERSION),
+		scope:               idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE),
+		roleGlob:            idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE),
+		actionGlob:          idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION),
+		resourceGlob:        idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE),
 		parentRoleAncestors: make(map[string]map[string][]string),
 	}
 }
@@ -404,11 +397,15 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 		addToSet(roleGlobs, r.Role, r)
 		addToSet(resourceGlobs, r.Resource, r)
 
-		action := r.GetAction()
-		if len(r.GetAllowActions().GetActions()) > 0 {
-			action = allowActionsIdxKey
+		// Very niche case--noop rows (from empty-rule role policies) have no ActionSet. This is ineffectual
+		// for the Check/Plan cases, but annoying in other APIs.
+		if r.ActionSet != nil {
+			action := r.GetAction()
+			if len(r.GetAllowActions().GetActions()) > 0 {
+				action = allowActionsIdxKey
+			}
+			addToSet(actionGlobs, action, r)
 		}
-		addToSet(actionGlobs, action, r)
 	}
 
 	// TODO(saml) ideally, we'd batch _all_ writes within a single call, but this
@@ -433,21 +430,48 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 	return nil
 }
 
-func (m *Impl) ListKeys(ctx context.Context, cat CategoryKey) ([]string, error) {
-	switch cat {
-	case CategoryKeyActionGlob:
-		return m.actionGlob.getAllKeys(ctx)
-	case CategoryKeyResourceGlob:
-		return m.resourceGlob.getAllKeys(ctx)
-	case CategoryKeyRoleGlob:
-		return m.roleGlob.getAllKeys(ctx)
-	case CategoryKeyScope:
-		return m.scope.getAllKeys(ctx)
-	case CategoryKeyVersion:
-		return m.version.getAllKeys(ctx)
-	default:
-		return nil, nil
+func (m *Impl) ListKeys(ctx context.Context, cats ...ruletablev1.CategoryKey) (map[ruletablev1.CategoryKey][]string, error) {
+	// TODO(saml) pipeline
+	res := make(map[ruletablev1.CategoryKey][]string)
+	for _, cat := range cats {
+		var allKeys []string
+		var err error
+		switch cat {
+		case ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE:
+			// scope can have a valid "" value
+			if scopeKeys, err := m.scope.getAllKeys(ctx); err != nil {
+				return nil, err
+			} else {
+				res[ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE] = scopeKeys
+			}
+			continue
+		case ruletablev1.CategoryKey_CATEGORY_KEY_ACTION:
+			allKeys, err = m.actionGlob.getAllKeys(ctx)
+		case ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE:
+			allKeys, err = m.resourceGlob.getAllKeys(ctx)
+		case ruletablev1.CategoryKey_CATEGORY_KEY_ROLE:
+			allKeys, err = m.roleGlob.getAllKeys(ctx)
+		case ruletablev1.CategoryKey_CATEGORY_KEY_VERSION:
+			allKeys, err = m.version.getAllKeys(ctx)
+		default:
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		keys := allKeys[:0]
+		for _, key := range allKeys {
+			// allowActionsIdxKey is only relevant to the actionGlob, but this
+			// way, we avoid a double iteration.
+			if key == allowActionsIdxKey || key == "" {
+				continue
+			}
+			keys = append(keys, key)
+		}
+		res[cat] = allKeys
 	}
+	return res, nil
 }
 
 // updateIndex fetches existing rows for the keys in the batch, resolves them if necessary,
@@ -1119,11 +1143,11 @@ func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes
 }
 
 func (m *Impl) Reset() {
-	m.version = m.idx.getLiteralMap(CategoryKeyVersion)
-	m.scope = m.idx.getLiteralMap(CategoryKeyScope)
-	m.roleGlob = m.idx.getGlobMap(CategoryKeyRoleGlob)
-	m.actionGlob = m.idx.getGlobMap(CategoryKeyActionGlob)
-	m.resourceGlob = m.idx.getGlobMap(CategoryKeyResourceGlob)
+	m.version = m.idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_VERSION)
+	m.scope = m.idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE)
+	m.roleGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE)
+	m.actionGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION)
+	m.resourceGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE)
 	m.parentRoleAncestors = make(map[string]map[string][]string)
 }
 
