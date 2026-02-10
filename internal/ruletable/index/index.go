@@ -469,7 +469,7 @@ func (m *Impl) ListKeys(ctx context.Context, cats ...ruletablev1.CategoryKey) (m
 			}
 			keys = append(keys, key)
 		}
-		res[cat] = allKeys
+		res[cat] = keys
 	}
 	return res, nil
 }
