@@ -4,7 +4,7 @@ go 1.25.3
 
 require (
 	github.com/alecthomas/kong v1.13.0
-	github.com/go-git/go-git/v5 v5.16.4
+	github.com/go-git/go-git/v5 v5.16.5
 )
 
 require (
