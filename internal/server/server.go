@@ -323,7 +323,9 @@ func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Se
 	}
 
 	s.pool.Go(func(_ context.Context) error {
-		log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
+		if !s.conf.EmbeddedMode {
+			log.Info(fmt.Sprintf("Starting gRPC server at %s", s.conf.GRPCListenAddr))
+		}
 
 		cleanup, err := admin.Register(server)
 		if err != nil {
@@ -337,7 +339,9 @@ func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Se
 			return err
 		}
 
-		log.Info("gRPC server stopped")
+		if !s.conf.EmbeddedMode {
+			log.Info("gRPC server stopped")
+		}
 		return nil
 	})
 
@@ -460,7 +464,9 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	}
 
 	s.pool.Go(func(_ context.Context) error {
-		log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
+		if !s.conf.EmbeddedMode {
+			log.Infof("Starting HTTP server at %s", s.conf.HTTPListenAddr)
+		}
 
 		if suggestHub {
 			zap.L().Named("hub").Info("Cerbos Hub offers features like enhanced policy management, " +
@@ -473,7 +479,9 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 			return err
 		}
 
-		log.Info("HTTP server stopped")
+		if !s.conf.EmbeddedMode {
+			log.Info("HTTP server stopped")
+		}
 		return nil
 	})
 
