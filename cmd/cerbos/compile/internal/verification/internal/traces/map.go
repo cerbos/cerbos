@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
@@ -30,7 +31,7 @@ func (m *Map) Print(p *printer.Printer) {
 	p.Println()
 	p.Println(colored.Trace("TRACES"))
 	for key, traceBatch := range *m {
-		definitions := m.definitionsToMap(traceBatch.Definitions)
+		definitions := tracer.TraceComponentDefinitionsToMap(traceBatch.Definitions)
 
 		p.Println(key)
 		for i, entry := range traceBatch.Entries {
@@ -41,19 +42,4 @@ func (m *Map) Print(p *printer.Printer) {
 		}
 		p.Println()
 	}
-}
-
-func (m *Map) definitionsToMap(definitions []*enginev1.Trace_Component) map[uint32]*enginev1.Trace_Component {
-	if len(definitions) == 0 {
-		return nil
-	}
-
-	definitionsMap := make(map[uint32]*enginev1.Trace_Component)
-	var idx uint32 = 0
-	for _, definition := range definitions {
-		definitionsMap[idx] = definition
-		idx++
-	}
-
-	return definitionsMap
 }

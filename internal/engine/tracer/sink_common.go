@@ -131,3 +131,18 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		Entries:     entries,
 	}
 }
+
+func TraceComponentDefinitionsToMap(definitions []*enginev1.Trace_Component) map[uint32]*enginev1.Trace_Component {
+	if len(definitions) == 0 {
+		return nil
+	}
+
+	definitionsMap := make(map[uint32]*enginev1.Trace_Component)
+	var idx uint32 = 0
+	for _, definition := range definitions {
+		definitionsMap[idx] = definition
+		idx++
+	}
+
+	return definitionsMap
+}

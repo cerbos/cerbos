@@ -620,8 +620,17 @@ func (*testTraceSink) Enabled() bool {
 }
 
 func (s *testTraceSink) AddTrace(trace *enginev1.Trace) {
+	traceBatch := tracer.TracesToBatch([]*enginev1.Trace{trace})
+	if traceBatch == nil {
+		return
+	}
+
+	definitions := tracer.TraceComponentDefinitionsToMap(traceBatch.Definitions)
 	var stdout bytes.Buffer
-	printer.New(&stdout, io.Discard).PrintTrace(trace)
+	p := printer.New(&stdout, io.Discard)
+	for _, entry := range traceBatch.Entries {
+		p.PrintTrace(definitions, entry)
+	}
 	s.t.Logf("%s\n", stdout.String())
 }
 
