@@ -257,23 +257,6 @@ func cerbos_engine_v1_Trace_Event_hashpb_sum(m *v1.Trace_Event, hasher hash.Hash
 	}
 }
 
-func cerbos_engine_v1_Trace_hashpb_sum(m *v1.Trace, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.Trace.components"]; !ok {
-		if len(m.Components) > 0 {
-			for _, v := range m.Components {
-				if v != nil {
-					cerbos_engine_v1_Trace_Component_hashpb_sum(v, hasher, ignore)
-				}
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.Trace.event"]; !ok {
-		if m.GetEvent() != nil {
-			cerbos_engine_v1_Trace_Event_hashpb_sum(m.GetEvent(), hasher, ignore)
-		}
-	}
-}
-
 func cerbos_policy_v1_Condition_hashpb_sum(m *Condition, hasher hash.Hash, ignore map[string]struct{}) {
 	if m.Condition != nil {
 		if _, ok := ignore["cerbos.policy.v1.Condition.condition"]; !ok {
@@ -922,15 +905,6 @@ func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *TestResults_Details, has
 			case *TestResults_Details_SkipReason:
 				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(t.SkipReason))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(t.SkipReason), len(t.SkipReason)))
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.engine_trace"]; !ok {
-		if len(m.EngineTrace) > 0 {
-			for _, v := range m.EngineTrace {
-				if v != nil {
-					cerbos_engine_v1_Trace_hashpb_sum(v, hasher, ignore)
-				}
 			}
 		}
 	}

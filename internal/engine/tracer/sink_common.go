@@ -44,10 +44,10 @@ func (c *Collector) Traces() []*enginev1.Trace {
 const defaultCapacity = 256
 
 var (
-	defIndexPool = sync.Pool{New: func() any { return make(map[uint64]uint32, defaultCapacity) }}
-	ptrHashPool  = sync.Pool{New: func() any { return make(map[*enginev1.Trace_Component]uint64, defaultCapacity) }}
-	serBufPool   = sync.Pool{New: func() any { b := make([]byte, 0, defaultCapacity); return &b }}
-	hasherPool   = sync.Pool{New: func() any { return xxhash.New() }}
+	defIndexPool       = sync.Pool{New: func() any { return make(map[uint64]uint32, defaultCapacity) }}
+	compHashToHashPool = sync.Pool{New: func() any { return make(map[uint64]uint64, defaultCapacity) }}
+	serBufPool         = sync.Pool{New: func() any { b := make([]byte, 0, defaultCapacity); return &b }}
+	hasherPool         = sync.Pool{New: func() any { return xxhash.New() }}
 )
 
 func hashComponentVT(comp *enginev1.Trace_Component, hasher *xxhash.Digest, buf []byte) (uint64, []byte) {
@@ -65,6 +65,12 @@ func hashComponentVT(comp *enginev1.Trace_Component, hasher *xxhash.Digest, buf 
 	return hasher.Sum64(), buf
 }
 
+func hashPB(comp *enginev1.Trace_Component) uint64 {
+	hasher := hasherPool.Get().(*xxhash.Digest) //nolint:forcetypeassert
+	comp.HashPB(hasher, nil)
+	return hasher.Sum64()
+}
+
 func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 	if len(traces) == 0 {
 		return nil
@@ -77,9 +83,9 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 
 	defs := make([]*enginev1.Trace_Component, 0, defaultCapacity)
 
-	defIndex := defIndexPool.Get().(map[uint64]uint32)                    //nolint:forcetypeassert
-	ptrToHash := ptrHashPool.Get().(map[*enginev1.Trace_Component]uint64) //nolint:forcetypeassert
-	serBufPtr := serBufPool.Get().(*[]byte)                               //nolint:forcetypeassert
+	defIndex := defIndexPool.Get().(map[uint64]uint32)             //nolint:forcetypeassert
+	compHashToHash := compHashToHashPool.Get().(map[uint64]uint64) //nolint:forcetypeassert
+	serBufPtr := serBufPool.Get().(*[]byte)                        //nolint:forcetypeassert
 	serBuf := *serBufPtr
 	hasher := hasherPool.Get().(*xxhash.Digest) //nolint:forcetypeassert
 
@@ -92,10 +98,11 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		indices := indicesBuf[:n]
 		indicesBuf = indicesBuf[n:]
 		for j, comp := range trace.Components {
-			key, ok := ptrToHash[comp]
+			compHashToHashKey := hashPB(comp)
+			key, ok := compHashToHash[compHashToHashKey]
 			if !ok {
 				key, serBuf = hashComponentVT(comp, hasher, serBuf)
-				ptrToHash[comp] = key
+				compHashToHash[compHashToHashKey] = key
 			}
 			if idx, ok := defIndex[key]; ok {
 				indices[j] = idx
@@ -112,9 +119,9 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 	}
 
 	clear(defIndex)
-	clear(ptrToHash)
+	clear(compHashToHash)
 	defIndexPool.Put(defIndex)
-	ptrHashPool.Put(ptrToHash)
+	compHashToHashPool.Put(compHashToHash)
 	*serBufPtr = serBuf[:0]
 	serBufPool.Put(serBufPtr)
 	hasherPool.Put(hasher)

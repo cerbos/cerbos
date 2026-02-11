@@ -163,23 +163,29 @@ func (p *Printer) PrintProtoJSON(message proto.Message, colorLevel outputcolor.L
 	return nil
 }
 
-func (p *Printer) PrintTrace(trace *enginev1.Trace) {
-	p.printTraceComponents(trace.Components)
-	p.printTraceEvent(trace.Event)
+func (p *Printer) PrintTrace(definitions map[uint32]*enginev1.Trace_Component, traceEntry *enginev1.TraceEntry) {
+	traceEntry.GetComponentIndices()
+	p.printTraceComponents(definitions, traceEntry.GetComponentIndices()...)
+	p.printTraceEvent(traceEntry.GetEvent())
 }
 
-func (p *Printer) printTraceComponents(components []*enginev1.Trace_Component) {
+func (p *Printer) printTraceComponents(definitions map[uint32]*enginev1.Trace_Component, componentIndices ...uint32) {
 	p.Printf("  ")
-	for i, component := range components {
+	for i, componentIdx := range componentIndices {
 		if i > 0 {
 			p.Printf("%s", colored.TraceComponentSeparator(" > ")) //nolint:govet
 		}
-		p.printTraceComponent(component)
+		p.printTraceComponent(definitions, componentIdx)
 	}
 	p.Println()
 }
 
-func (p *Printer) printTraceComponent(component *enginev1.Trace_Component) {
+func (p *Printer) printTraceComponent(definitions map[uint32]*enginev1.Trace_Component, componentIndex uint32) {
+	component, ok := definitions[componentIndex]
+	if !ok {
+		panic(fmt.Errorf("failed to find engine trace definition for component with index: %d", componentIndex))
+	}
+
 	switch component.Kind {
 	case enginev1.Trace_Component_KIND_ACTION:
 		p.Printf("%s%s", colored.TraceComponentKey("action="), component.GetAction())

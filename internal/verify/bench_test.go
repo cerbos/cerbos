@@ -235,7 +235,7 @@ func iterActionTraces(results *policyv1.TestResults) iter.Seq[[]*enginev1.Trace]
 				for _, p := range tc.Principals {
 					for _, r := range p.Resources {
 						for _, a := range r.Actions {
-							if !yield(a.Details.EngineTrace) { //nolint:staticcheck
+							if !yield(a.GetDetails().GetEngineTraceBatch()) { //nolint:staticcheck
 								return
 							}
 						}

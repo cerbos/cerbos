@@ -285,7 +285,6 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		for _, action := range actions {
 			results[action] = &policyv1.TestResults_Details{
 				Result:           policyv1.TestResults_RESULT_ERRORED,
-				EngineTrace:      traces,
 				EngineTraceBatch: tracer.TracesToBatch(traces),
 				Outcome:          &policyv1.TestResults_Details_Error{Error: err.Error()},
 			}
@@ -297,7 +296,6 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		for _, action := range actions {
 			results[action] = &policyv1.TestResults_Details{
 				Result:           policyv1.TestResults_RESULT_ERRORED,
-				EngineTrace:      traces,
 				EngineTraceBatch: tracer.TracesToBatch(traces),
 				Outcome:          &policyv1.TestResults_Details_Error{Error: "Empty response from server"},
 			}
@@ -316,7 +314,6 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		}
 
 		details := &policyv1.TestResults_Details{
-			EngineTrace:      traces,
 			EngineTraceBatch: tracer.TracesToBatch(traces),
 		}
 		expectedEffect := test.Expected[action]
