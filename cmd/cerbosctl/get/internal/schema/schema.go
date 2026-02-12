@@ -24,14 +24,19 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, format *flagset.Format) error
 
 	tw := printer.NewTableWriter(k.Stdout)
 	if !format.NoHeaders {
-		tw.SetHeader([]string{"SCHEMA ID"})
+		tw.Header([]string{"SCHEMA ID"})
 	}
 
 	sort.Strings(schemaIDs)
 	for _, id := range schemaIDs {
-		tw.Append([]string{id})
+		if err := tw.Append([]string{id}); err != nil {
+			return fmt.Errorf("failed to append row to the table: %w", err)
+		}
 	}
-	tw.Render()
+
+	if err := tw.Render(); err != nil {
+		return fmt.Errorf("failed to render table: %w", err)
+	}
 
 	return nil
 }

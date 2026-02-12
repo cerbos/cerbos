@@ -64,7 +64,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.98
 	github.com/nlepage/go-tarfs v1.2.1
 	github.com/oklog/ulid/v2 v2.1.1
-	github.com/olekukonko/tablewriter v0.0.5
+	github.com/olekukonko/tablewriter v1.1.3
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/peterh/liner v1.2.2
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
@@ -173,6 +173,9 @@ require (
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/clipperhouse/displaywidth v0.6.2 // indirect
+	github.com/clipperhouse/stringish v0.1.1 // indirect
+	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20251022180443-0feb69152e9f // indirect
 	github.com/containerd/console v1.0.5 // indirect
@@ -232,8 +235,8 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
@@ -245,6 +248,9 @@ require (
 	github.com/moby/term v0.5.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
+	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
+	github.com/olekukonko/errors v1.1.0 // indirect
+	github.com/olekukonko/ll v0.1.4-0.20260115111900-9e59c2286df0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.2.8 // indirect
