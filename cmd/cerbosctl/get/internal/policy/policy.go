@@ -57,7 +57,7 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 
 	tw := printer.NewTableWriter(k.Stdout)
 	if !format.NoHeaders {
-		tw.SetHeader(getHeaders(kind))
+		tw.Header(getHeaders(kind))
 	}
 
 	fd := newFilterDef(kind, filters.Name, filters.Version, filters.IncludeDisabled)
@@ -87,7 +87,9 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 				// no version or scope
 			}
 
-			tw.Append(row)
+			if err := tw.Append(row); err != nil {
+				return fmt.Errorf("failed to append row to the table: %w", err)
+			}
 		}
 
 		return nil
@@ -95,7 +97,9 @@ func List(k *kong.Kong, c *cerbos.GRPCAdminClient, filters *flagset.Filters, for
 		return fmt.Errorf("error while listing policies: %w", err)
 	}
 
-	tw.Render()
+	if err := tw.Render(); err != nil {
+		return fmt.Errorf("failed to render table: %w", err)
+	}
 
 	return nil
 }
