@@ -163,9 +163,25 @@ func (p *Printer) PrintProtoJSON(message proto.Message, colorLevel outputcolor.L
 	return nil
 }
 
+func (p *Printer) PrintTraceEntry(definitions []*enginev1.Trace_Component, trace *enginev1.TraceEntry) {
+	p.printTraceEntryComponents(definitions, trace.ComponentIndices)
+	p.printTraceEvent(trace.Event)
+}
+
 func (p *Printer) PrintTrace(trace *enginev1.Trace) {
 	p.printTraceComponents(trace.Components)
 	p.printTraceEvent(trace.Event)
+}
+
+func (p *Printer) printTraceEntryComponents(definitions []*enginev1.Trace_Component, componentIndices []uint32) {
+	p.Printf("  ")
+	for i, componentIndex := range componentIndices {
+		if i > 0 {
+			p.Printf("%s", colored.TraceComponentSeparator(" > ")) //nolint:govet
+		}
+		p.printTraceComponent(definitions[componentIndex])
+	}
+	p.Println()
 }
 
 func (p *Printer) printTraceComponents(components []*enginev1.Trace_Component) {

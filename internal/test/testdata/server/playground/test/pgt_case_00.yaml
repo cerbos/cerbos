@@ -57,129 +57,31 @@ playgroundTest:
                                                 "result": "RESULT_PASSED",
                                                 "success":
                                                   { "effect": "EFFECT_ALLOW" },
-                                                "engineTrace":
-                                                  [
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.derived_roles.apatr_common_roles",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_DERIVED_ROLE",
-                                                            "derivedRole": "abuse_moderator",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_SKIPPED",
-                                                          "message": "No matching roles",
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.derived_roles.apatr_common_roles",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_DERIVED_ROLE",
-                                                            "derivedRole": "owner",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_CONDITION",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_EXPR",
-                                                            "expr": "request.resource.attr.owner == request.principal.id",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "result": false,
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "view",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_SCOPE",
-                                                            "scope": "",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_RULE",
-                                                            "rule": "rule-001",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_SKIPPED",
-                                                          "message": "No matching derived roles",
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "view",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_SCOPE",
-                                                            "scope": "",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_RULE",
-                                                            "rule": "rule-002",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_CONDITION",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_EXPR",
-                                                            "expr": "request.resource.attr.public == true",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "result": true,
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.album_object.vdefault",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "view",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "effect": "EFFECT_ALLOW",
-                                                        },
-                                                    },
-                                                ],
+                                                "engineTraceBatch":
+                                                  {
+                                                    "definitions":
+                                                      [
+                                                        { "kind": "KIND_POLICY", "policy": "cerbos.derived_roles.apatr_common_roles" },
+                                                        { "kind": "KIND_DERIVED_ROLE", "derivedRole": "abuse_moderator" },
+                                                        { "kind": "KIND_DERIVED_ROLE", "derivedRole": "owner" },
+                                                        { "kind": "KIND_CONDITION" },
+                                                        { "kind": "KIND_EXPR", "expr": "request.resource.attr.owner == request.principal.id" },
+                                                        { "kind": "KIND_POLICY", "policy": "cerbos.resource.album_object.vdefault" },
+                                                        { "kind": "KIND_ACTION", "action": "view" },
+                                                        { "kind": "KIND_SCOPE", "scope": "" },
+                                                        { "kind": "KIND_RULE", "rule": "rule-001" },
+                                                        { "kind": "KIND_RULE", "rule": "rule-002" },
+                                                        { "kind": "KIND_EXPR", "expr": "request.resource.attr.public == true" },
+                                                      ],
+                                                    "entries":
+                                                      [
+                                                        { "componentIndices": [0, 1], "event": { "status": "STATUS_SKIPPED", "message": "No matching roles" } },
+                                                        { "componentIndices": [0, 2, 3, 4], "event": { "status": "STATUS_ACTIVATED", "result": false } },
+                                                        { "componentIndices": [5, 6, 7, 8], "event": { "status": "STATUS_SKIPPED", "message": "No matching derived roles" } },
+                                                        { "componentIndices": [5, 6, 7, 9, 3, 10], "event": { "status": "STATUS_ACTIVATED", "result": true } },
+                                                        { "componentIndices": [5, 6], "event": { "status": "STATUS_ACTIVATED", "effect": "EFFECT_ALLOW" } },
+                                                      ],
+                                                  },
                                               },
                                           },
                                         ],

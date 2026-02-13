@@ -26,11 +26,11 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -417,11 +417,14 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.SortRepeatedFields(&responsev1.CheckResourceSetResponse_Meta_ActionMeta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.CheckResourcesResponse_ResultEntry_Meta{}, "effective_derived_roles"),
 		protocmp.SortRepeatedFields(&responsev1.PlaygroundEvaluateResponse_EvalResultList{}, "effective_derived_roles"),
-		protocmp.SortRepeatedFields(&policyv1.TestResults_Details{}, "engine_trace"),
+		protocmp.SortRepeatedFields(&privatev1.TestTracesWrapper{}, "engine_trace"),
 		protocmp.SortRepeated(cmpOutputs),
 		protocmp.SortRepeated(cmpPlaygroundEvalResult),
 		protocmp.SortRepeated(cmpPlaygroundError),
 		protocmp.SortRepeated(cmpValidationError),
+		protocmp.FilterMessage(&enginev1.TraceBatch{},
+			cmp.Transformer("TraceBatchToTraces", TraceBatchToTraces),
+		),
 		protocmp.IgnoreFields(&responsev1.CheckResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlanResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlaygroundFailure_ErrorDetails{}, "context"),
@@ -453,6 +456,13 @@ func cmpValidationError(a, b *schemav1.ValidationError) bool {
 
 func cmpOutputs(a, b *enginev1.OutputEntry) bool {
 	return a.Src < b.Src
+}
+
+func TraceBatchToTraces(batch protocmp.Message) *privatev1.TestTracesWrapper {
+	batchPB := batch.Unwrap().(*enginev1.TraceBatch) //nolint:forcetypeassert
+	traces := tracer.BatchToTraces(batchPB)
+
+	return &privatev1.TestTracesWrapper{EngineTrace: traces}
 }
 
 func grpcHealthCheckPasses(t *testing.T, grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {

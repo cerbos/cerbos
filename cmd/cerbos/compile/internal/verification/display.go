@@ -242,7 +242,7 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 	switch action.Details.Result {
 	case policyv1.TestResults_RESULT_FAILED:
 		failure := action.Details.GetFailure()
-		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.GetEngineTraceBatch())
 		if len(failure.Outputs) > 0 {
 			o.appendNode(resultLevel, fmt.Sprintf("%s output expectation unsatisfied", colored.ErrorMsg("OUTCOME:")))
 			for _, output := range failure.Outputs {
@@ -263,7 +263,7 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 		}
 
 	case policyv1.TestResults_RESULT_ERRORED:
-		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.EngineTrace)
+		o.traces.Add(suite.Name, principal.Name, resource.Name, action.Name, action.Details.GetEngineTraceBatch())
 		o.appendNode(resultLevel, fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.GetError()))
 
 	default:

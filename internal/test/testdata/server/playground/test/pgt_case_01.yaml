@@ -85,124 +85,32 @@ playgroundTest:
                                                 "result": "RESULT_PASSED",
                                                 "success":
                                                   { "effect": "EFFECT_ALLOW" },
-                                                "engineTrace":
-                                                  [
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.derived_roles.alpha",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_DERIVED_ROLE",
-                                                            "derivedRole": "employee_that_owns_the_record",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_CONDITION",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_EXPR",
-                                                            "expr": "R.attr.owner == P.id",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "result": false,
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.derived_roles.beta",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_DERIVED_ROLE",
-                                                            "derivedRole": "direct_manager",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_SKIPPED",
-                                                          "message": "No matching roles",
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "assist",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_SCOPE",
-                                                            "scope": "acme.hr.uk",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_RULE",
-                                                            "rule": "rule-003",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_CONDITION",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "result": true,
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_ACTION",
-                                                            "action": "assist",
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "effect": "EFFECT_ALLOW",
-                                                        },
-                                                    },
-                                                    {
-                                                      "components":
-                                                        [
-                                                          {
-                                                            "kind": "KIND_POLICY",
-                                                            "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_VARIABLES",
-                                                          },
-                                                          {
-                                                            "kind": "KIND_VARIABLE",
-                                                            "variable":
-                                                              {
-                                                                "name": "principal_location",
-                                                                "expr": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                                                              },
-                                                          },
-                                                        ],
-                                                      "event":
-                                                        {
-                                                          "status": "STATUS_ACTIVATED",
-                                                          "result": null,
-                                                        },
-                                                    },
-                                                ],
+                                                "engineTraceBatch":
+                                                  {
+                                                    "definitions":
+                                                      [
+                                                        { "kind": "KIND_POLICY", "policy": "cerbos.derived_roles.alpha" },
+                                                        { "kind": "KIND_DERIVED_ROLE", "derivedRole": "employee_that_owns_the_record" },
+                                                        { "kind": "KIND_CONDITION" },
+                                                        { "kind": "KIND_EXPR", "expr": "R.attr.owner == P.id" },
+                                                        { "kind": "KIND_POLICY", "policy": "cerbos.derived_roles.beta" },
+                                                        { "kind": "KIND_DERIVED_ROLE", "derivedRole": "direct_manager" },
+                                                        { "kind": "KIND_POLICY", "policy": "cerbos.resource.leave_request.vdefault/acme.hr.uk" },
+                                                        { "kind": "KIND_ACTION", "action": "assist" },
+                                                        { "kind": "KIND_SCOPE", "scope": "acme.hr.uk" },
+                                                        { "kind": "KIND_RULE", "rule": "rule-003" },
+                                                        { "kind": "KIND_VARIABLES" },
+                                                        { "kind": "KIND_VARIABLE", "variable": { "name": "principal_location", "expr": "(P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\")" } },
+                                                      ],
+                                                    "entries":
+                                                      [
+                                                        { "componentIndices": [0, 1, 2, 3], "event": { "status": "STATUS_ACTIVATED", "result": false } },
+                                                        { "componentIndices": [4, 5], "event": { "status": "STATUS_SKIPPED", "message": "No matching roles" } },
+                                                        { "componentIndices": [6, 7, 8, 9, 2], "event": { "status": "STATUS_ACTIVATED", "result": true } },
+                                                        { "componentIndices": [6, 7], "event": { "status": "STATUS_ACTIVATED", "effect": "EFFECT_ALLOW" } },
+                                                        { "componentIndices": [6, 10, 11], "event": { "status": "STATUS_ACTIVATED", "result": null } },
+                                                      ],
+                                                  },
                                               },
                                           },
                                         ],
