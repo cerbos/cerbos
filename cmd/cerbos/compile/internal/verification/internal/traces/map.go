@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
@@ -32,12 +31,11 @@ func (m *Map) Print(p *printer.Printer) {
 	p.Println(colored.Trace("TRACES"))
 	for key, batch := range *m {
 		p.Println(key)
-		traces := tracer.BatchToTraces(batch)
-		for i, trace := range traces {
+		for i, traceEntry := range batch.Entries {
 			if i > 0 {
 				p.Println()
 			}
-			p.PrintTrace(trace)
+			p.PrintTraceEntry(batch.Definitions, traceEntry)
 		}
 		p.Println()
 	}
