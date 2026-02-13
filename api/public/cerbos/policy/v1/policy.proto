@@ -682,6 +682,7 @@ message TestResults {
       Success success = 5;
       string skip_reason = 6;
     }
+    repeated cerbos.engine.v1.Trace engine_trace = 4 [deprecated = true];
     cerbos.engine.v1.TraceBatch engine_trace_batch = 7;
   }
 

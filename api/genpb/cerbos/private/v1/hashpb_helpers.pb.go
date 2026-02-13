@@ -1538,6 +1538,15 @@ func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *v12.TestResults_Details,
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.engine_trace"]; !ok {
+		if len(m.EngineTrace) > 0 {
+			for _, v := range m.EngineTrace {
+				if v != nil {
+					cerbos_engine_v1_Trace_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
 	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.engine_trace_batch"]; !ok {
 		if m.GetEngineTraceBatch() != nil {
 			cerbos_engine_v1_TraceBatch_hashpb_sum(m.GetEngineTraceBatch(), hasher, ignore)
