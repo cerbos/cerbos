@@ -333,3 +333,7 @@ message WellKnownTypes {
 
   Nested optional_nested_msg = 31;
 }
+
+message TestTracesWrapper {
+  repeated cerbos.engine.v1.Trace engine_trace = 1;
+}

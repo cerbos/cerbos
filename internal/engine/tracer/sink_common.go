@@ -4,9 +4,11 @@
 package tracer
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/cespare/xxhash/v2"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
@@ -123,4 +125,24 @@ func TracesToBatch(traces []*enginev1.Trace) *enginev1.TraceBatch {
 		Definitions: defs,
 		Entries:     entries,
 	}
+}
+
+func BatchToTraces(batch *enginev1.TraceBatch) []*enginev1.Trace {
+	if batch == nil || len(batch.Entries) == 0 {
+		return nil
+	}
+
+	traces := make([]*enginev1.Trace, len(batch.Entries))
+	for i, entry := range batch.Entries {
+		components := make([]*enginev1.Trace_Component, len(entry.ComponentIndices))
+		for j, idx := range entry.ComponentIndices {
+			components[j] = batch.Definitions[idx]
+		}
+		traces[i] = &enginev1.Trace{
+			Components: components,
+			Event:      entry.Event,
+		}
+	}
+
+	return traces
 }

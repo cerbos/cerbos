@@ -7,19 +7,20 @@ import (
 	"fmt"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-type Map map[string][]*enginev1.Trace
+type Map map[string]*enginev1.TraceBatch
 
-func (m *Map) Add(suiteName, principalName, resourceName, actionName string, traces []*enginev1.Trace) {
-	if len(traces) == 0 {
+func (m *Map) Add(suiteName, principalName, resourceName, actionName string, batch *enginev1.TraceBatch) {
+	if batch == nil || len(batch.Entries) == 0 {
 		return
 	}
 
 	key := fmt.Sprintf("%s - %s.%s.%s", colored.Suite(suiteName), colored.Principal(principalName), colored.Resource(resourceName), colored.Action(actionName))
-	(*m)[key] = traces
+	(*m)[key] = batch
 }
 
 func (m *Map) Print(p *printer.Printer) {
@@ -29,8 +30,9 @@ func (m *Map) Print(p *printer.Printer) {
 
 	p.Println()
 	p.Println(colored.Trace("TRACES"))
-	for key, traces := range *m {
+	for key, batch := range *m {
 		p.Println(key)
+		traces := tracer.BatchToTraces(batch)
 		for i, trace := range traces {
 			if i > 0 {
 				p.Println()

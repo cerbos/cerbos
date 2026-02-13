@@ -140,6 +140,42 @@ func cerbos_engine_v1_Resource_hashpb_sum(m *v1.Resource, hasher hash.Hash, igno
 	}
 }
 
+func cerbos_engine_v1_TraceBatch_hashpb_sum(m *v1.TraceBatch, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.TraceBatch.definitions"]; !ok {
+		if len(m.Definitions) > 0 {
+			for _, v := range m.Definitions {
+				if v != nil {
+					cerbos_engine_v1_Trace_Component_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.TraceBatch.entries"]; !ok {
+		if len(m.Entries) > 0 {
+			for _, v := range m.Entries {
+				if v != nil {
+					cerbos_engine_v1_TraceEntry_hashpb_sum(v, hasher, ignore)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_TraceEntry_hashpb_sum(m *v1.TraceEntry, hasher hash.Hash, ignore map[string]struct{}) {
+	if _, ok := ignore["cerbos.engine.v1.TraceEntry.component_indices"]; !ok {
+		if len(m.ComponentIndices) > 0 {
+			for _, v := range m.ComponentIndices {
+				_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(v)))
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.TraceEntry.event"]; !ok {
+		if m.GetEvent() != nil {
+			cerbos_engine_v1_Trace_Event_hashpb_sum(m.GetEvent(), hasher, ignore)
+		}
+	}
+}
+
 func cerbos_engine_v1_Trace_Component_Variable_hashpb_sum(m *v1.Trace_Component_Variable, hasher hash.Hash, ignore map[string]struct{}) {
 	if _, ok := ignore["cerbos.engine.v1.Trace.Component.Variable.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(nil, uint64(len(m.GetName()))))
@@ -217,23 +253,6 @@ func cerbos_engine_v1_Trace_Event_hashpb_sum(m *v1.Trace_Event, hasher hash.Hash
 	if _, ok := ignore["cerbos.engine.v1.Trace.Event.result"]; !ok {
 		if m.GetResult() != nil {
 			google_protobuf_Value_hashpb_sum(m.GetResult(), hasher, ignore)
-		}
-	}
-}
-
-func cerbos_engine_v1_Trace_hashpb_sum(m *v1.Trace, hasher hash.Hash, ignore map[string]struct{}) {
-	if _, ok := ignore["cerbos.engine.v1.Trace.components"]; !ok {
-		if len(m.Components) > 0 {
-			for _, v := range m.Components {
-				if v != nil {
-					cerbos_engine_v1_Trace_Component_hashpb_sum(v, hasher, ignore)
-				}
-			}
-		}
-	}
-	if _, ok := ignore["cerbos.engine.v1.Trace.event"]; !ok {
-		if m.GetEvent() != nil {
-			cerbos_engine_v1_Trace_Event_hashpb_sum(m.GetEvent(), hasher, ignore)
 		}
 	}
 }
@@ -889,13 +908,9 @@ func cerbos_policy_v1_TestResults_Details_hashpb_sum(m *TestResults_Details, has
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.engine_trace"]; !ok {
-		if len(m.EngineTrace) > 0 {
-			for _, v := range m.EngineTrace {
-				if v != nil {
-					cerbos_engine_v1_Trace_hashpb_sum(v, hasher, ignore)
-				}
-			}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.Details.engine_trace_batch"]; !ok {
+		if m.GetEngineTraceBatch() != nil {
+			cerbos_engine_v1_TraceBatch_hashpb_sum(m.GetEngineTraceBatch(), hasher, ignore)
 		}
 	}
 }
