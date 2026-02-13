@@ -41,7 +41,7 @@ type ListCandidatesCmd struct { //betteralign:ignore
 func (c *ListCandidatesCmd) Run(k *kong.Kong) error {
 	tw := printer.NewTableWriter(k.Stdout)
 	if !c.NoHeaders {
-		tw.SetHeader([]string{"POLICY ID", "PATH"})
+		tw.Header([]string{"POLICY ID", "PATH"})
 	}
 
 	candidates, err := listCandidates(context.Background(), os.DirFS(c.Path))
@@ -50,9 +50,14 @@ func (c *ListCandidatesCmd) Run(k *kong.Kong) error {
 	}
 
 	for policyKey, policyID := range candidates {
-		tw.Append([]string{policyKey, policyID})
+		if err := tw.Append([]string{policyKey, policyID}); err != nil {
+			return fmt.Errorf("failed to append row to the table: %w", err)
+		}
 	}
-	tw.Render()
+
+	if err := tw.Render(); err != nil {
+		return fmt.Errorf("failed to render table: %w", err)
+	}
 
 	return nil
 }
