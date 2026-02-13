@@ -459,7 +459,7 @@ func cmpOutputs(a, b *enginev1.OutputEntry) bool {
 }
 
 func TraceBatchToTraces(batch protocmp.Message) *privatev1.TestTracesWrapper {
-	batchPB := batch.Unwrap().(*enginev1.TraceBatch)
+	batchPB := batch.Unwrap().(*enginev1.TraceBatch) //nolint:forcetypeassert
 	traces := tracer.BatchToTraces(batchPB)
 
 	return &privatev1.TestTracesWrapper{EngineTrace: traces}
