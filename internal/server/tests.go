@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -31,6 +30,7 @@ import (
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	svcv1 "github.com/cerbos/cerbos/api/genpb/cerbos/svc/v1"
+	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -458,241 +458,11 @@ func cmpOutputs(a, b *enginev1.OutputEntry) bool {
 	return a.Src < b.Src
 }
 
-// TraceBatchToTraces converts a protocmp.Message representing TraceBatch to
-// a protocmp.Message representing TestTracesWrapper. This resolves the component
-// indices in each TraceEntry to actual Trace_Component values from definitions.
-func TraceBatchToTraces(batch protocmp.Message) protocmp.Message {
-	definitions, _ := batch["definitions"].([]any)
-	entries, _ := batch["entries"].([]any)
+func TraceBatchToTraces(batch protocmp.Message) *privatev1.TestTracesWrapper {
+	batchPB := batch.Unwrap().(*enginev1.TraceBatch)
+	traces := tracer.BatchToTraces(batchPB)
 
-	if len(entries) == 0 {
-		return protocmpFromProto(&privatev1.TestTracesWrapper{})
-	}
-
-	traces := make([]*enginev1.Trace, len(entries))
-	for i, entry := range entries {
-		entryMsg := entry.(protocmp.Message)
-		indices := extractUint32Slice(entryMsg, "component_indices")
-		eventPM, _ := entryMsg["event"].(protocmp.Message)
-
-		components := make([]*enginev1.Trace_Component, len(indices))
-		for j, idx := range indices {
-			compPM := definitions[idx].(protocmp.Message)
-			components[j] = protocmpToTraceComponent(compPM)
-		}
-
-		var event *enginev1.Trace_Event
-		if eventPM != nil {
-			event = protocmpToTraceEvent(eventPM)
-		}
-
-		traces[i] = &enginev1.Trace{
-			Components: components,
-			Event:      event,
-		}
-	}
-
-	return protocmpFromProto(&privatev1.TestTracesWrapper{
-		EngineTrace: traces,
-	})
-}
-
-// protocmpFromProto converts a proto.Message to protocmp.Message using protoreflect.
-func protocmpFromProto(m proto.Message) protocmp.Message {
-	return protocmpFromReflect(m.ProtoReflect())
-}
-
-// protocmpFromReflect converts a protoreflect.Message to protocmp.Message.
-func protocmpFromReflect(mr protoreflect.Message) protocmp.Message {
-	result := make(protocmp.Message)
-	mr.Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
-		result[string(fd.Name())] = protocmpValueFromReflect(fd, v)
-		return true
-	})
-	return result
-}
-
-// protocmpValueFromReflect converts a protoreflect.Value to the protocmp representation.
-func protocmpValueFromReflect(fd protoreflect.FieldDescriptor, v protoreflect.Value) any {
-	switch {
-	case fd.IsList():
-		list := v.List()
-		result := make([]any, list.Len())
-		for i := range list.Len() {
-			result[i] = protocmpSingularValue(fd, list.Get(i))
-		}
-		return result
-	case fd.IsMap():
-		m := v.Map()
-		result := make(map[any]any)
-		m.Range(func(k protoreflect.MapKey, v protoreflect.Value) bool {
-			result[k.Interface()] = protocmpSingularValue(fd.MapValue(), v)
-			return true
-		})
-		return result
-	default:
-		return protocmpSingularValue(fd, v)
-	}
-}
-
-// protocmpSingularValue converts a singular protoreflect.Value to the protocmp representation.
-func protocmpSingularValue(fd protoreflect.FieldDescriptor, v protoreflect.Value) any {
-	if fd.Message() != nil {
-		return protocmpFromReflect(v.Message())
-	}
-	if fd.Kind() == protoreflect.EnumKind {
-		return v.Enum()
-	}
-	return v.Interface()
-}
-
-// extractUint32Slice extracts a []uint32 from a protocmp.Message field.
-func extractUint32Slice(m protocmp.Message, key string) []uint32 {
-	val, ok := m[key]
-	if !ok || val == nil {
-		return nil
-	}
-	// protocmp stores repeated uint32 as []uint32
-	if arr, ok := val.([]uint32); ok {
-		return arr
-	}
-	return nil
-}
-
-// protocmpToTraceComponent converts a protocmp.Message to *enginev1.Trace_Component.
-func protocmpToTraceComponent(pm protocmp.Message) *enginev1.Trace_Component {
-	comp := &enginev1.Trace_Component{}
-	populateProtoFromProtocmp(comp.ProtoReflect(), pm)
-	return comp
-}
-
-// protocmpToTraceEvent converts a protocmp.Message to *enginev1.Trace_Event.
-func protocmpToTraceEvent(pm protocmp.Message) *enginev1.Trace_Event {
-	event := &enginev1.Trace_Event{}
-	populateProtoFromProtocmp(event.ProtoReflect(), pm)
-	return event
-}
-
-// populateProtoFromProtocmp populates a protoreflect.Message from a protocmp.Message.
-func populateProtoFromProtocmp(mr protoreflect.Message, pm protocmp.Message) {
-	md := mr.Descriptor()
-
-	for i := range md.Fields().Len() {
-		fd := md.Fields().Get(i)
-		fieldName := string(fd.Name())
-
-		val, ok := pm[fieldName]
-		if !ok || val == nil {
-			continue
-		}
-
-		protoVal := convertProtocmpToProtoValue(fd, val, mr)
-		if protoVal.IsValid() {
-			mr.Set(fd, protoVal)
-		}
-	}
-}
-
-// convertProtocmpToProtoValue converts a protocmp value to protoreflect.Value.
-func convertProtocmpToProtoValue(fd protoreflect.FieldDescriptor, val any, mr protoreflect.Message) protoreflect.Value {
-	switch {
-	case fd.IsList():
-		list := mr.Mutable(fd).List()
-		arr, ok := val.([]any)
-		if !ok {
-			return protoreflect.Value{}
-		}
-		for _, elem := range arr {
-			list.Append(convertSingularValue(fd, elem, mr))
-		}
-		return protoreflect.ValueOfList(list)
-	case fd.IsMap():
-		m := mr.Mutable(fd).Map()
-		mapVal, ok := val.(map[any]any)
-		if !ok {
-			return protoreflect.Value{}
-		}
-		for k, v := range mapVal {
-			m.Set(protoreflect.MapKey(protoreflect.ValueOf(k)), convertSingularValue(fd.MapValue(), v, mr))
-		}
-		return protoreflect.ValueOfMap(m)
-	default:
-		return convertSingularValue(fd, val, mr)
-	}
-}
-
-// convertSingularValue converts a singular protocmp value to protoreflect.Value.
-func convertSingularValue(fd protoreflect.FieldDescriptor, val any, mr protoreflect.Message) protoreflect.Value {
-	if fd.Message() != nil {
-		pmVal, ok := val.(protocmp.Message)
-		if !ok {
-			return protoreflect.Value{}
-		}
-		msg := mr.NewField(fd).Message()
-		populateProtoFromProtocmp(msg, pmVal)
-		return protoreflect.ValueOfMessage(msg)
-	}
-
-	switch fd.Kind() {
-	case protoreflect.BoolKind:
-		return protoreflect.ValueOfBool(val.(bool))
-	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
-		return protoreflect.ValueOfInt32(int32(toInt64(val)))
-	case protoreflect.Uint32Kind, protoreflect.Fixed32Kind:
-		return protoreflect.ValueOfUint32(uint32(toUint64(val)))
-	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		return protoreflect.ValueOfInt64(toInt64(val))
-	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		return protoreflect.ValueOfUint64(toUint64(val))
-	case protoreflect.FloatKind:
-		return protoreflect.ValueOfFloat32(float32(val.(float64)))
-	case protoreflect.DoubleKind:
-		return protoreflect.ValueOfFloat64(val.(float64))
-	case protoreflect.StringKind:
-		return protoreflect.ValueOfString(val.(string))
-	case protoreflect.BytesKind:
-		return protoreflect.ValueOfBytes(val.([]byte))
-	case protoreflect.EnumKind:
-		return protoreflect.ValueOfEnum(val.(protoreflect.EnumNumber))
-	default:
-		return protoreflect.Value{}
-	}
-}
-
-func toInt64(val any) int64 {
-	switch v := val.(type) {
-	case int64:
-		return v
-	case int32:
-		return int64(v)
-	case int:
-		return int64(v)
-	case float64:
-		return int64(v)
-	default:
-		return 0
-	}
-}
-
-func toUint64(val any) uint64 {
-	switch v := val.(type) {
-	case uint64:
-		return v
-	case uint32:
-		return uint64(v)
-	case uint:
-		return uint64(v)
-	case int64:
-		return uint64(v)
-	case int32:
-		return uint64(v)
-	case int:
-		return uint64(v)
-	case float64:
-		return uint64(v)
-	default:
-		return 0
-	}
+	return &privatev1.TestTracesWrapper{EngineTrace: traces}
 }
 
 func grpcHealthCheckPasses(t *testing.T, grpcConn *grpc.ClientConn, reqTimeout time.Duration) func() bool {

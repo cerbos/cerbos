@@ -4,11 +4,9 @@
 package tracer
 
 import (
-	"slices"
 	"sync"
 
 	"github.com/cespare/xxhash/v2"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 )
