@@ -33,6 +33,7 @@ var ignoredRuleTableProtoFields = map[string]struct{}{
 type Index interface {
 	getLiteralMap(ruletablev1.CategoryKey) literalMap
 	getGlobMap(ruletablev1.CategoryKey) globMap
+	getParentRoleMap() parentRoleMap
 	resolve(context.Context, []*Row) ([]*Row, error)
 	resolveIter(context.Context, iter.Seq[*Row]) (iter.Seq[*Row], error)
 	needsResolve() bool
@@ -59,6 +60,11 @@ type globMap interface {
 	getAll(context.Context) (map[string]*rowSet, error)
 	getAllKeys(context.Context) ([]string, error)
 	delete(context.Context, ...string) error
+}
+
+type parentRoleMap interface {
+	setBatch(context.Context, map[string]map[string][]string) error
+	get(context.Context, ...string) (map[string]map[string][]string, error)
 }
 
 type Row struct {
@@ -323,24 +329,24 @@ func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
 }
 
 type Impl struct {
-	idx                 Index
-	version             literalMap
-	scope               literalMap
-	roleGlob            globMap
-	actionGlob          globMap
-	resourceGlob        globMap
-	parentRoleAncestors map[string]map[string][]string
+	idx          Index
+	version      literalMap
+	scope        literalMap
+	roleGlob     globMap
+	actionGlob   globMap
+	resourceGlob globMap
+	parentRoles  parentRoleMap
 }
 
 func NewImpl(idx Index) *Impl {
 	return &Impl{
-		idx:                 idx,
-		version:             idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_VERSION),
-		scope:               idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE),
-		roleGlob:            idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE),
-		actionGlob:          idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION),
-		resourceGlob:        idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE),
-		parentRoleAncestors: make(map[string]map[string][]string),
+		idx:          idx,
+		version:      idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_VERSION),
+		scope:        idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE),
+		roleGlob:     idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE),
+		actionGlob:   idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION),
+		resourceGlob: idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE),
+		parentRoles:  idx.getParentRoleMap(),
 	}
 }
 
@@ -794,60 +800,71 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 	return res, nil
 }
 
-func (m *Impl) AddParentRoles(scopes, roles []string) []string {
+// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.
+// When multiple scopes define parents for the same role, the results are merged rather than overwritten.
+func (m *Impl) AddParentRoles(ctx context.Context, scopes, roles []string) ([]string, error) {
 	parentRoles := make([]string, len(roles))
 	copy(parentRoles, roles)
 
-	scopeCache := make(map[string][]string)
+	scopedAncestors, err := m.parentRoles.get(ctx, scopes...)
+	if err != nil {
+		return nil, err
+	}
+
+	merged := make(map[string][]string)
 	for _, scope := range scopes {
-		c, ok := m.parentRoleAncestors[scope]
+		c, ok := scopedAncestors[scope]
 		if !ok {
 			continue
 		}
-		maps.Copy(scopeCache, c)
-	}
-
-	if len(scopeCache) == 0 {
-		return parentRoles
-	}
-
-	for _, role := range roles {
-		if roleParents, ok := scopeCache[role]; ok {
-			parentRoles = append(parentRoles, roleParents...) //nolint:makezero
+		for role, parents := range c {
+			merged[role] = append(merged[role], parents...)
 		}
 	}
 
-	return parentRoles
+	if len(merged) == 0 {
+		return parentRoles, nil
+	}
+
+	for _, role := range roles {
+		if parents, ok := merged[role]; ok {
+			parentRoles = append(parentRoles, parents...) //nolint:makezero
+		}
+	}
+
+	return parentRoles, nil
 }
 
-func (m *Impl) PrecompileParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) {
+func (m *Impl) IndexParentRoles(ctx context.Context, scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) error {
+	return m.parentRoles.setBatch(ctx, compileParentRoleAncestors(scopeParentRoles))
+}
+
+func compileParentRoleAncestors(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) map[string]map[string][]string {
+	compiled := make(map[string]map[string][]string, len(scopeParentRoles))
 	for scope, parentRoles := range scopeParentRoles {
 		if parentRoles == nil {
 			continue
 		}
 
-		if _, ok := m.parentRoleAncestors[scope]; !ok {
-			m.parentRoleAncestors[scope] = make(map[string][]string)
-		}
-
-		scopeCache := m.parentRoleAncestors[scope]
-
+		compiled[scope] = make(map[string][]string, len(parentRoles.RoleParentRoles))
 		for role := range parentRoles.RoleParentRoles {
 			visited := make(map[string]struct{})
 			roleParentsSet := make(map[string]struct{})
-			m.collectParentRoles(scopeParentRoles, scope, role, roleParentsSet, visited)
+			collectParentRoles(scopeParentRoles, scope, role, roleParentsSet, visited)
 
 			roleParents := make([]string, 0, len(roleParentsSet))
 			for rp := range roleParentsSet {
 				roleParents = append(roleParents, rp)
 			}
 
-			scopeCache[role] = roleParents
+			compiled[scope][role] = roleParents
 		}
 	}
+
+	return compiled
 }
 
-func (m *Impl) collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, parentRoleSet, visited map[string]struct{}) {
+func collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, parentRoleSet, visited map[string]struct{}) {
 	if _, seen := visited[role]; seen {
 		return
 	}
@@ -857,7 +874,7 @@ func (m *Impl) collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTab
 		if prs, ok := parentRoles.RoleParentRoles[role]; ok {
 			for _, pr := range prs.Roles {
 				parentRoleSet[pr] = struct{}{}
-				m.collectParentRoles(scopeParentRoles, scope, pr, parentRoleSet, visited)
+				collectParentRoles(scopeParentRoles, scope, pr, parentRoleSet, visited)
 			}
 		}
 	}
@@ -993,22 +1010,34 @@ func (m *Impl) DeletePolicy(ctx context.Context, fqn string, activeScopes map[st
 		}
 	}
 
-	for scope := range m.parentRoleAncestors {
-		if _, ok := activeScopes[scope]; !ok {
-			delete(m.parentRoleAncestors, scope)
-			continue
-		}
-
-		existingRoles := m.parentRoleAncestors[scope]
-		for role := range existingRoles {
-			exists, _ := m.ScopedRoleGlobExists(ctx, scope, role)
-			if !exists {
-				delete(existingRoles, role)
-			}
+	activeScopeKeys := make([]string, 0, len(allScopes))
+	for scope, rs := range allScopes {
+		if rs.len() > 0 {
+			activeScopeKeys = append(activeScopeKeys, scope)
 		}
 	}
 
-	return nil
+	parentRoleData, err := m.parentRoles.get(ctx, activeScopeKeys...)
+	if err != nil {
+		return err
+	}
+
+	pruned := make(map[string]map[string][]string, len(parentRoleData))
+	for scope, roleParents := range parentRoleData {
+		scopeRS := allScopes[scope]
+		prunedRoles := make(map[string][]string, len(roleParents))
+		for role, parents := range roleParents {
+			// check if role has at least one row in scope
+			if roleRS, ok := allRoleGlobs[role]; ok && roleRS.hasIntersectionWith(scopeRS) {
+				prunedRoles[role] = parents
+			}
+		}
+		if len(prunedRoles) > 0 {
+			pruned[scope] = prunedRoles
+		}
+	}
+
+	return m.parentRoles.setBatch(ctx, pruned)
 }
 
 func (m *Impl) GetScopes(ctx context.Context) ([]string, error) {
@@ -1148,7 +1177,7 @@ func (m *Impl) Reset() {
 	m.roleGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE)
 	m.actionGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION)
 	m.resourceGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE)
-	m.parentRoleAncestors = make(map[string]map[string][]string)
+	m.parentRoles = m.idx.getParentRoleMap()
 }
 
 func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
