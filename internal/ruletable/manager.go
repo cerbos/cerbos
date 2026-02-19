@@ -229,6 +229,16 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		return err
 	}
 
+	if role := meta.GetRole(); role != "" {
+		scope := namer.ScopeFromFQN(meta.GetFqn())
+		if scopeParentRoles, ok := mgr.ScopeParentRoles[scope]; ok && scopeParentRoles != nil {
+			delete(scopeParentRoles.RoleParentRoles, role)
+			if len(scopeParentRoles.RoleParentRoles) == 0 {
+				delete(mgr.ScopeParentRoles, scope)
+			}
+		}
+	}
+
 	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer (for example: we shouldn't have to pass `activeScopes` to `idx.DeletePolicy`. That function should carry out all of this housekeeping).
 	for scope := range mgr.principalScopeMap {
 		if _, ok := activeScopeSet[scope]; !ok {

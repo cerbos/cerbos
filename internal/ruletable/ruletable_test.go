@@ -296,6 +296,116 @@ func TestRuleTableManager(t *testing.T) {
 			require.Equal(c, output.Actions[action].GetEffect(), effectv1.Effect_EFFECT_DENY)
 		}, 1*time.Second, 50*time.Millisecond)
 	})
+
+	t.Run("deleting_role_policy_does_not_restore_parent_roles", func(t *testing.T) {
+		resourceFile := "resource_policies/document.yaml"
+		roleFile := "role_policies/employee.yaml"
+		unrelatedFile := "resource_policies/unrelated_parent_role_control.yaml"
+
+		allowUserDocumentView := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_ResourcePolicy{
+				ResourcePolicy: &policyv1.ResourcePolicy{
+					Resource: "document",
+					Version:  "default",
+					Rules: []*policyv1.ResourceRule{
+						{
+							Actions: []string{"view"},
+							Roles:   []string{"user"},
+							Effect:  effectv1.Effect_EFFECT_ALLOW,
+						},
+					},
+				},
+			},
+		}
+
+		employeeParentUser := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_RolePolicy{
+				RolePolicy: &policyv1.RolePolicy{
+					PolicyType:  &policyv1.RolePolicy_Role{Role: "employee"},
+					Version:     "default",
+					ParentRoles: []string{"user"},
+				},
+			},
+		}
+
+		addOrUpdatePolicy(t, resourceFile, allowUserDocumentView, memFsys, idx, store)
+		addOrUpdatePolicy(t, roleFile, employeeParentUser, memFsys, idx, store)
+
+		action := "view"
+		input := &enginev1.CheckInput{
+			RequestId: "role-parent-delete",
+			Resource: &enginev1.Resource{
+				Kind: "document",
+				Id:   "1",
+			},
+			Principal: &enginev1.Principal{
+				Id:    "sam",
+				Roles: []string{"employee"},
+			},
+			Actions: []string{action},
+		}
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
+			require.NoError(c, err)
+
+			require.Contains(c, output.Actions, action)
+			require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions[action].GetEffect())
+		}, 1*time.Second, 50*time.Millisecond)
+
+		deletePolicy(t, roleFile, memFsys, idx, store)
+
+		unrelatedUpdate := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_ResourcePolicy{
+				ResourcePolicy: &policyv1.ResourcePolicy{
+					Resource: "unrelated_parent_role_control",
+					Version:  "default",
+					Rules: []*policyv1.ResourceRule{
+						{
+							Actions: []string{"noop"},
+							Roles:   []string{"admin"},
+							Effect:  effectv1.Effect_EFFECT_ALLOW,
+						},
+					},
+				},
+			},
+		}
+
+		unrelatedAction := "noop"
+		unrelatedInput := &enginev1.CheckInput{
+			RequestId: "unrelated-update-control",
+			Resource: &enginev1.Resource{
+				Kind: "unrelated_parent_role_control",
+				Id:   "1",
+			},
+			Principal: &enginev1.Principal{
+				Id:    "sam",
+				Roles: []string{"admin"},
+			},
+			Actions: []string{unrelatedAction},
+		}
+
+		// forces reindex path which triggered the previous incorrect behaviour (building from the proto
+		// ScopeParentRoles state)
+		addOrUpdatePolicy(t, unrelatedFile, unrelatedUpdate, memFsys, idx, store)
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			unrelatedOutput, _, err := ruletableMgr.Check(ctx, tctx, evalParams, unrelatedInput)
+			require.NoError(c, err)
+
+			require.Contains(c, unrelatedOutput.Actions, unrelatedAction)
+			require.Equal(c, effectv1.Effect_EFFECT_ALLOW, unrelatedOutput.Actions[unrelatedAction].GetEffect())
+
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
+			require.NoError(c, err)
+
+			require.Contains(c, output.Actions, action)
+			require.Equal(c, effectv1.Effect_EFFECT_DENY, output.Actions[action].GetEffect())
+		}, 1*time.Second, 50*time.Millisecond)
+	})
 }
 
 func addOrUpdatePolicy(t *testing.T, f string, p *policyv1.Policy, memFsys afero.Fs, idx index.Index, store *disk.Store) {
@@ -307,6 +417,17 @@ func addOrUpdatePolicy(t *testing.T, f string, p *policyv1.Policy, memFsys afero
 	require.NoError(t, afero.WriteFile(memFsys, f, s.Bytes(), fs.ModeAppend))
 
 	evt, err := idx.AddOrUpdate(index.Entry{File: f, Policy: policy.Wrap(p)})
+	require.NoError(t, err)
+
+	store.NotifySubscribers(evt)
+}
+
+func deletePolicy(t *testing.T, f string, memFsys afero.Fs, idx index.Index, store *disk.Store) {
+	t.Helper()
+
+	require.NoError(t, memFsys.Remove(f))
+
+	evt, err := idx.Delete(index.Entry{File: f})
 	require.NoError(t, err)
 
 	store.NotifySubscribers(evt)
