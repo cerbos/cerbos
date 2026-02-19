@@ -93,5 +93,5 @@ func TestRedisIndex(t *testing.T) {
 	}
 
 	require.ErrorIs(t, readerImpl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{newRow}), index.ErrReadOnly)
-	require.ErrorIs(t, readerImpl.IndexParentRoles(ctx, map[string]*runtimev1.RuleTable_RoleParentRoles{"alpha": &runtimev1.RuleTable_RoleParentRoles{}}), index.ErrReadOnly)
+	require.ErrorIs(t, readerImpl.IndexParentRoles(ctx, map[string]*runtimev1.RuleTable_RoleParentRoles{"alpha": {}}), index.ErrReadOnly)
 }
