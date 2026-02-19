@@ -1613,7 +1613,7 @@ func (rt *RuleTable) planWithAuditTrail(
 
 				rolesIncludingParents, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, []string{role})
 				if err != nil {
-					return nil, auditTrail, err
+					return nil, nil, err
 				}
 
 				for _, scope := range scopes {
