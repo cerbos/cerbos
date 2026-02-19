@@ -32,7 +32,7 @@ func TestBlob(t *testing.T) {
 
 	computedEnvFn := func(ctx e2e.Ctx) map[string]string {
 		minioEndpoint := fmt.Sprintf("minio-%s.%s.svc.cluster.local:9000", ctx.ContextID, ctx.Namespace())
-		env["E2E_BUCKET_URL"] = blob.MinioBucketURL("cerbos", minioEndpoint)
+		env["E2E_BUCKET_URL"] = blob.SeaweedFSBucketURL("cerbos", minioEndpoint)
 		env["E2E_BUCKET_PREFIX"] = "repo/"
 		env["E2E_BUCKET_USERNAME"] = "admin"
 		env["E2E_BUCKET_PASSWORD"] = "passw0rd"

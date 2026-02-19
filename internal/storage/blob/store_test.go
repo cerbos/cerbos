@@ -55,7 +55,7 @@ func TestNewStore(t *testing.T) {
 		)
 		must.Error(err)
 	})
-	t.Run("Minio bucket test", func(t *testing.T) {
+	t.Run("SeaweedFS bucket test", func(t *testing.T) {
 		if testing.Short() {
 			t.Skip()
 		}
@@ -65,10 +65,8 @@ func TestNewStore(t *testing.T) {
 		conf.SetDefaults()
 
 		cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
-		endpoint := StartMinio(ctx, t, bucketName)
-		t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
-		t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
-		conf.Bucket = MinioBucketURL(bucketName, endpoint)
+		endpoint := StartSeaweedFS(ctx, t, bucketName)
+		conf.Bucket = SeaweedFSBucketURL(bucketName, endpoint)
 
 		must := require.New(t)
 
@@ -91,8 +89,8 @@ func TestNewStore(t *testing.T) {
 }
 
 func TestReloadable(t *testing.T) {
-	t.Setenv("AWS_ACCESS_KEY_ID", minioUsername)
-	t.Setenv("AWS_SECRET_ACCESS_KEY", minioPassword)
+	t.Setenv("AWS_ACCESS_KEY_ID", seaweedUsername)
+	t.Setenv("AWS_SECRET_ACCESS_KEY", seaweedPassword)
 
 	dir := t.TempDir()
 	store, bucket := mkStore(t, dir)
@@ -230,7 +228,7 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	t.Helper()
 
-	endpoint := StartMinio(t.Context(), t, bucketName)
+	endpoint := StartSeaweedFS(t.Context(), t, bucketName)
 	conf := mkConf(t, dir, bucketName, endpoint)
 	bucket, _, err := newBucket(t.Context(), conf)
 	require.NoError(t, err)
@@ -258,7 +256,7 @@ func mkConf(t *testing.T, dir, bucketName, endpoint string) *Conf {
 
 	conf := &Conf{WorkDir: dir}
 	conf.SetDefaults()
-	conf.Bucket = MinioBucketURL(bucketName, endpoint)
+	conf.Bucket = SeaweedFSBucketURL(bucketName, endpoint)
 
 	return conf
 }

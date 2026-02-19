@@ -33,8 +33,6 @@ func TestDriverInstantiation(t *testing.T) {
 	ctx := t.Context()
 
 	bucketName := "test"
-	t.Setenv("AWS_ACCESS_KEY_ID", "minioadmin")
-	t.Setenv("AWS_SECRET_ACCESS_KEY", "minioadmin")
 
 	conf := map[string]any{
 		"storage": map[string]any{
@@ -45,7 +43,7 @@ func TestDriverInstantiation(t *testing.T) {
 				"fallbackErrorThreshold": 3,
 			},
 			"blob": map[string]any{
-				"bucket":             blob.MinioBucketURL(bucketName, blob.StartMinio(ctx, t, bucketName)),
+				"bucket":             blob.SeaweedFSBucketURL(bucketName, blob.StartSeaweedFS(ctx, t, bucketName)),
 				"workDir":            t.TempDir(),
 				"updatePollInterval": "10s",
 			},

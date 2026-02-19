@@ -35,7 +35,7 @@ func TestCloneResult(t *testing.T) {
 		bucketDir := filepath.Join(dir, "bucket")
 		require.NoError(t, os.MkdirAll(bucketDir, perm775))
 		cacheDir := cacheDir(bucketDir, dir)
-		bucket := newMinioBucket(ctx, t, bucketDir, "")
+		bucket := newSeaweedFSBucket(ctx, t, bucketDir, "")
 		applyFiles(ctx, t, bucket, testCase.Inputs)
 
 		cloner, err := NewCloner(bucket, cacheDir)
