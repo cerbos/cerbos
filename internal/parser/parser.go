@@ -757,7 +757,7 @@ func (u *unmarshaler[T]) unmarshalInt(uctx *unmarshalCtx, n ast.Node, bitSize in
 		s := strings.TrimSpace(t.Value)
 		v, err := strconv.ParseInt(s, base10, bitSize)
 		if err != nil {
-			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %v", v, err)
+			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %v", s, err)
 		}
 		if bitSize == bitSize32 {
 			return protoreflect.ValueOfInt32(int32(v)), nil
@@ -790,7 +790,7 @@ func (u *unmarshaler[T]) unmarshalUint(uctx *unmarshalCtx, n ast.Node, bitSize i
 		s := strings.TrimSpace(t.Value)
 		v, err := strconv.ParseUint(s, base10, bitSize)
 		if err != nil {
-			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %v", v, err)
+			return protoreflect.Value{}, uctx.perrorf(n, "invalid integer value %q: %v", s, err)
 		}
 		if bitSize == bitSize32 {
 			return protoreflect.ValueOfUint32(uint32(v)), nil
