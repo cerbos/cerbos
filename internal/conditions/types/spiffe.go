@@ -409,7 +409,7 @@ func (std SPIFFETrustDomain) ConvertToNative(typeDesc reflect.Type) (any, error)
 			return sv, nil
 		}
 
-		if reflect.TypeOf(std).Implements(typeDesc) {
+		if reflect.TypeFor[SPIFFETrustDomain]().Implements(typeDesc) {
 			return std, nil
 		}
 	}
