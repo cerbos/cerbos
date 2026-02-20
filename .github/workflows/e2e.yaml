@@ -62,7 +62,7 @@ jobs:
           wait: 180s
 
       - name: Run E2E Tests
-        run: e2e/run.sh
+        run: e2e/run.sh ./blob/...
         env:
           E2E_SKIP_CLUSTER: "true"
           E2E_NO_CLEANUP: "true"
