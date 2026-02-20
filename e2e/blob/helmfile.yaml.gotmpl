@@ -1,6 +1,6 @@
 repositories:
-  - name: bitnami
-    url: https://charts.bitnami.com/bitnami
+  - name: seaweedfs
+    url: https://seaweedfs.github.io/seaweedfs/helm
 
 helmDefaults:
   cleanupOnFail: true
@@ -10,13 +10,13 @@ helmDefaults:
   createNamespace: true
 
 releases:
-  - name: minio
+  - name: seaweedfs
     namespace: '{{ requiredEnv "E2E_NS" }}'
     createNamespace: true
     labels:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
       e2e-ctx: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
-    chart: bitnami/minio
+    chart: seaweedfs/seaweedfs
     hooks:
       - events: ["presync"]
         showlogs: true
@@ -25,6 +25,17 @@ releases:
           - create
           - namespace
           - '{{ requiredEnv "E2E_NS" }}'
+      - events: ["presync"]
+        showlogs: true
+        command: kubectl
+        args:
+          - create
+          - secret
+          - generic
+          - s3-credentials
+          - '-n'
+          - '{{ requiredEnv "E2E_NS" }}'
+          - '--from-file=seaweedfs_s3_config=seaweedfs_s3_config'
       - events: ["postuninstall"]
         showlogs: true
         command: kubectl
@@ -34,27 +45,26 @@ releases:
           - '{{ requiredEnv "E2E_NS" }}'
     values:
       - nameOverride: '{{ requiredEnv "E2E_CONTEXT_ID" }}'
-      - image:
-          repository: bitnamilegacy/minio
-      - clientImage:
-          repository: bitnamilegacy/minio-client
-      - console:
-          image:
-            repository: bitnamilegacy/minio-object-browser
-      - defaultInitContainers:
-          volumePermissions:
-            image:
-              repository: bitnamilegacy/os-shell
-      - auth:
-          rootUser: admin
-          rootPassword: passw0rd
-      - defaultBuckets: "cerbos"
-      - persistence:
+      - master:
           enabled: false
+      - volume:
+          enabled: false
+      - filer:
+          enabled: false
+      - allInOne:
+          enabled: true
+          s3:
+            enabled: true
+            enableAuth: true
+            existingConfigSecret: s3-credentials
+            createBuckets:
+              - name: cerbos
+                anonymousRead: true
+          affinity: ""
 
   - name: cerbos
     namespace: '{{ requiredEnv "E2E_NS" }}'
-    needs: ["minio"]
+    needs: ["seaweedfs"]
     createNamespace: true
     labels:
       e2e-run: '{{ requiredEnv "E2E_RUN_ID" }}'
