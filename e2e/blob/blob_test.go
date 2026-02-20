@@ -31,7 +31,7 @@ func TestBlob(t *testing.T) {
 	env := make(map[string]string)
 
 	computedEnvFn := func(ctx e2e.Ctx) map[string]string {
-		seaweedEndpoint := fmt.Sprintf("seaweedfs-%s-all-in-one.%s.svc.cluster.local:9000", ctx.ContextID, ctx.Namespace())
+		seaweedEndpoint := fmt.Sprintf("seaweedfs-%s-all-in-one.%s.svc.cluster.local:8333", ctx.ContextID, ctx.Namespace())
 		env["E2E_BUCKET_URL"] = blob.SeaweedFSBucketURL("cerbos", seaweedEndpoint)
 		env["E2E_BUCKET_PREFIX"] = "repo/"
 		env["E2E_BUCKET_USERNAME"] = "admin"
