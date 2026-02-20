@@ -142,13 +142,25 @@ func openGSBucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bu
 }
 
 func openS3Bucket(ctx context.Context, conf *Conf, bucketURL *url.URL) (*blob.Bucket, error) {
-	cfg, err := gcaws.V2ConfigFromURLParams(ctx, bucketURL.Query())
+	var opts []func(*s3.Options)
+	q := bucketURL.Query()
+	if q.Has("use_path_style") {
+		q.Del("use_path_style")
+		opts = append(opts, func(o *s3.Options) { o.UsePathStyle = true })
+	}
+
+	if q.Has("disable_https") {
+		q.Del("disable_https")
+		opts = append(opts, func(o *s3.Options) { o.EndpointOptions.DisableHTTPS = true })
+	}
+
+	cfg, err := gcaws.V2ConfigFromURLParams(ctx, q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
 	cfg.HTTPClient = awshttp.NewBuildableClient().WithTimeout(*conf.RequestTimeout)
-	s3Client := s3.NewFromConfig(cfg)
+	s3Client := s3.NewFromConfig(cfg, opts...)
 	return s3blob.OpenBucket(ctx, s3Client, bucketURL.Host, nil)
 }
 

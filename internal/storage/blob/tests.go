@@ -14,11 +14,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
@@ -26,15 +28,15 @@ import (
 )
 
 const (
-	minioUsername = "minioadmin"
-	minioPassword = "minioadmin"
-	bucketName    = "test"
+	seaweedUsername = "weedadmin"
+	seaweedPassword = "weedadmin"
+	bucketName      = "test"
 )
 
 const timeout = 5 * time.Minute
 
-func MinioBucketURL(bucketName, endpoint string) string {
-	return fmt.Sprintf("s3://%s?region=local&hostname_immutable=true&endpoint=http%%3A%%2F%%2F%s", bucketName, endpoint)
+func SeaweedFSBucketURL(bucketName, endpoint string) string {
+	return fmt.Sprintf("s3://%s?region=local&hostname_immutable=true&use_path_style=true&disable_https=true&endpoint=http%%3A%%2F%%2F%s", bucketName, endpoint)
 }
 
 type UploadParam struct {
@@ -69,7 +71,7 @@ func CopyDirToBucket(tb testing.TB, ctx context.Context, param UploadParam) *blo
 	return bucket
 }
 
-func newMinioBucket(ctx context.Context, t *testing.T, path, prefix string) *blob.Bucket {
+func newSeaweedFSBucket(ctx context.Context, t *testing.T, path, prefix string) *blob.Bucket {
 	t.Helper()
 
 	deadline, ok := t.Deadline()
@@ -81,10 +83,10 @@ func newMinioBucket(ctx context.Context, t *testing.T, path, prefix string) *blo
 	defer cancelFunc()
 
 	param := UploadParam{
-		BucketURL:    MinioBucketURL(bucketName, StartMinio(ctx, t, bucketName)),
+		BucketURL:    SeaweedFSBucketURL(bucketName, StartSeaweedFS(ctx, t, bucketName)),
 		BucketPrefix: prefix,
-		Username:     minioUsername,
-		Password:     minioPassword,
+		Username:     seaweedUsername,
+		Password:     seaweedPassword,
 		Directory:    path,
 	}
 
@@ -154,17 +156,18 @@ func bucketDelete(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key s
 	tb.Logf("[END] Deleting %s", key)
 }
 
-func StartMinio(ctx context.Context, t *testing.T, bucketName string) string {
+func StartSeaweedFS(ctx context.Context, t *testing.T, bucketName string) string {
 	t.Helper()
+
 	is := require.New(t)
 	pool, err := dockertest.NewPool("")
 	is.NoError(err, "Could not connect to docker: %s", err)
 
 	options := &dockertest.RunOptions{
-		Repository: "minio/minio",
+		Repository: "chrislusf/seaweedfs",
 		Tag:        "latest",
-		Cmd:        []string{"server", "/data"},
-		Env:        []string{"MINIO_ROOT_USER=" + minioUsername, "MINIO_ROOT_PASSWORD=" + minioPassword},
+		Cmd:        []string{"server", "-s3"},
+		Env:        []string{"AWS_ACCESS_KEY_ID=" + strings.TrimPrefix(seaweedUsername, "admin-"), "AWS_SECRET_ACCESS_KEY=" + seaweedPassword},
 	}
 
 	resource, err := pool.RunWithOptions(options)
@@ -183,26 +186,10 @@ func StartMinio(ctx context.Context, t *testing.T, bucketName string) string {
 		})
 	}()
 
-	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("9000/tcp"))
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(minioUsername, minioPassword, ""),
-		Secure: false,
-	})
-	is.NoError(err, "Could not instantiate minio client", err)
-
-	cancelFn, err := client.HealthCheck(1 * time.Second)
-	is.NoError(err, "Failed to start healthcheck: %v", err)
-
-	t.Cleanup(cancelFn)
-
+	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("8333/tcp"))
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	// the minio client does not do service discovery for you (i.e. it does not check if connection can be established), so we have to use the health check
 	err = pool.Retry(func() error {
-		if client.IsOffline() {
-			return fmt.Errorf("healthcheck fail")
-		}
-
-		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%s/minio/health/ready", endpoint), nil)
+		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%s/healthz", endpoint), nil)
 		if err != nil {
 			return err
 		}
@@ -225,8 +212,21 @@ func StartMinio(ctx context.Context, t *testing.T, bucketName string) string {
 		is.NoError(err, "Could not purge resource: %s", err)
 	})
 
-	err = client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
+	s3APIEndpoint := "http://" + endpoint
+	cfg, err := config.LoadDefaultConfig(
+		t.Context(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(seaweedUsername, seaweedPassword, "")),
+		config.WithRegion("local"),
+		config.WithBaseEndpoint(s3APIEndpoint),
+	)
+	is.NoError(err, "Failed to load AWS config")
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = true })
+	_, err = client.CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &bucketName})
 	is.NoError(err, "Failed to create bucket %q: %v", bucketName, err)
+
+	t.Setenv("AWS_ACCESS_KEY_ID", seaweedUsername)
+	t.Setenv("AWS_SECRET_ACCESS_KEY", seaweedPassword)
 
 	return endpoint
 }
