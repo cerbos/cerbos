@@ -16,9 +16,10 @@ import (
 const memNamespaceKey = "mem"
 
 var (
-	_ Index      = (*Mem)(nil)
-	_ literalMap = (*memLiteralMap)(nil)
-	_ globMap    = (*memGlobMap)(nil)
+	_ Index         = (*Mem)(nil)
+	_ literalMap    = (*memLiteralMap)(nil)
+	_ globMap       = (*memGlobMap)(nil)
+	_ parentRoleMap = (*memParentRoleMap)(nil)
 )
 
 type Mem struct {
@@ -35,6 +36,10 @@ func (m *Mem) getLiteralMap(ruletablev1.CategoryKey) literalMap {
 
 func (m *Mem) getGlobMap(ruletablev1.CategoryKey) globMap {
 	return newMemGlobMap()
+}
+
+func (m *Mem) getParentRoleMap() parentRoleMap {
+	return newMemParentRoleMap()
 }
 
 func (m *Mem) resolve(_ context.Context, rows []*Row) ([]*Row, error) {
@@ -212,4 +217,36 @@ func (gl *memGlobMap) delete(_ context.Context, keys ...string) error {
 		gl.m.DeleteLiteral(k)
 	}
 	return nil
+}
+
+type memParentRoleMap struct {
+	m  map[string]map[string][]string
+	mu sync.RWMutex
+}
+
+func newMemParentRoleMap() *memParentRoleMap {
+	return &memParentRoleMap{
+		m: make(map[string]map[string][]string),
+	}
+}
+
+func (pm *memParentRoleMap) setBatch(_ context.Context, batch map[string]map[string][]string) error {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.m = batch
+	return nil
+}
+
+func (pm *memParentRoleMap) get(_ context.Context, scopes ...string) (map[string]map[string][]string, error) {
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+
+	out := make(map[string]map[string][]string, len(scopes))
+	for _, scope := range scopes {
+		if roles, ok := pm.m[scope]; ok {
+			out[scope] = roles
+		}
+	}
+
+	return out, nil
 }

@@ -556,8 +556,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 		return err
 	}
 
-	rt.idx.PrecompileParentRoles(rt.ScopeParentRoles)
-
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
 	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
@@ -600,7 +598,11 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		}
 	}
 
-	return rt.idx.IndexRules(ctx, rules)
+	if err := rt.idx.IndexRules(ctx, rules); err != nil {
+		return err
+	}
+
+	return rt.idx.IndexParentRoles(ctx, rt.ScopeParentRoles)
 }
 
 func (rt *RuleTable) GetAllRows(ctx context.Context) ([]*index.Row, error) {
@@ -865,7 +867,10 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
+	allRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, input.Principal.Roles)
+	if err != nil {
+		return nil, err
+	}
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -921,7 +926,10 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
+				parentRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, []string{role})
+				if err != nil {
+					return nil, err
+				}
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1554,7 +1562,10 @@ func (rt *RuleTable) planWithAuditTrail(
 		}
 	}
 
-	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
+	allRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, input.Principal.Roles)
+	if err != nil {
+		return nil, nil, err
+	}
 	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
 	if err != nil {
 		return nil, nil, err
@@ -1600,7 +1611,10 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
+				rolesIncludingParents, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, []string{role})
+				if err != nil {
+					return nil, nil, err
+				}
 
 				for _, scope := range scopes {
 					var scopeAllowNode *planner.QpN

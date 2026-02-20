@@ -54,6 +54,15 @@ func TestRedisIndex(t *testing.T) {
 	}
 
 	require.NoError(t, writerImpl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{testRow}))
+	require.NoError(t, writerImpl.IndexParentRoles(ctx, map[string]*runtimev1.RuleTable_RoleParentRoles{
+		"alpha": {
+			RoleParentRoles: map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles{
+				"manager": {
+					Roles: []string{"user"},
+				},
+			},
+		},
+	}))
 
 	readerIdx, err := index.GetExistingRedis(ctx, client, namespace)
 	require.NoError(t, err)
@@ -65,6 +74,10 @@ func TestRedisIndex(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, rows, 1)
+
+	roles, err := readerImpl.AddParentRoles(ctx, []string{"alpha"}, []string{"manager"})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"manager", "user"}, roles)
 
 	newRow := &runtimev1.RuleTable_RuleRow{
 		PolicyKind: policyv1.Kind_KIND_RESOURCE,
@@ -80,4 +93,5 @@ func TestRedisIndex(t *testing.T) {
 	}
 
 	require.ErrorIs(t, readerImpl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{newRow}), index.ErrReadOnly)
+	require.ErrorIs(t, readerImpl.IndexParentRoles(ctx, map[string]*runtimev1.RuleTable_RoleParentRoles{"alpha": {}}), index.ErrReadOnly)
 }

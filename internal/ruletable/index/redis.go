@@ -25,15 +25,17 @@ const (
 	// expirationBuffer is the safety margin between the sentinel expiring and the data expiring.
 	// This guarantees that if `GetExistingRedis` returns successfully, the data keys will persist for at least
 	// this long, covering the duration of the read operation.
-	defaultKeyTTL           = time.Minute * 5
-	defaultExpirationBuffer = time.Minute * 1
-	sentinelSuffix          = "sentinel"
+	defaultKeyTTL                  = time.Minute * 5
+	defaultExpirationBuffer        = time.Minute * 1
+	sentinelSuffix                 = "sentinel"
+	parentRoleAncestorsCategoryKey = "parent_role_ancestors"
 )
 
 var (
-	_ Index      = (*Redis)(nil)
-	_ literalMap = (*RedisLiteralMap)(nil)
-	_ globMap    = (*RedisGlobMap)(nil)
+	_ Index         = (*Redis)(nil)
+	_ literalMap    = (*RedisLiteralMap)(nil)
+	_ globMap       = (*RedisGlobMap)(nil)
+	_ parentRoleMap = (*RedisParentRoleMap)(nil)
 
 	ErrCacheMiss = errors.New("index not found in cache")
 	ErrReadOnly  = errors.New("redis instance is read only")
@@ -117,6 +119,10 @@ func (r *Redis) getLiteralMap(category ruletablev1.CategoryKey) literalMap {
 
 func (r *Redis) getGlobMap(category ruletablev1.CategoryKey) globMap {
 	return newRedisGlobMap(r.db, r.nsKey, string(category), r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
+}
+
+func (r *Redis) getParentRoleMap() parentRoleMap {
+	return newRedisParentRoleMap(r.db, r.nsKey, r.sentKey, r.readOnly, r.sentinelDeadline, r.dataDeadline)
 }
 
 func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
@@ -520,4 +526,117 @@ func hydrateParams(r *Row) error {
 		}
 	}
 	return nil
+}
+
+type RedisParentRoleMap struct {
+	*redisMap
+}
+
+func newRedisParentRoleMap(db Cmdable, nsKey, sentKey string, readOnly bool, sentinelDeadline, dataDeadline time.Time) *RedisParentRoleMap {
+	return &RedisParentRoleMap{
+		redisMap: newRedisMap(db, nsKey, parentRoleAncestorsCategoryKey, sentKey, readOnly, sentinelDeadline, dataDeadline),
+	}
+}
+
+func (pm *RedisParentRoleMap) setBatch(ctx context.Context, batch map[string]map[string][]string) error {
+	if pm.readOnly {
+		return ErrReadOnly
+	}
+
+	existingScopeKeys, err := pm.db.SMembers(ctx, pm.catKey).Result()
+	if err != nil {
+		return err
+	}
+
+	_, err = pm.db.TxPipelined(ctx, func(p redis.Pipeliner) error {
+		if len(existingScopeKeys) > 0 {
+			p.Del(ctx, existingScopeKeys...)
+		}
+		p.Del(ctx, pm.catKey)
+
+		for scope, roleParents := range batch {
+			scopeKey := pm.sumsKey(scope)
+			encoded, err := marshalRoleParents(roleParents)
+			if err != nil {
+				return err
+			}
+
+			p.SAdd(ctx, pm.catKey, scopeKey)
+			p.Set(ctx, scopeKey, encoded, 0)
+			p.PExpireAt(ctx, scopeKey, pm.dataDeadline)
+		}
+
+		p.PExpireAt(ctx, pm.catKey, pm.dataDeadline)
+		p.Set(ctx, pm.sentKey, "1", 0)
+		p.PExpireAt(ctx, pm.sentKey, pm.sentinelDeadline)
+
+		return nil
+	})
+
+	return err
+}
+
+func (pm *RedisParentRoleMap) get(ctx context.Context, scopes ...string) (map[string]map[string][]string, error) {
+	if len(scopes) == 0 {
+		return nil, nil
+	}
+
+	cmds := make(map[string]*redis.StringCmd, len(scopes))
+	if _, err := pm.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for _, scope := range scopes {
+			cmds[scope] = p.Get(ctx, pm.sumsKey(scope))
+		}
+		return nil
+	}); err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
+	}
+
+	out := make(map[string]map[string][]string, len(scopes))
+	for _, scope := range scopes {
+		encoded, err := cmds[scope].Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) {
+				continue
+			}
+			return nil, err
+		}
+
+		roleParents, err := unmarshalRoleParents([]byte(encoded))
+		if err != nil {
+			return nil, err
+		}
+
+		out[scope] = roleParents
+	}
+
+	return out, nil
+}
+
+func marshalRoleParents(roleParents map[string][]string) ([]byte, error) {
+	msg := &runtimev1.RuleTable_RoleParentRoles{
+		RoleParentRoles: make(map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles, len(roleParents)),
+	}
+
+	for role, parents := range roleParents {
+		msg.RoleParentRoles[role] = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{Roles: parents}
+	}
+
+	return msg.MarshalVT()
+}
+
+func unmarshalRoleParents(raw []byte) (map[string][]string, error) {
+	msg := &runtimev1.RuleTable_RoleParentRoles{}
+	if err := msg.UnmarshalVT(raw); err != nil {
+		return nil, err
+	}
+
+	roleParents := make(map[string][]string, len(msg.RoleParentRoles))
+	for role, parents := range msg.RoleParentRoles {
+		if parents == nil {
+			continue
+		}
+		roleParents[role] = parents.Roles
+	}
+
+	return roleParents, nil
 }

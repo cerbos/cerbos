@@ -1,0 +1,3 @@
+type:fix
+Fix stale parent role relationships persisting after role policy deletion
+This fixes a bug where deleting a role policy would not remove its parent role relationships from the index. A subsequent policy update would then rebuild the parent role index from stale state, effectively restoring the deleted role policy's inheritance rules. For example, if a role policy defined `employee` as inheriting from `user`, deleting that role policy and then adding or updating any other policy would cause `employee` to continue inheriting from `user`.
