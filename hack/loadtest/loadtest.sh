@@ -77,26 +77,26 @@ executeTest() {
   local resultPrefix="results/${STORE}_${NUM_POLICIES}"
 
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
-  ghz --insecure --reflect \
+  ghz --insecure \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
       --concurrency "$CONCURRENCY" \
       --connections "$CONNECTIONS" \
       --rps "$RPS" \
       --duration "${DURATION_SECS}s" \
-      --format json \
-      -O "${resultPrefix}_rps.json" \
+      -O json \
+      -o "${resultPrefix}_rps.json" \
       "${SERVER}"
 
   printf "Running throughput test: %s iterations\n" "$ITERATIONS"
-  ghz --insecure --reflect \
+  ghz --insecure \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
       --concurrency "$CONCURRENCY" \
       --connections "$CONNECTIONS" \
       --total "$ITERATIONS" \
-      --format json \
-      -O "${resultPrefix}_throughput.json" \
+      -O json \
+      -o "${resultPrefix}_throughput.json" \
       "${SERVER}"
 }
 
