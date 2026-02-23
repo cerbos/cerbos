@@ -13,8 +13,9 @@
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = [
-            pkgs.k6
+            pkgs.ghz
             pkgs.grpcurl
+            pkgs.jq
           ];
         };
       });

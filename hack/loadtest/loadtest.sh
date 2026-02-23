@@ -8,10 +8,10 @@ set -euo pipefail
 
 # Test parameters
 AUDIT_ENABLED=${AUDIT_ENABLED:-"false"}
+CONCURRENCY=${CONCURRENCY:-"100"}
+CONNECTIONS=${CONNECTIONS:-"5"}
 DURATION_SECS=${DURATION_SECS:-"120"}
 ITERATIONS=${ITERATIONS:-"1000000"}
-MAX_VUS=${MAX_VUS:-"100"}
-MIN_VUS=${MIN_VUS:-"25"}
 NUM_POLICIES=${NUM_POLICIES:-"1000"}
 REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
 REQ_KIND=${REQ_KIND:-"cr_req01"}
@@ -70,18 +70,35 @@ up() {
 
 executeTest() {
   mkdir -p results
-  k6 run \
-    --out json="results/${STORE}_${NUM_POLICIES}.json" \
-    -e DURATION_SECS="$DURATION_SECS" \
-    -e ITERATIONS="$ITERATIONS" \
-    -e MAX_VUS="$MAX_VUS" \
-    -e MIN_VUS="$MIN_VUS" \
-    -e REQ_COUNT="$REQ_COUNT" \
-    -e REQ_KIND="$REQ_KIND" \
-    -e RPS="$RPS" \
-    -e SERVER="$SERVER" \
-    -e WORK_DIR="$WORK_DIR" \
-    check.js
+
+  local dataFile="${WORK_DIR}/ghz_data.json"
+  printf "Building ghz data file from %s request files\n" "$REQ_COUNT"
+  jq -s '[.[].request]' "${WORK_DIR}/requests/${REQ_KIND}_"*.json > "$dataFile"
+
+  local resultPrefix="results/${STORE}_${NUM_POLICIES}"
+
+  printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
+  ghz --insecure --reflect \
+      --call cerbos.svc.v1.CerbosService/CheckResources \
+      --data-file "$dataFile" \
+      --concurrency "$CONCURRENCY" \
+      --connections "$CONNECTIONS" \
+      --rps "$RPS" \
+      --duration "${DURATION_SECS}s" \
+      --format json \
+      -O "${resultPrefix}_rps.json" \
+      "${SERVER}"
+
+  printf "Running throughput test: %s iterations\n" "$ITERATIONS"
+  ghz --insecure --reflect \
+      --call cerbos.svc.v1.CerbosService/CheckResources \
+      --data-file "$dataFile" \
+      --concurrency "$CONCURRENCY" \
+      --connections "$CONNECTIONS" \
+      --total "$ITERATIONS" \
+      --format json \
+      -O "${resultPrefix}_throughput.json" \
+      "${SERVER}"
 }
 
 usage() {
