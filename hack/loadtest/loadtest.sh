@@ -13,7 +13,6 @@ CONNECTIONS=${CONNECTIONS:-"5"}
 DURATION_SECS=${DURATION_SECS:-"120"}
 ITERATIONS=${ITERATIONS:-"1000000"}
 NUM_POLICIES=${NUM_POLICIES:-"1000"}
-REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
 REQ_KIND=${REQ_KIND:-"cr_req01"}
 RPS=${RPS:-"500"}
 SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
@@ -72,7 +71,7 @@ executeTest() {
   mkdir -p results
 
   local dataFile="${WORK_DIR}/ghz_data.json"
-  printf "Building ghz data file from %s request files\n" "$REQ_COUNT"
+  printf "Building ghz data file from %s request files\n" "${REQ_KIND}"
   jq -s '[.[].request]' "${WORK_DIR}/requests/${REQ_KIND}_"*.json > "$dataFile"
 
   local resultPrefix="results/${STORE}_${NUM_POLICIES}"
