@@ -14,11 +14,11 @@ MAX_VUS=${MAX_VUS:-"100"}
 MIN_VUS=${MIN_VUS:-"25"}
 NUM_POLICIES=${NUM_POLICIES:-"1000"}
 REQ_COUNT=${REQ_COUNT:-"$NUM_POLICIES"}
-REQ_KIND=${REQ_KIND:-"crs_req01"}
+REQ_KIND=${REQ_KIND:-"cr_req01"}
 RPS=${RPS:-"500"}
 SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
 STORE=${STORE:-"disk"}
-SERVER=${SERVER:-"localhost:3592"}
+SERVER=${SERVER:-"localhost:3593"}
 USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
 WORK_DIR=${WORK_DIR:-"./work"}
@@ -53,7 +53,7 @@ up() {
   printf "Starting all services\n"
   AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker-compose up -d
 
-  while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://${SERVER}/_cerbos/health")" != "200" ]]; do
+  while ! grpcurl -plaintext "${SERVER}" grpc.health.v1.Health/Check >/dev/null 2>&1; do
     echo "Waiting for Cerbos..."
     sleep 1
   done

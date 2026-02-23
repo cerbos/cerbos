@@ -1,15 +1,17 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-// PROTOCOL: HTTP
-// ENDPOINT: /api/check
+// PROTOCOL: gRPC
+// SERVICE: cerbos.svc.v1.CerbosService/CheckResources
 
 import { SharedArray } from 'k6/data';
-import http from 'k6/http';
+import grpc from 'k6/net/grpc';
 import { randomSeed, check } from 'k6';
 import { randomItem } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js';
 
 randomSeed(999333666);
+
+const client = new grpc.Client();
 
 export const options = {
     scenarios: {
@@ -29,13 +31,12 @@ export const options = {
         },
     },
     thresholds: {
-        http_req_failed: ['rate<0.01'], // http errors should be less than 1%
-        http_req_duration: ['p(95)<300'], // 95% of requests should be below 300ms
+        grpc_req_duration: ['p(95)<300'], // 95% of requests should be below 300ms
+        checks: ['rate>0.99'], // >99% of checks should pass
     },
 };
 
 const requestsDir = `${__ENV.WORK_DIR}/requests`
-const host = `http://${__ENV.SERVER}`
 
 const fileName = (prefix, num) => `${requestsDir}/${prefix}_${num.toString().padStart(5, 0)}.json`;
 
@@ -80,19 +81,16 @@ function deepEqual(object1, object2) {
 }
 
 export default function () {
-    const req = randomItem(requests)
-    const url = `${host}${req.url}`;
-    const res = http.post(url, JSON.stringify(req.request), {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
+    client.connect(__ENV.SERVER, { plaintext: true, reflect: true });
+    const req = randomItem(requests);
+    const res = client.invoke(
+        'cerbos.svc.v1.CerbosService/CheckResources',
+        req.request,
+    );
 
     check(res, {
-        'status is 200': (r) => r.status === 200,
-        'response is equal to wanted response': (r) => {
-            return deepEqual(JSON.parse(r.body), req.wantResponse)
-        },
+        'status is OK': (r) => r.status === grpc.StatusOK,
+        'response matches expected': (r) => deepEqual(r.message, req.wantResponse),
     });
+    client.close();
 }
-
