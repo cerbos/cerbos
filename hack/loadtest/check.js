@@ -12,6 +12,7 @@ import { randomItem } from 'https://jslib.k6.io/k6-utils/1.1.0/index.js';
 randomSeed(999333666);
 
 const client = new grpc.Client();
+let connected = false;
 
 export const options = {
     scenarios: {
@@ -54,34 +55,33 @@ const requests = new SharedArray('requests', function () {
     return reqs
 });
 
-// https://dmitripavlutin.com/how-to-compare-objects-in-javascript/
-function isObject(object) {
-    return object != null && typeof object === 'object';
-}
-
-// https://dmitripavlutin.com/how-to-compare-objects-in-javascript/
-function deepEqual(object1, object2) {
-    const keys1 = Object.keys(object1);
-    const keys2 = Object.keys(object2);
-    if (keys1.length !== keys2.length) {
-        return false;
-    }
-    for (const key of keys1) {
-        const val1 = object1[key];
-        const val2 = object2[key];
-        const areObjects = isObject(val1) && isObject(val2);
-        if (
-            areObjects && !deepEqual(val1, val2) ||
-            !areObjects && val1 !== val2
-        ) {
-            return false;
+// containsExpected checks that all fields in `expected` exist in `actual` with
+// matching values. Extra fields in `actual` (e.g. protobuf zero-value defaults)
+// are ignored.
+function containsExpected(actual, expected) {
+    if (Array.isArray(expected) && Array.isArray(actual)) {
+        if (expected.length !== actual.length) return false;
+        for (let i = 0; i < expected.length; i++) {
+            if (!containsExpected(actual[i], expected[i])) return false;
         }
+        return true;
     }
-    return true;
+    if (expected != null && typeof expected === 'object' &&
+        actual != null && typeof actual === 'object') {
+        for (const key of Object.keys(expected)) {
+            if (!(key in actual)) return false;
+            if (!containsExpected(actual[key], expected[key])) return false;
+        }
+        return true;
+    }
+    return actual === expected;
 }
 
 export default function () {
-    client.connect(__ENV.SERVER, { plaintext: true, reflect: true });
+    if (!connected) {
+        client.connect(__ENV.SERVER, { plaintext: true, reflect: true });
+        connected = true;
+    }
     const req = randomItem(requests);
     const res = client.invoke(
         'cerbos.svc.v1.CerbosService/CheckResources',
@@ -90,7 +90,6 @@ export default function () {
 
     check(res, {
         'status is OK': (r) => r.status === grpc.StatusOK,
-        'response matches expected': (r) => deepEqual(r.message, req.wantResponse),
+        'response matches expected': (r) => containsExpected(r.message, req.wantResponse),
     });
-    client.close();
 }
