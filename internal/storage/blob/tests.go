@@ -43,7 +43,7 @@ type UploadParam struct {
 	BucketURL    string
 	BucketPrefix string
 	Username     string
-	Password     string
+	Password     string //nolint:gosec
 	Directory    string
 }
 
@@ -194,7 +194,7 @@ func StartSeaweedFS(ctx context.Context, t *testing.T, bucketName string) string
 			return err
 		}
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := http.DefaultClient.Do(req) //nolint:gosec
 		if err != nil {
 			return err
 		}

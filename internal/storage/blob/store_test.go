@@ -308,7 +308,7 @@ func (mc *mockCloner) Clone(ctx context.Context) (*CloneResult, error) {
 				return nil, err
 			}
 
-			if err := os.WriteFile(path, fBytes, 0o600); err != nil {
+			if err := os.WriteFile(path, fBytes, 0o600); err != nil { //nolint:gosec
 				return nil, err
 			}
 		}

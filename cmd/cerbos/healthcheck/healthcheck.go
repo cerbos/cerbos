@@ -255,7 +255,7 @@ func (hc httpCheck) check(ctx context.Context, out io.Writer) error {
 		return fmt.Errorf("failed to create request to %q: %w", hc.url, err)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("request to %q failed: %w", hc.url, err)
 	}

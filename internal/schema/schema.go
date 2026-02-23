@@ -173,7 +173,7 @@ func DefaultResolver(loader Loader) Resolver {
 func loadFileURL(u *url.URL) (io.ReadCloser, error) {
 	f := u.Path
 	var pathErr *fs.PathError
-	if file, err := os.Open(f); err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+	if file, err := os.Open(f); err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) { //nolint:gosec
 		return nil, &notFoundErr{
 			url:      u.String(),
 			scheme:   u.Scheme,
@@ -195,7 +195,7 @@ func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}

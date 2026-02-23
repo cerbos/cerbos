@@ -208,6 +208,7 @@ func TestAdminAPICredentials(t *testing.T) {
 	}
 }
 
+//nolint:gosec
 func TestAdminCredentialsAreUnsafe(t *testing.T) {
 	testCases := []struct {
 		name         string

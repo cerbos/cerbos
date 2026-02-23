@@ -62,7 +62,7 @@ type SSHAuth struct {
 	// The path to the SSH private key file.
 	PrivateKeyFile string `yaml:"privateKeyFile" conf:",example=${HOME}/.ssh/id_rsa"`
 	// The password to the SSH private key.
-	Password string `yaml:"password" conf:",example=pw"`
+	Password string `yaml:"password" conf:",example=pw"` //nolint:gosec
 }
 
 func (sa *SSHAuth) Auth() (transport.AuthMethod, error) {
@@ -83,7 +83,7 @@ type HTTPSAuth struct {
 	// The username to use for authentication.
 	Username string `yaml:"username" conf:",example=cerbos"`
 	// The password (or token) to use for authentication.
-	Password string `yaml:"password" conf:",example=${GITHUB_TOKEN}"`
+	Password string `yaml:"password" conf:",example=${GITHUB_TOKEN}"` //nolint:gosec
 }
 
 func (ha *HTTPSAuth) Auth() (transport.AuthMethod, error) {

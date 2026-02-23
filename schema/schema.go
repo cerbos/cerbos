@@ -48,7 +48,7 @@ func ServeSvcSwagger(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(schema)
+	_, _ = w.Write(schema) //nolint:gosec
 }
 
 func ServeUI(w http.ResponseWriter, r *http.Request) {

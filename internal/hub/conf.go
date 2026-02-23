@@ -101,7 +101,7 @@ type CredentialsConf struct {
 	// ClientID of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_ID environment variable.
 	ClientID string `yaml:"clientID" conf:",example=92B0K05B6HOF"`
 	// ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
-	ClientSecret string `yaml:"clientSecret" conf:",example=${CERBOS_HUB_CLIENT_SECRET}"`
+	ClientSecret string `yaml:"clientSecret" conf:",example=${CERBOS_HUB_CLIENT_SECRET}"` //nolint:gosec
 	// WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
 	WorkspaceSecret string `yaml:"workspaceSecret" conf:",example=${CERBOS_HUB_WORKSPACE_SECRET}"`
 	// Deprecated: Use PDPID

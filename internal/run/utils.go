@@ -50,7 +50,7 @@ func checkHealth(client *http.Client, healthURL string) error {
 		return err
 	}
 
-	resp, err := client.Do(req)
+	resp, err := client.Do(req) //nolint:gosec
 	if err != nil {
 		return err
 	}

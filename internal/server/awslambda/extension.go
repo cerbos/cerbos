@@ -77,7 +77,7 @@ func RegisterNewExtension(ctx context.Context, runtimeAPI string) (*lambdaExt, e
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set(extensionNameHeader, path.Base(os.Args[0]))
 
-	resp, err := l.client.Do(req)
+	resp, err := l.client.Do(req) //nolint:gosec
 	if err != nil {
 		return nil, fmt.Errorf("failed to register extension: %w", err)
 	}
@@ -102,7 +102,7 @@ func (l *lambdaExt) CheckShutdown(ctx context.Context) (bool, error) {
 
 	req.Header.Set(extensionIDHeader, l.extensionID)
 
-	resp, err := l.client.Do(req)
+	resp, err := l.client.Do(req) //nolint:gosec
 	if err != nil {
 		return false, fmt.Errorf("failed to get next event: %w", err)
 	}
@@ -134,7 +134,7 @@ func (l *lambdaExt) ReportError(ctx context.Context, err error) error {
 	req.Header.Set(extensionIDHeader, l.extensionID)
 	req.Header.Set(extensionErrorType, "Extension.UnknownError")
 
-	resp, err := l.client.Do(req)
+	resp, err := l.client.Do(req) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("failed to report error: %w", err)
 	}

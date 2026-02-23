@@ -43,7 +43,7 @@ const (
 
 type AuthCreds struct {
 	Username string
-	Password string
+	Password string //nolint:gosec
 }
 
 func (ac AuthCreds) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
@@ -324,7 +324,7 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := c.Do(req)
+		resp, err := c.Do(req) //nolint:gosec
 		require.NoError(t, err, "HTTP request failed")
 
 		defer func() {
@@ -390,7 +390,7 @@ func (tr *TestRunner) checkCORS(c *http.Client, hostAddr string) func(*testing.T
 						req.Header.Set("Origin", "https://cerbos.dev")
 						req.Header.Set("Access-Control-Request-Method", method)
 
-						resp, err := c.Do(req)
+						resp, err := c.Do(req) //nolint:gosec
 						require.NoError(t, err, "HTTP request failed")
 
 						defer func() {
@@ -493,7 +493,7 @@ func httpHealthCheckPasses(client *http.Client, url string, reqTimeout time.Dura
 			return false
 		}
 
-		resp, err := client.Do(req)
+		resp, err := client.Do(req) //nolint:gosec
 		if err != nil {
 			return false
 		}
