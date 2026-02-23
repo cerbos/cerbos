@@ -29,7 +29,7 @@ clean() {
 
 generateResources() {
   printf "Generating %s policy sets\n" "$NUM_POLICIES"
-  go run ./generate.go --out="${WORK_DIR}" --count="$NUM_POLICIES"
+  go run -tags loadtest . --out="${WORK_DIR}" --count="$NUM_POLICIES"
 }
 
 put() {
@@ -67,32 +67,6 @@ up() {
   docker-compose logs -f
 }
 
-JQ_SUMMARY='
-def round2: . * 100 | round / 100;
-def ms: . / 1e6 | round2;
-def bar($m): "\u220e" * (if $m > 0 then ((. / $m * 40) | floor) else 0 end);
-
-"\nSummary:",
-"  Count:        \(.count)",
-"  Total:        \(.total / 1e9 | round2) s",
-"  Slowest:      \(.slowest | ms) ms",
-"  Fastest:      \(.fastest | ms) ms",
-"  Average:      \(.average | ms) ms",
-"  Requests/sec: \(.rps | round2)",
-"",
-"Response time histogram:",
-(.histogram | (map(.count) | max) as $m | .[] |
-  "\(.mark * 1000 | round2 | tostring | ("        "[length:]) + .)  [\(.count | tostring | . + ("      "[length:]))] |\(.count | bar($m))"),
-"",
-"Latency distribution:",
-(.latencyDistribution[] |
-  "  \(.percentage | tostring | ("   "[length:]) + .) % in \(.latency | ms) ms"),
-"",
-"Status code distribution:",
-(.statusCodeDistribution | to_entries[] |
-  "  [\(.key)]  \(.value) responses")
-'
-
 executeTest() {
   local dataFile="${WORK_DIR}/ghz_data.json"
   printf "Building ghz data file from %s request files\n" "${REQ_KIND}"
@@ -100,6 +74,8 @@ executeTest() {
 
   mkdir -p results
   local resultPrefix="results/${STORE}_${NUM_POLICIES}"
+
+  go build -tags printsummary -o "${WORK_DIR}/printsummary" .
 
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
   ghz --insecure \
@@ -110,7 +86,7 @@ executeTest() {
       --rps "$RPS" \
       --duration "${DURATION_SECS}s" \
       -O json \
-      "${SERVER}" | tee "${resultPrefix}_rps.json" | jq -r "$JQ_SUMMARY"
+      "${SERVER}" | tee "${resultPrefix}_rps.json" | "${WORK_DIR}/printsummary"
 
   printf "\nRunning throughput test: %s iterations\n" "$ITERATIONS"
   ghz --insecure \
@@ -120,7 +96,7 @@ executeTest() {
       --connections "$CONNECTIONS" \
       --total "$ITERATIONS" \
       -O json \
-      "${SERVER}" | tee "${resultPrefix}_throughput.json" | jq -r "$JQ_SUMMARY"
+      "${SERVER}" | tee "${resultPrefix}_throughput.json" | "${WORK_DIR}/printsummary"
 }
 
 usage() {

@@ -4,6 +4,7 @@ use (
 	.
 	./api/genpb
 	./deploy/awslambda/extension
+	./hack/loadtest
 	./hack/tools/changelog
 	./hack/tools/generate-npm-packages
 	./hack/tools/testsplit
