@@ -21,6 +21,82 @@ SERVER=${SERVER:-"localhost:3593"}
 USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
 WORK_DIR=${WORK_DIR:-"./work"}
+METRICS_URL=${METRICS_URL:-"http://localhost:3592/_cerbos/metrics"}
+
+PDP_METRICS=(
+  go_memstats_heap_alloc_bytes
+  go_memstats_heap_sys_bytes
+  go_memstats_heap_inuse_bytes
+  go_memstats_stack_inuse_bytes
+  go_memstats_gc_sys_bytes
+)
+
+# Scrape Cerbos metrics endpoint and output "metric_name integer_value" lines.
+# Args: $1 = output file
+# Returns non-zero if curl fails.
+scrapeMetrics() {
+  local outFile="$1"
+  local raw
+  raw=$(curl -sf "$METRICS_URL") || return 1
+
+  > "$outFile"
+  for m in "${PDP_METRICS[@]}"; do
+    local val
+    val=$(echo "$raw" | grep "^${m} " | cut -d ' ' -f 2)
+    if [[ -n "$val" ]]; then
+      # Convert scientific notation to integer
+      val=$(printf '%.0f' "$val")
+      echo "$m $val" >> "$outFile"
+    fi
+  done
+}
+
+# Print a before/after metrics diff table and write JSON.
+# Args: $1 = beforeFile, $2 = afterFile, $3 = jsonFile
+printMetricsDiff() {
+  local beforeFile="$1" afterFile="$2" jsonFile="$3"
+
+  printf "\nPDP Metrics (before/after):\n"
+  printf "%-30s %12s %12s %12s\n" "Metric" "Before" "After" "Delta"
+  printf "%-30s %12s %12s %12s\n" "------" "------" "-----" "-----"
+
+  local jsonEntries=()
+  while read -r metric beforeVal; do
+    local afterVal
+    afterVal=$(grep "^${metric} " "$afterFile" | cut -d ' ' -f 2)
+    if [[ -z "$afterVal" ]]; then
+      continue
+    fi
+
+    local delta sign
+    delta=$((afterVal - beforeVal))
+    if [[ $delta -ge 0 ]]; then
+      sign="+"
+    else
+      sign="-"
+      delta=$((-delta))
+    fi
+
+    local shortName="${metric#go_memstats_}"
+    local beforeHuman afterHuman deltaHuman
+    beforeHuman=$(numfmt --to=iec-i --suffix=B "$beforeVal")
+    afterHuman=$(numfmt --to=iec-i --suffix=B "$afterVal")
+    deltaHuman=$(numfmt --to=iec-i --suffix=B "$delta")
+
+    printf "%-30s %12s %12s %12s\n" "$shortName" "$beforeHuman" "$afterHuman" "${sign}${deltaHuman}"
+
+    local rawDelta=$((afterVal - beforeVal))
+    jsonEntries+=("{\"name\":\"${shortName}\",\"before\":${beforeVal},\"after\":${afterVal},\"delta\":${rawDelta}}")
+  done < "$beforeFile"
+
+  if [[ ${#jsonEntries[@]} -gt 0 ]]; then
+    local joined
+    joined=$(printf ',%s' "${jsonEntries[@]}")
+    joined="${joined:1}" # strip leading comma
+    echo "{\"metrics\":[${joined}]}" | jq . > "$jsonFile"
+    printf "Metrics saved to %s\n" "$jsonFile"
+  fi
+}
 
 clean() {
   printf "Cleaning up\n"
@@ -77,7 +153,16 @@ executeTest() {
 
   go build -tags printsummary -o "${WORK_DIR}/printsummary" .
 
+  local beforeFile afterFile metricsAvailable
+
+  # --- Sustained-rate test ---
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
+
+  beforeFile=$(mktemp)
+  afterFile=$(mktemp)
+  metricsAvailable=true
+  scrapeMetrics "$beforeFile" || metricsAvailable=false
+
   ghz --insecure \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
@@ -88,7 +173,21 @@ executeTest() {
       -O json \
       "${SERVER}" | tee "${resultPrefix}_rps.json" | "${WORK_DIR}/printsummary"
 
+  if $metricsAvailable && scrapeMetrics "$afterFile"; then
+    if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
+      printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_rps_metrics.json"
+    fi
+  fi
+  rm -f "$beforeFile" "$afterFile"
+
+  # --- Throughput test ---
   printf "\nRunning throughput test: %s iterations\n" "$ITERATIONS"
+
+  beforeFile=$(mktemp)
+  afterFile=$(mktemp)
+  metricsAvailable=true
+  scrapeMetrics "$beforeFile" || metricsAvailable=false
+
   ghz --insecure \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
@@ -97,6 +196,13 @@ executeTest() {
       --total "$ITERATIONS" \
       -O json \
       "${SERVER}" | tee "${resultPrefix}_throughput.json" | "${WORK_DIR}/printsummary"
+
+  if $metricsAvailable && scrapeMetrics "$afterFile"; then
+    if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
+      printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_throughput_metrics.json"
+    fi
+  fi
+  rm -f "$beforeFile" "$afterFile"
 }
 
 usage() {
