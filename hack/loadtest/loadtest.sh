@@ -24,6 +24,7 @@ WORK_DIR=${WORK_DIR:-"./work"}
 METRICS_URL=${METRICS_URL:-"http://localhost:3592/_cerbos/metrics"}
 
 PDP_METRICS=(
+  process_resident_memory_bytes
   go_memstats_heap_alloc_bytes
   go_memstats_heap_sys_bytes
   go_memstats_heap_inuse_bytes
