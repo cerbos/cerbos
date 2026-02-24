@@ -153,6 +153,16 @@ executeTest() {
 
   go build -tags printsummary -o "${WORK_DIR}/printsummary" .
 
+  # --- Warmup ---
+  printf "Warming up PDP with 1000 requests...\n"
+  ghz --insecure \
+      --call cerbos.svc.v1.CerbosService/CheckResources \
+      --data-file "$dataFile" \
+      --concurrency "$CONCURRENCY" \
+      --connections "$CONNECTIONS" \
+      --total 1000 \
+      "${SERVER}" > /dev/null
+
   local beforeFile afterFile metricsAvailable
 
   # --- Sustained-rate test ---
@@ -180,8 +190,12 @@ executeTest() {
   fi
   rm -f "$beforeFile" "$afterFile"
 
+  # Let GC settle before starting the next test
+  printf "\nWaiting 10s for GC to settle...\n"
+  sleep 10
+
   # --- Throughput test ---
-  printf "\nRunning throughput test: %s iterations\n" "$ITERATIONS"
+  printf "Running throughput test: %s iterations\n" "$ITERATIONS"
 
   beforeFile=$(mktemp)
   afterFile=$(mktemp)
