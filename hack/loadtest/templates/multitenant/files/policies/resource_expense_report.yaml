@@ -1,0 +1,12 @@
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: expense_report
+  version: default
+  rules:
+    - actions: ["create", "view", "approve", "reject"]
+      effect: EFFECT_ALLOW
+      roles: ["admin", "jr_admin", "assistant", "manager"]
+      condition:
+        match:
+          expr: R.attr.tenantId == P.attr.tenantId
