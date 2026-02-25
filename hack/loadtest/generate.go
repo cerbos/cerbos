@@ -7,7 +7,6 @@ package main
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -88,7 +87,7 @@ func (c *cmd) Run() error {
 		}
 	}
 
-	return c.buildReqIndex()
+	return nil
 }
 
 func prepOutDirs(out string) error {
@@ -158,31 +157,3 @@ func renderFile(fileName string, tmpl *template.Template, args templateArgs) err
 	return tmpl.Execute(f, args)
 }
 
-func (c *cmd) buildReqIndex() error {
-	requests, err := fs.Glob(fsys, filepath.Join(templatesDir, requestsDir, "*.tpl"))
-	if err != nil {
-		return fmt.Errorf("failed to glob request templates: %w", err)
-	}
-
-	index := make(map[string][]string)
-	for _, req := range requests {
-		fn := strings.TrimSuffix(filepath.Base(req), ".json.tpl")
-		fileList := make([]string, c.Count)
-		for i := 0; i < c.Count; i++ {
-			fileList[i] = fmt.Sprintf("%s_%05d.json", fn, i)
-		}
-
-		index[fn] = fileList
-	}
-
-	idxFile := filepath.Join(c.Out, tmplOutConf[requestsDir], "index.json")
-	f, err := os.Create(idxFile)
-	if err != nil {
-		return fmt.Errorf("failed to create %q: %w", idxFile, err)
-	}
-
-	defer f.Close()
-
-	m := json.NewEncoder(f)
-	return m.Encode(index)
-}
