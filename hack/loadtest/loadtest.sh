@@ -156,7 +156,14 @@ up() {
 executeTest() {
   local dataFile="${WORK_DIR}/ghz_data.json"
   printf "Building ghz data file from %s request files\n" "${REQ_KIND}"
-  jq -s '[.[].request]' "${WORK_DIR}/requests/${REQ_KIND}_"*.json > "$dataFile"
+  printf '[' > "$dataFile"
+  sep=""
+  for f in "${WORK_DIR}/requests/${REQ_KIND}_"*.json; do
+    printf '%s' "$sep" >> "$dataFile"
+    cat "$f" >> "$dataFile"
+    sep=","
+  done
+  printf ']' >> "$dataFile"
 
   mkdir -p results
   local resultPrefix="results/${STORE}_${NUM_POLICIES}"
