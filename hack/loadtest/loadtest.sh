@@ -185,7 +185,7 @@ executeTest() {
   local beforeFile afterFile metricsAvailable
   beforeFile=$(mktemp)
   afterFile=$(mktemp)
-  trap 'rm -f "$beforeFile" "$afterFile"' EXIT INT TERM
+  trap "rm -f \"$beforeFile\" \"$afterFile\"" EXIT INT TERM
 
   # --- Sustained-rate test ---
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
