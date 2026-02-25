@@ -113,21 +113,30 @@ put() {
   cerbosctl --server="${SERVER}" --username="${USERNAME}" --password="${PASSWORD}" --plaintext put "${1}" "${2}"
 }
 
+composeProfiles() {
+  if [[ "${STORE}" == "postgres" ]]; then
+    echo "--profile" "postgres"
+  fi
+}
+
 down() {
   printf "Killing all services\n"
-  docker-compose down
+  docker compose $(composeProfiles) down
 }
 
 up() {
   printf "Preparing config\n"
   mkdir -p "${WORK_DIR}"/{audit,cerbos}
-  mkdir -p "${WORK_DIR}"/postgres/{init,data}
-  cp ../../internal/storage/db/postgres/schema.sql "${WORK_DIR}/postgres/init/schema.sql"
+
+  if [[ "${STORE}" == "postgres" ]]; then
+    mkdir -p "${WORK_DIR}"/postgres/{init,data}
+    cp ../../internal/storage/db/postgres/schema.sql "${WORK_DIR}/postgres/init/schema.sql"
+  fi
 
   cp conf/cerbos/.cerbos.yaml "${WORK_DIR}/cerbos/.cerbos.yaml"
 
   printf "Starting all services\n"
-  AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker-compose up -d
+  AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker compose $(composeProfiles) up -d
 
   while ! grpcurl -plaintext "${SERVER}" grpc.health.v1.Health/Check >/dev/null 2>&1; do
     echo "Waiting for Cerbos..."
@@ -141,7 +150,7 @@ up() {
     put policies "${WORK_DIR}"/policies
   fi
 
-  docker-compose logs -f
+  docker compose $(composeProfiles) logs -f
 }
 
 executeTest() {
