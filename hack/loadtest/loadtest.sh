@@ -57,6 +57,12 @@ scrapeMetrics() {
 printMetricsDiff() {
   local beforeFile="$1" afterFile="$2" jsonFile="$3"
 
+  local hasNumfmt=true
+  if ! command -v numfmt &>/dev/null; then
+    printf "\nNote: numfmt not found (part of GNU coreutils). Metrics will be shown in raw bytes.\n"
+    hasNumfmt=false
+  fi
+
   printf "\nPDP Metrics (before/after):\n"
   printf "%-30s %12s %12s %12s\n" "Metric" "Before" "After" "Delta"
   printf "%-30s %12s %12s %12s\n" "------" "------" "-----" "-----"
@@ -79,10 +85,12 @@ printMetricsDiff() {
     fi
 
     local shortName="${metric#go_memstats_}"
-    local beforeHuman afterHuman deltaHuman
-    beforeHuman=$(numfmt --to=iec-i --suffix=B "$beforeVal")
-    afterHuman=$(numfmt --to=iec-i --suffix=B "$afterVal")
-    deltaHuman=$(numfmt --to=iec-i --suffix=B "$delta")
+    local beforeHuman="$beforeVal" afterHuman="$afterVal" deltaHuman="$delta"
+    if $hasNumfmt; then
+      beforeHuman=$(numfmt --to=iec-i --suffix=B "$beforeVal")
+      afterHuman=$(numfmt --to=iec-i --suffix=B "$afterVal")
+      deltaHuman=$(numfmt --to=iec-i --suffix=B "$delta")
+    fi
 
     printf "%-30s %12s %12s %12s\n" "$shortName" "$beforeHuman" "$afterHuman" "${sign}${deltaHuman}"
 
