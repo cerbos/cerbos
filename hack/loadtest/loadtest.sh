@@ -174,12 +174,13 @@ executeTest() {
       "${SERVER}" > /dev/null
 
   local beforeFile afterFile metricsAvailable
+  beforeFile=$(mktemp)
+  afterFile=$(mktemp)
+  trap 'rm -f "$beforeFile" "$afterFile"' EXIT INT TERM
 
   # --- Sustained-rate test ---
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
 
-  beforeFile=$(mktemp)
-  afterFile=$(mktemp)
   metricsAvailable=true
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
@@ -198,7 +199,6 @@ executeTest() {
       printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_rps_metrics.json"
     fi
   fi
-  rm -f "$beforeFile" "$afterFile"
 
   # Let GC settle before starting the next test
   printf "\nWaiting 10s for GC to settle...\n"
@@ -207,8 +207,6 @@ executeTest() {
   # --- Throughput test ---
   printf "Running throughput test: %s iterations\n" "$ITERATIONS"
 
-  beforeFile=$(mktemp)
-  afterFile=$(mktemp)
   metricsAvailable=true
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
@@ -226,7 +224,6 @@ executeTest() {
       printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_throughput_metrics.json"
     fi
   fi
-  rm -f "$beforeFile" "$afterFile"
 }
 
 usage() {
