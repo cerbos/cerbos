@@ -13,6 +13,7 @@ CONNECTIONS=${CONNECTIONS:-"5"}
 DURATION_SECS=${DURATION_SECS:-"120"}
 ITERATIONS=${ITERATIONS:-"1000000"}
 NUM_POLICIES=${NUM_POLICIES:-"1000"}
+POLICY_SET=${POLICY_SET:-"classic"}
 REQ_KIND=${REQ_KIND:-"cr_req01"}
 RPS=${RPS:-"500"}
 SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
@@ -114,7 +115,7 @@ clean() {
 
 generateResources() {
   printf "Generating %s policy sets\n" "$NUM_POLICIES"
-  go run -tags loadtest . --out="${WORK_DIR}" --count="$NUM_POLICIES"
+  go run -tags loadtest . --out="${WORK_DIR}" --count="$NUM_POLICIES" --set="${POLICY_SET}"
 }
 
 put() {

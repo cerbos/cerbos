@@ -63,6 +63,7 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 | `METRICS_URL` | Cerbos metrics endpoint URL | `http://localhost:3592/_cerbos/metrics` |
 | `NUM_POLICIES` | Number of policy sets to generate | `1000` |
 | `PASSWORD` | Cerbos Admin API password | `cerbosAdmin` |
+| `POLICY_SET` | Policy template set to use (see below) | `classic` |
 | `REQ_KIND` | Request template prefix to use | `cr_req01` |
 | `RPS` | Target requests per second for the sustained-rate test | `500` |
 | `SCHEMA_ENFORCEMENT` | Schema enforcement level | `none` |
@@ -70,6 +71,20 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 | `STORE` | Storage backend (`disk` or `postgres`) | `disk` |
 | `USERNAME` | Cerbos Admin API username | `cerbos` |
 | `WORK_DIR` | Directory for generated data and temporary files | `./work` |
+
+## Policy Sets
+
+| Set | Description | `REQ_KIND` values |
+|-----|-------------|-------------------|
+| `classic` | Resource policies with derived roles and scopes | `cr_req01`, `cr_req02`, `crb_req01`, `crb_req02` |
+| `multitenant` | Role policies with tenant scoping (12 resource kinds) | `cr_req01`, `cr_req02` |
+
+Example using the multitenant set:
+
+```sh
+POLICY_SET=multitenant NUM_POLICIES=100 ./loadtest.sh -g
+POLICY_SET=multitenant NUM_POLICIES=100 REQ_KIND=cr_req01 ./loadtest.sh -e
+```
 
 ## Observability
 
