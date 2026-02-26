@@ -76,7 +76,7 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 
 | Set | Description | `REQ_KIND` values |
 |-----|-------------|-------------------|
-| `classic` | Resource policies with derived roles and scopes | `cr_req01`, `cr_req02`, `crb_req01`, `crb_req02` |
+| `classic` | Resource policies with derived roles and scopes | `cr_req01`, `cr_req02` |
 | `multitenant` | Role policies with tenant scoping (12 resource kinds) | `cr_req01`, `cr_req02` |
 
 Example using the multitenant set:
