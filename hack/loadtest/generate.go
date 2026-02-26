@@ -120,7 +120,6 @@ func prepOutDirs(out string) error {
 	return nil
 }
 
-// dirExistsInEmbed checks whether a directory exists in the embedded template filesystem.
 func dirExistsInEmbed(dir string) bool {
 	entries, err := fsys.ReadDir(filepath.Join(templatesDir, dir))
 	if err != nil {

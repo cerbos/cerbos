@@ -64,9 +64,11 @@ printMetricsDiff() {
     hasNumfmt=false
   fi
 
+  local rowFmt="%-30s %12s %12s %12s\n"
+
   printf "\nPDP Metrics (before/after):\n"
-  printf "%-30s %12s %12s %12s\n" "Metric" "Before" "After" "Delta"
-  printf "%-30s %12s %12s %12s\n" "------" "------" "-----" "-----"
+  printf "$rowFmt" "Metric" "Before" "After" "Delta"
+  printf "$rowFmt" "------" "------" "-----" "-----"
 
   local jsonEntries=()
   while read -r metric beforeVal; do
@@ -93,7 +95,7 @@ printMetricsDiff() {
       deltaHuman=$(numfmt --to=iec-i --suffix=B "$delta")
     fi
 
-    printf "%-30s %12s %12s %12s\n" "$shortName" "$beforeHuman" "$afterHuman" "${sign}${deltaHuman}"
+    printf "$rowFmt" "$shortName" "$beforeHuman" "$afterHuman" "${sign}${deltaHuman}"
 
     local rawDelta=$((afterVal - beforeVal))
     jsonEntries+=("{\"name\":\"${shortName}\",\"before\":${beforeVal},\"after\":${afterVal},\"delta\":${rawDelta}}")
