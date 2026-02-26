@@ -83,7 +83,7 @@ func (cd *constantDefinitions) Compile(definitions map[string]*structpb.Value, p
 	for name, value := range definitions {
 		constPath := fmt.Sprintf("%s[%q]", path, name)
 
-		if err := ValidateIdentifier(name); err != nil {
+		if err := conditions.ValidateIdentifier(name); err != nil {
 			cd.modCtx.addErrForMapKeyAtProtoPath(constPath, errInvalidConstantName, "%s", err)
 		}
 

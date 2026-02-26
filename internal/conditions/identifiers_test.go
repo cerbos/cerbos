@@ -1,12 +1,12 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package compile_test
+package conditions_test
 
 import (
 	"testing"
 
-	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,7 +26,7 @@ func TestValidateIdentifiers(t *testing.T) {
 	}
 
 	for _, identifier := range valid {
-		assert.NoError(t, compile.ValidateIdentifier(identifier), "Expected %q to be valid", identifier)
+		assert.NoError(t, conditions.ValidateIdentifier(identifier), "Expected %q to be valid", identifier)
 	}
 
 	invalid := []string{
@@ -41,6 +41,6 @@ func TestValidateIdentifiers(t *testing.T) {
 	}
 
 	for _, identifier := range invalid {
-		assert.Error(t, compile.ValidateIdentifier(identifier), "Expected %q to be invalid", identifier)
+		assert.Error(t, conditions.ValidateIdentifier(identifier), "Expected %q to be invalid", identifier)
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"go.uber.org/multierr"
@@ -57,7 +57,7 @@ func (c *Conf) Validate() (outErr error) {
 	}
 
 	for identifier := range c.Globals {
-		if err := compile.ValidateIdentifier(identifier); err != nil {
+		if err := conditions.ValidateIdentifier(identifier); err != nil {
 			multierr.AppendInto(&outErr, fmt.Errorf("engine.globals: %w", err))
 		}
 	}

@@ -117,7 +117,7 @@ func (vd *variableDefinitions) Compile(definitions map[string]string, path, sour
 	for name, expr := range definitions {
 		varPath := fmt.Sprintf("%s[%q]", path, name)
 
-		if err := ValidateIdentifier(name); err != nil {
+		if err := conditions.ValidateIdentifier(name); err != nil {
 			vd.modCtx.addErrForMapKeyAtProtoPath(varPath, errInvalidVariableName, "%s", err)
 		}
 
