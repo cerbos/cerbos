@@ -19,6 +19,7 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/cel"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -26,8 +27,33 @@ const (
 	allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
 )
 
-var ignoredRuleTableProtoFields = map[string]struct{}{
-	"cerbos.runtime.v1.RuleTableMetadata.source_attributes": {},
+// functionalRuleRowFields lists proto field names that affect evaluation outcome.
+// Any RuleRow field NOT listed here is automatically excluded from the functional checksum
+var functionalRuleRowFields = map[protoreflect.Name]struct{}{
+	"resource": {}, "role": {},
+	// "action" and "allow_actions" are oneof variants of the "action_set" container.
+	// HashPB hashes the container, so these entries simply prevent the variant field names
+	// from being added to the ignore map — removing them would NOT exclude actions from the hash.
+	"action": {}, "allow_actions": {},
+	"condition": {}, "derived_role_condition": {}, "effect": {},
+	"scope": {}, "scope_permissions": {}, "version": {},
+	"emit_output": {}, "principal": {}, "params": {},
+	"derived_role_params": {}, "policy_kind": {}, "from_role_policy": {},
+}
+
+var ignoredNonFunctionalFields map[string]struct{}
+
+func init() {
+	ignoredNonFunctionalFields = make(map[string]struct{})
+	desc := (&runtimev1.RuleTable_RuleRow{}).ProtoReflect().Descriptor()
+	fields := desc.Fields()
+	for i := range fields.Len() {
+		f := fields.Get(i)
+		if _, ok := functionalRuleRowFields[f.Name()]; !ok {
+			ignoredNonFunctionalFields[string(f.FullName())] = struct{}{}
+		}
+	}
+	ignoredNonFunctionalFields["cerbos.runtime.v1.RuleTableMetadata.source_attributes"] = struct{}{}
 }
 
 type Index interface {
@@ -67,12 +93,31 @@ type parentRoleMap interface {
 	get(context.Context, ...string) (map[string]map[string][]string, error)
 }
 
+// deletableMap is the common subset of literalMap and globMap used by deleteFromCategoryMap.
+type deletableMap interface {
+	getAll(context.Context) (map[string]*rowSet, error)
+	set(context.Context, string, *rowSet) error
+	delete(context.Context, ...string) error
+}
+
 type Row struct {
 	*runtimev1.RuleTable_RuleRow
 	Params                     *rowParams
 	DerivedRoleParams          *rowParams
 	sum                        uint64
+	origins                    map[string]struct{} // set of contributing origin_fqns
 	NoMatchForScopePermissions bool
+}
+
+func (r *Row) clone() *Row {
+	c := *r
+	if r.origins != nil {
+		c.origins = make(map[string]struct{}, len(r.origins))
+		for k := range r.origins {
+			c.origins[k] = struct{}{}
+		}
+	}
+	return &c
 }
 
 type rowParams struct {
@@ -170,6 +215,55 @@ func (l *rowSet) del(r *Row) {
 	delete(l.m, r.sum)
 }
 
+// mergeOrigins returns a new Row that is a clone of dst with src's origins merged in.
+// Both dst and src must have non-nil origins.
+func mergeOrigins(dst, src *Row) *Row {
+	clone := dst.clone()
+	for o := range src.origins {
+		clone.origins[o] = struct{}{}
+	}
+	return clone
+}
+
+// mergeOrSet adds a row to the set. If a functionally identical row already exists
+// and both have origins, the origins are merged into a cloned row. Otherwise
+// the row is set directly. Callers must ensure the rowSet is not COW-shared.
+func (l *rowSet) mergeOrSet(r *Row) {
+	if existing, ok := l.m[r.sum]; ok && existing.origins != nil && r.origins != nil {
+		l.m[r.sum] = mergeOrigins(existing, r)
+		return
+	}
+	l.set(r)
+}
+
+// deleteOriginFromRowSet removes the given origin FQN from all rows in the set.
+// If a row's last origin is removed, it is deleted entirely.
+// If other origins remain, the row is cloned (to avoid mutating COW-shared pointers) and replaced.
+// For synthetic rows (nil origins), falls back to matching by OriginFqn.
+// Returns true if any modifications were made (needed to persist changes even when row count is unchanged).
+func deleteOriginFromRowSet(rs *rowSet, fqn string) bool {
+	modified := false
+	for _, r := range rs.rows() {
+		if r.origins != nil {
+			if _, ok := r.origins[fqn]; ok {
+				modified = true
+				if len(r.origins) == 1 {
+					rs.del(r)
+				} else {
+					rs.ensureUnique()
+					clone := r.clone()
+					delete(clone.origins, fqn)
+					rs.m[clone.sum] = clone
+				}
+			}
+		} else if r.OriginFqn == fqn {
+			modified = true
+			rs.del(r)
+		}
+	}
+	return modified
+}
+
 // rowSetsLen returns the total number of rows across multiple rowSet maps.
 func rowSetsLen(ms ...map[string]*rowSet) int {
 	total := 0
@@ -183,6 +277,8 @@ func rowSetsLen(ms ...map[string]*rowSet) int {
 
 // unionAll creates a new rowSet containing all rows from the given rowSets.
 // Pre-allocates the map with the right capacity for efficiency.
+// When rows with the same functional checksum appear in multiple sets,
+// their origins are merged (cloned to avoid mutating shared Row pointers).
 func unionAll(sets ...*rowSet) *rowSet {
 	if len(sets) == 1 && sets[0] != nil {
 		return sets[0].copy()
@@ -199,7 +295,16 @@ func unionAll(sets ...*rowSet) *rowSet {
 	for _, s := range sets {
 		if s != nil {
 			for _, r := range s.m {
-				res.m[r.sum] = r
+				if existing, ok := res.m[r.sum]; ok {
+					if existing.origins != nil && r.origins != nil {
+						res.m[r.sum] = mergeOrigins(existing, r)
+					}
+					// If either row has nil origins, skip the merge. This is unreachable in practice
+					// because all indexed rows have origins set during IndexRules; the guard is
+					// defensive to avoid panicking on unexpected nil maps.
+				} else {
+					res.m[r.sum] = r
+				}
 			}
 		}
 	}
@@ -361,11 +466,18 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 	actionGlobs := make(map[string]*rowSet)
 	resourceGlobs := make(map[string]*rowSet)
 
+	// Params interning — avoids redundant CEL compilation for rows sharing the same params.
+	// Separate caches prevent key collisions when Params and DerivedRoleParams have identical proto content.
+	paramsCache := make(map[uint64]*rowParams)
+	drParamsCache := make(map[uint64]*rowParams)
+
 	addToSet := func(m map[string]*rowSet, key string, r *Row) {
-		if _, ok := m[key]; !ok {
-			m[key] = newRowSet()
+		rs, ok := m[key]
+		if !ok {
+			rs = newRowSet()
+			m[key] = rs
 		}
-		m[key].set(r)
+		rs.mergeOrSet(r)
 	}
 
 	for _, rule := range rules {
@@ -376,13 +488,13 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
 			if !rule.FromRolePolicy { //nolint:nestif
-				params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
+				params, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
 				if err != nil {
 					return err
 				}
 				r.Params = params
 				if rule.OriginDerivedRole != "" {
-					drParams, err := generateRowParams(namer.DerivedRolesFQN(rule.OriginDerivedRole), rule.DerivedRoleParams.OrderedVariables, rule.DerivedRoleParams.Constants)
+					drParams, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams, namer.DerivedRolesFQN(rule.OriginDerivedRole))
 					if err != nil {
 						return err
 					}
@@ -390,14 +502,16 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 				}
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
-			params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
+			params, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
 			if err != nil {
 				return err
 			}
 			r.Params = params
 		}
 
-		r.sum = util.HashPB(r, ignoredRuleTableProtoFields)
+		r.sum = util.HashPB(r, ignoredNonFunctionalFields)
+		r.origins = map[string]struct{}{rule.OriginFqn: {}}
+
 		addToSet(versions, r.Version, r)
 		addToSet(scopes, r.Scope, r)
 		addToSet(roleGlobs, r.Role, r)
@@ -880,134 +994,54 @@ func collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RolePar
 	}
 }
 
+func (m *Impl) deleteFromCategoryMap(ctx context.Context, dm deletableMap, fqn string) (map[string]*rowSet, error) {
+	all, err := dm.getAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for cat, rs := range all {
+		if err := rs.resolve(ctx, m.idx); err != nil {
+			return nil, err
+		}
+		modified := deleteOriginFromRowSet(rs, fqn)
+		if rs.len() == 0 {
+			if err := dm.delete(ctx, cat); err != nil {
+				return nil, err
+			}
+		} else if modified {
+			if err := dm.set(ctx, cat, rs); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return all, nil
+}
+
 func (m *Impl) DeletePolicy(ctx context.Context, fqn string, activeScopes map[string]struct{}) error {
 	if fqn == "" {
 		return nil
 	}
 
-	allVersions, err := m.version.getAll(ctx)
-	if err != nil {
+	if _, err := m.deleteFromCategoryMap(ctx, m.version, fqn); err != nil {
 		return err
-	}
-	for cat, rs := range allVersions {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.version.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.version.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
 	}
 
-	allScopes, err := m.scope.getAll(ctx)
+	allScopes, err := m.deleteFromCategoryMap(ctx, m.scope, fqn)
 	if err != nil {
 		return err
-	}
-	for cat, rs := range allScopes {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.scope.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.scope.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
 	}
 
-	allRoleGlobs, err := m.roleGlob.getAll(ctx)
+	allRoleGlobs, err := m.deleteFromCategoryMap(ctx, m.roleGlob, fqn)
 	if err != nil {
 		return err
-	}
-	for cat, rs := range allRoleGlobs {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.roleGlob.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.roleGlob.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
 	}
 
-	allActionGlobs, err := m.actionGlob.getAll(ctx)
-	if err != nil {
+	if _, err := m.deleteFromCategoryMap(ctx, m.actionGlob, fqn); err != nil {
 		return err
-	}
-	for cat, rs := range allActionGlobs {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.actionGlob.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.actionGlob.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
 	}
 
-	allResourceGlobs, err := m.resourceGlob.getAll(ctx)
-	if err != nil {
+	if _, err := m.deleteFromCategoryMap(ctx, m.resourceGlob, fqn); err != nil {
 		return err
-	}
-	for cat, rs := range allResourceGlobs {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.resourceGlob.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.resourceGlob.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
 	}
 
 	activeScopeKeys := make([]string, 0, len(allScopes))
@@ -1178,6 +1212,26 @@ func (m *Impl) Reset() {
 	m.actionGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION)
 	m.resourceGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE)
 	m.parentRoles = m.idx.getParentRoleMap()
+}
+
+// getOrGenerateParams looks up the params proto in the cache by hash; on miss it compiles CEL
+// programs via generateRowParams and stores the result. This deduplicates the cache-lookup-or-generate
+// pattern used in IndexRules and hydrateParams.
+//
+// Note: the returned rowParams.Key reflects the fqn of the first caller to populate
+// the cache entry. On cache hits, the Key may not match the provided fqn; this is
+// correct because identical params produce identical variable evaluation results.
+func getOrGenerateParams(cache map[uint64]*rowParams, proto *runtimev1.RuleTable_RuleRow_Params, fqn string) (*rowParams, error) {
+	h := util.HashPB(proto, nil)
+	if cached, ok := cache[h]; ok {
+		return cached, nil
+	}
+	params, err := generateRowParams(fqn, proto.OrderedVariables, proto.Constants)
+	if err != nil {
+		return nil, err
+	}
+	cache[h] = params
+	return params, nil
 }
 
 func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
