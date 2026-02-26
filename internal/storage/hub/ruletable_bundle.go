@@ -190,6 +190,28 @@ func (rtb *RuleTableBundle) GetRuleTable() (*ruletable.RuleTable, error) {
 	return rtb.ruleTable, nil
 }
 
+func (rtb *RuleTableBundle) RepoStats(ctx context.Context) storage.RepoStats {
+	if rtb == nil || rtb.ruleTable == nil {
+		return storage.RepoStats{}
+	}
+
+	rows, err := rtb.ruleTable.GetAllRows(ctx)
+	if err != nil {
+		return storage.RepoStats{}
+	}
+
+	stats := newStatsCollector()
+	for _, row := range rows {
+		stats.addRow(row)
+	}
+
+	for _, schemas := range rtb.ruleTable.GetSchemas() {
+		stats.addSchemas(schemas)
+	}
+
+	return stats.collate()
+}
+
 func (rtb *RuleTableBundle) Release() error {
 	if rtb != nil {
 		rtb.ruleTable = nil
