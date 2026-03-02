@@ -142,6 +142,8 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 	pb := &telemetryv1.ServerLaunch_Stats{
 		Policy: &telemetryv1.ServerLaunch_Stats_Policy{
 			Count:             make(map[string]uint32, len(stats.PolicyCount)),
+			ConditionCount:    make(map[string]uint32, len(stats.ConditionCount)),
+			RuleCount:         make(map[string]uint32, len(stats.RuleCount)),
 			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
 			AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
 		},
@@ -152,6 +154,14 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 
 	for k, v := range stats.PolicyCount {
 		pb.Policy.Count[k.String()] = uint32(v)
+	}
+
+	for k, v := range stats.ConditionCount {
+		pb.Policy.ConditionCount[k.String()] = uint32(v)
+	}
+
+	for k, v := range stats.RuleCount {
+		pb.Policy.RuleCount[k.String()] = uint32(v)
 	}
 
 	for k, v := range stats.AvgConditionCount {

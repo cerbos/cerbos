@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -43,11 +44,22 @@ func TestLocalSource(t *testing.T) {
 		t.Run("original", runLocalSourceTests(lsv1, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 		require.NoError(t, lsv1.Reload(t.Context()), "Failed to reload local source")
 		t.Run("reloaded", runLocalSourceTests(lsv1, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+
 		t.Run("repoStats", runRepoStatsTest(lsv1, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
 				policy.PrincipalKind:  9,
 				policy.ResourceKind:   27,
 				policy.RolePolicyKind: 6,
+			},
+			ConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  8,
+				policy.ResourceKind:   57,
+				policy.RolePolicyKind: 2,
+			},
+			RuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  34,
+				policy.ResourceKind:   136,
+				policy.RolePolicyKind: 9,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  3.7777777777777777,
@@ -75,11 +87,22 @@ func TestLocalSource(t *testing.T) {
 		t.Run("original", runLocalSourceTests(lsv2, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 		require.NoError(t, lsv2.Reload(t.Context()), "Failed to reload local source")
 		t.Run("reloaded", runLocalSourceTests(lsv2, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+
 		t.Run("repoStats", runRepoStatsTest(lsv2, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
 				policy.PrincipalKind:  9,
 				policy.ResourceKind:   26,
 				policy.RolePolicyKind: 7,
+			},
+			ConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  8,
+				policy.ResourceKind:   54,
+				policy.RolePolicyKind: 2,
+			},
+			RuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  34,
+				policy.ResourceKind:   133,
+				policy.RolePolicyKind: 10,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  3.7777777777777777,
@@ -112,6 +135,14 @@ func TestLocalSource(t *testing.T) {
 			PolicyCount: map[policy.Kind]int{
 				policy.PrincipalKind: 10,
 				policy.ResourceKind:  34,
+			},
+			ConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind: 4,
+				policy.ResourceKind:  34,
+			},
+			RuleCount: map[policy.Kind]int{
+				policy.PrincipalKind: 20,
+				policy.ResourceKind:  82,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind: 2.0,
@@ -210,6 +241,9 @@ func runLocalSourceTests(have *hub.LocalSource, bundleType bundlev2.BundleType, 
 
 func runRepoStatsTest(ls *hub.LocalSource, wantStats storage.RepoStats) func(*testing.T) {
 	return func(t *testing.T) {
+		t.Helper()
+
+		time.Sleep(2 * time.Second)
 		haveStats := ls.RepoStats(t.Context())
 
 		require.Empty(t,

@@ -40,9 +40,11 @@ func newStatsCollector() *statsCollector {
 func (s *statsCollector) collate() storage.RepoStats {
 	is := storage.RepoStats{
 		PolicyCount:       s.policyCount,
-		SchemaCount:       len(s.schemaRefs),
+		ConditionCount:    s.conditionCount,
+		RuleCount:         s.ruleCount,
 		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCount)),
 		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCount)),
+		SchemaCount:       len(s.schemaRefs),
 	}
 
 	for k, c := range s.ruleCount {
