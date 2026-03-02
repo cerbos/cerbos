@@ -25,8 +25,8 @@ github.com/alecthomas/repr v0.5.2 h1:SU73FTI9D1P5UNtvseffFSGmdNci/O6RsqzeXJtP0Qs
 github.com/alecthomas/repr v0.5.2/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 h1:JYp7IbQjafoB+tBA3gMyHYHrpOtNuDiK/uB5uXxq5wM=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
-github.com/bojand/ghz v0.120.0 h1:6F4wsmZVwFg5UnD+/R+IABWk6sKE/0OKIBdUQUZnOdo=
-github.com/bojand/ghz v0.120.0/go.mod h1:HfECuBZj1v02XObGnRuoZgyB1PR24/25dIYiJIMjJnE=
+github.com/bojand/ghz v0.121.0 h1:CmXNDxDChmTI8eq6cs6ob3N+OUQIXeLQPCaKsw4oXXg=
+github.com/bojand/ghz v0.121.0/go.mod h1:0sdaLErDObg8GUZC+k8tNGYn5M9MkrahhUeplinKgT4=
 github.com/bufbuild/protocompile v0.14.2-0.20260130195850-5c64bed4577e h1:emH16Bf1w4C0cJ3ge4QtBAl4sIYJe23EfpWH0SpA9co=
 github.com/bufbuild/protocompile v0.14.2-0.20260130195850-5c64bed4577e/go.mod h1:cxhE8h+14t0Yxq2H9MV/UggzQ1L0gh0t2tJobITWsBE=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
