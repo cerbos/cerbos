@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/alecthomas/kong v1.14.0
-	github.com/bojand/ghz v0.120.0
+	github.com/bojand/ghz v0.121.0
 )
 
 require (
