@@ -41,19 +41,20 @@ var functionalRuleRowFields = map[protoreflect.Name]struct{}{
 	"derived_role_params": {}, "policy_kind": {}, "from_role_policy": {},
 }
 
-var ignoredNonFunctionalFields map[string]struct{}
+var ignoredNonFunctionalFields = buildIgnoredNonFunctionalFields()
 
-func init() {
-	ignoredNonFunctionalFields = make(map[string]struct{})
+func buildIgnoredNonFunctionalFields() map[string]struct{} {
+	res := make(map[string]struct{})
 	desc := (&runtimev1.RuleTable_RuleRow{}).ProtoReflect().Descriptor()
 	fields := desc.Fields()
 	for i := range fields.Len() {
 		f := fields.Get(i)
 		if _, ok := functionalRuleRowFields[f.Name()]; !ok {
-			ignoredNonFunctionalFields[string(f.FullName())] = struct{}{}
+			res[string(f.FullName())] = struct{}{}
 		}
 	}
-	ignoredNonFunctionalFields["cerbos.runtime.v1.RuleTableMetadata.source_attributes"] = struct{}{}
+	res["cerbos.runtime.v1.RuleTableMetadata.source_attributes"] = struct{}{}
+	return res
 }
 
 type Index interface {
@@ -221,28 +222,6 @@ func (l *rowSet) mergeOrSet(r *Row) {
 	l.m[r.sum] = r
 }
 
-// deleteOriginFromRowSet removes the given origin FQN from all rows in the set.
-// Rows with a single origin are removed; otherwise the row is cloned, that
-// origin is removed, and the clone is written back. Returns true on any change.
-func deleteOriginFromRowSet(rs *rowSet, fqn string) bool {
-	rs.ensureUnique()
-	modified := false
-	for _, r := range rs.rows() {
-		if _, ok := r.origins[fqn]; ok {
-			modified = true
-			if len(r.origins) == 1 {
-				delete(rs.m, r.sum)
-			} else {
-				clone := *r
-				clone.origins = maps.Clone(r.origins)
-				delete(clone.origins, fqn)
-				rs.m[clone.sum] = &clone
-			}
-		}
-	}
-	return modified
-}
-
 // rowSetsLen returns the total number of rows across multiple rowSet maps.
 func rowSetsLen(ms ...map[string]*rowSet) int {
 	total := 0
@@ -261,6 +240,7 @@ func unionAll(sets ...*rowSet) *rowSet {
 	if len(sets) == 1 && sets[0] != nil {
 		return sets[0].copy()
 	}
+	// Calculate total capacity
 	total := 0
 	for _, s := range sets {
 		if s != nil {
@@ -438,7 +418,6 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 	actionGlobs := make(map[string]*rowSet)
 	resourceGlobs := make(map[string]*rowSet)
 
-	// Per-batch params interning caches (see getOrGenerateParams).
 	paramsCache := make(map[uint64]*rowParams)
 	drParamsCache := make(map[uint64]*rowParams)
 
@@ -458,7 +437,7 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 
 		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
-			if !rule.FromRolePolicy { //nolint:nestif
+			if !rule.FromRolePolicy {
 				params, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
 				if err != nil {
 					return err
@@ -988,6 +967,28 @@ func (m *Impl) deleteFromCategoryMap(ctx context.Context, dm deletableMap, fqn s
 	return all, nil
 }
 
+// deleteOriginFromRowSet removes the given origin FQN from all rows in the set.
+// Rows with a single origin are removed; otherwise the row is cloned, that
+// origin is removed, and the clone is written back. Returns true on any change.
+func deleteOriginFromRowSet(rs *rowSet, fqn string) bool {
+	rs.ensureUnique()
+	modified := false
+	for _, r := range rs.rows() {
+		if _, ok := r.origins[fqn]; ok {
+			modified = true
+			if len(r.origins) == 1 {
+				delete(rs.m, r.sum)
+			} else {
+				clone := *r
+				clone.origins = maps.Clone(r.origins)
+				delete(clone.origins, fqn)
+				rs.m[clone.sum] = &clone
+			}
+		}
+	}
+	return modified
+}
+
 func (m *Impl) DeletePolicy(ctx context.Context, fqn string, activeScopes map[string]struct{}) error {
 	if fqn == "" {
 		return nil
@@ -1193,26 +1194,18 @@ func getOrGenerateParams(cache map[uint64]*rowParams, proto *runtimev1.RuleTable
 	if cached, ok := cache[h]; ok {
 		return cached, nil
 	}
-	params, err := generateRowParams(fqn, proto.OrderedVariables, proto.Constants)
+	progs, err := getCelProgramsFromExpressions(proto.OrderedVariables)
 	if err != nil {
 		return nil, err
+	}
+	params := &rowParams{
+		Key:         fqn,
+		Variables:   proto.OrderedVariables,
+		Constants:   (&structpb.Struct{Fields: proto.Constants}).AsMap(),
+		CelPrograms: progs,
 	}
 	cache[h] = params
 	return params, nil
-}
-
-func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
-	progs, err := getCelProgramsFromExpressions(orderedVariables)
-	if err != nil {
-		return nil, err
-	}
-
-	return &rowParams{
-		Key:         fqn,
-		Variables:   orderedVariables,
-		Constants:   (&structpb.Struct{Fields: constants}).AsMap(),
-		CelPrograms: progs,
-	}, nil
 }
 
 func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, error) {
