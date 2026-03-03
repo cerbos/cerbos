@@ -10,7 +10,9 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
+	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -62,71 +64,64 @@ func TestParentRoleIndex(t *testing.T) {
 	})
 }
 
-func TestParamsInterning(t *testing.T) {
-	ctx := context.Background()
-	impl := index.NewImpl(index.NewMem())
+func TestParamsIndex(t *testing.T) {
+	t.Run("interns equivalent params", func(t *testing.T) {
+		ctx := context.Background()
+		impl := index.NewImpl(index.NewMem())
 
-	// Two separate Params proto pointers with identical content.
-	// The params cache should compile CEL programs only once and share the result.
-	params1 := &runtimev1.RuleTable_RuleRow_Params{
-		OrderedVariables: []*runtimev1.Variable{},
-		Constants:        map[string]*structpb.Value{},
-	}
-	params2 := &runtimev1.RuleTable_RuleRow_Params{
-		OrderedVariables: []*runtimev1.Variable{},
-		Constants:        map[string]*structpb.Value{},
-	}
+		ast, iss := conditions.StdEnv.Compile("1 + 1")
+		require.Nil(t, iss)
+		checkedExpr, err := cel.AstToCheckedExpr(ast)
+		require.NoError(t, err)
 
-	rules := []*runtimev1.RuleTable_RuleRow{
-		{
-			OriginFqn:  "policy1",
-			PolicyKind: policyv1.Kind_KIND_RESOURCE,
-			Resource:   "document",
-			Role:       "viewer",
-			ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
-			Effect:     effectv1.Effect_EFFECT_ALLOW,
-			Version:    "default",
-			Params:     params1,
-		},
-		{
-			OriginFqn:  "policy1",
-			PolicyKind: policyv1.Kind_KIND_RESOURCE,
-			Resource:   "document",
-			Role:       "editor",
-			ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "edit"},
-			Effect:     effectv1.Effect_EFFECT_ALLOW,
-			Version:    "default",
-			Params:     params2,
-		},
-	}
+		// Two separate Params proto pointers with identical content.
+		// The params cache should compile CEL programs only once and share the result.
+		params1 := &runtimev1.RuleTable_RuleRow_Params{
+			OrderedVariables: []*runtimev1.Variable{{
+				Name: "v",
+				Expr: &runtimev1.Expr{Original: "1 + 1", Checked: checkedExpr},
+			}},
+			Constants: map[string]*structpb.Value{"k": structpb.NewStringValue("v")},
+		}
+		params2 := &runtimev1.RuleTable_RuleRow_Params{
+			OrderedVariables: []*runtimev1.Variable{{
+				Name: "v",
+				Expr: &runtimev1.Expr{Original: "1 + 1", Checked: checkedExpr},
+			}},
+			Constants: map[string]*structpb.Value{"k": structpb.NewStringValue("v")},
+		}
 
-	require.NoError(t, impl.IndexRules(ctx, rules))
+		rules := []*runtimev1.RuleTable_RuleRow{
+			{
+				OriginFqn:  "policy1",
+				PolicyKind: policyv1.Kind_KIND_RESOURCE,
+				Resource:   "document",
+				Role:       "viewer",
+				ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
+				Effect:     effectv1.Effect_EFFECT_ALLOW,
+				Version:    "default",
+				Params:     params1,
+			},
+			{
+				OriginFqn:  "policy1",
+				PolicyKind: policyv1.Kind_KIND_RESOURCE,
+				Resource:   "document",
+				Role:       "editor",
+				ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "edit"},
+				Effect:     effectv1.Effect_EFFECT_ALLOW,
+				Version:    "default",
+				Params:     params2,
+			},
+		}
 
-	allRows, err := impl.GetAllRows(ctx)
-	require.NoError(t, err)
-	require.Len(t, allRows, 2)
+		require.NoError(t, impl.IndexRules(ctx, rules))
 
-	// Both rows should share the same compiled *rowParams (pointer equality)
-	// because the params cache detects identical proto content.
-	require.True(t, allRows[0].Params == allRows[1].Params, "expected shared rowParams pointer from params interning")
-}
+		allRows, err := impl.GetAllRows(ctx)
+		require.NoError(t, err)
+		require.Len(t, allRows, 2)
 
-// makeRow builds a base RuleRow with common defaults and applies optional mutators.
-func makeRow(fqn string, mutators ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
-	r := &runtimev1.RuleTable_RuleRow{
-		OriginFqn:      fqn,
-		PolicyKind:     policyv1.Kind_KIND_RESOURCE,
-		Resource:       "document",
-		Role:           "viewer",
-		ActionSet:      &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
-		Effect:         effectv1.Effect_EFFECT_ALLOW,
-		Version:        "default",
-		FromRolePolicy: true,
-	}
-	for _, m := range mutators {
-		m(r)
-	}
-	return r
+		require.Same(t, allRows[0].Params, allRows[1].Params, "expected shared rowParams pointer from params interning")
+	})
 }
 
 func TestFunctionalChecksum(t *testing.T) {
@@ -271,4 +266,23 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, allRows, 0, "row should be removed after all origins deleted")
 	})
+}
+
+func makeRow(fqn string, mutators ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
+	r := &runtimev1.RuleTable_RuleRow{
+		OriginFqn:  fqn,
+		PolicyKind: policyv1.Kind_KIND_RESOURCE,
+		Resource:   "document",
+		Role:       "viewer",
+		ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
+		Effect:     effectv1.Effect_EFFECT_ALLOW,
+		Version:    "default",
+		// Default to role-policy-derived rows in tests so Params can remain nil unless
+		// a test explicitly opts into the params compilation path.
+		FromRolePolicy: true,
+	}
+	for _, m := range mutators {
+		m(r)
+	}
+	return r
 }

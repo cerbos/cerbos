@@ -126,54 +126,48 @@ func (r *Redis) getParentRoleMap() parentRoleMap {
 }
 
 func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
-	sums := make([]string, 0, len(rows))
-	for _, row := range rows {
-		var sum string
-		if row.RuleTable_RuleRow != nil {
-			sum = strconv.FormatUint(row.sum, 10)
-		} else {
-			sum = r.rowKey(row.sum)
+	resolveIndices := make([]int, 0, len(rows))
+	resolveKeys := make([]string, 0, len(rows))
+	for i, row := range rows {
+		if row.RuleTable_RuleRow == nil {
+			resolveIndices = append(resolveIndices, i)
+			resolveKeys = append(resolveKeys, rowKey(r.nsKey, row.sum))
 		}
-		sums = append(sums, sum)
 	}
 
-	if len(sums) == 0 {
+	if len(resolveKeys) == 0 {
 		return rows, nil
 	}
 
-	rawRows, err := r.db.MGet(ctx, sums...).Result()
+	rawRows, err := r.db.MGet(ctx, resolveKeys...).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	// Params interning caches — shared across this resolve batch.
-	// Separate caches prevent key collisions when Params and DerivedRoleParams have identical proto content.
+	// Per-resolve-batch cache for compiled row params.
 	paramsCache := make(map[uint64]*rowParams)
 	drParamsCache := make(map[uint64]*rowParams)
 
-	resolvedIndices := make([]int, 0, len(rows))
-	for i, raw := range rawRows {
-		if rows[i].RuleTable_RuleRow == nil {
-			if raw == nil {
-				// If we reach this case, somethings gone unexpectedly wrong.
-				return nil, fmt.Errorf("data missing for row checksum %s", sums[i])
-			}
-			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
-			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
-				return nil, err
-			}
-			if err := hydrateParams(rows[i], paramsCache, drParamsCache); err != nil {
-				return nil, err
-			}
-			resolvedIndices = append(resolvedIndices, i)
+	for j, raw := range rawRows {
+		i := resolveIndices[j]
+		if raw == nil {
+			// If we reach this case, somethings gone unexpectedly wrong.
+			return nil, fmt.Errorf("data missing for row checksum %d", rows[i].sum)
+		}
+		rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
+		if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
+			return nil, err
+		}
+		if err := hydrateParams(rows[i], paramsCache, drParamsCache); err != nil {
+			return nil, err
 		}
 	}
 
 	// Read origins for resolved rows.
-	if len(resolvedIndices) > 0 {
-		originsCmds := make(map[int]*redis.StringSliceCmd, len(resolvedIndices))
+	if len(resolveIndices) > 0 {
+		originsCmds := make(map[int]*redis.StringSliceCmd, len(resolveIndices))
 		if _, err := r.db.Pipelined(ctx, func(p redis.Pipeliner) error {
-			for _, i := range resolvedIndices {
+			for _, i := range resolveIndices {
 				originsCmds[i] = p.SMembers(ctx, originsKey(r.nsKey, rows[i].sum))
 			}
 			return nil
@@ -206,12 +200,11 @@ func (r *Redis) resolveIter(ctx context.Context, rows iter.Seq[*Row]) (iter.Seq[
 	return slices.Values(resolved), nil
 }
 
-func (r *Redis) rowKey(sum uint64) string {
+func rowKey(nsKey string, sum uint64) string {
 	// value is the serialised row
-	return r.nsKey + strconv.FormatUint(sum, 10)
+	return nsKey + strconv.FormatUint(sum, 10)
 }
 
-// originsKey builds the Redis key for the origins set of a given row checksum.
 func originsKey(nsKey string, sum uint64) string {
 	return nsKey + "origins:" + strconv.FormatUint(sum, 10)
 }
@@ -249,18 +242,20 @@ func (rm *redisMap) catFromSumsKey(k string) string {
 
 func (rm *redisMap) writeOrigins(ctx context.Context, p redis.Pipeliner, rs *rowSet) {
 	for sum, r := range rs.m {
-		if len(r.origins) > 0 {
-			origKey := originsKey(rm.nsKey, sum)
-			// Delete before adding to replace the set atomically,
-			// preventing stale origins from accumulating after DeletePolicy.
-			p.Del(ctx, origKey)
-			members := make([]any, 0, len(r.origins))
-			for o := range r.origins {
-				members = append(members, o)
-			}
-			p.SAdd(ctx, origKey, members...)
-			p.PExpireAt(ctx, origKey, rm.dataDeadline)
+		if len(r.origins) == 0 {
+			continue
 		}
+
+		key := originsKey(rm.nsKey, sum)
+		// Delete before adding to replace the set atomically,
+		// preventing stale origins from accumulating after DeletePolicy.
+		p.Del(ctx, key)
+		members := make([]any, 0, len(r.origins))
+		for o := range r.origins {
+			members = append(members, o)
+		}
+		p.SAdd(ctx, key, members...)
+		p.PExpireAt(ctx, key, rm.dataDeadline)
 	}
 }
 
@@ -268,7 +263,7 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 	sums := make([]any, 0, len(rs.m))
 	raws := make([]any, 0, len(rs.m))
 	for sum, r := range rs.m {
-		sums = append(sums, rm.rowKey(sum))
+		sums = append(sums, rowKey(rm.nsKey, sum))
 		b, err := r.MarshalVT()
 		if err != nil {
 			return nil, nil, err
@@ -276,11 +271,6 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 		raws = append(raws, b)
 	}
 	return sums, raws, nil
-}
-
-func (rm *redisMap) rowKey(sum uint64) string {
-	// value is the serialised row
-	return rm.nsKey + strconv.FormatUint(sum, 10)
 }
 
 func (rm *redisMap) sumFromRowKey(key string) uint64 {
