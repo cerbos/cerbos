@@ -71,7 +71,7 @@ type Row struct {
 	*runtimev1.RuleTable_RuleRow
 	Params                     *rowParams
 	DerivedRoleParams          *rowParams
-	sum                        uint64
+	Sum                        uint64
 	NoMatchForScopePermissions bool
 }
 
@@ -150,7 +150,7 @@ func (l *rowSet) set(r *Row) {
 	if l.m == nil {
 		l.m = make(map[uint64]*Row)
 	}
-	l.m[r.sum] = r
+	l.m[r.Sum] = r
 }
 
 func (l *rowSet) has(sum uint64) bool {
@@ -167,7 +167,7 @@ func (l *rowSet) len() int {
 
 func (l *rowSet) del(r *Row) {
 	l.ensureUnique()
-	delete(l.m, r.sum)
+	delete(l.m, r.Sum)
 }
 
 // rowSetsLen returns the total number of rows across multiple rowSet maps.
@@ -199,7 +199,7 @@ func unionAll(sets ...*rowSet) *rowSet {
 	for _, s := range sets {
 		if s != nil {
 			for _, r := range s.m {
-				res.m[r.sum] = r
+				res.m[r.Sum] = r
 			}
 		}
 	}
@@ -212,7 +212,7 @@ func (s *rowSet) intersectWith(o *rowSet) *rowSet {
 	}
 	res := newRowSetCap(min(s.len(), o.len()))
 	for r := range s.intersectWithIter(o) {
-		res.m[r.sum] = r
+		res.m[r.Sum] = r
 	}
 	return res
 }
@@ -230,7 +230,7 @@ func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
 	}
 
 	for _, r := range small.m {
-		if _, ok := large.m[r.sum]; ok {
+		if _, ok := large.m[r.Sum]; ok {
 			return true
 		}
 	}
@@ -250,7 +250,7 @@ func (s *rowSet) intersectWithIter(o *rowSet) iter.Seq[*Row] {
 		}
 
 		for _, r := range small.m {
-			if _, ok := large.m[r.sum]; ok {
+			if _, ok := large.m[r.Sum]; ok {
 				if !yield(r) {
 					return
 				}
@@ -277,8 +277,8 @@ func intersect3Iter(a, b, c *rowSet) iter.Seq[*Row] {
 
 		small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
 		for _, r := range small.m {
-			if _, ok := mid.m[r.sum]; ok {
-				if _, ok := large.m[r.sum]; ok {
+			if _, ok := mid.m[r.Sum]; ok {
+				if _, ok := large.m[r.Sum]; ok {
 					if !yield(r) {
 						return
 					}
@@ -397,7 +397,7 @@ func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_Rule
 			r.Params = params
 		}
 
-		r.sum = util.HashPB(r, ignoredRuleTableProtoFields)
+		r.Sum = util.HashPB(r, ignoredRuleTableProtoFields)
 		addToSet(versions, r.Version, r)
 		addToSet(scopes, r.Scope, r)
 		addToSet(roleGlobs, r.Role, r)
@@ -544,7 +544,7 @@ func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
 	appendRows := func(rowSets map[string]*rowSet) {
 		for _, rowSet := range rowSets {
 			for row := range rowSet.iter() {
-				if !resSet.has(row.sum) {
+				if !resSet.has(row.Sum) {
 					resSet.set(row)
 					res = append(res, row)
 				}
@@ -709,7 +709,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 								if matchLiteral {
 									for _, rows := range actionMatchedRows.GetMerged(action) {
 										for _, r := range rows {
-											if !resSet.has(r.sum) {
+											if !resSet.has(r.Sum) {
 												resSet.set(r)
 												res = append(res, r)
 											}
@@ -781,7 +781,7 @@ func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, 
 							continue
 						}
 						for r := range actionSet.intersectWithIter(roleResourceSet) {
-							if !resSet.has(r.sum) {
+							if !resSet.has(r.Sum) {
 								resSet.set(r)
 								res = append(res, r)
 							}

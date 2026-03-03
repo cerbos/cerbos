@@ -132,9 +132,9 @@ func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
 	for _, row := range rows {
 		var sum string
 		if row.RuleTable_RuleRow != nil {
-			sum = strconv.FormatUint(row.sum, 10)
+			sum = strconv.FormatUint(row.Sum, 10)
 		} else {
-			sum = r.rowKey(row.sum)
+			sum = r.rowKey(row.Sum)
 		}
 		sums = append(sums, sum)
 	}
@@ -244,7 +244,7 @@ func (rm *redisMap) getRowSetWithSums(sums []string) *rowSet {
 	rs := newRowSet()
 	for i := range sums {
 		rs.set(&Row{
-			sum: rm.sumFromRowKey(sums[i]),
+			Sum: rm.sumFromRowKey(sums[i]),
 		})
 	}
 	return rs

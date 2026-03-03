@@ -72,6 +72,7 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 0.3333333333333333,
 			},
 			SchemaCount: 3,
+			Hash:        uint64(6909798739708495473),
 		}))
 	})
 
@@ -115,6 +116,7 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 0.2857142857142857,
 			},
 			SchemaCount: 3,
+			Hash:        uint64(17487496333308169739),
 		}))
 	})
 
@@ -153,6 +155,7 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:  1,
 			},
 			SchemaCount: 3,
+			Hash:        uint64(8973509271454206490),
 		}))
 	})
 }
