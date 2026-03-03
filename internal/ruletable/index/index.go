@@ -94,7 +94,6 @@ type parentRoleMap interface {
 	get(context.Context, ...string) (map[string]map[string][]string, error)
 }
 
-// deletableMap is the common subset of literalMap and globMap used by deleteFromCategoryMap.
 type deletableMap interface {
 	getAll(context.Context) (map[string]*rowSet, error)
 	set(context.Context, string, *rowSet) error
