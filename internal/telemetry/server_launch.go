@@ -150,6 +150,7 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 		Schema: &telemetryv1.ServerLaunch_Stats_Schema{
 			Count: uint32(stats.SchemaCount),
 		},
+		Hash: stats.Hash,
 	}
 
 	for k, v := range stats.PolicyCount {

@@ -34,7 +34,6 @@ type statsCollector struct {
 	conditionCount map[policy.Kind]int
 	schemaRefs     map[uint64]struct{}
 	uniquePolicies map[uint64]struct{}
-	uniqueRules    map[string]struct{}
 	hashes         []hash
 }
 
@@ -50,7 +49,6 @@ func newStatsCollector() *statsCollector {
 		conditionCount: make(map[policy.Kind]int, numPolicyKinds),
 		schemaRefs:     make(map[uint64]struct{}),
 		uniquePolicies: make(map[uint64]struct{}),
-		uniqueRules:    make(map[string]struct{}),
 	}
 }
 
@@ -101,13 +99,9 @@ func (s *statsCollector) addRow(row *index.Row) {
 		s.policyCount[policyKind]++
 	}
 
-	if _, ok := s.uniqueRules[row.EvaluationKey]; !ok {
-		s.uniqueRules[row.EvaluationKey] = struct{}{}
-
-		s.ruleCount[policyKind]++
-		if row.GetCondition() != nil {
-			s.conditionCount[policyKind]++
-		}
+	s.ruleCount[policyKind]++
+	if row.GetCondition() != nil {
+		s.conditionCount[policyKind]++
 	}
 
 	s.hashes = append(s.hashes, hash{

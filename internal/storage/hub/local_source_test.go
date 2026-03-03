@@ -140,19 +140,19 @@ func TestLocalSource(t *testing.T) {
 			},
 			ConditionCount: map[policy.Kind]int{
 				policy.PrincipalKind: 4,
-				policy.ResourceKind:  34,
+				policy.ResourceKind:  37,
 			},
 			RuleCount: map[policy.Kind]int{
 				policy.PrincipalKind: 20,
-				policy.ResourceKind:  82,
+				policy.ResourceKind:  99,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind: 2.0,
-				policy.ResourceKind:  2.411764705882353,
+				policy.ResourceKind:  2.911764705882353,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
 				policy.PrincipalKind: 0.4,
-				policy.ResourceKind:  1,
+				policy.ResourceKind:  1.088235294117647,
 			},
 			SchemaCount: 3,
 			Hash:        uint64(8973509271454206490),

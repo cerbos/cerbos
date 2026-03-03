@@ -391,6 +391,9 @@ func cerbos_telemetry_v1_ServerLaunch_Stats_hashpb_sum(m *ServerLaunch_Stats, ha
 			cerbos_telemetry_v1_ServerLaunch_Stats_Schema_hashpb_sum(m.GetSchema(), hasher, ignore, b)
 		}
 	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Stats.hash"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], m.GetHash()))
+	}
 }
 
 func cerbos_telemetry_v1_ServerLaunch_hashpb_sum(m *ServerLaunch, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
