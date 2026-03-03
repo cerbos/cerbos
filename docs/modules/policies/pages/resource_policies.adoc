@@ -9,6 +9,8 @@ Resource policies define rules for actions that can be performed on a given reso
 
 Multiple rules can be defined for the same action on a resource for different roles and/or with different conditions. If more than one rule matches a given input, then a rule specifying `EFFECT_DENY` will take precedence over one specifying `EFFECT_ALLOW`.
 
+NOTE: This precedence applies to rules matched within a single role evaluation. When a principal has multiple roles, each role is evaluated independently. If _any_ of the principal's roles produces an `EFFECT_ALLOW` for an action, access is granted — even if another role is denied or has no matching rule. In other words, deny-takes-precedence resolves conflicts between rules that match for the same role, not across different roles.
+
 [source,yaml,linenums]
 ----
 ---
