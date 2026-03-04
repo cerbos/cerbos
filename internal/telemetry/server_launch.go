@@ -130,10 +130,6 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 					b.BundleSource = src.SourceKind()
 				}
 
-				if bundleConf.Remote != nil {
-					b.DeploymentId = bundleConf.Remote.DeploymentID
-				}
-
 				feats.Storage.Store = &telemetryv1.ServerLaunch_Features_Storage_Bundle_{Bundle: b}
 			}
 		}
