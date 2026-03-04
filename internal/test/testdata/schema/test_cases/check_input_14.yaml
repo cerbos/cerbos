@@ -3,15 +3,15 @@
 description: Missing schemas (http)
 schemaRefs:
   principalSchema:
-    ref: https://example.com/blah.json
+    ref: https://cerbos.dev/blah.json
   resourceSchema:
-    ref: https://example.com/blah.json
+    ref: https://cerbos.dev/blah.json
 checkInput:
-  actions: [ "view:public" ]
+  actions: ["view:public"]
   principal:
     id: "john"
     policyVersion: "20210210"
-    roles: [ "employee" ]
+    roles: ["employee"]
     attr: &myAttr
       stringField: hello
   resource:
@@ -21,9 +21,9 @@ checkInput:
     attr: *myAttr
 wantValidationErrors:
   - message: >-
-      Failed to load principal schema "https://example.com/blah.json": schema https://example.com/blah.json doesn't exist
+      Failed to load principal schema "https://cerbos.dev/blah.json": schema https://cerbos.dev/blah.json doesn't exist
     source: SOURCE_PRINCIPAL
 
   - message: >-
-      Failed to load resource schema "https://example.com/blah.json": schema https://example.com/blah.json doesn't exist
+      Failed to load resource schema "https://cerbos.dev/blah.json": schema https://cerbos.dev/blah.json doesn't exist
     source: SOURCE_RESOURCE
