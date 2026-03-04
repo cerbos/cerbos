@@ -47,11 +47,20 @@ GSCP /tmp/cerbos-loadtest-client.tar.gz "${CLIENT_VM}:/tmp/"
 GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
 rm -f /tmp/cerbos-loadtest-client.tar.gz
 
-log "Uploading Prometheus config to Client VM..."
-sed "s|__PDP_IP__|${PDP_IP}|g" "${SCRIPT_DIR}/conf/prometheus.yml.tpl" > /tmp/cerbos-loadtest-prometheus.yml
-GSSH "$CLIENT_VM" "mkdir -p ${REMOTE_BASE}/conf/prometheus ${REMOTE_BASE}/conf/grafana/dashboards"
-GSCP /tmp/cerbos-loadtest-prometheus.yml "${CLIENT_VM}:${REMOTE_BASE}/conf/prometheus/prometheus.yml"
-rm -f /tmp/cerbos-loadtest-prometheus.yml
+log "Writing Prometheus config to Client VM..."
+GSSH "$CLIENT_VM" <<ENDSSH
+mkdir -p ${REMOTE_BASE}/conf/prometheus ${REMOTE_BASE}/conf/grafana/dashboards
+cat > ${REMOTE_BASE}/conf/prometheus/prometheus.yml <<'PROMEOF'
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: "cerbos"
+    scrape_interval: 7s
+    metrics_path: /_cerbos/metrics
+    static_configs:
+      - targets: ["${PDP_IP}:3592"]
+PROMEOF
+ENDSSH
 
 log "Uploading Docker Compose and Grafana configs to Client VM..."
 GSCP "${SCRIPT_DIR}/conf/docker-compose.yml" "${CLIENT_VM}:${REMOTE_BASE}/conf/docker-compose.yml"
@@ -109,12 +118,12 @@ cd ${REMOTE_BASE}/conf
 docker compose up -d
 ENDSSH
 
-# --- Health check ---
+# --- Health check (curl from client VM validates VPC connectivity) ---
 log "Waiting for Cerbos to become healthy..."
 MAX_ATTEMPTS=30
 ATTEMPT=0
 while true; do
-  if GSSH "$CLIENT_VM" ". /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh && cd ${REMOTE_BASE} && nix develop --command grpcurl -plaintext ${PDP_IP}:3593 grpc.health.v1.Health/Check" 2>/dev/null | grep -q "SERVING"; then
+  if GSSH "$CLIENT_VM" "curl -sf http://${PDP_IP}:3592/_cerbos/health" &>/dev/null; then
     break
   fi
   ATTEMPT=$((ATTEMPT + 1))
