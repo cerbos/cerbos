@@ -12,11 +12,16 @@ jobs:
       contents: read
       packages: write
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           lfs: true
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -66,7 +71,9 @@ jobs:
 
       - name: Push Cerbos dev images to ECR
         run: |
-          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
-          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64
-          docker manifest create ${{ vars.AWS_CONTAINER_REPO }}:dev ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64 ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
-          docker manifest push ${{ vars.AWS_CONTAINER_REPO }}:dev
+          docker push ${VARS_AWS_CONTAINER_REPO}:dev-amd64
+          docker push ${VARS_AWS_CONTAINER_REPO}:dev-arm64
+          docker manifest create ${VARS_AWS_CONTAINER_REPO}:dev ${VARS_AWS_CONTAINER_REPO}:dev-arm64 ${VARS_AWS_CONTAINER_REPO}:dev-amd64
+          docker manifest push ${VARS_AWS_CONTAINER_REPO}:dev
+        env:
+          VARS_AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}

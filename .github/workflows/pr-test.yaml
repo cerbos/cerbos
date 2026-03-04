@@ -16,10 +16,16 @@ jobs:
       npm: ${{ steps.filter.outputs.npm }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
           filters: |
+            actions:
+              - '.github/**'
             code:
               - '!(.node-version|{docs,npm}/**)'
             docs:
@@ -43,8 +49,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -72,6 +84,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Download previous test times
         continue-on-error: true
         uses: dawidd6/action-download-artifact@fe9d59ce33ce92db8a6ac90b2c8be6b6d90417c8 # v15
@@ -101,10 +117,15 @@ jobs:
     outputs:
       job-total: ${{ strategy.job-total }}
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -121,7 +142,7 @@ jobs:
           name: previous-test-times
 
       - name: Test
-        run: just test-all ${{ strategy.job-index }} ${{ strategy.job-total }}
+        run: just test-all ${STRATEGY_JOB_INDEX} ${STRATEGY_JOB_TOTAL}
         env:
           GOEXPERIMENT: loopvar # https://github.com/golang/go/wiki/LoopvarExperiment
           CERBOS_LOG_LEVEL: "debug"
@@ -133,6 +154,8 @@ jobs:
           CERBOS_HUB_CLIENT_ID: "${{ secrets.CERBOS_HUB_CLIENT_ID }}"
           CERBOS_HUB_CLIENT_SECRET: "${{ secrets.CERBOS_HUB_CLIENT_SECRET }}"
           CERBOS_HUB_STORE_ID: "${{ secrets.CERBOS_HUB_STORE_ID }}"
+          STRATEGY_JOB_INDEX: ${{ strategy.job-index }}
+          STRATEGY_JOB_TOTAL: ${{ strategy.job-total }}
 
       - name: Upload JUnit reports
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -163,11 +186,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check test results
-        run: test "${{ needs.test.result }}" = "success"
+        run: test "${NEEDS_TEST_RESULT}" = "success"
+        env:
+          NEEDS_TEST_RESULT: ${{ needs.test.result }}
 
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Install Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
@@ -185,7 +216,9 @@ jobs:
       - name: Combine JUnit reports
         run: |-
           mv junit-reports-*/junit.*.xml .
-          just test-times ${{ needs.test.outputs.job-total }}
+          just test-times ${NEEDS_TEST_OUTPUTS_JOB_TOTAL}
+        env:
+          NEEDS_TEST_OUTPUTS_JOB_TOTAL: ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -206,11 +239,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           lfs: true
+          persist-credentials: false
 
       - name: Generate docs
         uses: ./.github/actions/antora-docs
@@ -223,8 +261,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Install Go
         uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
@@ -251,10 +295,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           fetch-tags: true
+          persist-credentials: false
 
       - name: Lint protos
         uses: bufbuild/buf-action@8f4a1456a0ab6a1eb80ba68e53832e6fcfacc16c # v1.3.0
@@ -272,7 +321,9 @@ jobs:
       - name: Set latest release commit ID
         id: latest_release_commit_id
         run: |
-          echo "LATEST_RELEASE_COMMIT_ID=$(git rev-list -n 1 tags/${{ steps.latest-release.outputs.tag }})" >> "$GITHUB_OUTPUT"
+          echo "LATEST_RELEASE_COMMIT_ID=$(git rev-list -n 1 tags/${STEPS_LATEST_RELEASE_OUTPUTS_TAG})" >> "$GITHUB_OUTPUT"
+        env:
+          STEPS_LATEST_RELEASE_OUTPUTS_TAG: ${{ steps.latest-release.outputs.tag }}
 
       - name: Check backwards compatibility
         uses: cerbos/buf-breaking-action@b637955df51832cca5dd244fb3ac9ab35781cdb5 # since
@@ -287,7 +338,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
         with:
@@ -303,10 +360,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -351,6 +413,10 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 10
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out .node-version file
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -358,6 +424,7 @@ jobs:
             .node-version
             hack/scripts/install-corepack.sh
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Download npm packages
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
@@ -392,5 +459,27 @@ jobs:
     needs:
       - test-npm
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check test results
-        run: test "${{ needs.test-npm.result }}" = "success"
+        run: test "${NEEDS_TEST_NPM_RESULT}" = "success"
+        env:
+          NEEDS_TEST_NPM_RESULT: ${{ needs.test-npm.result }}
+
+  zizmor:
+    name: Run zizmor
+    runs-on: ubuntu-latest
+    needs: changes
+    if: ${{ needs.changes.outputs.actions == 'true' }}
+    permissions:
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@0dce2577a4760a2749d8cfb7a84b7d5585ebcb7d # v0.5.0

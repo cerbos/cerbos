@@ -14,8 +14,14 @@ jobs:
     outputs:
       deps: ${{ steps.filter.outputs.deps }}
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Check for changes
         id: filter
@@ -33,8 +39,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space

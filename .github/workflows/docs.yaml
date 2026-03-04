@@ -4,22 +4,27 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'docs/**'
+      - "docs/**"
     branches:
       - main
-      - 'v*'
+      - "v*"
 jobs:
   publishDocs:
     name: Publish Documentation
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: main
           fetch-depth: 0
           lfs: true
+          persist-credentials: false
 
       - name: Generate docs
         uses: ./.github/actions/antora-docs
