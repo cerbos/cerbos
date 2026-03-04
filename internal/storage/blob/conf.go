@@ -74,12 +74,16 @@ func (conf *Conf) Validate() error {
 	return nil
 }
 
+func pd(d time.Duration) *time.Duration {
+	return &d
+}
+
 func (conf *Conf) SetDefaults() {
 	if conf.RequestTimeout == nil {
-		conf.RequestTimeout = new(defaultRequestTimeout)
+		conf.RequestTimeout = pd(defaultRequestTimeout)
 	}
 	if conf.DownloadTimeout == nil {
-		conf.DownloadTimeout = new(defaultDownloadTimeout)
+		conf.DownloadTimeout = pd(defaultDownloadTimeout)
 	}
 }
 
