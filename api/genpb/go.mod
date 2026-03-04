@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos/api/genpb
 
-go 1.26
+go 1.25.0
 
 toolchain go1.26.0
 
