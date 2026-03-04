@@ -181,7 +181,9 @@ executeTest() {
   mkdir -p results
   local resultPrefix="results/${STORE}_${NUM_POLICIES}"
 
-  go build -tags printsummary -o "${WORK_DIR}/printsummary" .
+  if [[ ! -x "${WORK_DIR}/printsummary" ]]; then
+    go build -tags printsummary -o "${WORK_DIR}/printsummary" .
+  fi
 
   # --- Warmup ---
   printf "Warming up PDP with 1000 requests...\n"
