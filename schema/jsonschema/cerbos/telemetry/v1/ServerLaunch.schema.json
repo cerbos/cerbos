@@ -114,9 +114,6 @@
         "clientId": {
           "type": "string"
         },
-        "deploymentId": {
-          "type": "string"
-        },
         "pdpId": {
           "type": "string"
         }

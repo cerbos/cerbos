@@ -162,10 +162,6 @@ func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Bundle_hashpb_sum(m *Serv
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetClientId()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetClientId()), len(m.GetClientId())))
 	}
-	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle.deployment_id"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDeploymentId()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDeploymentId()), len(m.GetDeploymentId())))
-	}
 }
 
 func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Disk_hashpb_sum(m *ServerLaunch_Features_Storage_Disk, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
