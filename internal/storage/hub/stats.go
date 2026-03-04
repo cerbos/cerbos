@@ -6,6 +6,8 @@
 package hub
 
 import (
+	"strings"
+
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -58,17 +60,27 @@ func (s *statsCollector) collate() storage.RepoStats {
 
 func (s *statsCollector) addRow(row *index.Row) {
 	mID := namer.GenModuleIDFromFQN(row.OriginFqn)
-	policyKind := policy.Kind(row.PolicyKind)
+	var kind policy.Kind
+	switch {
+	case strings.HasPrefix(row.OriginFqn, namer.PrincipalPoliciesPrefix):
+		kind = policy.PrincipalKind
+	case strings.HasPrefix(row.OriginFqn, namer.ResourcePoliciesPrefix):
+		kind = policy.ResourceKind
+	case strings.HasPrefix(row.OriginFqn, namer.RolePoliciesPrefix):
+		kind = policy.RolePolicyKind
+	default:
+		return
+	}
 
 	if _, ok := s.uniquePolicies[mID.RawValue()]; !ok {
 		s.uniquePolicies[mID.RawValue()] = struct{}{}
 
-		s.policyCount[policyKind]++
+		s.policyCount[kind]++
 	}
 
-	s.ruleCount[policyKind]++
+	s.ruleCount[kind]++
 	if row.GetCondition() != nil {
-		s.conditionCount[policyKind]++
+		s.conditionCount[kind]++
 	}
 }
 

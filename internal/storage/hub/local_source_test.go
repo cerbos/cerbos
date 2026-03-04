@@ -133,24 +133,29 @@ func TestLocalSource(t *testing.T) {
 
 		t.Run("repoStats", runRepoStatsTest(lsrt, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind: 10,
-				policy.ResourceKind:  34,
+				policy.PrincipalKind:  10,
+				policy.ResourceKind:   28,
+				policy.RolePolicyKind: 6,
 			},
 			ConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind: 4,
-				policy.ResourceKind:  37,
+				policy.PrincipalKind:  4,
+				policy.ResourceKind:   35,
+				policy.RolePolicyKind: 2,
 			},
 			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind: 20,
-				policy.ResourceKind:  99,
+				policy.PrincipalKind:  20,
+				policy.ResourceKind:   90,
+				policy.RolePolicyKind: 9,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind: 2.0,
-				policy.ResourceKind:  2.911764705882353,
+				policy.PrincipalKind:  2.0,
+				policy.ResourceKind:   3.2142857142857144,
+				policy.RolePolicyKind: 1.5,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind: 0.4,
-				policy.ResourceKind:  1.088235294117647,
+				policy.PrincipalKind:  0.4,
+				policy.ResourceKind:   1.25,
+				policy.RolePolicyKind: 0.3333333333333333,
 			},
 			SchemaCount: 3,
 		}))
