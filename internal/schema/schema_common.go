@@ -15,13 +15,10 @@ import (
 	"strings"
 
 	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
-	"github.com/tidwall/gjson"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -31,7 +28,6 @@ import (
 const (
 	Directory = "_schemas"
 	URLScheme = "cerbos"
-	attrPath  = "attr"
 )
 
 var alwaysValidResult = &ValidationResult{Reject: false}
@@ -222,9 +218,9 @@ func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaR
 		return NewLoadErr(src, schemaRef.Ref, err)
 	}
 
-	attrJSON, err := attrToJSONObject(src, attr)
-	if err != nil {
-		return err
+	attrJSON := make(map[string]any, len(attr))
+	for k, v := range attr {
+		attrJSON[k] = v.AsInterface()
 	}
 
 	if err := schema.Validate(attrJSON); err != nil {
@@ -237,19 +233,6 @@ func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaR
 	}
 
 	return nil
-}
-
-func attrToJSONObject(src ErrSource, attr map[string]*structpb.Value) (any, error) {
-	if attr == nil {
-		return map[string]any{}, nil
-	}
-
-	jsonBytes, err := protojson.Marshal(&privatev1.AttrWrapper{Attr: attr})
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal %s: %w", src, err)
-	}
-
-	return gjson.GetBytes(jsonBytes, attrPath).Value(), nil
 }
 
 func filterActionsToValidate(ignore, actions []string) []string {
