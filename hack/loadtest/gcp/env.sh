@@ -42,8 +42,6 @@ NUM_POLICIES=${NUM_POLICIES:-"1000"}
 REMOTE_BASE=${REMOTE_BASE:-"/opt/cerbos-loadtest"}
 WORK_DIR=${WORK_DIR:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/work"}
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # Helper functions
 GSSH() {
   local vm="$1"
