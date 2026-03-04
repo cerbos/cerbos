@@ -130,6 +130,10 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 					b.BundleSource = src.SourceKind()
 				}
 
+				if bundleConf.Remote != nil {
+					b.DeploymentId = bundleConf.Remote.DeploymentID
+				}
+
 				feats.Storage.Store = &telemetryv1.ServerLaunch_Features_Storage_Bundle_{Bundle: b}
 			}
 		}
@@ -150,7 +154,6 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 		Schema: &telemetryv1.ServerLaunch_Stats_Schema{
 			Count: uint32(stats.SchemaCount),
 		},
-		Hash: stats.Hash,
 	}
 
 	for k, v := range stats.PolicyCount {

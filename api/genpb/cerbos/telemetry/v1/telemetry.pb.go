@@ -435,7 +435,6 @@ type ServerLaunch_Stats struct {
 	state         protoimpl.MessageState     `protogen:"open.v1"`
 	Policy        *ServerLaunch_Stats_Policy `protobuf:"bytes,1,opt,name=policy,proto3" json:"policy,omitempty"`
 	Schema        *ServerLaunch_Stats_Schema `protobuf:"bytes,2,opt,name=schema,proto3" json:"schema,omitempty"`
-	Hash          uint64                     `protobuf:"varint,3,opt,name=hash,proto3" json:"hash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -482,13 +481,6 @@ func (x *ServerLaunch_Stats) GetSchema() *ServerLaunch_Stats_Schema {
 		return x.Schema
 	}
 	return nil
-}
-
-func (x *ServerLaunch_Stats) GetHash() uint64 {
-	if x != nil {
-		return x.Hash
-	}
-	return 0
 }
 
 type ServerLaunch_Features_Audit struct {
@@ -914,6 +906,7 @@ type ServerLaunch_Features_Storage_Bundle struct {
 	PdpId         string                 `protobuf:"bytes,1,opt,name=pdp_id,json=pdpId,proto3" json:"pdp_id,omitempty"`
 	BundleSource  string                 `protobuf:"bytes,2,opt,name=bundle_source,json=bundleSource,proto3" json:"bundle_source,omitempty"`
 	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	DeploymentId  string                 `protobuf:"bytes,4,opt,name=deployment_id,json=deploymentId,proto3" json:"deployment_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -965,6 +958,13 @@ func (x *ServerLaunch_Features_Storage_Bundle) GetBundleSource() string {
 func (x *ServerLaunch_Features_Storage_Bundle) GetClientId() string {
 	if x != nil {
 		return x.ClientId
+	}
+	return ""
+}
+
+func (x *ServerLaunch_Features_Storage_Bundle) GetDeploymentId() string {
+	if x != nil {
+		return x.DeploymentId
 	}
 	return ""
 }
@@ -1213,7 +1213,7 @@ var File_cerbos_telemetry_v1_telemetry_proto protoreflect.FileDescriptor
 
 const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\n" +
-	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\xd6\x15\n" +
+	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\xe8\x15\n" +
 	"\fServerLaunch\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12@\n" +
 	"\x06source\x18\x02 \x01(\v2(.cerbos.telemetry.v1.ServerLaunch.SourceR\x06source\x12F\n" +
@@ -1230,7 +1230,7 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x06cerbos\x18\x01 \x01(\v2(.cerbos.telemetry.v1.ServerLaunch.CerbosR\x06cerbos\x12\x0e\n" +
 	"\x02os\x18\x02 \x01(\tR\x02os\x12\x12\n" +
 	"\x04arch\x18\x03 \x01(\tR\x04arch\x12\x19\n" +
-	"\bnum_cpus\x18\x04 \x01(\rR\anumCpus\x1a\x94\t\n" +
+	"\bnum_cpus\x18\x04 \x01(\rR\anumCpus\x1a\xba\t\n" +
 	"\bFeatures\x12F\n" +
 	"\x05audit\x18\x01 \x01(\v20.cerbos.telemetry.v1.ServerLaunch.Features.AuditR\x05audit\x12I\n" +
 	"\x06schema\x18\x02 \x01(\v21.cerbos.telemetry.v1.ServerLaunch.Features.SchemaR\x06schema\x12P\n" +
@@ -1242,7 +1242,7 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x06Schema\x12 \n" +
 	"\venforcement\x18\x01 \x01(\tR\venforcement\x1a$\n" +
 	"\bAdminApi\x12\x18\n" +
-	"\aenabled\x18\x01 \x01(\bR\aenabled\x1a\xc5\x05\n" +
+	"\aenabled\x18\x01 \x01(\bR\aenabled\x1a\xeb\x05\n" +
 	"\aStorage\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12M\n" +
 	"\x04disk\x18\x02 \x01(\v27.cerbos.telemetry.v1.ServerLaunch.Features.Storage.DiskH\x00R\x04disk\x12J\n" +
@@ -1257,16 +1257,16 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\rpoll_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\fpollInterval\x1ab\n" +
 	"\x04Blob\x12\x1a\n" +
 	"\bprovider\x18\x01 \x01(\tR\bprovider\x12>\n" +
-	"\rpoll_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\fpollInterval\x1aa\n" +
+	"\rpoll_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\fpollInterval\x1a\x86\x01\n" +
 	"\x06Bundle\x12\x15\n" +
 	"\x06pdp_id\x18\x01 \x01(\tR\x05pdpId\x12#\n" +
 	"\rbundle_source\x18\x02 \x01(\tR\fbundleSource\x12\x1b\n" +
-	"\tclient_id\x18\x03 \x01(\tR\bclientIdB\a\n" +
-	"\x05store\x1a\x93\b\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\x12#\n" +
+	"\rdeployment_id\x18\x04 \x01(\tR\fdeploymentIdB\a\n" +
+	"\x05store\x1a\xff\a\n" +
 	"\x05Stats\x12F\n" +
 	"\x06policy\x18\x01 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.PolicyR\x06policy\x12F\n" +
-	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x12\x12\n" +
-	"\x04hash\x18\x03 \x01(\x04R\x04hash\x1a\xc5\x06\n" +
+	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\xc5\x06\n" +
 	"\x06Policy\x12O\n" +
 	"\x05count\x18\x01 \x03(\v29.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntryR\x05count\x12f\n" +
 	"\x0eavg_rule_count\x18\x02 \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgRuleCountEntryR\favgRuleCount\x12u\n" +

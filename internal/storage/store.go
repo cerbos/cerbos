@@ -276,5 +276,4 @@ type RepoStats struct {
 	AvgRuleCount      map[policy.Kind]float64
 	AvgConditionCount map[policy.Kind]float64
 	SchemaCount       int
-	Hash              uint64
 }

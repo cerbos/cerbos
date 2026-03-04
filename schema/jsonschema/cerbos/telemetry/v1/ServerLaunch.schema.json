@@ -114,6 +114,9 @@
         "clientId": {
           "type": "string"
         },
+        "deploymentId": {
+          "type": "string"
+        },
         "pdpId": {
           "type": "string"
         }
@@ -166,18 +169,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "hash": {
-          "oneOf": [
-            {
-              "type": "integer",
-              "minimum": 0
-            },
-            {
-              "type": "string",
-              "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$"
-            }
-          ]
-        },
         "policy": {
           "$ref": "#/definitions/cerbos.telemetry.v1.ServerLaunch.Stats.Policy"
         },

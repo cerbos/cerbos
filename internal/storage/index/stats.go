@@ -6,8 +6,6 @@
 package index
 
 import (
-	"github.com/cespare/xxhash/v2"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/storage"
@@ -21,7 +19,6 @@ type statsCollector struct {
 	ruleCount      map[policy.Kind]int
 	conditionCount map[policy.Kind]int
 	schemaRefs     map[uint64]struct{}
-	hash           *xxhash.Digest
 }
 
 type policyStats struct {
@@ -35,7 +32,6 @@ func newStatsCollector() *statsCollector {
 		ruleCount:      make(map[policy.Kind]int, numPolicyKinds),
 		conditionCount: make(map[policy.Kind]int, numPolicyKinds),
 		schemaRefs:     make(map[uint64]struct{}),
-		hash:           xxhash.New(),
 	}
 }
 
@@ -47,7 +43,6 @@ func (s *statsCollector) collate() storage.RepoStats {
 		SchemaCount:       len(s.schemaRefs),
 		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCount)),
 		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCount)),
-		Hash:              s.hash.Sum64(),
 	}
 
 	for k, c := range s.ruleCount {
@@ -82,8 +77,6 @@ func (s *statsCollector) add(p policy.Wrapper) {
 
 	s.ruleCount[p.Kind] += ps.ruleCount
 	s.conditionCount[p.Kind] += ps.conditionCount
-
-	p.HashPB(s.hash, policy.IgnoreHashFields)
 }
 
 func (s *statsCollector) procDerivedRoles(dr *policyv1.DerivedRoles) (ps policyStats) {

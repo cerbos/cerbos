@@ -6,9 +6,6 @@
 package hub
 
 import (
-	"encoding/binary"
-	"sort"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -16,17 +13,9 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cespare/xxhash/v2"
 )
 
 const numPolicyKinds = 4
-
-var ignoredProtoFields = map[string]struct{}{
-	"cerbos.runtime.v1.RuleTableMetadata.source_attributes":                   {},
-	"cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes": {},
-	"cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes":  {},
-	"cerbos.runtime.v1.RunnableRolePolicySet.Metadata.source_attributes":      {},
-}
 
 type statsCollector struct {
 	policyCount    map[policy.Kind]int
@@ -34,12 +23,6 @@ type statsCollector struct {
 	conditionCount map[policy.Kind]int
 	schemaRefs     map[uint64]struct{}
 	uniquePolicies map[uint64]struct{}
-	hashes         []hash
-}
-
-type hash struct {
-	fqn  string
-	hash uint64
 }
 
 func newStatsCollector() *statsCollector {
@@ -70,22 +53,6 @@ func (s *statsCollector) collate() storage.RepoStats {
 		is.AvgConditionCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
-	sort.Slice(s.hashes, func(i, j int) bool {
-		if s.hashes[i].fqn == s.hashes[j].fqn {
-			return s.hashes[i].hash < s.hashes[j].hash
-		}
-
-		return s.hashes[i].fqn < s.hashes[j].fqn
-	})
-
-	digest := xxhash.New()
-	for _, h := range s.hashes {
-		hashBytes := make([]byte, 8) //nolint:mnd
-		binary.LittleEndian.PutUint64(hashBytes, h.hash)
-		_, _ = digest.Write(hashBytes)
-	}
-	is.Hash = digest.Sum64()
-
 	return is
 }
 
@@ -103,12 +70,6 @@ func (s *statsCollector) addRow(row *index.Row) {
 	if row.GetCondition() != nil {
 		s.conditionCount[policyKind]++
 	}
-
-	s.hashes = append(s.hashes, hash{
-		fqn:  row.GetEvaluationKey(),
-		hash: row.Sum,
-	},
-	)
 }
 
 func (s *statsCollector) addSchemas(schemas *policyv1.Schemas) {
@@ -138,12 +99,6 @@ func (s *statsCollector) addRunnablePolicySet(rps *runtimev1.RunnablePolicySet) 
 		s.ruleCount[kind] += ps.ruleCount
 		s.conditionCount[kind] += ps.conditionCount
 	}
-
-	s.hashes = append(s.hashes, hash{
-		fqn:  rps.GetFqn(),
-		hash: util.HashPB(rps, ignoredProtoFields),
-	},
-	)
 }
 
 func (s *statsCollector) procRunnablePrincipalPolicySet(rpps *runtimev1.RunnablePrincipalPolicySet) []policyStats {

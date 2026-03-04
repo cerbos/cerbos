@@ -61,6 +61,7 @@ message ServerLaunch {
         string pdp_id = 1;
         string bundle_source = 2;
         string client_id = 3;
+        string deployment_id = 4;
       }
 
       string driver = 1;
@@ -93,7 +94,6 @@ message ServerLaunch {
 
     Policy policy = 1;
     Schema schema = 2;
-    uint64 hash = 3;
   }
 
   string version = 1;
