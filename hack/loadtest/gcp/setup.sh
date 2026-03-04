@@ -16,14 +16,6 @@ log "Setting up PDP VM (${PDP_VM})..."
 GSSH "$PDP_VM" <<ENDSSH
 set -euo pipefail
 
-# Install Nix if not present
-if ! command -v nix &>/dev/null; then
-  echo "Installing Nix..."
-  ${NIX_INSTALL}
-  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-fi
-nix --version
-
 # Create directory structure
 sudo mkdir -p ${REMOTE_BASE}/{bin,conf,policies,audit}
 sudo chown -R \$(id -u):\$(id -g) ${REMOTE_BASE}
