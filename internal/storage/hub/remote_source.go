@@ -44,8 +44,9 @@ const (
 )
 
 var (
-	_ storage.BinaryStore = (*RemoteSource)(nil)
-	_ storage.Reloadable  = (*RemoteSource)(nil)
+	_ storage.BinaryStore  = (*RemoteSource)(nil)
+	_ storage.Reloadable   = (*RemoteSource)(nil)
+	_ storage.Instrumented = (*RemoteSource)(nil)
 
 	playgroundLabelPattern = regexp.MustCompile(`^playground/[A-Z0-9]{12}$`)
 
@@ -64,6 +65,7 @@ type Bundle interface {
 	GetFirstMatch(context.Context, []namer.ModuleID) (*runtimev1.RunnablePolicySet, error)
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
+	RepoStats(context.Context) storage.RepoStats
 }
 
 type cloudAPIClient interface {
@@ -703,6 +705,10 @@ func (s *RemoteSource) LoadSchema(ctx context.Context, id string) (io.ReadCloser
 
 func (s *RemoteSource) Reload(ctx context.Context) error {
 	return s.fetchBundle(ctx)
+}
+
+func (s *RemoteSource) RepoStats(ctx context.Context) storage.RepoStats {
+	return s.bundle.RepoStats(ctx)
 }
 
 func (s *RemoteSource) Source() *auditv1.PolicySource {

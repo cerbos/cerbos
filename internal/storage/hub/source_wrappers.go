@@ -91,6 +91,14 @@ func (is instrumentedSource) Reload(ctx context.Context) error {
 	return nil
 }
 
+func (is instrumentedSource) RepoStats(ctx context.Context) storage.RepoStats {
+	if r, ok := is.source.(storage.Instrumented); ok {
+		return r.RepoStats(ctx)
+	}
+
+	return storage.RepoStats{}
+}
+
 func (is instrumentedSource) Source() *auditv1.PolicySource {
 	return is.source.Source()
 }

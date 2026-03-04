@@ -142,17 +142,21 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.PrincipalKind, policy.ResourceKind} {
 			t.Run(k.String(), func(t *testing.T) {
-				require.Greater(t, stats.PolicyCount[k], 2)
-				require.Greater(t, stats.AvgConditionCount[k], float64(0.1))
+				require.Greater(t, stats.PolicyCount[k], 5)
+				require.Greater(t, stats.ConditionCount[k], 3)
+				require.Greater(t, stats.RuleCount[k], 12)
+				require.Greater(t, stats.AvgConditionCount[k], float64(0.3))
 				require.Greater(t, stats.AvgRuleCount[k], float64(1.0))
 			})
 		}
 
 		for _, k := range []policy.Kind{policy.ExportConstantsKind, policy.ExportVariablesKind} {
 			t.Run(k.String(), func(t *testing.T) {
-				require.GreaterOrEqual(t, stats.PolicyCount[k], 1)
-				require.GreaterOrEqual(t, stats.AvgRuleCount[k], float64(1.0))
+				require.Equal(t, stats.PolicyCount[k], 1)
+				require.Zero(t, stats.ConditionCount[k])
+				require.Equal(t, stats.RuleCount[k], 2)
 				require.Zero(t, stats.AvgConditionCount[k])
+				require.Equal(t, stats.AvgRuleCount[k], float64(2))
 			})
 		}
 	})

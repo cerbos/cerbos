@@ -498,6 +498,20 @@ func (lb *LegacyBundle) Release() error {
 	return lb.Close()
 }
 
+func (lb *LegacyBundle) RepoStats(ctx context.Context) storage.RepoStats {
+	policySets, err := lb.GetAll(ctx)
+	if err != nil {
+		return storage.RepoStats{}
+	}
+
+	stats := newStatsCollector()
+	for _, policySet := range policySets {
+		stats.addRunnablePolicySet(policySet)
+	}
+
+	return stats.collate()
+}
+
 func (lb *LegacyBundle) Close() error {
 	if lb == nil {
 		return nil

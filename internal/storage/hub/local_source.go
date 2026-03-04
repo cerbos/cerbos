@@ -282,6 +282,10 @@ func (ls *LocalSource) Reload(_ context.Context) error {
 	return ls.loadBundle()
 }
 
+func (ls *LocalSource) RepoStats(ctx context.Context) storage.RepoStats {
+	return ls.bundle.RepoStats(ctx)
+}
+
 func (ls *LocalSource) Source() *auditv1.PolicySource {
 	return ls.source
 }

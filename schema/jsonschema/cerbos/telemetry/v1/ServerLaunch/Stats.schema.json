@@ -18,7 +18,21 @@
             "type": "number"
           }
         },
+        "conditionCount": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
         "count": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "ruleCount": {
           "type": "object",
           "additionalProperties": {
             "type": "integer",

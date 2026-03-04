@@ -162,6 +162,10 @@ func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Bundle_hashpb_sum(m *Serv
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetClientId()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetClientId()), len(m.GetClientId())))
 	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle.deployment_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDeploymentId()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDeploymentId()), len(m.GetDeploymentId())))
+	}
 }
 
 func cerbos_telemetry_v1_ServerLaunch_Features_Storage_Disk_hashpb_sum(m *ServerLaunch_Features_Storage_Disk, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
@@ -322,6 +326,52 @@ func cerbos_telemetry_v1_ServerLaunch_Stats_Policy_hashpb_sum(m *ServerLaunch_St
 					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 					_, _ = hasher.Write(protowire.AppendFixed64(b[:0], math.Float64bits(m.AvgConditionCount[k])))
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Stats.Policy.condition_count"]; !ok {
+		if len(m.ConditionCount) > 0 {
+			if len(m.ConditionCount) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.ConditionCount {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.ConditionCount[k])))
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.ConditionCount)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.ConditionCount[k])))
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Stats.Policy.rule_count"]; !ok {
+		if len(m.RuleCount) > 0 {
+			if len(m.RuleCount) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.RuleCount {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.RuleCount[k])))
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.RuleCount)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.RuleCount[k])))
 				}
 			}
 		}
