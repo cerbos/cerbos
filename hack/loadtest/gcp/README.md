@@ -65,7 +65,7 @@ gcloud compute ssh cerbos-loadtest-client --zone=us-central1-a -- -L 3000:localh
 |--------|---------|
 | `env.sh` | Shared configuration (GCP project, zone, VM names, machine types, test params) |
 | `provision.sh` | Create VPC network, subnet, firewall rules, and both VMs (idempotent) |
-| `setup.sh` | Install Nix on both VMs, Docker on client VM, create directory structure |
+| `setup.sh` | Install Nix + Docker on client VM, create directory structure on both VMs |
 | `deploy.sh` | Upload policies/requests/configs, download Cerbos binary, start all services |
 | `run.sh` | Run warmup + sustained-rate + throughput tests, download results |
 | `teardown.sh` | Delete all GCP resources (with confirmation prompt) |
@@ -108,7 +108,7 @@ All variables have sensible defaults and can be overridden:
 ## Verification
 
 1. After `provision.sh`: `gcloud compute instances list --filter="name~cerbos-loadtest"`
-2. After `setup.sh`: SSH to each VM, run `nix --version` and (client only) `docker --version`
+2. After `setup.sh`: SSH to client VM, run `nix --version` and `docker --version`
 3. After `deploy.sh`: health check runs automatically; check Grafana via SSH tunnel
 4. After `run.sh`: results are in `hack/loadtest/results/gcp/`
 5. After `teardown.sh`: `gcloud compute instances list` shows no loadtest VMs
