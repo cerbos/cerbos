@@ -107,6 +107,7 @@ generate-proto-code: _buf
         cd {{ tools_mod_dir }}
         "${TOOLS_BIN_DIR}/buf" generate --template=api.gen.yaml --output=..
     )
+    hack/scripts/remove-unused-protobuf-imports.sh
     GOWORK=off go mod tidy -C {{ genpb_dir }}
 
 generate-testdata-json-schemas: _buf
