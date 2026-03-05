@@ -12,9 +12,6 @@ package svcv1
 import (
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
-	_ "google.golang.org/genproto/googleapis/api/visibility"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
