@@ -15,7 +15,6 @@ import (
 	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/parser"
 
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/ruletable/planner/internal"
@@ -438,16 +437,7 @@ func (l *lambdaMatcher) evaluateExpr(ctx context.Context, knownVars map[string]a
 	if err != nil {
 		return nil, err
 	}
-	source, err := parser.Unparse(l.innerExpr, nil)
-	if err != nil {
-		return nil, err
-	}
-	ast1, issues := env.Compile(source)
-	if issues.Err() != nil {
-		return nil, issues.Err()
-	}
-	// ast = celast.NewAST(l.innerExpr, nil)
-	ast := ast1.NativeRep()
+	ast := celast.NewAST(l.innerExpr, nil)
 	_, details, err := conditions.ContextEval(ctx, env, ast, vars, p.nowFn, cel.EvalOptions(cel.OptPartialEval, cel.OptTrackState))
 	if err != nil {
 		return nil, err
