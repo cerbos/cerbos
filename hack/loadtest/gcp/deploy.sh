@@ -19,7 +19,7 @@ log "PDP internal IP: ${PDP_IP}"
 if [[ ! -d "${WORK_DIR}/policies" ]]; then
   err "Missing ${WORK_DIR}/policies — generate test data first:"
   err "  cd hack/loadtest"
-  err "  go run -tags loadtest . --out=work --count=1000 --set=classic"
+  err "  NUM_POLICIES=1000 ./loadtest.sh -g"
   exit 1
 fi
 

@@ -39,9 +39,9 @@ export GCP_PROJECT=my-project
 # 3. Install Nix + Docker on the VMs (one-time)
 ./setup.sh
 
-# 4. Generate test data (from hack/loadtest/)
+# 4. Generate test data and build printsummary (from hack/loadtest/)
 cd hack/loadtest
-go run -tags loadtest . --out=work --count=1000 --set=classic
+NUM_POLICIES=1000 ./loadtest.sh -g
 go build -tags printsummary -o work/printsummary .
 cd gcp
 
