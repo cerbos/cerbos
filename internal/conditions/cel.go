@@ -35,8 +35,8 @@ const (
 )
 
 var (
-	TrueExpr  *exprpb.CheckedExpr
-	FalseExpr *exprpb.CheckedExpr
+	TrueExpr  = boolExpr(true)
+	FalseExpr = boolExpr(false)
 
 	StdEnv *cel.Env
 
@@ -77,34 +77,47 @@ func init() {
 		panic(fmt.Errorf("failed to initialize standard CEL environment: %w", err))
 	}
 
-	FalseExpr, err = compileConstant("false")
-	if err != nil {
-		panic(fmt.Errorf("failed to compile constant 'false': %w", err))
-	}
-
-	TrueExpr, err = compileConstant("true")
-	if err != nil {
-		panic(fmt.Errorf("failed to compile constant 'true': %w", err))
-	}
-
 	variablesType, err = cel.TypeToExprType(types.VariablesType)
 	if err != nil {
 		panic(fmt.Errorf("failed to convert cerbos.Variables type to proto: %w", err))
 	}
 }
 
-func compileConstant(value string) (*exprpb.CheckedExpr, error) {
-	ast, iss := StdEnv.Compile(value)
-	if iss.Err() != nil {
-		return nil, fmt.Errorf("failed to compile constant %q: %w", value, iss.Err())
+const (
+	trueLineOffset  int32 = 5
+	falseLineOffset int32 = 6
+)
+
+func boolExpr(value bool) *exprpb.CheckedExpr {
+	lineOffset := falseLineOffset
+	if value {
+		lineOffset = trueLineOffset
 	}
 
-	expr, err := cel.AstToCheckedExpr(ast)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert constant %q to checked expression: %w", value, err)
+	return &exprpb.CheckedExpr{
+		Expr: &exprpb.Expr{
+			Id: 1,
+			ExprKind: &exprpb.Expr_ConstExpr{
+				ConstExpr: &exprpb.Constant{
+					ConstantKind: &exprpb.Constant_BoolValue{
+						BoolValue: value,
+					},
+				},
+			},
+		},
+		SourceInfo: &exprpb.SourceInfo{
+			Location:    "<input>",
+			LineOffsets: []int32{lineOffset},
+			Positions:   map[int64]int32{1: 0},
+		},
+		TypeMap: map[int64]*exprpb.Type{
+			1: {
+				TypeKind: &exprpb.Type_Primitive{
+					Primitive: exprpb.Type_BOOL,
+				},
+			},
+		},
 	}
-
-	return expr, nil
 }
 
 func Fqn(s string) string {
