@@ -40,7 +40,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
-	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
@@ -613,17 +612,17 @@ func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDeri
 	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
-func (rt *RuleTable) GetAllScopes(pt policy.Kind, scope, name, version string, lenient bool) ([]string, string, string) {
+func (rt *RuleTable) GetAllScopes(pt policyv1.Kind, scope, name, version string, lenient bool) ([]string, string, string) {
 	var firstPolicyKey, firstFqn string
 	var scopes []string
 
 	var fqnFn func(string, string, string) string
 	var scopeMap map[string]struct{}
 	switch pt { //nolint:exhaustive
-	case policy.PrincipalKind:
+	case policyv1.Kind_KIND_PRINCIPAL:
 		fqnFn = namer.PrincipalPolicyFQN
 		scopeMap = rt.principalScopeMap
-	case policy.ResourceKind:
+	case policyv1.Kind_KIND_RESOURCE:
 		fqnFn = namer.ResourcePolicyFQN
 		scopeMap = rt.resourceScopeMap
 	}
@@ -806,8 +805,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	principalScopes, principalPolicyKey, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
-	resourceScopes, resourcePolicyKey, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalScopes, principalPolicyKey, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceScopes, resourcePolicyKey, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
 		return result, nil
@@ -1525,8 +1524,8 @@ func (rt *RuleTable) planWithAuditTrail(
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	defer span.End()
 
-	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policy.PrincipalKind, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
-	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policy.ResourceKind, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
+	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
+	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
 
 	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
