@@ -24,7 +24,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cerbos/cerbos-sdk-go v0.3.17
 	github.com/cerbos/cerbos/api/genpb v0.51.1-0.20260305174123-599305d067e1
-	github.com/cerbos/cloud-api v0.1.70
+	github.com/cerbos/cloud-api v0.1.71
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.9.1

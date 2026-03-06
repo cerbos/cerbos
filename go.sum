@@ -175,8 +175,8 @@ github.com/cerbos/cerbos-sdk-go v0.3.17 h1:ZWAecsQJ2vGbVYvG5xPvbg8Volw1Q8fwofUkv
 github.com/cerbos/cerbos-sdk-go v0.3.17/go.mod h1:CLydthOV1inHHS/mn3JeVaIsx8a/A0FR+Rn8tDUm2kE=
 github.com/cerbos/cerbos/api/genpb v0.51.1-0.20260305174123-599305d067e1 h1:5iXN3NjwdlP/SMRtce47sE5ChjHCjCQ/uiiv1aR6ssw=
 github.com/cerbos/cerbos/api/genpb v0.51.1-0.20260305174123-599305d067e1/go.mod h1:Dkq+MrBNmWQSk5sTuvxdApiQ15x92T9OU572SCtpVh8=
-github.com/cerbos/cloud-api v0.1.70 h1:o1uxBDMqVKuZosyXVAsE8nRzFSIPypvU9jBEScWHdoY=
-github.com/cerbos/cloud-api v0.1.70/go.mod h1:9sYZLd/SipuVIk7tjd9s9G+7qPdfsrPxMBOOmLzwooM=
+github.com/cerbos/cloud-api v0.1.71 h1:vYWspZbg6Xj38PUGCjIiju6BSnucG1YM6ETDn5s2J1I=
+github.com/cerbos/cloud-api v0.1.71/go.mod h1:xKkdLg9LrNufrqns/Xgta5nW9gmf6d+A8qDfJFMOunk=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/clipperhouse/displaywidth v0.10.0 h1:GhBG8WuerxjFQQYeuZAeVTuyxuX+UraiZGD4HJQ3Y8g=
