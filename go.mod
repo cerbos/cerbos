@@ -17,14 +17,14 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.2
 	github.com/aws/aws-sdk-go-v2/config v1.32.10
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.10
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.35.7
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.1
-	github.com/aws/smithy-go v1.24.1
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.36.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.2
+	github.com/aws/smithy-go v1.24.2
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cerbos/cerbos-sdk-go v0.3.17
-	github.com/cerbos/cerbos/api/genpb v0.51.1-0.20260304111044-0494bff810b0
-	github.com/cerbos/cloud-api v0.1.69
+	github.com/cerbos/cerbos/api/genpb v0.51.1-0.20260305174123-599305d067e1
+	github.com/cerbos/cloud-api v0.1.70
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.9.1
@@ -116,7 +116,7 @@ require (
 	golang.org/x/sync v0.19.0
 	golang.org/x/tools v0.42.0
 	gonum.org/v1/gonum v0.17.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260217215200-42d3e9bedb6d
+	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171
 	google.golang.org/grpc v1.79.1
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -138,10 +138,11 @@ require (
 	cloud.google.com/go/monitoring v1.24.2 // indirect
 	cloud.google.com/go/storage v1.56.0 // indirect
 	connectrpc.com/connect v1.19.1 // indirect
-	connectrpc.com/otelconnect v0.8.0 // indirect
+	connectrpc.com/otelconnect v0.9.0 // indirect
 	dario.cat/mergo v1.0.1 // indirect
-	filippo.io/age v1.2.1 // indirect
+	filippo.io/age v1.3.1 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
+	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.53.0 // indirect
@@ -160,7 +161,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.9 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.10 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.6 // indirect
@@ -192,7 +193,7 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.36.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
-	github.com/failsafe-go/failsafe-go v0.9.4 // indirect
+	github.com/failsafe-go/failsafe-go v0.9.6 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
@@ -301,7 +302,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.247.0 // indirect
 	google.golang.org/genproto v0.0.0-20250715232539-7130f93afb79 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260209200024-4cfbd4190f57 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260217215200-42d3e9bedb6d // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.67.6 // indirect
