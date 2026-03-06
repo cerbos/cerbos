@@ -10,6 +10,7 @@ on:
         default: ""
   schedule:
     - cron: 0 1 * * 1-5
+permissions: {}
 jobs:
   runE2ETests:
     name: Run E2E Tests
