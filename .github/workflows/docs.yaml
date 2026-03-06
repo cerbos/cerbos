@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - "v*"
+permissions: {}
 jobs:
   publishDocs:
     name: Publish Documentation

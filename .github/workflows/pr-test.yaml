@@ -6,10 +6,13 @@ on:
       - main
       - "v*"
       - "feat/*"
+permissions: {}
 jobs:
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      pull-requests: read
     outputs:
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
@@ -41,6 +44,8 @@ jobs:
 
   cache:
     uses: ./.github/workflows/cache.yaml
+    permissions:
+      pull-requests: read
 
   generate:
     needs: changes
@@ -48,6 +53,7 @@ jobs:
     name: Generate
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -83,6 +89,7 @@ jobs:
     name: Download test times
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -110,6 +117,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions: {}
     strategy:
       fail-fast: false
       matrix:
@@ -185,6 +193,7 @@ jobs:
     name: Upload test times
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -238,6 +247,7 @@ jobs:
     name: Build docs
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -260,6 +270,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -294,6 +305,7 @@ jobs:
     name: Proto check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -337,6 +349,7 @@ jobs:
     name: Helm test
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -359,6 +372,7 @@ jobs:
     name: Build npm packages
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -412,6 +426,7 @@ jobs:
           - ubuntu-latest
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 10
+    permissions: {}
     steps:
       - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
         with:
@@ -455,6 +470,7 @@ jobs:
   test-npm-results:
     name: Check results of npm package tests
     runs-on: ubuntu-latest
+    permissions: {}
     if: always() && needs.test-npm.result != 'skipped'
     needs:
       - test-npm
