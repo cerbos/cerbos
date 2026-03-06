@@ -44,6 +44,8 @@ jobs:
 
   cache:
     uses: ./.github/workflows/cache.yaml
+    permissions:
+      pull-requests: read
 
   generate:
     needs: changes
