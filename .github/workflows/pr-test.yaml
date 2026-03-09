@@ -105,7 +105,7 @@ jobs:
           search_artifacts: true
 
       - name: Upload previous test times
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: previous-test-times
           path: test-times.json
@@ -167,7 +167,7 @@ jobs:
           STRATEGY_JOB_TOTAL: ${{ strategy.job-total }}
 
       - name: Upload JUnit reports
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: junit-reports-${{ strategy.job-index }}
           path: junit.*.xml
@@ -231,7 +231,7 @@ jobs:
           NEEDS_TEST_OUTPUTS_JOB_TOTAL: ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: test-times
           path: test-times.json
@@ -398,7 +398,7 @@ jobs:
         uses: anchore/sbom-action/download-syft@17ae1740179002c89186b61233e0f892c3118b11 # v0.23.0
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
+        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
         with:
           version: latest
           args: build --config=.goreleaser.yml --clean --snapshot
@@ -412,7 +412,7 @@ jobs:
         run: tar --create --verbose --file npm.tar npm
 
       - name: Upload npm packages
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: npm-packages
           path: npm.tar
