@@ -859,13 +859,14 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	allRoles, err := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-	if err != nil {
-		return nil, err
-	}
+	parentRolesMap := rt.idx.ParentRolesMap([]string{resourceScope})
+
 	includingParentRoles := make(map[string]struct{})
-	for _, r := range allRoles {
+	for _, r := range input.Principal.Roles {
 		includingParentRoles[r] = struct{}{}
+		for _, p := range parentRolesMap[r] {
+			includingParentRoles[p] = struct{}{}
+		}
 	}
 
 	varCache := make(map[string]map[string]any)
@@ -901,7 +902,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					break
 				}
 
-				roleEffectSet := make(map[effectv1.Effect]struct{})
+				var hasAllow bool
 				roleEffectInfo := EffectInfo{
 					Effect: effectv1.Effect_EFFECT_NO_MATCH,
 					Policy: noPolicyMatch,
@@ -913,10 +914,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles, err := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
-				if err != nil {
-					return nil, err
-				}
+				parentRoles := lookupParentRoles(role, parentRolesMap)
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1071,7 +1069,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								octx.ComputedOutput(output)
 							}
 
-							roleEffectSet[b.Core.Effect] = struct{}{}
+							if b.Core.Effect == effectv1.Effect_EFFECT_ALLOW {
+								hasAllow = true
+							}
 							if b.Core.Effect == effectv1.Effect_EFFECT_DENY {
 								roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
 								roleEffectInfo.Scope = scope
@@ -1100,10 +1100,10 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						}
 					}
 
-					if _, hasAllow := roleEffectSet[effectv1.Effect_EFFECT_ALLOW]; hasAllow {
+					if hasAllow {
 						switch rt.GetScopeScopePermissions(scope) { //nolint:exhaustive
 						case policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS:
-							delete(roleEffectSet, effectv1.Effect_EFFECT_ALLOW)
+							hasAllow = false
 						case policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT:
 							roleEffectInfo.Effect = effectv1.Effect_EFFECT_ALLOW
 							roleEffectInfo.Scope = scope
@@ -1549,16 +1549,16 @@ func (rt *RuleTable) planWithAuditTrail(
 		}
 	}
 
-	allRoles, err := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-	if err != nil {
-		return nil, nil, err
-	}
+	parentRolesMap := rt.idx.ParentRolesMap([]string{resourceScope})
 
 	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
 
 	includingParentRoles := make(map[string]struct{})
-	for _, r := range allRoles {
+	for _, r := range input.Principal.Roles {
 		includingParentRoles[r] = struct{}{}
+		for _, p := range parentRolesMap[r] {
+			includingParentRoles[p] = struct{}{}
+		}
 	}
 
 	policyMatch := false
@@ -1593,10 +1593,7 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents, err := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
-				if err != nil {
-					return nil, nil, err
-				}
+				rolesIncludingParents := lookupParentRoles(role, parentRolesMap)
 
 				for _, scope := range scopes {
 					var scopeAllowNode *planner.QpN
@@ -1998,6 +1995,17 @@ func migrate(rt *runtimev1.RuleTable) error {
 	}
 
 	return nil
+}
+
+func lookupParentRoles(role string, parentRolesMap map[string][]string) []string {
+	parents := parentRolesMap[role]
+	if len(parents) == 0 {
+		return []string{role}
+	}
+	result := make([]string, 0, 1+len(parents))
+	result = append(result, role)
+	result = append(result, parents...)
+	return result
 }
 
 func migrateFromCompilerVersion0To1(rt *runtimev1.RuleTable) error {

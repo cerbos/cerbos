@@ -271,12 +271,24 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	}
 
 	// baseBM = AND of all non-action dimensions.
-	allDims := []*roaring.Bitmap{versionBM, scopeBM, resourceBM, roleBM, policyKindBM, principalBM}
-	nonNilDims := make([]*roaring.Bitmap, 0, len(allDims))
-	for _, bm := range allDims {
-		if bm != nil {
-			nonNilDims = append(nonNilDims, bm)
-		}
+	nonNilDims := make([]*roaring.Bitmap, 0, 6) //nolint:mnd
+	if versionBM != nil {
+		nonNilDims = append(nonNilDims, versionBM)
+	}
+	if scopeBM != nil {
+		nonNilDims = append(nonNilDims, scopeBM)
+	}
+	if resourceBM != nil {
+		nonNilDims = append(nonNilDims, resourceBM)
+	}
+	if roleBM != nil {
+		nonNilDims = append(nonNilDims, roleBM)
+	}
+	if policyKindBM != nil {
+		nonNilDims = append(nonNilDims, policyKindBM)
+	}
+	if principalBM != nil {
+		nonNilDims = append(nonNilDims, principalBM)
 	}
 
 	var baseBM *roaring.Bitmap
@@ -497,6 +509,27 @@ func (m *Index) AddParentRoles(scopes, roles []string) ([]string, error) {
 	}
 
 	return parentRoles, nil
+}
+
+// ParentRolesMap returns a pre-merged map of role → [role, parent1, parent2, ...] across the provided scopes.
+// Each role's entry includes the role itself as the first element.
+func (m *Index) ParentRolesMap(scopes []string) map[string][]string {
+	if len(m.parentRoles) == 0 {
+		return nil
+	}
+
+	merged := make(map[string][]string)
+	for _, scope := range scopes {
+		c, ok := m.parentRoles[scope]
+		if !ok {
+			continue
+		}
+		for role, parents := range c {
+			merged[role] = append(merged[role], parents...)
+		}
+	}
+
+	return merged
 }
 
 func (m *Index) IndexParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) error {
