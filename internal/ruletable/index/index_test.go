@@ -4,7 +4,6 @@
 package index_test
 
 import (
-	"context"
 	"testing"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -18,8 +17,7 @@ import (
 )
 
 func TestParentRoleIndex(t *testing.T) {
-	ctx := context.Background()
-	impl := index.NewImpl(index.NewMem())
+	impl := index.New()
 
 	scopeParentRoles := map[string]*runtimev1.RuleTable_RoleParentRoles{
 		"acme": {
@@ -41,24 +39,24 @@ func TestParentRoleIndex(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, impl.IndexParentRoles(ctx, scopeParentRoles))
+	require.NoError(t, impl.IndexParentRoles(scopeParentRoles))
 
 	t.Run("transitive closure", func(t *testing.T) {
-		roles, err := impl.AddParentRoles(ctx, []string{"acme"}, []string{"manager"})
+		roles, err := impl.AddParentRoles([]string{"acme"}, []string{"manager"})
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{"manager", "employee", "user"}, roles)
 	})
 
 	t.Run("scope union", func(t *testing.T) {
-		roles, err := impl.AddParentRoles(ctx, []string{"acme", "acme.hr"}, []string{"manager"})
+		roles, err := impl.AddParentRoles([]string{"acme", "acme.hr"}, []string{"manager"})
 		require.NoError(t, err)
 		require.ElementsMatch(t, []string{"manager", "employee", "user", "contractor"}, roles)
 	})
 
 	t.Run("replace existing parent role index", func(t *testing.T) {
-		require.NoError(t, impl.IndexParentRoles(ctx, map[string]*runtimev1.RuleTable_RoleParentRoles{}))
+		require.NoError(t, impl.IndexParentRoles(map[string]*runtimev1.RuleTable_RoleParentRoles{}))
 
-		roles, err := impl.AddParentRoles(ctx, []string{"acme", "acme.hr"}, []string{"manager"})
+		roles, err := impl.AddParentRoles([]string{"acme", "acme.hr"}, []string{"manager"})
 		require.NoError(t, err)
 		require.Equal(t, []string{"manager"}, roles)
 	})
@@ -66,8 +64,7 @@ func TestParentRoleIndex(t *testing.T) {
 
 func TestParamsIndex(t *testing.T) {
 	t.Run("interns equivalent params", func(t *testing.T) {
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		ast, iss := conditions.StdEnv.Compile("1 + 1")
 		require.Nil(t, iss)
@@ -114,36 +111,34 @@ func TestParamsIndex(t *testing.T) {
 			},
 		}
 
-		require.NoError(t, impl.IndexRules(ctx, rules))
+		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 2)
 
-		require.Same(t, allRows[0].Params, allRows[1].Params, "expected shared rowParams pointer from params interning")
+		require.Same(t, allRows[0].Core.Params, allRows[1].Core.Params, "expected shared RowParams pointer from params interning")
 	})
 }
 
 func TestFunctionalChecksum(t *testing.T) {
 	t.Run("rows differing only in origin_fqn are deduplicated", func(t *testing.T) {
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
 			makeRow("policy_a"),
 			makeRow("policy_b"),
 		}
 
-		require.NoError(t, impl.IndexRules(ctx, rules))
+		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "functionally identical rows should be deduplicated")
 	})
 
 	t.Run("rows differing in condition are not deduplicated", func(t *testing.T) {
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
 			makeRow("policy_a"),
@@ -152,16 +147,15 @@ func TestFunctionalChecksum(t *testing.T) {
 			}),
 		}
 
-		require.NoError(t, impl.IndexRules(ctx, rules))
+		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 2, "rows with different conditions should not be deduplicated")
 	})
 
 	t.Run("different emit_output prevents dedup", func(t *testing.T) {
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
 			makeRow("policy_a"),
@@ -170,48 +164,90 @@ func TestFunctionalChecksum(t *testing.T) {
 			}),
 		}
 
-		require.NoError(t, impl.IndexRules(ctx, rules))
+		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 2, "rows with different emit_output should not be deduplicated")
 	})
 
 	t.Run("delete policy with shared row preserves row for remaining origin", func(t *testing.T) {
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
 			makeRow("policy_a"),
 			makeRow("policy_b"),
 		}
 
-		require.NoError(t, impl.IndexRules(ctx, rules))
+		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "rows should be deduplicated")
 
 		// Delete policy_a — row should survive with policy_b's origin.
-		require.NoError(t, impl.DeletePolicy(ctx, "policy_a", nil))
+		require.NoError(t, impl.DeletePolicy("policy_a"))
 
-		allRows, err = impl.GetAllRows(ctx)
+		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "row should survive after deleting one origin")
 
 		// Delete policy_b — row should be removed entirely.
-		require.NoError(t, impl.DeletePolicy(ctx, "policy_b", nil))
+		require.NoError(t, impl.DeletePolicy("policy_b"))
 
-		allRows, err = impl.GetAllRows(ctx)
+		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 0, "row should be removed after deleting last origin")
+	})
+
+	t.Run("delete policy removes orphaned binding when core is shared across different routing tuples", func(t *testing.T) {
+		impl := index.New()
+
+		// Two FQNs produce functionally identical rows (same effect, no condition)
+		// but with different resources, so they get different routing tuples and
+		// separate binding IDs. They share the same FunctionalCore.
+		rules := []*runtimev1.RuleTable_RuleRow{
+			makeRow("policy_a"), // resource="document"
+			makeRow("policy_b", func(r *runtimev1.RuleTable_RuleRow) {
+				r.Resource = "image"
+			}),
+		}
+
+		require.NoError(t, impl.IndexRules(rules))
+
+		// Both bindings should be queryable.
+		docRows, err := impl.GetRows([]string{"default"}, []string{"document"}, nil, nil, nil, false)
+		require.NoError(t, err)
+		require.Len(t, docRows, 1)
+
+		imgRows, err := impl.GetRows([]string{"default"}, []string{"image"}, nil, nil, nil, false)
+		require.NoError(t, err)
+		require.Len(t, imgRows, 1)
+
+		// Delete policy_a — its binding (resource="document") must be removed
+		// even though the shared core still has policy_b in origins.
+		require.NoError(t, impl.DeletePolicy("policy_a"))
+
+		docRows, err = impl.GetRows([]string{"default"}, []string{"document"}, nil, nil, nil, false)
+		require.NoError(t, err)
+		require.Len(t, docRows, 0, "orphaned binding for deleted policy should be removed from dimensions")
+
+		imgRows, err = impl.GetRows([]string{"default"}, []string{"image"}, nil, nil, nil, false)
+		require.NoError(t, err)
+		require.Len(t, imgRows, 1, "surviving policy's binding should remain")
+
+		// Delete policy_b — everything should be clean.
+		require.NoError(t, impl.DeletePolicy("policy_b"))
+
+		allRows, err := impl.GetAllRows()
+		require.NoError(t, err)
+		require.Len(t, allRows, 0, "all bindings should be removed after deleting all origins")
 	})
 
 	t.Run("rows with params differing only in origin_fqn are deduplicated", func(t *testing.T) {
 		// Uses FromRolePolicy: false with non-nil Params to exercise the params compilation path.
 		// Verifies that params interning doesn't interfere with functional checksumming.
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		withParams := func(r *runtimev1.RuleTable_RuleRow) {
 			r.FromRolePolicy = false
@@ -226,43 +262,42 @@ func TestFunctionalChecksum(t *testing.T) {
 			makeRow("policy_b", withParams),
 		}
 
-		require.NoError(t, impl.IndexRules(ctx, rules))
+		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "functionally identical rows with params should be deduplicated")
-		require.NotNil(t, allRows[0].Params, "deduplicated row should have compiled params")
+		require.NotNil(t, allRows[0].Core.Params, "deduplicated row should have compiled params")
 	})
 
 	t.Run("incremental indexing merges origins across batches", func(t *testing.T) {
-		ctx := context.Background()
-		impl := index.NewImpl(index.NewMem())
+		impl := index.New()
 
 		// First batch — adds row with policy_a origin.
-		require.NoError(t, impl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
 			makeRow("policy_a"),
 		}))
 
 		// Second batch — same functional row from policy_b triggers updateIndex → unionAll.
-		require.NoError(t, impl.IndexRules(ctx, []*runtimev1.RuleTable_RuleRow{
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
 			makeRow("policy_b"),
 		}))
 
-		allRows, err := impl.GetAllRows(ctx)
+		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "incremental indexing should still deduplicate")
 
 		// Delete one origin — row should survive.
-		require.NoError(t, impl.DeletePolicy(ctx, "policy_a", nil))
+		require.NoError(t, impl.DeletePolicy("policy_a"))
 
-		allRows, err = impl.GetAllRows(ctx)
+		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "row should survive with remaining origin")
 
 		// Delete the remaining origin — row should be removed.
-		require.NoError(t, impl.DeletePolicy(ctx, "policy_b", nil))
+		require.NoError(t, impl.DeletePolicy("policy_b"))
 
-		allRows, err = impl.GetAllRows(ctx)
+		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 0, "row should be removed after all origins deleted")
 	})

@@ -18,7 +18,6 @@ import (
 	"github.com/cerbos/cerbos/internal/inspect"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/util"
@@ -42,7 +41,7 @@ func OpenRuleTableBundle(opts OpenOpts) (*RuleTableBundle, error) {
 		return nil, err
 	}
 
-	ruleTable, err := ruletable.NewRuleTable(index.NewMem(), protoRT)
+	ruleTable, err := ruletable.NewRuleTable(protoRT)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}
@@ -115,7 +114,7 @@ func (rtb *RuleTableBundle) InspectPolicies(ctx context.Context, _ storage.ListP
 	}
 
 	ins := inspect.RuleTables(rtb.ruleTable)
-	if err := ins.Inspect(ctx); err != nil {
+	if err := ins.Inspect(); err != nil {
 		return nil, fmt.Errorf("failed to inspect rule table: %w", err)
 	}
 

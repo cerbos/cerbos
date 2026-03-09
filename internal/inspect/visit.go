@@ -13,28 +13,32 @@ import (
 	"github.com/google/cel-go/common/ast"
 )
 
-func visitRuleTableRow(row *index.Row, visitor ast.Visitor) error {
-	if err := visitCompiledCondition(row.GetCondition(), visitor); err != nil {
+func visitBinding(b *index.Binding, visitor ast.Visitor) error {
+	if err := visitCompiledCondition(b.Core.Condition, visitor); err != nil {
 		return fmt.Errorf("failed to visit condition: %w", err)
 	}
 
-	if err := visitCompiledCondition(row.GetDerivedRoleCondition(), visitor); err != nil {
+	if err := visitCompiledCondition(b.Core.DerivedRoleCondition, visitor); err != nil {
 		return fmt.Errorf("failed to visit derived role condition condition: %w", err)
 	}
 
-	if err := visitCompiledOutput(row.GetEmitOutput(), visitor); err != nil {
+	if err := visitCompiledOutput(b.Core.EmitOutput, visitor); err != nil {
 		return fmt.Errorf("failed to visit output: %w", err)
 	}
 
-	for _, variable := range row.GetParams().GetOrderedVariables() {
-		if err := visitCompiledExpr(variable.Expr, visitor); err != nil {
-			return fmt.Errorf("failed to visit ordered variables: %w", err)
+	if b.Core.Params != nil {
+		for _, variable := range b.Core.Params.Variables {
+			if err := visitCompiledExpr(variable.Expr, visitor); err != nil {
+				return fmt.Errorf("failed to visit ordered variables: %w", err)
+			}
 		}
 	}
 
-	for _, variable := range row.GetDerivedRoleParams().GetOrderedVariables() {
-		if err := visitCompiledExpr(variable.Expr, visitor); err != nil {
-			return fmt.Errorf("failed to visit ordered variables of the derived role params: %w", err)
+	if b.Core.DerivedRoleParams != nil {
+		for _, variable := range b.Core.DerivedRoleParams.Variables {
+			if err := visitCompiledExpr(variable.Expr, visitor); err != nil {
+				return fmt.Errorf("failed to visit ordered variables of the derived role params: %w", err)
+			}
 		}
 	}
 

@@ -5,7 +5,6 @@ package inspect
 
 import (
 	"cmp"
-	"context"
 	"fmt"
 	"slices"
 
@@ -29,12 +28,12 @@ type RuleTable struct {
 }
 
 // Inspect inspects the given rule table and caches the inspection related information internally.
-func (rt *RuleTable) Inspect(ctx context.Context) error {
+func (rt *RuleTable) Inspect() error {
 	if rt.ruleTable == nil {
 		return fmt.Errorf("rule table is nil")
 	}
 
-	rows, err := rt.ruleTable.GetAllRows(ctx)
+	rows, err := rt.ruleTable.GetAllRows()
 	if err != nil {
 		return fmt.Errorf("failed to get all rows from rule table: %w", err)
 	}
@@ -45,8 +44,8 @@ func (rt *RuleTable) Inspect(ctx context.Context) error {
 	constantSets := make(map[string]util.StringSet)
 	derivedRoleSets := make(map[string]util.StringSet)
 	variableSets := make(map[string]util.StringSet)
-	for _, row := range rows {
-		policyKey := namer.PolicyKeyFromFQN(row.OriginFqn)
+	for _, b := range rows {
+		policyKey := namer.PolicyKeyFromFQN(b.OriginFqn)
 
 		var result *responsev1.InspectPoliciesResponse_Result
 		if existingResult, ok := results[policyKey]; ok {
@@ -98,7 +97,7 @@ func (rt *RuleTable) Inspect(ctx context.Context) error {
 		}
 		variableSets[policyKey] = variableSet
 
-		if err := rt.inspectRow(row, actionSet, attrSet, constantSet, derivedRoleSet, variableSet, result); err != nil {
+		if err := rt.inspectBinding(b, actionSet, attrSet, constantSet, derivedRoleSet, variableSet, result); err != nil {
 			return err
 		}
 	}
@@ -107,8 +106,8 @@ func (rt *RuleTable) Inspect(ctx context.Context) error {
 	return nil
 }
 
-func (rt *RuleTable) inspectRow(
-	row *index.Row,
+func (rt *RuleTable) inspectBinding(
+	b *index.Binding,
 	actionSet util.StringSet,
 	attrSet util.StringSet,
 	constantSet util.StringSet,
@@ -116,7 +115,7 @@ func (rt *RuleTable) inspectRow(
 	variableSet util.StringSet,
 	result *responsev1.InspectPoliciesResponse_Result,
 ) error {
-	for _, action := range ruletable.ListRuleTableRowActions(row) {
+	for _, action := range ruletable.ListRuleTableRowActions(b) {
 		if !actionSet.Contains(action) {
 			actionSet[action] = struct{}{}
 			result.Actions = append(result.GetActions(), action)
@@ -124,7 +123,7 @@ func (rt *RuleTable) inspectRow(
 	}
 
 	attrs := make(map[string]*responsev1.InspectPoliciesResponse_Attribute)
-	if err := visitRuleTableRow(row, attributeVisitor(attrs)); err != nil {
+	if err := visitBinding(b, attributeVisitor(attrs)); err != nil {
 		return err
 	}
 	for key, attr := range attrs {
@@ -134,21 +133,21 @@ func (rt *RuleTable) inspectRow(
 		}
 	}
 
-	for _, constant := range ruletable.ListRuleTableRowConstants(row) {
+	for _, constant := range ruletable.ListRuleTableRowConstants(b) {
 		if !constantSet.Contains(constant.Name) {
 			constantSet[constant.Name] = struct{}{}
 			result.Constants = append(result.GetConstants(), constant)
 		}
 	}
 
-	if derivedRole := ruletable.GetRuleTableRowDerivedRoles(row); derivedRole != nil {
+	if derivedRole := ruletable.GetRuleTableRowDerivedRoles(b); derivedRole != nil {
 		if !derivedRoleSet.Contains(derivedRole.Name) {
 			derivedRoleSet[derivedRole.Name] = struct{}{}
 			result.DerivedRoles = append(result.GetDerivedRoles(), derivedRole)
 		}
 	}
 
-	for _, variable := range ruletable.ListRuleTableRowVariables(row) {
+	for _, variable := range ruletable.ListRuleTableRowVariables(b) {
 		if !variableSet.Contains(variable.Name) {
 			variableSet[variable.Name] = struct{}{}
 			result.Variables = append(result.GetVariables(), variable)

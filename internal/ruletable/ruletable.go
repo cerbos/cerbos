@@ -14,10 +14,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/cel-go/cel"
 	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/types"
@@ -60,8 +58,6 @@ const (
 	conditionNotSatisfied   = "Condition not satisfied"
 	noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
 	noPolicyMatch           = "NO_MATCH"
-
-	indexTimeout = time.Second * 10
 )
 
 func NewProtoRuletable() *runtimev1.RuleTable {
@@ -444,7 +440,7 @@ func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver sche
 
 type RuleTable struct {
 	*runtimev1.RuleTable
-	idx                   *index.Impl
+	idx                   *index.Index
 	principalScopeMap     map[string]struct{}
 	resourceScopeMap      map[string]struct{}
 	scopeScopePermissions map[string]policyv1.ScopePermissions
@@ -515,12 +511,12 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	return NewRuleTable(index.NewMem(), protoRT)
+	return NewRuleTable(protoRT)
 }
 
-func NewRuleTable(idx index.Index, protoRT *runtimev1.RuleTable) (*RuleTable, error) {
+func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
-		idx:          index.NewImpl(idx),
+		idx:          index.New(),
 		programCache: NewProgramCache(),
 	}
 
@@ -565,9 +561,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 }
 
 func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
-	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
-	defer cancelFn()
-
 	for _, rule := range rules {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE && !rule.FromRolePolicy {
 			modID := namer.GenModuleIDFromFQN(rule.OriginFqn)
@@ -597,15 +590,15 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		}
 	}
 
-	if err := rt.idx.IndexRules(ctx, rules); err != nil {
+	if err := rt.idx.IndexRules(rules); err != nil {
 		return err
 	}
 
-	return rt.idx.IndexParentRoles(ctx, rt.ScopeParentRoles)
+	return rt.idx.IndexParentRoles(rt.ScopeParentRoles)
 }
 
-func (rt *RuleTable) GetAllRows(ctx context.Context) ([]*index.Row, error) {
-	return rt.idx.GetAllRows(ctx)
+func (rt *RuleTable) GetAllRows() ([]*index.Binding, error) {
+	return rt.idx.GetAllRows()
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
@@ -853,11 +846,11 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	}
 
 	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
-	scopedPrincipalExists, err := rt.idx.ScopedPrincipalExists(ctx, principalVersion, principalScopes)
+	scopedPrincipalExists, err := rt.idx.ScopedPrincipalExists(principalVersion, principalScopes)
 	if err != nil {
 		return nil, err
 	}
-	scopedResourceExists, err := rt.idx.ScopedResourceExists(ctx, resourceVersion, sanitizedResource, resourceScopes)
+	scopedResourceExists, err := rt.idx.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
 	if err != nil {
 		return nil, err
 	}
@@ -866,7 +859,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	allRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, input.Principal.Roles)
+	allRoles, err := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -875,7 +868,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		includingParentRoles[r] = struct{}{}
 	}
 
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{sanitizedResource}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve, false)
+	candidates, err := rt.idx.GetRows([]string{resourceVersion}, []string{sanitizedResource}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve, false)
 	if err != nil {
 		return nil, err
 	}
@@ -925,7 +918,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, []string{role})
+				parentRoles, err := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 				if err != nil {
 					return nil, err
 				}
@@ -986,63 +979,62 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						break
 					}
 
-					// Only process rows that match the current policy type
-					for _, row := range candidateRows {
-						if !row.Matches(pt, scope, action, input.Principal.Id, parentRoles) {
+					for _, b := range candidates {
+						if !b.Matches(pt, scope, action, input.Principal.Id, parentRoles) {
 							continue
 						}
 
-						rulectx := sctx.StartRule(row.Name)
+						rulectx := sctx.StartRule(b.Name)
 
-						if m := rt.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(result.auditTrail.EffectivePolicies, m.GetSourceAttributes())
 						}
 
 						var constants map[string]any
 						var variables map[string]any
-						if row.Params != nil {
-							constants = row.Params.Constants
-							if c, ok := varCache[row.Params.Key]; ok {
+						if b.Core.Params != nil {
+							constants = b.Core.Params.Constants
+							if c, ok := varCache[b.Core.Params.Key]; ok {
 								variables = c
 							} else {
 								var err error
-								variables, err = evalCtx.evaluatePrograms(pctx.StartVariables(), constants, row.Params.CelPrograms)
+								variables, err = evalCtx.evaluatePrograms(pctx.StartVariables(), constants, b.Core.Params.CelPrograms)
 								if err != nil {
 									pctx.Skipped(err, "Error evaluating variables")
 									return nil, err
 								}
-								varCache[row.Params.Key] = variables
+								varCache[b.Core.Params.Key] = variables
 							}
 						}
 
 						var satisfiesCondition bool
-						if c, ok := conditionCache[row.EvaluationKey]; ok { //nolint:nestif
+						if c, ok := conditionCache[b.EvaluationKey]; ok { //nolint:nestif
 							satisfiesCondition = c
 						} else {
 							// We evaluate the derived role condition (if any) first, as this leads to a more sane engine trace output.
-							if row.DerivedRoleCondition != nil {
-								drctx := rulectx.StartDerivedRole(row.OriginDerivedRole)
+							if b.Core.DerivedRoleCondition != nil {
+								drctx := rulectx.StartDerivedRole(b.OriginDerivedRole)
 								var derivedRoleConstants map[string]any
 								var derivedRoleVariables map[string]any
-								if row.DerivedRoleParams != nil {
-									derivedRoleConstants = row.DerivedRoleParams.Constants
-									if c, ok := varCache[row.DerivedRoleParams.Key]; ok {
+								if b.Core.DerivedRoleParams != nil {
+									derivedRoleConstants = b.Core.DerivedRoleParams.Constants
+									if c, ok := varCache[b.Core.DerivedRoleParams.Key]; ok {
 										derivedRoleVariables = c
 									} else {
 										var err error
-										derivedRoleVariables, err = evalCtx.evaluatePrograms(drctx.StartVariables(), derivedRoleConstants, row.DerivedRoleParams.CelPrograms)
+										derivedRoleVariables, err = evalCtx.evaluatePrograms(drctx.StartVariables(), derivedRoleConstants, b.Core.DerivedRoleParams.CelPrograms)
 										if err != nil {
 											drctx.Skipped(err, "Error evaluating derived role variables")
 											return nil, err
 										}
-										varCache[row.DerivedRoleParams.Key] = derivedRoleVariables
+										varCache[b.Core.DerivedRoleParams.Key] = derivedRoleVariables
 									}
 								}
 
 								// Derived role engine trace logs are handled above. Because derived role conditions are baked into the rule table rows, we don't want to
 								// confuse matters by adding condition trace logs if a rule is referencing a derived role, so we pass a no-op context here.
 								// TODO(saml) we could probably pre-compile the condition also
-								drSatisfied, err := evalCtx.SatisfiesCondition(ctx, tracing.StartTracer(nil), row.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
+								drSatisfied, err := evalCtx.SatisfiesCondition(ctx, tracing.StartTracer(nil), b.Core.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
 								if err != nil {
 									rulectx.Skipped(err, "Error evaluating derived role condition")
 									continue
@@ -1051,58 +1043,58 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								// terminate early if the derived role condition isn't satisfied, which is consistent with the pre-rule table implementation
 								if !drSatisfied {
 									rulectx.Skipped(err, "No matching derived roles")
-									conditionCache[row.EvaluationKey] = false
+									conditionCache[b.EvaluationKey] = false
 									continue
 								}
 							}
 
-							isSatisfied, err := evalCtx.SatisfiesCondition(ctx, rulectx.StartCondition(), row.Condition, constants, variables)
+							isSatisfied, err := evalCtx.SatisfiesCondition(ctx, rulectx.StartCondition(), b.Core.Condition, constants, variables)
 							if err != nil {
 								rulectx.Skipped(err, "Error evaluating condition")
 								continue
 							}
 
-							conditionCache[row.EvaluationKey] = isSatisfied
+							conditionCache[b.EvaluationKey] = isSatisfied
 							satisfiesCondition = isSatisfied
 						}
 
 						if satisfiesCondition { //nolint:nestif
 							var outputExpr *exprpb.CheckedExpr
-							if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.RuleActivated != nil {
-								outputExpr = row.EmitOutput.When.RuleActivated.Checked
+							if b.Core.EmitOutput != nil && b.Core.EmitOutput.When != nil && b.Core.EmitOutput.When.RuleActivated != nil {
+								outputExpr = b.Core.EmitOutput.When.RuleActivated.Checked
 							}
 
 							if outputExpr != nil {
-								octx := rulectx.StartOutput(row.Name)
+								octx := rulectx.StartOutput(b.Name)
 								output := &enginev1.OutputEntry{
-									Src:    namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, row.Params.Constants, variables),
+									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, b.Core.Params.Constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
 								octx.ComputedOutput(output)
 							}
 
-							roleEffectSet[row.Effect] = struct{}{}
-							if row.Effect == effectv1.Effect_EFFECT_DENY {
+							roleEffectSet[b.Core.Effect] = struct{}{}
+							if b.Core.Effect == effectv1.Effect_EFFECT_DENY {
 								roleEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
 								roleEffectInfo.Scope = scope
-								if row.FromRolePolicy {
+								if b.Core.FromRolePolicy {
 									// Implicit DENY generated as a result of no matching role policy action
 									// needs to be attributed to said role policy
-									roleEffectInfo.Policy = namer.PolicyKeyFromFQN(row.OriginFqn)
+									roleEffectInfo.Policy = namer.PolicyKeyFromFQN(b.OriginFqn)
 								}
 								break scopesLoop
-							} else if row.NoMatchForScopePermissions {
+							} else if b.NoMatchForScopePermissions {
 								roleEffectInfo.Policy = noMatchScopePermissions
 								roleEffectInfo.Scope = scope
 							}
 						} else {
-							if row.EmitOutput != nil && row.EmitOutput.When != nil && row.EmitOutput.When.ConditionNotMet != nil {
-								octx := rulectx.StartOutput(row.Name)
+							if b.Core.EmitOutput != nil && b.Core.EmitOutput.When != nil && b.Core.EmitOutput.When.ConditionNotMet != nil {
+								octx := rulectx.StartOutput(b.Name)
 								output := &enginev1.OutputEntry{
-									Src:    namer.RuleFQN(rt.GetMeta(row.OriginFqn), row.Scope, row.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, row.EmitOutput.When.ConditionNotMet.Checked, row.Params.Constants, variables),
+									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, b.Core.EmitOutput.When.ConditionNotMet.Checked, b.Core.Params.Constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
@@ -1561,15 +1553,15 @@ func (rt *RuleTable) planWithAuditTrail(
 		}
 	}
 
-	allRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, input.Principal.Roles)
+	allRoles, err := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 	if err != nil {
 		return nil, nil, err
 	}
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
+	candidates, err := rt.idx.GetRows([]string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
 	if err != nil {
 		return nil, nil, err
 	}
-	if len(candidateRows) == 0 {
+	if len(candidates) == 0 {
 		return noMatchPlanOutput(input, validationErrors), auditTrail, nil
 	}
 
@@ -1610,7 +1602,7 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, []string{role})
+				rolesIncludingParents, err := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 				if err != nil {
 					return nil, nil, err
 				}
@@ -1662,63 +1654,63 @@ func (rt *RuleTable) planWithAuditTrail(
 						}
 					}
 
-					for _, row := range candidateRows {
-						if ok := row.Matches(pt, scope, action, input.Principal.Id, rolesIncludingParents); !ok {
+					for _, b := range candidates {
+						if !b.Matches(pt, scope, action, input.Principal.Id, rolesIncludingParents) {
 							continue
 						}
 
-						if m := rt.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
 						}
 
 						var constants map[string]any
 						var variables map[string]celast.Expr
-						if row.Params != nil {
-							constants = row.Params.Constants
+						if b.Core.Params != nil {
+							constants = b.Core.Params.Constants
 							var err error
-							variables, err = planner.VariableExprs(row.Params.Variables)
+							variables, err = planner.VariableExprs(b.Core.Params.Variables)
 							if err != nil {
 								return nil, auditTrail, err
 							}
 						}
 
-						node, err := evalCtx.EvaluateCondition(ctx, row.Condition, request, globals, constants, variables, derivedRolesList)
+						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, globals, constants, variables, derivedRolesList)
 						if err != nil {
 							return nil, auditTrail, err
 						}
 
-						if row.DerivedRoleCondition != nil { //nolint:nestif
+						if b.Core.DerivedRoleCondition != nil { //nolint:nestif
 							var variables map[string]celast.Expr
-							if row.DerivedRoleParams != nil {
+							if b.Core.DerivedRoleParams != nil {
 								var err error
-								variables, err = planner.VariableExprs(row.DerivedRoleParams.Variables)
+								variables, err = planner.VariableExprs(b.Core.DerivedRoleParams.Variables)
 								if err != nil {
 									return nil, auditTrail, err
 								}
 							}
 
-							drNode, err := evalCtx.EvaluateCondition(ctx, row.DerivedRoleCondition, request, globals, row.DerivedRoleParams.Constants, variables, derivedRolesList)
+							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
 							if err != nil {
 								return nil, auditTrail, err
 							}
 
-							if row.Condition == nil {
+							if b.Core.Condition == nil {
 								node = drNode
 							} else {
 								node = planner.MkNodeFromLO(planner.MkAndLogicalOperation([]*planner.QpN{node, drNode}))
 							}
 						}
 
-						switch row.Effect { //nolint:exhaustive
+						switch b.Core.Effect { //nolint:exhaustive
 						case effectv1.Effect_EFFECT_ALLOW:
 							scopeAllowNode = addNode(scopeAllowNode, node, planner.MkOrNode)
 						case effectv1.Effect_EFFECT_DENY:
 							// ignore constant false DENY nodes
-							if b, ok := planner.IsNodeConstBool(node); ok && !b {
+							if bv, ok := planner.IsNodeConstBool(node); ok && !bv {
 								continue
 							}
 
-							if row.FromRolePolicy {
+							if b.Core.FromRolePolicy {
 								scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, planner.MkOrNode)
 							} else {
 								scopeDenyNode = addNode(scopeDenyNode, node, planner.MkOrNode)
@@ -1874,26 +1866,18 @@ func (rt *RuleTable) Evaluator(evalConf *evaluator.Conf, schemaConf *schema.Conf
 }
 
 // ListRuleTableRowActions returns unique list of actions in a rule table row.
-func ListRuleTableRowActions(row *index.Row) []string {
-	var actions []string
-	if row == nil {
-		return actions
+func ListRuleTableRowActions(b *index.Binding) []string {
+	if b == nil {
+		return nil
 	}
 
-	ss := make(util.StringSet)
+	var actions []string
 
-	switch a := row.GetActionSet().(type) {
-	case *runtimev1.RuleTable_RuleRow_Action:
-		if !ss.Contains(a.Action) {
-			actions = append(actions, a.Action)
-		}
-
-	case *runtimev1.RuleTable_RuleRow_AllowActions_:
-		for action := range a.AllowActions.Actions {
-			if !ss.Contains(action) {
-				actions = append(actions, action)
-			}
-		}
+	if b.Action != "" {
+		actions = append(actions, b.Action)
+	}
+	for action := range b.AllowActions {
+		actions = append(actions, action)
 	}
 
 	if len(actions) > 1 {
@@ -1903,32 +1887,40 @@ func ListRuleTableRowActions(row *index.Row) []string {
 	return actions
 }
 
-// ListRuleTableRowConstants returns local and exported constants defined in a rule table row.
-func ListRuleTableRowConstants(row *index.Row) []*responsev1.InspectPoliciesResponse_Constant {
-	if row == nil {
+// ListRuleTableRowConstants returns local and exported constants defined in a binding.
+func ListRuleTableRowConstants(b *index.Binding) []*responsev1.InspectPoliciesResponse_Constant {
+	if b == nil {
 		return nil
 	}
 
-	constants := make([]*responsev1.InspectPoliciesResponse_Constant, len(row.GetParams().GetConstants())+len(row.GetDerivedRoleParams().GetConstants()))
-	i := 0
-	for name, value := range row.GetParams().GetConstants() {
-		constants[i] = &responsev1.InspectPoliciesResponse_Constant{
-			Name:  name,
-			Value: value,
-			Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
-		}
-
-		i++
+	var nParams, nDRParams int
+	if b.Core.Params != nil {
+		nParams = len(b.Core.Params.Constants)
+	}
+	if b.Core.DerivedRoleParams != nil {
+		nDRParams = len(b.Core.DerivedRoleParams.Constants)
 	}
 
-	for name, value := range row.GetDerivedRoleParams().GetConstants() {
-		constants[i] = &responsev1.InspectPoliciesResponse_Constant{
-			Name:  name,
-			Value: value,
-			Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+	constants := make([]*responsev1.InspectPoliciesResponse_Constant, 0, nParams+nDRParams)
+	if b.Core.Params != nil {
+		for name, value := range b.Core.Params.Constants {
+			pbVal, _ := structpb.NewValue(value)
+			constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
+				Name:  name,
+				Value: pbVal,
+				Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+			})
 		}
-
-		i++
+	}
+	if b.Core.DerivedRoleParams != nil {
+		for name, value := range b.Core.DerivedRoleParams.Constants {
+			pbVal, _ := structpb.NewValue(value)
+			constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
+				Name:  name,
+				Value: pbVal,
+				Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+			})
+		}
 	}
 
 	if len(constants) > 1 {
@@ -1944,30 +1936,29 @@ func ListRuleTableRowConstants(row *index.Row) []*responsev1.InspectPoliciesResp
 	return constants
 }
 
-// GetRuleTableRowDerivedRoles returns the derived role defined in a rule table row if it exists.
-func GetRuleTableRowDerivedRoles(row *index.Row) *responsev1.InspectPoliciesResponse_DerivedRole {
-	if row == nil || row.GetOriginDerivedRole() == "" {
+// GetRuleTableRowDerivedRoles returns the derived role defined in a binding if it exists.
+func GetRuleTableRowDerivedRoles(b *index.Binding) *responsev1.InspectPoliciesResponse_DerivedRole {
+	if b == nil || b.OriginDerivedRole == "" {
 		return nil
 	}
 
 	return &responsev1.InspectPoliciesResponse_DerivedRole{
-		Name: row.GetOriginDerivedRole(),
+		Name: b.OriginDerivedRole,
 		Kind: responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
 	}
 }
 
-// ListRuleTableRowVariables returns local and exported variables defined in a rule table row.
-func ListRuleTableRowVariables(row *index.Row) []*responsev1.InspectPoliciesResponse_Variable {
-	if row == nil {
+// ListRuleTableRowVariables returns local and exported variables defined in a binding.
+func ListRuleTableRowVariables(b *index.Binding) []*responsev1.InspectPoliciesResponse_Variable {
+	if b == nil || b.Core.Params == nil {
 		return nil
 	}
 
-	variables := make([]*responsev1.InspectPoliciesResponse_Variable, len(row.GetParams().GetOrderedVariables()))
-	for i := 0; i < len(row.GetParams().GetOrderedVariables()); i++ {
-		variable := row.GetParams().GetOrderedVariables()[i]
+	variables := make([]*responsev1.InspectPoliciesResponse_Variable, len(b.Core.Params.Variables))
+	for i, v := range b.Core.Params.Variables {
 		variables[i] = &responsev1.InspectPoliciesResponse_Variable{
-			Name:  variable.Name,
-			Value: variable.Expr.Original,
+			Name:  v.Name,
+			Value: v.Expr.Original,
 			Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
 		}
 	}
