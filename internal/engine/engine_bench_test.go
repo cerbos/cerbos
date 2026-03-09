@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"testing"
 	"text/template"
@@ -62,69 +61,6 @@ func BenchmarkEvaluator(b *testing.B) {
 		require.Equal(b, effectv1.Effect_EFFECT_ALLOW, result[0].Actions["ViewReports"].GetEffect())
 		require.Equal(b, effectv1.Effect_EFFECT_DENY, result[0].Actions["DeleteReports"].GetEffect())
 	}
-}
-
-func BenchmarkEvaluatorSharedRoles(b *testing.B) {
-	policyDir := generateSharedRolePolicies(b)
-	evaluator := mkRuleTable(b, policyDir)
-	b.ReportAllocs()
-	b.ResetTimer()
-	//nolint: gosec
-	for b.Loop() {
-		idx := rand.Intn(numScopes)
-		idxStr := strconv.Itoa(idx)
-		role := "role_" + strconv.Itoa(rand.Intn(10))
-		scope := ""
-		if idx > 0 {
-			scope = "org_" + idxStr
-		}
-
-		result, err := evaluator.Check(b.Context(), []*enginev1.CheckInput{
-			{
-				Resource: &enginev1.Resource{
-					Id:            "resource_" + idxStr,
-					Kind:          "endpoint",
-					PolicyVersion: "1",
-					Scope:         scope,
-				},
-				Principal: &enginev1.Principal{
-					Id:    "user",
-					Roles: []string{role},
-				},
-				Actions: []string{"ViewReports", "DeleteReports"},
-			},
-		})
-		require.NoError(b, err)
-		require.Len(b, result, 1)
-		require.Equal(b, effectv1.Effect_EFFECT_ALLOW, result[0].Actions["ViewReports"].GetEffect())
-		require.Equal(b, effectv1.Effect_EFFECT_DENY, result[0].Actions["DeleteReports"].GetEffect())
-	}
-}
-
-func BenchmarkHeapAfterBuild(b *testing.B) {
-	policyDir := generatePolicies(b)
-	evaluator := mkRuleTable(b, policyDir)
-	runtime.GC()
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	b.ReportMetric(float64(m.HeapInuse), "heap-inuse-bytes")
-	b.ReportMetric(float64(m.HeapObjects), "heap-objects")
-	_ = evaluator
-}
-
-func generateSharedRolePolicies(b *testing.B) string {
-	b.Helper()
-
-	outputDir := b.TempDir()
-
-	tmpl, err := template.ParseFiles(filepath.Join("testdata", "policy_template_shared_roles.yaml.gotmpl"))
-	require.NoError(b, err)
-
-	for i := range numScopes {
-		require.NoError(b, writePolicy(outputDir, i, tmpl))
-	}
-
-	return outputDir
 }
 
 func generatePolicies(b *testing.B) string {
