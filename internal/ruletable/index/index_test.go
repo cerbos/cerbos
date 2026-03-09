@@ -13,6 +13,7 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -297,6 +298,194 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, allRows, 0, "row should be removed after all origins deleted")
 	})
+}
+
+func TestGetVersions(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) { r.Version = "v1" }),
+		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) { r.Version = "v2"; r.Role = "editor" }),
+	}))
+	require.ElementsMatch(t, []string{"v1", "v2"}, impl.GetVersions())
+}
+
+func TestGetActions(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) {
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
+		}),
+		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) {
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "edit"}
+			r.Role = "editor"
+		}),
+	}))
+	require.ElementsMatch(t, []string{"view", "edit"}, impl.GetActions())
+}
+
+func TestGetResources(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow("p1"),
+		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) { r.Resource = "image"; r.Role = "editor" }),
+	}))
+	require.ElementsMatch(t, []string{"document", "image"}, impl.GetResources())
+}
+
+func TestQueryMulti(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) {
+			r.Version = "v1"
+			r.Resource = "document"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
+		}),
+		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) {
+			r.Version = "v1"
+			r.Resource = "document"
+			r.Role = "editor"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "edit"}
+		}),
+		makeRow("p3", func(r *runtimev1.RuleTable_RuleRow) {
+			r.Version = "v2"
+			r.Resource = "image"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
+		}),
+	}))
+
+	t.Run("all nil returns everything", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, nil, nil, nil)
+		require.Len(t, res, 3)
+	})
+
+	t.Run("filter by version", func(t *testing.T) {
+		res := impl.QueryMulti([]string{"v1"}, nil, nil, nil, nil)
+		require.Len(t, res, 2)
+		for _, b := range res {
+			require.Equal(t, "v1", b.Version)
+		}
+	})
+
+	t.Run("filter by multiple roles", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, nil, []string{"viewer", "editor"}, nil)
+		require.Len(t, res, 3)
+	})
+
+	t.Run("filter by action", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, nil, nil, []string{"edit"})
+		require.Len(t, res, 1)
+		require.Equal(t, "editor", res[0].Role)
+	})
+
+	t.Run("AND across dimensions", func(t *testing.T) {
+		res := impl.QueryMulti([]string{"v1"}, []string{"document"}, nil, []string{"viewer"}, []string{"view"})
+		require.Len(t, res, 1)
+		require.Equal(t, "viewer", res[0].Role)
+		require.Equal(t, "document", res[0].Resource)
+	})
+
+	t.Run("no match returns nil", func(t *testing.T) {
+		res := impl.QueryMulti([]string{"v99"}, nil, nil, nil, nil)
+		require.Nil(t, res)
+	})
+}
+
+func TestQueryMultiAllowActions(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) {
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
+		}),
+		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) {
+			r.Role = "admin"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+				AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+					Actions: map[string]*emptypb.Empty{"view": {}, "edit": {}},
+				},
+			}
+		}),
+	}))
+
+	t.Run("action filter includes AllowActions bindings", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, nil, nil, []string{"view"})
+		require.Len(t, res, 2)
+	})
+
+	t.Run("no action filter returns all including AllowActions", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, nil, nil, nil)
+		require.Len(t, res, 2)
+	})
+}
+
+func TestToRuleRow(t *testing.T) {
+	impl := index.New()
+
+	original := &runtimev1.RuleTable_RuleRow{
+		OriginFqn:         "policy1",
+		PolicyKind:        policyv1.Kind_KIND_RESOURCE,
+		Resource:          "document",
+		Role:              "viewer",
+		ActionSet:         &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
+		Effect:            effectv1.Effect_EFFECT_ALLOW,
+		Version:           "default",
+		Scope:             "acme",
+		OriginDerivedRole: "dr1",
+		Name:              "rule1",
+		Principal:         "alice",
+		EvaluationKey:     "ek1",
+		ScopePermissions:  policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+		FromRolePolicy:    true,
+	}
+
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{original}))
+	bindings, err := impl.GetAllRows()
+	require.NoError(t, err)
+	require.Len(t, bindings, 1)
+
+	row := bindings[0].ToRuleRow()
+	require.Equal(t, original.OriginFqn, row.OriginFqn)
+	require.Equal(t, original.Resource, row.Resource)
+	require.Equal(t, original.Role, row.Role)
+	require.Equal(t, original.Version, row.Version)
+	require.Equal(t, original.Scope, row.Scope)
+	require.Equal(t, original.Effect, row.Effect)
+	require.Equal(t, original.PolicyKind, row.PolicyKind)
+	require.Equal(t, original.FromRolePolicy, row.FromRolePolicy)
+	require.Equal(t, original.ScopePermissions, row.ScopePermissions)
+	require.Equal(t, original.OriginDerivedRole, row.OriginDerivedRole)
+	require.Equal(t, original.Name, row.Name)
+	require.Equal(t, original.Principal, row.Principal)
+	require.Equal(t, original.EvaluationKey, row.EvaluationKey)
+
+	actionRow, ok := row.ActionSet.(*runtimev1.RuleTable_RuleRow_Action)
+	require.True(t, ok)
+	require.Equal(t, "view", actionRow.Action)
+}
+
+func TestToRuleRowAllowActions(t *testing.T) {
+	impl := index.New()
+
+	original := makeRow("policy1", func(r *runtimev1.RuleTable_RuleRow) {
+		r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+			AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+				Actions: map[string]*emptypb.Empty{"view": {}, "edit": {}},
+			},
+		}
+	})
+
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{original}))
+	bindings, err := impl.GetAllRows()
+	require.NoError(t, err)
+	require.Len(t, bindings, 1)
+
+	row := bindings[0].ToRuleRow()
+	aaRow, ok := row.ActionSet.(*runtimev1.RuleTable_RuleRow_AllowActions_)
+	require.True(t, ok)
+	require.Len(t, aaRow.AllowActions.Actions, 2)
+	require.Contains(t, aaRow.AllowActions.Actions, "view")
+	require.Contains(t, aaRow.AllowActions.Actions, "edit")
 }
 
 func makeRow(fqn string, mutators ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {

@@ -478,6 +478,109 @@ func (m *Index) queryAllowActions(
 	return res
 }
 
+// QueryMulti returns bindings matching across multiple values per dimension.
+// Empty/nil slice = match all for that dimension.
+// OR within each dimension, AND across dimensions.
+// AllowActions bindings matching non-action dimensions are included (spitfire post-filters).
+// No synthetic DENY generation.
+func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string) []*Binding {
+	bi := m.bi
+
+	if bi.universe.IsEmpty() {
+		return nil
+	}
+
+	dims := make([]*roaring.Bitmap, 0, 5) //nolint:mnd
+
+	if len(versions) > 0 {
+		bm := queryLiteralMap(bi.version, versions)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+	if len(scopes) > 0 {
+		bm := queryLiteralMap(bi.scope, scopes)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+	if len(resources) > 0 {
+		bm := bi.resource.QueryMultiple(resources)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+	if len(roles) > 0 {
+		bm := bi.role.QueryMultiple(roles)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+
+	var baseBM *roaring.Bitmap
+	switch len(dims) {
+	case 0:
+		baseBM = bi.universe
+	case 1:
+		baseBM = dims[0]
+	default:
+		baseBM = roaring.FastAnd(dims...)
+	}
+	if baseBM.IsEmpty() {
+		return nil
+	}
+
+	resultBM := m.applyActionFilter(baseBM, actions)
+
+	if resultBM.IsEmpty() {
+		return nil
+	}
+
+	res := make([]*Binding, 0, resultBM.GetCardinality())
+	iter := resultBM.Iterator()
+	for iter.HasNext() {
+		if b := bi.getBinding(iter.Next()); b != nil {
+			res = append(res, b)
+		}
+	}
+	return res
+}
+
+// applyActionFilter intersects baseBM with action bitmaps (OR of actions) and
+// includes AllowActions bindings. If actions is empty, baseBM is returned as-is.
+func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roaring.Bitmap {
+	if len(actions) == 0 {
+		return baseBM
+	}
+
+	bi := m.bi
+	parts := make([]*roaring.Bitmap, 0, 2) //nolint:mnd
+
+	actionBM := bi.action.QueryMultiple(actions)
+	if !actionBM.IsEmpty() {
+		parts = append(parts, roaring.FastAnd(baseBM, actionBM))
+	}
+	if !bi.allowActionsBitmap.IsEmpty() {
+		aaBM := roaring.FastAnd(baseBM, bi.allowActionsBitmap)
+		if !aaBM.IsEmpty() {
+			parts = append(parts, aaBM)
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return roaring.New()
+	case 1:
+		return parts[0]
+	default:
+		return roaring.FastOr(parts...)
+	}
+}
+
 // AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.
 func (m *Index) AddParentRoles(scopes, roles []string) ([]string, error) {
 	if len(m.parentRoles) == 0 {
@@ -638,6 +741,22 @@ func (m *Index) GetScopes() ([]string, error) {
 
 func (m *Index) GetRoleGlobs() ([]string, error) {
 	return m.bi.role.GetAllKeys(), nil
+}
+
+func (m *Index) GetVersions() []string {
+	res := make([]string, 0, len(m.bi.version))
+	for v := range m.bi.version {
+		res = append(res, v)
+	}
+	return res
+}
+
+func (m *Index) GetActions() []string {
+	return m.bi.action.GetAllKeys()
+}
+
+func (m *Index) GetResources() []string {
+	return m.bi.resource.GetAllKeys()
 }
 
 func (m *Index) ScopedRoleGlobExists(scope, role string) (bool, error) {

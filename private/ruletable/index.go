@@ -10,8 +10,10 @@ import (
 )
 
 type (
-	Binding = index.Binding
-	Index   = index.Index
+	Binding        = index.Binding
+	FunctionalCore = index.FunctionalCore
+	Index          = index.Index
+	RowParams      = index.RowParams
 )
 
 var New = index.New
