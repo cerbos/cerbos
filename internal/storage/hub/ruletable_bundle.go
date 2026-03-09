@@ -194,7 +194,7 @@ func (rtb *RuleTableBundle) RepoStats(ctx context.Context) storage.RepoStats {
 		return storage.RepoStats{}
 	}
 
-	rows, err := rtb.ruleTable.GetAllRows(ctx)
+	rows, err := rtb.ruleTable.GetAllRows()
 	if err != nil {
 		return storage.RepoStats{}
 	}

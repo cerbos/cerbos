@@ -20,7 +20,7 @@ type globDimension struct {
 	compiled map[string]glob.Glob
 }
 
-func newglobDimension() *globDimension {
+func newGlobDimension() *globDimension {
 	return &globDimension{
 		literals: make(map[string]*roaring.Bitmap),
 		globs:    make(map[string]*roaring.Bitmap),

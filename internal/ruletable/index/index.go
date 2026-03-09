@@ -138,9 +138,9 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			rule.Role, action, rule.Principal, allowActions, funcSum)
 
 		if existingID, dup := m.bi.bindingDedup[routingHash]; dup {
-			// Duplicate binding: merge origin on existing binding's core.
 			if b := m.bi.getBinding(existingID); b != nil {
-				addToFQNMap(m.bi.fqnBindings, rule.OriginFqn, existingID)
+				b.Core.origins[rule.OriginFqn] = struct{}{}
+				addToLiteralMap(m.bi.fqnBindings, rule.OriginFqn, existingID)
 			}
 			continue
 		}
@@ -579,39 +579,6 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	default:
 		return roaring.FastOr(parts...)
 	}
-}
-
-// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.
-func (m *Index) AddParentRoles(scopes, roles []string) ([]string, error) {
-	if len(m.parentRoles) == 0 {
-		return roles, nil
-	}
-
-	parentRoles := make([]string, len(roles))
-	copy(parentRoles, roles)
-
-	merged := make(map[string][]string)
-	for _, scope := range scopes {
-		c, ok := m.parentRoles[scope]
-		if !ok {
-			continue
-		}
-		for role, parents := range c {
-			merged[role] = append(merged[role], parents...)
-		}
-	}
-
-	if len(merged) == 0 {
-		return parentRoles, nil
-	}
-
-	for _, role := range roles {
-		if parents, ok := merged[role]; ok {
-			parentRoles = append(parentRoles, parents...) //nolint:makezero
-		}
-	}
-
-	return parentRoles, nil
 }
 
 // ParentRolesMap returns a pre-merged map of role → [role, parent1, parent2, ...] across the provided scopes.

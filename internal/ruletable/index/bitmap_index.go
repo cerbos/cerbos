@@ -34,9 +34,9 @@ func newBitmapIndex() *bitmapIndex {
 	return &bitmapIndex{
 		version:            make(map[string]*roaring.Bitmap),
 		scope:              make(map[string]*roaring.Bitmap),
-		role:               newglobDimension(),
-		action:             newglobDimension(),
-		resource:           newglobDimension(),
+		role:               newGlobDimension(),
+		action:             newGlobDimension(),
+		resource:           newGlobDimension(),
 		policyKind:         make(map[policyv1.Kind]*roaring.Bitmap),
 		principal:          make(map[string]*roaring.Bitmap),
 		universe:           roaring.New(),
@@ -67,8 +67,8 @@ func (bi *bitmapIndex) freeID(id uint32) {
 
 func (bi *bitmapIndex) storeBinding(b *Binding) {
 	id := b.ID
-	for int(id) >= len(bi.bindings) {
-		bi.bindings = append(bi.bindings, nil)
+	if int(id) >= len(bi.bindings) {
+		bi.bindings = append(bi.bindings, make([]*Binding, int(id)-len(bi.bindings)+1)...)
 	}
 	bi.bindings[id] = b
 }
@@ -95,7 +95,7 @@ func (bi *bitmapIndex) addToDimensions(b *Binding) {
 		addToLiteralMap(bi.principal, b.Principal, id)
 	}
 
-	addToFQNMap(bi.fqnBindings, b.OriginFqn, id)
+	addToLiteralMap(bi.fqnBindings, b.OriginFqn, id)
 }
 
 func (bi *bitmapIndex) removeFromDimensions(b *Binding) {
@@ -162,15 +162,6 @@ func removeFromKindMap(m map[policyv1.Kind]*roaring.Bitmap, kind policyv1.Kind, 
 			delete(m, kind)
 		}
 	}
-}
-
-func addToFQNMap(m map[string]*roaring.Bitmap, fqn string, id uint32) {
-	bm, ok := m[fqn]
-	if !ok {
-		bm = roaring.New()
-		m[fqn] = bm
-	}
-	bm.Add(id)
 }
 
 // queryLiteralMap returns OR(m[k] for k in keys). Keys must not be empty.

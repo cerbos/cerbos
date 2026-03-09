@@ -212,6 +212,10 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 
+	if err := mgr.idx.DeletePolicy(meta.GetFqn()); err != nil {
+		return err
+	}
+
 	activeScopes, err := mgr.idx.GetScopes()
 	if err != nil {
 		return err
@@ -219,10 +223,6 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	activeScopeSet := make(map[string]struct{}, len(activeScopes))
 	for _, s := range activeScopes {
 		activeScopeSet[s] = struct{}{}
-	}
-
-	if err := mgr.idx.DeletePolicy(meta.GetFqn()); err != nil {
-		return err
 	}
 
 	if role := meta.GetRole(); role != "" {
