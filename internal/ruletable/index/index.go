@@ -14,7 +14,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cespare/xxhash/v2"
 	"github.com/google/cel-go/cel"
@@ -215,267 +214,256 @@ func (m *Index) GetAllRows() ([]*Binding, error) {
 	return res, nil
 }
 
-func (m *Index) GetRows(versions, resources, scopes, roles, actions []string, matchLiteral bool) ([]*Binding, error) {
+// Query returns bindings matching the given dimensions. Empty string / nil / zero
+// means "match all" for that dimension. AllowActions synthetic DENYs are prepended
+// when querying for a specific action with KIND_RESOURCE (or unspecified kind).
+func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string) []*Binding {
 	bi := m.bi
 
 	if bi.universe.IsEmpty() {
-		return nil, nil
+		return nil
 	}
 
-	// Build per-dimension bitmaps. Nil means "match all" (skip AND).
-	var versionBM, scopeBM, resourceBM, roleBM, actionBM *roaring.Bitmap
+	// Per-dimension bitmaps. Nil = match all (skip AND).
+	// Scope is always filtered because "" is a valid literal scope (root scope).
+	var versionBM, scopeBM, resourceBM, roleBM, policyKindBM, principalBM *roaring.Bitmap
 
-	if len(versions) > 0 {
-		versionBM = queryLiteralMap(bi.version, versions)
-		if versionBM.IsEmpty() {
-			return nil, nil
+	if version != "" {
+		bm, ok := bi.version[version]
+		if !ok {
+			return nil
 		}
+		versionBM = bm
 	}
-	if len(scopes) > 0 {
-		scopeBM = queryLiteralMap(bi.scope, scopes)
-		if scopeBM.IsEmpty() {
-			return nil, nil
+	{
+		bm, ok := bi.scope[scope]
+		if !ok {
+			return nil
 		}
+		scopeBM = bm
 	}
-	if len(resources) > 0 {
-		resourceBM = bi.resource.QueryMultiple(resources)
-		if resourceBM.IsEmpty() {
-			return nil, nil
+	if resource != "" {
+		bm := bi.resource.Query(resource)
+		if bm.IsEmpty() {
+			return nil
 		}
+		resourceBM = bm
 	}
 	if len(roles) > 0 {
 		roleBM = bi.role.QueryMultiple(roles)
 		if roleBM.IsEmpty() {
-			return nil, nil
+			return nil
 		}
 	}
-	if len(actions) > 0 {
-		actionBM = bi.action.QueryMultiple(actions)
+	if policyKind != 0 {
+		bm, ok := bi.policyKind[policyKind]
+		if !ok {
+			return nil
+		}
+		policyKindBM = bm
+	}
+	if principalID != "" {
+		bm, ok := bi.principal[principalID]
+		if !ok {
+			return nil
+		}
+		principalBM = bm
 	}
 
-	// Collect non-nil base dimensions for FastAnd (avoids cloning the
-	// large universe bitmap when at least two dimensions are provided).
-	allBaseDims := []*roaring.Bitmap{versionBM, scopeBM, resourceBM, roleBM}
-	baseDims := make([]*roaring.Bitmap, 0, len(allBaseDims))
-	for _, bm := range allBaseDims {
+	// baseBM = AND of all non-action dimensions.
+	allDims := []*roaring.Bitmap{versionBM, scopeBM, resourceBM, roleBM, policyKindBM, principalBM}
+	nonNilDims := make([]*roaring.Bitmap, 0, len(allDims))
+	for _, bm := range allDims {
 		if bm != nil {
-			baseDims = append(baseDims, bm)
+			nonNilDims = append(nonNilDims, bm)
 		}
 	}
 
-	// baseBM is read-only: passed to FastAnd (which clones internally) or
-	// iterated. No Clone needed.
 	var baseBM *roaring.Bitmap
-	switch len(baseDims) {
+	switch len(nonNilDims) {
 	case 0:
 		baseBM = bi.universe
 	case 1:
-		baseBM = baseDims[0]
+		baseBM = nonNilDims[0]
 	default:
-		baseBM = roaring.FastAnd(baseDims...)
+		baseBM = roaring.FastAnd(nonNilDims...)
 	}
 	if baseBM.IsEmpty() {
-		return nil, nil
+		return nil
 	}
 
-	// Result = AND(base, action).
+	// resultBM = AND(baseBM, actionBM) for regular (non-AllowActions) bindings.
 	resultBM := baseBM
-	if actionBM != nil {
-		resultBM = roaring.FastAnd(baseBM, actionBM)
+	if action != "" {
+		actionBM := bi.action.Query(action)
+		if !actionBM.IsEmpty() {
+			resultBM = roaring.FastAnd(baseBM, actionBM)
+		} else {
+			resultBM = roaring.New()
+		}
 	}
 
 	var res []*Binding
-	seen := make(map[uint32]struct{})
 
-	addBinding := func(b *Binding) {
-		if _, ok := seen[b.ID]; !ok {
-			seen[b.ID] = struct{}{}
-			res = append(res, b)
-		}
+	// AllowActions synthetic DENYs (prepended before regular bindings).
+	if action != "" && (policyKind == policyv1.Kind_KIND_RESOURCE || policyKind == 0) && !bi.allowActionsBitmap.IsEmpty() {
+		res = m.queryAllowActions(bi, action, resource, roles, versionBM, scopeBM, roleBM, resourceBM, res)
 	}
 
-	// Handle AllowActions rows (BEFORE regular action rows so that
-	// synthetic DENYs from role policies precede resource policy ALLOWs).
-	//
-	// Two-level check (matching old behaviour):
-	//   Level 1: Does the role have ANY AllowActions binding for (role, scope, version)?
-	//            This ignores resource — it detects that a role policy exists.
-	//   Level 2: Which AllowActions bindings match the queried resource?
-	//            If none match (but level 1 was true), generate blanket DENYs for all actions.
-	if !bi.allowActionsBitmap.IsEmpty() { //nolint:nestif
-		// Level 1: AllowActions bindings matching (version, scope, role) — no resource filter.
-		allRoutingDims := []*roaring.Bitmap{versionBM, scopeBM, roleBM}
-		routingDims := make([]*roaring.Bitmap, 0, len(allRoutingDims)+1)
-		for _, bm := range allRoutingDims {
-			if bm != nil {
-				routingDims = append(routingDims, bm)
-			}
-		}
-		routingDims = append(routingDims, bi.allowActionsBitmap)
-		var roleScopeBM *roaring.Bitmap
-		if len(routingDims) == 1 {
-			roleScopeBM = routingDims[0]
-		} else {
-			roleScopeBM = roaring.FastAnd(routingDims...)
-		}
-
-		if !roleScopeBM.IsEmpty() {
-			if len(actions) == 0 {
-				actions = bi.action.GetAllKeys()
-			}
-
-			// Level 2: AllowActions bindings that also match the resource.
-			allowBM := roaring.FastAnd(baseBM, bi.allowActionsBitmap)
-
-			// Group by (role, scope, version) to process each combination independently.
-			type routingKey struct{ role, scope, version string }
-
-			type groupInfo struct {
-				key      routingKey
-				roleFqn  string
-				bindings []*Binding
-			}
-
-			groupMap := make(map[routingKey]*groupInfo)
-
-			// Identify all (role, scope, version) groups from the scope-level bitmap.
-			rsIter := roleScopeBM.Iterator()
-			for rsIter.HasNext() {
-				id := rsIter.Next()
-				b := bi.getBinding(id)
-				if b == nil {
-					continue
-				}
-				key := routingKey{b.Role, b.Scope, b.Version}
-				if _, ok := groupMap[key]; !ok {
-					groupMap[key] = &groupInfo{
-						key:     key,
-						roleFqn: namer.RolePolicyFQN(b.Role, b.Version, b.Scope),
-					}
-				}
-			}
-
-			// Attach resource-matched bindings to their groups.
-			if !allowBM.IsEmpty() {
-				aIter := allowBM.Iterator()
-				for aIter.HasNext() {
-					id := aIter.Next()
-					ab := bi.getBinding(id)
-					if ab == nil {
-						continue
-					}
-					key := routingKey{ab.Role, ab.Scope, ab.Version}
-					if g, ok := groupMap[key]; ok {
-						g.bindings = append(g.bindings, ab)
-					}
-				}
-			}
-
-			// Build ordered group list matching input roles order (matching the
-			// old nested-loop iteration: role → scope → version).
-			var orderedGroups []*groupInfo
-			for _, role := range roles {
-				for _, scope := range scopes {
-					for _, version := range versions {
-						key := routingKey{role, scope, version}
-						if g, ok := groupMap[key]; ok {
-							orderedGroups = append(orderedGroups, g)
-						}
-					}
-				}
-			}
-
-			actionMatchedBindings := internal.NewGlobMap(make(map[string][]*Binding))
-
-			for _, group := range orderedGroups {
-				key := group.key
-				actionMatchedBindings.Clear()
-
-				for _, ab := range group.bindings {
-					for a := range ab.AllowActions {
-						bs, _ := actionMatchedBindings.Get(a)
-						bs = append(bs, ab)
-						actionMatchedBindings.Set(a, bs)
-					}
-				}
-
-				for _, action := range actions {
-					var matched []*Binding
-					for _, bs := range actionMatchedBindings.GetMerged(action) {
-						matched = append(matched, bs...)
-					}
-
-					if matchLiteral {
-						for _, b := range matched {
-							addBinding(b)
-						}
-					} else {
-						if len(matched) == 0 {
-							for _, resource := range resources {
-								res = append(res, &Binding{
-									Core: &FunctionalCore{
-										Effect:         effectv1.Effect_EFFECT_DENY,
-										PolicyKind:     policyv1.Kind_KIND_RESOURCE,
-										FromRolePolicy: true,
-									},
-									Action:                     action,
-									OriginFqn:                  group.roleFqn,
-									Resource:                   resource,
-									Role:                       key.role,
-									Scope:                      key.scope,
-									Version:                    key.version,
-									NoMatchForScopePermissions: true,
-								})
-							}
-						} else {
-							for _, ab := range matched {
-								if ab.Core.Condition != nil {
-									for _, resource := range resources {
-										res = append(res, &Binding{
-											Core: &FunctionalCore{
-												Effect: effectv1.Effect_EFFECT_DENY,
-												Condition: &runtimev1.Condition{
-													Op: &runtimev1.Condition_None{
-														None: &runtimev1.Condition_ExprList{
-															Expr: []*runtimev1.Condition{ab.Core.Condition},
-														},
-													},
-												},
-												ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
-												PolicyKind:       policyv1.Kind_KIND_RESOURCE,
-												FromRolePolicy:   true,
-											},
-											Action:        action,
-											OriginFqn:     ab.OriginFqn,
-											Resource:      resource,
-											Role:          ab.Role,
-											Scope:         key.scope,
-											Version:       key.version,
-											EvaluationKey: ab.EvaluationKey,
-										})
-									}
-								}
-							}
-						}
-					}
-				}
+	// Regular bindings.
+	if !resultBM.IsEmpty() {
+		iter := resultBM.Iterator()
+		for iter.HasNext() {
+			id := iter.Next()
+			if b := bi.getBinding(id); b != nil {
+				res = append(res, b)
 			}
 		}
 	}
 
-	// Collect regular action-matched bindings (after AllowActions so that
-	// synthetic DENYs precede resource policy rows in the slice).
-	iter := resultBM.Iterator()
+	return res
+}
+
+// queryAllowActions generates synthetic DENY bindings from AllowActions (role policy)
+// bindings. These DENYs are prepended before regular bindings so they take precedence.
+func (m *Index) queryAllowActions(
+	bi *bitmapIndex, action, resource string, roles []string,
+	versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap,
+	res []*Binding,
+) []*Binding {
+	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
+	level1Dims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
+	if versionBM != nil {
+		level1Dims = append(level1Dims, versionBM)
+	}
+	if scopeBM != nil {
+		level1Dims = append(level1Dims, scopeBM)
+	}
+	if roleBM != nil {
+		level1Dims = append(level1Dims, roleBM)
+	}
+	level1Dims = append(level1Dims, bi.allowActionsBitmap)
+
+	var level1BM *roaring.Bitmap
+	if len(level1Dims) == 1 {
+		level1BM = level1Dims[0]
+	} else {
+		level1BM = roaring.FastAnd(level1Dims...)
+	}
+	if level1BM.IsEmpty() {
+		return res
+	}
+
+	// Level 2: AllowActions bindings that also match the resource.
+	level2BM := level1BM
+	if resourceBM != nil {
+		level2BM = roaring.FastAnd(level1BM, resourceBM)
+	}
+
+	// Group Level 1 bindings by role.
+	type roleGroup struct {
+		roleFqn  string
+		scope    string
+		version  string
+		bindings []*Binding
+	}
+	groupMap := make(map[string]*roleGroup)
+
+	iter := level1BM.Iterator()
 	for iter.HasNext() {
 		id := iter.Next()
 		b := bi.getBinding(id)
 		if b == nil {
 			continue
 		}
-		addBinding(b)
+		if _, ok := groupMap[b.Role]; !ok {
+			groupMap[b.Role] = &roleGroup{
+				roleFqn: namer.RolePolicyFQN(b.Role, b.Version, b.Scope),
+				scope:   b.Scope,
+				version: b.Version,
+			}
+		}
 	}
 
-	return res, nil
+	// Attach Level 2 (resource-matched) bindings to their groups.
+	if !level2BM.IsEmpty() {
+		l2Iter := level2BM.Iterator()
+		for l2Iter.HasNext() {
+			id := l2Iter.Next()
+			b := bi.getBinding(id)
+			if b == nil {
+				continue
+			}
+			if g, ok := groupMap[b.Role]; ok {
+				g.bindings = append(g.bindings, b)
+			}
+		}
+	}
+
+	// Process each role in input order.
+	for _, role := range roles {
+		g, ok := groupMap[role]
+		if !ok {
+			continue
+		}
+
+		// Find AllowActions bindings from Level 2 that cover the queried action.
+		var matched []*Binding
+		for _, ab := range g.bindings {
+			for a := range ab.AllowActions {
+				if a == action || util.MatchesGlob(a, action) {
+					matched = append(matched, ab)
+					break
+				}
+			}
+		}
+
+		if len(matched) == 0 {
+			res = append(res, &Binding{
+				Core: &FunctionalCore{
+					Effect:         effectv1.Effect_EFFECT_DENY,
+					PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+					FromRolePolicy: true,
+				},
+				Action:                     action,
+				OriginFqn:                  g.roleFqn,
+				Resource:                   resource,
+				Role:                       role,
+				Scope:                      g.scope,
+				Version:                    g.version,
+				NoMatchForScopePermissions: true,
+			})
+		} else {
+			for _, ab := range matched {
+				if ab.Core.Condition != nil {
+					res = append(res, &Binding{
+						Core: &FunctionalCore{
+							Effect: effectv1.Effect_EFFECT_DENY,
+							Condition: &runtimev1.Condition{
+								Op: &runtimev1.Condition_None{
+									None: &runtimev1.Condition_ExprList{
+										Expr: []*runtimev1.Condition{ab.Core.Condition},
+									},
+								},
+							},
+							ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+							PolicyKind:       policyv1.Kind_KIND_RESOURCE,
+							FromRolePolicy:   true,
+						},
+						Action:        action,
+						OriginFqn:     ab.OriginFqn,
+						Resource:      resource,
+						Role:          ab.Role,
+						Scope:         g.scope,
+						Version:       g.version,
+						EvaluationKey: ab.EvaluationKey,
+					})
+				}
+			}
+		}
+	}
+
+	return res
 }
 
 // AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.

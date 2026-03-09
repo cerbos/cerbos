@@ -216,24 +216,20 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.NoError(t, impl.IndexRules(rules))
 
 		// Both bindings should be queryable.
-		docRows, err := impl.GetRows([]string{"default"}, []string{"document"}, nil, nil, nil, false)
-		require.NoError(t, err)
+		docRows := impl.Query("default", "document", "", "", nil, 0, "")
 		require.Len(t, docRows, 1)
 
-		imgRows, err := impl.GetRows([]string{"default"}, []string{"image"}, nil, nil, nil, false)
-		require.NoError(t, err)
+		imgRows := impl.Query("default", "image", "", "", nil, 0, "")
 		require.Len(t, imgRows, 1)
 
 		// Delete policy_a — its binding (resource="document") must be removed
 		// even though the shared core still has policy_b in origins.
 		require.NoError(t, impl.DeletePolicy("policy_a"))
 
-		docRows, err = impl.GetRows([]string{"default"}, []string{"document"}, nil, nil, nil, false)
-		require.NoError(t, err)
+		docRows = impl.Query("default", "document", "", "", nil, 0, "")
 		require.Len(t, docRows, 0, "orphaned binding for deleted policy should be removed from dimensions")
 
-		imgRows, err = impl.GetRows([]string{"default"}, []string{"image"}, nil, nil, nil, false)
-		require.NoError(t, err)
+		imgRows = impl.Query("default", "image", "", "", nil, 0, "")
 		require.Len(t, imgRows, 1, "surviving policy's binding should remain")
 
 		// Delete policy_b — everything should be clean.

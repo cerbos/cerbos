@@ -15,18 +15,16 @@ import (
 // and glob pattern keys. It mirrors the semantics of internal.GlobMap but
 // returns roaring bitmaps instead of rowSets.
 type globDimension struct {
-	literals   map[string]*roaring.Bitmap
-	globs      map[string]*roaring.Bitmap
-	compiled   map[string]glob.Glob
-	matchCache map[string][]string
+	literals map[string]*roaring.Bitmap
+	globs    map[string]*roaring.Bitmap
+	compiled map[string]glob.Glob
 }
 
 func newglobDimension() *globDimension {
 	return &globDimension{
-		literals:   make(map[string]*roaring.Bitmap),
-		globs:      make(map[string]*roaring.Bitmap),
-		compiled:   make(map[string]glob.Glob),
-		matchCache: make(map[string][]string),
+		literals: make(map[string]*roaring.Bitmap),
+		globs:    make(map[string]*roaring.Bitmap),
+		compiled: make(map[string]glob.Glob),
 	}
 }
 
@@ -43,7 +41,6 @@ func (gd *globDimension) Set(key string, id uint32) {
 			gd.compiled[key] = g
 			bm = roaring.New()
 			gd.globs[key] = bm
-			gd.clearMatchCache()
 		}
 		bm.Add(id)
 	} else {
@@ -65,7 +62,6 @@ func (gd *globDimension) Remove(key string, id uint32) {
 			if bm.IsEmpty() {
 				delete(gd.globs, key)
 				delete(gd.compiled, key)
-				gd.clearMatchCache()
 			}
 		}
 	} else {
@@ -141,21 +137,11 @@ func (gd *globDimension) GetAllKeys() []string {
 }
 
 func (gd *globDimension) getMatchingGlobs(key string) []string {
-	if cached, ok := gd.matchCache[key]; ok {
-		return cached
-	}
-
 	var matches []string
 	for pattern, compiled := range gd.compiled {
 		if compiled.Match(key) {
 			matches = append(matches, pattern)
 		}
 	}
-
-	gd.matchCache[key] = matches
 	return matches
-}
-
-func (gd *globDimension) clearMatchCache() {
-	clear(gd.matchCache)
 }

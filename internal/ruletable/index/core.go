@@ -4,12 +4,9 @@
 package index
 
 import (
-	"slices"
-
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 // FunctionalCore holds the behavioral part of a rule, deduplicated by content hash.
@@ -46,32 +43,6 @@ type Binding struct {
 	EvaluationKey              string
 	ID                         uint32
 	NoMatchForScopePermissions bool
-}
-
-func (b *Binding) Matches(pt policyv1.Kind, scope, action, principalID string, roles []string) bool {
-	if b.Core.PolicyKind != pt {
-		return false
-	}
-
-	if pt == policyv1.Kind_KIND_PRINCIPAL && b.Principal != principalID {
-		return false
-	}
-
-	if scope != b.Scope {
-		return false
-	}
-
-	if b.Role != "*" {
-		if !slices.Contains(roles, b.Role) {
-			return false
-		}
-	}
-
-	if b.Action != action && !util.MatchesGlob(b.Action, action) {
-		return false
-	}
-
-	return true
 }
 
 // RowParams holds compiled parameters for a rule or derived role.

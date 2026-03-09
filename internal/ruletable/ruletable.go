@@ -868,11 +868,6 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		includingParentRoles[r] = struct{}{}
 	}
 
-	candidates, err := rt.idx.GetRows([]string{resourceVersion}, []string{sanitizedResource}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, actionsToResolve, false)
-	if err != nil {
-		return nil, err
-	}
-
 	varCache := make(map[string]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
 	// We use a compound key comprising the parameter origin and the rule FQN.
@@ -979,11 +974,12 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						break
 					}
 
-					for _, b := range candidates {
-						if !b.Matches(pt, scope, action, input.Principal.Id, parentRoles) {
-							continue
-						}
-
+					var pid string
+					if pt == policyv1.Kind_KIND_PRINCIPAL {
+						pid = input.Principal.Id
+					}
+					bindings := rt.idx.Query(resourceVersion, sanitizedResource, scope, action, parentRoles, pt, pid)
+					for _, b := range bindings {
 						rulectx := sctx.StartRule(b.Name)
 
 						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
@@ -1557,13 +1553,8 @@ func (rt *RuleTable) planWithAuditTrail(
 	if err != nil {
 		return nil, nil, err
 	}
-	candidates, err := rt.idx.GetRows([]string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(candidates) == 0 {
-		return noMatchPlanOutput(input, validationErrors), auditTrail, nil
-	}
+
+	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
 
 	includingParentRoles := make(map[string]struct{})
 	for _, r := range allRoles {
@@ -1654,11 +1645,12 @@ func (rt *RuleTable) planWithAuditTrail(
 						}
 					}
 
-					for _, b := range candidates {
-						if !b.Matches(pt, scope, action, input.Principal.Id, rolesIncludingParents) {
-							continue
-						}
-
+					var pid string
+					if pt == policyv1.Kind_KIND_PRINCIPAL {
+						pid = input.Principal.Id
+					}
+					bindings := rt.idx.Query(resourceVersion, sanitizedResource, scope, action, rolesIncludingParents, pt, pid)
+					for _, b := range bindings {
 						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
 						}
