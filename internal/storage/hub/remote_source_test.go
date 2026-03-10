@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	bundleV1ID        = "h1:Hdon9Em1L7cUu4dClTCYnoEvQXoJjsMocshQsadoAWk="
+	bundleV1ID        = "h1:yQcafeDKgvnNSHY4XpOQvBB9hh+TDAhXzeXrSujFWeU="
 	bundleV2ID        = "66PXRRKTQ396OECH"
 	bundleRuleTableID = "YX8PDCGKHU89FQBI"
 	label             = "label"

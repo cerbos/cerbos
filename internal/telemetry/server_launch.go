@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"runtime/debug"
 
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
@@ -19,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/util"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func buildServerLaunch(store storage.Store) *telemetryv1.ServerLaunch {
@@ -181,6 +182,6 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 	for k, v := range stats.MaxRuleCount {
 		pb.Policy.MaxRuleCount[k.String()] = uint32(v)
 	}
-	
+
 	return pb
 }

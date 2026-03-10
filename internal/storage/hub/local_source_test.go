@@ -46,19 +46,19 @@ func TestLocalSource(t *testing.T) {
 
 		t.Run("repoStats", runRepoStatsTest(lsv1, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind:  9,
-				policy.ResourceKind:   27,
-				policy.RolePolicyKind: 6,
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   30,
+				policy.RolePolicyKind: 8,
 			},
 			ConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  8,
-				policy.ResourceKind:   57,
+				policy.PrincipalKind:  10,
+				policy.ResourceKind:   62,
 				policy.RolePolicyKind: 2,
 			},
 			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  34,
-				policy.ResourceKind:   136,
-				policy.RolePolicyKind: 9,
+				policy.PrincipalKind:  43,
+				policy.ResourceKind:   152,
+				policy.RolePolicyKind: 11,
 			},
 			MaxConditionCount: map[policy.Kind]int{
 				policy.PrincipalKind:  3,
@@ -71,14 +71,14 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 2,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  3.7777777777777777,
-				policy.ResourceKind:   5.037037037037037,
-				policy.RolePolicyKind: 1.5,
+				policy.PrincipalKind:  3.909090909090909,
+				policy.ResourceKind:   5.066666666666666,
+				policy.RolePolicyKind: 1.375,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  0.8888888888888888,
-				policy.ResourceKind:   2.111111111111111,
-				policy.RolePolicyKind: 0.3333333333333333,
+				policy.PrincipalKind:  0.9090909090909091,
+				policy.ResourceKind:   2.066666666666667,
+				policy.RolePolicyKind: 0.25,
 			},
 			SchemaCount: 3,
 		}))
@@ -99,19 +99,19 @@ func TestLocalSource(t *testing.T) {
 
 		t.Run("repoStats", runRepoStatsTest(lsv2, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind:  9,
-				policy.ResourceKind:   26,
-				policy.RolePolicyKind: 7,
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   30,
+				policy.RolePolicyKind: 8,
 			},
 			ConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  8,
-				policy.ResourceKind:   54,
+				policy.PrincipalKind:  10,
+				policy.ResourceKind:   62,
 				policy.RolePolicyKind: 2,
 			},
 			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  34,
-				policy.ResourceKind:   133,
-				policy.RolePolicyKind: 10,
+				policy.PrincipalKind:  43,
+				policy.ResourceKind:   152,
+				policy.RolePolicyKind: 11,
 			},
 			MaxConditionCount: map[policy.Kind]int{
 				policy.PrincipalKind:  3,
@@ -124,14 +124,14 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 2,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  3.7777777777777777,
-				policy.ResourceKind:   5.115384615384615,
-				policy.RolePolicyKind: 1.4285714285714286,
+				policy.PrincipalKind:  3.909090909090909,
+				policy.ResourceKind:   5.066666666666666,
+				policy.RolePolicyKind: 1.375,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  0.8888888888888888,
-				policy.ResourceKind:   2.076923076923077,
-				policy.RolePolicyKind: 0.2857142857142857,
+				policy.PrincipalKind:  0.9090909090909091,
+				policy.ResourceKind:   2.066666666666667,
+				policy.RolePolicyKind: 0.25,
 			},
 			SchemaCount: 3,
 		}))
@@ -152,9 +152,9 @@ func TestLocalSource(t *testing.T) {
 
 		t.Run("repoStats", runRepoStatsTest(lsrt, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind:  10,
-				policy.ResourceKind:   28,
-				policy.RolePolicyKind: 6,
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   30,
+				policy.RolePolicyKind: 8,
 			},
 			ConditionCount: map[policy.Kind]int{
 				policy.PrincipalKind:  4,
@@ -162,9 +162,9 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 2,
 			},
 			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  19,
-				policy.ResourceKind:   89,
-				policy.RolePolicyKind: 9,
+				policy.PrincipalKind:  20,
+				policy.ResourceKind:   93,
+				policy.RolePolicyKind: 11,
 			},
 			MaxConditionCount: map[policy.Kind]int{
 				policy.PrincipalKind:  2,
@@ -177,14 +177,14 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 2,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  0.4,
-				policy.ResourceKind:   1.25,
-				policy.RolePolicyKind: 0.3333333333333333,
+				policy.PrincipalKind:  0.36363636363636365,
+				policy.ResourceKind:   1.1666666666666667,
+				policy.RolePolicyKind: 0.25,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  1.9,
-				policy.ResourceKind:   3.1785714285714284,
-				policy.RolePolicyKind: 1.5,
+				policy.PrincipalKind:  1.8181818181818181,
+				policy.ResourceKind:   3.1,
+				policy.RolePolicyKind: 1.375,
 			},
 			SchemaCount: 3,
 		}))

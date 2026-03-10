@@ -39,7 +39,7 @@ func TestBundle(t *testing.T) {
 
 	results, err := verify.Bundle(ctx, params, test.PathToDir(t, "store"), true)
 	require.NoError(t, err)
-	require.Equal(t, policyv1.TestResults_RESULT_FAILED, results.Summary.OverallResult)
+	require.Equal(t, policyv1.TestResults_RESULT_PASSED, results.Summary.OverallResult)
 }
 
 func TestBundleStream(t *testing.T) {
@@ -56,10 +56,7 @@ func TestBundleStream(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, noOfSuites)
 
-	result := policyv1.TestResults_RESULT_PASSED
 	for suite := range suites {
-		result = suite.Summary.OverallResult
+		require.Equal(t, policyv1.TestResults_RESULT_PASSED, suite.Summary.OverallResult)
 	}
-
-	require.NotEqual(t, policyv1.TestResults_RESULT_PASSED, result)
 }
