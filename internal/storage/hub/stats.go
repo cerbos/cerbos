@@ -20,38 +20,38 @@ import (
 const numPolicyKinds = 4
 
 type statsCollector struct {
-	policyCount    map[policy.Kind]int
-	ruleCount      map[policy.Kind]int
-	conditionCount map[policy.Kind]int
-	schemaRefs     map[uint64]struct{}
-	uniquePolicies map[uint64]struct{}
+	policyCount           map[policy.Kind]int
+	ruleCountPerKind      map[policy.Kind]int
+	conditionCountPerKind map[policy.Kind]int
+	schemaRefs            map[uint64]struct{}
+	uniquePolicies        map[uint64]struct{}
 }
 
 func newStatsCollector() *statsCollector {
 	return &statsCollector{
-		policyCount:    make(map[policy.Kind]int, numPolicyKinds),
-		ruleCount:      make(map[policy.Kind]int, numPolicyKinds),
-		conditionCount: make(map[policy.Kind]int, numPolicyKinds),
-		schemaRefs:     make(map[uint64]struct{}),
-		uniquePolicies: make(map[uint64]struct{}),
+		policyCount:           make(map[policy.Kind]int, numPolicyKinds),
+		ruleCountPerKind:      make(map[policy.Kind]int, numPolicyKinds),
+		conditionCountPerKind: make(map[policy.Kind]int, numPolicyKinds),
+		schemaRefs:            make(map[uint64]struct{}),
+		uniquePolicies:        make(map[uint64]struct{}),
 	}
 }
 
 func (s *statsCollector) collate() storage.RepoStats {
 	is := storage.RepoStats{
 		PolicyCount:       s.policyCount,
-		ConditionCount:    s.conditionCount,
-		RuleCount:         s.ruleCount,
-		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCount)),
-		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCount)),
+		RuleCount:         s.ruleCountPerKind,
+		ConditionCount:    s.conditionCountPerKind,
+		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCountPerKind)),
+		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCountPerKind)),
 		SchemaCount:       len(s.schemaRefs),
 	}
 
-	for k, c := range s.ruleCount {
+	for k, c := range s.ruleCountPerKind {
 		is.AvgRuleCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
-	for k, c := range s.conditionCount {
+	for k, c := range s.conditionCountPerKind {
 		is.AvgConditionCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
@@ -78,9 +78,9 @@ func (s *statsCollector) addRow(row *index.Row) {
 		s.policyCount[kind]++
 	}
 
-	s.ruleCount[kind]++
+	s.ruleCountPerKind[kind]++
 	if row.GetCondition() != nil {
-		s.conditionCount[kind]++
+		s.conditionCountPerKind[kind]++
 	}
 }
 
@@ -108,8 +108,8 @@ func (s *statsCollector) addRunnablePolicySet(rps *runtimev1.RunnablePolicySet) 
 	kind := policy.KindFromFQN(rps.GetFqn())
 	s.policyCount[kind]++
 	for _, ps := range stats {
-		s.ruleCount[kind] += ps.ruleCount
-		s.conditionCount[kind] += ps.conditionCount
+		s.ruleCountPerKind[kind] += ps.ruleCount
+		s.conditionCountPerKind[kind] += ps.conditionCount
 	}
 }
 

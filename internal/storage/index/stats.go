@@ -15,10 +15,10 @@ import (
 const numPolicyKinds = 4
 
 type statsCollector struct {
-	policyCount    map[policy.Kind]int
-	ruleCount      map[policy.Kind]int
-	conditionCount map[policy.Kind]int
-	schemaRefs     map[uint64]struct{}
+	policyCount           map[policy.Kind]int
+	ruleCountPerKind      map[policy.Kind]int
+	conditionCountPerKind map[policy.Kind]int
+	schemaRefs            map[uint64]struct{}
 }
 
 type policyStats struct {
@@ -28,28 +28,28 @@ type policyStats struct {
 
 func newStatsCollector() *statsCollector {
 	return &statsCollector{
-		policyCount:    make(map[policy.Kind]int, numPolicyKinds),
-		ruleCount:      make(map[policy.Kind]int, numPolicyKinds),
-		conditionCount: make(map[policy.Kind]int, numPolicyKinds),
-		schemaRefs:     make(map[uint64]struct{}),
+		policyCount:           make(map[policy.Kind]int, numPolicyKinds),
+		ruleCountPerKind:      make(map[policy.Kind]int, numPolicyKinds),
+		conditionCountPerKind: make(map[policy.Kind]int, numPolicyKinds),
+		schemaRefs:            make(map[uint64]struct{}),
 	}
 }
 
 func (s *statsCollector) collate() storage.RepoStats {
 	is := storage.RepoStats{
 		PolicyCount:       s.policyCount,
-		ConditionCount:    s.conditionCount,
-		RuleCount:         s.ruleCount,
+		RuleCount:         s.ruleCountPerKind,
+		ConditionCount:    s.conditionCountPerKind,
 		SchemaCount:       len(s.schemaRefs),
-		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCount)),
-		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCount)),
+		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCountPerKind)),
+		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCountPerKind)),
 	}
 
-	for k, c := range s.ruleCount {
+	for k, c := range s.ruleCountPerKind {
 		is.AvgRuleCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
-	for k, c := range s.conditionCount {
+	for k, c := range s.conditionCountPerKind {
 		is.AvgConditionCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
@@ -75,8 +75,8 @@ func (s *statsCollector) add(p policy.Wrapper) {
 		ps = s.procRolePolicy(p.GetRolePolicy())
 	}
 
-	s.ruleCount[p.Kind] += ps.ruleCount
-	s.conditionCount[p.Kind] += ps.conditionCount
+	s.ruleCountPerKind[p.Kind] += ps.ruleCount
+	s.conditionCountPerKind[p.Kind] += ps.conditionCount
 }
 
 func (s *statsCollector) procDerivedRoles(dr *policyv1.DerivedRoles) (ps policyStats) {
