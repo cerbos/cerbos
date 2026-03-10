@@ -147,6 +147,8 @@ func TestBuildIndexWithDisk(t *testing.T) {
 				require.Greater(t, stats.RuleCount[k], 12)
 				require.Greater(t, stats.AvgConditionCount[k], float64(0.3))
 				require.Greater(t, stats.AvgRuleCount[k], float64(1.0))
+				require.Greater(t, stats.MaxConditionCount[k], 1)
+				require.Greater(t, stats.MaxRuleCount[k], 2)
 			})
 		}
 
@@ -157,6 +159,8 @@ func TestBuildIndexWithDisk(t *testing.T) {
 				require.Equal(t, stats.RuleCount[k], 2)
 				require.Zero(t, stats.AvgConditionCount[k])
 				require.Equal(t, stats.AvgRuleCount[k], float64(2))
+				require.Zero(t, stats.MaxConditionCount[k])
+				require.Equal(t, stats.MaxRuleCount[k], 2)
 			})
 		}
 	})

@@ -144,8 +144,10 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 			Count:             make(map[string]uint32, len(stats.PolicyCount)),
 			ConditionCount:    make(map[string]uint32, len(stats.ConditionCount)),
 			RuleCount:         make(map[string]uint32, len(stats.RuleCount)),
-			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
 			AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
+			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
+			MaxConditionCount: make(map[string]uint32, len(stats.MaxConditionCount)),
+			MaxRuleCount:      make(map[string]uint32, len(stats.MaxRuleCount)),
 		},
 		Schema: &telemetryv1.ServerLaunch_Stats_Schema{
 			Count: uint32(stats.SchemaCount),
@@ -172,5 +174,13 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 		pb.Policy.AvgRuleCount[k.String()] = v
 	}
 
+	for k, v := range stats.MaxConditionCount {
+		pb.Policy.MaxConditionCount[k.String()] = uint32(v)
+	}
+
+	for k, v := range stats.MaxRuleCount {
+		pb.Policy.MaxRuleCount[k.String()] = uint32(v)
+	}
+	
 	return pb
 }

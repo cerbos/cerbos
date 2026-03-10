@@ -18,6 +18,8 @@ type statsCollector struct {
 	policyCount           map[policy.Kind]int
 	ruleCountPerKind      map[policy.Kind]int
 	conditionCountPerKind map[policy.Kind]int
+	maxRuleCount          map[policy.Kind]int
+	maxConditionCount     map[policy.Kind]int
 	schemaRefs            map[uint64]struct{}
 }
 
@@ -31,6 +33,8 @@ func newStatsCollector() *statsCollector {
 		policyCount:           make(map[policy.Kind]int, numPolicyKinds),
 		ruleCountPerKind:      make(map[policy.Kind]int, numPolicyKinds),
 		conditionCountPerKind: make(map[policy.Kind]int, numPolicyKinds),
+		maxRuleCount:          make(map[policy.Kind]int, numPolicyKinds),
+		maxConditionCount:     make(map[policy.Kind]int, numPolicyKinds),
 		schemaRefs:            make(map[uint64]struct{}),
 	}
 }
@@ -40,6 +44,8 @@ func (s *statsCollector) collate() storage.RepoStats {
 		PolicyCount:       s.policyCount,
 		RuleCount:         s.ruleCountPerKind,
 		ConditionCount:    s.conditionCountPerKind,
+		MaxRuleCount:      s.maxRuleCount,
+		MaxConditionCount: s.maxConditionCount,
 		SchemaCount:       len(s.schemaRefs),
 		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCountPerKind)),
 		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCountPerKind)),
@@ -76,7 +82,14 @@ func (s *statsCollector) add(p policy.Wrapper) {
 	}
 
 	s.ruleCountPerKind[p.Kind] += ps.ruleCount
+	if existingRuleCount, ok := s.maxRuleCount[p.Kind]; !ok || ps.ruleCount > existingRuleCount {
+		s.maxRuleCount[p.Kind] = ps.ruleCount
+	}
+
 	s.conditionCountPerKind[p.Kind] += ps.conditionCount
+	if existingConditionCount, ok := s.maxConditionCount[p.Kind]; !ok || ps.conditionCount > existingConditionCount {
+		s.maxConditionCount[p.Kind] = ps.conditionCount
+	}
 }
 
 func (s *statsCollector) procDerivedRoles(dr *policyv1.DerivedRoles) (ps policyStats) {

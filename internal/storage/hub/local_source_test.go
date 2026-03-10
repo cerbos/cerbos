@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -61,6 +60,16 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   136,
 				policy.RolePolicyKind: 9,
 			},
+			MaxConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  3,
+				policy.ResourceKind:   7,
+				policy.RolePolicyKind: 1,
+			},
+			MaxRuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   17,
+				policy.RolePolicyKind: 2,
+			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  3.7777777777777777,
 				policy.ResourceKind:   5.037037037037037,
@@ -104,6 +113,16 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   133,
 				policy.RolePolicyKind: 10,
 			},
+			MaxConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  3,
+				policy.ResourceKind:   7,
+				policy.RolePolicyKind: 1,
+			},
+			MaxRuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   17,
+				policy.RolePolicyKind: 2,
+			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  3.7777777777777777,
 				policy.ResourceKind:   5.115384615384615,
@@ -143,19 +162,29 @@ func TestLocalSource(t *testing.T) {
 				policy.RolePolicyKind: 2,
 			},
 			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  20,
-				policy.ResourceKind:   90,
+				policy.PrincipalKind:  19,
+				policy.ResourceKind:   89,
 				policy.RolePolicyKind: 9,
 			},
-			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  2.0,
-				policy.ResourceKind:   3.2142857142857144,
-				policy.RolePolicyKind: 1.5,
+			MaxConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  2,
+				policy.ResourceKind:   5,
+				policy.RolePolicyKind: 1,
+			},
+			MaxRuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  6,
+				policy.ResourceKind:   11,
+				policy.RolePolicyKind: 2,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  0.4,
 				policy.ResourceKind:   1.25,
 				policy.RolePolicyKind: 0.3333333333333333,
+			},
+			AvgRuleCount: map[policy.Kind]float64{
+				policy.PrincipalKind:  1.9,
+				policy.ResourceKind:   3.1785714285714284,
+				policy.RolePolicyKind: 1.5,
 			},
 			SchemaCount: 3,
 		}))
@@ -248,7 +277,6 @@ func runRepoStatsTest(ls *hub.LocalSource, wantStats storage.RepoStats) func(*te
 	return func(t *testing.T) {
 		t.Helper()
 
-		time.Sleep(2 * time.Second)
 		haveStats := ls.RepoStats(t.Context())
 
 		require.Empty(t,
