@@ -80,7 +80,9 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   2.066666666666667,
 				policy.RolePolicyKind: 0.25,
 			},
-			SchemaCount: 3,
+			DistinctActionCount:   44,
+			DistinctResourceCount: 18,
+			SchemaCount:           3,
 		}))
 	})
 
@@ -133,7 +135,9 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   2.066666666666667,
 				policy.RolePolicyKind: 0.25,
 			},
-			SchemaCount: 3,
+			DistinctActionCount:   44,
+			DistinctResourceCount: 18,
+			SchemaCount:           3,
 		}))
 	})
 
@@ -186,7 +190,9 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   3.1,
 				policy.RolePolicyKind: 1.375,
 			},
-			SchemaCount: 3,
+			DistinctActionCount:   44,
+			DistinctResourceCount: 18,
+			SchemaCount:           3,
 		}))
 	})
 }

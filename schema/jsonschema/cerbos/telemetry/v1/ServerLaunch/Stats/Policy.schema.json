@@ -30,6 +30,14 @@
         "minimum": 0
       }
     },
+    "distinctActionCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "distinctResourceCount": {
+      "type": "integer",
+      "minimum": 0
+    },
     "maxConditionCount": {
       "type": "object",
       "additionalProperties": {

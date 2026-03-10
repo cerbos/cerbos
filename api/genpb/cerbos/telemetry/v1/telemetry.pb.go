@@ -962,16 +962,18 @@ func (x *ServerLaunch_Features_Storage_Bundle) GetClientId() string {
 }
 
 type ServerLaunch_Stats_Policy struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	Count             map[string]uint32      `protobuf:"bytes,1,rep,name=count,proto3" json:"count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	AvgRuleCount      map[string]float64     `protobuf:"bytes,2,rep,name=avg_rule_count,json=avgRuleCount,proto3" json:"avg_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
-	AvgConditionCount map[string]float64     `protobuf:"bytes,3,rep,name=avg_condition_count,json=avgConditionCount,proto3" json:"avg_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
-	ConditionCount    map[string]uint32      `protobuf:"bytes,4,rep,name=condition_count,json=conditionCount,proto3" json:"condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	RuleCount         map[string]uint32      `protobuf:"bytes,5,rep,name=rule_count,json=ruleCount,proto3" json:"rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	MaxConditionCount map[string]uint32      `protobuf:"bytes,6,rep,name=max_condition_count,json=maxConditionCount,proto3" json:"max_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	MaxRuleCount      map[string]uint32      `protobuf:"bytes,7,rep,name=max_rule_count,json=maxRuleCount,proto3" json:"max_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Count                 map[string]uint32      `protobuf:"bytes,1,rep,name=count,proto3" json:"count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	AvgRuleCount          map[string]float64     `protobuf:"bytes,2,rep,name=avg_rule_count,json=avgRuleCount,proto3" json:"avg_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
+	AvgConditionCount     map[string]float64     `protobuf:"bytes,3,rep,name=avg_condition_count,json=avgConditionCount,proto3" json:"avg_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
+	ConditionCount        map[string]uint32      `protobuf:"bytes,4,rep,name=condition_count,json=conditionCount,proto3" json:"condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	RuleCount             map[string]uint32      `protobuf:"bytes,5,rep,name=rule_count,json=ruleCount,proto3" json:"rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	MaxConditionCount     map[string]uint32      `protobuf:"bytes,6,rep,name=max_condition_count,json=maxConditionCount,proto3" json:"max_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	MaxRuleCount          map[string]uint32      `protobuf:"bytes,7,rep,name=max_rule_count,json=maxRuleCount,proto3" json:"max_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	DistinctActionCount   uint32                 `protobuf:"varint,8,opt,name=distinct_action_count,json=distinctActionCount,proto3" json:"distinct_action_count,omitempty"`
+	DistinctResourceCount uint32                 `protobuf:"varint,9,opt,name=distinct_resource_count,json=distinctResourceCount,proto3" json:"distinct_resource_count,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ServerLaunch_Stats_Policy) Reset() {
@@ -1051,6 +1053,20 @@ func (x *ServerLaunch_Stats_Policy) GetMaxRuleCount() map[string]uint32 {
 		return x.MaxRuleCount
 	}
 	return nil
+}
+
+func (x *ServerLaunch_Stats_Policy) GetDistinctActionCount() uint32 {
+	if x != nil {
+		return x.DistinctActionCount
+	}
+	return 0
+}
+
+func (x *ServerLaunch_Stats_Policy) GetDistinctResourceCount() uint32 {
+	if x != nil {
+		return x.DistinctResourceCount
+	}
+	return 0
 }
 
 type ServerLaunch_Stats_Schema struct {
@@ -1221,7 +1237,7 @@ var File_cerbos_telemetry_v1_telemetry_proto protoreflect.FileDescriptor
 
 const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\n" +
-	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\xa8\x18\n" +
+	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\x94\x19\n" +
 	"\fServerLaunch\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12@\n" +
 	"\x06source\x18\x02 \x01(\v2(.cerbos.telemetry.v1.ServerLaunch.SourceR\x06source\x12F\n" +
@@ -1270,11 +1286,11 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x06pdp_id\x18\x01 \x01(\tR\x05pdpId\x12#\n" +
 	"\rbundle_source\x18\x02 \x01(\tR\fbundleSource\x12\x1b\n" +
 	"\tclient_id\x18\x03 \x01(\tR\bclientIdB\a\n" +
-	"\x05store\x1a\xe5\n" +
-	"\n" +
+	"\x05store\x1a\xd1\v\n" +
 	"\x05Stats\x12F\n" +
 	"\x06policy\x18\x01 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.PolicyR\x06policy\x12F\n" +
-	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\xab\t\n" +
+	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\x97\n" +
+	"\n" +
 	"\x06Policy\x12O\n" +
 	"\x05count\x18\x01 \x03(\v29.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntryR\x05count\x12f\n" +
 	"\x0eavg_rule_count\x18\x02 \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgRuleCountEntryR\favgRuleCount\x12u\n" +
@@ -1283,7 +1299,9 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\n" +
 	"rule_count\x18\x05 \x03(\v2=.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.RuleCountEntryR\truleCount\x12u\n" +
 	"\x13max_condition_count\x18\x06 \x03(\v2E.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxConditionCountEntryR\x11maxConditionCount\x12f\n" +
-	"\x0emax_rule_count\x18\a \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxRuleCountEntryR\fmaxRuleCount\x1a8\n" +
+	"\x0emax_rule_count\x18\a \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxRuleCountEntryR\fmaxRuleCount\x122\n" +
+	"\x15distinct_action_count\x18\b \x01(\rR\x13distinctActionCount\x126\n" +
+	"\x17distinct_resource_count\x18\t \x01(\rR\x15distinctResourceCount\x1a8\n" +
 	"\n" +
 	"CountEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

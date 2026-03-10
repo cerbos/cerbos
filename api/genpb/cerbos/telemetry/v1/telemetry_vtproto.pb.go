@@ -736,6 +736,16 @@ func (m *ServerLaunch_Stats_Policy) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.DistinctResourceCount != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.DistinctResourceCount))
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.DistinctActionCount != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.DistinctActionCount))
+		i--
+		dAtA[i] = 0x40
+	}
 	if len(m.MaxRuleCount) > 0 {
 		for k := range m.MaxRuleCount {
 			v := m.MaxRuleCount[k]
@@ -1593,6 +1603,12 @@ func (m *ServerLaunch_Stats_Policy) SizeVT() (n int) {
 			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + 1 + protohelpers.SizeOfVarint(uint64(v))
 			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
+	}
+	if m.DistinctActionCount != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.DistinctActionCount))
+	}
+	if m.DistinctResourceCount != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.DistinctResourceCount))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4112,6 +4128,44 @@ func (m *ServerLaunch_Stats_Policy) UnmarshalVT(dAtA []byte) error {
 			}
 			m.MaxRuleCount[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistinctActionCount", wireType)
+			}
+			m.DistinctActionCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.DistinctActionCount |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DistinctResourceCount", wireType)
+			}
+			m.DistinctResourceCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.DistinctResourceCount |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

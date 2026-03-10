@@ -21,6 +21,8 @@ type statsCollector struct {
 	maxRuleCount          map[policy.Kind]int
 	maxConditionCount     map[policy.Kind]int
 	schemaRefs            map[uint64]struct{}
+	uniqueActions         map[string]struct{}
+	uniqueResources       map[string]struct{}
 }
 
 type policyStats struct {
@@ -36,19 +38,23 @@ func newStatsCollector() *statsCollector {
 		maxRuleCount:          make(map[policy.Kind]int, numPolicyKinds),
 		maxConditionCount:     make(map[policy.Kind]int, numPolicyKinds),
 		schemaRefs:            make(map[uint64]struct{}),
+		uniqueActions:         make(map[string]struct{}),
+		uniqueResources:       make(map[string]struct{}),
 	}
 }
 
 func (s *statsCollector) collate() storage.RepoStats {
 	is := storage.RepoStats{
-		PolicyCount:       s.policyCount,
-		RuleCount:         s.ruleCountPerKind,
-		ConditionCount:    s.conditionCountPerKind,
-		MaxRuleCount:      s.maxRuleCount,
-		MaxConditionCount: s.maxConditionCount,
-		SchemaCount:       len(s.schemaRefs),
-		AvgRuleCount:      make(map[policy.Kind]float64, len(s.ruleCountPerKind)),
-		AvgConditionCount: make(map[policy.Kind]float64, len(s.conditionCountPerKind)),
+		PolicyCount:           s.policyCount,
+		RuleCount:             s.ruleCountPerKind,
+		ConditionCount:        s.conditionCountPerKind,
+		MaxRuleCount:          s.maxRuleCount,
+		MaxConditionCount:     s.maxConditionCount,
+		AvgRuleCount:          make(map[policy.Kind]float64, len(s.ruleCountPerKind)),
+		AvgConditionCount:     make(map[policy.Kind]float64, len(s.conditionCountPerKind)),
+		DistinctActionCount:   len(s.uniqueActions),
+		DistinctResourceCount: len(s.uniqueResources),
+		SchemaCount:           len(s.schemaRefs),
 	}
 
 	for k, c := range s.ruleCountPerKind {
@@ -76,6 +82,7 @@ func (s *statsCollector) add(p policy.Wrapper) {
 	case policy.PrincipalKind:
 		ps = s.procPrincipalPolicy(p.GetPrincipalPolicy())
 	case policy.ResourceKind:
+		s.uniqueResources[p.Name] = struct{}{}
 		ps = s.procResourcePolicy(p.GetResourcePolicy())
 	case policy.RolePolicyKind:
 		ps = s.procRolePolicy(p.GetRolePolicy())
@@ -154,6 +161,10 @@ func (s *statsCollector) procResourcePolicy(rp *policyv1.ResourcePolicy) (ps pol
 	ps.ruleCount = len(rp.Rules)
 
 	for _, r := range rp.Rules {
+		for _, action := range r.GetActions() {
+			s.uniqueActions[action] = struct{}{}
+		}
+
 		if r.Condition != nil {
 			ps.conditionCount++
 		}

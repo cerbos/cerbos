@@ -142,13 +142,15 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 	pb := &telemetryv1.ServerLaunch_Stats{
 		Policy: &telemetryv1.ServerLaunch_Stats_Policy{
-			Count:             make(map[string]uint32, len(stats.PolicyCount)),
-			ConditionCount:    make(map[string]uint32, len(stats.ConditionCount)),
-			RuleCount:         make(map[string]uint32, len(stats.RuleCount)),
-			AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
-			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
-			MaxConditionCount: make(map[string]uint32, len(stats.MaxConditionCount)),
-			MaxRuleCount:      make(map[string]uint32, len(stats.MaxRuleCount)),
+			Count:                 make(map[string]uint32, len(stats.PolicyCount)),
+			AvgRuleCount:          make(map[string]float64, len(stats.AvgRuleCount)),
+			AvgConditionCount:     make(map[string]float64, len(stats.AvgConditionCount)),
+			ConditionCount:        make(map[string]uint32, len(stats.ConditionCount)),
+			RuleCount:             make(map[string]uint32, len(stats.RuleCount)),
+			MaxConditionCount:     make(map[string]uint32, len(stats.MaxConditionCount)),
+			MaxRuleCount:          make(map[string]uint32, len(stats.MaxRuleCount)),
+			DistinctActionCount:   uint32(stats.DistinctActionCount),
+			DistinctResourceCount: uint32(stats.DistinctResourceCount),
 		},
 		Schema: &telemetryv1.ServerLaunch_Stats_Schema{
 			Count: uint32(stats.SchemaCount),
