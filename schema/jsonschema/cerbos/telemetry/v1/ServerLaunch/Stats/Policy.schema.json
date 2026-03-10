@@ -30,6 +30,20 @@
         "minimum": 0
       }
     },
+    "maxConditionCount": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "maxRuleCount": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
     "ruleCount": {
       "type": "object",
       "additionalProperties": {

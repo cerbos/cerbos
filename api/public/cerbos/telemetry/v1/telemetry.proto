@@ -85,6 +85,8 @@ message ServerLaunch {
       map<string, double> avg_condition_count = 3;
       map<string, uint32> condition_count = 4;
       map<string, uint32> rule_count = 5;
+      map<string, uint32> max_condition_count = 6;
+      map<string, uint32> max_rule_count = 7;
     }
 
     message Schema {

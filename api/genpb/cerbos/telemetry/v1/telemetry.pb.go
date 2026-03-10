@@ -968,6 +968,8 @@ type ServerLaunch_Stats_Policy struct {
 	AvgConditionCount map[string]float64     `protobuf:"bytes,3,rep,name=avg_condition_count,json=avgConditionCount,proto3" json:"avg_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"fixed64,2,opt,name=value"`
 	ConditionCount    map[string]uint32      `protobuf:"bytes,4,rep,name=condition_count,json=conditionCount,proto3" json:"condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	RuleCount         map[string]uint32      `protobuf:"bytes,5,rep,name=rule_count,json=ruleCount,proto3" json:"rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	MaxConditionCount map[string]uint32      `protobuf:"bytes,6,rep,name=max_condition_count,json=maxConditionCount,proto3" json:"max_condition_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	MaxRuleCount      map[string]uint32      `protobuf:"bytes,7,rep,name=max_rule_count,json=maxRuleCount,proto3" json:"max_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1037,6 +1039,20 @@ func (x *ServerLaunch_Stats_Policy) GetRuleCount() map[string]uint32 {
 	return nil
 }
 
+func (x *ServerLaunch_Stats_Policy) GetMaxConditionCount() map[string]uint32 {
+	if x != nil {
+		return x.MaxConditionCount
+	}
+	return nil
+}
+
+func (x *ServerLaunch_Stats_Policy) GetMaxRuleCount() map[string]uint32 {
+	if x != nil {
+		return x.MaxRuleCount
+	}
+	return nil
+}
+
 type ServerLaunch_Stats_Schema struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Count         uint32                 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
@@ -1091,7 +1107,7 @@ type Event_CountStat struct {
 
 func (x *Event_CountStat) Reset() {
 	*x = Event_CountStat{}
-	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[22]
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1103,7 +1119,7 @@ func (x *Event_CountStat) String() string {
 func (*Event_CountStat) ProtoMessage() {}
 
 func (x *Event_CountStat) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[22]
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1145,7 +1161,7 @@ type Event_ApiActivity struct {
 
 func (x *Event_ApiActivity) Reset() {
 	*x = Event_ApiActivity{}
-	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[23]
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1157,7 +1173,7 @@ func (x *Event_ApiActivity) String() string {
 func (*Event_ApiActivity) ProtoMessage() {}
 
 func (x *Event_ApiActivity) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[23]
+	mi := &file_cerbos_telemetry_v1_telemetry_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1205,7 +1221,7 @@ var File_cerbos_telemetry_v1_telemetry_proto protoreflect.FileDescriptor
 
 const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\n" +
-	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\xc2\x15\n" +
+	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\xa8\x18\n" +
 	"\fServerLaunch\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12@\n" +
 	"\x06source\x18\x02 \x01(\v2(.cerbos.telemetry.v1.ServerLaunch.SourceR\x06source\x12F\n" +
@@ -1254,17 +1270,20 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x06pdp_id\x18\x01 \x01(\tR\x05pdpId\x12#\n" +
 	"\rbundle_source\x18\x02 \x01(\tR\fbundleSource\x12\x1b\n" +
 	"\tclient_id\x18\x03 \x01(\tR\bclientIdB\a\n" +
-	"\x05store\x1a\xff\a\n" +
+	"\x05store\x1a\xe5\n" +
+	"\n" +
 	"\x05Stats\x12F\n" +
 	"\x06policy\x18\x01 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.PolicyR\x06policy\x12F\n" +
-	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\xc5\x06\n" +
+	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\xab\t\n" +
 	"\x06Policy\x12O\n" +
 	"\x05count\x18\x01 \x03(\v29.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntryR\x05count\x12f\n" +
 	"\x0eavg_rule_count\x18\x02 \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgRuleCountEntryR\favgRuleCount\x12u\n" +
 	"\x13avg_condition_count\x18\x03 \x03(\v2E.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgConditionCountEntryR\x11avgConditionCount\x12k\n" +
 	"\x0fcondition_count\x18\x04 \x03(\v2B.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.ConditionCountEntryR\x0econditionCount\x12\\\n" +
 	"\n" +
-	"rule_count\x18\x05 \x03(\v2=.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.RuleCountEntryR\truleCount\x1a8\n" +
+	"rule_count\x18\x05 \x03(\v2=.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.RuleCountEntryR\truleCount\x12u\n" +
+	"\x13max_condition_count\x18\x06 \x03(\v2E.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxConditionCountEntryR\x11maxConditionCount\x12f\n" +
+	"\x0emax_rule_count\x18\a \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxRuleCountEntryR\fmaxRuleCount\x1a8\n" +
 	"\n" +
 	"CountEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -1279,6 +1298,12 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1a<\n" +
 	"\x0eRuleCountEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1aD\n" +
+	"\x16MaxConditionCountEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1a?\n" +
+	"\x11MaxRuleCountEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\rR\x05value:\x028\x01\x1a\x1e\n" +
 	"\x06Schema\x12\x14\n" +
@@ -1314,7 +1339,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_rawDescGZIP() []byte {
 	return file_cerbos_telemetry_v1_telemetry_proto_rawDescData
 }
 
-var file_cerbos_telemetry_v1_telemetry_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_cerbos_telemetry_v1_telemetry_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_cerbos_telemetry_v1_telemetry_proto_goTypes = []any{
 	(*ServerLaunch)(nil),                         // 0: cerbos.telemetry.v1.ServerLaunch
 	(*ServerStop)(nil),                           // 1: cerbos.telemetry.v1.ServerStop
@@ -1338,16 +1363,18 @@ var file_cerbos_telemetry_v1_telemetry_proto_goTypes = []any{
 	nil,                                          // 19: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgConditionCountEntry
 	nil,                                          // 20: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.ConditionCountEntry
 	nil,                                          // 21: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.RuleCountEntry
-	(*Event_CountStat)(nil),                      // 22: cerbos.telemetry.v1.Event.CountStat
-	(*Event_ApiActivity)(nil),                    // 23: cerbos.telemetry.v1.Event.ApiActivity
-	(*durationpb.Duration)(nil),                  // 24: google.protobuf.Duration
+	nil,                                          // 22: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxConditionCountEntry
+	nil,                                          // 23: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxRuleCountEntry
+	(*Event_CountStat)(nil),                      // 24: cerbos.telemetry.v1.Event.CountStat
+	(*Event_ApiActivity)(nil),                    // 25: cerbos.telemetry.v1.Event.ApiActivity
+	(*durationpb.Duration)(nil),                  // 26: google.protobuf.Duration
 }
 var file_cerbos_telemetry_v1_telemetry_proto_depIdxs = []int32{
 	4,  // 0: cerbos.telemetry.v1.ServerLaunch.source:type_name -> cerbos.telemetry.v1.ServerLaunch.Source
 	5,  // 1: cerbos.telemetry.v1.ServerLaunch.features:type_name -> cerbos.telemetry.v1.ServerLaunch.Features
 	6,  // 2: cerbos.telemetry.v1.ServerLaunch.stats:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats
-	24, // 3: cerbos.telemetry.v1.ServerStop.uptime:type_name -> google.protobuf.Duration
-	23, // 4: cerbos.telemetry.v1.Event.api_activity:type_name -> cerbos.telemetry.v1.Event.ApiActivity
+	26, // 3: cerbos.telemetry.v1.ServerStop.uptime:type_name -> google.protobuf.Duration
+	25, // 4: cerbos.telemetry.v1.Event.api_activity:type_name -> cerbos.telemetry.v1.Event.ApiActivity
 	3,  // 5: cerbos.telemetry.v1.ServerLaunch.Source.cerbos:type_name -> cerbos.telemetry.v1.ServerLaunch.Cerbos
 	7,  // 6: cerbos.telemetry.v1.ServerLaunch.Features.audit:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Audit
 	8,  // 7: cerbos.telemetry.v1.ServerLaunch.Features.schema:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Schema
@@ -1359,21 +1386,23 @@ var file_cerbos_telemetry_v1_telemetry_proto_depIdxs = []int32{
 	12, // 13: cerbos.telemetry.v1.ServerLaunch.Features.Storage.git:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git
 	13, // 14: cerbos.telemetry.v1.ServerLaunch.Features.Storage.blob:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob
 	14, // 15: cerbos.telemetry.v1.ServerLaunch.Features.Storage.bundle:type_name -> cerbos.telemetry.v1.ServerLaunch.Features.Storage.Bundle
-	24, // 16: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git.poll_interval:type_name -> google.protobuf.Duration
-	24, // 17: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob.poll_interval:type_name -> google.protobuf.Duration
+	26, // 16: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Git.poll_interval:type_name -> google.protobuf.Duration
+	26, // 17: cerbos.telemetry.v1.ServerLaunch.Features.Storage.Blob.poll_interval:type_name -> google.protobuf.Duration
 	17, // 18: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntry
 	18, // 19: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.avg_rule_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgRuleCountEntry
 	19, // 20: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.avg_condition_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.AvgConditionCountEntry
 	20, // 21: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.condition_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.ConditionCountEntry
 	21, // 22: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.rule_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.RuleCountEntry
-	24, // 23: cerbos.telemetry.v1.Event.ApiActivity.uptime:type_name -> google.protobuf.Duration
-	22, // 24: cerbos.telemetry.v1.Event.ApiActivity.method_calls:type_name -> cerbos.telemetry.v1.Event.CountStat
-	22, // 25: cerbos.telemetry.v1.Event.ApiActivity.user_agents:type_name -> cerbos.telemetry.v1.Event.CountStat
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	22, // 23: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.max_condition_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxConditionCountEntry
+	23, // 24: cerbos.telemetry.v1.ServerLaunch.Stats.Policy.max_rule_count:type_name -> cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxRuleCountEntry
+	26, // 25: cerbos.telemetry.v1.Event.ApiActivity.uptime:type_name -> google.protobuf.Duration
+	24, // 26: cerbos.telemetry.v1.Event.ApiActivity.method_calls:type_name -> cerbos.telemetry.v1.Event.CountStat
+	24, // 27: cerbos.telemetry.v1.Event.ApiActivity.user_agents:type_name -> cerbos.telemetry.v1.Event.CountStat
+	28, // [28:28] is the sub-list for method output_type
+	28, // [28:28] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_telemetry_v1_telemetry_proto_init() }
@@ -1396,7 +1425,7 @@ func file_cerbos_telemetry_v1_telemetry_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_telemetry_v1_telemetry_proto_rawDesc), len(file_cerbos_telemetry_v1_telemetry_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
