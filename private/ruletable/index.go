@@ -10,15 +10,10 @@ import (
 )
 
 type (
-	RedisIndex = index.Redis
-	Row        = index.Row
-	Impl       = index.Impl
+	Binding        = index.Binding
+	FunctionalCore = index.FunctionalCore
+	Index          = index.Index
+	RowParams      = index.RowParams
 )
 
-var (
-	ErrCacheMiss = index.ErrCacheMiss
-
-	GetExistingRedis = index.GetExistingRedis
-	NewImpl          = index.NewImpl
-	NewRedis         = index.NewRedis
-)
+var New = index.New

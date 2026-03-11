@@ -58,7 +58,7 @@ func (s *statsCollector) collate() storage.RepoStats {
 	return is
 }
 
-func (s *statsCollector) addRow(row *index.Row) {
+func (s *statsCollector) addRow(row *index.Binding) {
 	mID := namer.GenModuleIDFromFQN(row.OriginFqn)
 	var kind policy.Kind
 	switch {
@@ -79,7 +79,7 @@ func (s *statsCollector) addRow(row *index.Row) {
 	}
 
 	s.ruleCount[kind]++
-	if row.GetCondition() != nil {
+	if row.Core.Condition != nil {
 		s.conditionCount[kind]++
 	}
 }

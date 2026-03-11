@@ -4,82 +4,51 @@
 package index
 
 import (
-	"context"
-	"iter"
-	"maps"
+	"encoding/binary"
 	"slices"
-	"sync"
+
+	"github.com/RoaringBitmap/roaring/v2"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	ruletablev1 "github.com/cerbos/cerbos/api/genpb/cerbos/ruletable/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/cerbos/cerbos/internal/ruletable/internal"
 	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cespare/xxhash/v2"
 	"github.com/google/cel-go/cel"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-const (
-	allowActionsIdxKey = "\x00_cerbos_reserved_allow_actions"
+// functionalRuleRowFields lists proto field names that affect evaluation outcome.
+// Routing fields (scope, version, resource, role, action, principal) are excluded
+// because they are handled by the bitmap index dimensions.
+var functionalRuleRowFields = map[protoreflect.Name]struct{}{
+	"condition": {}, "derived_role_condition": {},
+	"effect": {}, "scope_permissions": {},
+	"emit_output": {}, "params": {},
+	"derived_role_params": {}, "policy_kind": {},
+	"from_role_policy": {},
+}
+
+var (
+	nonFunctionalChecksumFields = buildNonFunctionalChecksumFields()
+	hashSep                     = []byte{0}
 )
 
-var ignoredRuleTableProtoFields = map[string]struct{}{
-	"cerbos.runtime.v1.RuleTableMetadata.source_attributes": {},
-}
-
-type Index interface {
-	getLiteralMap(ruletablev1.CategoryKey) literalMap
-	getGlobMap(ruletablev1.CategoryKey) globMap
-	getParentRoleMap() parentRoleMap
-	resolve(context.Context, []*Row) ([]*Row, error)
-	resolveIter(context.Context, iter.Seq[*Row]) (iter.Seq[*Row], error)
-	needsResolve() bool
-}
-
-type batchWriter interface {
-	setBatch(context.Context, map[string]*rowSet) error
-}
-
-type literalMap interface {
-	batchWriter
-	set(context.Context, string, *rowSet) error
-	get(context.Context, ...string) (map[string]*rowSet, error)
-	getAll(context.Context) (map[string]*rowSet, error)
-	getAllKeys(context.Context) ([]string, error)
-	delete(context.Context, ...string) error
-}
-
-type globMap interface {
-	batchWriter
-	set(context.Context, string, *rowSet) error
-	getWithLiteral(context.Context, ...string) (map[string]*rowSet, error)
-	getMerged(context.Context, ...string) (map[string]*rowSet, error)
-	getAll(context.Context) (map[string]*rowSet, error)
-	getAllKeys(context.Context) ([]string, error)
-	delete(context.Context, ...string) error
-}
-
-type parentRoleMap interface {
-	setBatch(context.Context, map[string]map[string][]string) error
-	get(context.Context, ...string) (map[string]map[string][]string, error)
-}
-
-type Row struct {
-	*runtimev1.RuleTable_RuleRow
-	Params                     *rowParams
-	DerivedRoleParams          *rowParams
-	sum                        uint64
-	NoMatchForScopePermissions bool
-}
-
-type rowParams struct {
-	Key         string
-	Constants   map[string]any // conditions can be converted to Go native types at build time
-	CelPrograms []*CelProgram  // these need to be ordered for self referential variables at eval time
-	Variables   []*runtimev1.Variable
+func buildNonFunctionalChecksumFields() map[string]struct{} {
+	res := make(map[string]struct{})
+	desc := (&runtimev1.RuleTable_RuleRow{}).ProtoReflect().Descriptor()
+	fields := desc.Fields()
+	for i := range fields.Len() {
+		f := fields.Get(i)
+		if _, ok := functionalRuleRowFields[f.Name()]; !ok {
+			res[string(f.FullName())] = struct{}{}
+		}
+	}
+	res["cerbos.runtime.v1.RuleTableMetadata.source_attributes"] = struct{}{}
+	return res
 }
 
 type CelProgram struct {
@@ -88,732 +57,540 @@ type CelProgram struct {
 	Expr string
 }
 
-func (r *Row) Matches(pt policyv1.Kind, scope, action, principalID string, roles []string) bool {
-	if r.PolicyKind != pt {
-		return false
-	}
-
-	if pt == policyv1.Kind_KIND_PRINCIPAL && r.Principal != principalID {
-		return false
-	}
-
-	if scope != r.Scope {
-		return false
-	}
-
-	if r.Role != "*" {
-		if !slices.Contains(roles, r.Role) {
-			return false
-		}
-	}
-
-	a := r.GetAction()
-	if a != action && !util.MatchesGlob(a, action) {
-		return false
-	}
-
-	return true
+type Index struct {
+	bi          *bitmapIndex
+	parentRoles map[string]map[string][]string
 }
 
-type rowSet struct {
-	m   map[uint64]*Row
-	cow bool       // copy-on-write: if true, copy map before mutation
-	mu  sync.Mutex // protects cow flag and m pointer during copy operations
+func New() *Index {
+	return &Index{bi: newBitmapIndex()}
 }
 
-func newRowSet() *rowSet {
-	return &rowSet{
-		m: make(map[uint64]*Row),
-	}
-}
-
-func newRowSetCap(capacity int) *rowSet {
-	return &rowSet{
-		m: make(map[uint64]*Row, capacity),
-	}
-}
-
-// ensureUnique copies the map if it's shared (cow flag is set).
-func (s *rowSet) ensureUnique() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.cow {
-		newM := make(map[uint64]*Row, s.len())
-		maps.Copy(newM, s.m)
-		s.m = newM
-		s.cow = false
-	}
-}
-
-func (l *rowSet) set(r *Row) {
-	l.ensureUnique()
-	if l.m == nil {
-		l.m = make(map[uint64]*Row)
-	}
-	l.m[r.sum] = r
-}
-
-func (l *rowSet) has(sum uint64) bool {
-	_, exists := l.m[sum]
-	return exists
-}
-
-func (l *rowSet) len() int {
-	if l == nil {
-		return 0
-	}
-	return len(l.m)
-}
-
-func (l *rowSet) del(r *Row) {
-	l.ensureUnique()
-	delete(l.m, r.sum)
-}
-
-// rowSetsLen returns the total number of rows across multiple rowSet maps.
-func rowSetsLen(ms ...map[string]*rowSet) int {
-	total := 0
-	for _, m := range ms {
-		for _, rs := range m {
-			total += rs.len()
-		}
-	}
-	return total
-}
-
-// unionAll creates a new rowSet containing all rows from the given rowSets.
-// Pre-allocates the map with the right capacity for efficiency.
-func unionAll(sets ...*rowSet) *rowSet {
-	if len(sets) == 1 && sets[0] != nil {
-		return sets[0].copy()
-	}
-	// Calculate total capacity
-	total := 0
-	for _, s := range sets {
-		if s != nil {
-			total += s.len()
-		}
-	}
-
-	res := newRowSetCap(total)
-	for _, s := range sets {
-		if s != nil {
-			for _, r := range s.m {
-				res.m[r.sum] = r
-			}
-		}
-	}
-	return res
-}
-
-func (s *rowSet) intersectWith(o *rowSet) *rowSet {
-	if s.len() == 0 || o.len() == 0 {
-		return newRowSet()
-	}
-	res := newRowSetCap(min(s.len(), o.len()))
-	for r := range s.intersectWithIter(o) {
-		res.m[r.sum] = r
-	}
-	return res
-}
-
-// hasIntersectionWith returns true if there is any overlap between two rowSets.
-// Returns early on first match, avoiding allocation when just checking for existence.
-func (s *rowSet) hasIntersectionWith(o *rowSet) bool {
-	if s.len() == 0 || o.len() == 0 {
-		return false
-	}
-
-	small, large := s, o
-	if o.len() < s.len() {
-		small, large = o, s
-	}
-
-	for _, r := range small.m {
-		if _, ok := large.m[r.sum]; ok {
-			return true
-		}
-	}
-	return false
-}
-
-// intersectWithIter returns an iterator over the intersection of two rowSets.
-func (s *rowSet) intersectWithIter(o *rowSet) iter.Seq[*Row] {
-	return func(yield func(*Row) bool) {
-		if s.len() == 0 || o.len() == 0 {
-			return
-		}
-
-		small, large := s, o
-		if o.len() < s.len() {
-			small, large = o, s
-		}
-
-		for _, r := range small.m {
-			if _, ok := large.m[r.sum]; ok {
-				if !yield(r) {
-					return
-				}
-			}
-		}
-	}
-}
-
-// intersect3Iter returns an iterator over the three-way intersection (a ∩ b ∩ c).
-func intersect3Iter(a, b, c *rowSet) iter.Seq[*Row] {
-	return func(yield func(*Row) bool) {
-		if a.len() == 0 || b.len() == 0 || c.len() == 0 {
-			return
-		}
-
-		sets := [3]*rowSet{a, b, c}
-		for i := range 2 {
-			for j := i + 1; j < 3; j++ {
-				if sets[j].len() < sets[i].len() {
-					sets[i], sets[j] = sets[j], sets[i]
-				}
-			}
-		}
-
-		small, mid, large := sets[0], sets[1], sets[2] //nolint:gosec // G602: false positive
-		for _, r := range small.m {
-			if _, ok := mid.m[r.sum]; ok {
-				if _, ok := large.m[r.sum]; ok {
-					if !yield(r) {
-						return
-					}
-				}
-			}
-		}
-	}
-}
-
-func (s *rowSet) copy() *rowSet {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	// Mark original as shared
-	s.cow = true
-	// Create copy that shares the map
-	c := &rowSet{m: s.m, cow: true}
-	return c
-}
-
-func (l *rowSet) rows() []*Row {
-	res := make([]*Row, 0, l.len())
-	for _, r := range l.m {
-		res = append(res, r)
-	}
-
-	return res
-}
-
-func (l *rowSet) iter() iter.Seq[*Row] {
-	return maps.Values(l.m)
-}
-
-func (rs *rowSet) resolve(ctx context.Context, idx Index) error {
-	if !idx.needsResolve() {
-		return nil
-	}
-
-	res, err := idx.resolve(ctx, rs.rows())
-	if err != nil {
-		return err
-	}
-
-	for _, row := range res {
-		rs.set(row)
-	}
-
-	return nil
-}
-
-type Impl struct {
-	idx          Index
-	version      literalMap
-	scope        literalMap
-	roleGlob     globMap
-	actionGlob   globMap
-	resourceGlob globMap
-	parentRoles  parentRoleMap
-}
-
-func NewImpl(idx Index) *Impl {
-	return &Impl{
-		idx:          idx,
-		version:      idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_VERSION),
-		scope:        idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE),
-		roleGlob:     idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE),
-		actionGlob:   idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION),
-		resourceGlob: idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE),
-		parentRoles:  idx.getParentRoleMap(),
-	}
-}
-
-func (m *Impl) IndexRules(ctx context.Context, rules []*runtimev1.RuleTable_RuleRow) error {
+func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	if len(rules) == 0 {
 		return nil
 	}
 
-	versions := make(map[string]*rowSet)
-	scopes := make(map[string]*rowSet)
-	roleGlobs := make(map[string]*rowSet)
-	actionGlobs := make(map[string]*rowSet)
-	resourceGlobs := make(map[string]*rowSet)
-
-	addToSet := func(m map[string]*rowSet, key string, r *Row) {
-		if _, ok := m[key]; !ok {
-			m[key] = newRowSet()
-		}
-		m[key].set(r)
-	}
+	paramsCache := make(map[uint64]*RowParams)
+	drParamsCache := make(map[uint64]*RowParams)
 
 	for _, rule := range rules {
-		r := &Row{
-			RuleTable_RuleRow: rule,
-		}
+		var params, drParams *RowParams
 
 		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
-			if !rule.FromRolePolicy { //nolint:nestif
-				params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
+			if !rule.FromRolePolicy {
+				p, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
 				if err != nil {
 					return err
 				}
-				r.Params = params
+				params = p
 				if rule.OriginDerivedRole != "" {
-					drParams, err := generateRowParams(namer.DerivedRolesFQN(rule.OriginDerivedRole), rule.DerivedRoleParams.OrderedVariables, rule.DerivedRoleParams.Constants)
+					drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams, namer.DerivedRolesFQN(rule.OriginDerivedRole))
 					if err != nil {
 						return err
 					}
-					r.DerivedRoleParams = drParams
+					drParams = drp
 				}
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
-			params, err := generateRowParams(rule.OriginFqn, rule.Params.OrderedVariables, rule.Params.Constants)
+			p, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
 			if err != nil {
 				return err
 			}
-			r.Params = params
+			params = p
 		}
 
-		r.sum = util.HashPB(r, ignoredRuleTableProtoFields)
-		addToSet(versions, r.Version, r)
-		addToSet(scopes, r.Scope, r)
-		addToSet(roleGlobs, r.Role, r)
-		addToSet(resourceGlobs, r.Resource, r)
+		funcSum := util.HashPB(rule, nonFunctionalChecksumFields)
 
-		// Very niche case--noop rows (from empty-rule role policies) have no ActionSet. This is ineffectual
-		// for the Check/Plan cases, but annoying in other APIs.
-		if r.ActionSet != nil {
-			action := r.GetAction()
-			if len(r.GetAllowActions().GetActions()) > 0 {
-				action = allowActionsIdxKey
+		core, ok := m.bi.coresBySum[funcSum]
+		if !ok {
+			core = &FunctionalCore{
+				Effect:               rule.Effect,
+				Condition:            rule.Condition,
+				DerivedRoleCondition: rule.DerivedRoleCondition,
+				EmitOutput:           rule.EmitOutput,
+				ScopePermissions:     rule.ScopePermissions,
+				FromRolePolicy:       rule.FromRolePolicy,
+				PolicyKind:           rule.PolicyKind,
+				Params:               params,
+				DerivedRoleParams:    drParams,
+				origins:              make(map[string]struct{}),
+				sum:                  funcSum,
 			}
-			addToSet(actionGlobs, action, r)
+			m.bi.coresBySum[funcSum] = core
 		}
-	}
+		core.origins[rule.OriginFqn] = struct{}{}
 
-	// TODO(saml) ideally, we'd batch _all_ writes within a single call, but this
-	// is less intrusive and doesn't require a significant re-write (while still
-	// seeing significant speed-ups).
-	if err := m.updateIndex(ctx, m.version, m.version.get, versions); err != nil {
-		return err
-	}
-	if err := m.updateIndex(ctx, m.scope, m.scope.get, scopes); err != nil {
-		return err
-	}
-	if err := m.updateIndex(ctx, m.roleGlob, m.roleGlob.getWithLiteral, roleGlobs); err != nil {
-		return err
-	}
-	if err := m.updateIndex(ctx, m.resourceGlob, m.resourceGlob.getWithLiteral, resourceGlobs); err != nil {
-		return err
-	}
-	if err := m.updateIndex(ctx, m.actionGlob, m.actionGlob.getWithLiteral, actionGlobs); err != nil {
-		return err
+		action := ""
+		var allowActions map[string]struct{}
+		switch v := rule.ActionSet.(type) {
+		case *runtimev1.RuleTable_RuleRow_AllowActions_:
+			allowActions = make(map[string]struct{}, len(v.AllowActions.GetActions()))
+			for a := range v.AllowActions.GetActions() {
+				allowActions[a] = struct{}{}
+			}
+		case *runtimev1.RuleTable_RuleRow_Action:
+			action = v.Action
+		}
+
+		routingHash := computeRoutingHash(rule.Scope, rule.Version, rule.Resource,
+			rule.Role, action, rule.Principal, allowActions, funcSum)
+
+		if existingID, dup := m.bi.bindingDedup[routingHash]; dup {
+			if b := m.bi.getBinding(existingID); b != nil {
+				b.Core.origins[rule.OriginFqn] = struct{}{}
+				addToLiteralMap(m.bi.fqnBindings, rule.OriginFqn, existingID)
+			}
+			continue
+		}
+
+		// Allocate a new binding.
+		id := m.bi.allocID()
+		b := &Binding{
+			ID:                id,
+			Scope:             rule.Scope,
+			Version:           rule.Version,
+			Resource:          rule.Resource,
+			Role:              rule.Role,
+			Action:            action,
+			Principal:         rule.Principal,
+			OriginFqn:         rule.OriginFqn,
+			OriginDerivedRole: rule.OriginDerivedRole,
+			Name:              rule.Name,
+			EvaluationKey:     rule.EvaluationKey,
+			AllowActions:      allowActions,
+			Core:              core,
+		}
+
+		m.bi.storeBinding(b)
+		m.bi.addToDimensions(b)
+		m.bi.bindingDedup[routingHash] = id
 	}
 
 	return nil
 }
 
-func (m *Impl) ListKeys(ctx context.Context, cats ...ruletablev1.CategoryKey) (map[ruletablev1.CategoryKey][]string, error) {
-	// TODO(saml) pipeline
-	res := make(map[ruletablev1.CategoryKey][]string)
-	for _, cat := range cats {
-		var allKeys []string
-		var err error
-		switch cat {
-		case ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE:
-			// scope can have a valid "" value
-			if scopeKeys, err := m.scope.getAllKeys(ctx); err != nil {
-				return nil, err
-			} else {
-				res[ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE] = scopeKeys
-			}
-			continue
-		case ruletablev1.CategoryKey_CATEGORY_KEY_ACTION:
-			allKeys, err = m.actionGlob.getAllKeys(ctx)
-		case ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE:
-			allKeys, err = m.resourceGlob.getAllKeys(ctx)
-		case ruletablev1.CategoryKey_CATEGORY_KEY_ROLE:
-			allKeys, err = m.roleGlob.getAllKeys(ctx)
-		case ruletablev1.CategoryKey_CATEGORY_KEY_VERSION:
-			allKeys, err = m.version.getAllKeys(ctx)
-		default:
-			return nil, nil
+func computeRoutingHash(scope, version, resource, role, action, principal string,
+	allowActions map[string]struct{}, funcSum uint64,
+) uint64 {
+	h := xxhash.New()
+	_, _ = h.WriteString(scope)
+	_, _ = h.Write(hashSep)
+	_, _ = h.WriteString(version)
+	_, _ = h.Write(hashSep)
+	_, _ = h.WriteString(resource)
+	_, _ = h.Write(hashSep)
+	_, _ = h.WriteString(role)
+	_, _ = h.Write(hashSep)
+	_, _ = h.WriteString(action)
+	_, _ = h.Write(hashSep)
+	_, _ = h.WriteString(principal)
+	_, _ = h.Write(hashSep)
+	if allowActions != nil {
+		sorted := make([]string, 0, len(allowActions))
+		for a := range allowActions {
+			sorted = append(sorted, a)
 		}
-		if err != nil {
-			return nil, err
+		slices.Sort(sorted)
+		for _, a := range sorted {
+			_, _ = h.WriteString(a)
+			_, _ = h.Write(hashSep)
 		}
+	}
+	var buf [8]byte
+	binary.LittleEndian.PutUint64(buf[:], funcSum)
+	_, _ = h.Write(buf[:])
+	return h.Sum64()
+}
 
-		keys := allKeys[:0]
-		for _, key := range allKeys {
-			// allowActionsIdxKey is only relevant to the actionGlob, but this
-			// way, we avoid a double iteration.
-			if key == allowActionsIdxKey || key == "" {
-				continue
-			}
-			keys = append(keys, key)
+func (m *Index) GetAllRows() ([]*Binding, error) {
+	var res []*Binding
+	for _, b := range m.bi.bindings {
+		if b != nil {
+			res = append(res, b)
 		}
-		res[cat] = keys
 	}
 	return res, nil
 }
 
-// updateIndex fetches existing rows for the keys in the batch, resolves them if necessary,
-// merges them with the new batch, and writes the result back. This is only relevant
-// for cases where the rule table is retrospectively updated by the manager (via mutable store
-// events) after init.
-func (m *Impl) updateIndex(ctx context.Context, bw batchWriter, getFn func(context.Context, ...string) (map[string]*rowSet, error), batch map[string]*rowSet) error {
-	if len(batch) == 0 {
+// Query returns bindings matching the given dimensions. Empty string / nil / zero
+// means "match all" for that dimension. AllowActions synthetic DENYs are prepended
+// when querying for a specific action with KIND_RESOURCE (or unspecified kind).
+func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string) []*Binding {
+	bi := m.bi
+
+	if bi.universe.IsEmpty() {
 		return nil
 	}
 
-	keys := make([]string, 0, len(batch))
-	for k := range batch {
-		keys = append(keys, k)
-	}
+	// Per-dimension bitmaps. Nil = match all (skip AND).
+	// Scope is always filtered because "" is a valid literal scope (root scope).
+	var versionBM, scopeBM, resourceBM, roleBM, policyKindBM, principalBM *roaring.Bitmap
 
-	existing, err := getFn(ctx, keys...)
-	if err != nil {
-		return err
-	}
-
-	for k, oldSet := range existing {
-		if err := oldSet.resolve(ctx, m.idx); err != nil {
-			return err
+	if version != "" {
+		bm, ok := bi.version[version]
+		if !ok {
+			return nil
 		}
+		versionBM = bm
+	}
+	{
+		bm, ok := bi.scope[scope]
+		if !ok {
+			return nil
+		}
+		scopeBM = bm
+	}
+	if resource != "" {
+		bm := bi.resource.Query(resource)
+		if bm.IsEmpty() {
+			return nil
+		}
+		resourceBM = bm
+	}
+	if len(roles) > 0 {
+		roleBM = bi.role.QueryMultiple(roles)
+		if roleBM.IsEmpty() {
+			return nil
+		}
+	}
+	if policyKind != 0 {
+		bm, ok := bi.policyKind[policyKind]
+		if !ok {
+			return nil
+		}
+		policyKindBM = bm
+	}
+	if principalID != "" {
+		bm, ok := bi.principal[principalID]
+		if !ok {
+			return nil
+		}
+		principalBM = bm
+	}
 
-		if newSet, ok := batch[k]; ok {
-			batch[k] = unionAll(oldSet, newSet)
+	// baseBM = AND of all non-action dimensions.
+	nonNilDims := make([]*roaring.Bitmap, 0, 6) //nolint:mnd
+	if versionBM != nil {
+		nonNilDims = append(nonNilDims, versionBM)
+	}
+	if scopeBM != nil {
+		nonNilDims = append(nonNilDims, scopeBM)
+	}
+	if resourceBM != nil {
+		nonNilDims = append(nonNilDims, resourceBM)
+	}
+	if roleBM != nil {
+		nonNilDims = append(nonNilDims, roleBM)
+	}
+	if policyKindBM != nil {
+		nonNilDims = append(nonNilDims, policyKindBM)
+	}
+	if principalBM != nil {
+		nonNilDims = append(nonNilDims, principalBM)
+	}
+
+	var baseBM *roaring.Bitmap
+	switch len(nonNilDims) {
+	case 0:
+		baseBM = bi.universe
+	case 1:
+		baseBM = nonNilDims[0]
+	default:
+		baseBM = roaring.FastAnd(nonNilDims...)
+	}
+	if baseBM.IsEmpty() {
+		return nil
+	}
+
+	// resultBM = AND(baseBM, actionBM) for regular (non-AllowActions) bindings.
+	resultBM := baseBM
+	if action != "" {
+		actionBM := bi.action.Query(action)
+		if !actionBM.IsEmpty() {
+			resultBM = roaring.FastAnd(baseBM, actionBM)
+		} else {
+			resultBM = roaring.New()
 		}
 	}
 
-	return bw.setBatch(ctx, batch)
-}
+	var res []*Binding
 
-func (m *Impl) GetAllRows(ctx context.Context) ([]*Row, error) {
-	versions, err := m.version.getAll(ctx)
-	if err != nil {
-		return nil, err
+	// AllowActions synthetic DENYs (prepended before regular bindings).
+	if action != "" && (policyKind == policyv1.Kind_KIND_RESOURCE || policyKind == 0) && !bi.allowActionsBitmap.IsEmpty() {
+		res = m.queryAllowActions(bi, action, resource, roles, versionBM, scopeBM, roleBM, resourceBM, res)
 	}
 
-	scopes, err := m.scope.getAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	roles, err := m.roleGlob.getAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	resources, err := m.resourceGlob.getAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	actions, err := m.actionGlob.getAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	capacity := rowSetsLen(versions, scopes, roles, resources, actions)
-	resSet := newRowSetCap(capacity)
-	res := make([]*Row, 0, capacity)
-	appendRows := func(rowSets map[string]*rowSet) {
-		for _, rowSet := range rowSets {
-			for row := range rowSet.iter() {
-				if !resSet.has(row.sum) {
-					resSet.set(row)
-					res = append(res, row)
-				}
+	// Regular bindings.
+	if !resultBM.IsEmpty() {
+		iter := resultBM.Iterator()
+		for iter.HasNext() {
+			id := iter.Next()
+			if b := bi.getBinding(id); b != nil {
+				res = append(res, b)
 			}
 		}
 	}
 
-	appendRows(versions)
-	appendRows(scopes)
-	appendRows(roles)
-	appendRows(resources)
-	appendRows(actions)
-
-	return res, nil
+	return res
 }
 
-func (m *Impl) GetRows(ctx context.Context, versions, resources, scopes, roles, actions []string, matchLiteral bool) ([]*Row, error) {
-	// we need the determinism of a slice, so track results in that and use the resSet to prevent dupes
-	resSet := newRowSet()
-	res := []*Row{}
+// queryAllowActions generates synthetic DENY bindings from AllowActions (role policy)
+// bindings. These DENYs are prepended before regular bindings so they take precedence.
+func (m *Index) queryAllowActions(
+	bi *bitmapIndex, action, resource string, roles []string,
+	versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap,
+	res []*Binding,
+) []*Binding {
+	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
+	level1Dims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
+	if versionBM != nil {
+		level1Dims = append(level1Dims, versionBM)
+	}
+	if scopeBM != nil {
+		level1Dims = append(level1Dims, scopeBM)
+	}
+	if roleBM != nil {
+		level1Dims = append(level1Dims, roleBM)
+	}
+	level1Dims = append(level1Dims, bi.allowActionsBitmap)
 
-	var versionSets map[string]*rowSet
-	var err error
-	if len(versions) > 0 {
-		versionSets, err = m.version.get(ctx, versions...)
+	var level1BM *roaring.Bitmap
+	if len(level1Dims) == 1 {
+		level1BM = level1Dims[0]
 	} else {
-		versionSets, err = m.version.getAll(ctx)
-		versions = slices.Collect(maps.Keys(versionSets))
+		level1BM = roaring.FastAnd(level1Dims...)
 	}
-	if err != nil {
-		return nil, err
-	}
-	if len(versionSets) == 0 {
-		return res, nil
+	if level1BM.IsEmpty() {
+		return res
 	}
 
-	// Fetch resource set but defer intersection until after scope filtering
-	// (scope is more selective than resource for multi-tenant scenarios)
-	var resourceSets map[string]*rowSet
-	if len(resources) > 0 {
-		resourceSets, err = m.resourceGlob.getMerged(ctx, resources...)
-	} else {
-		resourceSets, err = m.resourceGlob.getAll(ctx)
-		resources = slices.Collect(maps.Keys(resourceSets))
-	}
-	if err != nil {
-		return nil, err
-	}
-	if len(resourceSets) == 0 {
-		return res, nil
+	// Level 2: AllowActions bindings that also match the resource.
+	level2BM := level1BM
+	if resourceBM != nil {
+		level2BM = roaring.FastAnd(level1BM, resourceBM)
 	}
 
-	var scopeSets map[string]*rowSet
-	if len(scopes) > 0 {
-		scopeSets, err = m.scope.get(ctx, scopes...)
-	} else {
-		scopeSets, err = m.scope.getAll(ctx)
-		scopes = slices.Collect(maps.Keys(scopeSets))
+	// Group Level 1 bindings by role.
+	type roleGroup struct {
+		roleFqn  string
+		scope    string
+		version  string
+		bindings []*Binding
 	}
-	if err != nil {
-		return nil, err
-	}
-	if len(scopeSets) == 0 {
-		return res, nil
-	}
+	groupMap := make(map[string]*roleGroup)
 
-	var roleSets map[string]*rowSet
-	if len(roles) > 0 {
-		roleSets, err = m.roleGlob.getMerged(ctx, roles...)
-	} else {
-		roleSets, err = m.roleGlob.getAll(ctx)
-		roles = slices.Collect(maps.Keys(roleSets))
-	}
-	if err != nil {
-		return nil, err
-	}
-	if len(roleSets) == 0 {
-		return res, nil
-	}
-
-	literalActionSets, err := m.actionGlob.getWithLiteral(ctx, allowActionsIdxKey)
-	if err != nil {
-		return nil, err
-	}
-
-	var actionSets map[string]*rowSet
-	if len(actions) > 0 {
-		actionSets, err = m.actionGlob.getMerged(ctx, actions...)
-	} else {
-		actionSets, err = m.actionGlob.getAll(ctx)
-		if len(actionSets) > 0 {
-			delete(actionSets, allowActionsIdxKey)
-			actions = slices.Collect(maps.Keys(actionSets))
+	iter := level1BM.Iterator()
+	for iter.HasNext() {
+		id := iter.Next()
+		b := bi.getBinding(id)
+		if b == nil {
+			continue
+		}
+		if _, ok := groupMap[b.Role]; !ok {
+			groupMap[b.Role] = &roleGroup{
+				roleFqn: namer.RolePolicyFQN(b.Role, b.Version, b.Scope),
+				scope:   b.Scope,
+				version: b.Version,
+			}
 		}
 	}
-	if err != nil {
-		return nil, err
+
+	// Attach Level 2 (resource-matched) bindings to their groups.
+	if !level2BM.IsEmpty() {
+		l2Iter := level2BM.Iterator()
+		for l2Iter.HasNext() {
+			id := l2Iter.Next()
+			b := bi.getBinding(id)
+			if b == nil {
+				continue
+			}
+			if g, ok := groupMap[b.Role]; ok {
+				g.bindings = append(g.bindings, b)
+			}
+		}
 	}
 
-	if len(literalActionSets) == 0 && len(actionSets) == 0 {
-		return res, nil
-	}
-
-	literalActionSet, hasRolePolicyRules := literalActionSets[allowActionsIdxKey]
-
-	actionMatchedRows := internal.NewGlobMap(make(map[string][]*Row))
-
-	for _, version := range versions {
-		versionSet, ok := versionSets[version]
+	// Process each role in input order.
+	for _, role := range roles {
+		g, ok := groupMap[role]
 		if !ok {
 			continue
 		}
-		for _, resource := range resources {
-			resourceSet, ok := resourceSets[resource]
-			if !ok {
-				continue
+
+		// Find AllowActions bindings from Level 2 that cover the queried action.
+		var matched []*Binding
+		for _, ab := range g.bindings {
+			for a := range ab.AllowActions {
+				if a == action || util.MatchesGlob(a, action) {
+					matched = append(matched, ab)
+					break
+				}
 			}
-			for _, scope := range scopes {
-				scopeSet, ok := scopeSets[scope]
-				if !ok {
-					continue
-				}
-				scopeVersionSet := scopeSet.intersectWith(versionSet)
-				if scopeVersionSet.len() == 0 {
-					continue
-				}
-				scopeResourceSet := scopeVersionSet.intersectWith(resourceSet)
-				if scopeResourceSet.len() == 0 {
-					continue
-				}
+		}
 
-				for _, role := range roles {
-					roleSet, ok := roleSets[role]
-					if !ok {
-						continue
-					}
-					roleResourceSet := roleSet.intersectWith(scopeResourceSet)
-
-					roleFqn := namer.RolePolicyFQN(role, version, scope)
-
-					if hasRolePolicyRules { //nolint:nestif
-						roleScopeSet := roleSet.intersectWith(scopeVersionSet)
-						if literalActionSet.hasIntersectionWith(roleScopeSet) { //nolint:nestif
-							ars, err := m.idx.resolveIter(ctx, literalActionSet.intersectWithIter(roleResourceSet))
-							if err != nil {
-								return nil, err
-							}
-							actionMatchedRows.Clear()
-							for ar := range ars {
-								for a := range ar.GetAllowActions().GetActions() {
-									rows, _ := actionMatchedRows.Get(a)
-									rows = append(rows, ar)
-									actionMatchedRows.Set(a, rows)
-								}
-							}
-
-							for _, action := range actions {
-								matchedRows := []*Row{}
-								for _, rows := range actionMatchedRows.GetMerged(action) {
-									matchedRows = append(matchedRows, rows...)
-								}
-								if matchLiteral {
-									for _, rows := range actionMatchedRows.GetMerged(action) {
-										for _, r := range rows {
-											if !resSet.has(r.sum) {
-												resSet.set(r)
-												res = append(res, r)
-											}
-										}
-									}
-								} else {
-									if len(matchedRows) == 0 {
-										// add a blanket DENY for non matching actions
-										newRow := &Row{
-											RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-												ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-													Action: action,
-												},
-												OriginFqn:      roleFqn,
-												Resource:       resource,
-												Role:           role,
-												Effect:         effectv1.Effect_EFFECT_DENY,
-												Scope:          scope,
-												Version:        version,
-												PolicyKind:     policyv1.Kind_KIND_RESOURCE,
-												FromRolePolicy: true,
-											},
-											NoMatchForScopePermissions: true,
-										}
-										resSet.set(newRow)
-										res = append(res, newRow)
-									} else {
-										for _, ar := range matchedRows {
-											// Don't bother adding a rule if there's no condition.
-											// Otherwise, we invert the condition and set a DENY
-											if ar.Condition != nil {
-												newRow := &Row{
-													RuleTable_RuleRow: &runtimev1.RuleTable_RuleRow{
-														ActionSet: &runtimev1.RuleTable_RuleRow_Action{
-															Action: action,
-														},
-														OriginFqn: ar.OriginFqn,
-														Resource:  resource,
-														Condition: &runtimev1.Condition{
-															Op: &runtimev1.Condition_None{
-																None: &runtimev1.Condition_ExprList{
-																	Expr: []*runtimev1.Condition{ar.Condition},
-																},
-															},
-														},
-														Role:             ar.Role,
-														Effect:           effectv1.Effect_EFFECT_DENY,
-														Scope:            scope,
-														ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
-														Version:          version,
-														EvaluationKey:    ar.EvaluationKey,
-														PolicyKind:       policyv1.Kind_KIND_RESOURCE,
-														FromRolePolicy:   true,
-													},
-												}
-												resSet.set(newRow)
-												res = append(res, newRow)
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-
-					for _, action := range actions {
-						actionSet, ok := actionSets[action]
-						if !ok {
-							continue
-						}
-						for r := range actionSet.intersectWithIter(roleResourceSet) {
-							if !resSet.has(r.sum) {
-								resSet.set(r)
-								res = append(res, r)
-							}
-						}
-					}
+		if len(matched) == 0 {
+			res = append(res, &Binding{
+				Core: &FunctionalCore{
+					Effect:         effectv1.Effect_EFFECT_DENY,
+					PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+					FromRolePolicy: true,
+				},
+				Action:                     action,
+				OriginFqn:                  g.roleFqn,
+				Resource:                   resource,
+				Role:                       role,
+				Scope:                      g.scope,
+				Version:                    g.version,
+				NoMatchForScopePermissions: true,
+			})
+		} else {
+			for _, ab := range matched {
+				if ab.Core.Condition != nil {
+					res = append(res, &Binding{
+						Core: &FunctionalCore{
+							Effect: effectv1.Effect_EFFECT_DENY,
+							Condition: &runtimev1.Condition{
+								Op: &runtimev1.Condition_None{
+									None: &runtimev1.Condition_ExprList{
+										Expr: []*runtimev1.Condition{ab.Core.Condition},
+									},
+								},
+							},
+							ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
+							PolicyKind:       policyv1.Kind_KIND_RESOURCE,
+							FromRolePolicy:   true,
+						},
+						Action:        action,
+						OriginFqn:     ab.OriginFqn,
+						Resource:      resource,
+						Role:          ab.Role,
+						Scope:         g.scope,
+						Version:       g.version,
+						EvaluationKey: ab.EvaluationKey,
+					})
 				}
 			}
 		}
 	}
 
-	res, err = m.idx.resolve(ctx, res)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return res
 }
 
-// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.
-// When multiple scopes define parents for the same role, the results are merged rather than overwritten.
-func (m *Impl) AddParentRoles(ctx context.Context, scopes, roles []string) ([]string, error) {
-	parentRoles := make([]string, len(roles))
-	copy(parentRoles, roles)
+// QueryMulti returns bindings matching across multiple values per dimension.
+// Empty/nil slice = match all for that dimension.
+// OR within each dimension, AND across dimensions.
+// AllowActions bindings matching non-action dimensions are included (spitfire post-filters).
+// No synthetic DENY generation.
+func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string) []*Binding {
+	bi := m.bi
 
-	scopedAncestors, err := m.parentRoles.get(ctx, scopes...)
-	if err != nil {
-		return nil, err
+	if bi.universe.IsEmpty() {
+		return nil
+	}
+
+	dims := make([]*roaring.Bitmap, 0, 5) //nolint:mnd
+
+	if len(versions) > 0 {
+		bm := queryLiteralMap(bi.version, versions)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+	if len(scopes) > 0 {
+		bm := queryLiteralMap(bi.scope, scopes)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+	if len(resources) > 0 {
+		bm := bi.resource.QueryMultiple(resources)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+	if len(roles) > 0 {
+		bm := bi.role.QueryMultiple(roles)
+		if bm.IsEmpty() {
+			return nil
+		}
+		dims = append(dims, bm)
+	}
+
+	var baseBM *roaring.Bitmap
+	switch len(dims) {
+	case 0:
+		baseBM = bi.universe
+	case 1:
+		baseBM = dims[0]
+	default:
+		baseBM = roaring.FastAnd(dims...)
+	}
+	if baseBM.IsEmpty() {
+		return nil
+	}
+
+	resultBM := m.applyActionFilter(baseBM, actions)
+
+	if resultBM.IsEmpty() {
+		return nil
+	}
+
+	res := make([]*Binding, 0, resultBM.GetCardinality())
+	iter := resultBM.Iterator()
+	for iter.HasNext() {
+		if b := bi.getBinding(iter.Next()); b != nil {
+			res = append(res, b)
+		}
+	}
+	return res
+}
+
+// applyActionFilter intersects baseBM with action bitmaps (OR of actions) and
+// includes AllowActions bindings. If actions is empty, baseBM is returned as-is.
+func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roaring.Bitmap {
+	if len(actions) == 0 {
+		return baseBM
+	}
+
+	bi := m.bi
+	parts := make([]*roaring.Bitmap, 0, 2) //nolint:mnd
+
+	actionBM := bi.action.QueryMultiple(actions)
+	if !actionBM.IsEmpty() {
+		parts = append(parts, roaring.FastAnd(baseBM, actionBM))
+	}
+	if !bi.allowActionsBitmap.IsEmpty() {
+		aaBM := roaring.FastAnd(baseBM, bi.allowActionsBitmap)
+		if !aaBM.IsEmpty() {
+			parts = append(parts, aaBM)
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return roaring.New()
+	case 1:
+		return parts[0]
+	default:
+		return roaring.FastOr(parts...)
+	}
+}
+
+// ParentRolesMap returns a pre-merged map of role → [role, parent1, parent2, ...] across the provided scopes.
+// Each role's entry includes the role itself as the first element.
+func (m *Index) ParentRolesMap(scopes []string) map[string][]string {
+	if len(m.parentRoles) == 0 {
+		return nil
 	}
 
 	merged := make(map[string][]string)
 	for _, scope := range scopes {
-		c, ok := scopedAncestors[scope]
+		c, ok := m.parentRoles[scope]
 		if !ok {
 			continue
 		}
@@ -822,21 +599,12 @@ func (m *Impl) AddParentRoles(ctx context.Context, scopes, roles []string) ([]st
 		}
 	}
 
-	if len(merged) == 0 {
-		return parentRoles, nil
-	}
-
-	for _, role := range roles {
-		if parents, ok := merged[role]; ok {
-			parentRoles = append(parentRoles, parents...) //nolint:makezero
-		}
-	}
-
-	return parentRoles, nil
+	return merged
 }
 
-func (m *Impl) IndexParentRoles(ctx context.Context, scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) error {
-	return m.parentRoles.setBatch(ctx, compileParentRoleAncestors(scopeParentRoles))
+func (m *Index) IndexParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) error {
+	m.parentRoles = compileParentRoleAncestors(scopeParentRoles)
+	return nil
 }
 
 func compileParentRoleAncestors(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) map[string]map[string][]string {
@@ -880,318 +648,172 @@ func collectParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RolePar
 	}
 }
 
-func (m *Impl) DeletePolicy(ctx context.Context, fqn string, activeScopes map[string]struct{}) error {
+func (m *Index) DeletePolicy(fqn string) error {
 	if fqn == "" {
 		return nil
 	}
 
-	allVersions, err := m.version.getAll(ctx)
-	if err != nil {
-		return err
+	fqnBM, ok := m.bi.fqnBindings[fqn]
+	if !ok {
+		return nil
 	}
-	for cat, rs := range allVersions {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
+
+	// Collect IDs to remove (can't modify bitmap during iteration).
+	idsToRemove := fqnBM.ToArray()
+
+	for _, id := range idsToRemove {
+		b := m.bi.getBinding(id)
+		if b == nil {
+			continue
 		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
+
+		// Remove this FQN from the core's origins.
+		delete(b.Core.origins, fqn)
+
+		// Check if any remaining origin still references this binding.
+		referencedByOther := false
+		for remainingFQN := range b.Core.origins {
+			if bm, ok := m.bi.fqnBindings[remainingFQN]; ok && bm.Contains(id) {
+				referencedByOther = true
+				break
 			}
 		}
-		if rs.len() == 0 {
-			if err := m.version.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.version.set(ctx, cat, rs); err != nil {
-				return err
-			}
+
+		if !referencedByOther {
+			m.bi.removeFromDimensions(b)
+			m.bi.freeID(id)
+
+			routingHash := computeRoutingHash(b.Scope, b.Version, b.Resource,
+				b.Role, b.Action, b.Principal, b.AllowActions, b.Core.sum)
+			delete(m.bi.bindingDedup, routingHash)
+		}
+
+		if len(b.Core.origins) == 0 {
+			delete(m.bi.coresBySum, b.Core.sum)
 		}
 	}
 
-	allScopes, err := m.scope.getAll(ctx)
-	if err != nil {
-		return err
-	}
-	for cat, rs := range allScopes {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.scope.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.scope.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
-	}
+	delete(m.bi.fqnBindings, fqn)
 
-	allRoleGlobs, err := m.roleGlob.getAll(ctx)
-	if err != nil {
-		return err
-	}
-	for cat, rs := range allRoleGlobs {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.roleGlob.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.roleGlob.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
-	}
-
-	allActionGlobs, err := m.actionGlob.getAll(ctx)
-	if err != nil {
-		return err
-	}
-	for cat, rs := range allActionGlobs {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.actionGlob.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.actionGlob.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
-	}
-
-	allResourceGlobs, err := m.resourceGlob.getAll(ctx)
-	if err != nil {
-		return err
-	}
-	for cat, rs := range allResourceGlobs {
-		if err := rs.resolve(ctx, m.idx); err != nil {
-			return err
-		}
-		initialLen := rs.len()
-		for _, r := range rs.rows() {
-			if r.OriginFqn == fqn {
-				rs.del(r)
-			}
-		}
-		if rs.len() == 0 {
-			if err := m.resourceGlob.delete(ctx, cat); err != nil {
-				return err
-			}
-		} else if rs.len() != initialLen {
-			if err := m.resourceGlob.set(ctx, cat, rs); err != nil {
-				return err
-			}
-		}
-	}
-
-	activeScopeKeys := make([]string, 0, len(allScopes))
-	for scope, rs := range allScopes {
-		if rs.len() > 0 {
-			activeScopeKeys = append(activeScopeKeys, scope)
-		}
-	}
-
-	parentRoleData, err := m.parentRoles.get(ctx, activeScopeKeys...)
-	if err != nil {
-		return err
-	}
-
-	pruned := make(map[string]map[string][]string, len(parentRoleData))
-	for scope, roleParents := range parentRoleData {
-		scopeRS := allScopes[scope]
-		prunedRoles := make(map[string][]string, len(roleParents))
-		for role, parents := range roleParents {
-			// check if role has at least one row in scope
-			if roleRS, ok := allRoleGlobs[role]; ok && roleRS.hasIntersectionWith(scopeRS) {
-				prunedRoles[role] = parents
-			}
-		}
-		if len(prunedRoles) > 0 {
-			pruned[scope] = prunedRoles
-		}
-	}
-
-	return m.parentRoles.setBatch(ctx, pruned)
+	return nil
 }
 
-func (m *Impl) GetScopes(ctx context.Context) ([]string, error) {
-	scopeSets, err := m.scope.getAll(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]string, 0, len(scopeSets))
-	for scope := range scopeSets {
+func (m *Index) GetScopes() ([]string, error) {
+	res := make([]string, 0, len(m.bi.scope))
+	for scope := range m.bi.scope {
 		res = append(res, scope)
 	}
 	return res, nil
 }
 
-func (m *Impl) GetRoleGlobs(ctx context.Context) ([]string, error) {
-	roleSets, err := m.roleGlob.getAll(ctx)
+func (m *Index) GetRoleGlobs() ([]string, error) {
+	return m.bi.role.GetAllKeys(), nil
+}
+
+func (m *Index) GetVersions() []string {
+	res := make([]string, 0, len(m.bi.version))
+	for v := range m.bi.version {
+		res = append(res, v)
+	}
+	return res
+}
+
+func (m *Index) GetActions() []string {
+	return m.bi.action.GetAllKeys()
+}
+
+func (m *Index) GetResources() []string {
+	return m.bi.resource.GetAllKeys()
+}
+
+func (m *Index) ScopedRoleGlobExists(scope, role string) (bool, error) {
+	roleBM := m.bi.role.Query(role)
+	if roleBM.IsEmpty() {
+		return false, nil
+	}
+	scopeBM, ok := m.bi.scope[scope]
+	if !ok {
+		return false, nil
+	}
+	return roleBM.Intersects(scopeBM), nil
+}
+
+func (m *Index) ScopedResourceExists(version, resource string, scopes []string) (bool, error) {
+	if len(scopes) == 0 {
+		return false, nil
+	}
+
+	versionBM, ok := m.bi.version[version]
+	if !ok {
+		return false, nil
+	}
+
+	scopeBM := queryLiteralMap(m.bi.scope, scopes)
+	if scopeBM.IsEmpty() {
+		return false, nil
+	}
+
+	resourceBM := m.bi.resource.Query(resource)
+	if resourceBM.IsEmpty() {
+		return false, nil
+	}
+
+	kindBM, ok := m.bi.policyKind[policyv1.Kind_KIND_RESOURCE]
+	if !ok {
+		return false, nil
+	}
+
+	return roaring.FastAnd(versionBM, scopeBM, resourceBM, kindBM).GetCardinality() > 0, nil
+}
+
+func (m *Index) ScopedPrincipalExists(version string, scopes []string) (bool, error) {
+	if len(scopes) == 0 {
+		return false, nil
+	}
+
+	versionBM, ok := m.bi.version[version]
+	if !ok {
+		return false, nil
+	}
+
+	scopeBM := queryLiteralMap(m.bi.scope, scopes)
+	if scopeBM.IsEmpty() {
+		return false, nil
+	}
+
+	kindBM, ok := m.bi.policyKind[policyv1.Kind_KIND_PRINCIPAL]
+	if !ok {
+		return false, nil
+	}
+
+	return roaring.FastAnd(versionBM, scopeBM, kindBM).GetCardinality() > 0, nil
+}
+
+func (m *Index) Reset() {
+	m.bi = newBitmapIndex()
+	m.parentRoles = nil
+}
+
+// getOrGenerateParams returns cached RowParams for the given proto hash, compiling CEL programs
+// on miss. The returned Key reflects the fqn of whichever caller first populated the entry;
+// callers must not rely on Key matching their fqn.
+func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable_RuleRow_Params, fqn string) (*RowParams, error) {
+	h := util.HashPB(proto, nil)
+	if cached, ok := cache[h]; ok {
+		return cached, nil
+	}
+	progs, err := getCelProgramsFromExpressions(proto.OrderedVariables)
 	if err != nil {
 		return nil, err
 	}
-	res := make([]string, 0, len(roleSets))
-	for roleGlob := range roleSets {
-		res = append(res, roleGlob)
-	}
-	return res, nil
-}
-
-func (m *Impl) ScopedRoleGlobExists(ctx context.Context, scope, role string) (bool, error) {
-	roleGlobSets, err := m.roleGlob.getWithLiteral(ctx, role)
-	if err != nil {
-		return false, err
-	}
-	rs, ok := roleGlobSets[role]
-	if !ok {
-		return false, nil
-	}
-
-	scopeSets, err := m.scope.get(ctx, scope)
-	if err != nil {
-		return false, err
-	}
-	scopeSet, ok := scopeSets[scope]
-	if !ok {
-		return false, nil
-	}
-	return rs.hasIntersectionWith(scopeSet), nil
-}
-
-func (m *Impl) ScopedResourceExists(ctx context.Context, version, resource string, scopes []string) (bool, error) {
-	versionSets, err := m.version.get(ctx, version)
-	if err != nil {
-		return false, err
-	}
-	rs, ok := versionSets[version]
-	if !ok {
-		return false, nil
-	}
-
-	scopesToUnion := make([]*rowSet, 0, len(scopes))
-	for _, scope := range scopes {
-		scopeRss, err := m.scope.get(ctx, scope)
-		if err != nil {
-			return false, err
-		}
-		if scopeRs, ok := scopeRss[scope]; ok {
-			scopesToUnion = append(scopesToUnion, scopeRs)
-		}
-	}
-	if len(scopesToUnion) == 0 {
-		return false, nil
-	}
-	scopeSet := unionAll(scopesToUnion...)
-
-	resourceSets, err := m.resourceGlob.getMerged(ctx, resource)
-	if err != nil {
-		return false, err
-	}
-	resourceSet, ok := resourceSets[resource]
-	if !ok {
-		return false, nil
-	}
-
-	resolved, err := m.idx.resolveIter(ctx, intersect3Iter(rs, scopeSet, resourceSet))
-	if err != nil {
-		return false, err
-	}
-	for rule := range resolved {
-		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (m *Impl) ScopedPrincipalExists(ctx context.Context, version string, scopes []string) (bool, error) {
-	versionSets, err := m.version.get(ctx, version)
-	if err != nil {
-		return false, err
-	}
-	rs, ok := versionSets[version]
-	if !ok {
-		return false, nil
-	}
-
-	scopesToUnion := make([]*rowSet, 0, len(scopes))
-	for _, scope := range scopes {
-		scopeSets, err := m.scope.get(ctx, scope)
-		if err != nil {
-			return false, err
-		}
-		if ss, ok := scopeSets[scope]; ok {
-			scopesToUnion = append(scopesToUnion, ss)
-		}
-	}
-	if len(scopesToUnion) == 0 {
-		return false, nil
-	}
-	scopeSet := unionAll(scopesToUnion...)
-
-	resolved, err := m.idx.resolveIter(ctx, rs.intersectWithIter(scopeSet))
-	if err != nil {
-		return false, err
-	}
-	for rule := range resolved {
-		if rule.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (m *Impl) Reset() {
-	m.version = m.idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_VERSION)
-	m.scope = m.idx.getLiteralMap(ruletablev1.CategoryKey_CATEGORY_KEY_SCOPE)
-	m.roleGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ROLE)
-	m.actionGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_ACTION)
-	m.resourceGlob = m.idx.getGlobMap(ruletablev1.CategoryKey_CATEGORY_KEY_RESOURCE)
-	m.parentRoles = m.idx.getParentRoleMap()
-}
-
-func generateRowParams(fqn string, orderedVariables []*runtimev1.Variable, constants map[string]*structpb.Value) (*rowParams, error) {
-	progs, err := getCelProgramsFromExpressions(orderedVariables)
-	if err != nil {
-		return nil, err
-	}
-
-	return &rowParams{
+	params := &RowParams{
 		Key:         fqn,
-		Variables:   orderedVariables,
-		Constants:   (&structpb.Struct{Fields: constants}).AsMap(),
+		Variables:   proto.OrderedVariables,
+		Constants:   (&structpb.Struct{Fields: proto.Constants}).AsMap(),
 		CelPrograms: progs,
-	}, nil
+	}
+	cache[h] = params
+	return params, nil
 }
 
 func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, error) {

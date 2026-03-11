@@ -20,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -112,7 +111,7 @@ func (mgr *Manager) reload() error {
 		}
 
 		var err error
-		if newRuleTable, err = NewRuleTable(index.NewMem(), protoRT); err != nil {
+		if newRuleTable, err = NewRuleTable(protoRT); err != nil {
 			return fmt.Errorf("failed to create rule table: %w", err)
 		}
 	}
@@ -213,20 +212,17 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 
-	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
-	defer cancelFn()
+	if err := mgr.idx.DeletePolicy(meta.GetFqn()); err != nil {
+		return err
+	}
 
-	activeScopes, err := mgr.idx.GetScopes(ctx)
+	activeScopes, err := mgr.idx.GetScopes()
 	if err != nil {
 		return err
 	}
 	activeScopeSet := make(map[string]struct{}, len(activeScopes))
 	for _, s := range activeScopes {
 		activeScopeSet[s] = struct{}{}
-	}
-
-	if err := mgr.idx.DeletePolicy(ctx, meta.GetFqn(), activeScopeSet); err != nil {
-		return err
 	}
 
 	if role := meta.GetRole(); role != "" {
@@ -239,7 +235,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		}
 	}
 
-	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer (for example: we shouldn't have to pass `activeScopes` to `idx.DeletePolicy`. That function should carry out all of this housekeeping).
+	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer.
 	for scope := range mgr.principalScopeMap {
 		if _, ok := activeScopeSet[scope]; !ok {
 			delete(mgr.principalScopeMap, scope)
