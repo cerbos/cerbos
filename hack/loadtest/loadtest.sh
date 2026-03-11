@@ -182,7 +182,7 @@ executeTest() {
   local resultPrefix="results/${STORE}_${NUM_POLICIES}"
 
   if [[ ! -x "${WORK_DIR}/printsummary" ]]; then
-    go build -tags printsummary -o "${WORK_DIR}/printsummary" .
+    CGO_ENABLED=0 go build -tags printsummary -o "${WORK_DIR}/printsummary" .
   fi
 
   # --- Warmup ---
