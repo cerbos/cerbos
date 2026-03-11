@@ -89,6 +89,8 @@ message ServerLaunch {
       map<string, uint32> max_rule_count = 7;
       uint32 distinct_action_count = 8;
       uint32 distinct_resource_count = 9;
+      bool has_output = 10;
+      bool has_scoped_policies = 11;
     }
 
     message Schema {

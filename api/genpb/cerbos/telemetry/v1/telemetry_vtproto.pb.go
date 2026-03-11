@@ -736,6 +736,26 @@ func (m *ServerLaunch_Stats_Policy) MarshalToSizedBufferVT(dAtA []byte) (int, er
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.HasScopedPolicies {
+		i--
+		if m.HasScopedPolicies {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x58
+	}
+	if m.HasOutput {
+		i--
+		if m.HasOutput {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x50
+	}
 	if m.DistinctResourceCount != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.DistinctResourceCount))
 		i--
@@ -1609,6 +1629,12 @@ func (m *ServerLaunch_Stats_Policy) SizeVT() (n int) {
 	}
 	if m.DistinctResourceCount != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.DistinctResourceCount))
+	}
+	if m.HasOutput {
+		n += 2
+	}
+	if m.HasScopedPolicies {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4166,6 +4192,46 @@ func (m *ServerLaunch_Stats_Policy) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HasOutput", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HasOutput = bool(v != 0)
+		case 11:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HasScopedPolicies", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.HasScopedPolicies = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

@@ -40,6 +40,12 @@
           "type": "integer",
           "minimum": 0
         },
+        "hasOutput": {
+          "type": "boolean"
+        },
+        "hasScopedPolicies": {
+          "type": "boolean"
+        },
         "maxConditionCount": {
           "type": "object",
           "additionalProperties": {

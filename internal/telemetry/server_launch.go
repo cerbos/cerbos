@@ -151,6 +151,8 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 			MaxRuleCount:          make(map[string]uint32, len(stats.MaxRuleCount)),
 			DistinctActionCount:   uint32(stats.DistinctActionCount),
 			DistinctResourceCount: uint32(stats.DistinctResourceCount),
+			HasOutput:             stats.HasOutput,
+			HasScopedPolicies:     stats.HasScopedPolicies,
 		},
 		Schema: &telemetryv1.ServerLaunch_Stats_Schema{
 			Count: uint32(stats.SchemaCount),

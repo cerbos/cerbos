@@ -83,6 +83,8 @@ func TestLocalSource(t *testing.T) {
 			DistinctActionCount:   44,
 			DistinctResourceCount: 18,
 			SchemaCount:           3,
+			HasOutput:             true,
+			HasScopedPolicies:     true,
 		}))
 	})
 
@@ -138,6 +140,8 @@ func TestLocalSource(t *testing.T) {
 			DistinctActionCount:   44,
 			DistinctResourceCount: 18,
 			SchemaCount:           3,
+			HasOutput:             true,
+			HasScopedPolicies:     true,
 		}))
 	})
 
@@ -193,6 +197,8 @@ func TestLocalSource(t *testing.T) {
 			DistinctActionCount:   44,
 			DistinctResourceCount: 18,
 			SchemaCount:           3,
+			HasOutput:             true,
+			HasScopedPolicies:     true,
 		}))
 	})
 }

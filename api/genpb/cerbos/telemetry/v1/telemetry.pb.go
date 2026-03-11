@@ -972,6 +972,8 @@ type ServerLaunch_Stats_Policy struct {
 	MaxRuleCount          map[string]uint32      `protobuf:"bytes,7,rep,name=max_rule_count,json=maxRuleCount,proto3" json:"max_rule_count,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
 	DistinctActionCount   uint32                 `protobuf:"varint,8,opt,name=distinct_action_count,json=distinctActionCount,proto3" json:"distinct_action_count,omitempty"`
 	DistinctResourceCount uint32                 `protobuf:"varint,9,opt,name=distinct_resource_count,json=distinctResourceCount,proto3" json:"distinct_resource_count,omitempty"`
+	HasOutput             bool                   `protobuf:"varint,10,opt,name=has_output,json=hasOutput,proto3" json:"has_output,omitempty"`
+	HasScopedPolicies     bool                   `protobuf:"varint,11,opt,name=has_scoped_policies,json=hasScopedPolicies,proto3" json:"has_scoped_policies,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1067,6 +1069,20 @@ func (x *ServerLaunch_Stats_Policy) GetDistinctResourceCount() uint32 {
 		return x.DistinctResourceCount
 	}
 	return 0
+}
+
+func (x *ServerLaunch_Stats_Policy) GetHasOutput() bool {
+	if x != nil {
+		return x.HasOutput
+	}
+	return false
+}
+
+func (x *ServerLaunch_Stats_Policy) GetHasScopedPolicies() bool {
+	if x != nil {
+		return x.HasScopedPolicies
+	}
+	return false
 }
 
 type ServerLaunch_Stats_Schema struct {
@@ -1237,7 +1253,7 @@ var File_cerbos_telemetry_v1_telemetry_proto protoreflect.FileDescriptor
 
 const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\n" +
-	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\x94\x19\n" +
+	"#cerbos/telemetry/v1/telemetry.proto\x12\x13cerbos.telemetry.v1\x1a\x1egoogle/protobuf/duration.proto\"\xe3\x19\n" +
 	"\fServerLaunch\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\tR\aversion\x12@\n" +
 	"\x06source\x18\x02 \x01(\v2(.cerbos.telemetry.v1.ServerLaunch.SourceR\x06source\x12F\n" +
@@ -1286,10 +1302,10 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x06pdp_id\x18\x01 \x01(\tR\x05pdpId\x12#\n" +
 	"\rbundle_source\x18\x02 \x01(\tR\fbundleSource\x12\x1b\n" +
 	"\tclient_id\x18\x03 \x01(\tR\bclientIdB\a\n" +
-	"\x05store\x1a\xd1\v\n" +
+	"\x05store\x1a\xa0\f\n" +
 	"\x05Stats\x12F\n" +
 	"\x06policy\x18\x01 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.PolicyR\x06policy\x12F\n" +
-	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\x97\n" +
+	"\x06schema\x18\x02 \x01(\v2..cerbos.telemetry.v1.ServerLaunch.Stats.SchemaR\x06schema\x1a\xe6\n" +
 	"\n" +
 	"\x06Policy\x12O\n" +
 	"\x05count\x18\x01 \x03(\v29.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.CountEntryR\x05count\x12f\n" +
@@ -1301,7 +1317,11 @@ const file_cerbos_telemetry_v1_telemetry_proto_rawDesc = "" +
 	"\x13max_condition_count\x18\x06 \x03(\v2E.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxConditionCountEntryR\x11maxConditionCount\x12f\n" +
 	"\x0emax_rule_count\x18\a \x03(\v2@.cerbos.telemetry.v1.ServerLaunch.Stats.Policy.MaxRuleCountEntryR\fmaxRuleCount\x122\n" +
 	"\x15distinct_action_count\x18\b \x01(\rR\x13distinctActionCount\x126\n" +
-	"\x17distinct_resource_count\x18\t \x01(\rR\x15distinctResourceCount\x1a8\n" +
+	"\x17distinct_resource_count\x18\t \x01(\rR\x15distinctResourceCount\x12\x1d\n" +
+	"\n" +
+	"has_output\x18\n" +
+	" \x01(\bR\thasOutput\x12.\n" +
+	"\x13has_scoped_policies\x18\v \x01(\bR\x11hasScopedPolicies\x1a8\n" +
 	"\n" +
 	"CountEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +

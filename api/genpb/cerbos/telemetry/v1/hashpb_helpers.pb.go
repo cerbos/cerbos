@@ -424,6 +424,12 @@ func cerbos_telemetry_v1_ServerLaunch_Stats_Policy_hashpb_sum(m *ServerLaunch_St
 	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Stats.Policy.distinct_resource_count"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetDistinctResourceCount())))
 	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Stats.Policy.has_output"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetHasOutput())))
+	}
+	if _, ok := ignore["cerbos.telemetry.v1.ServerLaunch.Stats.Policy.has_scoped_policies"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetHasScopedPolicies())))
+	}
 }
 
 func cerbos_telemetry_v1_ServerLaunch_Stats_Schema_hashpb_sum(m *ServerLaunch_Stats_Schema, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {

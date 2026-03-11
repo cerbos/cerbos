@@ -20,13 +20,22 @@ import (
 const numPolicyKinds = 4
 
 type statsCollector struct {
-	policyCount     map[policy.Kind]int
-	schemaRefs      map[uint64]struct{}
-	uniquePolicies  map[uint64]struct{}
-	ruleCount       map[string]int
-	conditionCount  map[string]int
-	uniqueActions   map[string]struct{}
-	uniqueResources map[string]struct{}
+	policyCount       map[policy.Kind]int
+	schemaRefs        map[uint64]struct{}
+	uniquePolicies    map[uint64]struct{}
+	ruleCount         map[string]int
+	conditionCount    map[string]int
+	uniqueActions     map[string]struct{}
+	uniqueResources   map[string]struct{}
+	hasOutput         bool
+	hasScopedPolicies bool
+}
+
+type policyStats struct {
+	ruleCount      int
+	conditionCount int
+	hasOutput      bool
+	scoped         bool
 }
 
 func newStatsCollector() *statsCollector {
@@ -83,6 +92,8 @@ func (s *statsCollector) collate() storage.RepoStats {
 		DistinctActionCount:   len(s.uniqueActions),
 		DistinctResourceCount: len(s.uniqueResources),
 		SchemaCount:           len(s.schemaRefs),
+		HasOutput:             s.hasOutput,
+		HasScopedPolicies:     s.hasScopedPolicies,
 	}
 
 	for k, c := range ruleCountPerKind {
@@ -111,6 +122,14 @@ func (s *statsCollector) addRow(row *index.Row) {
 
 	if actionSet, ok := row.GetActionSet().(*runtimev1.RuleTable_RuleRow_Action); kind == policy.ResourceKind && ok {
 		s.uniqueActions[actionSet.Action] = struct{}{}
+	}
+
+	if row.EmitOutput != nil {
+		s.hasOutput = true
+	}
+
+	if row.GetScope() != "" {
+		s.hasScopedPolicies = true
 	}
 
 	if row.GetEvaluationKey() == "" {
@@ -151,6 +170,14 @@ func (s *statsCollector) addRunnablePolicySet(rps *runtimev1.RunnablePolicySet) 
 	for _, ps := range stats {
 		s.ruleCount[fqn] += ps.ruleCount
 		s.conditionCount[fqn] += ps.conditionCount
+
+		if ps.hasOutput {
+			s.hasOutput = true
+		}
+
+		if ps.scoped {
+			s.hasScopedPolicies = true
+		}
 	}
 }
 
@@ -168,7 +195,15 @@ func (s *statsCollector) procRunnablePrincipalPolicySet(rpps *runtimev1.Runnable
 				if actionRule.GetCondition() != nil {
 					ps.conditionCount++
 				}
+
+				if actionRule.GetEmitOutput() != nil {
+					ps.hasOutput = true
+				}
 			}
+		}
+
+		if p.GetScope() != "" {
+			ps.scoped = true
 		}
 
 		stats = append(stats, ps)
@@ -195,10 +230,18 @@ func (s *statsCollector) procRunnableResourcePolicySet(rrps *runtimev1.RunnableR
 			if rule.GetCondition() != nil {
 				ps.conditionCount++
 			}
+
+			if rule.GetEmitOutput() != nil {
+				ps.hasOutput = true
+			}
 		}
 
 		if schemas := p.GetSchemas(); schemas != nil {
 			s.addSchemas(schemas)
+		}
+
+		if p.GetScope() != "" {
+			ps.scoped = true
 		}
 
 		stats = append(stats, ps)
@@ -226,9 +269,4 @@ func (s *statsCollector) procRunnableRolePolicySet(rrps *runtimev1.RunnableRoleP
 	}
 
 	return stats
-}
-
-type policyStats struct {
-	ruleCount      int
-	conditionCount int
 }

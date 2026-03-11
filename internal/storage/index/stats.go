@@ -23,11 +23,15 @@ type statsCollector struct {
 	schemaRefs            map[uint64]struct{}
 	uniqueActions         map[string]struct{}
 	uniqueResources       map[string]struct{}
+	hasOutput             bool
+	hasScopedPolicies     bool
 }
 
 type policyStats struct {
 	ruleCount      int
 	conditionCount int
+	hasOutput      bool
+	scoped         bool
 }
 
 func newStatsCollector() *statsCollector {
@@ -55,6 +59,8 @@ func (s *statsCollector) collate() storage.RepoStats {
 		DistinctActionCount:   len(s.uniqueActions),
 		DistinctResourceCount: len(s.uniqueResources),
 		SchemaCount:           len(s.schemaRefs),
+		HasOutput:             s.hasOutput,
+		HasScopedPolicies:     s.hasScopedPolicies,
 	}
 
 	for k, c := range s.ruleCountPerKind {
@@ -96,6 +102,14 @@ func (s *statsCollector) add(p policy.Wrapper) {
 	s.conditionCountPerKind[p.Kind] += ps.conditionCount
 	if existingConditionCount, ok := s.maxConditionCount[p.Kind]; !ok || ps.conditionCount > existingConditionCount {
 		s.maxConditionCount[p.Kind] = ps.conditionCount
+	}
+
+	if ps.hasOutput {
+		s.hasOutput = true
+	}
+
+	if ps.scoped {
+		s.hasScopedPolicies = true
 	}
 }
 
@@ -147,7 +161,15 @@ func (s *statsCollector) procPrincipalPolicy(pp *policyv1.PrincipalPolicy) (ps p
 			if a.Condition != nil {
 				ps.conditionCount++
 			}
+
+			if a.Output != nil {
+				ps.hasOutput = true
+			}
 		}
+	}
+
+	if pp.GetScope() != "" {
+		ps.scoped = true
 	}
 
 	return ps
@@ -168,6 +190,10 @@ func (s *statsCollector) procResourcePolicy(rp *policyv1.ResourcePolicy) (ps pol
 		if r.Condition != nil {
 			ps.conditionCount++
 		}
+
+		if r.Output != nil {
+			ps.hasOutput = true
+		}
 	}
 
 	if sch := rp.Schemas; sch != nil {
@@ -178,6 +204,10 @@ func (s *statsCollector) procResourcePolicy(rp *policyv1.ResourcePolicy) (ps pol
 		if psch := sch.GetPrincipalSchema(); psch != nil {
 			s.schemaRefs[util.HashStr(psch.Ref)] = struct{}{}
 		}
+	}
+
+	if rp.GetScope() != "" {
+		ps.scoped = true
 	}
 
 	return ps

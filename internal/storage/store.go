@@ -280,4 +280,6 @@ type RepoStats struct {
 	DistinctActionCount   int
 	DistinctResourceCount int
 	SchemaCount           int
+	HasOutput             bool
+	HasScopedPolicies     bool
 }

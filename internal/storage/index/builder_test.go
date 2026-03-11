@@ -141,6 +141,8 @@ func TestBuildIndexWithDisk(t *testing.T) {
 		require.GreaterOrEqual(t, 3, stats.SchemaCount)
 		require.Equal(t, stats.DistinctActionCount, 44)
 		require.Equal(t, stats.DistinctResourceCount, 18)
+		require.True(t, stats.HasOutput)
+		require.True(t, stats.HasScopedPolicies)
 
 		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.PrincipalKind, policy.ResourceKind} {
 			t.Run(k.String(), func(t *testing.T) {
