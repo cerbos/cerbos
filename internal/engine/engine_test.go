@@ -477,7 +477,7 @@ func TestQueryPlan(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			suites := slices.Concat(commonSuites, tc.suites)
-			timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395716+13:00")
+			timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395+13:00")
 			require.NoError(t, err)
 			for _, suite := range suites {
 				t.Run(suite.Name, func(t *testing.T) {
