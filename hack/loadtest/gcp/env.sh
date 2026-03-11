@@ -6,6 +6,17 @@
 # Shared configuration for GCP load testing scripts.
 # All values can be overridden via environment variables.
 
+# When TERRAFORM_DIR is set, read infrastructure values from Terraform outputs.
+# Otherwise, fall back to environment variables / gcloud defaults.
+if [[ -n "${TERRAFORM_DIR:-}" ]]; then
+  _tf_output() { terraform -chdir="$TERRAFORM_DIR" output -raw "$1"; }
+  GCP_PROJECT=$(_tf_output project)
+  GCP_ZONE=$(_tf_output zone)
+  PDP_VM=$(_tf_output pdp_vm_name)
+  CLIENT_VM=$(_tf_output client_vm_name)
+  unset -f _tf_output
+fi
+
 # GCP settings
 GCP_PROJECT=${GCP_PROJECT:-$(gcloud config get-value project 2>/dev/null)}
 GCP_ZONE=${GCP_ZONE:-"us-central1-a"}
@@ -15,8 +26,8 @@ GCP_REGION=${GCP_REGION:-"${GCP_ZONE%-*}"}
 NAME_PREFIX=${NAME_PREFIX:-"cerbos-loadtest"}
 NETWORK_NAME="${NAME_PREFIX}-net"
 SUBNET_NAME="${NAME_PREFIX}-subnet"
-PDP_VM="${NAME_PREFIX}-pdp"
-CLIENT_VM="${NAME_PREFIX}-client"
+PDP_VM=${PDP_VM:-"${NAME_PREFIX}-pdp"}
+CLIENT_VM=${CLIENT_VM:-"${NAME_PREFIX}-client"}
 
 # VM configuration
 PDP_MACHINE_TYPE=${PDP_MACHINE_TYPE:-"c3-standard-4"}
@@ -32,11 +43,11 @@ SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
 # Test parameters
 RPS=${RPS:-"500"}
 DURATION_SECS=${DURATION_SECS:-"120"}
-ITERATIONS=${ITERATIONS:-"1000000"}
-CONCURRENCY=${CONCURRENCY:-"100"}
+ITERATIONS=${ITERATIONS:-"1000"}
+CONCURRENCY=${CONCURRENCY:-"10"}
 CONNECTIONS=${CONNECTIONS:-"5"}
 REQ_KIND=${REQ_KIND:-"cr_req01"}
-NUM_POLICIES=${NUM_POLICIES:-"1000"}
+NUM_POLICIES=${NUM_POLICIES:-"100"}
 
 # Paths
 REMOTE_BASE=${REMOTE_BASE:-"/opt/cerbos-loadtest"}

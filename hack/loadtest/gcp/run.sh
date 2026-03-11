@@ -9,9 +9,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=env.sh
 source "${SCRIPT_DIR}/env.sh"
 
-PDP_IP=$(gcloud compute instances describe "$PDP_VM" \
-  --zone="$GCP_ZONE" --project="$GCP_PROJECT" \
-  --format='get(networkInterfaces[0].networkIP)')
+if [[ -n "${TERRAFORM_DIR:-}" ]]; then
+  PDP_IP=$(terraform -chdir="$TERRAFORM_DIR" output -raw pdp_internal_ip)
+else
+  PDP_IP=$(gcloud compute instances describe "$PDP_VM" \
+    --zone="$GCP_ZONE" --project="$GCP_PROJECT" \
+    --format='get(networkInterfaces[0].networkIP)')
+fi
 log "PDP internal IP: ${PDP_IP}"
 
 log "Running load tests on Client VM (${CLIENT_VM})..."

@@ -10,9 +10,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/env.sh"
 
 # --- Get PDP internal IP ---
-PDP_IP=$(gcloud compute instances describe "$PDP_VM" \
-  --zone="$GCP_ZONE" --project="$GCP_PROJECT" \
-  --format='get(networkInterfaces[0].networkIP)')
+if [[ -n "${TERRAFORM_DIR:-}" ]]; then
+  PDP_IP=$(terraform -chdir="$TERRAFORM_DIR" output -raw pdp_internal_ip)
+else
+  PDP_IP=$(gcloud compute instances describe "$PDP_VM" \
+    --zone="$GCP_ZONE" --project="$GCP_PROJECT" \
+    --format='get(networkInterfaces[0].networkIP)')
+fi
 log "PDP internal IP: ${PDP_IP}"
 
 # --- Validate local artifacts ---
@@ -26,7 +30,7 @@ fi
 if [[ ! -f "${WORK_DIR}/printsummary" ]]; then
   err "Missing ${WORK_DIR}/printsummary — build it first:"
   err "  cd hack/loadtest"
-  err "  go build -tags printsummary -o work/printsummary ."
+  err "  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags printsummary -o work/printsummary ."
   exit 1
 fi
 
@@ -81,19 +85,31 @@ if [[ "${CERBOS_VERSION}" == "latest" ]]; then
 fi
 
 log "Setting up Cerbos ${CERBOS_VERSION} on PDP VM..."
+
+# Download binary locally and upload to PDP VM (which has no public IP)
+CERBOS_TARBALL="/tmp/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
+if [[ ! -f "$CERBOS_TARBALL" ]]; then
+  log "Downloading Cerbos ${CERBOS_VERSION} locally..."
+  curl -sfL -o "$CERBOS_TARBALL" \
+    "https://github.com/cerbos/cerbos/releases/download/v${CERBOS_VERSION}/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
+fi
+
+log "Uploading Cerbos binary to PDP VM..."
+GSCP "$CERBOS_TARBALL" "${PDP_VM}:/tmp/cerbos.tar.gz"
+
 GSSH "$PDP_VM" <<ENDSSH
 set -euo pipefail
 
 VERSION_MARKER="${REMOTE_BASE}/bin/.cerbos-version"
 if [[ -f "\${VERSION_MARKER}" ]] && [[ "\$(cat "\${VERSION_MARKER}")" == "${CERBOS_VERSION}" ]]; then
-  echo "Cerbos ${CERBOS_VERSION} already downloaded"
+  echo "Cerbos ${CERBOS_VERSION} already installed"
 else
-  echo "Downloading Cerbos ${CERBOS_VERSION}..."
-  curl -sfL "https://github.com/cerbos/cerbos/releases/download/v${CERBOS_VERSION}/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz" \
-    | tar xzf - -C ${REMOTE_BASE}/bin cerbos
+  echo "Installing Cerbos ${CERBOS_VERSION}..."
+  tar xzf /tmp/cerbos.tar.gz -C ${REMOTE_BASE}/bin cerbos
   chmod +x ${REMOTE_BASE}/bin/cerbos
   echo "${CERBOS_VERSION}" > "\${VERSION_MARKER}"
 fi
+rm -f /tmp/cerbos.tar.gz
 
 # Stop any existing Cerbos process
 pkill -f "${REMOTE_BASE}/bin/cerbos" 2>/dev/null || true
