@@ -27,6 +27,7 @@ type statsCollector struct {
 	conditionCount    map[string]int
 	uniqueActions     map[string]struct{}
 	uniqueResources   map[string]struct{}
+	uniqueRules       map[string]struct{}
 	hasOutput         bool
 	hasScopedPolicies bool
 }
@@ -47,6 +48,7 @@ func newStatsCollector() *statsCollector {
 		conditionCount:  make(map[string]int),
 		uniqueActions:   make(map[string]struct{}),
 		uniqueResources: make(map[string]struct{}),
+		uniqueRules:     make(map[string]struct{}),
 	}
 }
 
@@ -136,7 +138,11 @@ func (s *statsCollector) addRow(row *index.Row) {
 		return
 	}
 
-	s.ruleCount[fqn]++
+	if _, ok := s.uniqueRules[row.GetEvaluationKey()]; !ok {
+		s.uniqueRules[row.GetEvaluationKey()] = struct{}{}
+		s.ruleCount[fqn]++
+	}
+
 	if row.GetCondition() != nil {
 		s.conditionCount[fqn]++
 	}
