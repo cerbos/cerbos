@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/cerbos/cerbos/internal/util"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
@@ -56,11 +57,18 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 	}
 
 	switch {
-	case conf.Credentials != nil:
-		lp.BundleVersion = cloudapi.Version1
-		lp.SecretKey = conf.Credentials.WorkspaceSecret
+	case util.IsRuleTableBundle(lp.BundlePath):
+		lp.BundleVersion = cloudapi.Version2
+		if conf.Local.EncryptionKey != "" {
+			encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode encryption key: %w", err)
+			}
 
-	case conf.Local != nil && conf.Local.EncryptionKey != "":
+			lp.EncryptionKey = encryptionKey
+		}
+
+	case conf.Local.EncryptionKey != "":
 		lp.BundleVersion = cloudapi.Version2
 		encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
 		if err != nil {
@@ -69,8 +77,12 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 
 		lp.EncryptionKey = encryptionKey
 
+	case conf.Credentials.WorkspaceSecret != "":
+		lp.BundleVersion = cloudapi.Version1
+		lp.SecretKey = conf.Credentials.WorkspaceSecret
+
 	default:
-		return nil, fmt.Errorf("encryptionKey or workspaceSecret must be specified")
+		return nil, fmt.Errorf("rule table bundle (encrypted or unencrypted) path, encryptionKey (encrypted bundlev2) or workspaceSecret (encrypted bundlev1) must be specified")
 	}
 
 	return NewLocalSource(ctx, lp)
