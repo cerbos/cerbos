@@ -8,6 +8,7 @@ package hub
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -55,12 +56,20 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 		CacheSize:  conf.CacheSize,
 	}
 
+	ext := filepath.Ext(lp.BundlePath)
 	switch {
-	case conf.Credentials != nil:
-		lp.BundleVersion = cloudapi.Version1
-		lp.SecretKey = conf.Credentials.WorkspaceSecret
+	case ext == ".crrt", ext == ".crrts":
+		lp.BundleVersion = cloudapi.Version2
+		if conf.Local.EncryptionKey != "" {
+			encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode encryption key: %w", err)
+			}
 
-	case conf.Local != nil && conf.Local.EncryptionKey != "":
+			lp.EncryptionKey = encryptionKey
+		}
+
+	case conf.Local.EncryptionKey != "":
 		lp.BundleVersion = cloudapi.Version2
 		encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
 		if err != nil {
@@ -69,8 +78,12 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 
 		lp.EncryptionKey = encryptionKey
 
+	case conf.Credentials.WorkspaceSecret != "":
+		lp.BundleVersion = cloudapi.Version1
+		lp.SecretKey = conf.Credentials.WorkspaceSecret
+
 	default:
-		return nil, fmt.Errorf("encryptionKey or workspaceSecret must be specified")
+		return nil, errors.New("invalid configuration for local source")
 	}
 
 	return NewLocalSource(ctx, lp)
