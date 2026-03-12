@@ -21,8 +21,8 @@ type statsCollector struct {
 	maxRuleCount          map[policy.Kind]int
 	maxConditionCount     map[policy.Kind]int
 	schemaRefs            map[uint64]struct{}
-	uniqueActions         map[string]struct{}
-	uniqueResources       map[string]struct{}
+	uniqueActions         map[uint64]struct{}
+	uniqueResources       map[uint64]struct{}
 	hasOutput             bool
 	hasScopedPolicies     bool
 }
@@ -42,8 +42,8 @@ func newStatsCollector() *statsCollector {
 		maxRuleCount:          make(map[policy.Kind]int, numPolicyKinds),
 		maxConditionCount:     make(map[policy.Kind]int, numPolicyKinds),
 		schemaRefs:            make(map[uint64]struct{}),
-		uniqueActions:         make(map[string]struct{}),
-		uniqueResources:       make(map[string]struct{}),
+		uniqueActions:         make(map[uint64]struct{}),
+		uniqueResources:       make(map[uint64]struct{}),
 	}
 }
 
@@ -88,7 +88,7 @@ func (s *statsCollector) add(p policy.Wrapper) {
 	case policy.PrincipalKind:
 		ps = s.procPrincipalPolicy(p.GetPrincipalPolicy())
 	case policy.ResourceKind:
-		s.uniqueResources[p.Name] = struct{}{}
+		s.uniqueResources[util.HashStr(p.Name)] = struct{}{}
 		ps = s.procResourcePolicy(p.GetResourcePolicy())
 	case policy.RolePolicyKind:
 		ps = s.procRolePolicy(p.GetRolePolicy())
@@ -184,7 +184,7 @@ func (s *statsCollector) procResourcePolicy(rp *policyv1.ResourcePolicy) (ps pol
 
 	for _, r := range rp.Rules {
 		for _, action := range r.GetActions() {
-			s.uniqueActions[action] = struct{}{}
+			s.uniqueActions[util.HashStr(action)] = struct{}{}
 		}
 
 		if r.Condition != nil {

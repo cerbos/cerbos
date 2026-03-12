@@ -21,13 +21,13 @@ const numPolicyKinds = 4
 
 type statsCollector struct {
 	policyCount       map[policy.Kind]int
-	schemaRefs        map[uint64]struct{}
+	ruleCount         map[policy.Kind]int
+	conditionCount    map[policy.Kind]int
 	uniquePolicies    map[uint64]struct{}
-	ruleCount         map[string]int
-	conditionCount    map[string]int
-	uniqueActions     map[string]struct{}
-	uniqueResources   map[string]struct{}
-	uniqueRules       map[string]struct{}
+	uniqueRules       map[uint64]struct{}
+	uniqueResources   map[uint64]struct{}
+	uniqueActions     map[uint64]struct{}
+	schemaRefs        map[uint64]struct{}
 	hasOutput         bool
 	hasScopedPolicies bool
 }
@@ -42,55 +42,23 @@ type policyStats struct {
 func newStatsCollector() *statsCollector {
 	return &statsCollector{
 		policyCount:     make(map[policy.Kind]int, numPolicyKinds),
-		schemaRefs:      make(map[uint64]struct{}),
+		ruleCount:       make(map[policy.Kind]int, numPolicyKinds),
+		conditionCount:  make(map[policy.Kind]int, numPolicyKinds),
 		uniquePolicies:  make(map[uint64]struct{}),
-		ruleCount:       make(map[string]int),
-		conditionCount:  make(map[string]int),
-		uniqueActions:   make(map[string]struct{}),
-		uniqueResources: make(map[string]struct{}),
-		uniqueRules:     make(map[string]struct{}),
+		uniqueRules:     make(map[uint64]struct{}),
+		uniqueResources: make(map[uint64]struct{}),
+		uniqueActions:   make(map[uint64]struct{}),
+		schemaRefs:      make(map[uint64]struct{}),
 	}
 }
 
 func (s *statsCollector) collate() storage.RepoStats {
-	var ruleCountPerKind map[policy.Kind]int
-	var maxRuleCountPerKind map[policy.Kind]int
-	if s.ruleCount != nil {
-		ruleCountPerKind = make(map[policy.Kind]int)
-		maxRuleCountPerKind = make(map[policy.Kind]int)
-
-		for fqn, ruleCount := range s.ruleCount {
-			kind := policy.KindFromFQN(fqn)
-			ruleCountPerKind[kind] += ruleCount
-			if existingRuleCount, ok := maxRuleCountPerKind[kind]; !ok || ruleCount > existingRuleCount {
-				maxRuleCountPerKind[kind] = ruleCount
-			}
-		}
-	}
-
-	var conditionCountPerKind map[policy.Kind]int
-	var maxConditionCountPerKind map[policy.Kind]int
-	if s.conditionCount != nil {
-		conditionCountPerKind = make(map[policy.Kind]int)
-		maxConditionCountPerKind = make(map[policy.Kind]int)
-
-		for fqn, conditionCount := range s.conditionCount {
-			kind := policy.KindFromFQN(fqn)
-			conditionCountPerKind[kind] += conditionCount
-			if existingConditionCount, ok := maxConditionCountPerKind[kind]; !ok || conditionCount > existingConditionCount {
-				maxConditionCountPerKind[kind] = conditionCount
-			}
-		}
-	}
-
 	is := storage.RepoStats{
 		PolicyCount:           s.policyCount,
-		RuleCount:             ruleCountPerKind,
-		ConditionCount:        conditionCountPerKind,
-		MaxRuleCount:          maxRuleCountPerKind,
-		MaxConditionCount:     maxConditionCountPerKind,
-		AvgRuleCount:          make(map[policy.Kind]float64, len(ruleCountPerKind)),
-		AvgConditionCount:     make(map[policy.Kind]float64, len(conditionCountPerKind)),
+		RuleCount:             s.ruleCount,
+		ConditionCount:        s.conditionCount,
+		AvgRuleCount:          make(map[policy.Kind]float64, len(s.ruleCount)),
+		AvgConditionCount:     make(map[policy.Kind]float64, len(s.conditionCount)),
 		DistinctActionCount:   len(s.uniqueActions),
 		DistinctResourceCount: len(s.uniqueResources),
 		SchemaCount:           len(s.schemaRefs),
@@ -98,11 +66,11 @@ func (s *statsCollector) collate() storage.RepoStats {
 		HasScopedPolicies:     s.hasScopedPolicies,
 	}
 
-	for k, c := range ruleCountPerKind {
+	for k, c := range s.ruleCount {
 		is.AvgRuleCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
-	for k, c := range conditionCountPerKind {
+	for k, c := range s.conditionCount {
 		is.AvgConditionCount[k] = float64(c) / float64(s.policyCount[k])
 	}
 
@@ -113,17 +81,18 @@ func (s *statsCollector) addRow(row *index.Row) {
 	fqn := row.GetOriginFqn()
 	kind := policy.KindFromFQN(fqn)
 	mID := namer.GenModuleIDFromFQN(fqn).RawValue()
+
 	if _, ok := s.uniquePolicies[mID]; !ok {
 		s.uniquePolicies[mID] = struct{}{}
 		s.policyCount[kind]++
 	}
 
 	if kind == policy.ResourceKind {
-		s.uniqueResources[row.Resource] = struct{}{}
+		s.uniqueResources[util.HashStr(row.Resource)] = struct{}{}
 	}
 
 	if actionSet, ok := row.GetActionSet().(*runtimev1.RuleTable_RuleRow_Action); kind == policy.ResourceKind && ok {
-		s.uniqueActions[actionSet.Action] = struct{}{}
+		s.uniqueActions[util.HashStr(actionSet.Action)] = struct{}{}
 	}
 
 	if row.EmitOutput != nil {
@@ -138,13 +107,13 @@ func (s *statsCollector) addRow(row *index.Row) {
 		return
 	}
 
-	if _, ok := s.uniqueRules[row.GetEvaluationKey()]; !ok {
-		s.uniqueRules[row.GetEvaluationKey()] = struct{}{}
-		s.ruleCount[fqn]++
+	if _, ok := s.uniqueRules[util.HashStr(row.GetEvaluationKey())]; !ok {
+		s.uniqueRules[util.HashStr(row.GetEvaluationKey())] = struct{}{}
+		s.ruleCount[kind]++
 	}
 
 	if row.GetCondition() != nil {
-		s.conditionCount[fqn]++
+		s.conditionCount[kind]++
 	}
 }
 
@@ -160,22 +129,24 @@ func (s *statsCollector) addSchemas(schemas *policyv1.Schemas) {
 
 func (s *statsCollector) addRunnablePolicySet(rps *runtimev1.RunnablePolicySet) {
 	fqn := rps.GetFqn()
+	kind := policy.KindFromFQN(fqn)
+
 	var stats []policyStats
 	switch policySet := rps.PolicySet.(type) {
 	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
 		stats = s.procRunnablePrincipalPolicySet(policySet.PrincipalPolicy)
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		stats = s.procRunnableResourcePolicySet(policySet.ResourcePolicy)
-		s.uniqueResources[strings.Split(strings.TrimPrefix(fqn, namer.ResourcePoliciesPrefix+"."), ".")[0]] = struct{}{}
+		resource := strings.Split(strings.TrimPrefix(fqn, namer.ResourcePoliciesPrefix+"."), ".")[0]
+		s.uniqueResources[util.HashStr(resource)] = struct{}{}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		stats = s.procRunnableRolePolicySet(policySet.RolePolicy)
 	}
 
-	kind := policy.KindFromFQN(fqn)
 	s.policyCount[kind]++
 	for _, ps := range stats {
-		s.ruleCount[fqn] += ps.ruleCount
-		s.conditionCount[fqn] += ps.conditionCount
+		s.ruleCount[kind] += ps.ruleCount
+		s.conditionCount[kind] += ps.conditionCount
 
 		if ps.hasOutput {
 			s.hasOutput = true
@@ -230,7 +201,7 @@ func (s *statsCollector) procRunnableResourcePolicySet(rrps *runtimev1.RunnableR
 			ps.ruleCount++
 
 			for action := range rule.GetActions() {
-				s.uniqueActions[action] = struct{}{}
+				s.uniqueActions[util.HashStr(action)] = struct{}{}
 			}
 
 			if rule.GetCondition() != nil {
