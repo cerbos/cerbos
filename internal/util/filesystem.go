@@ -96,15 +96,6 @@ func IsArchiveFile(fileName string) bool {
 	return IsZip(fileName) || IsTar(fileName) || IsGzip(fileName)
 }
 
-func IsRuleTableBundle(fileName string) bool {
-	switch filepath.Ext(fileName) {
-	case ".crrt", ".crrts":
-		return true
-	default:
-		return false
-	}
-}
-
 type ClosableFS struct {
 	fs.FS
 	io.Closer

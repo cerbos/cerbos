@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/cerbos/cerbos/internal/util"
 	cloudapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
@@ -56,8 +55,9 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 		CacheSize:  conf.CacheSize,
 	}
 
+	ext := filepath.Ext(lp.BundlePath)
 	switch {
-	case util.IsRuleTableBundle(lp.BundlePath):
+	case ext == ".crrt", ext == ".crrts":
 		lp.BundleVersion = cloudapi.Version2
 		if conf.Local.EncryptionKey != "" {
 			encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
