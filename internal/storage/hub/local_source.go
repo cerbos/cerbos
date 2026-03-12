@@ -8,6 +8,7 @@ package hub
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -82,7 +83,7 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 		lp.SecretKey = conf.Credentials.WorkspaceSecret
 
 	default:
-		return nil, fmt.Errorf("rule table bundle (encrypted or unencrypted) path, encryptionKey (encrypted bundlev2) or workspaceSecret (encrypted bundlev1) must be specified")
+		return nil, errors.New("invalid configuration for local source")
 	}
 
 	return NewLocalSource(ctx, lp)
