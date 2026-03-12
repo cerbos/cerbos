@@ -5,22 +5,19 @@
 
 package tracer
 
-import (
-	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-)
+type Sink interface {
+	Enabled() bool
+	AddTrace(any)
+}
 
 type noopSink struct{}
 
-func NewSink(log any) Sink {
-	return &noopSink{}
+func NewZapSink(any) Sink {
+	return noopSink{}
 }
 
-func (zs *noopSink) Enabled() bool {
+func (noopSink) Enabled() bool {
 	return false
 }
 
-func (zs *noopSink) AddTrace(trace *enginev1.Trace) {}
-
-func NewZapSink(log any) Sink {
-	return &noopSink{}
-}
+func (noopSink) AddTrace(any) {}
