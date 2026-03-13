@@ -7,11 +7,12 @@ set -euo pipefail
 
 
 # Test parameters
+CERBOS_VERSION=${CERBOS_VERSION:-"latest"}
 AUDIT_ENABLED=${AUDIT_ENABLED:-"false"}
 CONCURRENCY=${CONCURRENCY:-"100"}
 CONNECTIONS=${CONNECTIONS:-"5"}
 DURATION_SECS=${DURATION_SECS:-"120"}
-ITERATIONS=${ITERATIONS:-"1000000"}
+ITERATIONS=${ITERATIONS:-"100000"}
 NUM_POLICIES=${NUM_POLICIES:-"1000"}
 POLICY_SET=${POLICY_SET:-"classic"}
 REQ_KIND=${REQ_KIND:-"cr_req01"}
@@ -147,7 +148,7 @@ up() {
   cp conf/cerbos/.cerbos.yaml "${WORK_DIR}/cerbos/.cerbos.yaml"
 
   printf "Starting all services\n"
-  AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker compose $(composeProfiles) up -d
+  CERBOS_VERSION="$CERBOS_VERSION" AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker compose $(composeProfiles) up -d
 
   while ! grpcurl -plaintext "${SERVER}" grpc.health.v1.Health/Check >/dev/null 2>&1; do
     echo "Waiting for Cerbos..."
