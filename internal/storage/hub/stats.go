@@ -177,7 +177,7 @@ func (s *statsCollector) addRunnablePolicySet(rps *runtimev1.RunnablePolicySet) 
 
 func (s *statsCollector) procRunnablePrincipalPolicySet(rpps *runtimev1.RunnablePrincipalPolicySet) (ps policyStats) {
 	if rpps == nil {
-		return
+		return ps
 	}
 
 	for _, p := range rpps.GetPolicies() {
@@ -199,12 +199,12 @@ func (s *statsCollector) procRunnablePrincipalPolicySet(rpps *runtimev1.Runnable
 		}
 	}
 
-	return
+	return ps
 }
 
 func (s *statsCollector) procRunnableResourcePolicySet(rrps *runtimev1.RunnableResourcePolicySet) (ps policyStats) {
 	if rrps == nil {
-		return
+		return ps
 	}
 
 	for _, p := range rrps.GetPolicies() {
@@ -233,12 +233,12 @@ func (s *statsCollector) procRunnableResourcePolicySet(rrps *runtimev1.RunnableR
 		}
 	}
 
-	return
+	return ps
 }
 
 func (s *statsCollector) procRunnableRolePolicySet(rrps *runtimev1.RunnableRolePolicySet) (ps policyStats) {
 	if rrps == nil {
-		return
+		return ps
 	}
 
 	for _, ruleList := range rrps.GetResources() {
@@ -250,7 +250,7 @@ func (s *statsCollector) procRunnableRolePolicySet(rrps *runtimev1.RunnableRoleP
 		}
 	}
 
-	return
+	return ps
 }
 
 func (s *statsCollector) addSchemas(schemas *policyv1.Schemas) {

@@ -297,8 +297,7 @@ func runRepoStatsTest(ls *hub.LocalSource, wantStats storage.RepoStats) func(*te
 				wantStats,
 				haveStats,
 				protocmp.Transform(),
-				cmpopts.IgnoreFields(storage.RepoStats{}, "AvgConditionCount"),
-				cmpopts.IgnoreFields(storage.RepoStats{}, "AvgRuleCount"),
+				cmpopts.EquateApprox(0.0001, 0),
 			),
 		)
 	}
