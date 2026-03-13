@@ -20,6 +20,7 @@ import (
 	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -60,15 +61,25 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   152,
 				policy.RolePolicyKind: 11,
 			},
-			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  3.909090909090909,
-				policy.ResourceKind:   5.066666666666666,
-				policy.RolePolicyKind: 1.375,
+			MaxConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  3,
+				policy.ResourceKind:   7,
+				policy.RolePolicyKind: 1,
+			},
+			MaxRuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   17,
+				policy.RolePolicyKind: 2,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  0.9090909090909091,
 				policy.ResourceKind:   2.066666666666667,
 				policy.RolePolicyKind: 0.25,
+			},
+			AvgRuleCount: map[policy.Kind]float64{
+				policy.PrincipalKind:  3.909090909090909,
+				policy.ResourceKind:   5.066666666666666,
+				policy.RolePolicyKind: 1.375,
 			},
 			DistinctActionCount:   44,
 			DistinctResourceCount: 18,
@@ -107,15 +118,25 @@ func TestLocalSource(t *testing.T) {
 				policy.ResourceKind:   152,
 				policy.RolePolicyKind: 11,
 			},
-			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  3.909090909090909,
-				policy.ResourceKind:   5.066666666666666,
-				policy.RolePolicyKind: 1.375,
+			MaxConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  3,
+				policy.ResourceKind:   7,
+				policy.RolePolicyKind: 1,
+			},
+			MaxRuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  11,
+				policy.ResourceKind:   17,
+				policy.RolePolicyKind: 2,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  0.9090909090909091,
 				policy.ResourceKind:   2.066666666666667,
 				policy.RolePolicyKind: 0.25,
+			},
+			AvgRuleCount: map[policy.Kind]float64{
+				policy.PrincipalKind:  3.909090909090909,
+				policy.ResourceKind:   5.066666666666666,
+				policy.RolePolicyKind: 1.375,
 			},
 			DistinctActionCount:   44,
 			DistinctResourceCount: 18,
@@ -153,6 +174,16 @@ func TestLocalSource(t *testing.T) {
 				policy.PrincipalKind:  20,
 				policy.ResourceKind:   77,
 				policy.RolePolicyKind: 9,
+			},
+			MaxConditionCount: map[policy.Kind]int{
+				policy.PrincipalKind:  2,
+				policy.ResourceKind:   5,
+				policy.RolePolicyKind: 1,
+			},
+			MaxRuleCount: map[policy.Kind]int{
+				policy.PrincipalKind:  6,
+				policy.ResourceKind:   11,
+				policy.RolePolicyKind: 2,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  0.36363636363636365,
@@ -266,6 +297,8 @@ func runRepoStatsTest(ls *hub.LocalSource, wantStats storage.RepoStats) func(*te
 				wantStats,
 				haveStats,
 				protocmp.Transform(),
+				cmpopts.IgnoreFields(storage.RepoStats{}, "AvgConditionCount"),
+				cmpopts.IgnoreFields(storage.RepoStats{}, "AvgRuleCount"),
 			),
 		)
 	}
