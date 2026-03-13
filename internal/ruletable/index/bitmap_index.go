@@ -47,6 +47,9 @@ func newBitmapIndex() *bitmapIndex {
 	}
 }
 
+// allocID returns a uint32 to use as a binding's bit position across all bitmaps.
+// It reuses IDs freed by freeID so that repeated add/remove cycles don't grow the
+// bindings slice or make the bitmaps increasingly sparse.
 func (bi *bitmapIndex) allocID() uint32 {
 	if len(bi.freeIDs) > 0 {
 		id := bi.freeIDs[len(bi.freeIDs)-1]
@@ -59,9 +62,7 @@ func (bi *bitmapIndex) allocID() uint32 {
 }
 
 func (bi *bitmapIndex) freeID(id uint32) {
-	if int(id) < len(bi.bindings) {
-		bi.bindings[id] = nil
-	}
+	bi.bindings[id] = nil
 	bi.freeIDs = append(bi.freeIDs, id)
 }
 
