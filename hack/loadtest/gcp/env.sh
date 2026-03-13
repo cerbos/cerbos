@@ -71,3 +71,32 @@ log() {
 err() {
   printf "[%s] ERROR: %s\n" "$(date '+%H:%M:%S')" "$*" >&2
 }
+
+restart_cerbos() {
+  log "Restarting Cerbos on PDP VM..."
+  GSSH "$PDP_VM" <<ENDSSH
+set -euo pipefail
+pkill -f "${REMOTE_BASE}/bin/cerbos" 2>/dev/null || true
+sleep 1
+echo "Starting Cerbos..."
+STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
+  nohup ${REMOTE_BASE}/bin/cerbos server \
+  --config=${REMOTE_BASE}/conf/cerbos.yaml \
+  --log-level=warn \
+  > ${REMOTE_BASE}/cerbos.log 2>&1 &
+echo "Cerbos PID: \$!"
+
+echo "Waiting for Cerbos to become healthy..."
+for i in \$(seq 1 30); do
+  if curl -sf http://localhost:3592/_cerbos/health >/dev/null 2>&1; then
+    echo "Cerbos is healthy"
+    exit 0
+  fi
+  sleep 2
+done
+echo "ERROR: Cerbos health check failed after 30 attempts" >&2
+echo "Last log lines:" >&2
+tail -20 ${REMOTE_BASE}/cerbos.log >&2
+exit 1
+ENDSSH
+}

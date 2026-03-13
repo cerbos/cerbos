@@ -9,6 +9,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=env.sh
 source "${SCRIPT_DIR}/env.sh"
 
+POLICIES_ONLY=false
+while getopts "p" opt; do
+  case "$opt" in
+    p) POLICIES_ONLY=true ;;
+    *) echo "Usage: $0 [-p]" >&2; exit 1 ;;
+  esac
+done
+
 # --- Get PDP internal IP ---
 if [[ -n "${TERRAFORM_DIR:-}" ]]; then
   PDP_IP=$(terraform -chdir="$TERRAFORM_DIR" output -raw pdp_internal_ip)
@@ -27,19 +35,25 @@ if [[ ! -d "${WORK_DIR}/policies" ]]; then
   exit 1
 fi
 
-if [[ ! -f "${WORK_DIR}/printsummary" ]]; then
+if [[ "$POLICIES_ONLY" == false ]] && [[ ! -f "${WORK_DIR}/printsummary" ]]; then
   err "Missing ${WORK_DIR}/printsummary — build it first:"
   err "  cd hack/loadtest"
   err "  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags printsummary -o work/printsummary ."
   exit 1
 fi
 
-# --- Deploy to PDP VM ---
+# --- Deploy policies to PDP VM ---
 log "Uploading policies to PDP VM..."
 tar czf /tmp/cerbos-loadtest-policies.tar.gz -C "${WORK_DIR}" policies
 GSCP /tmp/cerbos-loadtest-policies.tar.gz "${PDP_VM}:/tmp/"
 GSSH "$PDP_VM" "tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
 rm -f /tmp/cerbos-loadtest-policies.tar.gz
+
+if [[ "$POLICIES_ONLY" == true ]]; then
+  restart_cerbos
+  log "Policies redeployed — Cerbos is healthy"
+  exit 0
+fi
 
 log "Uploading Cerbos config to PDP VM..."
 GSCP "${SCRIPT_DIR}/conf/cerbos.yaml" "${PDP_VM}:${REMOTE_BASE}/conf/cerbos.yaml"
@@ -110,20 +124,6 @@ else
   echo "${CERBOS_VERSION}" > "\${VERSION_MARKER}"
 fi
 rm -f /tmp/cerbos.tar.gz
-
-# Stop any existing Cerbos process
-pkill -f "${REMOTE_BASE}/bin/cerbos" 2>/dev/null || true
-sleep 1
-
-# Start Cerbos (env vars are substituted by Cerbos in cerbos.yaml)
-echo "Starting Cerbos..."
-STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
-  nohup ${REMOTE_BASE}/bin/cerbos server \
-  --config=${REMOTE_BASE}/conf/cerbos.yaml \
-  --log-level=warn \
-  > ${REMOTE_BASE}/cerbos.log 2>&1 &
-
-echo "Cerbos PID: \$!"
 ENDSSH
 
 # --- Start observability stack on Client VM ---
@@ -134,22 +134,7 @@ cd ${REMOTE_BASE}/conf
 docker compose up -d
 ENDSSH
 
-# --- Health check (curl from client VM validates VPC connectivity) ---
-log "Waiting for Cerbos to become healthy..."
-MAX_ATTEMPTS=30
-ATTEMPT=0
-while true; do
-  if GSSH "$CLIENT_VM" "curl -sf http://${PDP_IP}:3592/_cerbos/health" &>/dev/null; then
-    break
-  fi
-  ATTEMPT=$((ATTEMPT + 1))
-  if [[ $ATTEMPT -ge $MAX_ATTEMPTS ]]; then
-    err "Cerbos health check failed after ${MAX_ATTEMPTS} attempts"
-    err "Check PDP logs: GSSH ${PDP_VM} 'cat ${REMOTE_BASE}/cerbos.log'"
-    exit 1
-  fi
-  sleep 2
-done
+restart_cerbos
 
 log "Deployment complete — Cerbos is healthy"
 log "PDP:     ${PDP_IP}:3593 (gRPC), ${PDP_IP}:3592 (HTTP/metrics)"
