@@ -40,15 +40,6 @@ STORE=${STORE:-"disk"}
 AUDIT_ENABLED=${AUDIT_ENABLED:-"false"}
 SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
 
-# Test parameters
-RPS=${RPS:-"500"}
-DURATION_SECS=${DURATION_SECS:-"120"}
-ITERATIONS=${ITERATIONS:-"10000"}
-CONCURRENCY=${CONCURRENCY:-"100"}
-CONNECTIONS=${CONNECTIONS:-"5"}
-REQ_KIND=${REQ_KIND:-"cr_req01"}
-NUM_POLICIES=${NUM_POLICIES:-"1000"}
-
 # Paths
 REMOTE_BASE=${REMOTE_BASE:-"/opt/cerbos-loadtest"}
 WORK_DIR=${WORK_DIR:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/work"}
@@ -87,16 +78,19 @@ STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORC
 echo "Cerbos PID: \$!"
 
 echo "Waiting for Cerbos to become healthy..."
+healthy=false
 for i in \$(seq 1 30); do
   if curl -sf http://localhost:3592/_cerbos/health >/dev/null 2>&1; then
     echo "Cerbos is healthy"
-    exit 0
+    healthy=true
+    break
   fi
   sleep 2
 done
-echo "ERROR: Cerbos health check failed after 30 attempts" >&2
-echo "Last log lines:" >&2
-tail -20 ${REMOTE_BASE}/cerbos.log >&2
-exit 1
+if [ "\$healthy" != "true" ]; then
+  echo "ERROR: Cerbos health check failed after 30 attempts" >&2
+  tail -20 ${REMOTE_BASE}/cerbos.log >&2
+  exit 1
+fi
 ENDSSH
 }
