@@ -32,6 +32,34 @@
             "minimum": 0
           }
         },
+        "distinctActionCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distinctResourceCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hasOutput": {
+          "type": "boolean"
+        },
+        "hasScopedPolicies": {
+          "type": "boolean"
+        },
+        "maxConditionCount": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "maxRuleCount": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
         "ruleCount": {
           "type": "object",
           "additionalProperties": {

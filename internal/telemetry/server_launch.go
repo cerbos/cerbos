@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"runtime/debug"
 
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
@@ -19,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/git"
 	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/util"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 func buildServerLaunch(store storage.Store) *telemetryv1.ServerLaunch {
@@ -141,11 +142,17 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 	pb := &telemetryv1.ServerLaunch_Stats{
 		Policy: &telemetryv1.ServerLaunch_Stats_Policy{
-			Count:             make(map[string]uint32, len(stats.PolicyCount)),
-			ConditionCount:    make(map[string]uint32, len(stats.ConditionCount)),
-			RuleCount:         make(map[string]uint32, len(stats.RuleCount)),
-			AvgRuleCount:      make(map[string]float64, len(stats.AvgRuleCount)),
-			AvgConditionCount: make(map[string]float64, len(stats.AvgConditionCount)),
+			Count:                 make(map[string]uint32, len(stats.PolicyCount)),
+			AvgRuleCount:          make(map[string]float64, len(stats.AvgRuleCount)),
+			AvgConditionCount:     make(map[string]float64, len(stats.AvgConditionCount)),
+			ConditionCount:        make(map[string]uint32, len(stats.ConditionCount)),
+			RuleCount:             make(map[string]uint32, len(stats.RuleCount)),
+			MaxConditionCount:     make(map[string]uint32, len(stats.MaxConditionCount)),
+			MaxRuleCount:          make(map[string]uint32, len(stats.MaxRuleCount)),
+			DistinctActionCount:   uint32(stats.DistinctActionCount),
+			DistinctResourceCount: uint32(stats.DistinctResourceCount),
+			HasOutput:             stats.HasOutput,
+			HasScopedPolicies:     stats.HasScopedPolicies,
 		},
 		Schema: &telemetryv1.ServerLaunch_Stats_Schema{
 			Count: uint32(stats.SchemaCount),
@@ -170,6 +177,14 @@ func extractStats(stats storage.RepoStats) *telemetryv1.ServerLaunch_Stats {
 
 	for k, v := range stats.AvgRuleCount {
 		pb.Policy.AvgRuleCount[k.String()] = v
+	}
+
+	for k, v := range stats.MaxConditionCount {
+		pb.Policy.MaxConditionCount[k.String()] = uint32(v)
+	}
+
+	for k, v := range stats.MaxRuleCount {
+		pb.Policy.MaxRuleCount[k.String()] = uint32(v)
 	}
 
 	return pb

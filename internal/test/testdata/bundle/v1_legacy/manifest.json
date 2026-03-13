@@ -7,12 +7,15 @@
     "cerbos.principal.donald_duck.vdefault": "policies/2F26F3660A97BECD",
     "cerbos.principal.donald_duck.vdefault/acme": "policies/4C6062CFBE8627DB",
     "cerbos.principal.donald_duck.vdefault/acme.hr": "policies/60C13DA6FD1DF10C",
+    "cerbos.principal.donald_duck.vdefault/acme.hr.uk": "policies/3A8D594DC281587F",
     "cerbos.principal.donald_duck.vdefault/acme.sales": "policies/3B3420C03F235ADC",
+    "cerbos.principal.frodo.vdefault": "policies/856504B54C11DDAD",
     "cerbos.principal.scrooge_mcduck.vdefault": "policies/C1B3716695815705",
     "cerbos.principal.terry_tibbs.vdefault": "policies/BCD8E5E5F425900C",
     "cerbos.resource.account.vdefault": "policies/EE58DE7B0F7DA6B9",
     "cerbos.resource.album_object.vdefault": "policies/684ED25FF04663F2",
     "cerbos.resource.all_any_none.vdefault": "policies/9EE2728D1E33C89A",
+    "cerbos.resource.archive_record.vdefault": "policies/FDA42092706CA782",
     "cerbos.resource.arn:aws:sns:us-east-1:123456789012:topic-a.vdefault": "policies/9F5F3F76EE98C8C8",
     "cerbos.resource.calendar_entry.vdefault": "policies/A0426D93EF8C53F6",
     "cerbos.resource.calendar_entry.vdefault/acme": "policies/BC84D833F53CDD82",
@@ -30,19 +33,23 @@
     "cerbos.resource.leave_request.vdefault/acme.hr.uk": "policies/BC5AE9FB81ACF7B2",
     "cerbos.resource.leave_request.vdefault/acme.hr.uk.brighton": "policies/66F0D66E65A4E98",
     "cerbos.resource.leave_request.vdefault/acme.hr.uk.brighton.kemptown": "policies/6BEF92FA3BC182E6",
+    "cerbos.resource.leave_request.vdefault/acme.hr.uk.bristol": "policies/8B7A6022AC0463A5",
     "cerbos.resource.leave_request.vdefault/acme.hr.uk.london": "policies/A6B40AB5AE94039D",
     "cerbos.resource.leave_request.vstaging": "policies/AD56144EE420A347",
     "cerbos.resource.missing_attr.vdefault": "policies/131D16D1DB4AD8E7",
     "cerbos.resource.output_now.vdefault": "policies/B60C34C563EA79A",
     "cerbos.resource.purchase_order.vdefault": "policies/B55EE74E34DF4F2B",
     "cerbos.resource.runtime_effective_derived_roles.vdefault": "policies/8AF83EE9B401DBF5",
+    "cerbos.resource.temple_relic.vdefault": "policies/47D783B4796F62AE",
     "cerbos.resource.variables_referencing_variables.vdefault": "policies/528071D04EFEBBF9",
-    "cerbos.role.acme_assistant/acme.hr.uk": "policies/77C53F4F92A176EA",
-    "cerbos.role.acme_creator/acme.hr.uk.brighton": "policies/498506F5740220EB",
-    "cerbos.role.acme_jr_admin/acme.hr.uk.brighton": "policies/9DB2774CA4E44C05",
-    "cerbos.role.acme_london_employee/acme.hr.uk.london": "policies/5816AC3EB92F65DA",
-    "cerbos.role.acme_travel_agent/acme.hr.uk": "policies/F003E1CA7BAC2D00",
-    "cerbos.role.party_person/acme.hr.uk.brighton.kemptown": "policies/1FFBD29C40FFE682"
+    "cerbos.role.20210210_admin.v20210210": "policies/EB800A9390508DCA",
+    "cerbos.role.acme_assistant.vdefault/acme.hr.uk": "policies/6529772F76C1D499",
+    "cerbos.role.acme_creator.vdefault/acme.hr.uk.brighton": "policies/3AD12E31782C18FF",
+    "cerbos.role.acme_jr_admin.vdefault/acme.hr.uk.brighton": "policies/BA937D7DF2FB5F14",
+    "cerbos.role.acme_london_employee.vdefault/acme.hr.uk.london": "policies/B3A526D1963F936D",
+    "cerbos.role.acme_travel_agent.vdefault/acme.hr.uk": "policies/1A155590E8F3AE7D",
+    "cerbos.role.party_person.vdefault/acme.hr.uk.brighton.kemptown": "policies/9CF77F617A0876A1",
+    "cerbos.role.relic_specialist.vdefault": "policies/95DF822FB4CD80B9"
   },
   "schemas": [
     "principal.json",
@@ -51,7 +58,7 @@
     "resources/salary_record.json"
   ],
   "meta": {
-    "identifier": "h1:Hdon9Em1L7cUu4dClTCYnoEvQXoJjsMocshQsadoAWk=",
-    "source": "/Users/samuellock/cerbos/cerbos/internal/test/testdata/store"
+    "identifier": "h1:yQcafeDKgvnNSHY4XpOQvBB9hh+TDAhXzeXrSujFWeU=",
+    "source": "/Users/oguzhan/github/oguzhand95/cerbos/internal/test/testdata/store"
   }
 }
