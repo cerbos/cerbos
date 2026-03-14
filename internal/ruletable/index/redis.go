@@ -128,38 +128,61 @@ func (r *Redis) getParentRoleMap() parentRoleMap {
 }
 
 func (r *Redis) resolve(ctx context.Context, rows []*Row) ([]*Row, error) {
-	sums := make([]string, 0, len(rows))
-	for _, row := range rows {
-		var sum string
-		if row.RuleTable_RuleRow != nil {
-			sum = strconv.FormatUint(row.sum, 10)
-		} else {
-			sum = r.rowKey(row.sum)
+	resolveIndices := make([]int, 0, len(rows))
+	resolveKeys := make([]string, 0, len(rows))
+	for i, row := range rows {
+		if row.RuleTable_RuleRow == nil {
+			resolveIndices = append(resolveIndices, i)
+			resolveKeys = append(resolveKeys, rowKey(r.nsKey, row.sum))
 		}
-		sums = append(sums, sum)
 	}
 
-	if len(sums) == 0 {
+	if len(resolveKeys) == 0 {
 		return rows, nil
 	}
 
-	rawRows, err := r.db.MGet(ctx, sums...).Result()
+	rawRows, err := r.db.MGet(ctx, resolveKeys...).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	for i, raw := range rawRows {
-		if rows[i].RuleTable_RuleRow == nil {
-			if raw == nil {
-				// If we reach this case, somethings gone unexpectedly wrong.
-				return nil, fmt.Errorf("data missing for row checksum %s", sums[i])
+	// Per-resolve-batch cache for compiled row params.
+	paramsCache := make(map[uint64]*rowParams)
+	drParamsCache := make(map[uint64]*rowParams)
+
+	for j, raw := range rawRows {
+		i := resolveIndices[j]
+		if raw == nil {
+			// If we reach this case, somethings gone unexpectedly wrong.
+			return nil, fmt.Errorf("data missing for row checksum %d", rows[i].sum)
+		}
+		rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
+		if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
+			return nil, err
+		}
+		if err := hydrateParams(rows[i], paramsCache, drParamsCache); err != nil {
+			return nil, err
+		}
+	}
+
+	// Read origins for resolved rows.
+	if len(resolveIndices) > 0 {
+		originsCmds := make(map[int]*redis.StringSliceCmd, len(resolveIndices))
+		if _, err := r.db.Pipelined(ctx, func(p redis.Pipeliner) error {
+			for _, i := range resolveIndices {
+				originsCmds[i] = p.SMembers(ctx, originsKey(r.nsKey, rows[i].sum))
 			}
-			rows[i].RuleTable_RuleRow = &runtimev1.RuleTable_RuleRow{}
-			if err := rows[i].UnmarshalVT([]byte(raw.(string))); err != nil { //nolint:forcetypeassert
-				return nil, err
-			}
-			if err := hydrateParams(rows[i]); err != nil {
-				return nil, err
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+		for i, cmd := range originsCmds {
+			origins := cmd.Val()
+			if len(origins) > 0 {
+				rows[i].origins = make(map[string]struct{}, len(origins))
+				for _, o := range origins {
+					rows[i].origins[o] = struct{}{}
+				}
 			}
 		}
 	}
@@ -179,9 +202,13 @@ func (r *Redis) resolveIter(ctx context.Context, rows iter.Seq[*Row]) (iter.Seq[
 	return slices.Values(resolved), nil
 }
 
-func (r *Redis) rowKey(sum uint64) string {
+func rowKey(nsKey string, sum uint64) string {
 	// value is the serialised row
-	return r.nsKey + strconv.FormatUint(sum, 10)
+	return nsKey + strconv.FormatUint(sum, 10)
+}
+
+func originsKey(nsKey string, sum uint64) string {
+	return nsKey + "origins:" + strconv.FormatUint(sum, 10)
 }
 
 type redisMap struct {
@@ -215,11 +242,30 @@ func (rm *redisMap) catFromSumsKey(k string) string {
 	return strings.TrimPrefix(k, rm.catKey+":")
 }
 
+func (rm *redisMap) writeOrigins(ctx context.Context, p redis.Pipeliner, rs *rowSet) {
+	for sum, r := range rs.m {
+		if len(r.origins) == 0 {
+			continue
+		}
+
+		key := originsKey(rm.nsKey, sum)
+		// Delete before adding to replace the set atomically,
+		// preventing stale origins from accumulating after DeletePolicy.
+		p.Del(ctx, key)
+		members := make([]any, 0, len(r.origins))
+		for o := range r.origins {
+			members = append(members, o)
+		}
+		p.SAdd(ctx, key, members...)
+		p.PExpireAt(ctx, key, rm.dataDeadline)
+	}
+}
+
 func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 	sums := make([]any, 0, len(rs.m))
 	raws := make([]any, 0, len(rs.m))
 	for sum, r := range rs.m {
-		sums = append(sums, rm.rowKey(sum))
+		sums = append(sums, rowKey(rm.nsKey, sum))
 		b, err := r.MarshalVT()
 		if err != nil {
 			return nil, nil, err
@@ -227,11 +273,6 @@ func (rm *redisMap) serialize(rs *rowSet) ([]any, []any, error) {
 		raws = append(raws, b)
 	}
 	return sums, raws, nil
-}
-
-func (rm *redisMap) rowKey(sum uint64) string {
-	// value is the serialised row
-	return rm.nsKey + strconv.FormatUint(sum, 10)
 }
 
 func (rm *redisMap) sumFromRowKey(key string) uint64 {
@@ -285,6 +326,8 @@ func (rm *redisMap) set(ctx context.Context, cat string, rs *rowSet) error {
 			p.PExpireAt(ctx, rk, rm.dataDeadline)
 		}
 
+		rm.writeOrigins(ctx, p, rs)
+
 		p.Set(ctx, rm.sentKey, "1", 0)
 		p.PExpireAt(ctx, rm.sentKey, rm.sentinelDeadline)
 
@@ -326,6 +369,8 @@ func (rm *redisMap) setBatch(ctx context.Context, batch map[string]*rowSet) erro
 				p.Set(ctx, rk, r, 0)
 				p.PExpireAt(ctx, rk, rm.dataDeadline)
 			}
+
+			rm.writeOrigins(ctx, p, rs)
 		}
 
 		p.Set(ctx, rm.sentKey, "1", 0)
@@ -512,20 +557,21 @@ func (gl *RedisGlobMap) getMerged(ctx context.Context, keys ...string) (map[stri
 	return res, nil
 }
 
-func hydrateParams(r *Row) error {
-	var err error
+func hydrateParams(r *Row, paramsCache, drParamsCache map[uint64]*rowParams) error {
 	if (r.PolicyKind == policyv1.Kind_KIND_RESOURCE && !r.FromRolePolicy) ||
 		r.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
-		r.Params, err = generateRowParams(r.OriginFqn, r.RuleTable_RuleRow.Params.OrderedVariables, r.RuleTable_RuleRow.Params.Constants)
+		params, err := getOrGenerateParams(paramsCache, r.RuleTable_RuleRow.Params, r.OriginFqn)
 		if err != nil {
 			return err
 		}
+		r.Params = params
 	}
 	if r.RuleTable_RuleRow.DerivedRoleParams != nil {
-		r.DerivedRoleParams, err = generateRowParams(namer.DerivedRolesFQN(r.OriginDerivedRole), r.RuleTable_RuleRow.DerivedRoleParams.OrderedVariables, r.RuleTable_RuleRow.DerivedRoleParams.Constants)
+		drParams, err := getOrGenerateParams(drParamsCache, r.RuleTable_RuleRow.DerivedRoleParams, namer.DerivedRolesFQN(r.OriginDerivedRole))
 		if err != nil {
 			return err
 		}
+		r.DerivedRoleParams = drParams
 	}
 	return nil
 }
