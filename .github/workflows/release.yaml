@@ -70,10 +70,10 @@ jobs:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@17ae1740179002c89186b61233e0f892c3118b11 # v0.23.0
+        uses: anchore/sbom-action/download-syft@57aae528053a48a3f6235f2d9461b05fbcb7366d # v0.23.1
 
       - name: Install Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
