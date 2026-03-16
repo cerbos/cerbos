@@ -14,8 +14,8 @@ import (
 // have that value. Queries are flat bitmap AND operations.
 type bitmapIndex struct {
 	action             *globDimension
-	coresBySum         map[uint64]*FunctionalCore
-	bindingDedup       map[routingKey]uint32
+	coresBySum         map[uint64]*FunctionalCore // dedup behavioural part
+	bindingDedup       map[routingKey]uint32      // dedup whole binding (incl. functional sum)
 	version            map[string]*roaring.Bitmap
 	scope              map[string]*roaring.Bitmap
 	role               *globDimension
@@ -66,16 +66,14 @@ func (bi *bitmapIndex) freeID(id uint32) {
 	bi.freeIDs = append(bi.freeIDs, id)
 }
 
-func (bi *bitmapIndex) storeBinding(b *Binding) {
-	id := b.ID
-	if int(id) >= len(bi.bindings) {
-		bi.bindings = append(bi.bindings, make([]*Binding, int(id)-len(bi.bindings)+1)...)
+func (bi *bitmapIndex) addBinding(b *Binding) {
+	id := bi.allocID()
+	b.ID = id
+	if int(id) < len(bi.bindings) {
+		bi.bindings[id] = b
+	} else {
+		bi.bindings = append(bi.bindings, b)
 	}
-	bi.bindings[id] = b
-}
-
-func (bi *bitmapIndex) addToDimensions(b *Binding) {
-	id := b.ID
 
 	bi.universe.Add(id)
 	addToLiteralMap(bi.version, b.Version, id)
@@ -99,10 +97,11 @@ func (bi *bitmapIndex) addToDimensions(b *Binding) {
 	addToLiteralMap(bi.fqnBindings, b.OriginFqn, id)
 }
 
-// removeFromDimensions removes the binding's ID from all dimension bitmaps.
+// removeBinding removes the binding from the slice and all dimension bitmaps,
+// and returns the ID to the free list.
 // It does NOT touch fqnBindings — that is managed by DeletePolicy, which needs
 // to inspect fqnBindings across origins before deciding whether to remove the binding.
-func (bi *bitmapIndex) removeFromDimensions(b *Binding) {
+func (bi *bitmapIndex) removeBinding(b *Binding) {
 	id := b.ID
 
 	bi.universe.Remove(id)
@@ -123,6 +122,8 @@ func (bi *bitmapIndex) removeFromDimensions(b *Binding) {
 	if b.Principal != "" {
 		removeFromLiteralMap(bi.principal, b.Principal, id)
 	}
+
+	bi.freeID(id)
 }
 
 func (bi *bitmapIndex) getBinding(id uint32) *Binding {

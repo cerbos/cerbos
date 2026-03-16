@@ -162,10 +162,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			continue
 		}
 
-		// Allocate a new binding.
-		id := m.bi.allocID()
 		b := &Binding{
-			ID:                id,
 			Scope:             rule.Scope,
 			Version:           rule.Version,
 			Resource:          rule.Resource,
@@ -180,9 +177,8 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			Core:              core,
 		}
 
-		m.bi.storeBinding(b)
-		m.bi.addToDimensions(b)
-		m.bi.bindingDedup[rk] = id
+		m.bi.addBinding(b)
+		m.bi.bindingDedup[rk] = b.ID
 	}
 
 	return nil
@@ -708,8 +704,7 @@ func (m *Index) DeletePolicy(fqn string) error {
 		}
 
 		if !referencedByOther {
-			m.bi.removeFromDimensions(b)
-			m.bi.freeID(id)
+			m.bi.removeBinding(b)
 
 			rk := makeRoutingKey(b.Scope, b.Version, b.Resource,
 				b.Role, b.Action, b.Principal, b.AllowActions, b.Core.sum)
