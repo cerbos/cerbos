@@ -20,18 +20,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// Number of non-action dimensions that can be ANDed in Query (version, scope, resource, role, policyKind, principal).
-const maxNonActionDims = 6
-
-// Number of non-action, non-principal dimensions used in QueryMulti (version, scope, resource, role).
-const maxMultiDims = 4
-
-// Number of parts that applyActionFilter may combine (regular actions, AllowActions).
-const maxActionFilterParts = 2
-
-// Number of dimensions in queryAllowActions level-1 filter (version, scope, role, allowActionsBitmap).
-const maxAllowActionsDims = 4
-
 // functionalRuleRowFields lists proto field names that affect evaluation outcome.
 // Routing fields (scope, version, resource, role, action, principal) are excluded
 // because they are handled by the bitmap index dimensions.
@@ -275,41 +263,34 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	}
 
 	// baseBM = AND of all non-action dimensions.
-	var dimsBuf [maxNonActionDims]*roaring.Bitmap
-	n := 0
+	dims := make([]*roaring.Bitmap, 0, 6)
 	if versionBM != nil {
-		dimsBuf[n] = versionBM
-		n++
+		dims = append(dims, versionBM)
 	}
 	if scopeBM != nil {
-		dimsBuf[n] = scopeBM
-		n++
+		dims = append(dims, scopeBM)
 	}
 	if resourceBM != nil {
-		dimsBuf[n] = resourceBM
-		n++
+		dims = append(dims, resourceBM)
 	}
 	if roleBM != nil {
-		dimsBuf[n] = roleBM
-		n++
+		dims = append(dims, roleBM)
 	}
 	if policyKindBM != nil {
-		dimsBuf[n] = policyKindBM
-		n++
+		dims = append(dims, policyKindBM)
 	}
 	if principalBM != nil {
-		dimsBuf[n] = principalBM
-		n++
+		dims = append(dims, principalBM)
 	}
 
 	var baseBM *roaring.Bitmap
-	switch n {
+	switch len(dims) {
 	case 0:
 		baseBM = bi.universe
 	case 1:
-		baseBM = dimsBuf[0]
+		baseBM = dims[0]
 	default:
-		baseBM = roaring.FastAnd(dimsBuf[:n]...)
+		baseBM = roaring.FastAnd(dims...)
 	}
 	if baseBM.IsEmpty() {
 		return nil
@@ -355,28 +336,23 @@ func (m *Index) queryAllowActions(
 	res []*Binding,
 ) []*Binding {
 	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
-	var l1Buf [maxAllowActionsDims]*roaring.Bitmap
-	l1n := 0
+	l1 := make([]*roaring.Bitmap, 0, 4)
 	if versionBM != nil {
-		l1Buf[l1n] = versionBM
-		l1n++
+		l1 = append(l1, versionBM)
 	}
 	if scopeBM != nil {
-		l1Buf[l1n] = scopeBM
-		l1n++
+		l1 = append(l1, scopeBM)
 	}
 	if roleBM != nil {
-		l1Buf[l1n] = roleBM
-		l1n++
+		l1 = append(l1, roleBM)
 	}
-	l1Buf[l1n] = bi.allowActionsBitmap
-	l1n++
+	l1 = append(l1, bi.allowActionsBitmap)
 
 	var level1BM *roaring.Bitmap
-	if l1n == 1 {
-		level1BM = l1Buf[0]
+	if len(l1) == 1 {
+		level1BM = l1[0]
 	} else {
-		level1BM = roaring.FastAnd(l1Buf[:l1n]...)
+		level1BM = roaring.FastAnd(l1...)
 	}
 	if level1BM.IsEmpty() {
 		return res
@@ -506,50 +482,45 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 		return nil
 	}
 
-	var mdBuf [maxMultiDims]*roaring.Bitmap
-	mn := 0
+	dims := make([]*roaring.Bitmap, 0, 4)
 
 	if len(versions) > 0 {
 		bm := bi.version.Query(versions)
 		if bm.IsEmpty() {
 			return nil
 		}
-		mdBuf[mn] = bm
-		mn++
+		dims = append(dims, bm)
 	}
 	if len(scopes) > 0 {
 		bm := bi.scope.Query(scopes)
 		if bm.IsEmpty() {
 			return nil
 		}
-		mdBuf[mn] = bm
-		mn++
+		dims = append(dims, bm)
 	}
 	if len(resources) > 0 {
 		bm := bi.resource.QueryMultiple(resources)
 		if bm.IsEmpty() {
 			return nil
 		}
-		mdBuf[mn] = bm
-		mn++
+		dims = append(dims, bm)
 	}
 	if len(roles) > 0 {
 		bm := bi.role.QueryMultiple(roles)
 		if bm.IsEmpty() {
 			return nil
 		}
-		mdBuf[mn] = bm
-		mn++
+		dims = append(dims, bm)
 	}
 
 	var baseBM *roaring.Bitmap
-	switch mn {
+	switch len(dims) {
 	case 0:
 		baseBM = bi.universe
 	case 1:
-		baseBM = mdBuf[0]
+		baseBM = dims[0]
 	default:
-		baseBM = roaring.FastAnd(mdBuf[:mn]...)
+		baseBM = roaring.FastAnd(dims...)
 	}
 	if baseBM.IsEmpty() {
 		return nil
@@ -579,29 +550,26 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	}
 
 	bi := m.bi
-	var partsBuf [maxActionFilterParts]*roaring.Bitmap
-	pn := 0
+	parts := make([]*roaring.Bitmap, 0, 2)
 
 	actionBM := bi.action.QueryMultiple(actions)
 	if !actionBM.IsEmpty() {
-		partsBuf[pn] = roaring.FastAnd(baseBM, actionBM)
-		pn++
+		parts = append(parts, roaring.FastAnd(baseBM, actionBM))
 	}
 	if !bi.allowActionsBitmap.IsEmpty() {
 		aaBM := roaring.FastAnd(baseBM, bi.allowActionsBitmap)
 		if !aaBM.IsEmpty() {
-			partsBuf[pn] = aaBM
-			pn++
+			parts = append(parts, aaBM)
 		}
 	}
 
-	switch pn {
+	switch len(parts) {
 	case 0:
 		return roaring.New()
 	case 1:
-		return partsBuf[0]
+		return parts[0]
 	default:
-		return roaring.FastOr(partsBuf[0], partsBuf[1])
+		return roaring.FastOr(parts...)
 	}
 }
 
