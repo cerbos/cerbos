@@ -12,8 +12,8 @@ import (
 )
 
 // globDimension is a bitmap-based dimension index that supports both literal
-// and glob pattern keys. It mirrors the semantics of internal.GlobMap but
-// returns roaring bitmaps instead of rowSets.
+// and glob pattern keys. It mirrors the semantics of internal.GlobMap,
+// returning roaring bitmaps for queried values.
 type globDimension struct {
 	literals map[string]*roaring.Bitmap
 	globs    map[string]*roaring.Bitmap

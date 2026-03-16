@@ -99,6 +99,9 @@ func (bi *bitmapIndex) addToDimensions(b *Binding) {
 	addToLiteralMap(bi.fqnBindings, b.OriginFqn, id)
 }
 
+// removeFromDimensions removes the binding's ID from all dimension bitmaps.
+// It does NOT touch fqnBindings — that is managed by DeletePolicy, which needs
+// to inspect fqnBindings across origins before deciding whether to remove the binding.
 func (bi *bitmapIndex) removeFromDimensions(b *Binding) {
 	id := b.ID
 
