@@ -47,55 +47,19 @@ func (rt *RuleTable) Inspect() error {
 	for _, b := range rows {
 		policyKey := namer.PolicyKeyFromFQN(b.OriginFqn)
 
-		var result *responsev1.InspectPoliciesResponse_Result
-		if existingResult, ok := results[policyKey]; ok {
-			result = existingResult
-		} else {
+		result, ok := results[policyKey]
+		if !ok {
 			result = &responsev1.InspectPoliciesResponse_Result{
 				PolicyId: namer.PolicyKeyFromFQN(policyKey),
 			}
+			results[policyKey] = result
 		}
-		results[policyKey] = result
 
-		var actionSet util.StringSet
-		if existingActionSet, ok := actionSets[policyKey]; ok {
-			actionSet = existingActionSet
-		} else {
-			actionSet = make(util.StringSet)
-		}
-		actionSets[policyKey] = actionSet
-
-		var attrSet util.StringSet
-		if existingAttrSet, ok := attrSets[policyKey]; ok {
-			attrSet = existingAttrSet
-		} else {
-			attrSet = make(util.StringSet)
-		}
-		attrSets[policyKey] = attrSet
-
-		var constantSet util.StringSet
-		if existingConstantSet, ok := constantSets[policyKey]; ok {
-			constantSet = existingConstantSet
-		} else {
-			constantSet = make(util.StringSet)
-		}
-		constantSets[policyKey] = constantSet
-
-		var derivedRoleSet util.StringSet
-		if existingDerivedRoleSet, ok := derivedRoleSets[policyKey]; ok {
-			derivedRoleSet = existingDerivedRoleSet
-		} else {
-			derivedRoleSet = make(util.StringSet)
-		}
-		derivedRoleSets[policyKey] = derivedRoleSet
-
-		var variableSet util.StringSet
-		if existingVariableSet, ok := variableSets[policyKey]; ok {
-			variableSet = existingVariableSet
-		} else {
-			variableSet = make(util.StringSet)
-		}
-		variableSets[policyKey] = variableSet
+		actionSet := getOrInitStringSet(actionSets, policyKey)
+		attrSet := getOrInitStringSet(attrSets, policyKey)
+		constantSet := getOrInitStringSet(constantSets, policyKey)
+		derivedRoleSet := getOrInitStringSet(derivedRoleSets, policyKey)
+		variableSet := getOrInitStringSet(variableSets, policyKey)
 
 		if err := rt.inspectBinding(b, actionSet, attrSet, constantSet, derivedRoleSet, variableSet, result); err != nil {
 			return err
@@ -206,4 +170,13 @@ func (rt *RuleTable) Results() map[string]*responsev1.InspectPoliciesResponse_Re
 	}
 
 	return rt.results
+}
+
+func getOrInitStringSet(m map[string]util.StringSet, key string) util.StringSet {
+	if s, ok := m[key]; ok {
+		return s
+	}
+	s := make(util.StringSet)
+	m[key] = s
+	return s
 }

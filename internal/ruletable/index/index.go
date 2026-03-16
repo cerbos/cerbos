@@ -4,8 +4,8 @@
 package index
 
 import (
-	"encoding/binary"
 	"slices"
+	"strings"
 
 	"github.com/RoaringBitmap/roaring/v2"
 
@@ -15,11 +15,22 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cespare/xxhash/v2"
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+// Number of non-action dimensions that can be ANDed in Query (version, scope, resource, role, policyKind, principal).
+const maxNonActionDims = 6
+
+// Number of non-action, non-principal dimensions used in QueryMulti (version, scope, resource, role).
+const maxMultiDims = 4
+
+// Number of parts that applyActionFilter may combine (regular actions, AllowActions).
+const maxActionFilterParts = 2
+
+// Number of dimensions in queryAllowActions level-1 filter (version, scope, role, allowActionsBitmap).
+const maxAllowActionsDims = 4
 
 // functionalRuleRowFields lists proto field names that affect evaluation outcome.
 // Routing fields (scope, version, resource, role, action, principal) are excluded
@@ -32,10 +43,16 @@ var functionalRuleRowFields = map[protoreflect.Name]struct{}{
 	"from_role_policy": {},
 }
 
-var (
-	nonFunctionalChecksumFields = buildNonFunctionalChecksumFields()
-	hashSep                     = []byte{0}
-)
+var nonFunctionalChecksumFields = buildNonFunctionalChecksumFields()
+
+// routingKey uniquely identifies a binding's routing tuple plus its functional
+// checksum. Using a struct key (instead of a hash) for dedup eliminates the
+// possibility of hash collisions silently dropping rules.
+type routingKey struct {
+	scope, version, resource, role, action, principal string
+	allowActions                                      string // sorted, null-separated
+	funcSum                                           uint64
+}
 
 func buildNonFunctionalChecksumFields() map[string]struct{} {
 	res := make(map[string]struct{})
@@ -134,10 +151,10 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			action = v.Action
 		}
 
-		routingHash := computeRoutingHash(rule.Scope, rule.Version, rule.Resource,
+		rk := makeRoutingKey(rule.Scope, rule.Version, rule.Resource,
 			rule.Role, action, rule.Principal, allowActions, funcSum)
 
-		if existingID, dup := m.bi.bindingDedup[routingHash]; dup {
+		if existingID, dup := m.bi.bindingDedup[rk]; dup {
 			if b := m.bi.getBinding(existingID); b != nil {
 				b.Core.origins[rule.OriginFqn] = struct{}{}
 				addToLiteralMap(m.bi.fqnBindings, rule.OriginFqn, existingID)
@@ -165,43 +182,34 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 
 		m.bi.storeBinding(b)
 		m.bi.addToDimensions(b)
-		m.bi.bindingDedup[routingHash] = id
+		m.bi.bindingDedup[rk] = id
 	}
 
 	return nil
 }
 
-func computeRoutingHash(scope, version, resource, role, action, principal string,
+func makeRoutingKey(scope, version, resource, role, action, principal string,
 	allowActions map[string]struct{}, funcSum uint64,
-) uint64 {
-	h := xxhash.New()
-	_, _ = h.WriteString(scope)
-	_, _ = h.Write(hashSep)
-	_, _ = h.WriteString(version)
-	_, _ = h.Write(hashSep)
-	_, _ = h.WriteString(resource)
-	_, _ = h.Write(hashSep)
-	_, _ = h.WriteString(role)
-	_, _ = h.Write(hashSep)
-	_, _ = h.WriteString(action)
-	_, _ = h.Write(hashSep)
-	_, _ = h.WriteString(principal)
-	_, _ = h.Write(hashSep)
-	if allowActions != nil {
+) routingKey {
+	var aaKey string
+	if len(allowActions) > 0 {
 		sorted := make([]string, 0, len(allowActions))
 		for a := range allowActions {
 			sorted = append(sorted, a)
 		}
 		slices.Sort(sorted)
-		for _, a := range sorted {
-			_, _ = h.WriteString(a)
-			_, _ = h.Write(hashSep)
-		}
+		aaKey = strings.Join(sorted, "\x00")
 	}
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], funcSum)
-	_, _ = h.Write(buf[:])
-	return h.Sum64()
+	return routingKey{
+		scope:        scope,
+		version:      version,
+		resource:     resource,
+		role:         role,
+		action:       action,
+		principal:    principal,
+		allowActions: aaKey,
+		funcSum:      funcSum,
+	}
 }
 
 func (m *Index) GetAllRows() ([]*Binding, error) {
@@ -271,7 +279,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	}
 
 	// baseBM = AND of all non-action dimensions.
-	var dimsBuf [6]*roaring.Bitmap //nolint:mnd
+	var dimsBuf [maxNonActionDims]*roaring.Bitmap
 	n := 0
 	if versionBM != nil {
 		dimsBuf[n] = versionBM
@@ -351,7 +359,7 @@ func (m *Index) queryAllowActions(
 	res []*Binding,
 ) []*Binding {
 	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
-	var l1Buf [4]*roaring.Bitmap //nolint:mnd
+	var l1Buf [maxAllowActionsDims]*roaring.Bitmap
 	l1n := 0
 	if versionBM != nil {
 		l1Buf[l1n] = versionBM
@@ -502,7 +510,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 		return nil
 	}
 
-	var mdBuf [4]*roaring.Bitmap //nolint:mnd
+	var mdBuf [maxMultiDims]*roaring.Bitmap
 	mn := 0
 
 	if len(versions) > 0 {
@@ -575,7 +583,7 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	}
 
 	bi := m.bi
-	var partsBuf [2]*roaring.Bitmap //nolint:mnd
+	var partsBuf [maxActionFilterParts]*roaring.Bitmap
 	pn := 0
 
 	actionBM := bi.action.QueryMultiple(actions)
@@ -703,9 +711,9 @@ func (m *Index) DeletePolicy(fqn string) error {
 			m.bi.removeFromDimensions(b)
 			m.bi.freeID(id)
 
-			routingHash := computeRoutingHash(b.Scope, b.Version, b.Resource,
+			rk := makeRoutingKey(b.Scope, b.Version, b.Resource,
 				b.Role, b.Action, b.Principal, b.AllowActions, b.Core.sum)
-			delete(m.bi.bindingDedup, routingHash)
+			delete(m.bi.bindingDedup, rk)
 		} else if b.OriginFqn == fqn {
 			// Update OriginFqn to a surviving origin so audit trails
 			// and output attribution don't reference a deleted policy.
@@ -852,7 +860,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {
-			return progs, err
+			return nil, err
 		}
 
 		progs[i] = &CelProgram{Name: v.Name, Prog: p, Expr: v.Expr.Original}
