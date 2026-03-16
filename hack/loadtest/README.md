@@ -93,3 +93,7 @@ Prometheus and Grafana are started alongside Cerbos. Grafana is available at `ht
 ## Container Resource Limits
 
 The Cerbos container is capped at 4 CPUs and 512 MB RAM to ensure reproducible results. Adjust `docker-compose.yml` if needed.
+
+## GCP Two-VM Testing
+
+See [`gcp/README.md`](gcp/README.md) for running load tests on dedicated GCP VMs. Infrastructure is provisioned with Terraform (see `environments/gcp_loadtest` in the *private* [infrastructure repo](https://github.com/cerbos/infrastructure)).

@@ -24,51 +24,56 @@ Deploys Cerbos load tests across two GCP VMs for realistic network latency and i
 ## Prerequisites
 
 - `gcloud` CLI installed and authenticated, with a GCP project that has Compute Engine API enabled
+- Terraform ~> 1.10.5 (infrastructure provisioning)
 - Go installed locally (for `generate.go` and `printsummary` builds)
-- The cerbos repo checked out locally
+- The cerbos repo and [infrastructure repo](https://github.com/cerbos/infrastructure) checked out locally
 
 ## Workflow
 
 ```bash
-# 1. Configure (optional — defaults auto-detect your gcloud project)
-export GCP_PROJECT=my-project
+# 1. Provision infrastructure with Terraform
+cd infrastructure/environments/gcp_loadtest
+terraform init
+terraform apply
 
-# 2. Create VPC, firewall rules, and VMs
-./provision.sh
-
-# 3. Install Nix + Docker on the VMs (one-time)
+# 2. Install Nix + Docker on the VMs (one-time)
+cd cerbos/hack/loadtest/gcp
+export TERRAFORM_DIR=/path/to/infrastructure/environments/gcp_loadtest
 ./setup.sh
 
-# 4. Generate test data and build printsummary (from hack/loadtest/)
+# 3. Generate test data and build printsummary (from hack/loadtest/)
 cd hack/loadtest
 NUM_POLICIES=1000 ./loadtest.sh -g
-go build -tags printsummary -o work/printsummary .
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags printsummary -o work/printsummary .
 cd gcp
 
-# 5. Deploy policies, configs, Cerbos binary, and start services
+# 4. Deploy policies, configs, Cerbos binary, and start services
 ./deploy.sh
 
-# 6. Run load tests
+# 5. Run load tests
 RPS=500 DURATION_SECS=120 ./run.sh
+
+# 6. (Optional) Redeploy policies only (restarts Cerbos)
+NUM_POLICIES=500 ../loadtest.sh -g
+./deploy.sh -p
 
 # 7. (Optional) View Grafana dashboards via SSH tunnel
 gcloud compute ssh cerbos-loadtest-client --zone=us-central1-a -- -L 3000:localhost:3000
 # Then open http://localhost:3000
 
-# 8. Tear down all GCP resources
-./teardown.sh
+# 8. Tear down infrastructure
+cd infrastructure/environments/gcp_loadtest
+terraform destroy
 ```
 
 ## Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `env.sh` | Shared configuration (GCP project, zone, VM names, machine types, test params) |
-| `provision.sh` | Create VPC network, subnet, firewall rules, and both VMs (idempotent) |
+| `env.sh` | Shared configuration and helper functions; reads Terraform outputs when `TERRAFORM_DIR` is set |
 | `setup.sh` | Install Nix + Docker on client VM, create directory structure on both VMs |
-| `deploy.sh` | Upload policies/requests/configs, download Cerbos binary, start all services |
+| `deploy.sh` | Upload policies/requests/configs, download Cerbos binary, start all services. Use `-p` to redeploy policies only |
 | `run.sh` | Run warmup + sustained-rate + throughput tests, download results |
-| `teardown.sh` | Delete all GCP resources (with confirmation prompt) |
 
 ## Environment Variables
 
@@ -78,11 +83,9 @@ All variables have sensible defaults and can be overridden:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `GCP_PROJECT` | GCP project ID | Auto-detected from `gcloud config` |
+| `TERRAFORM_DIR` | Path to `infrastructure/environments/gcp_loadtest`; when set, GCP project, zone, and VM names are read from Terraform outputs | *(unset)* |
+| `GCP_PROJECT` | GCP project ID (fallback when `TERRAFORM_DIR` is not set) | Auto-detected from `gcloud config` |
 | `GCP_ZONE` | Compute zone | `us-central1-a` |
-| `PDP_MACHINE_TYPE` | PDP VM machine type | `c3-standard-4` |
-| `CLIENT_MACHINE_TYPE` | Client VM machine type | `e2-standard-4` |
-| `BOOT_DISK_SIZE` | Boot disk size for both VMs | `50GB` |
 
 ### Cerbos
 
@@ -107,8 +110,8 @@ All variables have sensible defaults and can be overridden:
 
 ## Verification
 
-1. After `provision.sh`: `gcloud compute instances list --filter="name~cerbos-loadtest"`
+1. After `terraform apply`: `terraform output` shows VM names and IPs
 2. After `setup.sh`: SSH to client VM, run `nix --version` and `docker --version`
 3. After `deploy.sh`: health check runs automatically; check Grafana via SSH tunnel
 4. After `run.sh`: results are in `hack/loadtest/results/gcp/`
-5. After `teardown.sh`: `gcloud compute instances list` shows no loadtest VMs
+5. After `terraform destroy`: all loadtest resources are removed
