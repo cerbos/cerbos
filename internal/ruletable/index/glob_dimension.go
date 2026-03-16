@@ -15,7 +15,10 @@ import (
 // and glob pattern keys. It mirrors the semantics of internal.GlobMap,
 // returning roaring bitmaps for queried values.
 type globDimension struct {
+	// Raw maps rather than dimension[string] because globs and compiled have
+	// coupled lifecycles that don't fit the dimension abstraction cleanly.
 	literals map[string]*roaring.Bitmap
+	// `globs` and `compiled` share the same key
 	globs    map[string]*roaring.Bitmap
 	compiled map[string]glob.Glob
 }
@@ -28,8 +31,6 @@ func newGlobDimension() *globDimension {
 	}
 }
 
-// Set adds id to the bitmap for the given key, creating it if necessary.
-// If key contains a '*', it's treated as a glob pattern.
 func (gd *globDimension) Set(key string, id uint32) {
 	if strings.ContainsRune(key, '*') { //nolint:nestif
 		bm, ok := gd.globs[key]
@@ -53,8 +54,6 @@ func (gd *globDimension) Set(key string, id uint32) {
 	}
 }
 
-// Remove removes id from the bitmap for the given key. If the bitmap becomes
-// empty, the key is deleted.
 func (gd *globDimension) Remove(key string, id uint32) {
 	if strings.ContainsRune(key, '*') { //nolint:nestif
 		if bm, ok := gd.globs[key]; ok {
@@ -132,7 +131,6 @@ func (gd *globDimension) QueryMultiple(values []string) *roaring.Bitmap {
 	}
 }
 
-// GetAllKeys returns all literal and glob keys.
 func (gd *globDimension) GetAllKeys() []string {
 	keys := make([]string, 0, len(gd.literals)+len(gd.globs))
 	for k := range gd.literals {
