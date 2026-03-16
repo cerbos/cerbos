@@ -212,7 +212,7 @@ func (c *Cmd) startPDP(ctx context.Context) (*pdpInstance, error) {
 		client:   client,
 	}
 
-	serverCtx, stopFn := context.WithCancel(context.Background())
+	serverCtx, stopFn := context.WithCancel(context.Background()) //nolint:gosec
 	instance.stopFn = stopFn
 
 	c.goroutine(func() {

@@ -13,7 +13,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -99,7 +98,13 @@ func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *b
 
 	var files []string
 
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s: %w", dir, err)
+	}
+	defer root.Close()
+
+	if err := fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -108,30 +113,24 @@ func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *b
 			return nil
 		}
 
-		key, err := filepath.Rel(dir, path)
-		if err != nil {
-			return err
-		}
-
-		fileBytes, err := os.ReadFile(path)
+		fileBytes, err := root.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("failed to read file %q: %w", path, err)
 		}
 
-		tb.Logf("[START] Copying %s", key)
-		if err := bucket.WriteAll(ctx, key, fileBytes, nil); err != nil {
-			tb.Logf("[ERROR] Copying %s: %v", key, err)
+		tb.Logf("[START] Copying %s", path)
+		if err := bucket.WriteAll(ctx, path, fileBytes, nil); err != nil {
+			tb.Logf("[ERROR] Copying %s: %v", path, err)
 			return fmt.Errorf("failed to write to bucket: %w", err)
 		}
-		tb.Logf("[END] Copying %s", key)
+		tb.Logf("[END] Copying %s", path)
 
-		files = append(files, key)
-
+		files = append(files, path)
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
+
 	return files, err
 }
 

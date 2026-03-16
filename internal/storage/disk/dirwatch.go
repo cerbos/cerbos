@@ -52,7 +52,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.Sub
 		return fmt.Errorf("failed to watch directory %s: %w", dir, err)
 	}
 
-	go dw.handleEvents(ctx)
+	go dw.handleEvents(ctx) //nolint:gosec
 
 	return nil
 }

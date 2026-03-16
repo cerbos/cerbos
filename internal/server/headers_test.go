@@ -35,7 +35,7 @@ func TestPeerFromContext(t *testing.T) {
 	})
 
 	t.Run("HTTP", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/", nil)
+		req := httptest.NewRequestWithContext(t.Context(), "GET", "/", nil)
 		req.Header.Set(audit.HTTPRemoteAddrKey, "attempted spoof")
 		req.Header.Set(audit.SetByGRPCGatewayKey, "attempted spoof")
 		req.Header.Set("User-Agent", "peer-from-context")
