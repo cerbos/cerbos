@@ -16,13 +16,13 @@ type bitmapIndex struct {
 	action             *globDimension
 	coresBySum         map[uint64]*FunctionalCore // dedup behavioural part
 	bindingDedup       map[routingKey]uint32      // dedup whole binding (incl. functional sum)
-	version            map[string]*roaring.Bitmap
-	scope              map[string]*roaring.Bitmap
+	version            dimension[string]
+	scope              dimension[string]
 	role               *globDimension
-	policyKind         map[policyv1.Kind]*roaring.Bitmap
+	policyKind         dimension[policyv1.Kind]
 	resource           *globDimension
-	fqnBindings        map[string]*roaring.Bitmap
-	principal          map[string]*roaring.Bitmap
+	fqnBindings        dimension[string]
+	principal          dimension[string]
 	universe           *roaring.Bitmap
 	allowActionsBitmap *roaring.Bitmap
 	freeIDs            []uint32
@@ -32,16 +32,16 @@ type bitmapIndex struct {
 
 func newBitmapIndex() *bitmapIndex {
 	return &bitmapIndex{
-		version:            make(map[string]*roaring.Bitmap),
-		scope:              make(map[string]*roaring.Bitmap),
+		version:            newDimension[string](),
+		scope:              newDimension[string](),
 		role:               newGlobDimension(),
 		action:             newGlobDimension(),
 		resource:           newGlobDimension(),
-		policyKind:         make(map[policyv1.Kind]*roaring.Bitmap),
-		principal:          make(map[string]*roaring.Bitmap),
+		policyKind:         newDimension[policyv1.Kind](),
+		principal:          newDimension[string](),
 		universe:           roaring.New(),
 		allowActionsBitmap: roaring.New(),
-		fqnBindings:        make(map[string]*roaring.Bitmap),
+		fqnBindings:        newDimension[string](),
 		coresBySum:         make(map[uint64]*FunctionalCore),
 		bindingDedup:       make(map[routingKey]uint32),
 	}
@@ -50,131 +50,137 @@ func newBitmapIndex() *bitmapIndex {
 // allocID returns a uint32 to use as a binding's bit position across all bitmaps.
 // It reuses IDs freed by freeID so that repeated add/remove cycles don't grow the
 // bindings slice or make the bitmaps increasingly sparse.
-func (bi *bitmapIndex) allocID() uint32 {
-	if len(bi.freeIDs) > 0 {
-		id := bi.freeIDs[len(bi.freeIDs)-1]
-		bi.freeIDs = bi.freeIDs[:len(bi.freeIDs)-1]
+func (idx *bitmapIndex) allocID() uint32 {
+	if len(idx.freeIDs) > 0 {
+		id := idx.freeIDs[len(idx.freeIDs)-1]
+		idx.freeIDs = idx.freeIDs[:len(idx.freeIDs)-1]
 		return id
 	}
-	id := bi.nextID
-	bi.nextID++
+	id := idx.nextID
+	idx.nextID++
 	return id
 }
 
-func (bi *bitmapIndex) freeID(id uint32) {
-	bi.bindings[id] = nil
-	bi.freeIDs = append(bi.freeIDs, id)
+func (idx *bitmapIndex) freeID(id uint32) {
+	idx.bindings[id] = nil
+	idx.freeIDs = append(idx.freeIDs, id)
 }
 
-func (bi *bitmapIndex) addBinding(b *Binding) {
-	id := bi.allocID()
+func (idx *bitmapIndex) addBinding(b *Binding) {
+	id := idx.allocID()
 	b.ID = id
-	if int(id) < len(bi.bindings) {
-		bi.bindings[id] = b
+	if int(id) < len(idx.bindings) {
+		idx.bindings[id] = b
 	} else {
-		bi.bindings = append(bi.bindings, b)
+		idx.bindings = append(idx.bindings, b)
 	}
 
-	bi.universe.Add(id)
-	addToLiteralMap(bi.version, b.Version, id)
-	addToLiteralMap(bi.scope, b.Scope, id)
+	idx.universe.Add(id)
 
-	bi.role.Set(b.Role, id)
-	bi.resource.Set(b.Resource, id)
+	idx.version.Add(b.Version, id)
+	idx.scope.Add(b.Scope, id)
+
+	idx.role.Set(b.Role, id)
+	idx.resource.Set(b.Resource, id)
 
 	if b.AllowActions != nil {
-		bi.allowActionsBitmap.Add(id)
+		idx.allowActionsBitmap.Add(id)
 	} else if b.Action != "" {
-		bi.action.Set(b.Action, id)
+		idx.action.Set(b.Action, id)
 	}
 
-	addToKindMap(bi.policyKind, b.Core.PolicyKind, id)
+	idx.policyKind.Add(b.Core.PolicyKind, id)
 
 	if b.Principal != "" {
-		addToLiteralMap(bi.principal, b.Principal, id)
+		idx.principal.Add(b.Principal, id)
 	}
 
-	addToLiteralMap(bi.fqnBindings, b.OriginFqn, id)
+	idx.fqnBindings.Add(b.OriginFqn, id)
 }
 
 // removeBinding removes the binding from the slice and all dimension bitmaps,
 // and returns the ID to the free list.
 // It does NOT touch fqnBindings — that is managed by DeletePolicy, which needs
 // to inspect fqnBindings across origins before deciding whether to remove the binding.
-func (bi *bitmapIndex) removeBinding(b *Binding) {
+func (idx *bitmapIndex) removeBinding(b *Binding) {
 	id := b.ID
 
-	bi.universe.Remove(id)
-	removeFromLiteralMap(bi.version, b.Version, id)
-	removeFromLiteralMap(bi.scope, b.Scope, id)
+	idx.universe.Remove(id)
+	idx.version.Remove(b.Version, id)
+	idx.scope.Remove(b.Scope, id)
 
-	bi.role.Remove(b.Role, id)
-	bi.resource.Remove(b.Resource, id)
+	idx.role.Remove(b.Role, id)
+	idx.resource.Remove(b.Resource, id)
 
 	if b.AllowActions != nil {
-		bi.allowActionsBitmap.Remove(id)
+		idx.allowActionsBitmap.Remove(id)
 	} else if b.Action != "" {
-		bi.action.Remove(b.Action, id)
+		idx.action.Remove(b.Action, id)
 	}
 
-	removeFromKindMap(bi.policyKind, b.Core.PolicyKind, id)
+	idx.policyKind.Remove(b.Core.PolicyKind, id)
 
 	if b.Principal != "" {
-		removeFromLiteralMap(bi.principal, b.Principal, id)
+		idx.principal.Remove(b.Principal, id)
 	}
 
-	bi.freeID(id)
+	idx.freeID(id)
 }
 
-func (bi *bitmapIndex) getBinding(id uint32) *Binding {
-	if int(id) >= len(bi.bindings) {
-		return nil
-	}
-	return bi.bindings[id]
+func (idx *bitmapIndex) getBinding(id uint32) *Binding {
+	return idx.bindings[id]
 }
 
-func addToLiteralMap(m map[string]*roaring.Bitmap, key string, id uint32) {
-	bm, ok := m[key]
+// dimension is a thin wrapper around map[T]*roaring.Bitmap for exact-match dimensions.
+type dimension[T comparable] struct {
+	m map[T]*roaring.Bitmap
+}
+
+func newDimension[T comparable]() dimension[T] {
+	return dimension[T]{m: make(map[T]*roaring.Bitmap)}
+}
+
+func (d dimension[T]) Add(key T, id uint32) {
+	bm, ok := d.m[key]
 	if !ok {
 		bm = roaring.New()
-		m[key] = bm
+		d.m[key] = bm
 	}
 	bm.Add(id)
 }
 
-func removeFromLiteralMap(m map[string]*roaring.Bitmap, key string, id uint32) {
-	if bm, ok := m[key]; ok {
+func (d dimension[T]) Remove(key T, id uint32) {
+	if bm, ok := d.m[key]; ok {
 		bm.Remove(id)
 		if bm.IsEmpty() {
-			delete(m, key)
+			delete(d.m, key)
 		}
 	}
 }
 
-func addToKindMap(m map[policyv1.Kind]*roaring.Bitmap, kind policyv1.Kind, id uint32) {
-	bm, ok := m[kind]
-	if !ok {
-		bm = roaring.New()
-		m[kind] = bm
-	}
-	bm.Add(id)
+func (d dimension[T]) Get(key T) (*roaring.Bitmap, bool) {
+	bm, ok := d.m[key]
+	return bm, ok
 }
 
-func removeFromKindMap(m map[policyv1.Kind]*roaring.Bitmap, kind policyv1.Kind, id uint32) {
-	if bm, ok := m[kind]; ok {
-		bm.Remove(id)
-		if bm.IsEmpty() {
-			delete(m, kind)
-		}
-	}
+func (d dimension[T]) Delete(key T) {
+	delete(d.m, key)
 }
 
-// queryLiteralMap returns OR(m[k] for k in keys). Keys must not be empty.
+func (d dimension[T]) Keys() []T {
+	keys := make([]T, 0, len(d.m))
+	for k := range d.m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Query returns OR(d[k] for k in keys).
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func queryLiteralMap(m map[string]*roaring.Bitmap, keys []string) *roaring.Bitmap {
+func (d dimension[T]) Query(keys []T) *roaring.Bitmap {
 	parts := make([]*roaring.Bitmap, 0, len(keys))
 	for _, k := range keys {
-		if bm, ok := m[k]; ok {
+		if bm, ok := d.m[k]; ok {
 			parts = append(parts, bm)
 		}
 	}

@@ -157,7 +157,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		if existingID, dup := m.bi.bindingDedup[rk]; dup {
 			if b := m.bi.getBinding(existingID); b != nil {
 				b.Core.origins[rule.OriginFqn] = struct{}{}
-				addToLiteralMap(m.bi.fqnBindings, rule.OriginFqn, existingID)
+				m.bi.fqnBindings.Add(rule.OriginFqn, existingID)
 			}
 			continue
 		}
@@ -233,14 +233,14 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	var versionBM, scopeBM, resourceBM, roleBM, policyKindBM, principalBM *roaring.Bitmap
 
 	if version != "" {
-		bm, ok := bi.version[version]
+		bm, ok := bi.version.Get(version)
 		if !ok {
 			return nil
 		}
 		versionBM = bm
 	}
 	{
-		bm, ok := bi.scope[scope]
+		bm, ok := bi.scope.Get(scope)
 		if !ok {
 			return nil
 		}
@@ -260,14 +260,14 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		}
 	}
 	if policyKind != 0 {
-		bm, ok := bi.policyKind[policyKind]
+		bm, ok := bi.policyKind.Get(policyKind)
 		if !ok {
 			return nil
 		}
 		policyKindBM = bm
 	}
 	if principalID != "" {
-		bm, ok := bi.principal[principalID]
+		bm, ok := bi.principal.Get(principalID)
 		if !ok {
 			return nil
 		}
@@ -510,7 +510,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	mn := 0
 
 	if len(versions) > 0 {
-		bm := queryLiteralMap(bi.version, versions)
+		bm := bi.version.Query(versions)
 		if bm.IsEmpty() {
 			return nil
 		}
@@ -518,7 +518,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 		mn++
 	}
 	if len(scopes) > 0 {
-		bm := queryLiteralMap(bi.scope, scopes)
+		bm := bi.scope.Query(scopes)
 		if bm.IsEmpty() {
 			return nil
 		}
@@ -677,7 +677,7 @@ func (m *Index) DeletePolicy(fqn string) error {
 		return nil
 	}
 
-	fqnBM, ok := m.bi.fqnBindings[fqn]
+	fqnBM, ok := m.bi.fqnBindings.Get(fqn)
 	if !ok {
 		return nil
 	}
@@ -697,7 +697,7 @@ func (m *Index) DeletePolicy(fqn string) error {
 		// Check if any remaining origin still references this binding.
 		referencedByOther := false
 		for remainingFQN := range b.Core.origins {
-			if bm, ok := m.bi.fqnBindings[remainingFQN]; ok && bm.Contains(id) {
+			if bm, ok := m.bi.fqnBindings.Get(remainingFQN); ok && bm.Contains(id) {
 				referencedByOther = true
 				break
 			}
@@ -723,17 +723,13 @@ func (m *Index) DeletePolicy(fqn string) error {
 		}
 	}
 
-	delete(m.bi.fqnBindings, fqn)
+	m.bi.fqnBindings.Delete(fqn)
 
 	return nil
 }
 
 func (m *Index) GetScopes() ([]string, error) {
-	res := make([]string, 0, len(m.bi.scope))
-	for scope := range m.bi.scope {
-		res = append(res, scope)
-	}
-	return res, nil
+	return m.bi.scope.Keys(), nil
 }
 
 func (m *Index) GetRoleGlobs() ([]string, error) {
@@ -741,11 +737,7 @@ func (m *Index) GetRoleGlobs() ([]string, error) {
 }
 
 func (m *Index) GetVersions() []string {
-	res := make([]string, 0, len(m.bi.version))
-	for v := range m.bi.version {
-		res = append(res, v)
-	}
-	return res
+	return m.bi.version.Keys()
 }
 
 func (m *Index) GetActions() []string {
@@ -761,7 +753,7 @@ func (m *Index) ScopedRoleGlobExists(scope, role string) (bool, error) {
 	if roleBM.IsEmpty() {
 		return false, nil
 	}
-	scopeBM, ok := m.bi.scope[scope]
+	scopeBM, ok := m.bi.scope.Get(scope)
 	if !ok {
 		return false, nil
 	}
@@ -773,12 +765,12 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 		return false, nil
 	}
 
-	versionBM, ok := m.bi.version[version]
+	versionBM, ok := m.bi.version.Get(version)
 	if !ok {
 		return false, nil
 	}
 
-	scopeBM := queryLiteralMap(m.bi.scope, scopes)
+	scopeBM := m.bi.scope.Query(scopes)
 	if scopeBM.IsEmpty() {
 		return false, nil
 	}
@@ -788,7 +780,7 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 		return false, nil
 	}
 
-	kindBM, ok := m.bi.policyKind[policyv1.Kind_KIND_RESOURCE]
+	kindBM, ok := m.bi.policyKind.Get(policyv1.Kind_KIND_RESOURCE)
 	if !ok {
 		return false, nil
 	}
@@ -801,17 +793,17 @@ func (m *Index) ScopedPrincipalExists(version string, scopes []string) (bool, er
 		return false, nil
 	}
 
-	versionBM, ok := m.bi.version[version]
+	versionBM, ok := m.bi.version.Get(version)
 	if !ok {
 		return false, nil
 	}
 
-	scopeBM := queryLiteralMap(m.bi.scope, scopes)
+	scopeBM := m.bi.scope.Query(scopes)
 	if scopeBM.IsEmpty() {
 		return false, nil
 	}
 
-	kindBM, ok := m.bi.policyKind[policyv1.Kind_KIND_PRINCIPAL]
+	kindBM, ok := m.bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
 	if !ok {
 		return false, nil
 	}
