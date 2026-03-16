@@ -485,6 +485,31 @@ func TestToRuleRowAllowActions(t *testing.T) {
 	require.Contains(t, aaRow.AllowActions.Actions, "edit")
 }
 
+func TestDeletePolicyUpdatesOriginFqn(t *testing.T) {
+	impl := index.New()
+
+	// Two FQNs produce identical routing+functional hashes → deduplicated onto one binding.
+	rules := []*runtimev1.RuleTable_RuleRow{
+		makeRow("policy_a"),
+		makeRow("policy_b"),
+	}
+
+	require.NoError(t, impl.IndexRules(rules))
+
+	allRows, err := impl.GetAllRows()
+	require.NoError(t, err)
+	require.Len(t, allRows, 1)
+	require.Equal(t, "policy_a", allRows[0].OriginFqn, "first-indexed FQN should be primary")
+
+	// Delete the primary origin — binding should survive with updated OriginFqn.
+	require.NoError(t, impl.DeletePolicy("policy_a"))
+
+	allRows, err = impl.GetAllRows()
+	require.NoError(t, err)
+	require.Len(t, allRows, 1, "binding should survive with remaining origin")
+	require.Equal(t, "policy_b", allRows[0].OriginFqn, "OriginFqn should update to a surviving origin")
+}
+
 func makeRow(fqn string, mutators ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
 	r := &runtimev1.RuleTable_RuleRow{
 		OriginFqn:  fqn,

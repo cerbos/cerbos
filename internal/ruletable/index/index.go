@@ -686,6 +686,13 @@ func (m *Index) DeletePolicy(fqn string) error {
 			routingHash := computeRoutingHash(b.Scope, b.Version, b.Resource,
 				b.Role, b.Action, b.Principal, b.AllowActions, b.Core.sum)
 			delete(m.bi.bindingDedup, routingHash)
+		} else if b.OriginFqn == fqn {
+			// Update OriginFqn to a surviving origin so audit trails
+			// and output attribution don't reference a deleted policy.
+			for remainingFQN := range b.Core.origins {
+				b.OriginFqn = remainingFQN
+				break
+			}
 		}
 
 		if len(b.Core.origins) == 0 {
