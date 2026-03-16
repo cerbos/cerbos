@@ -32,6 +32,11 @@ func TestServe(t *testing.T) {
 			require.NoError(t, err, "Failed to get free port")
 
 			config := map[string]any{
+				"auxData": map[string]any{
+					"jwt": map[string]any{
+						"disableVerification": true,
+					},
+				},
 				"schema": map[string]any{
 					"enforcement": "reject",
 				},
