@@ -510,6 +510,110 @@ func TestDeletePolicyUpdatesOriginFqn(t *testing.T) {
 	require.Equal(t, "policy_b", allRows[0].OriginFqn, "OriginFqn should update to a surviving origin")
 }
 
+func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
+	t.Run("action not in AllowActions produces synthetic DENY", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}, "list": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.Query("default", "document", "", "delete", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "")
+		require.Len(t, res, 1)
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, res[0].Core.Effect)
+		require.True(t, res[0].Core.FromRolePolicy)
+		require.True(t, res[0].NoMatchForScopePermissions)
+	})
+
+	t.Run("action in AllowActions without condition produces no synthetic DENY", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}, "list": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.Query("default", "document", "", "view", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "")
+		require.Len(t, res, 0)
+	})
+
+	t.Run("action in AllowActions with condition produces conditional synthetic DENY", func(t *testing.T) {
+		impl := index.New()
+		cond := &runtimev1.Condition{
+			Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: "request.resource.attr.public == true"}},
+		}
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.Condition = cond
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.Query("default", "document", "", "view", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "")
+		require.Len(t, res, 1)
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, res[0].Core.Effect)
+		require.True(t, res[0].Core.FromRolePolicy)
+
+		// Condition must be wrapped in Condition_None.
+		noneOp, ok := res[0].Core.Condition.Op.(*runtimev1.Condition_None)
+		require.True(t, ok, "condition should be wrapped in Condition_None")
+		require.Len(t, noneOp.None.Expr, 1)
+		require.Equal(t, cond, noneOp.None.Expr[0])
+	})
+
+	t.Run("multiple roles with different AllowActions sets", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}},
+					},
+				}
+			}),
+			makeRow("rp2", func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "editor"
+				r.Resource = "document"
+				r.Effect = effectv1.Effect_EFFECT_DENY // different effect to avoid dedup with viewer
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}, "edit": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.Query("default", "document", "", "edit", []string{"viewer", "editor"}, policyv1.Kind_KIND_RESOURCE, "")
+
+		// Only viewer should get a synthetic DENY (edit is not in viewer's AllowActions).
+		// Editor has edit in its AllowActions with no condition, so no synthetic DENY.
+		require.Len(t, res, 1)
+		require.True(t, res[0].NoMatchForScopePermissions)
+		require.Equal(t, "viewer", res[0].Role)
+	})
+}
+
 func makeRow(fqn string, mutators ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
 	r := &runtimev1.RuleTable_RuleRow{
 		OriginFqn:  fqn,
