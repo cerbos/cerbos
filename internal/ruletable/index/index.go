@@ -271,34 +271,41 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	}
 
 	// baseBM = AND of all non-action dimensions.
-	nonNilDims := make([]*roaring.Bitmap, 0, 6) //nolint:mnd
+	var dimsBuf [6]*roaring.Bitmap //nolint:mnd
+	n := 0
 	if versionBM != nil {
-		nonNilDims = append(nonNilDims, versionBM)
+		dimsBuf[n] = versionBM
+		n++
 	}
 	if scopeBM != nil {
-		nonNilDims = append(nonNilDims, scopeBM)
+		dimsBuf[n] = scopeBM
+		n++
 	}
 	if resourceBM != nil {
-		nonNilDims = append(nonNilDims, resourceBM)
+		dimsBuf[n] = resourceBM
+		n++
 	}
 	if roleBM != nil {
-		nonNilDims = append(nonNilDims, roleBM)
+		dimsBuf[n] = roleBM
+		n++
 	}
 	if policyKindBM != nil {
-		nonNilDims = append(nonNilDims, policyKindBM)
+		dimsBuf[n] = policyKindBM
+		n++
 	}
 	if principalBM != nil {
-		nonNilDims = append(nonNilDims, principalBM)
+		dimsBuf[n] = principalBM
+		n++
 	}
 
 	var baseBM *roaring.Bitmap
-	switch len(nonNilDims) {
+	switch n {
 	case 0:
 		baseBM = bi.universe
 	case 1:
-		baseBM = nonNilDims[0]
+		baseBM = dimsBuf[0]
 	default:
-		baseBM = roaring.FastAnd(nonNilDims...)
+		baseBM = roaring.FastAnd(dimsBuf[:n]...)
 	}
 	if baseBM.IsEmpty() {
 		return nil
@@ -344,23 +351,28 @@ func (m *Index) queryAllowActions(
 	res []*Binding,
 ) []*Binding {
 	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
-	level1Dims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
+	var l1Buf [4]*roaring.Bitmap //nolint:mnd
+	l1n := 0
 	if versionBM != nil {
-		level1Dims = append(level1Dims, versionBM)
+		l1Buf[l1n] = versionBM
+		l1n++
 	}
 	if scopeBM != nil {
-		level1Dims = append(level1Dims, scopeBM)
+		l1Buf[l1n] = scopeBM
+		l1n++
 	}
 	if roleBM != nil {
-		level1Dims = append(level1Dims, roleBM)
+		l1Buf[l1n] = roleBM
+		l1n++
 	}
-	level1Dims = append(level1Dims, bi.allowActionsBitmap)
+	l1Buf[l1n] = bi.allowActionsBitmap
+	l1n++
 
 	var level1BM *roaring.Bitmap
-	if len(level1Dims) == 1 {
-		level1BM = level1Dims[0]
+	if l1n == 1 {
+		level1BM = l1Buf[0]
 	} else {
-		level1BM = roaring.FastAnd(level1Dims...)
+		level1BM = roaring.FastAnd(l1Buf[:l1n]...)
 	}
 	if level1BM.IsEmpty() {
 		return res
@@ -490,45 +502,50 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 		return nil
 	}
 
-	dims := make([]*roaring.Bitmap, 0, 5) //nolint:mnd
+	var mdBuf [4]*roaring.Bitmap //nolint:mnd
+	mn := 0
 
 	if len(versions) > 0 {
 		bm := queryLiteralMap(bi.version, versions)
 		if bm.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
+		mdBuf[mn] = bm
+		mn++
 	}
 	if len(scopes) > 0 {
 		bm := queryLiteralMap(bi.scope, scopes)
 		if bm.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
+		mdBuf[mn] = bm
+		mn++
 	}
 	if len(resources) > 0 {
 		bm := bi.resource.QueryMultiple(resources)
 		if bm.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
+		mdBuf[mn] = bm
+		mn++
 	}
 	if len(roles) > 0 {
 		bm := bi.role.QueryMultiple(roles)
 		if bm.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
+		mdBuf[mn] = bm
+		mn++
 	}
 
 	var baseBM *roaring.Bitmap
-	switch len(dims) {
+	switch mn {
 	case 0:
 		baseBM = bi.universe
 	case 1:
-		baseBM = dims[0]
+		baseBM = mdBuf[0]
 	default:
-		baseBM = roaring.FastAnd(dims...)
+		baseBM = roaring.FastAnd(mdBuf[:mn]...)
 	}
 	if baseBM.IsEmpty() {
 		return nil
@@ -558,26 +575,29 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	}
 
 	bi := m.bi
-	parts := make([]*roaring.Bitmap, 0, 2) //nolint:mnd
+	var partsBuf [2]*roaring.Bitmap //nolint:mnd
+	pn := 0
 
 	actionBM := bi.action.QueryMultiple(actions)
 	if !actionBM.IsEmpty() {
-		parts = append(parts, roaring.FastAnd(baseBM, actionBM))
+		partsBuf[pn] = roaring.FastAnd(baseBM, actionBM)
+		pn++
 	}
 	if !bi.allowActionsBitmap.IsEmpty() {
 		aaBM := roaring.FastAnd(baseBM, bi.allowActionsBitmap)
 		if !aaBM.IsEmpty() {
-			parts = append(parts, aaBM)
+			partsBuf[pn] = aaBM
+			pn++
 		}
 	}
 
-	switch len(parts) {
+	switch pn {
 	case 0:
 		return roaring.New()
 	case 1:
-		return parts[0]
+		return partsBuf[0]
 	default:
-		return roaring.FastOr(parts...)
+		return roaring.FastOr(partsBuf[0], partsBuf[1])
 	}
 }
 
@@ -770,7 +790,7 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 		return false, nil
 	}
 
-	return roaring.FastAnd(versionBM, scopeBM, resourceBM, kindBM).GetCardinality() > 0, nil
+	return intersectionNonEmpty(versionBM, scopeBM, resourceBM, kindBM), nil
 }
 
 func (m *Index) ScopedPrincipalExists(version string, scopes []string) (bool, error) {
@@ -793,7 +813,7 @@ func (m *Index) ScopedPrincipalExists(version string, scopes []string) (bool, er
 		return false, nil
 	}
 
-	return roaring.FastAnd(versionBM, scopeBM, kindBM).GetCardinality() > 0, nil
+	return intersectionNonEmpty(versionBM, scopeBM, kindBM), nil
 }
 
 func (m *Index) Reset() {
@@ -839,4 +859,34 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	}
 
 	return progs, nil
+}
+
+// intersectionNonEmpty returns true if the intersection of all bitmaps is
+// non-empty without allocating any new bitmaps. It iterates the smallest
+// bitmap by cardinality and checks containment in the others.
+func intersectionNonEmpty(bitmaps ...*roaring.Bitmap) bool {
+	minIdx := 0
+	minCard := bitmaps[0].GetCardinality()
+	for i := 1; i < len(bitmaps); i++ {
+		if c := bitmaps[i].GetCardinality(); c < minCard {
+			minCard = c
+			minIdx = i
+		}
+	}
+
+	iter := bitmaps[minIdx].Iterator()
+	for iter.HasNext() {
+		v := iter.Next()
+		inAll := true
+		for i, bm := range bitmaps {
+			if i != minIdx && !bm.Contains(v) {
+				inAll = false
+				break
+			}
+		}
+		if inAll {
+			return true
+		}
+	}
+	return false
 }

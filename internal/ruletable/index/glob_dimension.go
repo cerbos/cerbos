@@ -79,25 +79,33 @@ func (gd *globDimension) Remove(key string, id uint32) {
 // callers must not mutate it.
 func (gd *globDimension) Query(value string) *roaring.Bitmap {
 	literalBM := gd.literals[value]
-	globs := gd.getMatchingGlobs(value)
 
-	if len(globs) == 0 {
+	if len(gd.compiled) == 0 {
 		if literalBM != nil {
 			return literalBM
 		}
 		return roaring.New()
 	}
 
-	result := roaring.New()
+	// Collect literal + matching glob bitmaps and combine with FastOr.
+	var parts []*roaring.Bitmap
 	if literalBM != nil {
-		result.Or(literalBM)
+		parts = append(parts, literalBM)
 	}
-	for _, pattern := range globs {
-		if bm, ok := gd.globs[pattern]; ok {
-			result.Or(bm)
+	for pattern, compiled := range gd.compiled {
+		if compiled.Match(value) {
+			parts = append(parts, gd.globs[pattern])
 		}
 	}
-	return result
+
+	switch len(parts) {
+	case 0:
+		return roaring.New()
+	case 1:
+		return parts[0]
+	default:
+		return roaring.FastOr(parts...)
+	}
 }
 
 // QueryMultiple returns OR of all bitmaps matching any of the given values.
@@ -108,9 +116,9 @@ func (gd *globDimension) QueryMultiple(values []string) *roaring.Bitmap {
 		if bm, ok := gd.literals[v]; ok {
 			parts = append(parts, bm)
 		}
-		for _, pattern := range gd.getMatchingGlobs(v) {
-			if bm, ok := gd.globs[pattern]; ok {
-				parts = append(parts, bm)
+		for pattern, compiled := range gd.compiled {
+			if compiled.Match(v) {
+				parts = append(parts, gd.globs[pattern])
 			}
 		}
 	}
@@ -134,14 +142,4 @@ func (gd *globDimension) GetAllKeys() []string {
 		keys = append(keys, k)
 	}
 	return keys
-}
-
-func (gd *globDimension) getMatchingGlobs(key string) []string {
-	var matches []string
-	for pattern, compiled := range gd.compiled {
-		if compiled.Match(key) {
-			matches = append(matches, pattern)
-		}
-	}
-	return matches
 }
