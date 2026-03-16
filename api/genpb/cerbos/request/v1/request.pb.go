@@ -2009,19 +2009,15 @@ const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\aactions\x12A\n" +
 	"\bresource\x18\x02 \x01(\v2\x1a.cerbos.engine.v1.ResourceB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\bresource:\x1e\x92A\x1b\n" +
 	"\x192\x17Check resources requestB\x12\n" +
-	"\x10_request_context\"\xb2\a\n" +
+	"\x10_request_context\"\xef\x02\n" +
 	"\aAuxData\x120\n" +
-	"\x03jwt\x18\x01 \x01(\v2\x1e.cerbos.request.v1.AuxData.JWTR\x03jwt\x1a\xb0\x06\n" +
-	"\x03JWT\x12\xc7\x04\n" +
-	"\x05token\x18\x01 \x01(\tB\xb0\x04\x92A\x9f\x042\x1dJWT from the original requestJ\xc9\x03\"eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX\"\x82\x03\x1a\n" +
-	"\x14x-example-show-value\x12\x02 \x00\x82\x03\x14\n" +
-	"\x0ex-fill-example\x12\x02 \x00\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x05token\x12\xb8\x01\n" +
+	"\x03jwt\x18\x01 \x01(\v2\x1e.cerbos.request.v1.AuxData.JWTR\x03jwt\x1a\xe9\x01\n" +
+	"\x03JWT\x12E\n" +
+	"\x05token\x18\x01 \x01(\tB/\x92A\x1f2\x1dJWT from the original request\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\x05token\x12u\n" +
 	"\n" +
-	"key_set_id\x18\x02 \x01(\tB\x99\x01\x92A\x95\x012RKey ID to use when decoding the token (defined in the Cerbos server configuration)J\v\"my-keyset\"\x82\x03\x1a\n" +
-	"\x14x-example-show-value\x12\x02 \x00\x82\x03\x14\n" +
-	"\x0ex-fill-example\x12\x02 \x00R\bkeySetId:$\x92A!\n" +
-	"\x1f2\x1dJWT from the original request:B\x92A?\n" +
-	"=2;Structured auxiliary data useful for evaluating the request\"a\n" +
+	"key_set_id\x18\x02 \x01(\tBW\x92AT2RKey ID to use when decoding the token (defined in the Cerbos server configuration)R\bkeySetId:$\x92A!\n" +
+	"\x1f2\x1dJWT from the original request:F\x92AC\n" +
+	"=2;Structured auxiliary data useful for evaluating the request2\x02{}\"a\n" +
 	"\x04File\x12*\n" +
 	"\tfile_name\x18\x01 \x01(\tB\r\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\bfileName\x12-\n" +
 	"\bcontents\x18\x02 \x01(\fB\x11\xe0A\x02\xbaH\v\xc8\x01\x01z\x06\x10\x01\x18\x80\x80@R\bcontents\"\xbe\x01\n" +
