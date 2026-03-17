@@ -31,18 +31,7 @@ var functionalRuleRowFields = map[protoreflect.Name]struct{}{
 	"from_role_policy": {},
 }
 
-var nonFunctionalChecksumFields = buildNonFunctionalChecksumFields()
-
-// routingKey uniquely identifies a binding's routing tuple plus its functional
-// checksum. Using a struct key (instead of a hash) for dedup eliminates the
-// possibility of hash collisions silently dropping rules.
-type routingKey struct {
-	scope, version, resource, role, action, principal string
-	allowActions                                      string // sorted, null-separated
-	funcSum                                           uint64
-}
-
-func buildNonFunctionalChecksumFields() map[string]struct{} {
+var nonFunctionalChecksumFields = func() map[string]struct{} {
 	res := make(map[string]struct{})
 	desc := (&runtimev1.RuleTable_RuleRow{}).ProtoReflect().Descriptor()
 	fields := desc.Fields()
@@ -54,6 +43,13 @@ func buildNonFunctionalChecksumFields() map[string]struct{} {
 	}
 	res["cerbos.runtime.v1.RuleTableMetadata.source_attributes"] = struct{}{}
 	return res
+}()
+
+// routingKey uniquely identifies a binding's routing tuple plus its functional checksum.
+type routingKey struct {
+	scope, version, resource, role, action, principal string
+	allowActions                                      string // sorted, null-separated
+	funcSum                                           uint64
 }
 
 type CelProgram struct {
@@ -139,8 +135,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			action = v.Action
 		}
 
-		rk := makeRoutingKey(rule.Scope, rule.Version, rule.Resource,
-			rule.Role, action, rule.Principal, allowActions, funcSum)
+		rk := makeRoutingKey(rule.Scope, rule.Version, rule.Resource, rule.Role, action, rule.Principal, allowActions, funcSum)
 
 		if existingID, dup := m.bi.bindingDedup[rk]; dup {
 			if b := m.bi.getBinding(existingID); b != nil {
@@ -172,9 +167,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	return nil
 }
 
-func makeRoutingKey(scope, version, resource, role, action, principal string,
-	allowActions map[string]struct{}, funcSum uint64,
-) routingKey {
+func makeRoutingKey(scope, version, resource, role, action, principal string, allowActions map[string]struct{}, funcSum uint64) routingKey {
 	var aaKey string
 	if len(allowActions) > 0 {
 		sorted := make([]string, 0, len(allowActions))
