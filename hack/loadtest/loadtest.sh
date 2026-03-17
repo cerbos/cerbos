@@ -180,7 +180,7 @@ executeTest() {
   } > "$dataFile"
 
   mkdir -p results
-  local resultPrefix="results/${STORE}_${NUM_POLICIES}"
+  local resultPrefix="results/${STORE}"
 
   if [[ ! -x "${WORK_DIR}/printsummary" ]]; then
     CGO_ENABLED=0 go build -tags printsummary -o "${WORK_DIR}/printsummary" .
