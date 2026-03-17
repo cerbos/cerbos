@@ -1,0 +1,2 @@
+type:feature
+Add path functions to Cerbos CEL library

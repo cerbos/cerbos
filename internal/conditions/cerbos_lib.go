@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"path/filepath"
+	"reflect"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -31,6 +33,16 @@ const (
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
 	IDFn                        = "id"
+	absPathFn                   = "absPath"
+	basePathFn                  = "basePath"
+	dirPathFn                   = "dirPath"
+	extPathFn                   = "extPath"
+	joinPathFn                  = "joinPath"
+	pathHasPrefixFn             = "pathHasPrefix"
+	pathMatchFn                 = "pathMatch"
+	pathMatchAnyOfFn            = "pathMatchAnyOf"
+	relPathFn                   = "relPath"
+	volumeNameFn                = "volumeName"
 	CELNowFnActivationKey       = "_cerbos_now_fn"
 )
 
@@ -122,6 +134,114 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				[]*cel.Type{cel.DynType},
 				cel.DynType,
 				cel.UnaryBinding(func(value ref.Val) ref.Val { return value }),
+			),
+		),
+		cel.Function(
+			absPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", absPathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutStringErr(absPath)),
+			),
+		),
+		cel.Function(
+			basePathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", basePathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutString(basePath)),
+			),
+		),
+		cel.Function(
+			dirPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", dirPathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutString(dirPath)),
+			),
+		),
+		cel.Function(
+			extPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", extPathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutString(extPath)),
+			),
+		),
+		cel.Function(
+			joinPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_stringarray", joinPathFn),
+				[]*cel.Type{cel.ListType(cel.StringType)},
+				cel.StringType,
+				cel.UnaryBinding(callInStringSliceOutString(filepath.Join)),
+			),
+		),
+		cel.Function(
+			pathHasPrefixFn,
+			cel.Overload(
+				fmt.Sprintf("%s_overload", pathHasPrefixFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(pathHasPrefix)),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", pathHasPrefixFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(pathHasPrefix)),
+			),
+		),
+		cel.Function(
+			pathMatchFn,
+			cel.Overload(
+				fmt.Sprintf("%s_overload", pathMatchFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(pathMatch)),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", pathMatchFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(pathMatch)),
+			),
+		),
+		cel.Function(
+			pathMatchAnyOfFn,
+			cel.Overload(
+				fmt.Sprintf("%s_overload", pathMatchAnyOfFn),
+				[]*cel.Type{cel.StringType, cel.ListType(cel.StringType)},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringSliceOutBoolErr(pathMatchAnyOf)),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", pathMatchAnyOfFn),
+				[]*cel.Type{cel.StringType, cel.ListType(cel.StringType)},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringSliceOutBoolErr(pathMatchAnyOf)),
+			),
+		),
+		cel.Function(
+			relPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string_string", relPathFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.StringType,
+				cel.BinaryBinding(callInStringStringOutStringErr(relPath)),
+			),
+		),
+		cel.Function(
+			volumeNameFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", volumeNameFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutString(volumeName)),
 			),
 		),
 		customtypes.HierarchyFunc,
@@ -483,6 +603,86 @@ func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error)
 	return cidr.Contains(ipAddr), nil
 }
 
+func absPath(path string) (string, error) {
+	absolutePath, err := filepath.Abs(normalizePath(path))
+	if err != nil {
+		return "", fmt.Errorf("failed to find absolute path of %q: %w", path, err)
+	}
+
+	return absolutePath, nil
+}
+
+func basePath(path string) string {
+	return filepath.Base(normalizePath(path))
+}
+
+func dirPath(path string) string {
+	return filepath.Dir(normalizePath(path))
+}
+
+func extPath(path string) string {
+	return filepath.Ext(normalizePath(path))
+}
+
+func pathHasPrefix(path, prefix string) (bool, error) {
+	var err error
+	if path, err = absPath(path); err != nil {
+		return false, err
+	}
+
+	if prefix, err = absPath(prefix); err != nil {
+		return false, err
+	}
+
+	rel, err := filepath.Rel(prefix, path)
+	if err != nil {
+		return false, fmt.Errorf("failed to determine relative path of %s: %w", prefix, err)
+	}
+
+	return len(rel) > 0 && rel[0] != '.' && rel[0] != '/', nil
+}
+
+func pathMatch(path, pattern string) (bool, error) {
+	matched, err := filepath.Match(pattern, normalizePath(path))
+	if err != nil {
+		return false, fmt.Errorf("failed to match pattern %q on path %q: %w", pattern, path, err)
+	}
+
+	return matched, nil
+}
+
+func pathMatchAnyOf(path string, patterns ...string) (bool, error) {
+	for _, pattern := range patterns {
+		matched, err := pathMatch(path, pattern)
+		if err != nil {
+			return false, err
+		}
+
+		if matched {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func relPath(basePath, targetPath string) (string, error) {
+	path, err := filepath.Rel(normalizePath(basePath), normalizePath(targetPath))
+	if err != nil {
+		return "", fmt.Errorf("failed to determine relative path of %s: %w", targetPath, err)
+	}
+
+	return path, nil
+}
+
+func volumeName(path string) string {
+	return filepath.VolumeName(filepath.Clean(path))
+}
+
+func normalizePath(path string) string {
+	return filepath.Clean(filepath.ToSlash(path))
+}
+
 func callInStringStringOutBool(fn func(string, string) (bool, error)) functions.BinaryOp {
 	return func(lhsVal, rhsVal ref.Val) ref.Val {
 		lhs, ok := lhsVal.(types.String)
@@ -518,5 +718,105 @@ func callInTimestampOutDuration(fn func(time.Time) time.Duration) functions.Unar
 func callInNothingOutTimestamp(fn func() time.Time) functions.FunctionOp {
 	return func(_ ...ref.Val) ref.Val {
 		return types.DefaultTypeAdapter.NativeToValue(fn())
+	}
+}
+
+func callInStringOutString(fn func(string) string) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		stringVal, ok := val.Value().(string)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(fn(stringVal))
+	}
+}
+
+func callInStringOutStringErr(fn func(string) (string, error)) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		stringVal, ok := val.Value().(string)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		retVal, err := fn(stringVal)
+		if err != nil {
+			return types.NewErr("%s", err.Error())
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
+	}
+}
+
+func callInStringStringOutStringErr(fn func(string, string) (string, error)) functions.BinaryOp {
+	return func(lhsVal, rhsVal ref.Val) ref.Val {
+		lhs, ok := lhsVal.(types.String)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(lhsVal)
+		}
+
+		rhs, ok := rhsVal.(types.String)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(rhsVal)
+		}
+
+		retVal, err := fn(string(lhs), string(rhs))
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
+	}
+}
+
+func callInStringSliceOutString(fn func(...string) string) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		list, ok := val.(traits.Lister)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		native, err := list.ConvertToNative(reflect.SliceOf(reflect.TypeFor[string]()))
+		if err != nil {
+			return types.NewErr("failed to convert list to string slice: %v", err)
+		}
+
+		elements, ok := native.([]string)
+		if !ok {
+			return types.NewErr("expected string slice but got %T", native)
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(fn(elements...))
+	}
+}
+
+func callInStringStringSliceOutBoolErr(fn func(string, ...string) (bool, error)) functions.BinaryOp {
+	return func(lhsVal, rhsVal ref.Val) ref.Val {
+		lhs, ok := lhsVal.(types.String)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(lhsVal)
+		}
+
+		rhs, ok := rhsVal.(traits.Lister)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(rhsVal)
+		}
+
+		native, err := rhs.ConvertToNative(reflect.SliceOf(reflect.TypeFor[string]()))
+		if err != nil {
+			return types.NewErr("failed to convert list to string slice: %v", err)
+		}
+
+		elements, ok := native.([]string)
+		if !ok {
+			return types.NewErr("expected string slice but got %T", native)
+		}
+
+		retVal, err := fn(string(lhs), elements...)
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
 	}
 }

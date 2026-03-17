@@ -277,6 +277,25 @@ Duration values must be specified in one of the following units. Larger units li
 | timeSince | Time elapsed since the given timestamp to current time on the server. This is a Cerbos extension to CEL | timestamp(R.attr.lastAccessed).timeSince() > duration("1h")
 |===
 
+[#paths]
+== Paths
+
+NOTE: The path functions are Cerbos-specific extensions to CEL.
+
+[caption=]
+[%header,cols=".^1m,.^2,4m",grid=rows]
+|===
+| Function       | Description                                                    | Example
+| basePath       | Returns the last element of a path                             | basePath("/path/to/dir") == "dir"
+| dirPath        | Returns the directory portion of a path                        | dirPath("/path/to/file.txt") == "/path/to"
+| extPath        | Returns the file extension of a path including the leading dot | extPath("/path/to/file.txt") == ".txt"
+| joinPath       | Joins a list of path segments into a single path               | joinPath(["/path", "to", "file.txt"]) == "/path/to/file.txt"
+| pathHasPrefix  | Returns true if the second path is a prefix of the first path  | pathHasPrefix("/path/to/dir", "/path/to") == true && "/path/to/dir".pathHasPrefix("/path/to") == true
+| pathMatch      | Returns true if path matches a given glob pattern              | pathMatch("/path/to/file.zip", "/path/to/*.zip") == true && "/path/to/file.zip".pathMatch("/path/to/*.zip") == true
+| pathMatchAnyOf | Returns true if path matches any of the given glob patterns    | pathMatchAnyOf("/path/to/file.zip", ["/path/to/*.tar.gz", "/path/to/*.zip"]) == true && "/path/to/file.zip".pathMatchAnyOf(["/path/to/*.tar.gz", "/path/to/*.zip"]) == true
+| relPath        | Returns the relative path from a base path to a target path    | relPath("/path/to", "/path/to/file.txt") == "file.txt"
+| volumeName     | Returns the volume name of a path                              | volumeName("\\host") == ""
+|===
 
 [#hierarchies]
 == Hierarchies
