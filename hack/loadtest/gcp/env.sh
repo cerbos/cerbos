@@ -63,6 +63,20 @@ err() {
   printf "[%s] ERROR: %s\n" "$(date '+%H:%M:%S')" "$*" >&2
 }
 
+require_running_vms() {
+  local vms=("$@")
+  for vm in "${vms[@]}"; do
+    local status
+    status=$(gcloud compute instances describe "$vm" \
+      --zone="$GCP_ZONE" --project="$GCP_PROJECT" \
+      --format='get(status)' 2>/dev/null) || { err "VM $vm not found"; exit 1; }
+    if [[ "$status" != "RUNNING" ]]; then
+      log "VM $vm is $status — starting it..."
+      gcloud compute instances start "$vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT"
+    fi
+  done
+}
+
 restart_cerbos() {
   log "Restarting Cerbos on PDP VM..."
   GSSH "$PDP_VM" <<ENDSSH
