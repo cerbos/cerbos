@@ -52,6 +52,7 @@ rm -f /tmp/cerbos-loadtest-policies.tar.gz
 if [[ "$POLICIES_ONLY" == true ]]; then
   restart_cerbos
   log "Policies redeployed — Cerbos is healthy"
+  log "Next step: ./run.sh"
   exit 0
 fi
 
