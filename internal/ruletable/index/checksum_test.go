@@ -15,9 +15,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// routingRuleRowFields lists proto field names that are routing dimensions. These
-// are excluded from the functional checksum because the bitmap index handles them,
-// but they still need to be classified in TestAllRuleRowFieldsClassified.
 var routingRuleRowFields = map[protoreflect.Name]struct{}{
 	"resource": {}, "role": {},
 	"action": {}, "allow_actions": {},
@@ -43,18 +40,17 @@ func TestAllRuleRowFieldsClassified(t *testing.T) {
 		require.Truef(t, isFunctional || isRouting || isNonFunctional,
 			"RuleRow field %q is not classified: add it to functionalRuleRowFields, routingRuleRowFields, or metadataOnlyFields in checksum_test.go", name)
 
-		classified := 0
+		n := 0
 		if isFunctional {
-			classified++
+			n++
 		}
 		if isRouting {
-			classified++
+			n++
 		}
 		if isNonFunctional {
-			classified++
+			n++
 		}
-		require.Equalf(t, 1, classified,
-			"RuleRow field %q appears in multiple classification sets", name)
+		require.Equalf(t, 1, n, "RuleRow field %q appears in multiple classification sets", name)
 	}
 }
 
@@ -65,10 +61,10 @@ func TestFunctionalChecksumExcludesRoutingFields(t *testing.T) {
 	}
 
 	t.Run("different scope same checksum", func(t *testing.T) {
-		a := protoClone(base)
+		a := proto.Clone(base).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
 		a.Scope = "acme"
 
-		b := protoClone(base)
+		b := proto.Clone(base).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
 		b.Scope = "acme.hr"
 
 		require.Equal(t,
@@ -79,10 +75,10 @@ func TestFunctionalChecksumExcludesRoutingFields(t *testing.T) {
 	})
 
 	t.Run("different effect different checksum", func(t *testing.T) {
-		a := protoClone(base)
+		a := proto.Clone(base).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
 		a.Effect = effectv1.Effect_EFFECT_ALLOW
 
-		b := protoClone(base)
+		b := proto.Clone(base).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
 		b.Effect = effectv1.Effect_EFFECT_DENY
 
 		require.NotEqual(t,
@@ -91,8 +87,4 @@ func TestFunctionalChecksumExcludesRoutingFields(t *testing.T) {
 			"functional field effect should affect functional checksum",
 		)
 	})
-}
-
-func protoClone(r *runtimev1.RuleTable_RuleRow) *runtimev1.RuleTable_RuleRow {
-	return proto.Clone(r).(*runtimev1.RuleTable_RuleRow) //nolint:forcetypeassert
 }
