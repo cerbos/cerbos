@@ -10,6 +10,7 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/google/cel-go/cel"
 	"github.com/stretchr/testify/require"
@@ -86,9 +87,10 @@ func TestParamsIndex(t *testing.T) {
 			Constants: map[string]*structpb.Value{"k": structpb.NewStringValue("v")},
 		}
 
+		docFQN := namer.ResourcePolicyFQN("document", "default", "")
 		rules := []*runtimev1.RuleTable_RuleRow{
 			{
-				OriginFqn:  "policy1",
+				OriginFqn:  docFQN,
 				PolicyKind: policyv1.Kind_KIND_RESOURCE,
 				Resource:   "document",
 				Role:       "viewer",
@@ -98,7 +100,7 @@ func TestParamsIndex(t *testing.T) {
 				Params:     params1,
 			},
 			{
-				OriginFqn:  "policy1",
+				OriginFqn:  docFQN,
 				PolicyKind: policyv1.Kind_KIND_RESOURCE,
 				Resource:   "document",
 				Role:       "editor",
@@ -120,12 +122,19 @@ func TestParamsIndex(t *testing.T) {
 }
 
 func TestFunctionalChecksum(t *testing.T) {
+	// fqnA and fqnB are two distinct FQNs used in dedup tests. They have different
+	// scopes in the FQN string but the rows they label share the same routing dimensions
+	// (Scope: ""), simulating the scenario where the same binding is contributed by two
+	// policy origins (e.g. derived-role expansion that converges on the same parent role).
+	fqnA := namer.ResourcePolicyFQN("document", "default", "")
+	fqnB := namer.ResourcePolicyFQN("document", "default", "acme")
+
 	t.Run("rows differing only in origin_fqn are deduplicated", func(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a"),
-			makeRow("policy_b"),
+			makeRow(fqnA),
+			makeRow(fqnB),
 		}
 
 		require.NoError(t, impl.IndexRules(rules))
@@ -139,8 +148,8 @@ func TestFunctionalChecksum(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a"),
-			makeRow("policy_b", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(fqnA),
+			makeRow(fqnB, func(r *runtimev1.RuleTable_RuleRow) {
 				r.Condition = &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: "true"}}}
 			}),
 		}
@@ -156,8 +165,8 @@ func TestFunctionalChecksum(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a"),
-			makeRow("policy_b", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(fqnA),
+			makeRow(fqnB, func(r *runtimev1.RuleTable_RuleRow) {
 				r.EmitOutput = &runtimev1.Output{When: &runtimev1.Output_When{RuleActivated: &runtimev1.Expr{Original: "output"}}}
 			}),
 		}
@@ -173,8 +182,8 @@ func TestFunctionalChecksum(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a"),
-			makeRow("policy_b"),
+			makeRow(fqnA),
+			makeRow(fqnB),
 		}
 
 		require.NoError(t, impl.IndexRules(rules))
@@ -183,15 +192,15 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "rows should be deduplicated")
 
-		// Delete policy_a — row should survive with policy_b's origin.
-		require.NoError(t, impl.DeletePolicy("policy_a"))
+		// Delete fqnA — row should survive with fqnB's origin.
+		require.NoError(t, impl.DeletePolicy(fqnA))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "row should survive after deleting one origin")
 
-		// Delete policy_b — row should be removed entirely.
-		require.NoError(t, impl.DeletePolicy("policy_b"))
+		// Delete fqnB — row should be removed entirely.
+		require.NoError(t, impl.DeletePolicy(fqnB))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
@@ -201,12 +210,15 @@ func TestFunctionalChecksum(t *testing.T) {
 	t.Run("delete policy removes orphaned binding when core is shared across different routing tuples", func(t *testing.T) {
 		impl := index.New()
 
-		// Two FQNs produce functionally identical rows (same effect, no condition)
-		// but with different resources, so they get different routing tuples and
-		// separate binding IDs. They share the same FunctionalCore.
+		// Two distinct policies produce functionally identical rows (same effect, no condition)
+		// but with different resources, so they get different routing tuples and separate
+		// binding IDs. They share the same FunctionalCore.
+		docPolicyFQN := namer.ResourcePolicyFQN("document", "default", "")
+		imgPolicyFQN := namer.ResourcePolicyFQN("image", "default", "")
+
 		rules := []*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a"), // resource="document"
-			makeRow("policy_b", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(docPolicyFQN), // resource="document"
+			makeRow(imgPolicyFQN, func(r *runtimev1.RuleTable_RuleRow) {
 				r.Resource = "image"
 			}),
 		}
@@ -220,9 +232,9 @@ func TestFunctionalChecksum(t *testing.T) {
 		imgRows := impl.Query("default", "image", "", "", nil, 0, "")
 		require.Len(t, imgRows, 1)
 
-		// Delete policy_a — its binding (resource="document") must be removed
-		// even though the shared core still has policy_b in origins.
-		require.NoError(t, impl.DeletePolicy("policy_a"))
+		// Delete docPolicyFQN — its binding (resource="document") must be removed
+		// even though the shared core still has imgPolicyFQN in origins.
+		require.NoError(t, impl.DeletePolicy(docPolicyFQN))
 
 		docRows = impl.Query("default", "document", "", "", nil, 0, "")
 		require.Len(t, docRows, 0, "orphaned binding for deleted policy should be removed from dimensions")
@@ -230,8 +242,8 @@ func TestFunctionalChecksum(t *testing.T) {
 		imgRows = impl.Query("default", "image", "", "", nil, 0, "")
 		require.Len(t, imgRows, 1, "surviving policy's binding should remain")
 
-		// Delete policy_b — everything should be clean.
-		require.NoError(t, impl.DeletePolicy("policy_b"))
+		// Delete imgPolicyFQN — everything should be clean.
+		require.NoError(t, impl.DeletePolicy(imgPolicyFQN))
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
@@ -252,8 +264,8 @@ func TestFunctionalChecksum(t *testing.T) {
 		}
 
 		rules := []*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a", withParams),
-			makeRow("policy_b", withParams),
+			makeRow(fqnA, withParams),
+			makeRow(fqnB, withParams),
 		}
 
 		require.NoError(t, impl.IndexRules(rules))
@@ -267,14 +279,14 @@ func TestFunctionalChecksum(t *testing.T) {
 	t.Run("incremental indexing merges origins across batches", func(t *testing.T) {
 		impl := index.New()
 
-		// First batch — adds row with policy_a origin.
+		// First batch — adds row with fqnA origin.
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_a"),
+			makeRow(fqnA),
 		}))
 
-		// Second batch — same functional row from policy_b triggers updateIndex → unionAll.
+		// Second batch — same functional row from fqnB triggers updateIndex → unionAll.
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-			makeRow("policy_b"),
+			makeRow(fqnB),
 		}))
 
 		allRows, err := impl.GetAllRows()
@@ -282,14 +294,14 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.Len(t, allRows, 1, "incremental indexing should still deduplicate")
 
 		// Delete one origin — row should survive.
-		require.NoError(t, impl.DeletePolicy("policy_a"))
+		require.NoError(t, impl.DeletePolicy(fqnA))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
 		require.Len(t, allRows, 1, "row should survive with remaining origin")
 
 		// Delete the remaining origin — row should be removed.
-		require.NoError(t, impl.DeletePolicy("policy_b"))
+		require.NoError(t, impl.DeletePolicy(fqnB))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
@@ -300,8 +312,8 @@ func TestFunctionalChecksum(t *testing.T) {
 func TestGetVersions(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) { r.Version = "v1" }),
-		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) { r.Version = "v2"; r.Role = "editor" }),
+		makeRow(namer.ResourcePolicyFQN("document", "v1", ""), func(r *runtimev1.RuleTable_RuleRow) { r.Version = "v1" }),
+		makeRow(namer.ResourcePolicyFQN("document", "v2", ""), func(r *runtimev1.RuleTable_RuleRow) { r.Version = "v2"; r.Role = "editor" }),
 	}))
 	require.ElementsMatch(t, []string{"v1", "v2"}, impl.GetVersions())
 }
@@ -309,10 +321,10 @@ func TestGetVersions(t *testing.T) {
 func TestGetActions(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
 		}),
-		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.ResourcePolicyFQN("document", "default", "acme"), func(r *runtimev1.RuleTable_RuleRow) {
 			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "edit"}
 			r.Role = "editor"
 		}),
@@ -323,8 +335,8 @@ func TestGetActions(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-		makeRow("p1"),
-		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) { r.Resource = "image"; r.Role = "editor" }),
+		makeRow(namer.ResourcePolicyFQN("document", "default", "")),
+		makeRow(namer.ResourcePolicyFQN("image", "default", ""), func(r *runtimev1.RuleTable_RuleRow) { r.Resource = "image"; r.Role = "editor" }),
 	}))
 	require.ElementsMatch(t, []string{"document", "image"}, impl.GetResources())
 }
@@ -332,19 +344,19 @@ func TestGetResources(t *testing.T) {
 func TestQueryMulti(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.ResourcePolicyFQN("document", "v1", ""), func(r *runtimev1.RuleTable_RuleRow) {
 			r.Version = "v1"
 			r.Resource = "document"
 			r.Role = "viewer"
 			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
 		}),
-		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.ResourcePolicyFQN("document", "v1", "acme"), func(r *runtimev1.RuleTable_RuleRow) {
 			r.Version = "v1"
 			r.Resource = "document"
 			r.Role = "editor"
 			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "edit"}
 		}),
-		makeRow("p3", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.ResourcePolicyFQN("image", "v2", ""), func(r *runtimev1.RuleTable_RuleRow) {
 			r.Version = "v2"
 			r.Resource = "image"
 			r.Role = "viewer"
@@ -392,10 +404,10 @@ func TestQueryMulti(t *testing.T) {
 func TestQueryMultiAllowActions(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-		makeRow("p1", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
 		}),
-		makeRow("p2", func(r *runtimev1.RuleTable_RuleRow) {
+		makeRow(namer.RolePolicyFQN("admin", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 			r.Role = "admin"
 			r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
 				AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
@@ -420,7 +432,7 @@ func TestToRuleRow(t *testing.T) {
 	impl := index.New()
 
 	original := &runtimev1.RuleTable_RuleRow{
-		OriginFqn:         "policy1",
+		OriginFqn:         namer.ResourcePolicyFQN("document", "default", "acme"),
 		PolicyKind:        policyv1.Kind_KIND_RESOURCE,
 		Resource:          "document",
 		Role:              "viewer",
@@ -464,7 +476,7 @@ func TestToRuleRow(t *testing.T) {
 func TestToRuleRowAllowActions(t *testing.T) {
 	impl := index.New()
 
-	original := makeRow("policy1", func(r *runtimev1.RuleTable_RuleRow) {
+	original := makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 		r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
 			AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
 				Actions: map[string]*emptypb.Empty{"view": {}, "edit": {}},
@@ -489,9 +501,14 @@ func TestDeletePolicyUpdatesOriginFqn(t *testing.T) {
 	impl := index.New()
 
 	// Two FQNs produce identical routing+functional hashes → deduplicated onto one binding.
+	// They have different scopes in the FQN but share routing dimensions (rows both use Scope: ""),
+	// simulating multiple policy origins contributing the same binding.
+	fqnA := namer.ResourcePolicyFQN("document", "default", "")
+	fqnB := namer.ResourcePolicyFQN("document", "default", "acme")
+
 	rules := []*runtimev1.RuleTable_RuleRow{
-		makeRow("policy_a"),
-		makeRow("policy_b"),
+		makeRow(fqnA),
+		makeRow(fqnB),
 	}
 
 	require.NoError(t, impl.IndexRules(rules))
@@ -499,22 +516,22 @@ func TestDeletePolicyUpdatesOriginFqn(t *testing.T) {
 	allRows, err := impl.GetAllRows()
 	require.NoError(t, err)
 	require.Len(t, allRows, 1)
-	require.Equal(t, "policy_a", allRows[0].OriginFqn, "first-indexed FQN should be primary")
+	require.Equal(t, fqnA, allRows[0].OriginFqn, "first-indexed FQN should be primary")
 
 	// Delete the primary origin — binding should survive with updated OriginFqn.
-	require.NoError(t, impl.DeletePolicy("policy_a"))
+	require.NoError(t, impl.DeletePolicy(fqnA))
 
 	allRows, err = impl.GetAllRows()
 	require.NoError(t, err)
 	require.Len(t, allRows, 1, "binding should survive with remaining origin")
-	require.Equal(t, "policy_b", allRows[0].OriginFqn, "OriginFqn should update to a surviving origin")
+	require.Equal(t, fqnB, allRows[0].OriginFqn, "OriginFqn should update to a surviving origin")
 }
 
 func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 	t.Run("action not in AllowActions produces synthetic DENY", func(t *testing.T) {
 		impl := index.New()
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 				r.Role = "viewer"
 				r.Resource = "document"
 				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
@@ -535,7 +552,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 	t.Run("action in AllowActions without condition produces no synthetic DENY", func(t *testing.T) {
 		impl := index.New()
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 				r.Role = "viewer"
 				r.Resource = "document"
 				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
@@ -556,7 +573,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 			Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: "request.resource.attr.public == true"}},
 		}
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 				r.Role = "viewer"
 				r.Resource = "document"
 				r.Condition = cond
@@ -583,7 +600,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 	t.Run("multiple roles with different AllowActions sets", func(t *testing.T) {
 		impl := index.New()
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
-			makeRow("rp1", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 				r.Role = "viewer"
 				r.Resource = "document"
 				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
@@ -592,7 +609,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 					},
 				}
 			}),
-			makeRow("rp2", func(r *runtimev1.RuleTable_RuleRow) {
+			makeRow(namer.RolePolicyFQN("editor", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 				r.Role = "editor"
 				r.Resource = "document"
 				r.Effect = effectv1.Effect_EFFECT_DENY // different effect to avoid dedup with viewer
