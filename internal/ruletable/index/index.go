@@ -4,9 +4,6 @@
 package index
 
 import (
-	"slices"
-	"strings"
-
 	"github.com/RoaringBitmap/roaring/v2"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -44,13 +41,6 @@ var nonFunctionalChecksumFields = func() map[string]struct{} {
 	res["cerbos.runtime.v1.RuleTableMetadata.source_attributes"] = struct{}{}
 	return res
 }()
-
-// routingKey uniquely identifies a binding's routing tuple plus its functional checksum.
-type routingKey struct {
-	scope, version, resource, role, action, principal string
-	allowActions                                      string // sorted, null-separated
-	funcSum                                           uint64
-}
 
 type CelProgram struct {
 	Prog cel.Program
@@ -135,16 +125,6 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			action = v.Action
 		}
 
-		rk := makeRoutingKey(rule.Scope, rule.Version, rule.Resource, rule.Role, action, rule.Principal, allowActions, funcSum)
-
-		if existingID, dup := m.bi.bindingDedup[rk]; dup {
-			if b := m.bi.getBinding(existingID); b != nil {
-				b.Core.origins[rule.OriginFqn] = struct{}{}
-				m.bi.fqnBindings.Add(rule.OriginFqn, existingID)
-			}
-			continue
-		}
-
 		b := &Binding{
 			Scope:             rule.Scope,
 			Version:           rule.Version,
@@ -161,32 +141,9 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		}
 
 		m.bi.addBinding(b)
-		m.bi.bindingDedup[rk] = b.ID
 	}
 
 	return nil
-}
-
-func makeRoutingKey(scope, version, resource, role, action, principal string, allowActions map[string]struct{}, funcSum uint64) routingKey {
-	var aaKey string
-	if len(allowActions) > 0 {
-		sorted := make([]string, 0, len(allowActions))
-		for a := range allowActions {
-			sorted = append(sorted, a)
-		}
-		slices.Sort(sorted)
-		aaKey = strings.Join(sorted, "\x00")
-	}
-	return routingKey{
-		scope:        scope,
-		version:      version,
-		resource:     resource,
-		role:         role,
-		action:       action,
-		principal:    principal,
-		allowActions: aaKey,
-		funcSum:      funcSum,
-	}
 }
 
 func (m *Index) GetAllRows() ([]*Binding, error) {
@@ -666,10 +623,6 @@ func (m *Index) DeletePolicy(fqn string) error {
 
 		if !referencedByOther {
 			m.bi.removeBinding(b)
-
-			rk := makeRoutingKey(b.Scope, b.Version, b.Resource,
-				b.Role, b.Action, b.Principal, b.AllowActions, b.Core.sum)
-			delete(m.bi.bindingDedup, rk)
 		} else if b.OriginFqn == fqn {
 			// Update OriginFqn to a surviving origin so audit trails
 			// and output attribution don't reference a deleted policy.

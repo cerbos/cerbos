@@ -15,7 +15,6 @@ import (
 type bitmapIndex struct {
 	action             *globDimension
 	coresBySum         map[uint64]*FunctionalCore // dedup behavioural part
-	bindingDedup       map[routingKey]uint32      // dedup whole binding (incl. functional sum)
 	version            dimension[string]
 	scope              dimension[string]
 	role               *globDimension
@@ -43,7 +42,6 @@ func newBitmapIndex() *bitmapIndex {
 		allowActionsBitmap: roaring.New(),
 		fqnBindings:        newDimension[string](),
 		coresBySum:         make(map[uint64]*FunctionalCore),
-		bindingDedup:       make(map[routingKey]uint32),
 	}
 }
 

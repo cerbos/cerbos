@@ -122,14 +122,10 @@ func TestParamsIndex(t *testing.T) {
 }
 
 func TestFunctionalChecksum(t *testing.T) {
-	// fqnA and fqnB are two distinct FQNs used in dedup tests. They have different
-	// scopes in the FQN string but the rows they label share the same routing dimensions
-	// (Scope: ""), simulating the scenario where the same binding is contributed by two
-	// policy origins (e.g. derived-role expansion that converges on the same parent role).
 	fqnA := namer.ResourcePolicyFQN("document", "default", "")
 	fqnB := namer.ResourcePolicyFQN("document", "default", "acme")
 
-	t.Run("rows differing only in origin_fqn are deduplicated", func(t *testing.T) {
+	t.Run("rows differing only in origin_fqn share a FunctionalCore", func(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
@@ -141,7 +137,8 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 1, "functionally identical rows should be deduplicated")
+		require.Len(t, allRows, 2)
+		require.Same(t, allRows[0].Core, allRows[1].Core, "functionally identical rows should share a FunctionalCore")
 	})
 
 	t.Run("rows differing in condition are not deduplicated", func(t *testing.T) {
@@ -178,7 +175,7 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.Len(t, allRows, 2, "rows with different emit_output should not be deduplicated")
 	})
 
-	t.Run("delete policy with shared row preserves row for remaining origin", func(t *testing.T) {
+	t.Run("delete policy removes its bindings independently", func(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
@@ -190,21 +187,19 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 1, "rows should be deduplicated")
+		require.Len(t, allRows, 2)
 
-		// Delete fqnA — row should survive with fqnB's origin.
 		require.NoError(t, impl.DeletePolicy(fqnA))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 1, "row should survive after deleting one origin")
+		require.Len(t, allRows, 1, "only fqnB's binding should remain")
 
-		// Delete fqnB — row should be removed entirely.
 		require.NoError(t, impl.DeletePolicy(fqnB))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 0, "row should be removed after deleting last origin")
+		require.Len(t, allRows, 0, "all bindings should be removed")
 	})
 
 	t.Run("delete policy removes orphaned binding when core is shared across different routing tuples", func(t *testing.T) {
@@ -250,7 +245,7 @@ func TestFunctionalChecksum(t *testing.T) {
 		require.Len(t, allRows, 0, "all bindings should be removed after deleting all origins")
 	})
 
-	t.Run("rows with params differing only in origin_fqn are deduplicated", func(t *testing.T) {
+	t.Run("rows with params differing only in origin_fqn share core and params", func(t *testing.T) {
 		// Uses FromRolePolicy: false with non-nil Params to exercise the params compilation path.
 		// Verifies that params interning doesn't interfere with functional checksumming.
 		impl := index.New()
@@ -272,35 +267,33 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 1, "functionally identical rows with params should be deduplicated")
-		require.NotNil(t, allRows[0].Core.Params, "deduplicated row should have compiled params")
+		require.Len(t, allRows, 2)
+		require.Same(t, allRows[0].Core, allRows[1].Core, "functionally identical rows should share a FunctionalCore")
+		require.NotNil(t, allRows[0].Core.Params, "shared core should have compiled params")
 	})
 
-	t.Run("incremental indexing merges origins across batches", func(t *testing.T) {
+	t.Run("incremental indexing shares cores across batches", func(t *testing.T) {
 		impl := index.New()
 
-		// First batch — adds row with fqnA origin.
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
 			makeRow(fqnA),
 		}))
 
-		// Second batch — same functional row from fqnB triggers updateIndex → unionAll.
 		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
 			makeRow(fqnB),
 		}))
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 1, "incremental indexing should still deduplicate")
+		require.Len(t, allRows, 2)
+		require.Same(t, allRows[0].Core, allRows[1].Core, "incremental indexing should share FunctionalCore")
 
-		// Delete one origin — row should survive.
 		require.NoError(t, impl.DeletePolicy(fqnA))
 
 		allRows, err = impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 1, "row should survive with remaining origin")
+		require.Len(t, allRows, 1, "only fqnB's binding should remain")
 
-		// Delete the remaining origin — row should be removed.
 		require.NoError(t, impl.DeletePolicy(fqnB))
 
 		allRows, err = impl.GetAllRows()
@@ -495,36 +488,6 @@ func TestToRuleRowAllowActions(t *testing.T) {
 	require.Len(t, aaRow.AllowActions.Actions, 2)
 	require.Contains(t, aaRow.AllowActions.Actions, "view")
 	require.Contains(t, aaRow.AllowActions.Actions, "edit")
-}
-
-func TestDeletePolicyUpdatesOriginFqn(t *testing.T) {
-	impl := index.New()
-
-	// Two FQNs produce identical routing+functional hashes → deduplicated onto one binding.
-	// They have different scopes in the FQN but share routing dimensions (rows both use Scope: ""),
-	// simulating multiple policy origins contributing the same binding.
-	fqnA := namer.ResourcePolicyFQN("document", "default", "")
-	fqnB := namer.ResourcePolicyFQN("document", "default", "acme")
-
-	rules := []*runtimev1.RuleTable_RuleRow{
-		makeRow(fqnA),
-		makeRow(fqnB),
-	}
-
-	require.NoError(t, impl.IndexRules(rules))
-
-	allRows, err := impl.GetAllRows()
-	require.NoError(t, err)
-	require.Len(t, allRows, 1)
-	require.Equal(t, fqnA, allRows[0].OriginFqn, "first-indexed FQN should be primary")
-
-	// Delete the primary origin — binding should survive with updated OriginFqn.
-	require.NoError(t, impl.DeletePolicy(fqnA))
-
-	allRows, err = impl.GetAllRows()
-	require.NoError(t, err)
-	require.Len(t, allRows, 1, "binding should survive with remaining origin")
-	require.Equal(t, fqnB, allRows[0].OriginFqn, "OriginFqn should update to a surviving origin")
 }
 
 func TestQueryAllowActionsSyntheticDeny(t *testing.T) {

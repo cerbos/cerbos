@@ -144,12 +144,12 @@ func TestLocalSource(t *testing.T) {
 			},
 			RuleCount: map[policy.Kind]int{
 				policy.PrincipalKind:  20,
-				policy.ResourceKind:   89,
+				policy.ResourceKind:   90,
 				policy.RolePolicyKind: 9,
 			},
 			AvgRuleCount: map[policy.Kind]float64{
 				policy.PrincipalKind:  2.0,
-				policy.ResourceKind:   3.1785714285714284,
+				policy.ResourceKind:   3.2142857142857144,
 				policy.RolePolicyKind: 1.5,
 			},
 			AvgConditionCount: map[policy.Kind]float64{
