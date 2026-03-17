@@ -43,7 +43,6 @@ run_tests() {
         telepresence helm install
         telepresence connect --no-report -- \
             gotestsum \
-            --rerun-fails=2 \
             --format="$FORMAT" \
             --packages="$E2E_PACKAGE" \
             -- \
