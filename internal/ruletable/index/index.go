@@ -260,7 +260,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	// Role policy synthetic DENYs are prepended so the evaluator sees them
 	// before regular ALLOWs, which is required for scope permission semantics.
 	if action != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
-		res = m.queryAllowActions(bi, action, resource, roles, versionBM, scopeBM, roleBM, resourceBM, res)
+		res = m.queryAllowActions(bi, version, scope, action, resource, roles, versionBM, scopeBM, roleBM, resourceBM, res)
 	}
 
 	// Regular bindings.
@@ -278,87 +278,79 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 }
 
 // queryAllowActions generates synthetic DENY bindings from role policy AllowActions.
-func (m *Index) queryAllowActions(bi *bitmapIndex, action, resource string, roles []string, versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap, res []*Binding,
+func (m *Index) queryAllowActions(bi *bitmapIndex, version, scope, action, resource string, roles []string, versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap, res []*Binding,
 ) []*Binding {
-	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
-	l1 := make([]*roaring.Bitmap, 0, 4)
+	// find candidate role policy bindings.
+	// we ignore `resource` because we need to know which roles have ANY role policies,
+	// even if the `resource` doesn't match (which implies "DENY").
+	// saml: benchmarks show a 3% speedup if we batch inputs to `FastAnd` below. In for a penny...
+	candidateDims := make([]*roaring.Bitmap, 0, 4)
 	if versionBM != nil {
-		l1 = append(l1, versionBM)
+		candidateDims = append(candidateDims, versionBM)
 	}
 	if scopeBM != nil {
-		l1 = append(l1, scopeBM)
+		candidateDims = append(candidateDims, scopeBM)
 	}
 	if roleBM != nil {
-		l1 = append(l1, roleBM)
+		candidateDims = append(candidateDims, roleBM)
 	}
-	l1 = append(l1, bi.allowActionsBitmap)
+	candidateDims = append(candidateDims, bi.allowActionsBitmap)
 
-	var level1BM *roaring.Bitmap
-	if len(l1) == 1 {
-		level1BM = l1[0]
+	var candidateBM *roaring.Bitmap
+	if len(candidateDims) == 1 {
+		candidateBM = candidateDims[0]
 	} else {
-		level1BM = roaring.FastAnd(l1...)
+		candidateBM = roaring.FastAnd(candidateDims...)
 	}
-	if level1BM.IsEmpty() {
+	if candidateBM.IsEmpty() {
 		return res
 	}
 
-	// Level 2: AllowActions bindings that also match the resource.
-	level2BM := level1BM
+	// now AND with the resource
+	// (FastAnd returns a new copy so candidateBM isn't mutated).
+	resourceMatchedBM := candidateBM
 	if resourceBM != nil {
-		level2BM = roaring.FastAnd(level1BM, resourceBM)
+		resourceMatchedBM = roaring.FastAnd(candidateBM, resourceBM)
 	}
 
-	// Group Level 1 bindings by role.
-	type roleGroup struct {
-		roleFqn  string
-		scope    string
-		version  string
-		bindings []*Binding
-	}
-	groupMap := make(map[string]*roleGroup)
-
-	iter := level1BM.Iterator()
+	// we need two levels because we can't determine "does this role have a role policy"
+	// from `resourceMatchedBM` alone; a role policy might exist but have no entry for
+	// the requested resource, which is still an implicit DENY.
+	// `candidateBM` tells us which roles have policies, `resourceMatchedBM` tells us
+	// which of those actually cover the requested resource.
+	rolesWithPolicy := make(map[string]struct{})
+	iter := candidateBM.Iterator()
 	for iter.HasNext() {
-		id := iter.Next()
-		b := bi.getBinding(id)
+		b := bi.getBinding(iter.Next())
 		if b == nil {
 			continue
 		}
-		if _, ok := groupMap[b.Role]; !ok {
-			groupMap[b.Role] = &roleGroup{
-				roleFqn: namer.RolePolicyFQN(b.Role, b.Version, b.Scope),
-				scope:   b.Scope,
-				version: b.Version,
-			}
-		}
+		rolesWithPolicy[b.Role] = struct{}{}
 	}
 
-	// Attach Level 2 (resource-matched) bindings to their groups.
-	if !level2BM.IsEmpty() {
-		l2Iter := level2BM.Iterator()
-		for l2Iter.HasNext() {
-			id := l2Iter.Next()
-			b := bi.getBinding(id)
+	// group resource-matched bindings by role.
+	resourceMatchedByRole := make(map[string][]*Binding)
+	if !resourceMatchedBM.IsEmpty() {
+		rmIter := resourceMatchedBM.Iterator()
+		for rmIter.HasNext() {
+			b := bi.getBinding(rmIter.Next())
 			if b == nil {
 				continue
 			}
-			if g, ok := groupMap[b.Role]; ok {
-				g.bindings = append(g.bindings, b)
-			}
+			resourceMatchedByRole[b.Role] = append(resourceMatchedByRole[b.Role], b)
 		}
 	}
 
-	// Process each role in input order.
+	// process each role in input order.
 	for _, role := range roles {
-		g, ok := groupMap[role]
-		if !ok {
+		// no role policies exist for this role, skip it
+		if _, ok := rolesWithPolicy[role]; !ok {
 			continue
 		}
 
-		// Find AllowActions bindings from Level 2 that cover the queried action.
+		// find resource-matched bindings that cover the queried action.
 		var matched []*Binding
-		for _, ab := range g.bindings {
+		for _, ab := range resourceMatchedByRole[role] {
 			for a := range ab.AllowActions {
 				if a == action || util.MatchesGlob(a, action) {
 					matched = append(matched, ab)
@@ -368,6 +360,7 @@ func (m *Index) queryAllowActions(bi *bitmapIndex, action, resource string, role
 		}
 
 		if len(matched) == 0 {
+			// role policy exists but no AllowActions entry covers this resource+action == unconditional deny
 			res = append(res, &Binding{
 				Core: &FunctionalCore{
 					Effect:         effectv1.Effect_EFFECT_DENY,
@@ -375,11 +368,11 @@ func (m *Index) queryAllowActions(bi *bitmapIndex, action, resource string, role
 					FromRolePolicy: true,
 				},
 				Action:                     action,
-				OriginFqn:                  g.roleFqn,
+				OriginFqn:                  namer.RolePolicyFQN(role, version, scope),
 				Resource:                   resource,
 				Role:                       role,
-				Scope:                      g.scope,
-				Version:                    g.version,
+				Scope:                      scope,
+				Version:                    version,
 				NoMatchForScopePermissions: true,
 			})
 		} else {
@@ -403,8 +396,8 @@ func (m *Index) queryAllowActions(bi *bitmapIndex, action, resource string, role
 						OriginFqn:     ab.OriginFqn,
 						Resource:      resource,
 						Role:          ab.Role,
-						Scope:         g.scope,
-						Version:       g.version,
+						Scope:         scope,
+						Version:       version,
 						EvaluationKey: ab.EvaluationKey,
 					})
 				}
@@ -416,10 +409,9 @@ func (m *Index) queryAllowActions(bi *bitmapIndex, action, resource string, role
 }
 
 // QueryMulti returns bindings matching across multiple values per dimension.
-// Empty/nil slice = match all for that dimension.
 // OR within each dimension, AND across dimensions.
-// AllowActions bindings matching non-action dimensions are included (spitfire post-filters).
-// No synthetic DENY generation.
+// Unlike Query, AllowActions bindings are included directly (no synthetic DENY
+// generation) because the caller handles action matching itself.
 func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string) []*Binding {
 	bi := m.bi
 
@@ -487,8 +479,6 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	return res
 }
 
-// applyActionFilter intersects baseBM with action bitmaps (OR of actions) and
-// includes AllowActions bindings. If actions is empty, baseBM is returned as-is.
 func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roaring.Bitmap {
 	if len(actions) == 0 {
 		return baseBM
@@ -518,8 +508,8 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	}
 }
 
-// ParentRolesMap returns a pre-merged map of role → [role, parent1, parent2, ...] across the provided scopes.
-// Each role's entry includes the role itself as the first element.
+// ParentRolesMap returns the union of all parent roles across the provided scopes.
+// When multiple scopes define parents for the same role, the results are merged rather than overwritten.
 func (m *Index) ParentRolesMap(scopes []string) map[string][]string {
 	if len(m.parentRoles) == 0 {
 		return nil
@@ -597,35 +587,14 @@ func (m *Index) DeletePolicy(fqn string) error {
 
 	// Collect IDs to remove (can't modify bitmap during iteration).
 	idsToRemove := fqnBM.ToArray()
-
 	for _, id := range idsToRemove {
 		b := m.bi.getBinding(id)
 		if b == nil {
 			continue
 		}
 
-		// Remove this FQN from the core's origins.
 		delete(b.Core.origins, fqn)
-
-		// Check if any remaining origin still references this binding.
-		referencedByOther := false
-		for remainingFQN := range b.Core.origins {
-			if bm, ok := m.bi.fqnBindings.Get(remainingFQN); ok && bm.Contains(id) {
-				referencedByOther = true
-				break
-			}
-		}
-
-		if !referencedByOther {
-			m.bi.removeBinding(b)
-		} else if b.OriginFqn == fqn {
-			// Update OriginFqn to a surviving origin so audit trails
-			// and output attribution don't reference a deleted policy.
-			for remainingFQN := range b.Core.origins {
-				b.OriginFqn = remainingFQN
-				break
-			}
-		}
+		m.bi.removeBinding(b)
 
 		if len(b.Core.origins) == 0 {
 			delete(m.bi.coresBySum, b.Core.sum)
@@ -655,18 +624,6 @@ func (m *Index) GetActions() []string {
 
 func (m *Index) GetResources() []string {
 	return m.bi.resource.GetAllKeys()
-}
-
-func (m *Index) ScopedRoleGlobExists(scope, role string) (bool, error) {
-	roleBM := m.bi.role.Query(role)
-	if roleBM.IsEmpty() {
-		return false, nil
-	}
-	scopeBM, ok := m.bi.scope.Get(scope)
-	if !ok {
-		return false, nil
-	}
-	return roleBM.Intersects(scopeBM), nil
 }
 
 func (m *Index) ScopedResourceExists(version, resource string, scopes []string) (bool, error) {
