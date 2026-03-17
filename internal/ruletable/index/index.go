@@ -156,9 +156,9 @@ func (m *Index) GetAllRows() ([]*Binding, error) {
 	return res, nil
 }
 
-// Query returns bindings matching the given dimensions. Empty string / nil / zero
-// means "match all" for that dimension. AllowActions synthetic DENYs are prepended
-// when querying for a specific action with KIND_RESOURCE (or unspecified kind).
+// Query returns bindings matching the given dimensions. Nil or zero-values mean
+// "match all" for that dimension. Synthetic DENYs from role policy AllowActions
+// are prepended when querying for a specific action with KIND_RESOURCE.
 func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string) []*Binding {
 	bi := m.bi
 
@@ -166,9 +166,14 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		return nil
 	}
 
-	// Per-dimension bitmaps. Nil = match all (skip AND).
-	// Scope is always filtered because "" is a valid literal scope (root scope).
-	var versionBM, scopeBM, resourceBM, roleBM, policyKindBM, principalBM *roaring.Bitmap
+	var scopeBM, versionBM, resourceBM, roleBM, policyKindBM, principalBM *roaring.Bitmap
+
+	// scope is always filtered because "" is a valid literal scope (root scope).
+	bm, ok := bi.scope.Get(scope)
+	if !ok {
+		return nil
+	}
+	scopeBM = bm
 
 	if version != "" {
 		bm, ok := bi.version.Get(version)
@@ -176,13 +181,6 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 			return nil
 		}
 		versionBM = bm
-	}
-	{
-		bm, ok := bi.scope.Get(scope)
-		if !ok {
-			return nil
-		}
-		scopeBM = bm
 	}
 	if resource != "" {
 		bm := bi.resource.Query(resource)
@@ -212,7 +210,6 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		principalBM = bm
 	}
 
-	// baseBM = AND of all non-action dimensions.
 	dims := make([]*roaring.Bitmap, 0, 6)
 	if versionBM != nil {
 		dims = append(dims, versionBM)
@@ -233,6 +230,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		dims = append(dims, principalBM)
 	}
 
+	// baseBM = AND of all non-action dimensions.
 	var baseBM *roaring.Bitmap
 	switch len(dims) {
 	case 0:
@@ -259,8 +257,9 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	var res []*Binding
 
-	// AllowActions synthetic DENYs (prepended before regular bindings).
-	if action != "" && (policyKind == policyv1.Kind_KIND_RESOURCE || policyKind == 0) && !bi.allowActionsBitmap.IsEmpty() {
+	// Role policy synthetic DENYs are prepended so the evaluator sees them
+	// before regular ALLOWs, which is required for scope permission semantics.
+	if action != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
 		res = m.queryAllowActions(bi, action, resource, roles, versionBM, scopeBM, roleBM, resourceBM, res)
 	}
 
@@ -278,12 +277,8 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	return res
 }
 
-// queryAllowActions generates synthetic DENY bindings from AllowActions (role policy)
-// bindings. These DENYs are prepended before regular bindings so they take precedence.
-func (m *Index) queryAllowActions(
-	bi *bitmapIndex, action, resource string, roles []string,
-	versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap,
-	res []*Binding,
+// queryAllowActions generates synthetic DENY bindings from role policy AllowActions.
+func (m *Index) queryAllowActions(bi *bitmapIndex, action, resource string, roles []string, versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap, res []*Binding,
 ) []*Binding {
 	// Level 1: AllowActions bindings matching (version, scope, roles) — no resource filter.
 	l1 := make([]*roaring.Bitmap, 0, 4)
