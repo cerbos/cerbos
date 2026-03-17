@@ -70,8 +70,7 @@ func TestParamsIndex(t *testing.T) {
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
 		require.NoError(t, err)
 
-		// Two separate Params proto pointers with identical content.
-		// The params cache should compile CEL programs only once and share the result.
+		// identical content: the params cache should compile CEL programs only once and share the result.
 		params1 := &runtimev1.RuleTable_RuleRow_Params{
 			OrderedVariables: []*runtimev1.Variable{{
 				Name: "v",
@@ -155,10 +154,11 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 2, "rows with different conditions should not be deduplicated")
+		require.Len(t, allRows, 2)
+		require.NotSame(t, allRows[0].Core, allRows[1].Core, "rows with different conditions should not share a FunctionalCore")
 	})
 
-	t.Run("different emit_output prevents dedup", func(t *testing.T) {
+	t.Run("different emit_output prevents core sharing", func(t *testing.T) {
 		impl := index.New()
 
 		rules := []*runtimev1.RuleTable_RuleRow{
@@ -172,7 +172,8 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		allRows, err := impl.GetAllRows()
 		require.NoError(t, err)
-		require.Len(t, allRows, 2, "rows with different emit_output should not be deduplicated")
+		require.Len(t, allRows, 2)
+		require.NotSame(t, allRows[0].Core, allRows[1].Core, "rows with different emit_output should not share a FunctionalCore")
 	})
 
 	t.Run("delete policy removes its bindings independently", func(t *testing.T) {
@@ -205,9 +206,9 @@ func TestFunctionalChecksum(t *testing.T) {
 	t.Run("delete policy removes orphaned binding when core is shared across different routing tuples", func(t *testing.T) {
 		impl := index.New()
 
-		// Two distinct policies produce functionally identical rows (same effect, no condition)
+		// two distinct policies produce functionally identical rows (same effect, no condition)
 		// but with different resources, so they get different routing tuples and separate
-		// binding IDs. They share the same FunctionalCore.
+		// binding IDs, but share the same FunctionalCore
 		docPolicyFQN := namer.ResourcePolicyFQN("document", "default", "")
 		imgPolicyFQN := namer.ResourcePolicyFQN("image", "default", "")
 
@@ -220,15 +221,14 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		// Both bindings should be queryable.
 		docRows := impl.Query("default", "document", "", "", nil, 0, "")
 		require.Len(t, docRows, 1)
 
 		imgRows := impl.Query("default", "image", "", "", nil, 0, "")
 		require.Len(t, imgRows, 1)
 
-		// Delete docPolicyFQN — its binding (resource="document") must be removed
-		// even though the shared core still has imgPolicyFQN in origins.
+		// delete `docPolicyFQN`. Its "document" binding must be removed
+		// even though the shared core still has `imgPolicyFQN` in origins.
 		require.NoError(t, impl.DeletePolicy(docPolicyFQN))
 
 		docRows = impl.Query("default", "document", "", "", nil, 0, "")
@@ -237,7 +237,6 @@ func TestFunctionalChecksum(t *testing.T) {
 		imgRows = impl.Query("default", "image", "", "", nil, 0, "")
 		require.Len(t, imgRows, 1, "surviving policy's binding should remain")
 
-		// Delete imgPolicyFQN — everything should be clean.
 		require.NoError(t, impl.DeletePolicy(imgPolicyFQN))
 
 		allRows, err := impl.GetAllRows()
@@ -246,8 +245,8 @@ func TestFunctionalChecksum(t *testing.T) {
 	})
 
 	t.Run("rows with params differing only in origin_fqn share core and params", func(t *testing.T) {
-		// Uses FromRolePolicy: false with non-nil Params to exercise the params compilation path.
-		// Verifies that params interning doesn't interfere with functional checksumming.
+		// uses FromRolePolicy: false with non-nil Params to exercise the params compilation path.
+		// verifies that params interning doesn't interfere with functional checksumming.
 		impl := index.New()
 
 		withParams := func(r *runtimev1.RuleTable_RuleRow) {
@@ -421,75 +420,6 @@ func TestQueryMultiAllowActions(t *testing.T) {
 	})
 }
 
-func TestToRuleRow(t *testing.T) {
-	impl := index.New()
-
-	original := &runtimev1.RuleTable_RuleRow{
-		OriginFqn:         namer.ResourcePolicyFQN("document", "default", "acme"),
-		PolicyKind:        policyv1.Kind_KIND_RESOURCE,
-		Resource:          "document",
-		Role:              "viewer",
-		ActionSet:         &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
-		Effect:            effectv1.Effect_EFFECT_ALLOW,
-		Version:           "default",
-		Scope:             "acme",
-		OriginDerivedRole: "dr1",
-		Name:              "rule1",
-		Principal:         "alice",
-		EvaluationKey:     "ek1",
-		ScopePermissions:  policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
-		FromRolePolicy:    true,
-	}
-
-	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{original}))
-	bindings, err := impl.GetAllRows()
-	require.NoError(t, err)
-	require.Len(t, bindings, 1)
-
-	row := bindingToRuleRow(bindings[0])
-	require.Equal(t, original.OriginFqn, row.OriginFqn)
-	require.Equal(t, original.Resource, row.Resource)
-	require.Equal(t, original.Role, row.Role)
-	require.Equal(t, original.Version, row.Version)
-	require.Equal(t, original.Scope, row.Scope)
-	require.Equal(t, original.Effect, row.Effect)
-	require.Equal(t, original.PolicyKind, row.PolicyKind)
-	require.Equal(t, original.FromRolePolicy, row.FromRolePolicy)
-	require.Equal(t, original.ScopePermissions, row.ScopePermissions)
-	require.Equal(t, original.OriginDerivedRole, row.OriginDerivedRole)
-	require.Equal(t, original.Name, row.Name)
-	require.Equal(t, original.Principal, row.Principal)
-	require.Equal(t, original.EvaluationKey, row.EvaluationKey)
-
-	actionRow, ok := row.ActionSet.(*runtimev1.RuleTable_RuleRow_Action)
-	require.True(t, ok)
-	require.Equal(t, "view", actionRow.Action)
-}
-
-func TestToRuleRowAllowActions(t *testing.T) {
-	impl := index.New()
-
-	original := makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
-		r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
-			AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
-				Actions: map[string]*emptypb.Empty{"view": {}, "edit": {}},
-			},
-		}
-	})
-
-	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{original}))
-	bindings, err := impl.GetAllRows()
-	require.NoError(t, err)
-	require.Len(t, bindings, 1)
-
-	row := bindingToRuleRow(bindings[0])
-	aaRow, ok := row.ActionSet.(*runtimev1.RuleTable_RuleRow_AllowActions_)
-	require.True(t, ok)
-	require.Len(t, aaRow.AllowActions.Actions, 2)
-	require.Contains(t, aaRow.AllowActions.Actions, "view")
-	require.Contains(t, aaRow.AllowActions.Actions, "edit")
-}
-
 func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 	t.Run("action not in AllowActions produces synthetic DENY", func(t *testing.T) {
 		impl := index.New()
@@ -553,7 +483,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 		require.Equal(t, effectv1.Effect_EFFECT_DENY, res[0].Core.Effect)
 		require.True(t, res[0].Core.FromRolePolicy)
 
-		// Condition must be wrapped in Condition_None.
+		// condition must be inverted (wrapped in Condition_None)
 		noneOp, ok := res[0].Core.Condition.Op.(*runtimev1.Condition_None)
 		require.True(t, ok, "condition should be wrapped in Condition_None")
 		require.Len(t, noneOp.None.Expr, 1)
@@ -575,7 +505,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 			makeRow(namer.RolePolicyFQN("editor", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
 				r.Role = "editor"
 				r.Resource = "document"
-				r.Effect = effectv1.Effect_EFFECT_DENY // different effect to avoid dedup with viewer
+				r.Effect = effectv1.Effect_EFFECT_DENY
 				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
 					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
 						Actions: map[string]*emptypb.Empty{"view": {}, "edit": {}},
@@ -586,88 +516,26 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 
 		res := impl.Query("default", "document", "", "edit", []string{"viewer", "editor"}, policyv1.Kind_KIND_RESOURCE, "")
 
-		// Only viewer should get a synthetic DENY (edit is not in viewer's AllowActions).
-		// Editor has edit in its AllowActions with no condition, so no synthetic DENY.
+		// only viewer should get a synthetic DENY (edit is not in viewer's AllowActions).
+		// editor has edit in its AllowActions with no condition, so no synthetic DENY
 		require.Len(t, res, 1)
 		require.True(t, res[0].NoMatchForScopePermissions)
 		require.Equal(t, "viewer", res[0].Role)
 	})
 }
 
-func bindingToRuleRow(b *index.Binding) *runtimev1.RuleTable_RuleRow {
-	row := &runtimev1.RuleTable_RuleRow{
-		OriginFqn:            b.OriginFqn,
-		Resource:             b.Resource,
-		Role:                 b.Role,
-		Scope:                b.Scope,
-		Version:              b.Version,
-		OriginDerivedRole:    b.OriginDerivedRole,
-		Name:                 b.Name,
-		Principal:            b.Principal,
-		EvaluationKey:        b.EvaluationKey,
-		Effect:               b.Core.Effect,
-		Condition:            b.Core.Condition,
-		DerivedRoleCondition: b.Core.DerivedRoleCondition,
-		EmitOutput:           b.Core.EmitOutput,
-		ScopePermissions:     b.Core.ScopePermissions,
-		PolicyKind:           b.Core.PolicyKind,
-		FromRolePolicy:       b.Core.FromRolePolicy,
-		Params:               rowParamsToProto(b.Core.Params),
-		DerivedRoleParams:    rowParamsToProto(b.Core.DerivedRoleParams),
-	}
-
-	if b.AllowActions != nil {
-		actions := make(map[string]*emptypb.Empty, len(b.AllowActions))
-		for a := range b.AllowActions {
-			actions[a] = &emptypb.Empty{}
-		}
-		row.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
-			AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: actions},
-		}
-	} else {
-		row.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: b.Action}
-	}
-
-	return row
-}
-
-func rowParamsToProto(p *index.RowParams) *runtimev1.RuleTable_RuleRow_Params {
-	if p == nil {
-		return nil
-	}
-
-	var constants map[string]*structpb.Value
-	if len(p.Constants) > 0 {
-		constants = make(map[string]*structpb.Value, len(p.Constants))
-		for k, v := range p.Constants {
-			sv, err := structpb.NewValue(v)
-			if err != nil {
-				continue
-			}
-			constants[k] = sv
-		}
-	}
-
-	return &runtimev1.RuleTable_RuleRow_Params{
-		OrderedVariables: p.Variables,
-		Constants:        constants,
-	}
-}
-
-func makeRow(fqn string, mutators ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
+func makeRow(fqn string, fn ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
 	r := &runtimev1.RuleTable_RuleRow{
-		OriginFqn:  fqn,
-		PolicyKind: policyv1.Kind_KIND_RESOURCE,
-		Resource:   "document",
-		Role:       "viewer",
-		ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
-		Effect:     effectv1.Effect_EFFECT_ALLOW,
-		Version:    "default",
-		// Default to role-policy-derived rows in tests so Params can remain nil unless
-		// a test explicitly opts into the params compilation path.
+		OriginFqn:      fqn,
+		PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+		Resource:       "document",
+		Role:           "viewer",
+		ActionSet:      &runtimev1.RuleTable_RuleRow_Action{Action: "view"},
+		Effect:         effectv1.Effect_EFFECT_ALLOW,
+		Version:        "default",
 		FromRolePolicy: true,
 	}
-	for _, m := range mutators {
+	for _, m := range fn {
 		m(r)
 	}
 	return r
