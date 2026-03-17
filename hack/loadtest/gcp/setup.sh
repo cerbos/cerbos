@@ -16,8 +16,14 @@ log "Setting up PDP VM (${PDP_VM})..."
 GSSH "$PDP_VM" <<ENDSSH
 set -euo pipefail
 
+# Install sysstat for CPU monitoring (mpstat)
+if ! command -v mpstat &>/dev/null; then
+  echo "Installing sysstat..."
+  sudo apt-get update -qq && sudo apt-get install -y -qq sysstat
+fi
+
 # Create directory structure
-sudo mkdir -p ${REMOTE_BASE}/{bin,conf,policies,audit}
+sudo mkdir -p ${REMOTE_BASE}/{bin,conf,policies,audit,results}
 sudo chown -R \$(id -u):\$(id -g) ${REMOTE_BASE}
 echo "PDP VM setup complete"
 ENDSSH
@@ -26,6 +32,12 @@ ENDSSH
 log "Setting up Client VM (${CLIENT_VM})..."
 GSSH "$CLIENT_VM" <<ENDSSH
 set -euo pipefail
+
+# Install sysstat for CPU monitoring (mpstat)
+if ! command -v mpstat &>/dev/null; then
+  echo "Installing sysstat..."
+  sudo apt-get update -qq && sudo apt-get install -y -qq sysstat
+fi
 
 # Install Docker if not present
 if ! command -v docker &>/dev/null; then

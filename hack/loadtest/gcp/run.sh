@@ -20,6 +20,19 @@ else
 fi
 log "PDP internal IP: ${PDP_IP}"
 
+# --- Start CPU monitoring on both VMs ---
+log "Starting CPU monitors..."
+GSSH "$PDP_VM" <<ENDSSH
+set -euo pipefail
+pkill -f "mpstat -P ALL" 2>/dev/null || true
+setsid mpstat -P ALL 1 > /opt/cerbos-loadtest/results/cpu_usage.log 2>&1 < /dev/null &
+ENDSSH
+GSSH "$CLIENT_VM" <<ENDSSH
+set -euo pipefail
+pkill -f "mpstat -P ALL" 2>/dev/null || true
+setsid mpstat -P ALL 1 > ${REMOTE_BASE}/results/client_cpu_usage.log 2>&1 < /dev/null &
+ENDSSH
+
 log "Running load tests on Client VM (${CLIENT_VM})..."
 GSSH "$CLIENT_VM" <<ENDSSH
 set -euo pipefail
@@ -42,10 +55,19 @@ ${NUM_POLICIES:+NUM_POLICIES="${NUM_POLICIES}"} \
   nix develop --command bash loadtest.sh -e
 ENDSSH
 
-# --- Retrieve results ---
+# --- Stop CPU monitoring ---
+log "Stopping CPU monitors..."
+GSSH "$PDP_VM" <<'ENDSSH'
+pkill -f "mpstat -P ALL" 2>/dev/null || true
+ENDSSH
+GSSH "$CLIENT_VM" <<'ENDSSH'
+pkill -f "mpstat -P ALL" 2>/dev/null || true
+ENDSSH
+
 log "Downloading results..."
 LOCAL_RESULTS="${SCRIPT_DIR}/../results/gcp"
 mkdir -p "$LOCAL_RESULTS"
+GSCP "${PDP_VM}:${REMOTE_BASE}/results/cpu_usage.log" "$LOCAL_RESULTS/"
 GSCP "${CLIENT_VM}:${REMOTE_BASE}/results/*" "$LOCAL_RESULTS/"
 
 log "Results saved to hack/loadtest/results/gcp/"
