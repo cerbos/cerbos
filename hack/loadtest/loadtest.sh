@@ -217,7 +217,9 @@ executeTest() {
       --rps "$RPS" \
       --duration "${DURATION_SECS}s" \
       -O json \
-      "${SERVER}" | tee "${resultPrefix}_rps.json" | "${WORK_DIR}/printsummary"
+      "${SERVER}" | \
+        tee "${resultPrefix}_rps.json" | "${WORK_DIR}/printsummary" | \
+        tee "${resultPrefix}_rps.txt"
 
   if $metricsAvailable && scrapeMetrics "$afterFile"; then
     if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
@@ -242,7 +244,9 @@ executeTest() {
       --connections "$CONNECTIONS" \
       --total "$ITERATIONS" \
       -O json \
-      "${SERVER}" | tee "${resultPrefix}_throughput.json" | "${WORK_DIR}/printsummary"
+      "${SERVER}" | \
+        tee "${resultPrefix}_throughput.json" | "${WORK_DIR}/printsummary" | \
+        tee  "${resultPrefix}_throughput.txt"
 
   if $metricsAvailable && scrapeMetrics "$afterFile"; then
     if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
