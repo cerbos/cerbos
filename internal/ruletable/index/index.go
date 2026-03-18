@@ -49,13 +49,26 @@ type CelProgram struct {
 	Expr string
 }
 
-type Index struct {
-	bi          *bitmapIndex
-	parentRoles map[string]map[string][]string
+type Option func(*Index)
+
+// WithSourceRows retains the original proto row on each Binding, preventing
+// GC of the proto rows after indexing.
+func WithSourceRows() Option {
+	return func(idx *Index) { idx.retainSourceRows = true }
 }
 
-func New() *Index {
-	return &Index{bi: newBitmapIndex()}
+type Index struct {
+	bi               *bitmapIndex
+	parentRoles      map[string]map[string][]string
+	retainSourceRows bool
+}
+
+func New(opts ...Option) *Index {
+	idx := &Index{bi: newBitmapIndex()}
+	for _, o := range opts {
+		o(idx)
+	}
+	return idx
 }
 
 func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
@@ -154,6 +167,9 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			EvaluationKey:     rule.EvaluationKey,
 			AllowActions:      allowActions,
 			Core:              core,
+		}
+		if m.retainSourceRows {
+			b.SourceRow = rule
 		}
 
 		m.bi.addBinding(b)
