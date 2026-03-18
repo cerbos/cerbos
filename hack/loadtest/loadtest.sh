@@ -117,6 +117,8 @@ clean() {
 }
 
 generateResources() {
+  clean
+  mkdir "${WORK_DIR}"
   printf "Generating %s policy sets\n" "$NUM_POLICIES"
   go run -tags loadtest . --out="${WORK_DIR}" --count="$NUM_POLICIES" --set="${POLICY_SET}"
 }
