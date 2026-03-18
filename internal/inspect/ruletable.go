@@ -97,7 +97,11 @@ func (rt *RuleTable) inspectBinding(
 		}
 	}
 
-	for _, constant := range ruletable.ListRuleTableRowConstants(b) {
+	rowConstants, err := ruletable.ListRuleTableRowConstants(b)
+	if err != nil {
+		return err
+	}
+	for _, constant := range rowConstants {
 		if !constantSet.Contains(constant.Name) {
 			constantSet[constant.Name] = struct{}{}
 			result.Constants = append(result.GetConstants(), constant)

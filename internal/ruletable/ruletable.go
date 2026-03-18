@@ -1881,9 +1881,9 @@ func ListRuleTableRowActions(b *index.Binding) []string {
 }
 
 // ListRuleTableRowConstants returns local and exported constants defined in a binding.
-func ListRuleTableRowConstants(b *index.Binding) []*responsev1.InspectPoliciesResponse_Constant {
+func ListRuleTableRowConstants(b *index.Binding) ([]*responsev1.InspectPoliciesResponse_Constant, error) {
 	if b == nil {
-		return nil
+		return nil, nil
 	}
 
 	var nParams, nDRParams int
@@ -1897,7 +1897,10 @@ func ListRuleTableRowConstants(b *index.Binding) []*responsev1.InspectPoliciesRe
 	constants := make([]*responsev1.InspectPoliciesResponse_Constant, 0, nParams+nDRParams)
 	if b.Core.Params != nil {
 		for name, value := range b.Core.Params.Constants {
-			pbVal, _ := structpb.NewValue(value)
+			pbVal, err := structpb.NewValue(value)
+			if err != nil {
+				return nil, fmt.Errorf("converting constant %q: %w", name, err)
+			}
 			constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
 				Name:  name,
 				Value: pbVal,
@@ -1907,7 +1910,10 @@ func ListRuleTableRowConstants(b *index.Binding) []*responsev1.InspectPoliciesRe
 	}
 	if b.Core.DerivedRoleParams != nil {
 		for name, value := range b.Core.DerivedRoleParams.Constants {
-			pbVal, _ := structpb.NewValue(value)
+			pbVal, err := structpb.NewValue(value)
+			if err != nil {
+				return nil, fmt.Errorf("converting derived role constant %q: %w", name, err)
+			}
 			constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
 				Name:  name,
 				Value: pbVal,
@@ -1926,7 +1932,7 @@ func ListRuleTableRowConstants(b *index.Binding) []*responsev1.InspectPoliciesRe
 		})
 	}
 
-	return constants
+	return constants, nil
 }
 
 // GetRuleTableRowDerivedRoles returns the derived role defined in a binding if it exists.
