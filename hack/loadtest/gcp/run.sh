@@ -67,7 +67,7 @@ ENDSSH
 log "Downloading results..."
 LOCAL_RESULTS="${SCRIPT_DIR}/../results/gcp"
 mkdir -p "$LOCAL_RESULTS"
-GSCP "${PDP_VM}:${REMOTE_BASE}/results/cpu_usage.log" "$LOCAL_RESULTS/"
+GSCP "${PDP_VM}:${REMOTE_BASE}/results/cpu_usage.log" "$LOCAL_RESULTS/pdp_cpu_usage.log"
 GSCP "${CLIENT_VM}:${REMOTE_BASE}/results/*" "$LOCAL_RESULTS/"
 
 log "Results saved to hack/loadtest/results/gcp/"
