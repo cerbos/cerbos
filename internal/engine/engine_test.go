@@ -16,10 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alicebob/miniredis/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -36,7 +34,6 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -54,19 +51,12 @@ func TestCheck(t *testing.T) {
 	eng, engCancelFunc := mkEngine(t, params)
 	t.Cleanup(engCancelFunc)
 
-	rtMem, rtMemCancelFunc := mkRuleTable(t, params, index.NewMem())
-	t.Cleanup(rtMemCancelFunc)
-
-	mr := miniredis.RunT(t)
-	t.Cleanup(mr.Close)
-
-	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
-	t.Cleanup(func() { client.Close() })
+	rt, rtCancelFunc := mkRuleTable(t, params)
+	t.Cleanup(rtCancelFunc)
 
 	evaluators := map[string]evaluator.Evaluator{
-		"engine":          eng,
-		"ruletable_mem":   rtMem,
-		"ruletable_redis": nil,
+		"engine":    eng,
+		"ruletable": rt,
 	}
 
 	testCases := test.LoadTestCases(t, "engine")
@@ -74,17 +64,6 @@ func TestCheck(t *testing.T) {
 
 	for evalName, eval := range evaluators {
 		t.Run(evalName, func(t *testing.T) {
-			// avoid spinning up a redis instance in CI (it's slow)
-			if evalName == "ruletable_redis" {
-				test.SkipIfGHActions(t)
-
-				if eval == nil {
-					redIdx := index.NewRedis(client, "test", 0, 0)
-					var rtRedisCancelFunc context.CancelFunc
-					eval, rtRedisCancelFunc = mkRuleTable(t, params, redIdx)
-					t.Cleanup(rtRedisCancelFunc)
-				}
-			}
 			for _, tcase := range testCases {
 				t.Run(tcase.Name, func(t *testing.T) {
 					tc := readTestCase(t, tcase.Input)
@@ -402,7 +381,7 @@ func mkEngine(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) 
 	return eng, cancelFunc
 }
 
-func mkRuleTable(tb testing.TB, p param, idx index.Index) (evaluator.Evaluator, context.CancelFunc) {
+func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFunc) {
 	tb.Helper()
 
 	if p.subDir == "" {
@@ -431,7 +410,7 @@ func mkRuleTable(tb testing.TB, p param, idx index.Index) (evaluator.Evaluator, 
 	evalConf.Globals = map[string]any{"environment": "test"}
 	evalConf.LenientScopeSearch = p.lenientScopeSearch
 
-	rt, err := ruletable.NewRuleTable(idx, protoRT)
+	rt, err := ruletable.NewRuleTable(protoRT)
 	require.NoError(tb, err)
 
 	eval, err := rt.Evaluator(evalConf, schema.NewConf(p.schemaEnforcement))

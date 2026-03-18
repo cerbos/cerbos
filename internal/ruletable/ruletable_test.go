@@ -24,7 +24,6 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
@@ -50,7 +49,7 @@ func TestRuleTableManager(t *testing.T) {
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	ruleTable, err := ruletable.NewRuleTable(rtindex.NewMem(), ruletable.NewProtoRuletable())
+	ruleTable, err := ruletable.NewRuleTable(ruletable.NewProtoRuletable())
 	require.NoError(t, err)
 
 	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)

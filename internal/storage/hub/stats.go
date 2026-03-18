@@ -96,8 +96,8 @@ func (s *statsCollector) collate() storage.RepoStats {
 	return is
 }
 
-func (s *statsCollector) addRow(row *index.Row) {
-	fqn := row.GetOriginFqn()
+func (s *statsCollector) addRow(row *index.Binding) {
+	fqn := row.OriginFqn
 	kind := policy.KindFromFQN(fqn)
 	mID := namer.GenModuleIDFromFQN(fqn).RawValue()
 
@@ -111,28 +111,28 @@ func (s *statsCollector) addRow(row *index.Row) {
 		s.uniqueResources[util.HashStr(row.Resource)] = struct{}{}
 	}
 
-	if actionSet, ok := row.GetActionSet().(*runtimev1.RuleTable_RuleRow_Action); kind == policy.ResourceKind && ok {
-		s.uniqueActions[util.HashStr(actionSet.Action)] = struct{}{}
+	if row.Action != "" && kind == policy.ResourceKind {
+		s.uniqueActions[util.HashStr(row.Action)] = struct{}{}
 	}
 
-	if row.EmitOutput != nil {
+	if row.Core.EmitOutput != nil {
 		s.hasOutput = true
 	}
 
-	if row.GetScope() != "" {
+	if row.Scope != "" {
 		s.hasScopedPolicies = true
 	}
 
-	if row.GetEvaluationKey() == "" {
+	if row.EvaluationKey == "" {
 		return
 	}
 
-	if _, ok := s.uniqueRules[util.HashStr(row.GetEvaluationKey())]; !ok {
-		s.uniqueRules[util.HashStr(row.GetEvaluationKey())] = struct{}{}
+	if _, ok := s.uniqueRules[util.HashStr(row.EvaluationKey)]; !ok {
+		s.uniqueRules[util.HashStr(row.EvaluationKey)] = struct{}{}
 		s.policies[mID].ruleCount++
 	}
 
-	if row.GetCondition() != nil {
+	if row.Core.Condition != nil {
 		s.policies[mID].conditionCount++
 	}
 }

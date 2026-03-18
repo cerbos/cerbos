@@ -85,19 +85,11 @@ func (rt *RuleTable) planWithAuditTrail(
 		}
 	}
 
-	allRoles, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, input.Principal.Roles)
-	if err != nil {
-		return nil, nil, err
-	}
-	candidateRows, err := rt.idx.GetRows(ctx, []string{resourceVersion}, []string{namer.SanitizedResource(input.Resource.Kind)}, rt.CombineScopes(principalScopes, resourceScopes), allRoles, input.Actions, false)
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(candidateRows) == 0 {
-		return noMatchPlanOutput(input, validationErrors), auditTrail, nil
-	}
+	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 
-	includingParentRoles := make(map[string]struct{})
+	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
+
+	includingParentRoles := make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
 	}
@@ -134,10 +126,7 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents, err := rt.idx.AddParentRoles(ctx, []string{resourceScope}, []string{role})
-				if err != nil {
-					return nil, nil, err
-				}
+				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
 				for _, scope := range scopes {
 					var scopeAllowNode *planner.QpN
@@ -186,63 +175,66 @@ func (rt *RuleTable) planWithAuditTrail(
 						}
 					}
 
-					for _, row := range candidateRows {
-						if ok := row.Matches(pt, scope, action, input.Principal.Id, rolesIncludingParents); !ok {
-							continue
-						}
-
-						if m := rt.GetMeta(row.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+					// principal ID is only passed for principal policies; for resource
+					// policies an empty string means "match all principals".
+					var pid string
+					if pt == policyv1.Kind_KIND_PRINCIPAL {
+						pid = input.Principal.Id
+					}
+					bindings := rt.idx.Query(resourceVersion, sanitizedResource, scope, action, rolesIncludingParents, pt, pid)
+					for _, b := range bindings {
+						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
 						}
 
 						var constants map[string]any
 						var variables map[string]celast.Expr
-						if row.Params != nil {
-							constants = row.Params.Constants
+						if b.Core.Params != nil {
+							constants = b.Core.Params.Constants
 							var err error
-							variables, err = planner.VariableExprs(row.Params.Variables)
+							variables, err = planner.VariableExprs(b.Core.Params.Variables)
 							if err != nil {
 								return nil, auditTrail, err
 							}
 						}
 
-						node, err := evalCtx.EvaluateCondition(ctx, row.Condition, request, globals, constants, variables, derivedRolesList)
+						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, globals, constants, variables, derivedRolesList)
 						if err != nil {
 							return nil, auditTrail, err
 						}
 
-						if row.DerivedRoleCondition != nil { //nolint:nestif
+						if b.Core.DerivedRoleCondition != nil { //nolint:nestif
 							var variables map[string]celast.Expr
-							if row.DerivedRoleParams != nil {
+							if b.Core.DerivedRoleParams != nil {
 								var err error
-								variables, err = planner.VariableExprs(row.DerivedRoleParams.Variables)
+								variables, err = planner.VariableExprs(b.Core.DerivedRoleParams.Variables)
 								if err != nil {
 									return nil, auditTrail, err
 								}
 							}
 
-							drNode, err := evalCtx.EvaluateCondition(ctx, row.DerivedRoleCondition, request, globals, row.DerivedRoleParams.Constants, variables, derivedRolesList)
+							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
 							if err != nil {
 								return nil, auditTrail, err
 							}
 
-							if row.Condition == nil {
+							if b.Core.Condition == nil {
 								node = drNode
 							} else {
 								node = planner.MkNodeFromLO(planner.MkAndLogicalOperation([]*planner.QpN{node, drNode}))
 							}
 						}
 
-						switch row.Effect { //nolint:exhaustive
+						switch b.Core.Effect { //nolint:exhaustive
 						case effectv1.Effect_EFFECT_ALLOW:
 							scopeAllowNode = addNode(scopeAllowNode, node, planner.MkOrNode)
 						case effectv1.Effect_EFFECT_DENY:
 							// ignore constant false DENY nodes
-							if b, ok := planner.IsNodeConstBool(node); ok && !b {
+							if bv, ok := planner.IsNodeConstBool(node); ok && !bv {
 								continue
 							}
 
-							if row.FromRolePolicy {
+							if b.Core.FromRolePolicy {
 								scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, planner.MkOrNode)
 							} else {
 								scopeDenyNode = addNode(scopeDenyNode, node, planner.MkOrNode)

@@ -20,7 +20,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 )
@@ -113,8 +112,7 @@ func mkRuleTable(b *testing.B, policyDir string) evaluator.Evaluator {
 	evalConf.SetDefaults()
 	evalConf.Globals = map[string]any{"environment": "test"}
 
-	idx := index.NewMem()
-	rt, err := ruletable.NewRuleTable(idx, protoRT)
+	rt, err := ruletable.NewRuleTable(protoRT)
 	require.NoError(b, err)
 
 	eval, err := rt.Evaluator(evalConf, schema.NewConf(schema.EnforcementWarn))

@@ -26,7 +26,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/ruletable"
-	rtindex "github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -121,11 +120,11 @@ func TestInspect(t *testing.T) {
 				}
 				require.NoError(t, err)
 
-				rt, err := ruletable.NewRuleTable(rtindex.NewMem(), protoRT)
+				rt, err := ruletable.NewRuleTable(protoRT)
 				require.NoError(t, err)
 
 				ins := inspect.RuleTables(rt)
-				require.NoError(t, ins.Inspect(t.Context()))
+				require.NoError(t, ins.Inspect())
 				have := ins.Results()
 				require.Empty(t, cmp.Diff(expectedPolicies, have, protocmp.Transform()))
 			})

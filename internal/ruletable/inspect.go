@@ -7,36 +7,27 @@ package ruletable
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
-	"github.com/cerbos/cerbos/internal/util"
-
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // ListRuleTableRowActions returns unique list of actions in a rule table row.
-func ListRuleTableRowActions(row *index.Row) []string {
-	var actions []string
-	if row == nil {
-		return actions
+func ListRuleTableRowActions(b *index.Binding) []string {
+	if b == nil {
+		return nil
 	}
 
-	ss := make(util.StringSet)
+	var actions []string
 
-	switch a := row.GetActionSet().(type) {
-	case *runtimev1.RuleTable_RuleRow_Action:
-		if !ss.Contains(a.Action) {
-			actions = append(actions, a.Action)
-		}
-
-	case *runtimev1.RuleTable_RuleRow_AllowActions_:
-		for action := range a.AllowActions.Actions {
-			if !ss.Contains(action) {
-				actions = append(actions, action)
-			}
-		}
+	if b.Action != "" {
+		actions = append(actions, b.Action)
+	}
+	for action := range b.AllowActions {
+		actions = append(actions, action)
 	}
 
 	if len(actions) > 1 {
@@ -46,32 +37,46 @@ func ListRuleTableRowActions(row *index.Row) []string {
 	return actions
 }
 
-// ListRuleTableRowConstants returns local and exported constants defined in a rule table row.
-func ListRuleTableRowConstants(row *index.Row) []*responsev1.InspectPoliciesResponse_Constant {
-	if row == nil {
-		return nil
+// ListRuleTableRowConstants returns local and exported constants defined in a binding.
+func ListRuleTableRowConstants(b *index.Binding) ([]*responsev1.InspectPoliciesResponse_Constant, error) {
+	if b == nil {
+		return nil, nil
 	}
 
-	constants := make([]*responsev1.InspectPoliciesResponse_Constant, len(row.GetParams().GetConstants())+len(row.GetDerivedRoleParams().GetConstants()))
-	i := 0
-	for name, value := range row.GetParams().GetConstants() {
-		constants[i] = &responsev1.InspectPoliciesResponse_Constant{
-			Name:  name,
-			Value: value,
-			Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
-		}
-
-		i++
+	var nParams, nDRParams int
+	if b.Core.Params != nil {
+		nParams = len(b.Core.Params.Constants)
+	}
+	if b.Core.DerivedRoleParams != nil {
+		nDRParams = len(b.Core.DerivedRoleParams.Constants)
 	}
 
-	for name, value := range row.GetDerivedRoleParams().GetConstants() {
-		constants[i] = &responsev1.InspectPoliciesResponse_Constant{
-			Name:  name,
-			Value: value,
-			Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+	constants := make([]*responsev1.InspectPoliciesResponse_Constant, 0, nParams+nDRParams)
+	if b.Core.Params != nil {
+		for name, value := range b.Core.Params.Constants {
+			pbVal, err := structpb.NewValue(value)
+			if err != nil {
+				return nil, fmt.Errorf("converting constant %q: %w", name, err)
+			}
+			constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
+				Name:  name,
+				Value: pbVal,
+				Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+			})
 		}
-
-		i++
+	}
+	if b.Core.DerivedRoleParams != nil {
+		for name, value := range b.Core.DerivedRoleParams.Constants {
+			pbVal, err := structpb.NewValue(value)
+			if err != nil {
+				return nil, fmt.Errorf("converting derived role constant %q: %w", name, err)
+			}
+			constants = append(constants, &responsev1.InspectPoliciesResponse_Constant{
+				Name:  name,
+				Value: pbVal,
+				Kind:  responsev1.InspectPoliciesResponse_Constant_KIND_UNKNOWN,
+			})
+		}
 	}
 
 	if len(constants) > 1 {
@@ -84,33 +89,32 @@ func ListRuleTableRowConstants(row *index.Row) []*responsev1.InspectPoliciesResp
 		})
 	}
 
-	return constants
+	return constants, nil
 }
 
-// GetRuleTableRowDerivedRoles returns the derived role defined in a rule table row if it exists.
-func GetRuleTableRowDerivedRoles(row *index.Row) *responsev1.InspectPoliciesResponse_DerivedRole {
-	if row == nil || row.GetOriginDerivedRole() == "" {
+// GetRuleTableRowDerivedRoles returns the derived role defined in a binding if it exists.
+func GetRuleTableRowDerivedRoles(b *index.Binding) *responsev1.InspectPoliciesResponse_DerivedRole {
+	if b == nil || b.OriginDerivedRole == "" {
 		return nil
 	}
 
 	return &responsev1.InspectPoliciesResponse_DerivedRole{
-		Name: row.GetOriginDerivedRole(),
+		Name: b.OriginDerivedRole,
 		Kind: responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
 	}
 }
 
-// ListRuleTableRowVariables returns local and exported variables defined in a rule table row.
-func ListRuleTableRowVariables(row *index.Row) []*responsev1.InspectPoliciesResponse_Variable {
-	if row == nil {
+// ListRuleTableRowVariables returns local and exported variables defined in a binding.
+func ListRuleTableRowVariables(b *index.Binding) []*responsev1.InspectPoliciesResponse_Variable {
+	if b == nil || b.Core.Params == nil {
 		return nil
 	}
 
-	variables := make([]*responsev1.InspectPoliciesResponse_Variable, len(row.GetParams().GetOrderedVariables()))
-	for i := 0; i < len(row.GetParams().GetOrderedVariables()); i++ {
-		variable := row.GetParams().GetOrderedVariables()[i]
+	variables := make([]*responsev1.InspectPoliciesResponse_Variable, len(b.Core.Params.Variables))
+	for i, v := range b.Core.Params.Variables {
 		variables[i] = &responsev1.InspectPoliciesResponse_Variable{
-			Name:  variable.Name,
-			Value: variable.Expr.Original,
+			Name:  v.Name,
+			Value: v.Expr.Original,
 			Kind:  responsev1.InspectPoliciesResponse_Variable_KIND_UNKNOWN,
 		}
 	}

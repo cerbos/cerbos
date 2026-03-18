@@ -9,7 +9,6 @@ import (
 	"io"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/google/cel-go/cel"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -41,8 +40,6 @@ const (
 	conditionNotSatisfied   = "Condition not satisfied"
 	noMatchScopePermissions = "NO_MATCH_FOR_SCOPE_PERMISSIONS"
 	noPolicyMatch           = "NO_MATCH"
-
-	indexTimeout = time.Second * 10
 )
 
 func NewProtoRuletable() *runtimev1.RuleTable {
@@ -425,7 +422,7 @@ func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver sche
 
 type RuleTable struct {
 	*runtimev1.RuleTable
-	idx                   *index.Impl
+	idx                   *index.Index
 	principalScopeMap     map[string]struct{}
 	resourceScopeMap      map[string]struct{}
 	scopeScopePermissions map[string]policyv1.ScopePermissions
@@ -496,12 +493,12 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
-	return NewRuleTable(index.NewMem(), protoRT)
+	return NewRuleTable(protoRT)
 }
 
-func NewRuleTable(idx index.Index, protoRT *runtimev1.RuleTable) (*RuleTable, error) {
+func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
-		idx:          index.NewImpl(idx),
+		idx:          index.New(),
 		programCache: NewProgramCache(),
 	}
 
@@ -546,9 +543,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 }
 
 func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
-	ctx, cancelFn := context.WithTimeout(context.Background(), indexTimeout)
-	defer cancelFn()
-
 	for _, rule := range rules {
 		if rule.PolicyKind == policyv1.Kind_KIND_RESOURCE && !rule.FromRolePolicy {
 			modID := namer.GenModuleIDFromFQN(rule.OriginFqn)
@@ -578,15 +572,15 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		}
 	}
 
-	if err := rt.idx.IndexRules(ctx, rules); err != nil {
+	if err := rt.idx.IndexRules(rules); err != nil {
 		return err
 	}
 
-	return rt.idx.IndexParentRoles(ctx, rt.ScopeParentRoles)
+	return rt.idx.IndexParentRoles(rt.ScopeParentRoles)
 }
 
-func (rt *RuleTable) GetAllRows(ctx context.Context) ([]*index.Row, error) {
-	return rt.idx.GetAllRows(ctx)
+func (rt *RuleTable) GetAllRows() ([]*index.Binding, error) {
+	return rt.idx.GetAllRows()
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
