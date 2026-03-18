@@ -13,7 +13,11 @@ type (
 	Binding        = index.Binding
 	FunctionalCore = index.FunctionalCore
 	Index          = index.Index
+	Option         = index.Option
 	RowParams      = index.RowParams
 )
 
-var New = index.New
+var (
+	New            = index.New
+	WithSourceRows = index.WithSourceRows
+)
