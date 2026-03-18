@@ -210,7 +210,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		principalBM = bm
 	}
 
-	dims := make([]*roaring.Bitmap, 0, 6)
+	dims := make([]*roaring.Bitmap, 0, 6) //nolint:mnd
 	if versionBM != nil {
 		dims = append(dims, versionBM)
 	}
@@ -284,7 +284,7 @@ func (m *Index) queryAllowActions(bi *bitmapIndex, version, scope, action, resou
 	// we ignore `resource` because we need to know which roles have ANY role policies,
 	// even if the `resource` doesn't match (which implies "DENY").
 	// saml: benchmarks show a 3% speedup if we batch inputs to `FastAnd` below. In for a penny...
-	candidateDims := make([]*roaring.Bitmap, 0, 4)
+	candidateDims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
 	if versionBM != nil {
 		candidateDims = append(candidateDims, versionBM)
 	}
@@ -419,7 +419,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 		return nil
 	}
 
-	dims := make([]*roaring.Bitmap, 0, 4)
+	dims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
 
 	if len(versions) > 0 {
 		bm := bi.version.Query(versions)
@@ -485,7 +485,7 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	}
 
 	bi := m.bi
-	parts := make([]*roaring.Bitmap, 0, 2)
+	parts := make([]*roaring.Bitmap, 0, 2) //nolint:mnd
 
 	actionBM := bi.action.QueryMultiple(actions)
 	if !actionBM.IsEmpty() {
@@ -530,8 +530,8 @@ func (m *Index) AddParentRoles(scopes, roles []string) []string {
 		return roles
 	}
 
-	result := make([]string, len(roles))
-	copy(result, roles)
+	result := make([]string, 0, len(roles)*2) //nolint:mnd
+	result = append(result, roles...)
 	for _, role := range roles {
 		result = append(result, merged[role]...)
 	}
