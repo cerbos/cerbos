@@ -46,7 +46,7 @@ fi
 log "Uploading policies to PDP VM..."
 tar czf /tmp/cerbos-loadtest-policies.tar.gz -C "${WORK_DIR}" policies
 GSCP /tmp/cerbos-loadtest-policies.tar.gz "${PDP_VM}:/tmp/"
-GSSH "$PDP_VM" "tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
+GSSH "$PDP_VM" "rm -rf ${REMOTE_BASE}/policies && tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
 rm -f /tmp/cerbos-loadtest-policies.tar.gz
 
 if [[ "$POLICIES_ONLY" == true ]]; then
