@@ -107,7 +107,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		if rule.DerivedRoleCondition != nil {
 			condDisc |= 2
 		}
-		hasher.Write([]byte{condDisc})
+		_, _ = hasher.Write([]byte{condDisc})
 		funcSum := hasher.Sum64()
 
 		core, ok := m.bi.coresBySum[funcSum]
