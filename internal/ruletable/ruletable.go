@@ -972,6 +972,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						break
 					}
 
+					// principal ID is only passed for principal policies; for resource
+					// policies an empty string means "match all principals".
 					var pid string
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
@@ -1642,6 +1644,8 @@ func (rt *RuleTable) planWithAuditTrail(
 						}
 					}
 
+					// principal ID is only passed for principal policies; for resource
+					// policies an empty string means "match all principals".
 					var pid string
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
