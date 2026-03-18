@@ -5,6 +5,7 @@ package index
 
 import (
 	"github.com/RoaringBitmap/roaring/v2"
+	"github.com/cespare/xxhash/v2"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -92,7 +93,22 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			params = p
 		}
 
-		funcSum := util.HashPB(rule, nonFunctionalChecksumFields)
+		// hashpb does not include field tags, so Condition=X/DerivedRoleCondition=nil
+		// hashes identically to Condition=nil/DerivedRoleCondition=X when X is the
+		// same Condition content. Feed a discriminator byte into the hasher to break
+		// the collision.
+		// TODO(saml): addressing upstream in protoc-gen-go-hashpb, remove this when that lands.
+		hasher := xxhash.New()
+		rule.HashPB(hasher, nonFunctionalChecksumFields)
+		var condDisc byte
+		if rule.Condition != nil {
+			condDisc |= 1
+		}
+		if rule.DerivedRoleCondition != nil {
+			condDisc |= 2
+		}
+		hasher.Write([]byte{condDisc})
+		funcSum := hasher.Sum64()
 
 		core, ok := m.bi.coresBySum[funcSum]
 		if !ok {
