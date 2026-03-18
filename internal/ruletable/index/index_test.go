@@ -44,20 +44,20 @@ func TestParentRoleIndex(t *testing.T) {
 	require.NoError(t, impl.IndexParentRoles(scopeParentRoles))
 
 	t.Run("transitive closure", func(t *testing.T) {
-		m := impl.ParentRolesMap([]string{"acme"})
-		require.ElementsMatch(t, []string{"employee", "user"}, m["manager"])
+		roles := impl.AddParentRoles([]string{"acme"}, []string{"manager"})
+		require.ElementsMatch(t, []string{"manager", "employee", "user"}, roles)
 	})
 
 	t.Run("scope union", func(t *testing.T) {
-		m := impl.ParentRolesMap([]string{"acme", "acme.hr"})
-		require.ElementsMatch(t, []string{"employee", "user", "contractor"}, m["manager"])
+		roles := impl.AddParentRoles([]string{"acme", "acme.hr"}, []string{"manager"})
+		require.ElementsMatch(t, []string{"manager", "employee", "user", "contractor"}, roles)
 	})
 
 	t.Run("replace existing parent role index", func(t *testing.T) {
 		require.NoError(t, impl.IndexParentRoles(map[string]*runtimev1.RuleTable_RoleParentRoles{}))
 
-		m := impl.ParentRolesMap([]string{"acme", "acme.hr"})
-		require.Nil(t, m)
+		roles := impl.AddParentRoles([]string{"acme", "acme.hr"}, []string{"manager"})
+		require.Equal(t, []string{"manager"}, roles)
 	})
 }
 

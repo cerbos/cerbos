@@ -859,14 +859,11 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	parentRolesMap := rt.idx.ParentRolesMap([]string{resourceScope})
+	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 
-	includingParentRoles := make(map[string]struct{})
-	for _, r := range input.Principal.Roles {
+	includingParentRoles := make(map[string]struct{}, len(allRoles))
+	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
-		for _, p := range parentRolesMap[r] {
-			includingParentRoles[p] = struct{}{}
-		}
 	}
 
 	varCache := make(map[string]map[string]any)
@@ -914,7 +911,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := lookupParentRoles(role, parentRolesMap)
+				parentRoles := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
 			scopesLoop:
 				for _, scope := range scopes {
@@ -1551,16 +1548,13 @@ func (rt *RuleTable) planWithAuditTrail(
 		}
 	}
 
-	parentRolesMap := rt.idx.ParentRolesMap([]string{resourceScope})
+	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 
 	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
 
-	includingParentRoles := make(map[string]struct{})
-	for _, r := range input.Principal.Roles {
+	includingParentRoles := make(map[string]struct{}, len(allRoles))
+	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
-		for _, p := range parentRolesMap[r] {
-			includingParentRoles[p] = struct{}{}
-		}
 	}
 
 	policyMatch := false
@@ -1595,7 +1589,7 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
 
-				rolesIncludingParents := lookupParentRoles(role, parentRolesMap)
+				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
 				for _, scope := range scopes {
 					var scopeAllowNode *planner.QpN
@@ -2005,17 +1999,6 @@ func migrate(rt *runtimev1.RuleTable) error {
 	}
 
 	return nil
-}
-
-func lookupParentRoles(role string, parentRolesMap map[string][]string) []string {
-	parents := parentRolesMap[role]
-	if len(parents) == 0 {
-		return []string{role}
-	}
-	result := make([]string, 0, 1+len(parents))
-	result = append(result, role)
-	result = append(result, parents...)
-	return result
 }
 
 func migrateFromCompilerVersion0To1(rt *runtimev1.RuleTable) error {

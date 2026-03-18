@@ -508,11 +508,11 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 	}
 }
 
-// ParentRolesMap returns the union of all parent roles across the provided scopes.
+// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.
 // When multiple scopes define parents for the same role, the results are merged rather than overwritten.
-func (m *Index) ParentRolesMap(scopes []string) map[string][]string {
+func (m *Index) AddParentRoles(scopes, roles []string) []string {
 	if len(m.parentRoles) == 0 {
-		return nil
+		return roles
 	}
 
 	merged := make(map[string][]string)
@@ -526,7 +526,16 @@ func (m *Index) ParentRolesMap(scopes []string) map[string][]string {
 		}
 	}
 
-	return merged
+	if len(merged) == 0 {
+		return roles
+	}
+
+	result := make([]string, len(roles))
+	copy(result, roles)
+	for _, role := range roles {
+		result = append(result, merged[role]...)
+	}
+	return result
 }
 
 func (m *Index) IndexParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) error {
