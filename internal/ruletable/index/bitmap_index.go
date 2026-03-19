@@ -26,7 +26,6 @@ type bitmapIndex struct {
 	allowActionsBitmap *roaring.Bitmap
 	freeIDs            []uint32
 	bindings           []*Binding
-	nextID             uint32
 }
 
 func newBitmapIndex() *bitmapIndex {
@@ -54,9 +53,7 @@ func (idx *bitmapIndex) allocID() uint32 {
 		idx.freeIDs = idx.freeIDs[:len(idx.freeIDs)-1]
 		return id
 	}
-	id := idx.nextID
-	idx.nextID++
-	return id
+	return uint32(len(idx.bindings))
 }
 
 func (idx *bitmapIndex) freeID(id uint32) {

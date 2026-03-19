@@ -4,6 +4,8 @@
 package index
 
 import (
+	"slices"
+
 	"github.com/RoaringBitmap/roaring/v2"
 	"github.com/cespare/xxhash/v2"
 
@@ -74,6 +76,10 @@ func New(opts ...Option) *Index {
 func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	if len(rules) == 0 {
 		return nil
+	}
+
+	if newBindings := len(rules) - len(m.bi.freeIDs); newBindings > 0 {
+		m.bi.bindings = slices.Grow(m.bi.bindings, newBindings)
 	}
 
 	paramsCache := make(map[uint64]*RowParams)
@@ -179,7 +185,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 }
 
 func (m *Index) GetAllRows() ([]*Binding, error) {
-	var res []*Binding
+	res := make([]*Binding, 0, m.bi.universe.GetCardinality())
 	for _, b := range m.bi.bindings {
 		if b != nil {
 			res = append(res, b)
