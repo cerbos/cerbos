@@ -296,6 +296,81 @@ func TestRuleTableManager(t *testing.T) {
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 
+	t.Run("deleting_role_policy_clears_parent_roles_immediately", func(t *testing.T) {
+		resourceFile := "resource_policies/pebble.yaml"
+		roleFile := "role_policies/skipper.yaml"
+
+		allowUserPebbleSkip := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_ResourcePolicy{
+				ResourcePolicy: &policyv1.ResourcePolicy{
+					Resource: "pebble",
+					Version:  "default",
+					Rules: []*policyv1.ResourceRule{
+						{
+							Actions: []string{"skip"},
+							Roles:   []string{"user"},
+							Effect:  effectv1.Effect_EFFECT_ALLOW,
+						},
+					},
+				},
+			},
+		}
+
+		skipperParentUser := &policyv1.Policy{
+			ApiVersion: "api.cerbos.dev/v1",
+			PolicyType: &policyv1.Policy_RolePolicy{
+				RolePolicy: &policyv1.RolePolicy{
+					PolicyType:  &policyv1.RolePolicy_Role{Role: "skipper"},
+					Version:     "default",
+					ParentRoles: []string{"user"},
+					Rules: []*policyv1.RoleRule{
+						{
+							Resource:     "pebble",
+							AllowActions: []string{"skip"},
+						},
+					},
+				},
+			},
+		}
+
+		addOrUpdatePolicy(t, resourceFile, allowUserPebbleSkip, memFsys, idx, store)
+		addOrUpdatePolicy(t, roleFile, skipperParentUser, memFsys, idx, store)
+
+		action := "skip"
+		input := &enginev1.CheckInput{
+			RequestId: "parent-role-immediate",
+			Resource: &enginev1.Resource{
+				Kind: "pebble",
+				Id:   "1",
+			},
+			Principal: &enginev1.Principal{
+				Id:    "sam",
+				Roles: []string{"skipper"},
+			},
+			Actions: []string{action},
+		}
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
+			require.NoError(c, err)
+
+			require.Contains(c, output.Actions, action)
+			require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions[action].GetEffect())
+		}, 1*time.Second, 50*time.Millisecond)
+
+		deletePolicy(t, roleFile, memFsys, idx, store)
+
+		// Parent role expansion should be cleared immediately after deletion
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
+			require.NoError(c, err)
+
+			require.Contains(c, output.Actions, action)
+			require.Equal(c, effectv1.Effect_EFFECT_DENY, output.Actions[action].GetEffect())
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
 	t.Run("deleting_role_policy_does_not_restore_parent_roles", func(t *testing.T) {
 		resourceFile := "resource_policies/document.yaml"
 		roleFile := "role_policies/employee.yaml"

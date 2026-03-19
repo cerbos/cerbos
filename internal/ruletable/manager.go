@@ -233,6 +233,9 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 				delete(mgr.ScopeParentRoles, scope)
 			}
 		}
+		if err := mgr.idx.IndexParentRoles(mgr.ScopeParentRoles); err != nil {
+			return err
+		}
 	}
 
 	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer.
