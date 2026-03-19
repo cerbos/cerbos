@@ -276,7 +276,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	case 1:
 		baseBM = dims[0]
 	default:
-		baseBM = roaring.FastAnd(dims...)
+		baseBM = fastAnd(dims...)
 	}
 	if baseBM.IsEmpty() {
 		return nil
@@ -287,7 +287,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	if action != "" {
 		actionBM := bi.action.Query(action)
 		if !actionBM.IsEmpty() {
-			resultBM = roaring.FastAnd(baseBM, actionBM)
+			resultBM = fastAnd(baseBM, actionBM)
 		} else {
 			resultBM = roaring.New()
 		}
@@ -338,17 +338,17 @@ func (m *Index) queryAllowActions(bi *bitmapIndex, version, scope, action, resou
 	if len(candidateDims) == 1 {
 		candidateBM = candidateDims[0]
 	} else {
-		candidateBM = roaring.FastAnd(candidateDims...)
+		candidateBM = fastAnd(candidateDims...)
 	}
 	if candidateBM.IsEmpty() {
 		return res
 	}
 
 	// now AND with the resource
-	// (FastAnd returns a new copy so candidateBM isn't mutated).
+	// (fastAnd returns a new copy so candidateBM isn't mutated).
 	resourceMatchedBM := candidateBM
 	if resourceBM != nil {
-		resourceMatchedBM = roaring.FastAnd(candidateBM, resourceBM)
+		resourceMatchedBM = fastAnd(candidateBM, resourceBM)
 	}
 
 	// we need two levels because we can't determine "does this role have a role policy"
@@ -495,7 +495,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	case 1:
 		baseBM = dims[0]
 	default:
-		baseBM = roaring.FastAnd(dims...)
+		baseBM = fastAnd(dims...)
 	}
 	if baseBM.IsEmpty() {
 		return nil
@@ -527,10 +527,10 @@ func (m *Index) applyActionFilter(baseBM *roaring.Bitmap, actions []string) *roa
 
 	actionBM := bi.action.QueryMultiple(actions)
 	if !actionBM.IsEmpty() {
-		parts = append(parts, roaring.FastAnd(baseBM, actionBM))
+		parts = append(parts, fastAnd(baseBM, actionBM))
 	}
 	if !bi.allowActionsBitmap.IsEmpty() {
-		aaBM := roaring.FastAnd(baseBM, bi.allowActionsBitmap)
+		aaBM := fastAnd(baseBM, bi.allowActionsBitmap)
 		if !aaBM.IsEmpty() {
 			parts = append(parts, aaBM)
 		}
@@ -767,6 +767,25 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	}
 
 	return progs, nil
+}
+
+// fastAnd swaps the smallest bitmap to position 0 before calling
+// roaring.FastAnd, which processes left-to-right. A full sort would be
+// theoretically optimal (the merge-join scans both sides), but at our
+// slice sizes (<=6) the sort overhead seems to cost more than it saves.
+func fastAnd(bitmaps ...*roaring.Bitmap) *roaring.Bitmap {
+	minIdx := 0
+	minCard := bitmaps[0].GetCardinality()
+	for i := 1; i < len(bitmaps); i++ {
+		if c := bitmaps[i].GetCardinality(); c < minCard {
+			minCard = c
+			minIdx = i
+		}
+	}
+	if minIdx != 0 {
+		bitmaps[0], bitmaps[minIdx] = bitmaps[minIdx], bitmaps[0]
+	}
+	return roaring.FastAnd(bitmaps...)
 }
 
 // intersectionNonEmpty returns true if the intersection of all bitmaps is
