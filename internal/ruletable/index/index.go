@@ -91,13 +91,13 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
 			if !rule.FromRolePolicy {
-				p, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
+				p, err := getOrGenerateParams(paramsCache, rule.Params)
 				if err != nil {
 					return err
 				}
 				params = p
 				if rule.OriginDerivedRole != "" {
-					drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams, namer.DerivedRolesFQN(rule.OriginDerivedRole))
+					drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
 					if err != nil {
 						return err
 					}
@@ -105,7 +105,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 				}
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
-			p, err := getOrGenerateParams(paramsCache, rule.Params, rule.OriginFqn)
+			p, err := getOrGenerateParams(paramsCache, rule.Params)
 			if err != nil {
 				return err
 			}
@@ -729,10 +729,9 @@ func (m *Index) Reset() {
 	m.parentRoles = nil
 }
 
-// getOrGenerateParams returns cached RowParams for the given proto hash, compiling CEL programs
-// on miss. The returned Key reflects the fqn of whichever caller first populated the entry;
-// callers must not rely on Key matching their fqn.
-func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable_RuleRow_Params, fqn string) (*RowParams, error) {
+// getOrGenerateParams returns cached RowParams for the given proto content hash,
+// compiling CEL programs on miss. Rows with identical params share the same pointer and Key.
+func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable_RuleRow_Params) (*RowParams, error) {
 	h := util.HashPB(proto, nil)
 	if cached, ok := cache[h]; ok {
 		return cached, nil
@@ -742,7 +741,7 @@ func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable
 		return nil, err
 	}
 	params := &RowParams{
-		Key:         fqn,
+		Key:         h,
 		Variables:   proto.OrderedVariables,
 		Constants:   (&structpb.Struct{Fields: proto.Constants}).AsMap(),
 		CelPrograms: progs,

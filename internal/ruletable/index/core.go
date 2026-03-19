@@ -48,8 +48,8 @@ type Binding struct {
 
 // RowParams holds compiled parameters for a rule or derived role.
 type RowParams struct {
-	Key         string
 	Constants   map[string]any
 	CelPrograms []*CelProgram
 	Variables   []*runtimev1.Variable
+	Key         uint64
 }

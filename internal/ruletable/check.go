@@ -179,7 +179,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		includingParentRoles[r] = struct{}{}
 	}
 
-	varCache := make(map[string]map[string]any)
+	varCache := make(map[uint64]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
 	// We use a compound key comprising the parameter origin and the rule FQN.
 	conditionCache := make(map[string]bool)
@@ -244,11 +244,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										continue
 									}
 
-									// we only store a subset of the derived role set variables against each derived role, so we need to cache
-									// against the named derived role, inside the derived role set, specifically.
-									cacheKey := dr.OriginFqn + "#" + name
 									var variables map[string]any
-									if c, ok := varCache[cacheKey]; ok {
+									if c, ok := varCache[dr.VarCacheKey]; ok {
 										variables = c
 									} else {
 										var err error
@@ -256,7 +253,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										if err != nil {
 											return nil, err
 										}
-										varCache[cacheKey] = variables
+										varCache[dr.VarCacheKey] = variables
 									}
 
 									// we don't use `conditionCache` as we don't do any evaluations scoped solely to derived role conditions

@@ -24,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 type compilerVersionMigration func(*runtimev1.RuleTable) error
@@ -432,7 +433,8 @@ type RuleTable struct {
 
 type WrappedRunnableDerivedRole struct {
 	*runtimev1.RunnableDerivedRole
-	Constants map[string]any
+	Constants   map[string]any
+	VarCacheKey uint64
 }
 
 // ProgramCache caches compiled CEL programs keyed by CheckedExpr pointer to avoid repeated compilation.
@@ -555,6 +557,7 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 					rt.policyDerivedRoles[modID][n] = &WrappedRunnableDerivedRole{
 						RunnableDerivedRole: dr,
 						Constants:           (&structpb.Struct{Fields: dr.Constants}).AsMap(),
+						VarCacheKey:         util.HashPB(dr, nil),
 					}
 				}
 			}
