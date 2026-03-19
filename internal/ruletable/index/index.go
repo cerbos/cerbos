@@ -769,21 +769,38 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	return progs, nil
 }
 
-// fastAnd swaps the smallest bitmap to position 0 before calling
-// roaring.FastAnd, which processes left-to-right. A full sort would be
-// theoretically optimal (the merge-join scans both sides), but at our
-// slice sizes (<=6) the sort overhead seems to cost more than it saves.
+// fastAnd swaps the smallest bitmap to position 0 and the largest to
+// the end before calling roaring.FastAnd, which processes left-to-right.
+// Smallest-first minimises the initial And; largest-last defers the most
+// expensive merge-join to when the intermediate result is smallest.
 func fastAnd(bitmaps ...*roaring.Bitmap) *roaring.Bitmap {
-	minIdx := 0
+	minIdx, maxIdx := 0, 0
 	minCard := bitmaps[0].GetCardinality()
+	maxCard := minCard
 	for i := 1; i < len(bitmaps); i++ {
-		if c := bitmaps[i].GetCardinality(); c < minCard {
+		c := bitmaps[i].GetCardinality()
+		if c < minCard {
 			minCard = c
 			minIdx = i
 		}
+		if c > maxCard {
+			maxCard = c
+			maxIdx = i
+		}
+	}
+	// same cardinality, early return
+	if minIdx == maxIdx {
+		return roaring.FastAnd(bitmaps...)
 	}
 	if minIdx != 0 {
 		bitmaps[0], bitmaps[minIdx] = bitmaps[minIdx], bitmaps[0]
+		if maxIdx == 0 {
+			// the max _was_ at 0 but the first swap displaced it to where minIdx was
+			maxIdx = minIdx
+		}
+	}
+	if last := len(bitmaps) - 1; maxIdx != last {
+		bitmaps[last], bitmaps[maxIdx] = bitmaps[maxIdx], bitmaps[last]
 	}
 	return roaring.FastAnd(bitmaps...)
 }
