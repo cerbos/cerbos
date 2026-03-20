@@ -92,27 +92,46 @@ GSCP "${SCRIPT_DIR}/flake.nix" "${CLIENT_VM}:${REMOTE_BASE}/flake.nix"
 GSCP "${SCRIPT_DIR}/flake.lock" "${CLIENT_VM}:${REMOTE_BASE}/flake.lock"
 GSCP "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_VM}:${REMOTE_BASE}/loadtest.sh"
 
-# --- Download and start Cerbos on PDP VM ---
-# Resolve "latest" to actual version locally
-if [[ "${CERBOS_VERSION}" == "latest" ]]; then
-  CERBOS_VERSION=$(curl -sf https://api.github.com/repos/cerbos/cerbos/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
-  log "Resolved latest Cerbos version: ${CERBOS_VERSION}"
+# Upload protoset if provided
+if [[ -n "${PROTOSET:-}" ]]; then
+  if [[ ! -f "$PROTOSET" ]]; then
+    err "PROTOSET set but file not found: $PROTOSET"
+    exit 1
+  fi
+  log "Uploading protoset to Client VM..."
+  GSCP "$PROTOSET" "${CLIENT_VM}:${REMOTE_BASE}/cerbos.protoset"
 fi
 
-log "Setting up Cerbos ${CERBOS_VERSION} on PDP VM..."
+# --- Deploy Cerbos binary to PDP VM ---
+if [[ -n "${CERBOS_BINARY_PATH:-}" ]]; then
+  # Use a locally built binary
+  if [[ ! -f "$CERBOS_BINARY_PATH" ]]; then
+    err "CERBOS_BINARY_PATH set but file not found: $CERBOS_BINARY_PATH"
+    exit 1
+  fi
+  log "Uploading custom Cerbos binary from ${CERBOS_BINARY_PATH}..."
+  GSCP "$CERBOS_BINARY_PATH" "${PDP_VM}:${REMOTE_BASE}/bin/cerbos"
+  GSSH "$PDP_VM" "chmod +x ${REMOTE_BASE}/bin/cerbos && echo 'custom' > ${REMOTE_BASE}/bin/.cerbos-version"
+else
+  # Download a published release
+  if [[ "${CERBOS_VERSION}" == "latest" ]]; then
+    CERBOS_VERSION=$(curl -sf https://api.github.com/repos/cerbos/cerbos/releases/latest | grep '"tag_name"' | sed 's/.*"v\(.*\)".*/\1/')
+    log "Resolved latest Cerbos version: ${CERBOS_VERSION}"
+  fi
 
-# Download binary locally and upload to PDP VM (which has no public IP)
-CERBOS_TARBALL="/tmp/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
-if [[ ! -f "$CERBOS_TARBALL" ]]; then
-  log "Downloading Cerbos ${CERBOS_VERSION} locally..."
-  curl -sfL -o "$CERBOS_TARBALL" \
-    "https://github.com/cerbos/cerbos/releases/download/v${CERBOS_VERSION}/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
-fi
+  log "Setting up Cerbos ${CERBOS_VERSION} on PDP VM..."
 
-log "Uploading Cerbos binary to PDP VM..."
-GSCP "$CERBOS_TARBALL" "${PDP_VM}:/tmp/cerbos.tar.gz"
+  CERBOS_TARBALL="/tmp/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
+  if [[ ! -f "$CERBOS_TARBALL" ]]; then
+    log "Downloading Cerbos ${CERBOS_VERSION} locally..."
+    curl -sfL -o "$CERBOS_TARBALL" \
+      "https://github.com/cerbos/cerbos/releases/download/v${CERBOS_VERSION}/cerbos_${CERBOS_VERSION}_Linux_x86_64.tar.gz"
+  fi
 
-GSSH "$PDP_VM" <<ENDSSH
+  log "Uploading Cerbos binary to PDP VM..."
+  GSCP "$CERBOS_TARBALL" "${PDP_VM}:/tmp/cerbos.tar.gz"
+
+  GSSH "$PDP_VM" <<ENDSSH
 set -euo pipefail
 
 VERSION_MARKER="${REMOTE_BASE}/bin/.cerbos-version"
@@ -126,6 +145,7 @@ else
 fi
 rm -f /tmp/cerbos.tar.gz
 ENDSSH
+fi
 
 # --- Start observability stack on Client VM ---
 log "Starting Prometheus + Grafana on Client VM..."
