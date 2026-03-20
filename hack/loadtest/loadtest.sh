@@ -24,6 +24,7 @@ USERNAME=${USERNAME:-"cerbos"}
 PASSWORD=${PASSWORD:-"cerbosAdmin"}
 WORK_DIR=${WORK_DIR:-"./work"}
 METRICS_URL=${METRICS_URL:-"http://localhost:3592/_cerbos/metrics"}
+PROTOSET=${PROTOSET:-""}
 
 PDP_METRICS=(
   process_resident_memory_bytes
@@ -188,9 +189,16 @@ executeTest() {
     CGO_ENABLED=0 go build -tags printsummary -o "${WORK_DIR}/printsummary" .
   fi
 
+  # Proto source: use protoset file if provided, otherwise rely on server reflection
+  local ghzProtoArgs=()
+  if [[ -n "$PROTOSET" ]]; then
+    ghzProtoArgs+=(--protoset "$PROTOSET")
+  fi
+
   # --- Warmup ---
   printf "Warming up PDP with 1000 requests...\n"
   ghz --insecure \
+      "${ghzProtoArgs[@]}" \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
       --concurrency "$CONCURRENCY" \
@@ -210,6 +218,7 @@ executeTest() {
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
   ghz --insecure \
+      "${ghzProtoArgs[@]}" \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
       --concurrency "$CONCURRENCY" \
@@ -238,6 +247,7 @@ executeTest() {
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
   ghz --insecure \
+      "${ghzProtoArgs[@]}" \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
       --concurrency "$CONCURRENCY" \

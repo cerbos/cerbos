@@ -52,6 +52,7 @@ ${CONCURRENCY:+CONCURRENCY="${CONCURRENCY}"} \
 ${CONNECTIONS:+CONNECTIONS="${CONNECTIONS}"} \
 ${REQ_KIND:+REQ_KIND="${REQ_KIND}"} \
 ${NUM_POLICIES:+NUM_POLICIES="${NUM_POLICIES}"} \
+${PROTOSET:+PROTOSET="${REMOTE_BASE}/cerbos.protoset"} \
   nix develop --command bash loadtest.sh -e
 ENDSSH
 
