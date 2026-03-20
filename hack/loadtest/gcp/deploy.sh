@@ -66,10 +66,11 @@ GSCP /tmp/cerbos-loadtest-client.tar.gz "${CLIENT_VM}:/tmp/"
 GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
 rm -f /tmp/cerbos-loadtest-client.tar.gz
 
-log "Writing Prometheus config to Client VM..."
-GSSH "$CLIENT_VM" <<ENDSSH
-mkdir -p ${REMOTE_BASE}/conf/prometheus ${REMOTE_BASE}/conf/grafana/dashboards
-cat > ${REMOTE_BASE}/conf/prometheus/prometheus.yml <<'PROMEOF'
+log "Uploading client configs to Client VM..."
+CLIENT_STAGING=$(mktemp -d)
+trap "rm -rf '$CLIENT_STAGING'" EXIT
+mkdir -p "${CLIENT_STAGING}/conf/prometheus" "${CLIENT_STAGING}/conf/grafana/dashboards"
+cat > "${CLIENT_STAGING}/conf/prometheus/prometheus.yml" <<PROMEOF
 global:
   scrape_interval: 15s
 scrape_configs:
@@ -79,28 +80,24 @@ scrape_configs:
     static_configs:
       - targets: ["${PDP_IP}:3592"]
 PROMEOF
-ENDSSH
-
-log "Uploading Docker Compose and Grafana configs to Client VM..."
-GSCP "${SCRIPT_DIR}/conf/docker-compose.yml" "${CLIENT_VM}:${REMOTE_BASE}/conf/docker-compose.yml"
-GSCP "${SCRIPT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_VM}:${REMOTE_BASE}/conf/grafana/datasources.yaml"
-GSCP "${SCRIPT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_VM}:${REMOTE_BASE}/conf/grafana/dashboards.yaml"
-GSCP "${SCRIPT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_VM}:${REMOTE_BASE}/conf/grafana/dashboards/cerbos.json"
-
-log "Uploading Nix flake and loadtest script to Client VM..."
-GSCP "${SCRIPT_DIR}/flake.nix" "${CLIENT_VM}:${REMOTE_BASE}/flake.nix"
-GSCP "${SCRIPT_DIR}/flake.lock" "${CLIENT_VM}:${REMOTE_BASE}/flake.lock"
-GSCP "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_VM}:${REMOTE_BASE}/loadtest.sh"
-
-# Upload protoset if provided
+cp "${SCRIPT_DIR}/conf/docker-compose.yml" "${CLIENT_STAGING}/conf/docker-compose.yml"
+cp "${SCRIPT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_STAGING}/conf/grafana/datasources.yaml"
+cp "${SCRIPT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_STAGING}/conf/grafana/dashboards.yaml"
+cp "${SCRIPT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_STAGING}/conf/grafana/dashboards/cerbos.json"
+cp "${SCRIPT_DIR}/flake.nix" "${CLIENT_STAGING}/flake.nix"
+cp "${SCRIPT_DIR}/flake.lock" "${CLIENT_STAGING}/flake.lock"
+cp "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_STAGING}/loadtest.sh"
 if [[ -n "${PROTOSET:-}" ]]; then
   if [[ ! -f "$PROTOSET" ]]; then
     err "PROTOSET set but file not found: $PROTOSET"
     exit 1
   fi
-  log "Uploading protoset to Client VM..."
-  GSCP "$PROTOSET" "${CLIENT_VM}:${REMOTE_BASE}/cerbos.protoset"
+  cp "$PROTOSET" "${CLIENT_STAGING}/cerbos.protoset"
 fi
+tar czf /tmp/cerbos-loadtest-configs.tar.gz -C "${CLIENT_STAGING}" .
+GSCP /tmp/cerbos-loadtest-configs.tar.gz "${CLIENT_VM}:/tmp/"
+GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-configs.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-configs.tar.gz"
+rm -f /tmp/cerbos-loadtest-configs.tar.gz
 
 # --- Deploy Cerbos binary to PDP VM ---
 if [[ -n "${CERBOS_BINARY_PATH:-}" ]]; then
