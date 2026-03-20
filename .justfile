@@ -97,6 +97,9 @@ generate-notice: _go_licence_detector
 generate-npm-packages:
 	@ go run ./hack/tools/generate-npm-packages
 
+generate-protoset OUTPUT='cerbos.protoset': _buf
+    @ "${TOOLS_BIN_DIR}/buf" build api/public -o {{ OUTPUT }}
+
 generate-proto-code: _buf
     #!/usr/bin/env bash
     set -euo pipefail
