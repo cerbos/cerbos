@@ -70,6 +70,7 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 | `SERVER` | Cerbos gRPC server address | `localhost:3593` |
 | `STORE` | Storage backend (`disk` or `postgres`) | `disk` |
 | `USERNAME` | Cerbos Admin API username | `cerbos` |
+| `PROTOSET` | Path to a compiled proto descriptor set; bypasses gRPC server reflection (required when reflection is broken, e.g. stripped OpenAPI annotations). Generate with `just generate-protoset` | *(unset)* |
 | `WORK_DIR` | Directory for generated data and temporary files | `./work` |
 
 ## Policy Sets

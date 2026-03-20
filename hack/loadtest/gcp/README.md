@@ -53,15 +53,21 @@ cd gcp
 # 5. Run load tests
 RPS=500 DURATION_SECS=120 ./run.sh
 
-# 6. (Optional) Redeploy policies only (restarts Cerbos)
+# 6. (Optional) Deploy a custom Cerbos binary with protoset
+just generate-protoset
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o cerbos ./cmd/cerbos
+CERBOS_BINARY_PATH=./cerbos PROTOSET=./cerbos.protoset ./deploy.sh
+PROTOSET=1 ./run.sh
+
+# 8. (Optional) Redeploy policies only (restarts Cerbos)
 NUM_POLICIES=500 ../loadtest.sh -g
 ./deploy.sh -p
 
-# 7. (Optional) View Grafana dashboards via SSH tunnel
+# 9. (Optional) View Grafana dashboards via SSH tunnel
 gcloud compute ssh cerbos-loadtest-client --zone=us-central1-a -- -L 3000:localhost:3000
 # Then open http://localhost:3000
 
-# 8. Tear down infrastructure
+# 10. Tear down infrastructure
 cd infrastructure/environments/gcp_loadtest
 terraform destroy
 ```
@@ -92,6 +98,8 @@ All variables have sensible defaults and can be overridden:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `CERBOS_VERSION` | Cerbos release version to download | `latest` |
+| `CERBOS_BINARY_PATH` | Path to a locally built Cerbos binary; when set, skips downloading a release | *(unset)* |
+| `PROTOSET` | Path to a compiled proto descriptor set; uploaded to client VM and passed to ghz to bypass gRPC server reflection. Generate with `just generate-protoset` | *(unset)* |
 | `STORE` | Storage backend (`disk`) | `disk` |
 | `AUDIT_ENABLED` | Enable audit logging | `false` |
 | `SCHEMA_ENFORCEMENT` | Schema enforcement level | `none` |
