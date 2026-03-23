@@ -9,7 +9,7 @@ site:
 content:
   sources:
     - url: ./../
-      branches: [HEAD, 'v{0..9}*', '!v0.{0..31}']
+      branches: [HEAD, "v{0..9}*", "!v0.{0..31}"]
       edit_url: "https://github.com/cerbos/cerbos/tree/main/{path}"
       start_path: docs
     - url: https://github.com/cerbos/cloud-docs.git
@@ -20,7 +20,6 @@ urls:
   latest_prerelease_version_segment: prerelease
 asciidoc:
   attributes:
-    app-name: "cerbos"
     app-version: "0.52.0@"
     experimental: true
     page-pagination: true
@@ -47,3 +46,5 @@ antora:
         - "cerbos/{prerelease,[0-9]*.[0-9]*.[0-9]*}/**"
         - "cerbos/**/releases/**"
         - "cerbos-hub/legacy/**"
+
+    - require: "@antora/collector-extension"
