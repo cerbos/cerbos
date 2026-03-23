@@ -632,10 +632,9 @@ func (m *Index) DeletePolicy(fqn string) error {
 		return nil
 	}
 
-	// Collect IDs to remove (can't modify bitmap during iteration).
-	idsToRemove := fqnBM.ToArray()
-	for _, id := range idsToRemove {
-		b := m.bi.getBinding(id)
+	iter := fqnBM.Iterator()
+	for iter.HasNext() {
+		b := m.bi.getBinding(iter.Next())
 		if b == nil {
 			continue
 		}
