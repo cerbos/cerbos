@@ -216,10 +216,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		return err
 	}
 
-	activeScopes, err := mgr.idx.GetScopes()
-	if err != nil {
-		return err
-	}
+	activeScopes := mgr.idx.GetScopes()
 	activeScopeSet := make(map[string]struct{}, len(activeScopes))
 	for _, s := range activeScopes {
 		activeScopeSet[s] = struct{}{}

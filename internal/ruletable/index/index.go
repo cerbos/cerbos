@@ -652,12 +652,12 @@ func (m *Index) DeletePolicy(fqn string) error {
 	return nil
 }
 
-func (m *Index) GetScopes() ([]string, error) {
-	return m.bi.scope.Keys(), nil
+func (m *Index) GetScopes() []string {
+	return m.bi.scope.Keys()
 }
 
-func (m *Index) GetRoleGlobs() ([]string, error) {
-	return m.bi.role.GetAllKeys(), nil
+func (m *Index) GetRoles() []string {
+	return m.bi.role.GetAllKeys()
 }
 
 func (m *Index) GetVersions() []string {
