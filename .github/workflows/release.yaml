@@ -65,7 +65,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to ECR
-        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+        uses: aws-actions/amazon-ecr-login@c962da2960ed15f492addc26fffa274485265950 # v2.0.2
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
@@ -118,7 +118,7 @@ jobs:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: bufbuild/buf-action@8f4a1456a0ab6a1eb80ba68e53832e6fcfacc16c # v1.3.0
+        uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}
@@ -267,7 +267,7 @@ jobs:
         uses: aws-actions/setup-sam@d78e1a4a9656d3b223e59b80676a797f20093133 # v2
 
       - name: Download GoReleaser artifacts
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: artifacts
           path: dist/
