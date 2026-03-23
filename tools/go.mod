@@ -7,7 +7,7 @@ require (
 	github.com/bufbuild/buf v1.66.1
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
-	github.com/dadav/helm-schema v0.0.0-20260224190900-bc6f8b9b2e44
+	github.com/dadav/helm-schema v0.0.0-20260317211912-1d17584b1912
 	github.com/dkorunic/betteralign v0.9.0
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golangci/golangci-lint/v2 v2.11.3

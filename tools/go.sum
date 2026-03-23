@@ -431,8 +431,8 @@ github.com/cyphar/filepath-securejoin v0.6.1 h1:5CeZ1jPXEiYt3+Z6zqprSAgSWiggmpVy
 github.com/cyphar/filepath-securejoin v0.6.1/go.mod h1:A8hd4EnAeyujCJRrICiOWqjS1AX0a9kM5XL+NwKoYSc=
 github.com/dadav/go-jsonpointer v0.0.0-20240918181927-335cbee8c279 h1:GxxxrAMM6YJK4Tf7c6APwkhXzzpJm2hGeWKpD3OKpHY=
 github.com/dadav/go-jsonpointer v0.0.0-20240918181927-335cbee8c279/go.mod h1:JoQhlwhuWFnmxzDNgByW0ONYJZjQGnUnRu9H7+C0lTU=
-github.com/dadav/helm-schema v0.0.0-20260224190900-bc6f8b9b2e44 h1:/5BGPw4X5mIW7RlSi/Bj6nGj2k/hn0MuZ5k2SPIUhuI=
-github.com/dadav/helm-schema v0.0.0-20260224190900-bc6f8b9b2e44/go.mod h1:EZ0m7bYj4NA82UI7EfR8TNQGDmE/4kk0pMTLJA5wd6k=
+github.com/dadav/helm-schema v0.0.0-20260317211912-1d17584b1912 h1:Fo+EzLsGybwhWc+milFuWV4065ZQDLeg0y0FY9uL9o0=
+github.com/dadav/helm-schema v0.0.0-20260317211912-1d17584b1912/go.mod h1:EZ0m7bYj4NA82UI7EfR8TNQGDmE/4kk0pMTLJA5wd6k=
 github.com/daixiang0/gci v0.13.7 h1:+0bG5eK9vlI08J+J/NWGbWPTNiXPG4WhNLJOkSxWITQ=
 github.com/daixiang0/gci v0.13.7/go.mod h1:812WVN6JLFY9S6Tv76twqmNqevN0pa3SX3nih0brVzQ=
 github.com/danieljoos/wincred v1.2.3 h1:v7dZC2x32Ut3nEfRH+vhoZGvN72+dQ/snVXo/vMFLdQ=
