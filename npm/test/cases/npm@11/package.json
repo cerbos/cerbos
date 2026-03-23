@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "npm@11.11.0",
+  "packageManager": "npm@11.11.1",
   "dependencies": {
     "cerbos": "latest",
     "cerbosctl": "latest"
