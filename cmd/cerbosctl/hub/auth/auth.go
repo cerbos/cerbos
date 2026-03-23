@@ -5,28 +5,28 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/adrg/xdg"
 	"github.com/alecthomas/kong"
-	"github.com/zalando/go-keyring"
 	"go.uber.org/zap"
-	"golang.org/x/oauth2"
 
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cloud-api/base"
 )
 
 var (
-	ClientID      = "7dMG4MO7GXv4liZFoLDDzqM4yN8s0YFy"
-	DeviceAuthURL = "https://spitfire-development.eu.auth0.com/oauth/device/code"
+	DeviceAuthClientID = "7dMG4MO7GXv4liZFoLDDzqM4yN8s0YFy"
+	DeviceAuthURL      = "https://spitfire-development.eu.auth0.com/oauth/device/code"
+	TokenURL           = "https://spitfire-development.eu.auth0.com/oauth/token"
 )
 
 type Cmd struct {
-	LogLevel string `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
+	LogLevel     string `help:"Log level (${enum})" default:"info" enum:"debug,info,warn,error"`
+	APIEndpoint  string `name:"api-endpoint" default:"https://api.cerbos.cloud" env:"CERBOS_HUB_API_ENDPOINT"`
+	ClientID     string `name:"client-id" help:"Client ID of the access credential" env:"CERBOS_HUB_CLIENT_ID" and:"client-id,client-secret"`
+	ClientSecret string `name:"client-secret" help:"Client secret of the access credential" env:"CERBOS_HUB_CLIENT_SECRET" and:"client-id,client-secret"` //nolint:gosec
 }
 
 func (c *Cmd) Run(k *kong.Kong, cmd *Cmd) error {
@@ -37,63 +37,24 @@ func (c *Cmd) Run(k *kong.Kong, cmd *Cmd) error {
 	defer zap.L().Sync() //nolint:errcheck
 
 	log := zap.L().Named("auth")
-	config := &oauth2.Config{
-		ClientID: ClientID,
-		Scopes:   []string{"openid"},
-		Endpoint: oauth2.Endpoint{
-			DeviceAuthURL: DeviceAuthURL,
-		},
-	}
-	verifier := oauth2.GenerateVerifier()
-	response, err := config.DeviceAuth(ctx, oauth2.S256ChallengeOption(verifier))
-	if err != nil {
-		log.Error("Failed to start auth flow", zap.Error(err))
-		return fmt.Errorf("failed to start auth flow: %w", err)
-	}
 
-	fmt.Fprintf(k.Stdout, "Log in and connect this machine to your account by visiting %s\n", response.VerificationURIComplete)
-	token, err := config.DeviceAccessToken(ctx, response)
-	if err != nil {
-		log.Error("Failed to obtain token", zap.Error(err))
-		return fmt.Errorf("failed to obtain token: %w", err)
-	}
-
-	if err := saveToken(log, token); err != nil {
-		log.Error("Failed to save token", zap.Error(err))
-		return fmt.Errorf("failed to save token: %w", err)
-	}
-
-	fmt.Fprintln(k.Stdout, "Successfully logged in to Cerbos Hub")
-	return nil
-}
-
-func saveToken(log *zap.Logger, token *oauth2.Token) error {
-	tokenBytes, err := json.Marshal(token)
-	if err != nil {
-		return fmt.Errorf("failed to marshal token: %w", err)
-	}
-
-	if err := keyring.Set("cerbosctl", "token", string(tokenBytes)); err != nil {
-		log.Debug("Failed to save token to key ring: falling back to disk storage", zap.Error(err))
-		savePath, err := xdg.StateFile(".cerbosctl")
-		if err != nil {
-			log.Debug("Failed to determine path to credentials", zap.Error(err))
-			return fmt.Errorf("failed to determine path to credentials: %w", err)
+	if c.ClientID != "" && c.ClientSecret != "" {
+		log.Debug("Logging in using client credentials")
+		if err := base.ClientLogin(ctx, c.APIEndpoint, c.ClientID, c.ClientSecret); err != nil {
+			log.Error("Failed to log in using client credentials", zap.Error(err))
+			return err
 		}
 
-		credentialsFile, err := os.Create(savePath)
-		if err != nil {
-			log.Debug("Failed to create file", zap.Error(err))
-			return fmt.Errorf("failed to save ")
-		}
-		defer credentialsFile.Close()
-
-		n, err := credentialsFile.Write(tokenBytes)
-		if err != nil || n != len(tokenBytes) {
-			log.Debug("Failed to write token", zap.Error(err))
-			return fmt.Errorf("failed to write token: %w", err)
-		}
+		log.Info("Successfully authenticated using client credentials")
+		return nil
 	}
 
+	log.Debug("Initiating device auth flow")
+	if err := base.DeviceLogin(ctx, c.APIEndpoint, DeviceAuthURL, TokenURL, DeviceAuthClientID); err != nil {
+		log.Error("Failed to authenticate", zap.Error(err))
+		return err
+	}
+
+	log.Info("Device successfully authenticated")
 	return nil
 }
