@@ -784,7 +784,14 @@ func fastAnd(bitmaps ...*roaring.Bitmap) *roaring.Bitmap {
 	if minIdx != 0 {
 		bitmaps[0], bitmaps[minIdx] = bitmaps[minIdx], bitmaps[0]
 	}
-	return roaring.FastAnd(bitmaps...)
+	res := roaring.FastAnd(bitmaps...)
+
+	// ensure the passed bitmaps preserve their original ordering by swopping back if changed
+	if minIdx != 0 {
+		bitmaps[0], bitmaps[minIdx] = bitmaps[minIdx], bitmaps[0]
+	}
+
+	return res
 }
 
 // intersectionNonEmpty returns true if the intersection of all bitmaps is
