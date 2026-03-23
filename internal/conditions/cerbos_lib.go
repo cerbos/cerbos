@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"path/filepath"
 	"reflect"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/google/cel-go/interpreter"
 	"github.com/google/cel-go/interpreter/functions"
 
+	"github.com/cerbos/cerbos/internal/conditions/crosspath"
 	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
 )
 
@@ -142,7 +142,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", absPathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutStringErr(absPath)),
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Abs)),
 			),
 		),
 		cel.Function(
@@ -151,7 +151,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", basePathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(basePath)),
+				cel.UnaryBinding(callInStringOutString(crosspath.Base)),
 			),
 		),
 		cel.Function(
@@ -160,7 +160,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", dirPathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(dirPath)),
+				cel.UnaryBinding(callInStringOutString(crosspath.Dir)),
 			),
 		),
 		cel.Function(
@@ -169,7 +169,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", extPathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(extPath)),
+				cel.UnaryBinding(callInStringOutString(crosspath.Ext)),
 			),
 		),
 		cel.Function(
@@ -178,7 +178,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_stringarray", joinPathFn),
 				[]*cel.Type{cel.ListType(cel.StringType)},
 				cel.StringType,
-				cel.UnaryBinding(callInStringSliceOutString(filepath.Join)),
+				cel.UnaryBinding(callInStringSliceOutString(crosspath.Join)),
 			),
 		),
 		cel.Function(
@@ -202,13 +202,13 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_overload", pathMatchFn),
 				[]*cel.Type{cel.StringType, cel.StringType},
 				cel.BoolType,
-				cel.BinaryBinding(callInStringStringOutBool(pathMatch)),
+				cel.BinaryBinding(callInStringStringOutBool(crosspath.Match)),
 			),
 			cel.MemberOverload(
 				fmt.Sprintf("%s_member_overload", pathMatchFn),
 				[]*cel.Type{cel.StringType, cel.StringType},
 				cel.BoolType,
-				cel.BinaryBinding(callInStringStringOutBool(pathMatch)),
+				cel.BinaryBinding(callInStringStringOutBool(crosspath.Match)),
 			),
 		),
 		cel.Function(
@@ -232,7 +232,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string_string", relPathFn),
 				[]*cel.Type{cel.StringType, cel.StringType},
 				cel.StringType,
-				cel.BinaryBinding(callInStringStringOutStringErr(relPath)),
+				cel.BinaryBinding(callInStringStringOutStringErr(crosspath.Rel)),
 			),
 		),
 		cel.Function(
@@ -241,7 +241,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", volumeNameFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(volumeName)),
+				cel.UnaryBinding(callInStringOutString(crosspath.VolumeName)),
 			),
 		),
 		customtypes.HierarchyFunc,
@@ -603,57 +603,27 @@ func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error)
 	return cidr.Contains(ipAddr), nil
 }
 
-func absPath(path string) (string, error) {
-	absolutePath, err := filepath.Abs(normalizePath(path))
-	if err != nil {
-		return "", fmt.Errorf("failed to find absolute path of %q: %w", path, err)
-	}
-
-	return absolutePath, nil
-}
-
-func basePath(path string) string {
-	return filepath.Base(normalizePath(path))
-}
-
-func dirPath(path string) string {
-	return filepath.Dir(normalizePath(path))
-}
-
-func extPath(path string) string {
-	return filepath.Ext(normalizePath(path))
-}
-
 func pathHasPrefix(path, prefix string) (bool, error) {
 	var err error
-	if path, err = absPath(path); err != nil {
+	if path, err = crosspath.Abs(path); err != nil {
 		return false, err
 	}
 
-	if prefix, err = absPath(prefix); err != nil {
+	if prefix, err = crosspath.Abs(prefix); err != nil {
 		return false, err
 	}
 
-	rel, err := filepath.Rel(prefix, path)
+	rel, err := crosspath.Rel(prefix, path)
 	if err != nil {
-		return false, fmt.Errorf("failed to determine relative path of %s: %w", prefix, err)
+		return false, err
 	}
 
 	return len(rel) > 0 && rel[0] != '.' && rel[0] != '/', nil
 }
 
-func pathMatch(path, pattern string) (bool, error) {
-	matched, err := filepath.Match(pattern, normalizePath(path))
-	if err != nil {
-		return false, fmt.Errorf("failed to match pattern %q on path %q: %w", pattern, path, err)
-	}
-
-	return matched, nil
-}
-
 func pathMatchAnyOf(path string, patterns ...string) (bool, error) {
 	for _, pattern := range patterns {
-		matched, err := pathMatch(path, pattern)
+		matched, err := crosspath.Match(path, pattern)
 		if err != nil {
 			return false, err
 		}
@@ -664,23 +634,6 @@ func pathMatchAnyOf(path string, patterns ...string) (bool, error) {
 	}
 
 	return false, nil
-}
-
-func relPath(basePath, targetPath string) (string, error) {
-	path, err := filepath.Rel(normalizePath(basePath), normalizePath(targetPath))
-	if err != nil {
-		return "", fmt.Errorf("failed to determine relative path of %s: %w", targetPath, err)
-	}
-
-	return path, nil
-}
-
-func volumeName(path string) string {
-	return filepath.VolumeName(filepath.Clean(path))
-}
-
-func normalizePath(path string) string {
-	return filepath.Clean(filepath.ToSlash(path))
 }
 
 func callInStringStringOutBool(fn func(string, string) (bool, error)) functions.BinaryOp {
