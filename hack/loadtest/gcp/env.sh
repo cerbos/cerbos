@@ -108,3 +108,21 @@ if [ "\$healthy" != "true" ]; then
 fi
 ENDSSH
 }
+
+check_policies() {
+  if [[ ! -d "${WORK_DIR}/policies" ]]; then
+    err "Missing ${WORK_DIR}/policies — generate test data first:"
+    err "  cd hack/loadtest"
+    err "  NUM_POLICIES=1000 ./loadtest.sh -g"
+    exit 1
+  fi
+}
+
+check_print_summary() {
+  if [[ "$POLICIES_ONLY" == false ]] && [[ ! -f "${WORK_DIR}/printsummary" ]]; then
+    err "Missing ${WORK_DIR}/printsummary — build it first:"
+    err "  cd hack/loadtest"
+    err "  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags printsummary -o work/printsummary ."
+    exit 1
+  fi
+}
