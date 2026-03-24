@@ -5,7 +5,6 @@
 
 set -euo pipefail
 
-
 # Test parameters
 CERBOS_VERSION=${CERBOS_VERSION:-"latest"}
 AUDIT_ENABLED=${AUDIT_ENABLED:-"false"}
@@ -149,8 +148,8 @@ up() {
   fi
 
   cp conf/cerbos/.cerbos.yaml "${WORK_DIR}/cerbos/.cerbos.yaml"
-
   printf "Starting all services\n"
+
   CERBOS_VERSION="$CERBOS_VERSION" AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" WORK_DIR="$WORK_DIR" docker compose $(composeProfiles) up -d
 
   while ! grpcurl -plaintext "${SERVER}" grpc.health.v1.Health/Check >/dev/null 2>&1; do
@@ -165,7 +164,7 @@ up() {
     put policies "${WORK_DIR}"/policies
   fi
 
-  docker compose $(composeProfiles) logs -f
+  docker compose $(composeProfiles) logs -f 2>/dev/null # it re-parses config and complains about missing env vars, so silence it
 }
 
 executeTest() {
