@@ -140,9 +140,9 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 			absPathFn,
 			cel.Overload(
 				fmt.Sprintf("%s_string", absPathFn),
-				[]*cel.Type{cel.StringType},
+				[]*cel.Type{cel.StringType, cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutStringErr(crosspath.Abs)),
+				cel.BinaryBinding(callInStringStringOutStringErr(crosspath.Abs)),
 			),
 		),
 		cel.Function(
@@ -604,13 +604,8 @@ func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error)
 }
 
 func pathHasPrefix(path, prefix string) (bool, error) {
-	var err error
-	if path, err = crosspath.Abs(path); err != nil {
-		return false, err
-	}
-
-	if prefix, err = crosspath.Abs(prefix); err != nil {
-		return false, err
+	if prefix == path {
+		return true, nil
 	}
 
 	rel, err := crosspath.Rel(prefix, path)
@@ -682,22 +677,6 @@ func callInStringOutString(fn func(string) string) functions.UnaryOp {
 		}
 
 		return types.DefaultTypeAdapter.NativeToValue(fn(stringVal))
-	}
-}
-
-func callInStringOutStringErr(fn func(string) (string, error)) functions.UnaryOp {
-	return func(val ref.Val) ref.Val {
-		stringVal, ok := val.Value().(string)
-		if !ok {
-			return types.MaybeNoSuchOverloadErr(val)
-		}
-
-		retVal, err := fn(stringVal)
-		if err != nil {
-			return types.NewErr("%s", err.Error())
-		}
-
-		return types.DefaultTypeAdapter.NativeToValue(retVal)
 	}
 }
 
