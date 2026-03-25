@@ -28,9 +28,9 @@ fi
 log "PDP internal IP: ${PDP_IP}"
 
 # --- Validate local artifacts ---
-check_policies()
+check_policies
 
-check_print_summary()  
+check_print_summary  
 
 # --- Deploy policies to PDP VM ---
 log "Uploading policies to PDP VM..."
