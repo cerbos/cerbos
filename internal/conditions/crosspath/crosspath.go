@@ -183,6 +183,7 @@ func Join(paths ...string) (string, error) {
 	}
 }
 
+// Match reports whether name matches the shell file name pattern.
 func Match(path, pattern string) (bool, error) {
 	encodedPath, err := Encode(path)
 	if err != nil {

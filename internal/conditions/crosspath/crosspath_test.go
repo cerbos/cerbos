@@ -17,6 +17,7 @@ func TestEncodeAndDecode(t *testing.T) {
 		// UNIX
 		"/",
 		"/path/to/dir",
+		"path/to/dir",
 		"/path/to/file.txt",
 
 		// UNC
@@ -305,11 +306,31 @@ func TestJoin(t *testing.T) {
 		want  string
 	}{
 		{
+			paths: nil,
+			want:  "",
+		},
+		{
 			paths: paths(""),
 			want:  "",
 		},
 
 		// UNIX
+		{
+			paths: paths("/path", "to", "dir"),
+			want:  "/path/to/dir",
+		},
+		{
+			paths: paths("/path", "to", "dir", ".."),
+			want:  "/path/to",
+		},
+		{
+			paths: paths("path", "to", "dir"),
+			want:  "path/to/dir",
+		},
+		{
+			paths: paths("path", "to", "dir", ".."),
+			want:  "path/to",
+		},
 		{
 			paths: paths("/path", "to", "file.txt"),
 			want:  "/path/to/file.txt",
@@ -321,6 +342,14 @@ func TestJoin(t *testing.T) {
 
 		// UNC
 		{
+			paths: paths(`\\host`, "share", "path", "to", "dir"),
+			want:  `\\host\share\path\to\dir`,
+		},
+		{
+			paths: paths(`\\host`, "share", "path", "to", "dir", ".."),
+			want:  `\\host\share\path\to`,
+		},
+		{
 			paths: paths(`\\host`, "share", "file.txt"),
 			want:  `\\host\share\file.txt`,
 		},
@@ -330,6 +359,22 @@ func TestJoin(t *testing.T) {
 		},
 
 		// Win32
+		{
+			paths: paths("C:", "path", "to", "dir"),
+			want:  `C:\path\to\dir`,
+		},
+		{
+			paths: paths("C:", "path", "to", "dir", ".."),
+			want:  `C:\path\to`,
+		},
+		{
+			paths: paths(`\path`, "to", "dir"),
+			want:  `\path\to\dir`,
+		},
+		{
+			paths: paths(`\path`, "to", "dir", ".."),
+			want:  `\path\to`,
+		},
 		{
 			paths: paths("C:", "path", "to", "file.txt"),
 			want:  `C:\path\to\file.txt`,
@@ -360,6 +405,10 @@ func TestMatch(t *testing.T) {
 			want:  true,
 		},
 		{
+			paths: paths("/path/to/../file.zip", "/path/to/../*.zip"),
+			want:  true,
+		},
+		{
 			paths: paths("/path/to/file.zip", "/path/to/*.txt"),
 		},
 
@@ -369,12 +418,20 @@ func TestMatch(t *testing.T) {
 			want:  true,
 		},
 		{
+			paths: paths(`\\host\share\..\file.zip`, `\\host\share\..\*.zip`),
+			want:  true,
+		},
+		{
 			paths: paths(`\\host\share\file.zip`, `\\host\share\*.txt`),
 		},
 
 		// Win32
 		{
 			paths: paths(`C:\path\to\file.zip`, `C:\path\to\*.zip`),
+			want:  true,
+		},
+		{
+			paths: paths(`C:\path\to\..\file.zip`, `C:\path\to\..\*.zip`),
 			want:  true,
 		},
 		{
