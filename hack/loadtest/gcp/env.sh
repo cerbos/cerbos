@@ -19,7 +19,7 @@ fi
 
 # GCP settings
 GCP_PROJECT=${GCP_PROJECT:-$(gcloud config get-value project 2>/dev/null)}
-GCP_ZONE=${GCP_ZONE:-"us-central1-a"}
+GCP_ZONE=${GCP_ZONE:?"Error: GCP_ZONE is not set"}
 GCP_REGION=${GCP_REGION:-"${GCP_ZONE%-*}"}
 
 # Resource naming
