@@ -100,8 +100,10 @@ if [[ -n "${CERBOS_BINARY_PATH:-}" ]]; then
     exit 1
   fi
   log "Uploading custom Cerbos binary from ${CERBOS_BINARY_PATH}..."
-  GSCP "$CERBOS_BINARY_PATH" "${PDP_VM}:${REMOTE_BASE}/bin/cerbos"
-  GSSH "$PDP_VM" "chmod +x ${REMOTE_BASE}/bin/cerbos && echo 'custom' > ${REMOTE_BASE}/bin/.cerbos-version"
+  gzip -c "$CERBOS_BINARY_PATH" > /tmp/cerbos-custom.gz
+  GSCP /tmp/cerbos-custom.gz "${PDP_VM}:/tmp/cerbos-custom.gz"
+  GSSH "$PDP_VM" "gunzip -c /tmp/cerbos-custom.gz > ${REMOTE_BASE}/bin/cerbos && chmod +x ${REMOTE_BASE}/bin/cerbos && echo 'custom' > ${REMOTE_BASE}/bin/.cerbos-version && rm /tmp/cerbos-custom.gz"
+  rm -f /tmp/cerbos-custom.gz
 else
   # Download a published release
   if [[ "${CERBOS_VERSION}" == "latest" ]]; then
