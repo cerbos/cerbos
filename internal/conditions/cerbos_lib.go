@@ -33,7 +33,6 @@ const (
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
 	IDFn                        = "id"
-	absPathFn                   = "absPath"
 	basePathFn                  = "basePath"
 	dirPathFn                   = "dirPath"
 	extPathFn                   = "extPath"
@@ -134,15 +133,6 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				[]*cel.Type{cel.DynType},
 				cel.DynType,
 				cel.UnaryBinding(func(value ref.Val) ref.Val { return value }),
-			),
-		),
-		cel.Function(
-			absPathFn,
-			cel.Overload(
-				fmt.Sprintf("%s_string", absPathFn),
-				[]*cel.Type{cel.StringType, cel.StringType},
-				cel.StringType,
-				cel.BinaryBinding(callInStringStringOutStringErr(crosspath.Abs)),
 			),
 		),
 		cel.Function(

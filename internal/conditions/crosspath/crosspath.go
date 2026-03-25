@@ -89,20 +89,6 @@ func Decode(encoded Encoded) string {
 	}
 }
 
-// Abs returns an absolute representation of path against the work directory.
-func Abs(workDir, path string) (string, error) {
-	if strings.HasPrefix(path, workDir) {
-		encoded, err := Encode(path)
-		if err != nil {
-			return "", fmt.Errorf("failed to encode path %s: %w", path, err)
-		}
-
-		return Decode(encoded), nil
-	}
-
-	return Join(workDir, path)
-}
-
 // Base returns the last element of path.
 func Base(path string) (string, error) {
 	encoded, err := Encode(path)

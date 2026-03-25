@@ -115,7 +115,6 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `spiffeMatchTrustDomain(spiffeTrustDomain("spiffe://cerbos.dev")).matchesID(spiffeID("spiffe://cerbos.dev/ns/privileged/sa/curl"))`},
 		{expr: `spiffeMatchTrustDomain("spiffe://cerbos.dev").matchesID(spiffeID("spiffe://cerbos.dev/ns/privileged/sa/curl"))`},
 		{expr: `!spiffeMatchTrustDomain("spiffe://cerbos.dev").matchesID(spiffeID("spiffe://example.com/ns/privileged/sa/curl"))`},
-		{expr: `absPath("/", "/path/to/file.txt") == "/path/to/file.txt"`},
 		{expr: `basePath("/path/to/dir") == "dir"`},
 		{expr: `dirPath("/path/to/file.txt") == "/path/to"`},
 		{expr: `extPath("/path/to/file.txt") == ".txt"`},
