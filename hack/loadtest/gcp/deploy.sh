@@ -90,6 +90,9 @@ GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-configs.tar.gz -C ${REMOTE_BASE}
 rm -f /tmp/cerbos-loadtest-configs.tar.gz
 
 # --- Deploy Cerbos binary to PDP VM ---
+# Stop running Cerbos before replacing the binary
+GSSH "$PDP_VM" "pkill -x cerbos 2>/dev/null || true; sleep 1"
+
 if [[ -n "${CERBOS_BINARY_PATH:-}" ]]; then
   # Use a locally built binary
   if [[ ! -f "$CERBOS_BINARY_PATH" ]]; then
