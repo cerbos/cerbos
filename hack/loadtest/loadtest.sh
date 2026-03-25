@@ -231,7 +231,8 @@ executeTest() {
 
   if $metricsAvailable && scrapeMetrics "$afterFile"; then
     if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
-      printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_rps_metrics.json"
+      printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_rps_metrics.json" | \
+        tee -a  "${resultPrefix}_rps.txt"
     fi
   fi
 
@@ -259,7 +260,8 @@ executeTest() {
 
   if $metricsAvailable && scrapeMetrics "$afterFile"; then
     if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
-      printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_throughput_metrics.json"
+      printMetricsDiff "$beforeFile" "$afterFile" "${resultPrefix}_throughput_metrics.json" | \
+        tee -a "${resultPrefix}_throughput.txt"
     fi
   fi
 }
