@@ -120,9 +120,9 @@ check_policies() {
 
 check_print_summary() {
   if [[ "$POLICIES_ONLY" == false ]] && [[ ! -f "${WORK_DIR}/printsummary" ]]; then
-    err "Missing ${WORK_DIR}/printsummary — build it first:"
-    err "  cd hack/loadtest"
-    err "  CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags printsummary -o work/printsummary ."
-    exit 1
+    log "Building printsummary..."
+    pushd "${SCRIPT_DIR}/.." > /dev/null
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -tags printsummary -o work/printsummary .
+    popd > /dev/null
   fi
 }
