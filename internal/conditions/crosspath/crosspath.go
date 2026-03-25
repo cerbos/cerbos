@@ -4,12 +4,15 @@
 package crosspath
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 )
 
 const noOfPartsInUNCPaths = 3
+
+var ErrUnsupportedWin32Path = errors.New("unsupported Win32 path")
 
 // Encoded is an encoded path.
 //
@@ -25,7 +28,7 @@ type Encoded struct {
 }
 
 // Encode encodes a UNIX or Win32 path as Encoded.
-func Encode(path string) Encoded {
+func Encode(path string) (Encoded, error) {
 	var encoded Encoded
 
 	if strings.Contains(path, `\`) {
@@ -42,6 +45,11 @@ func Encode(path string) Encoded {
 			encoded.root = true
 		}
 	case isDrivePath(path):
+		// deny paths such as `D:.`, `D:foo`
+		if !encoded.win32 && len(path) > 2 {
+			return Encoded{}, ErrUnsupportedWin32Path
+		}
+
 		encoded.kind = KindDrive
 		encoded.value = toSlash(`\` + path)
 
@@ -62,7 +70,7 @@ func Encode(path string) Encoded {
 	}
 
 	encoded.value = filepath.Clean(encoded.value)
-	return encoded
+	return encoded, nil
 }
 
 // Decode decodes an Encoded path in its original encoding.
@@ -84,75 +92,109 @@ func Decode(encoded Encoded) string {
 // Abs returns an absolute representation of path against the work directory.
 func Abs(workDir, path string) (string, error) {
 	if strings.HasPrefix(path, workDir) {
-		encodedPath := Encode(path)
-		return Decode(encodedPath), nil
+		encoded, err := Encode(path)
+		if err != nil {
+			return "", fmt.Errorf("failed to encode path %s: %w", path, err)
+		}
+
+		return Decode(encoded), nil
 	}
 
-	return Join(workDir, path), nil
+	return Join(workDir, path)
 }
 
 // Base returns the last element of path.
-func Base(path string) string {
-	return filepath.Base(Encode(path).value)
+func Base(path string) (string, error) {
+	encoded, err := Encode(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode path %s: %w", path, err)
+	}
+
+	return filepath.Base(encoded.value), nil
 }
 
 // Dir returns all but the last element of path, typically the path's directory.
-func Dir(path string) string {
-	encoded := Encode(path)
+func Dir(path string) (string, error) {
+	encoded, err := Encode(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode path %s: %w", path, err)
+	}
+
 	switch {
 	case encoded.kind == KindUNC:
 		if encoded.root {
-			return Decode(encoded)
+			return Decode(encoded), nil
 		}
 
 		idx := strings.LastIndex(encoded.value, "/")
 		encoded.value = encoded.value[:idx]
-		return Decode(encoded)
+		return Decode(encoded), nil
 	case encoded.kind == KindDrive:
 		if encoded.root {
-			return Decode(encoded) + `\`
+			return Decode(encoded) + `\`, nil
 		}
 
 		idx := strings.LastIndex(encoded.value, "/")
 		encoded.value = encoded.value[:idx]
-		return Decode(encoded)
+		return Decode(encoded), nil
 	case encoded.kind == KindUnknown && encoded.win32:
 		idx := strings.LastIndex(encoded.value, "/")
 		encoded.value = encoded.value[:idx]
-		return Decode(encoded)
+		return Decode(encoded), nil
 	default:
 		encoded.value = filepath.Dir(encoded.value)
-		return Decode(encoded)
+		return Decode(encoded), nil
 	}
 }
 
 // Ext returns the file name extension used by path.
-func Ext(path string) string {
-	return filepath.Ext(Encode(path).value)
+func Ext(path string) (string, error) {
+	encoded, err := Encode(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode path %s: %w", path, err)
+	}
+
+	return filepath.Ext(encoded.value), nil
 }
 
 // Join joins any number of path elements into a single path.
-func Join(paths ...string) string {
+func Join(paths ...string) (string, error) {
 	switch len(paths) {
 	case 0:
-		return ""
+		return "", nil
 	case 1:
-		return paths[0]
+		return paths[0], nil
 	default:
-		result := Encode(paths[0])
+		result, err := Encode(paths[0])
+		if err != nil {
+			return "", fmt.Errorf("failed to encode first path %s: %w", paths[0], err)
+		}
+
 		for i := 1; i < len(paths); i++ {
-			encoded := Encode(paths[i])
+			var encoded Encoded
+			if encoded, err = Encode(paths[i]); err != nil {
+				return "", fmt.Errorf("failed to encode path %s: %w", paths[i], err)
+			}
+
 			result.value = filepath.Join(result.value, encoded.value)
 		}
 
-		return Decode(result)
+		return Decode(result), nil
 	}
 }
 
 func Match(path, pattern string) (bool, error) {
-	encoded := Encode(path)
-	encodedPattern := Encode(pattern)
-	matched, err := filepath.Match(encodedPattern.value, encoded.value)
+	encodedPath, err := Encode(path)
+	if err != nil {
+		return false, fmt.Errorf("failed to encode path %s: %w", path, err)
+	}
+
+	encodedPattern, err := Encode(pattern)
+	if err != nil {
+		return false, fmt.Errorf("failed to encode pattern %s: %w", pattern, err)
+	}
+
+	matched, err := filepath.Match(encodedPattern.value, encodedPath.value)
 	if err != nil {
 		return false, fmt.Errorf("failed to match pattern %q on path %q: %w", pattern, path, err)
 	}
@@ -164,10 +206,16 @@ func Match(path, pattern string) (bool, error) {
 // joined to basePath with an intervening separator. That is,
 // [Join](basePath, Rel(basePath, targPath)) is equivalent to targPath itself.
 func Rel(basePath, targetPath string) (string, error) {
-	encodedBasePath := Encode(basePath)
-	encodedTargetPath := Encode(targetPath)
+	encodedBasePath, err := Encode(basePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode base path %s: %w", basePath, err)
+	}
 
-	var err error
+	encodedTargetPath, err := Encode(targetPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode target path %s: %w", targetPath, err)
+	}
+
 	if encodedTargetPath.value, err = filepath.Rel(encodedBasePath.value, encodedTargetPath.value); err != nil {
 		return "", fmt.Errorf("failed to determine relative path of %s: %w", targetPath, err)
 	}
@@ -216,7 +264,7 @@ func isUNCPath(path string) bool {
 }
 
 func isDrivePath(path string) bool {
-	return len(path) > 1 && path[1] == ':' && validDriveLetter(path[0])
+	return len(path) > 1 && validDriveLetter(path[0]) && path[1] == ':'
 }
 
 func validDriveLetter(letter uint8) bool {

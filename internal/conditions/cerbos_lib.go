@@ -151,7 +151,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", basePathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(crosspath.Base)),
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Base)),
 			),
 		),
 		cel.Function(
@@ -160,7 +160,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", dirPathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(crosspath.Dir)),
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Dir)),
 			),
 		),
 		cel.Function(
@@ -169,7 +169,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_string", extPathFn),
 				[]*cel.Type{cel.StringType},
 				cel.StringType,
-				cel.UnaryBinding(callInStringOutString(crosspath.Ext)),
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Ext)),
 			),
 		),
 		cel.Function(
@@ -178,7 +178,7 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				fmt.Sprintf("%s_stringarray", joinPathFn),
 				[]*cel.Type{cel.ListType(cel.StringType)},
 				cel.StringType,
-				cel.UnaryBinding(callInStringSliceOutString(crosspath.Join)),
+				cel.UnaryBinding(callInStringSliceOutStringErr(crosspath.Join)),
 			),
 		),
 		cel.Function(
@@ -680,6 +680,22 @@ func callInStringOutString(fn func(string) string) functions.UnaryOp {
 	}
 }
 
+func callInStringOutStringErr(fn func(string) (string, error)) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		stringVal, ok := val.Value().(string)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		retVal, err := fn(stringVal)
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
+	}
+}
+
 func callInStringStringOutStringErr(fn func(string, string) (string, error)) functions.BinaryOp {
 	return func(lhsVal, rhsVal ref.Val) ref.Val {
 		lhs, ok := lhsVal.(types.String)
@@ -701,7 +717,7 @@ func callInStringStringOutStringErr(fn func(string, string) (string, error)) fun
 	}
 }
 
-func callInStringSliceOutString(fn func(...string) string) functions.UnaryOp {
+func callInStringSliceOutStringErr(fn func(...string) (string, error)) functions.UnaryOp {
 	return func(val ref.Val) ref.Val {
 		list, ok := val.(traits.Lister)
 		if !ok {
@@ -718,7 +734,12 @@ func callInStringSliceOutString(fn func(...string) string) functions.UnaryOp {
 			return types.NewErr("expected string slice but got %T", native)
 		}
 
-		return types.DefaultTypeAdapter.NativeToValue(fn(elements...))
+		retVal, err := fn(elements...)
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
 	}
 }
 

@@ -37,7 +37,8 @@ func TestEncodeAndDecode(t *testing.T) {
 
 	for idx, testCase := range testCases {
 		t.Run(strconv.Itoa(idx), func(t *testing.T) {
-			encoded := crosspath.Encode(testCase)
+			encoded, err := crosspath.Encode(testCase)
+			require.NoError(t, err)
 			require.Equal(t, testCase, crosspath.Decode(encoded))
 		})
 	}
@@ -213,7 +214,8 @@ func TestBase(t *testing.T) {
 
 	for idx, testCase := range testCases {
 		t.Run(strconv.Itoa(idx), func(t *testing.T) {
-			have := crosspath.Base(testCase.path)
+			have, err := crosspath.Base(testCase.path)
+			require.NoError(t, err)
 			require.Equal(t, testCase.expected, have)
 		})
 	}
@@ -221,8 +223,9 @@ func TestBase(t *testing.T) {
 
 func TestDir(t *testing.T) {
 	testCases := []struct {
-		path     string
-		expected string
+		path      string
+		expected  string
+		expectErr bool
 	}{
 		// directory
 		{path: "/path/to/dir", expected: "/path/to"},
@@ -240,7 +243,9 @@ func TestDir(t *testing.T) {
 		{path: "/", expected: "/"},
 		{path: `\\host\share`, expected: `\\host\share`},
 		{path: `C:\`, expected: `C:\`},
-		{path: `C:`, expected: `C:\`}, // TODO(oguzhan): I think this would return `C:.` or perhaps `C:` in Win32
+		{path: `C:`, expected: `C:\`},
+		{path: `C:.`, expectErr: true},
+		{path: `C:dir`, expectErr: true},
 
 		// relative
 		{path: "./path/to/dir", expected: "path/to"},
@@ -265,8 +270,12 @@ func TestDir(t *testing.T) {
 
 	for idx, testCase := range testCases {
 		t.Run(strconv.Itoa(idx), func(t *testing.T) {
-			have := crosspath.Dir(testCase.path)
-			require.Equal(t, testCase.expected, have)
+			have, err := crosspath.Dir(testCase.path)
+			if testCase.expectErr {
+				require.Error(t, err)
+			} else {
+				require.Equal(t, testCase.expected, have)
+			}
 		})
 	}
 }
@@ -283,7 +292,8 @@ func TestExt(t *testing.T) {
 
 	for idx, testCase := range testCases {
 		t.Run(strconv.Itoa(idx), func(t *testing.T) {
-			have := crosspath.Ext(testCase.path)
+			have, err := crosspath.Ext(testCase.path)
+			require.NoError(t, err)
 			require.Equal(t, testCase.expected, have)
 		})
 	}
@@ -325,14 +335,15 @@ func TestJoin(t *testing.T) {
 			expected: `C:\path\to\file.txt`,
 		},
 		{
-			paths:    paths("C:"),
-			expected: "C:",
+			paths:    paths(`C:\`),
+			expected: `C:\`,
 		},
 	}
 
 	for idx, testCase := range testCases {
 		t.Run(strconv.Itoa(idx), func(t *testing.T) {
-			have := crosspath.Join(testCase.paths...)
+			have, err := crosspath.Join(testCase.paths...)
+			require.NoError(t, err)
 			require.Equal(t, testCase.expected, have)
 		})
 	}
