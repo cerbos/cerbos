@@ -11,12 +11,15 @@ import (
 
 	"github.com/alecthomas/kong"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cloud-api/base"
+	authv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/auth/v1"
 )
 
 var (
+	Audience           = "https://spitfire.localhost:8080/users/"
 	DeviceAuthClientID = "7dMG4MO7GXv4liZFoLDDzqM4yN8s0YFy"
 	DeviceAuthURL      = "https://spitfire-development.eu.auth0.com/oauth/device/code"
 	TokenURL           = "https://spitfire-development.eu.auth0.com/oauth/token"
@@ -50,11 +53,15 @@ func (c *Cmd) Run(k *kong.Kong, cmd *Cmd) error {
 	}
 
 	log.Debug("Initiating device auth flow")
-	if err := base.DeviceLogin(ctx, c.APIEndpoint, DeviceAuthURL, TokenURL, DeviceAuthClientID); err != nil {
+	if err := base.DeviceLogin(ctx, c.APIEndpoint, DeviceAuthURL, TokenURL, DeviceAuthClientID, Audience); err != nil {
 		log.Error("Failed to authenticate", zap.Error(err))
 		return err
 	}
 
 	log.Info("Device successfully authenticated")
 	return nil
+}
+
+func DeviceTokenSource(ctx context.Context, credentials *authv1.SavedCredentials) oauth2.TokenSource {
+	return base.DeviceTokenSource(ctx, DeviceAuthURL, TokenURL, DeviceAuthClientID, credentials.GetDeviceToken())
 }
