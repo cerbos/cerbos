@@ -48,117 +48,115 @@ shift $((OPTIND - 1))
 [[ $# -lt 1 ]] && usage
 JSON_FILE="$1"
 
-if ! command -v jq &>/dev/null; then
-  echo "Error: jq is required" >&2
-  exit 1
-fi
+for cmd in jq sqlite3; do
+  if ! command -v "$cmd" &>/dev/null; then
+    echo "Error: $cmd is required" >&2
+    exit 1
+  fi
+done
 
 if [[ ! -f "$JSON_FILE" ]]; then
   echo "Error: file not found: $JSON_FILE" >&2
   exit 1
 fi
 
-# Compute threshold from percentile if needed
+DB=$(mktemp -t latency-XXXXX.db)
+trap "rm -f '$DB'" EXIT
+
+# Extract details to CSV via jq, load into SQLite
+sqlite3 "$DB" "CREATE TABLE req (ts TEXT, latency_ns INTEGER);"
+jq -r '.details[] | [.timestamp, .latency] | @csv' "$JSON_FILE" \
+  | sqlite3 "$DB" ".mode csv" ".import /dev/stdin req"
+
+# Compute relative time in seconds and latency in ms
+sqlite3 "$DB" "
+  ALTER TABLE req ADD COLUMN t_sec REAL;
+  ALTER TABLE req ADD COLUMN latency_ms REAL;
+
+  UPDATE req SET
+    latency_ms = latency_ns / 1000000.0,
+    t_sec = (
+      CAST(substr(ts, 12, 2) AS REAL) * 3600 +
+      CAST(substr(ts, 15, 2) AS REAL) * 60 +
+      CAST(substr(ts, 18, 6) AS REAL)
+    ) - (
+      SELECT
+        CAST(substr(ts, 12, 2) AS REAL) * 3600 +
+        CAST(substr(ts, 15, 2) AS REAL) * 60 +
+        CAST(substr(ts, 18, 6) AS REAL)
+      FROM req ORDER BY rowid LIMIT 1
+    );
+"
+
+# Compute threshold
 if [[ -n "$PERCENTILE" ]]; then
-  THRESHOLD_NS=$(jq --argjson p "$PERCENTILE" '
-    [.details[].latency] | sort |
-    .[((length * ($p / 100)) | floor)]
-  ' "$JSON_FILE")
-  THRESHOLD_MS=$(echo "$THRESHOLD_NS" | awk '{printf "%.2f", $1/1000000}')
-  printf "Using p%s threshold: %.2f ms\n\n" "$PERCENTILE" "$THRESHOLD_MS"
+  THRESHOLD_MS=$(sqlite3 "$DB" "
+    SELECT latency_ms FROM req
+    ORDER BY latency_ms
+    LIMIT 1 OFFSET (SELECT CAST(COUNT(*) * ${PERCENTILE} / 100.0 AS INTEGER) FROM req);
+  ")
+  printf "Using p%s threshold: %s ms\n\n" "$PERCENTILE" "$THRESHOLD_MS"
 elif [[ -z "$THRESHOLD_MS" ]]; then
-  # Default: p95
   PERCENTILE=95
-  THRESHOLD_NS=$(jq --argjson p "$PERCENTILE" '
-    [.details[].latency] | sort |
-    .[((length * ($p / 100)) | floor)]
-  ' "$JSON_FILE")
-  THRESHOLD_MS=$(echo "$THRESHOLD_NS" | awk '{printf "%.2f", $1/1000000}')
-  printf "Using p%s threshold: %.2f ms\n\n" "$PERCENTILE" "$THRESHOLD_MS"
+  THRESHOLD_MS=$(sqlite3 "$DB" "
+    SELECT latency_ms FROM req
+    ORDER BY latency_ms
+    LIMIT 1 OFFSET (SELECT CAST(COUNT(*) * ${PERCENTILE} / 100.0 AS INTEGER) FROM req);
+  ")
+  printf "Using p%s threshold: %s ms\n\n" "$PERCENTILE" "$THRESHOLD_MS"
 else
   printf "Using threshold: %s ms\n\n" "$THRESHOLD_MS"
 fi
 
-THRESHOLD_NS=$(echo "$THRESHOLD_MS" | awk '{printf "%.0f", $1*1000000}')
+# Run the analysis
+sqlite3 "$DB" <<SQL
+-- Build per-window stats
+CREATE TABLE windows AS
+SELECT
+  CAST(t_sec / ${WINDOW_SECS} AS INTEGER) AS window,
+  COUNT(*) AS total,
+  SUM(CASE WHEN latency_ms > ${THRESHOLD_MS} THEN 1 ELSE 0 END) AS slow,
+  ROUND(MAX(CASE WHEN latency_ms > ${THRESHOLD_MS} THEN latency_ms END), 2) AS max_slow_ms,
+  ROUND(AVG(latency_ms), 2) AS avg_ms
+FROM req
+GROUP BY 1
+ORDER BY 1;
+SQL
 
-# Main analysis
-jq -r --argjson threshold "$THRESHOLD_NS" --argjson window "$WINDOW_SECS" '
-  # Parse timestamps to epoch seconds (using the fractional part)
-  def ts_to_epoch:
-    # Extract seconds from ISO timestamp: "2026-03-26T05:08:29.350Z"
-    # We just need relative seconds from the first timestamp
-    split("T")[1] | split("Z")[0] |
-    split(":") | (.[0] | tonumber) * 3600 + (.[1] | tonumber) * 60 + (.[2] | split(".") | (.[0] | tonumber) + ((.[1] // "0")[:3] | tonumber) / 1000);
+# Print summary using individual queries for clean output
+printf "Test overview:\n"
+printf "  Duration:        %ss\n" "$(sqlite3 "$DB" "SELECT MAX(window) + 1 FROM windows;")"
+printf "  Total requests:  %s\n" "$(sqlite3 "$DB" "SELECT SUM(total) FROM windows;")"
+printf "  Slow requests:   %s (>%s ms)\n" "$(sqlite3 "$DB" "SELECT SUM(slow) FROM windows;")" "$THRESHOLD_MS"
+printf "  Slow percentage: %s%%\n" "$(sqlite3 "$DB" "SELECT ROUND(SUM(slow) * 100.0 / SUM(total), 2) FROM windows;")"
+printf "\nTime distribution (%ss windows):\n" "$WINDOW_SECS"
+printf "  Windows:         %s\n" "$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows;")"
+printf "  Mean slow/win:   %s\n" "$(sqlite3 "$DB" "SELECT ROUND(AVG(slow), 2) FROM windows;")"
+printf "  Mean total/win:  %s\n" "$(sqlite3 "$DB" "SELECT ROUND(AVG(total), 0) FROM windows;")"
+printf "  StdDev(slow):    %s\n" "$(sqlite3 "$DB" "SELECT ROUND(SQRT(AVG((slow - m) * (slow - m))), 2) FROM windows, (SELECT AVG(slow) AS m FROM windows);")"
 
-  .details as $details |
-  ($details | length) as $total |
-  ($details | map(select(.latency > $threshold)) | length) as $slow_count |
+CV=$(sqlite3 "$DB" "SELECT CASE WHEN m = 0 THEN 0 ELSE ROUND(SQRT(AVG((slow - m) * (slow - m))) / m * 100, 1) END FROM windows, (SELECT AVG(slow) AS m FROM windows);")
+printf "  CV:              %s%%\n" "$CV"
 
-  # Get time range
-  ($details[0].timestamp | ts_to_epoch) as $t_start |
-  ($details[-1].timestamp | ts_to_epoch) as $t_end |
-  (($t_end - $t_start) | ceil | if . < 1 then 1 else . end) as $duration |
-  (($duration / $window) | ceil | if . < 1 then 1 else . end) as $num_windows |
+VERDICT=$(awk -v cv="$CV" 'BEGIN {
+  if (cv == 0) print "NO SLOW REQUESTS"
+  else if (cv < 50) print "UNIFORM — slow requests are evenly spread (CV < 50%)"
+  else if (cv < 100) print "MODERATE CLUSTERING — some uneven distribution (50% < CV < 100%)"
+  else print "CLUSTERED — slow requests bunch together (CV > 100%), likely GC pauses or periodic stalls"
+}')
+printf "\n  Verdict:         %s\n" "$VERDICT"
 
-  # Bucket slow requests into time windows
-  [
-    $details[] |
-    select(.latency > $threshold) |
-    {
-      window: (((.timestamp | ts_to_epoch) - $t_start) / $window | floor),
-      latency_ms: (.latency / 1000000)
-    }
-  ] as $slow_requests |
-
-  # Count per window
-  [range(0; $num_windows)] as $windows |
-  [$windows[] | . as $w |
-    {
-      window: $w,
-      count: ([$slow_requests[] | select(.window == $w)] | length),
-      max_ms: ([$slow_requests[] | select(.window == $w) | .latency_ms] | if length > 0 then max else 0 end)
-    }
-  ] as $buckets |
-
-  # Compute stats
-  ([$buckets[].count] | add / length) as $mean |
-  (if $mean == 0 then 0
-   else
-     ([$buckets[].count] | map(. - $mean | . * .) | add / length | sqrt) as $stddev |
-     ($stddev / $mean * 100)
-   end) as $cv |
-
-  # Summary
-  "Test overview:",
-  "  Duration:        \($duration | round)s",
-  "  Total requests:  \($total)",
-  "  Slow requests:   \($slow_count) (>\(($threshold/1000000*100|round)/100) ms)",
-  "  Slow percentage: \(($slow_count / $total * 10000 | round) / 100)%",
-  "",
-  "Time distribution (\($window)s windows):",
-  "  Windows:  \($num_windows)",
-  "  Mean:     \(($mean * 100 | round) / 100) slow reqs/window",
-  "  StdDev:   \(([$buckets[].count] | map(. - $mean | . * .) | add / length | sqrt * 100 | round) / 100)",
-  "  CV:       \(($cv * 10 | round) / 10)%",
-  "",
-  (if $cv < 50 then
-    "  Verdict:  UNIFORM — slow requests are evenly spread (CV < 50%)"
-  elif $cv < 100 then
-    "  Verdict:  MODERATE CLUSTERING — some uneven distribution (50% < CV < 100%)"
-  else
-    "  Verdict:  CLUSTERED — slow requests bunch together (CV > 100%), likely GC pauses or periodic stalls"
-  end),
-  "",
-  "Per-window breakdown:",
-  "  Window    Count   Max(ms)  Histogram",
-  "  ------    -----   -------  ---------",
-  ($buckets[] |
-    "  \(
-      if .window < 10 then "     \(.window)" elif .window < 100 then "    \(.window)" else "   \(.window)" end
-    )    \(
-      if .count < 10 then "    \(.count)" elif .count < 100 then "   \(.count)" else "  \(.count)" end
-    )   \(
-      if .max_ms == 0 then "      -" else (.max_ms * 100 | round | . / 100 | tostring | if length < 7 then "       "[:7 - length] + . else . end) end
-    )  \("█" * ((.count / (if $mean > 0 then $mean else 1 end) * 5) | round | if . > 40 then 40 else . end))"
-  )
-' "$JSON_FILE"
+# Per-window breakdown
+printf "\nPer-window breakdown:\n"
+sqlite3 -header -column "$DB" <<SQL
+SELECT
+  window AS win,
+  total,
+  slow,
+  ROUND(slow * 100.0 / total, 1) AS 'slow%',
+  COALESCE(CAST(max_slow_ms AS TEXT), '-') AS max_ms,
+  avg_ms,
+  REPLACE(PRINTF('%.' || MAX(0, MIN(40, CAST(ROUND(slow * 5.0 / NULLIF((SELECT AVG(slow) FROM windows), 0)) AS INTEGER))) || 'f', 0), '0', '█') AS histogram
+FROM windows
+ORDER BY window;
+SQL
