@@ -32,6 +32,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.18.0
 	github.com/fergusstrange/embedded-postgres v1.34.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gdamore/tcell/v2 v2.13.8
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-andiamo/splitter v1.2.5
@@ -71,7 +72,6 @@ require (
 	github.com/pterm/pterm v0.12.83
 	github.com/rdforte/gomaxecs v1.1.2
 	github.com/rivo/tview v0.42.0
-	github.com/rjeczalik/notify v0.9.3
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/rs/cors v1.11.1
 	github.com/rudderlabs/analytics-go v3.3.3+incompatible
@@ -192,7 +192,6 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
 	github.com/failsafe-go/failsafe-go v0.9.6 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.8.0 // indirect
