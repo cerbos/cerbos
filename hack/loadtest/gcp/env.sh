@@ -85,6 +85,7 @@ pkill -f "${REMOTE_BASE}/bin/cerbos" 2>/dev/null || true
 sleep 1
 echo "Starting Cerbos..."
 STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
+  ${GOMAXPROCS:+GOMAXPROCS=${GOMAXPROCS}} \
   nohup ${REMOTE_BASE}/bin/cerbos server \
   --config=${REMOTE_BASE}/conf/cerbos.yaml \
   --log-level=warn \
