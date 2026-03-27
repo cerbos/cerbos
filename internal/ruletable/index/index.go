@@ -6,7 +6,6 @@ package index
 import (
 	"slices"
 
-	"github.com/RoaringBitmap/roaring/v2"
 	"github.com/cespare/xxhash/v2"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -207,7 +206,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	arena := acquireArena()
 	defer arena.release()
 
-	var scopeBM, versionBM, resourceBM, roleBM, policyKindBM, principalBM *roaring.Bitmap
+	var scopeBM, versionBM, resourceBM, roleBM, policyKindBM, principalBM *Bitmap
 
 	// scope is always filtered because "" is a valid literal scope (root scope).
 	bm, ok := bi.scope.Get(scope)
@@ -251,7 +250,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		principalBM = bm
 	}
 
-	dims := make([]*roaring.Bitmap, 0, 6) //nolint:mnd
+	dims := make([]*Bitmap, 0, 6) //nolint:mnd
 	if versionBM != nil {
 		dims = append(dims, versionBM)
 	}
@@ -272,7 +271,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	}
 
 	// baseBM = AND of all non-action dimensions.
-	var baseBM *roaring.Bitmap
+	var baseBM *Bitmap
 	switch len(dims) {
 	case 0:
 		baseBM = bi.universe
@@ -319,13 +318,13 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 }
 
 // queryAllowActions generates synthetic DENY bindings from role policy AllowActions.
-func (m *Index) queryAllowActions(arena *bitmapArena, bi *bitmapIndex, version, scope, action, resource string, roles []string, versionBM, scopeBM, roleBM, resourceBM *roaring.Bitmap, res []*Binding,
+func (m *Index) queryAllowActions(arena *bitmapArena, bi *bitmapIndex, version, scope, action, resource string, roles []string, versionBM, scopeBM, roleBM, resourceBM *Bitmap, res []*Binding,
 ) []*Binding {
 	// find candidate role policy bindings.
 	// we ignore `resource` because we need to know which roles have ANY role policies,
 	// even if the `resource` doesn't match (which implies "DENY").
 	// saml: benchmarks show a 3% speedup if we batch inputs to `FastAnd` below. In for a penny...
-	candidateDims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
+	candidateDims := make([]*Bitmap, 0, 4) //nolint:mnd
 	if versionBM != nil {
 		candidateDims = append(candidateDims, versionBM)
 	}
@@ -337,7 +336,7 @@ func (m *Index) queryAllowActions(arena *bitmapArena, bi *bitmapIndex, version, 
 	}
 	candidateDims = append(candidateDims, bi.allowActionsBitmap)
 
-	var candidateBM *roaring.Bitmap
+	var candidateBM *Bitmap
 	if len(candidateDims) == 1 {
 		candidateBM = candidateDims[0]
 	} else {
@@ -464,7 +463,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	arena := acquireArena()
 	defer arena.release()
 
-	dims := make([]*roaring.Bitmap, 0, 4) //nolint:mnd
+	dims := make([]*Bitmap, 0, 4) //nolint:mnd
 
 	if len(versions) > 0 {
 		bm := bi.version.Query(arena, versions)
@@ -495,7 +494,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 		dims = append(dims, bm)
 	}
 
-	var baseBM *roaring.Bitmap
+	var baseBM *Bitmap
 	switch len(dims) {
 	case 0:
 		baseBM = bi.universe
@@ -524,13 +523,13 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	return res
 }
 
-func (m *Index) applyActionFilter(arena *bitmapArena, baseBM *roaring.Bitmap, actions []string) *roaring.Bitmap {
+func (m *Index) applyActionFilter(arena *bitmapArena, baseBM *Bitmap, actions []string) *Bitmap {
 	if len(actions) == 0 {
 		return baseBM
 	}
 
 	bi := m.bi
-	parts := make([]*roaring.Bitmap, 0, 2) //nolint:mnd
+	parts := make([]*Bitmap, 0, 2) //nolint:mnd
 
 	actionBM := bi.action.QueryMultiple(arena, actions)
 	if !actionBM.IsEmpty() {
@@ -781,14 +780,14 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 }
 
 // intersectionNonEmpty returns true if the intersection of all bitmaps is
-// non-empty without allocating any new bitmaps. It iterates the smallest
-// bitmap by cardinality and checks containment in the others.
-func intersectionNonEmpty(bitmaps ...*roaring.Bitmap) bool {
+// non-empty without allocating any new bitmaps. It iterates the shortest
+// bitmap (by Len) and checks containment in the others.
+func intersectionNonEmpty(bitmaps ...*Bitmap) bool {
 	minIdx := 0
-	minCard := bitmaps[0].GetCardinality()
+	minLen := bitmaps[0].Len()
 	for i := 1; i < len(bitmaps); i++ {
-		if c := bitmaps[i].GetCardinality(); c < minCard {
-			minCard = c
+		if l := bitmaps[i].Len(); l < minLen {
+			minLen = l
 			minIdx = i
 		}
 	}

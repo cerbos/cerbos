@@ -5,12 +5,10 @@ package index
 
 import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-
-	"github.com/RoaringBitmap/roaring/v2"
 )
 
 // bitmapIndex is the core in-memory bitmap index. Each binding gets a uint32 ID,
-// and each (dimension, value) pair has a roaring bitmap tracking which binding IDs
+// and each (dimension, value) pair has a bitmap tracking which binding IDs
 // have that value. Queries are flat bitmap AND operations.
 type bitmapIndex struct {
 	action             *globDimension
@@ -22,8 +20,8 @@ type bitmapIndex struct {
 	resource           *globDimension
 	fqnBindings        dimension[string]
 	principal          dimension[string]
-	universe           *roaring.Bitmap
-	allowActionsBitmap *roaring.Bitmap
+	universe           *Bitmap
+	allowActionsBitmap *Bitmap
 	freeIDs            []uint32
 	bindings           []*Binding
 }
@@ -37,8 +35,8 @@ func newBitmapIndex() *bitmapIndex {
 		resource:           newGlobDimension(),
 		policyKind:         newDimension[policyv1.Kind](),
 		principal:          newDimension[string](),
-		universe:           roaring.New(),
-		allowActionsBitmap: roaring.New(),
+		universe:           NewBitmap(),
+		allowActionsBitmap: NewBitmap(),
 		fqnBindings:        newDimension[string](),
 		coresBySum:         make(map[uint64]*FunctionalCore),
 	}
@@ -126,19 +124,19 @@ func (idx *bitmapIndex) getBinding(id uint32) *Binding {
 	return idx.bindings[id]
 }
 
-// dimension is a thin wrapper around map[T]*roaring.Bitmap for exact-match dimensions.
+// dimension is a thin wrapper around map[T]*Bitmap for exact-match dimensions.
 type dimension[T comparable] struct {
-	m map[T]*roaring.Bitmap
+	m map[T]*Bitmap
 }
 
 func newDimension[T comparable]() dimension[T] {
-	return dimension[T]{m: make(map[T]*roaring.Bitmap)}
+	return dimension[T]{m: make(map[T]*Bitmap)}
 }
 
 func (d dimension[T]) Add(key T, id uint32) {
 	bm, ok := d.m[key]
 	if !ok {
-		bm = roaring.New()
+		bm = NewBitmap()
 		d.m[key] = bm
 	}
 	bm.Add(id)
@@ -153,7 +151,7 @@ func (d dimension[T]) Remove(key T, id uint32) {
 	}
 }
 
-func (d dimension[T]) Get(key T) (*roaring.Bitmap, bool) {
+func (d dimension[T]) Get(key T) (*Bitmap, bool) {
 	bm, ok := d.m[key]
 	return bm, ok
 }
@@ -172,8 +170,8 @@ func (d dimension[T]) Keys() []T {
 
 // Query returns OR(d[k] for k in keys).
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func (d dimension[T]) Query(arena *bitmapArena, keys []T) *roaring.Bitmap {
-	parts := make([]*roaring.Bitmap, 0, len(keys))
+func (d dimension[T]) Query(arena *bitmapArena, keys []T) *Bitmap {
+	parts := make([]*Bitmap, 0, len(keys))
 	for _, k := range keys {
 		if bm, ok := d.m[k]; ok {
 			parts = append(parts, bm)

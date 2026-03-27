@@ -6,27 +6,26 @@ package index
 import (
 	"strings"
 
-	"github.com/RoaringBitmap/roaring/v2"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/gobwas/glob"
 )
 
 // globDimension is a bitmap-based dimension index that supports both literal
 // and glob pattern keys. It mirrors the semantics of internal.GlobMap,
-// returning roaring bitmaps for queried values.
+// returning bitmaps for queried values.
 type globDimension struct {
 	// Raw maps rather than dimension[string] because globs and compiled have
 	// coupled lifecycles that don't fit the dimension abstraction cleanly.
-	literals map[string]*roaring.Bitmap
+	literals map[string]*Bitmap
 	// `globs` and `compiled` share the same key
-	globs    map[string]*roaring.Bitmap
+	globs    map[string]*Bitmap
 	compiled map[string]glob.Glob
 }
 
 func newGlobDimension() *globDimension {
 	return &globDimension{
-		literals: make(map[string]*roaring.Bitmap),
-		globs:    make(map[string]*roaring.Bitmap),
+		literals: make(map[string]*Bitmap),
+		globs:    make(map[string]*Bitmap),
 		compiled: make(map[string]glob.Glob),
 	}
 }
@@ -40,14 +39,14 @@ func (gd *globDimension) Set(key string, id uint32) {
 				return
 			}
 			gd.compiled[key] = g
-			bm = roaring.New()
+			bm = NewBitmap()
 			gd.globs[key] = bm
 		}
 		bm.Add(id)
 	} else {
 		bm, ok := gd.literals[key]
 		if !ok {
-			bm = roaring.New()
+			bm = NewBitmap()
 			gd.literals[key] = bm
 		}
 		bm.Add(id)
@@ -76,7 +75,7 @@ func (gd *globDimension) Remove(key string, id uint32) {
 // Query returns the OR of the literal bitmap for value and all glob bitmaps
 // whose pattern matches value. The returned bitmap may alias a stored bitmap;
 // callers must not mutate it.
-func (gd *globDimension) Query(arena *bitmapArena, value string) *roaring.Bitmap {
+func (gd *globDimension) Query(arena *bitmapArena, value string) *Bitmap {
 	literalBM := gd.literals[value]
 
 	if len(gd.compiled) == 0 {
@@ -87,7 +86,7 @@ func (gd *globDimension) Query(arena *bitmapArena, value string) *roaring.Bitmap
 	}
 
 	// Collect literal + matching glob bitmaps and combine with in-place OR.
-	var parts []*roaring.Bitmap
+	var parts []*Bitmap
 	if literalBM != nil {
 		parts = append(parts, literalBM)
 	}
@@ -109,8 +108,8 @@ func (gd *globDimension) Query(arena *bitmapArena, value string) *roaring.Bitmap
 
 // QueryMultiple returns OR of all bitmaps matching any of the given values.
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func (gd *globDimension) QueryMultiple(arena *bitmapArena, values []string) *roaring.Bitmap {
-	parts := make([]*roaring.Bitmap, 0, len(values))
+func (gd *globDimension) QueryMultiple(arena *bitmapArena, values []string) *Bitmap {
+	parts := make([]*Bitmap, 0, len(values))
 	for _, v := range values {
 		if bm, ok := gd.literals[v]; ok {
 			parts = append(parts, bm)
