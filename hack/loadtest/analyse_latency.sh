@@ -146,6 +146,49 @@ VERDICT=$(awk -v cv="$CV" 'BEGIN {
 }')
 printf "\n  Verdict:         %s\n" "$VERDICT"
 
+# Stall and throughput gap detection
+MEAN_TOTAL=$(sqlite3 "$DB" "SELECT ROUND(AVG(total), 0) FROM windows;")
+STALL_THRESHOLD=50  # slow% above this = potential stall
+GAP_THRESHOLD=50    # total below this % of mean = throughput gap
+
+STALLS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows WHERE slow * 100.0 / total > ${STALL_THRESHOLD};")
+GAPS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows WHERE total < ${MEAN_TOTAL} * ${GAP_THRESHOLD} / 100.0;")
+
+if [[ "$STALLS" -gt 0 || "$GAPS" -gt 0 ]]; then
+  printf "\nAnomalies detected:\n"
+  if [[ "$STALLS" -gt 0 ]]; then
+    printf "  Stalls:          %s windows with >%s%% slow requests (system mostly unresponsive)\n" "$STALLS" "$STALL_THRESHOLD"
+    sqlite3 -header -column "$DB" <<SQL
+SELECT
+  window AS win,
+  total,
+  slow,
+  ROUND(slow * 100.0 / total, 1) AS 'slow%',
+  COALESCE(CAST(max_slow_ms AS TEXT), '-') AS max_ms,
+  avg_ms
+FROM windows
+WHERE slow * 100.0 / total > ${STALL_THRESHOLD}
+ORDER BY slow * 1.0 / total DESC;
+SQL
+  fi
+  if [[ "$GAPS" -gt 0 ]]; then
+    printf "  Throughput gaps:  %s windows with <%s%% of mean throughput (%s reqs/win)\n" "$GAPS" "$GAP_THRESHOLD" "$MEAN_TOTAL"
+    sqlite3 -header -column "$DB" <<SQL
+SELECT
+  window AS win,
+  total,
+  ROUND(total * 100.0 / ${MEAN_TOTAL}, 1) AS 'of_mean%',
+  slow,
+  avg_ms
+FROM windows
+WHERE total < ${MEAN_TOTAL} * ${GAP_THRESHOLD} / 100.0
+ORDER BY total;
+SQL
+  fi
+else
+  printf "\nNo stalls or throughput gaps detected.\n"
+fi
+
 # Per-window breakdown
 printf "\nPer-window breakdown:\n"
 sqlite3 -header -column "$DB" <<SQL
