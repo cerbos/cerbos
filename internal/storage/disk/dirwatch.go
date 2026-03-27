@@ -57,7 +57,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.Sub
 			return err
 		}
 
-		if !d.IsDir() {
+		if !d.IsDir() || util.PathIsHidden(path) {
 			return nil
 		}
 
@@ -145,16 +145,6 @@ func (dw *dirWatch) listen(ctx context.Context) {
 }
 
 func (dw *dirWatch) processEvent(event fsnotify.Event) {
-	// We need to manually add newly created directories.
-	// See https://github.com/fsnotify/fsnotify/issues/18 for more details.
-	if st, err := os.Stat(event.Name); event.Has(fsnotify.Create) && err == nil && st.IsDir() && !slices.Contains(dw.watcher.WatchList(), event.Name) {
-		if err := dw.watcher.Add(event.Name); err != nil {
-			dw.log.Errorw("Failed to initiate monitoring on the newly created subdirectory", "dir", event.Name, zap.Error(err))
-		}
-
-		dw.log.Debugw("Initiated monitoring on the newly created subdirectory", "dir", event.Name)
-	}
-
 	path, err := filepath.Rel(dw.dir, event.Name)
 	if err != nil {
 		dw.log.Warnw("Failed to determine relative path of file", "file", path, "error", err)
@@ -195,7 +185,20 @@ func (dw *dirWatch) triggerUpdate() {
 	// The deleted files need to be processed first because we could have a duplicate definition when a file is renamed otherwise.
 	for path := range eventBatch {
 		fullPath := filepath.Join(dw.dir, path)
-		if _, err := os.Stat(fullPath); err == nil || !errors.Is(err, os.ErrNotExist) {
+		st, err := os.Stat(fullPath)
+		if err == nil {
+			// We need to manually add newly created directories.
+			// See https://github.com/fsnotify/fsnotify/issues/18 for more details.
+			if st.IsDir() && !util.PathIsHidden(fullPath) && !slices.Contains(dw.watcher.WatchList(), fullPath) {
+				if err := dw.watcher.Add(fullPath); err != nil {
+					dw.log.Errorw("Failed to initiate monitoring on the newly created subdirectory", "file", fullPath, zap.Error(err))
+				}
+
+				dw.log.Debugw("Initiated monitoring on the newly created subdirectory", "file", fullPath)
+			}
+
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
 			continue
 		}
 
