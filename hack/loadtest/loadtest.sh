@@ -216,6 +216,8 @@ executeTest() {
   metricsAvailable=true
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
+  printf "Start: %s\n" "$(date '+%T')" > "${resultPrefix}_rps.txt"
+
   ghz --insecure \
       "${ghzProtoArgs[@]}" \
       --call cerbos.svc.v1.CerbosService/CheckResources \
@@ -227,7 +229,9 @@ executeTest() {
       -O json \
       "${SERVER}" | \
         tee "${resultPrefix}_rps.json" | "${WORK_DIR}/printsummary" | \
-        tee "${resultPrefix}_rps.txt"
+        tee -a "${resultPrefix}_rps.txt"
+
+  printf "End:   %s\n" "$(date '+%T')" | tee -a "${resultPrefix}_rps.txt"
 
   if $metricsAvailable && scrapeMetrics "$afterFile"; then
     if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
@@ -246,6 +250,8 @@ executeTest() {
   metricsAvailable=true
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
+  printf "Start: %s\n" "$(date '+%T')" > "${resultPrefix}_throughput.txt"
+
   ghz --insecure \
       "${ghzProtoArgs[@]}" \
       --call cerbos.svc.v1.CerbosService/CheckResources \
@@ -256,7 +262,9 @@ executeTest() {
       -O json \
       "${SERVER}" | \
         tee "${resultPrefix}_throughput.json" | "${WORK_DIR}/printsummary" | \
-        tee  "${resultPrefix}_throughput.txt"
+        tee -a "${resultPrefix}_throughput.txt"
+
+  printf "End:   %s\n" "$(date '+%T')" | tee -a "${resultPrefix}_throughput.txt"
 
   if $metricsAvailable && scrapeMetrics "$afterFile"; then
     if [[ -s "$beforeFile" && -s "$afterFile" ]]; then
