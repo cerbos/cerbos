@@ -151,8 +151,10 @@ MEAN_TOTAL=$(sqlite3 "$DB" "SELECT ROUND(AVG(total), 0) FROM windows;")
 STALL_THRESHOLD=50  # slow% above this = potential stall
 GAP_THRESHOLD=50    # total below this % of mean = throughput gap
 
-STALLS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows WHERE slow * 100.0 / total > ${STALL_THRESHOLD};")
-GAPS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows WHERE total < ${MEAN_TOTAL} * ${GAP_THRESHOLD} / 100.0;")
+# Exclude the last window (often partial — test ends mid-window)
+LAST_WIN=$(sqlite3 "$DB" "SELECT MAX(window) FROM windows;")
+STALLS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows WHERE window < ${LAST_WIN} AND slow * 100.0 / total > ${STALL_THRESHOLD};")
+GAPS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows WHERE window < ${LAST_WIN} AND total < ${MEAN_TOTAL} * ${GAP_THRESHOLD} / 100.0;")
 
 if [[ "$STALLS" -gt 0 || "$GAPS" -gt 0 ]]; then
   printf "\nAnomalies detected:\n"
@@ -167,7 +169,7 @@ SELECT
   COALESCE(CAST(max_slow_ms AS TEXT), '-') AS max_ms,
   avg_ms
 FROM windows
-WHERE slow * 100.0 / total > ${STALL_THRESHOLD}
+WHERE window < ${LAST_WIN} AND slow * 100.0 / total > ${STALL_THRESHOLD}
 ORDER BY slow * 1.0 / total DESC;
 SQL
   fi
@@ -181,7 +183,7 @@ SELECT
   slow,
   avg_ms
 FROM windows
-WHERE total < ${MEAN_TOTAL} * ${GAP_THRESHOLD} / 100.0
+WHERE window < ${LAST_WIN} AND total < ${MEAN_TOTAL} * ${GAP_THRESHOLD} / 100.0
 ORDER BY total;
 SQL
   fi
