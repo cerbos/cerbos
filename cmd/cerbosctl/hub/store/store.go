@@ -4,6 +4,7 @@
 package store
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"buf.build/go/protovalidate"
+	
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/auth"
@@ -66,7 +68,7 @@ func (c Conn) storeClient() (*hub.StoreClient, error) {
 		case *authv1.SavedCredentials_ClientCredentials:
 			hubOpts = append(hubOpts, cerbos.WithHubCredentials(creds.ClientCredentials.GetClientId(), creds.ClientCredentials.GetClientSecret()))
 		case *authv1.SavedCredentials_DeviceToken:
-			hubOpts = append(hubOpts, cerbos.WithHubDeviceToken(creds.DeviceToken.GetAccessToken()))
+			hubOpts = append(hubOpts, cerbos.WithSavedCredentials(saved))
 		default:
 			return nil, errors.New("unable to load saved credentials")
 		}
