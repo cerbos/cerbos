@@ -116,7 +116,7 @@ func (dw *dirWatch) listen(ctx context.Context) {
 
 		case event, ok := <-dw.watcher.Events:
 			if !ok {
-				dw.log.Error("Failed to retrieve event from watcher")
+				dw.log.Info("Directory watch ended")
 				return
 			}
 
@@ -124,7 +124,7 @@ func (dw *dirWatch) listen(ctx context.Context) {
 
 		case err, ok := <-dw.watcher.Errors:
 			if !ok {
-				dw.log.Error("Failed to retrieve error from watcher")
+				dw.log.Info("Directory watch ended")
 				return
 			}
 

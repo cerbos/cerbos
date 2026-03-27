@@ -1,3 +1,3 @@
 type:fix
-Fix policies not being found due to an error with the directory watch system
-This fixes an issue with directory watching when the inodes of the directory being watched gets changed during git switch. Also fixes an issue when a file is renamed, a duplicate definition error is thrown.
+Fix issues with the directory watch system
+Fixes an issue where renaming a policy file causes it to be dropped from the index. Also addresses an edge case where change detection fails if the inode of the initial directory changes while the watch is active.
