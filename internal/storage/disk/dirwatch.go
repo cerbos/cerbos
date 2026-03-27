@@ -192,26 +192,33 @@ func (dw *dirWatch) triggerUpdate() {
 	dw.mu.Unlock()
 
 	errCount := 0
+	// The deleted files need to be processed first because we could have a duplicate definition when a file is renamed otherwise.
 	for path := range eventBatch {
 		fullPath := filepath.Join(dw.dir, path)
-		if _, err := os.Stat(fullPath); errors.Is(err, os.ErrNotExist) {
-			dw.log.Debugw("Detected file removal", "file", path)
-			if sf, ok := util.RelativeSchemaPath(path); ok {
-				dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
-				continue
-			}
-
-			evt, err := dw.idx.Delete(index.Entry{File: path})
-			if err != nil {
-				dw.log.Warnw("Failed to remove file from index", "file", path, "error", err)
-				errCount++
-				continue
-			}
-
-			dw.NotifySubscribers(evt)
+		if _, err := os.Stat(fullPath); err == nil || !errors.Is(err, os.ErrNotExist) {
 			continue
 		}
 
+		dw.log.Debugw("Detected file removal", "file", path)
+		if sf, ok := util.RelativeSchemaPath(path); ok {
+			delete(eventBatch, path)
+			dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
+			continue
+		}
+
+		evt, err := dw.idx.Delete(index.Entry{File: path})
+		if err != nil {
+			dw.log.Warnw("Failed to remove file from index", "file", path, "error", err)
+			errCount++
+			continue
+		}
+
+		delete(eventBatch, path)
+		dw.NotifySubscribers(evt)
+	}
+
+	for path := range eventBatch {
+		fullPath := filepath.Join(dw.dir, path)
 		dw.log.Debugw("Detected file update", "file", path)
 		if sf, ok := util.RelativeSchemaPath(path); ok {
 			dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sf))
