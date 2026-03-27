@@ -13,6 +13,7 @@ content:
       edit_url: "https://github.com/cerbos/cerbos/tree/main/{path}"
       start_path: docs
     - url: https://github.com/cerbos/cloud-docs.git
+    - url: https://github.com/cerbos/synapse-docs.git
 urls:
   redirect_facility: netlify
   latest_version_segment: latest
