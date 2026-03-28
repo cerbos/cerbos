@@ -5,10 +5,13 @@ package index
 
 import "math/bits"
 
-// Bitmap is a flat bitset backed by []uint64. It is a drop-in replacement for
-// roaring.Bitmap for the dense, sequential ID space used by the bitmap index.
+// Bitmap is a two-level hierarchical bitset. The first level (words) stores the
+// actual bits. The second level (meta) tracks which words are non-zero: bit j of
+// meta[i] is set iff words[i*64+j] != 0. This lets bulk operations (And, Or,
+// IsEmpty, GetCardinality, iteration) skip empty regions cheaply.
 type Bitmap struct {
 	words []uint64
+	meta  []uint64
 }
 
 // NewBitmap returns a new empty Bitmap.
@@ -17,29 +20,34 @@ func NewBitmap() *Bitmap {
 }
 
 func (b *Bitmap) Add(id uint32) {
-	idx := int(id / 64) //nolint:mnd
-	b.ensure(idx + 1)
-	b.words[idx] |= 1 << (id % 64) //nolint:mnd
+	wIdx := int(id / 64) //nolint:mnd
+	b.ensure(wIdx + 1)
+	b.words[wIdx] |= 1 << (id % 64) //nolint:mnd
+	b.meta[wIdx/64] |= 1 << (uint(wIdx) % 64) //nolint:mnd
 }
 
 func (b *Bitmap) Remove(id uint32) {
-	idx := int(id / 64) //nolint:mnd
-	if idx < len(b.words) {
-		b.words[idx] &^= 1 << (id % 64) //nolint:mnd
+	wIdx := int(id / 64) //nolint:mnd
+	if wIdx >= len(b.words) {
+		return
+	}
+	b.words[wIdx] &^= 1 << (id % 64) //nolint:mnd
+	if b.words[wIdx] == 0 {
+		b.meta[wIdx/64] &^= 1 << (uint(wIdx) % 64) //nolint:mnd
 	}
 }
 
 func (b *Bitmap) Contains(id uint32) bool {
-	idx := int(id / 64) //nolint:mnd
-	if idx >= len(b.words) {
+	wIdx := int(id / 64) //nolint:mnd
+	if wIdx >= len(b.words) {
 		return false
 	}
-	return b.words[idx]&(1<<(id%64)) != 0 //nolint:mnd
+	return b.words[wIdx]&(1<<(id%64)) != 0 //nolint:mnd
 }
 
 func (b *Bitmap) IsEmpty() bool {
-	for _, w := range b.words {
-		if w != 0 {
+	for _, m := range b.meta {
+		if m != 0 {
 			return false
 		}
 	}
@@ -48,15 +56,18 @@ func (b *Bitmap) IsEmpty() bool {
 
 func (b *Bitmap) GetCardinality() uint64 {
 	var n uint64
-	for _, w := range b.words {
-		n += uint64(bits.OnesCount64(w))
+	for mi, m := range b.meta {
+		for m != 0 {
+			j := bits.TrailingZeros64(m)
+			n += uint64(bits.OnesCount64(b.words[mi*64+j])) //nolint:mnd
+			m &^= 1 << j
+		}
 	}
 	return n
 }
 
-// Len returns the number of uint64 words in the bitmap. This is an O(1)
-// proxy for bitmap size, useful for choosing the smallest operand in AND
-// without the cost of a full popcount.
+// Len returns the number of uint64 words in the bitmap. O(1) proxy for
+// bitmap size, useful for choosing the smallest operand in AND.
 func (b *Bitmap) Len() int {
 	return len(b.words)
 }
@@ -64,53 +75,119 @@ func (b *Bitmap) Len() int {
 // Or performs in-place union: b = b | other.
 func (b *Bitmap) Or(other *Bitmap) {
 	b.ensure(len(other.words))
-	for i, w := range other.words {
-		b.words[i] |= w
+	for mi, m := range other.meta {
+		if m == 0 {
+			continue
+		}
+		b.meta[mi] |= m
+		base := mi * 64 //nolint:mnd
+		for m != 0 {
+			j := bits.TrailingZeros64(m)
+			b.words[base+j] |= other.words[base+j]
+			m &^= 1 << j
+		}
 	}
 }
 
 // And performs in-place intersection: b = b & other.
 func (b *Bitmap) And(other *Bitmap) {
-	minLen := min(len(b.words), len(other.words))
-	for i := range minLen {
-		b.words[i] &= other.words[i]
+	// Meta words beyond other's length: b's bits are ANDed with implicit zeros.
+	minMeta := min(len(b.meta), len(other.meta))
+	for mi := minMeta; mi < len(b.meta); mi++ {
+		if b.meta[mi] == 0 {
+			continue
+		}
+		base := mi * 64 //nolint:mnd
+		for m := b.meta[mi]; m != 0; {
+			j := bits.TrailingZeros64(m)
+			b.words[base+j] = 0
+			m &^= 1 << j
+		}
+		b.meta[mi] = 0
 	}
-	// Words beyond other's length are ANDed with implicit zeros.
-	clear(b.words[minLen:])
+
+	// Words within shared meta range.
+	for mi := range minMeta {
+		bm := b.meta[mi]
+		if bm == 0 {
+			continue
+		}
+		base := mi * 64 //nolint:mnd
+		// Only examine words where b has data.
+		newMeta := uint64(0)
+		for m := bm; m != 0; {
+			j := bits.TrailingZeros64(m)
+			wIdx := base + j
+			if wIdx < len(other.words) {
+				b.words[wIdx] &= other.words[wIdx]
+			} else {
+				b.words[wIdx] = 0
+			}
+			if b.words[wIdx] != 0 {
+				newMeta |= 1 << j
+			}
+			m &^= 1 << j
+		}
+		b.meta[mi] = newMeta
+	}
 }
 
-// Clear resets the bitmap for reuse, retaining the backing array.
+// Clear resets the bitmap for reuse, retaining the backing arrays.
 func (b *Bitmap) Clear() {
-	clear(b.words[:cap(b.words)])
+	// Only zero words that are actually set, guided by meta.
+	for mi, m := range b.meta {
+		if m == 0 {
+			continue
+		}
+		base := mi * 64 //nolint:mnd
+		for m != 0 {
+			j := bits.TrailingZeros64(m)
+			b.words[base+j] = 0
+			m &^= 1 << j
+		}
+		b.meta[mi] = 0
+	}
 	b.words = b.words[:0]
+	b.meta = b.meta[:0]
 }
 
 // Iterator returns a BitmapIterator over the set bits.
 func (b *Bitmap) Iterator() BitmapIterator {
-	it := BitmapIterator{words: b.words}
+	it := BitmapIterator{bm: b}
 	it.advance()
 	return it
 }
 
-// ensure grows words to at least n elements if necessary.
+// ensure grows words and meta to accommodate at least n words.
 func (b *Bitmap) ensure(n int) {
 	if n <= len(b.words) {
 		return
 	}
+	needMeta := (n + 63) / 64 //nolint:mnd
 	if n <= cap(b.words) {
 		b.words = b.words[:n]
+		b.meta = b.meta[:needMeta]
 		return
 	}
-	newWords := make([]uint64, n, max(n, cap(b.words)*2))
+	newCap := max(n, cap(b.words)*2)
+	newWords := make([]uint64, n, newCap)
 	copy(newWords, b.words)
 	b.words = newWords
+
+	newMetaCap := (newCap + 63) / 64 //nolint:mnd
+	newMeta := make([]uint64, needMeta, newMetaCap)
+	copy(newMeta, b.meta)
+	b.meta = newMeta
 }
 
-// BitmapIterator iterates over set bits in ascending order.
+// BitmapIterator iterates over set bits in ascending order, using the meta
+// level to skip empty word regions.
 type BitmapIterator struct {
-	words   []uint64
-	wordIdx int
-	word    uint64
+	bm      *Bitmap
+	metaIdx int
+	metaW   uint64 // remaining meta bits in current meta word
+	word    uint64 // remaining bits in current data word
+	wordIdx int    // index of current data word
 }
 
 func (it *BitmapIterator) HasNext() bool {
@@ -122,19 +199,43 @@ func (it *BitmapIterator) Next() uint32 {
 	id := uint32(it.wordIdx*64 + bit) //nolint:mnd
 	it.word &^= 1 << bit
 	if it.word == 0 {
-		it.wordIdx++
-		it.advance()
+		it.nextWord()
 	}
 	return id
 }
 
+// advance finds the first non-zero data word using meta.
 func (it *BitmapIterator) advance() {
-	for it.wordIdx < len(it.words) {
-		if it.words[it.wordIdx] != 0 {
-			it.word = it.words[it.wordIdx]
+	for it.metaIdx < len(it.bm.meta) {
+		if it.bm.meta[it.metaIdx] != 0 {
+			it.metaW = it.bm.meta[it.metaIdx]
+			it.nextWord()
 			return
 		}
-		it.wordIdx++
+		it.metaIdx++
 	}
 	it.word = 0
+}
+
+// nextWord moves to the next non-zero data word within the current or
+// subsequent meta words.
+func (it *BitmapIterator) nextWord() {
+	for {
+		if it.metaW != 0 {
+			j := bits.TrailingZeros64(it.metaW)
+			it.metaW &^= 1 << j
+			it.wordIdx = it.metaIdx*64 + j //nolint:mnd
+			it.word = it.bm.words[it.wordIdx]
+			if it.word != 0 {
+				return
+			}
+			continue
+		}
+		it.metaIdx++
+		if it.metaIdx >= len(it.bm.meta) {
+			it.word = 0
+			return
+		}
+		it.metaW = it.bm.meta[it.metaIdx]
+	}
 }
