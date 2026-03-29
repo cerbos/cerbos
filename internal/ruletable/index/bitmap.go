@@ -22,7 +22,7 @@ func NewBitmap() *Bitmap {
 func (b *Bitmap) Add(id uint32) {
 	wIdx := int(id / 64) //nolint:mnd
 	b.ensure(wIdx + 1)
-	b.words[wIdx] |= 1 << (id % 64) //nolint:mnd
+	b.words[wIdx] |= 1 << (id % 64)  //nolint:mnd
 	b.meta[wIdx/64] |= 1 << (uint(wIdx) % 64) //nolint:mnd
 }
 
@@ -66,10 +66,17 @@ func (b *Bitmap) GetCardinality() uint64 {
 	return n
 }
 
-// Len returns the number of uint64 words in the bitmap. O(1) proxy for
-// bitmap size, useful for choosing the smallest operand in AND.
-func (b *Bitmap) Len() int {
-	return len(b.words)
+// Less reports whether b is likely smaller than other. It compares meta
+// slice lengths first (range), then the last meta word (density in the
+// highest block). O(1) heuristic for AND operand ordering.
+func (b *Bitmap) Less(other *Bitmap) bool {
+	if len(b.meta) != len(other.meta) {
+		return len(b.meta) < len(other.meta)
+	}
+	if len(b.meta) == 0 {
+		return false
+	}
+	return b.meta[len(b.meta)-1] < other.meta[len(other.meta)-1]
 }
 
 // Or performs in-place union: b = b | other.
@@ -91,29 +98,12 @@ func (b *Bitmap) Or(other *Bitmap) {
 
 // And performs in-place intersection: b = b & other.
 func (b *Bitmap) And(other *Bitmap) {
-	// Meta words beyond other's length: b's bits are ANDed with implicit zeros.
-	minMeta := min(len(b.meta), len(other.meta))
-	for mi := minMeta; mi < len(b.meta); mi++ {
-		if b.meta[mi] == 0 {
-			continue
-		}
-		base := mi * 64 //nolint:mnd
-		for m := b.meta[mi]; m != 0; {
-			j := bits.TrailingZeros64(m)
-			b.words[base+j] = 0
-			m &^= 1 << j
-		}
-		b.meta[mi] = 0
-	}
-
-	// Words within shared meta range.
-	for mi := range minMeta {
+	for mi := range b.meta {
 		bm := b.meta[mi]
 		if bm == 0 {
 			continue
 		}
 		base := mi * 64 //nolint:mnd
-		// Only examine words where b has data.
 		newMeta := uint64(0)
 		for m := bm; m != 0; {
 			j := bits.TrailingZeros64(m)
@@ -134,19 +124,8 @@ func (b *Bitmap) And(other *Bitmap) {
 
 // Clear resets the bitmap for reuse, retaining the backing arrays.
 func (b *Bitmap) Clear() {
-	// Only zero words that are actually set, guided by meta.
-	for mi, m := range b.meta {
-		if m == 0 {
-			continue
-		}
-		base := mi * 64 //nolint:mnd
-		for m != 0 {
-			j := bits.TrailingZeros64(m)
-			b.words[base+j] = 0
-			m &^= 1 << j
-		}
-		b.meta[mi] = 0
-	}
+	clear(b.words)
+	clear(b.meta)
 	b.words = b.words[:0]
 	b.meta = b.meta[:0]
 }

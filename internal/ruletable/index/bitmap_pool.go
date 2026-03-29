@@ -55,10 +55,10 @@ func (a *bitmapArena) orInto(parts []*Bitmap) *Bitmap {
 }
 
 // and2 ANDs exactly two bitmaps into a fresh pooled bitmap. Copies the
-// shorter bitmap (by Len, the highest set bit) first to minimise work.
+// likely-smaller bitmap first to minimise intermediate work.
 func (a *bitmapArena) and2(x, y *Bitmap) *Bitmap {
 	bm := a.get()
-	if x.Len() <= y.Len() {
+	if x.Less(y) {
 		bm.Or(x)
 		bm.And(y)
 	} else {
@@ -68,14 +68,12 @@ func (a *bitmapArena) and2(x, y *Bitmap) *Bitmap {
 	return bm
 }
 
-// andInto ANDs bitmaps into a fresh pooled bitmap. Copies the shortest
-// bitmap (by Len) first to minimise intermediate work.
+// andInto ANDs bitmaps into a fresh pooled bitmap. Copies the likely-smallest
+// bitmap first to minimise intermediate work.
 func (a *bitmapArena) andInto(bitmaps []*Bitmap) *Bitmap {
 	minIdx := 0
-	minLen := bitmaps[0].Len()
 	for i := 1; i < len(bitmaps); i++ {
-		if l := bitmaps[i].Len(); l < minLen {
-			minLen = l
+		if bitmaps[i].Less(bitmaps[minIdx]) {
 			minIdx = i
 		}
 	}
