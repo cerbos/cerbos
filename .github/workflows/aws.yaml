@@ -44,7 +44,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to ECR
-        uses: aws-actions/amazon-ecr-login@c962da2960ed15f492addc26fffa274485265950 # v2.0.2
+        uses: aws-actions/amazon-ecr-login@183a1442edf41672e66566b7fc560e297a290896 # v2.1.1
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
