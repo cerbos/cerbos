@@ -188,6 +188,15 @@ executeTest() {
     CGO_ENABLED=0 go build -tags printsummary -o "${WORK_DIR}/printsummary" .
   fi
 
+  # Capture CPU info once for embedding in result files
+  local cpuInfo=""
+  if [[ -f /proc/cpuinfo ]]; then
+    local cpuModel cpuMHz
+    cpuModel=$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | xargs)
+    cpuMHz=$(grep -m1 "cpu MHz" /proc/cpuinfo | cut -d: -f2 | xargs)
+    cpuInfo="CPU: ${cpuModel} @ ${cpuMHz} MHz"
+  fi
+
   # Proto source: use protoset file if provided, otherwise rely on server reflection
   local ghzProtoArgs=()
   if [[ -n "$PROTOSET" ]]; then
@@ -216,7 +225,7 @@ executeTest() {
   metricsAvailable=true
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
-  printf "Start: %s\n" "$(date '+%T')" > "${resultPrefix}_rps.txt"
+  { printf "Start: %s\n" "$(date '+%T')"; [[ -n "$cpuInfo" ]] && printf "%s\n" "$cpuInfo"; } | tee "${resultPrefix}_rps.txt"
 
   ghz --insecure \
       "${ghzProtoArgs[@]}" \
@@ -250,7 +259,7 @@ executeTest() {
   metricsAvailable=true
   scrapeMetrics "$beforeFile" || metricsAvailable=false
 
-  printf "Start: %s\n" "$(date '+%T')" > "${resultPrefix}_throughput.txt"
+  { printf "Start: %s\n" "$(date '+%T')"; [[ -n "$cpuInfo" ]] && printf "%s\n" "$cpuInfo"; } | tee "${resultPrefix}_throughput.txt"
 
   ghz --insecure \
       "${ghzProtoArgs[@]}" \
