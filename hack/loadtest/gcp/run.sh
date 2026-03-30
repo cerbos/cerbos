@@ -68,7 +68,17 @@ ENDSSH
 log "Downloading results..."
 LOCAL_RESULTS="${SCRIPT_DIR}/../results/gcp"
 mkdir -p "$LOCAL_RESULTS"
-GSCP "${PDP_VM}:${REMOTE_BASE}/results/cpu_usage.log" "$LOCAL_RESULTS/pdp_cpu_usage.log"
-GSCP "${CLIENT_VM}:${REMOTE_BASE}/results/*" "$LOCAL_RESULTS/"
+
+# Compress on remote, download, uncompress locally
+GSSH "$PDP_VM" "tar czf /tmp/pdp-results.tar.gz -C ${REMOTE_BASE}/results cpu_usage.log"
+GSCP "${PDP_VM}:/tmp/pdp-results.tar.gz" "/tmp/pdp-results.tar.gz"
+tar xzf /tmp/pdp-results.tar.gz -C "$LOCAL_RESULTS"
+mv "$LOCAL_RESULTS/cpu_usage.log" "$LOCAL_RESULTS/pdp_cpu_usage.log"
+rm -f /tmp/pdp-results.tar.gz
+
+GSSH "$CLIENT_VM" "tar czf /tmp/client-results.tar.gz -C ${REMOTE_BASE}/results ."
+GSCP "${CLIENT_VM}:/tmp/client-results.tar.gz" "/tmp/client-results.tar.gz"
+tar xzf /tmp/client-results.tar.gz -C "$LOCAL_RESULTS"
+rm -f /tmp/client-results.tar.gz
 
 log "Results saved to hack/loadtest/results/gcp/"
