@@ -96,6 +96,17 @@ func (b *Bitmap) And(other *Bitmap) {
 		if bm == 0 {
 			continue
 		}
+		// Fast skip: if meta words don't overlap, clear all words in this group.
+		if mi >= len(other.meta) || bm&other.meta[mi] == 0 {
+			base := mi * 64 //nolint:mnd
+			for m := bm; m != 0; {
+				j := bits.TrailingZeros64(m)
+				b.words[base+j] = 0
+				m &^= 1 << j
+			}
+			b.meta[mi] = 0
+			continue
+		}
 		base := mi * 64 //nolint:mnd
 		newMeta := uint64(0)
 		for m := bm; m != 0; {
@@ -113,6 +124,29 @@ func (b *Bitmap) And(other *Bitmap) {
 		}
 		b.meta[mi] = newMeta
 	}
+}
+
+// MetaIntersects returns true if the meta-level intersection of all given
+// bitmaps is non-empty. This is a cheap necessary condition for the full
+// intersection being non-empty — if the meta AND is zero, the bitmaps are
+// disjoint and no per-bit work is needed.
+func MetaIntersects(bitmaps ...*Bitmap) bool {
+	minMeta := len(bitmaps[0].meta)
+	for _, bm := range bitmaps[1:] {
+		if len(bm.meta) < minMeta {
+			minMeta = len(bm.meta)
+		}
+	}
+	for mi := range minMeta {
+		combined := bitmaps[0].meta[mi]
+		for _, bm := range bitmaps[1:] {
+			combined &= bm.meta[mi]
+		}
+		if combined != 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // Clear resets the bitmap for reuse, retaining the backing arrays.
