@@ -18,12 +18,10 @@ type bitmapArena struct {
 	used []*Bitmap
 }
 
-var arenaPool = sync.Pool{
-	New: func() any { return &bitmapArena{used: make([]*Bitmap, 0, 8)} }, //nolint:mnd
-}
-
-func acquireArena() *bitmapArena {
-	return arenaPool.Get().(*bitmapArena) //nolint:forcetypeassert
+// newBitmapArena must remain small enough to be inlined so that the arena
+// struct is stack-allocated at call sites. Verify with: go build -gcflags='-m'
+func newBitmapArena() *bitmapArena {
+	return &bitmapArena{used: make([]*Bitmap, 0, 8)} //nolint:mnd
 }
 
 func (a *bitmapArena) release() {
@@ -31,8 +29,6 @@ func (a *bitmapArena) release() {
 		bm.Clear()
 		bitmapPool.Put(bm)
 	}
-	a.used = a.used[:0]
-	arenaPool.Put(a)
 }
 
 // get returns a cleared bitmap from the pool and tracks it for later release.
@@ -42,10 +38,8 @@ func (a *bitmapArena) get() *Bitmap {
 	return bm
 }
 
-// orInto ORs all parts into a pooled bitmap using in-place Or. This avoids
-// roaring.FastOr's lazy-OR path, which allocates N-1 intermediate array
-// containers that become immediate GC pressure. In-place Or merges directly
-// into the destination's containers, which grow once and are reused.
+// orInto ORs all parts into a pooled bitmap using in-place Or, avoiding
+// intermediate bitmap allocations.
 func (a *bitmapArena) orInto(parts []*Bitmap) *Bitmap {
 	bm := a.get()
 	for _, p := range parts {
