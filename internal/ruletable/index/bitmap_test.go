@@ -276,34 +276,22 @@ func TestBitmapClearAndReuseWithGrowth(t *testing.T) {
 	require.Equal(t, uint64(2), b.GetCardinality())
 }
 
-func TestBitmapLess(t *testing.T) {
-	t.Run("both empty", func(t *testing.T) {
-		a := NewBitmap()
-		b := NewBitmap()
-		require.False(t, a.Less(b))
-		require.False(t, b.Less(a))
-	})
+func TestBitmapWordsLen(t *testing.T) {
+	a := NewBitmap()
+	require.Equal(t, 0, a.WordsLen())
 
-	t.Run("different meta lengths", func(t *testing.T) {
-		a := NewBitmap()
-		a.Add(1)
-		b := NewBitmap()
-		b.Add(5000)
+	a.Add(0) // word 0
+	require.Equal(t, 1, a.WordsLen())
 
-		require.True(t, a.Less(b))
-		require.False(t, b.Less(a))
-	})
+	a.Add(63) // still word 0
+	require.Equal(t, 1, a.WordsLen())
 
-	t.Run("same meta length different last word", func(t *testing.T) {
-		a := NewBitmap()
-		a.Add(0) // word 0 → meta[0] bit 0
+	a.Add(64) // word 1
+	require.Equal(t, 2, a.WordsLen())
 
-		b := NewBitmap()
-		b.Add(63 * 64) // word 63 → meta[0] bit 63
-
-		require.True(t, a.Less(b))
-		require.False(t, b.Less(a))
-	})
+	b := NewBitmap()
+	b.Add(5000) // word 78
+	require.Greater(t, b.WordsLen(), a.WordsLen())
 }
 
 func TestBitmapGetCardinalityFullWord(t *testing.T) {

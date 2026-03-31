@@ -66,17 +66,10 @@ func (b *Bitmap) GetCardinality() uint64 {
 	return n
 }
 
-// Less reports whether b is likely smaller than other. It compares meta
-// slice lengths first (range), then the last meta word (density in the
-// highest block). O(1) heuristic for AND operand ordering.
-func (b *Bitmap) Less(other *Bitmap) bool {
-	if len(b.meta) != len(other.meta) {
-		return len(b.meta) < len(other.meta)
-	}
-	if len(b.meta) == 0 {
-		return false
-	}
-	return b.meta[len(b.meta)-1] < other.meta[len(other.meta)-1]
+// WordsLen returns the number of uint64 words in the bitmap. O(1) proxy for
+// bitmap size, useful for choosing the shortest operand in AND.
+func (b *Bitmap) WordsLen() int {
+	return len(b.words)
 }
 
 // Or performs in-place union: b = b | other.
