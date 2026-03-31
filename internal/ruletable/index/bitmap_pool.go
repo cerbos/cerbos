@@ -39,11 +39,21 @@ func (a *bitmapArena) get() *Bitmap {
 }
 
 // orInto ORs all parts into a pooled bitmap using in-place Or, avoiding
-// intermediate bitmap allocations.
+// intermediate bitmap allocations. Starts with the largest bitmap so that
+// ensure allocates once to the final size.
 func (a *bitmapArena) orInto(parts []*Bitmap) *Bitmap {
+	maxIdx := 0
+	for i := 1; i < len(parts); i++ {
+		if parts[i].WordsLen() > parts[maxIdx].WordsLen() {
+			maxIdx = i
+		}
+	}
 	bm := a.get()
-	for _, p := range parts {
-		bm.Or(p)
+	bm.Or(parts[maxIdx])
+	for i, p := range parts {
+		if i != maxIdx {
+			bm.Or(p)
+		}
 	}
 	return bm
 }
