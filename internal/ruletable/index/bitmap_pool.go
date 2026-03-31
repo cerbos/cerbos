@@ -6,7 +6,12 @@ package index
 import "sync"
 
 var bitmapPool = sync.Pool{
-	New: func() any { return NewBitmap() },
+	New: func() any {
+		b := NewBitmap()
+		b.words = make([]uint64, 0, 4)
+		b.meta = make([]uint64, 0, 1)
+		return b
+	},
 }
 
 // emptyBitmap is shared. Callers must not mutate it.
