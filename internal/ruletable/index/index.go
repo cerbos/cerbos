@@ -780,31 +780,29 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 }
 
 // intersectionNonEmpty returns true if the intersection of all bitmaps is
-// non-empty without allocating any new bitmaps. Uses meta-level checks for
-// early exit, then iterates the shortest bitmap checking containment.
+// non-empty without allocating any new bitmaps. It ANDs words across all
+// bitmaps, checking 64 bits at a time, with a meta-level early exit.
 func intersectionNonEmpty(bitmaps ...*Bitmap) bool {
-	minIdx := 0
-	for i := 1; i < len(bitmaps); i++ {
-		if bitmaps[i].WordsLen() < bitmaps[minIdx].WordsLen() {
-			minIdx = i
-		}
-	}
-
 	if !MetaIntersects(bitmaps...) {
 		return false
 	}
 
-	iter := bitmaps[minIdx].Iterator()
-	for iter.HasNext() {
-		v := iter.Next()
-		inAll := true
-		for i, bm := range bitmaps {
-			if i != minIdx && !bm.Contains(v) {
-				inAll = false
+	minWords := bitmaps[0].WordsLen()
+	for _, bm := range bitmaps[1:] {
+		if bm.WordsLen() < minWords {
+			minWords = bm.WordsLen()
+		}
+	}
+
+	for w := range minWords {
+		val := bitmaps[0].words[w]
+		for _, bm := range bitmaps[1:] {
+			val &= bm.words[w]
+			if val == 0 {
 				break
 			}
 		}
-		if inAll {
+		if val != 0 {
 			return true
 		}
 	}
