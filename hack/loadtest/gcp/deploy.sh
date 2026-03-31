@@ -10,10 +10,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/env.sh"
 
 POLICIES_ONLY=false
-while getopts "p" opt; do
+BINARY_ONLY=false
+while getopts "bp" opt; do
   case "$opt" in
+    b) BINARY_ONLY=true ;;
     p) POLICIES_ONLY=true ;;
-    *) echo "Usage: $0 [-p]" >&2; exit 1 ;;
+    *) echo "Usage: $0 [-b|-p]" >&2; exit 1 ;;
   esac
 done
 
@@ -27,40 +29,45 @@ else
 fi
 log "PDP internal IP: ${PDP_IP}"
 
-# --- Validate local artifacts ---
-check_policies
-
-check_print_summary  
-
-# --- Deploy policies to PDP VM ---
-log "Uploading policies to PDP VM..."
-tar czf /tmp/cerbos-loadtest-policies.tar.gz -C "${WORK_DIR}" policies
-GSCP /tmp/cerbos-loadtest-policies.tar.gz "${PDP_VM}:/tmp/"
-GSSH "$PDP_VM" "rm -rf ${REMOTE_BASE}/policies && tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
-rm -f /tmp/cerbos-loadtest-policies.tar.gz
-
-if [[ "$POLICIES_ONLY" == true ]]; then
-  restart_cerbos
-  log "Policies redeployed — Cerbos is healthy"
-  log "Next step: ./run.sh"
-  exit 0
+# --- Deploy Cerbos binary to PDP VM (binary-only mode) ---
+if [[ "$BINARY_ONLY" == true ]]; then
+  GSSH "$PDP_VM" "pkill -x cerbos 2>/dev/null || true; sleep 1"
 fi
 
-log "Uploading Cerbos config to PDP VM..."
-GSCP "${SCRIPT_DIR}/conf/cerbos.yaml" "${PDP_VM}:${REMOTE_BASE}/conf/cerbos.yaml"
+if [[ "$BINARY_ONLY" == false ]]; then
+  # --- Validate local artifacts ---
+  check_policies
+  check_print_summary
 
-# --- Deploy to Client VM ---
-log "Uploading requests and printsummary to Client VM..."
-tar czf /tmp/cerbos-loadtest-client.tar.gz -C "${WORK_DIR}" requests printsummary
-GSCP /tmp/cerbos-loadtest-client.tar.gz "${CLIENT_VM}:/tmp/"
-GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
-rm -f /tmp/cerbos-loadtest-client.tar.gz
+  # --- Deploy policies to PDP VM ---
+  log "Uploading policies to PDP VM..."
+  tar czf /tmp/cerbos-loadtest-policies.tar.gz -C "${WORK_DIR}" policies
+  GSCP /tmp/cerbos-loadtest-policies.tar.gz "${PDP_VM}:/tmp/"
+  GSSH "$PDP_VM" "rm -rf ${REMOTE_BASE}/policies && tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
+  rm -f /tmp/cerbos-loadtest-policies.tar.gz
 
-log "Uploading client configs to Client VM..."
-CLIENT_STAGING=$(mktemp -d)
-trap "rm -rf '$CLIENT_STAGING'" EXIT
-mkdir -p "${CLIENT_STAGING}/conf/prometheus" "${CLIENT_STAGING}/conf/grafana/dashboards"
-cat > "${CLIENT_STAGING}/conf/prometheus/prometheus.yml" <<PROMEOF
+  if [[ "$POLICIES_ONLY" == true ]]; then
+    restart_cerbos
+    log "Policies redeployed — Cerbos is healthy"
+    log "Next step: ./run.sh"
+    exit 0
+  fi
+
+  log "Uploading Cerbos config to PDP VM..."
+  GSCP "${SCRIPT_DIR}/conf/cerbos.yaml" "${PDP_VM}:${REMOTE_BASE}/conf/cerbos.yaml"
+
+  # --- Deploy to Client VM ---
+  log "Uploading requests and printsummary to Client VM..."
+  tar czf /tmp/cerbos-loadtest-client.tar.gz -C "${WORK_DIR}" requests printsummary
+  GSCP /tmp/cerbos-loadtest-client.tar.gz "${CLIENT_VM}:/tmp/"
+  GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
+  rm -f /tmp/cerbos-loadtest-client.tar.gz
+
+  log "Uploading client configs to Client VM..."
+  CLIENT_STAGING=$(mktemp -d)
+  trap "rm -rf '$CLIENT_STAGING'" EXIT
+  mkdir -p "${CLIENT_STAGING}/conf/prometheus" "${CLIENT_STAGING}/conf/grafana/dashboards"
+  cat > "${CLIENT_STAGING}/conf/prometheus/prometheus.yml" <<PROMEOF
 global:
   scrape_interval: 15s
 scrape_configs:
@@ -70,28 +77,29 @@ scrape_configs:
     static_configs:
       - targets: ["${PDP_IP}:3592"]
 PROMEOF
-cp "${SCRIPT_DIR}/conf/docker-compose.yml" "${CLIENT_STAGING}/conf/docker-compose.yml"
-cp "${SCRIPT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_STAGING}/conf/grafana/datasources.yaml"
-cp "${SCRIPT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_STAGING}/conf/grafana/dashboards.yaml"
-cp "${SCRIPT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_STAGING}/conf/grafana/dashboards/cerbos.json"
-cp "${SCRIPT_DIR}/flake.nix" "${CLIENT_STAGING}/flake.nix"
-cp "${SCRIPT_DIR}/flake.lock" "${CLIENT_STAGING}/flake.lock"
-cp "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_STAGING}/loadtest.sh"
-if [[ -n "${PROTOSET:-}" ]]; then
-  if [[ ! -f "$PROTOSET" ]]; then
-    err "PROTOSET set but file not found: $PROTOSET"
-    exit 1
+  cp "${SCRIPT_DIR}/conf/docker-compose.yml" "${CLIENT_STAGING}/conf/docker-compose.yml"
+  cp "${SCRIPT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_STAGING}/conf/grafana/datasources.yaml"
+  cp "${SCRIPT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_STAGING}/conf/grafana/dashboards.yaml"
+  cp "${SCRIPT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_STAGING}/conf/grafana/dashboards/cerbos.json"
+  cp "${SCRIPT_DIR}/flake.nix" "${CLIENT_STAGING}/flake.nix"
+  cp "${SCRIPT_DIR}/flake.lock" "${CLIENT_STAGING}/flake.lock"
+  cp "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_STAGING}/loadtest.sh"
+  if [[ -n "${PROTOSET:-}" ]]; then
+    if [[ ! -f "$PROTOSET" ]]; then
+      err "PROTOSET set but file not found: $PROTOSET"
+      exit 1
+    fi
+    cp "$PROTOSET" "${CLIENT_STAGING}/cerbos.protoset"
   fi
-  cp "$PROTOSET" "${CLIENT_STAGING}/cerbos.protoset"
-fi
-tar czf /tmp/cerbos-loadtest-configs.tar.gz -C "${CLIENT_STAGING}" .
-GSCP /tmp/cerbos-loadtest-configs.tar.gz "${CLIENT_VM}:/tmp/"
-GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-configs.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-configs.tar.gz"
-rm -f /tmp/cerbos-loadtest-configs.tar.gz
+  tar czf /tmp/cerbos-loadtest-configs.tar.gz -C "${CLIENT_STAGING}" .
+  GSCP /tmp/cerbos-loadtest-configs.tar.gz "${CLIENT_VM}:/tmp/"
+  GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-configs.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-configs.tar.gz"
+  rm -f /tmp/cerbos-loadtest-configs.tar.gz
 
-# --- Deploy Cerbos binary to PDP VM ---
-# Stop running Cerbos before replacing the binary
-GSSH "$PDP_VM" "pkill -x cerbos 2>/dev/null || true; sleep 1"
+  # --- Deploy Cerbos binary to PDP VM ---
+  # Stop running Cerbos before replacing the binary
+  GSSH "$PDP_VM" "pkill -x cerbos 2>/dev/null || true; sleep 1"
+fi
 
 if [[ -n "${CERBOS_BINARY_PATH:-}" ]]; then
   # Use a locally built binary
@@ -139,18 +147,19 @@ rm -f /tmp/cerbos.tar.gz
 ENDSSH
 fi
 
-# --- Start observability stack on Client VM ---
-log "Starting Prometheus + Grafana on Client VM..."
-GSSH "$CLIENT_VM" <<ENDSSH
+if [[ "$BINARY_ONLY" == false ]]; then
+  # --- Start observability stack on Client VM ---
+  log "Starting Prometheus + Grafana on Client VM..."
+  GSSH "$CLIENT_VM" <<ENDSSH
 set -euo pipefail
 cd ${REMOTE_BASE}/conf
 docker compose up -d
 ENDSSH
+fi
 
 restart_cerbos
 
 log "Deployment complete — Cerbos is healthy"
 log "PDP:     ${PDP_IP}:3593 (gRPC), ${PDP_IP}:3592 (HTTP/metrics)"
-log "Grafana: gcloud compute ssh ${CLIENT_VM} --zone=${GCP_ZONE} -- -L 3000:localhost:3000"
 log ""
 log "Next step: ./run.sh"
