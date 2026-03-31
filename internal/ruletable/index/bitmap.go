@@ -20,29 +20,29 @@ func NewBitmap() *Bitmap {
 }
 
 func (b *Bitmap) Add(id uint32) {
-	wIdx := int(id / 64) //nolint:mnd
-	b.ensure(wIdx + 1)
-	b.words[wIdx] |= 1 << (id % 64)  //nolint:mnd
-	b.meta[wIdx/64] |= 1 << (uint(wIdx) % 64) //nolint:mnd
+	i := int(id / 64) //nolint:mnd
+	b.ensure(i + 1)
+	b.words[i] |= 1 << (id % 64)        //nolint:mnd
+	b.meta[i/64] |= 1 << (uint(i) % 64) //nolint:mnd
 }
 
 func (b *Bitmap) Remove(id uint32) {
-	wIdx := int(id / 64) //nolint:mnd
-	if wIdx >= len(b.words) {
+	i := int(id / 64) //nolint:mnd
+	if i >= len(b.words) {
 		return
 	}
-	b.words[wIdx] &^= 1 << (id % 64) //nolint:mnd
-	if b.words[wIdx] == 0 {
-		b.meta[wIdx/64] &^= 1 << (uint(wIdx) % 64) //nolint:mnd
+	b.words[i] &^= 1 << (id % 64) //nolint:mnd
+	if b.words[i] == 0 {
+		b.meta[i/64] &^= 1 << (uint(i) % 64) //nolint:mnd
 	}
 }
 
 func (b *Bitmap) Contains(id uint32) bool {
-	wIdx := int(id / 64) //nolint:mnd
-	if wIdx >= len(b.words) {
+	i := int(id / 64) //nolint:mnd
+	if i >= len(b.words) {
 		return false
 	}
-	return b.words[wIdx]&(1<<(id%64)) != 0 //nolint:mnd
+	return b.words[i]&(1<<(id%64)) != 0 //nolint:mnd
 }
 
 func (b *Bitmap) IsEmpty() bool {
@@ -91,14 +91,13 @@ func (b *Bitmap) Or(other *Bitmap) {
 
 // And performs in-place intersection: b = b & other.
 func (b *Bitmap) And(other *Bitmap) {
-	for mi := range b.meta {
-		bm := b.meta[mi]
+	for mi, bm := range b.meta {
 		if bm == 0 {
 			continue
 		}
 		// Fast skip: if meta words don't overlap, clear all words in this group.
+		base := mi * 64 //nolint:mnd
 		if mi >= len(other.meta) || bm&other.meta[mi] == 0 {
-			base := mi * 64 //nolint:mnd
 			for m := bm; m != 0; {
 				j := bits.TrailingZeros64(m)
 				b.words[base+j] = 0
@@ -107,20 +106,19 @@ func (b *Bitmap) And(other *Bitmap) {
 			b.meta[mi] = 0
 			continue
 		}
-		base := mi * 64 //nolint:mnd
 		newMeta := uint64(0)
 		for m := bm; m != 0; {
 			j := bits.TrailingZeros64(m)
-			wIdx := base + j
-			if wIdx < len(other.words) {
-				b.words[wIdx] &= other.words[wIdx]
-			} else {
-				b.words[wIdx] = 0
+			m &^= 1 << j
+			i := base + j
+			if i >= len(other.words) {
+				b.words[i] = 0
+				continue
 			}
-			if b.words[wIdx] != 0 {
+			b.words[i] &= other.words[i]
+			if b.words[i] != 0 {
 				newMeta |= 1 << j
 			}
-			m &^= 1 << j
 		}
 		b.meta[mi] = newMeta
 	}
@@ -169,10 +167,10 @@ func (b *Bitmap) ensure(n int) {
 	if n <= len(b.words) {
 		return
 	}
-	needMeta := (n + 63) / 64 //nolint:mnd
+	nMeta := (n + 63) / 64 //nolint:mnd
 	if n <= cap(b.words) {
 		b.words = b.words[:n]
-		b.meta = b.meta[:needMeta]
+		b.meta = b.meta[:nMeta]
 		return
 	}
 	newCap := max(n, cap(b.words)*2)
@@ -181,7 +179,7 @@ func (b *Bitmap) ensure(n int) {
 	b.words = newWords
 
 	newMetaCap := (newCap + 63) / 64 //nolint:mnd
-	newMeta := make([]uint64, needMeta, newMetaCap)
+	newMeta := make([]uint64, nMeta, newMetaCap)
 	copy(newMeta, b.meta)
 	b.meta = newMeta
 }
@@ -232,7 +230,7 @@ func (it *BitmapIterator) nextWord() {
 			it.metaW &^= 1 << j
 			it.wordIdx = it.metaIdx*64 + j //nolint:mnd
 			it.word = it.bm.words[it.wordIdx]
-			if it.word != 0 {
+			if it.word != 0 { // shouldn't be, but check for safety
 				return
 			}
 			continue
