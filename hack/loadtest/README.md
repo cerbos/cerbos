@@ -95,6 +95,29 @@ Prometheus and Grafana are started alongside Cerbos. Grafana is available at `ht
 
 The Cerbos container is capped at 4 CPUs and 512 MB RAM to ensure reproducible results. Adjust `docker-compose.yml` if needed.
 
+## Analysing Latency Distribution
+
+`analyse_latency.sh` checks whether slow requests in a ghz JSON result are evenly distributed over time or clustered (which could indicate GC pauses, warmup effects, or periodic stalls). Requires `jq` and `sqlite3`.
+
+```sh
+# Default: p95 threshold, 1s windows
+./analyse_latency.sh results/disk_throughput.json
+
+# Custom threshold in ms
+./analyse_latency.sh -t 30 results/disk_throughput.json
+
+# Custom percentile and window size
+./analyse_latency.sh -p 99 -w 5 results/disk_rps.json
+```
+
+The script reports:
+- **CV (coefficient of variation)** of slow request counts per window — lower values indicate more uniform distribution
+- **Stall detection**: windows where >50% of requests are slow (system mostly unresponsive)
+- **Throughput gaps**: windows where total request count drops below 50% of the mean
+- Per-window breakdown with total requests, slow count, slow%, max latency, and histogram
+
+Note: ghz caps JSON details at 1M requests. For tests exceeding this, per-request analysis will be incomplete.
+
 ## GCP Two-VM Testing
 
 See [`gcp/README.md`](gcp/README.md) for running load tests on dedicated GCP VMs. Infrastructure is provisioned with Terraform (see `environments/gcp_loadtest` in the *private* [infrastructure repo](https://github.com/cerbos/infrastructure)).

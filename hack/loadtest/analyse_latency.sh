@@ -138,14 +138,6 @@ printf "  StdDev(slow):    %s\n" "$(sqlite3 "$DB" "SELECT ROUND(SQRT(AVG((slow -
 CV=$(sqlite3 "$DB" "SELECT CASE WHEN m = 0 THEN 0 ELSE ROUND(SQRT(AVG((slow - m) * (slow - m))) / m * 100, 1) END FROM windows, (SELECT AVG(slow) AS m FROM windows);")
 printf "  CV:              %s%%\n" "$CV"
 
-VERDICT=$(awk -v cv="$CV" 'BEGIN {
-  if (cv == 0) print "NO SLOW REQUESTS"
-  else if (cv < 50) print "UNIFORM — slow requests are evenly spread (CV < 50%)"
-  else if (cv < 100) print "MODERATE CLUSTERING — some uneven distribution (50% < CV < 100%)"
-  else print "CLUSTERED — slow requests bunch together (CV > 100%), likely GC pauses or periodic stalls"
-}')
-printf "\n  Verdict:         %s\n" "$VERDICT"
-
 # Stall and throughput gap detection
 MEAN_TOTAL=$(sqlite3 "$DB" "SELECT ROUND(AVG(total), 0) FROM windows;")
 STALL_THRESHOLD=50  # slow% above this = potential stall
