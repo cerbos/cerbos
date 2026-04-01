@@ -204,14 +204,15 @@ executeTest() {
   fi
 
   # --- Warmup ---
-  printf "Warming up PDP with 1000 requests...\n"
+  printf "Warming up PDP with RPS=$RPS for 5 seconds...\n"
   ghz --insecure \
       "${ghzProtoArgs[@]}" \
       --call cerbos.svc.v1.CerbosService/CheckResources \
       --data-file "$dataFile" \
       --concurrency "$CONCURRENCY" \
       --connections "$CONNECTIONS" \
-      --total 1000 \
+      --rps "$RPS" \
+      --duration "5s" \
       "${SERVER}" > /dev/null
 
   local beforeFile afterFile metricsAvailable
