@@ -69,6 +69,12 @@ jq -r '.details[] | [.timestamp, .latency] | @csv' "$JSON_FILE" \
   | sqlite3 "$DB" ".mode csv" ".import /dev/stdin req"
 
 # Compute relative time in seconds and latency in ms
+T_START=$(sqlite3 "$DB" "
+  SELECT CAST(substr(ts, 12, 2) AS REAL) * 3600 +
+         CAST(substr(ts, 15, 2) AS REAL) * 60 +
+         CAST(substr(ts, 18, 6) AS REAL)
+  FROM req ORDER BY rowid LIMIT 1;
+")
 sqlite3 "$DB" "
   ALTER TABLE req ADD COLUMN t_sec REAL;
   ALTER TABLE req ADD COLUMN latency_ms REAL;
@@ -79,13 +85,7 @@ sqlite3 "$DB" "
       CAST(substr(ts, 12, 2) AS REAL) * 3600 +
       CAST(substr(ts, 15, 2) AS REAL) * 60 +
       CAST(substr(ts, 18, 6) AS REAL)
-    ) - (
-      SELECT
-        CAST(substr(ts, 12, 2) AS REAL) * 3600 +
-        CAST(substr(ts, 15, 2) AS REAL) * 60 +
-        CAST(substr(ts, 18, 6) AS REAL)
-      FROM req ORDER BY rowid LIMIT 1
-    );
+    ) - ${T_START};
 "
 
 # Compute threshold
