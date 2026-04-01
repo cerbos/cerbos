@@ -220,6 +220,10 @@ executeTest() {
   trap "rm -f \"$beforeFile\" \"$afterFile\"" EXIT INT TERM
 
   # --- Sustained-rate test ---
+  local estimatedCount=$((RPS * DURATION_SECS))
+  if [[ $estimatedCount -gt 1000000 ]]; then
+    printf "WARNING: estimated %s requests exceeds 1M — ghz will cap JSON details output, limiting per-request analysis\n" "$estimatedCount"
+  fi
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
 
   metricsAvailable=true
@@ -254,6 +258,9 @@ executeTest() {
   sleep 10
 
   # --- Throughput test ---
+  if [[ $ITERATIONS -gt 1000000 ]]; then
+    printf "WARNING: %s iterations exceeds 1M — ghz will cap JSON details output, limiting per-request analysis\n" "$ITERATIONS"
+  fi
   printf "Running throughput test: %s iterations\n" "$ITERATIONS"
 
   metricsAvailable=true
