@@ -221,7 +221,8 @@ executeTest() {
 
   # --- Sustained-rate test ---
   local estimatedCount=$((RPS * DURATION_SECS))
-  if [[ $estimatedCount -gt 1000000 ]]; then
+  local ghzLimit=1000000
+  if [[ $estimatedCount -gt $ghzLimit ]]; then
     printf "WARNING: estimated %s requests exceeds 1M — ghz will cap JSON details output, limiting per-request analysis\n" "$estimatedCount"
   fi
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
@@ -258,7 +259,7 @@ executeTest() {
   sleep 10
 
   # --- Throughput test ---
-  if [[ $ITERATIONS -gt 1000000 ]]; then
+  if [[ $ITERATIONS -gt $ghzLimit ]]; then
     printf "WARNING: %s iterations exceeds 1M — ghz will cap JSON details output, limiting per-request analysis\n" "$ITERATIONS"
   fi
   printf "Running throughput test: %s iterations\n" "$ITERATIONS"
