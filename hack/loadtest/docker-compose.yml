@@ -31,7 +31,7 @@ services:
 
   postgres:
     container_name: postgres
-    image: postgres:14.0-alpine
+    image: postgres:14.0-alpine@sha256:1cf551de75fd602ebc94ccda93305a4e411f941bf9465f59d850bdcfd474ca52
     restart: always
     profiles:
       - postgres
@@ -47,7 +47,7 @@ services:
 
   prometheus:
     container_name: prometheus
-    image: prom/prometheus:latest
+    image: prom/prometheus:latest@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9
     volumes:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -56,7 +56,7 @@ services:
 
   grafana:
     container_name: grafana
-    image: grafana/grafana:latest
+    image: grafana/grafana:latest@sha256:83749231c3835e390a3144e5e940203e42b9589761f20ef3169c716e734ad505
     volumes:
       - ./conf/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
       - ./conf/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
