@@ -23,8 +23,6 @@ type bitmapArena struct {
 	used []*Bitmap
 }
 
-// newBitmapArena must remain small enough to be inlined so that the arena
-// struct is stack-allocated at call sites. Verify with: go build -gcflags='-m'
 func newBitmapArena() *bitmapArena {
 	return &bitmapArena{used: make([]*Bitmap, 0, 8)} //nolint:mnd
 }
