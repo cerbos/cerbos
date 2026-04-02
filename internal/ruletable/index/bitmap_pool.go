@@ -8,8 +8,8 @@ import "sync"
 var bitmapPool = sync.Pool{
 	New: func() any {
 		b := NewBitmap()
-		b.words = make([]uint64, 0, 4)
-		b.meta = make([]uint64, 0, 1)
+		b.words = make([]uint64, 0, 4) //nolint:mnd
+		b.meta = make([]uint64, 0, 1)  //nolint:mnd
 		return b
 	},
 }

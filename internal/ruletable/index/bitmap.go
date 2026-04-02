@@ -3,7 +3,16 @@
 
 package index
 
-import "math/bits"
+import (
+	"encoding/binary"
+	"fmt"
+	"math/bits"
+)
+
+const (
+	wordLenSize = 4 // bytes for the encoded word count (uint32)
+	wordSize    = 8 // bytes per uint64 bitmap word
+)
 
 // Bitmap is a two-level hierarchical bitset. The first level (words) stores the
 // actual bits. The second level (meta) tracks which words are non-zero: bit j of
@@ -173,7 +182,7 @@ func (b *Bitmap) ensure(n int) {
 		b.meta = b.meta[:nMeta]
 		return
 	}
-	newCap := max(n, cap(b.words)*2)
+	newCap := max(n, cap(b.words)*2) //nolint:mnd
 	newWords := make([]uint64, n, newCap)
 	copy(newWords, b.words)
 	b.words = newWords
@@ -182,6 +191,49 @@ func (b *Bitmap) ensure(n int) {
 	newMeta := make([]uint64, nMeta, newMetaCap)
 	copy(newMeta, b.meta)
 	b.meta = newMeta
+}
+
+// MarshalBinary encodes the bitmap as a byte slice. The format is:
+// [4 bytes: wordLen (little-endian uint32)] [wordLen * 8 bytes: words] [remaining: meta].
+// meta length is derived from wordLen as (wordLen+63)/64.
+func (b *Bitmap) MarshalBinary() ([]byte, error) {
+	buf := make([]byte, wordLenSize+len(b.words)*wordSize+len(b.meta)*wordSize)
+	binary.LittleEndian.PutUint32(buf, uint32(len(b.words)))
+	off := wordLenSize
+	for _, w := range b.words {
+		binary.LittleEndian.PutUint64(buf[off:], w)
+		off += wordSize
+	}
+	for _, m := range b.meta {
+		binary.LittleEndian.PutUint64(buf[off:], m)
+		off += wordSize
+	}
+	return buf, nil
+}
+
+// UnmarshalBinary decodes a bitmap from a byte slice produced by MarshalBinary.
+func (b *Bitmap) UnmarshalBinary(buf []byte) (int, error) {
+	if len(buf) < wordLenSize {
+		return 0, fmt.Errorf("bitmap: buffer too short (%d bytes)", len(buf))
+	}
+	wLen := int(binary.LittleEndian.Uint32(buf))
+	mLen := (wLen + 63) / 64 //nolint:mnd
+	expected := wordLenSize + wLen*wordSize + mLen*wordSize
+	if len(buf) < expected {
+		return 0, fmt.Errorf("bitmap: buffer size %d, expected at least %d", len(buf), expected)
+	}
+	b.words = make([]uint64, wLen)
+	b.meta = make([]uint64, mLen)
+	off := wordLenSize
+	for i := range b.words {
+		b.words[i] = binary.LittleEndian.Uint64(buf[off:]) //nolint:gosec
+		off += wordSize
+	}
+	for i := range b.meta {
+		b.meta[i] = binary.LittleEndian.Uint64(buf[off:]) //nolint:gosec
+		off += wordSize
+	}
+	return expected, nil
 }
 
 // BitmapIterator iterates over set bits in ascending order, using the meta
@@ -194,14 +246,19 @@ type BitmapIterator struct {
 	wordIdx int    // index of current data word
 }
 
+// HasNext reports whether the iterator has remaining IDs.
 func (it *BitmapIterator) HasNext() bool {
 	return it.word != 0
 }
 
+// Next returns the ID of the next set bit in ascending order. Callers must
+// check HasNext() before calling Next(); behaviour is undefined if the
+// iterator is exhausted. The underlying bitmap must not be modified during
+// iteration.
 func (it *BitmapIterator) Next() uint32 {
-	bit := bits.TrailingZeros64(it.word)
-	id := uint32(it.wordIdx*64 + bit) //nolint:mnd
-	it.word &^= 1 << bit
+	j := bits.TrailingZeros64(it.word)
+	id := uint32(it.wordIdx*64 + j) //nolint:mnd
+	it.word &^= 1 << j
 	if it.word == 0 {
 		it.nextWord()
 	}
