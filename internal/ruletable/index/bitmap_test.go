@@ -336,6 +336,55 @@ func TestBitmapPoolRoundtrip(t *testing.T) {
 	bitmapPool.Put(bm2)
 }
 
+func TestBitmapMarshalRoundtrip(t *testing.T) {
+	tests := []struct {
+		name string
+		ids  []uint32
+	}{
+		{name: "empty", ids: nil},
+		{name: "single", ids: []uint32{42}},
+		{name: "word_boundaries", ids: []uint32{0, 63, 64, 127, 128}},
+		{name: "sparse", ids: []uint32{5, 64*64 + 3, 128*64 + 7}},
+		{name: "dense", ids: func() []uint32 {
+			ids := make([]uint32, 64)
+			for i := range ids {
+				ids[i] = uint32(i)
+			}
+			return ids
+		}()},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			orig := NewBitmap()
+			for _, id := range tt.ids {
+				orig.Add(id)
+			}
+
+			buf, err := orig.MarshalBinary()
+			require.NoError(t, err)
+
+			restored := NewBitmap()
+			_, err = restored.UnmarshalBinary(buf)
+			require.NoError(t, err)
+
+			require.Equal(t, collectIterator(orig), collectIterator(restored))
+			require.Equal(t, orig.GetCardinality(), restored.GetCardinality())
+			require.Equal(t, len(orig.words), len(restored.words))
+			require.Equal(t, len(orig.meta), len(restored.meta))
+		})
+	}
+}
+
+func TestBitmapUnmarshalErrors(t *testing.T) {
+	b := NewBitmap()
+	_, err := b.UnmarshalBinary(nil)
+	require.Error(t, err, "nil buffer")
+	_, err = b.UnmarshalBinary([]byte{1, 2})
+	require.Error(t, err, "too short")
+	_, err = b.UnmarshalBinary([]byte{1, 2, 1, 2})
+	require.Error(t, err, "truncated words")
+}
+
 func TestBitmapArenaOrInto(t *testing.T) {
 	a := NewBitmap()
 	a.Add(1)
