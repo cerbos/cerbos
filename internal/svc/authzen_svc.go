@@ -293,7 +293,7 @@ func buildCheckResourcesResponse(requestID string, inputs []*enginev1.CheckInput
 	}
 
 	for i, out := range outputs {
-		resource := inputs[i].Resource
+		resource := inputs[i].Resource //nolint:gosec
 		entry := &responsev1.CheckResourcesResponse_ResultEntry{
 			Resource: &responsev1.CheckResourcesResponse_ResultEntry_Resource{
 				Id:            resource.Id,

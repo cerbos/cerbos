@@ -1,0 +1,24 @@
+name: Permissions Advisor
+permissions:
+  actions: read
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "The name of the workflow file to analyze"
+        required: true
+        type: string
+      count:
+        description: "How many last runs to analyze"
+        required: false
+        type: string
+        default: "10"
+
+jobs:
+  advisor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GitHubSecurityLab/actions-permissions/advisor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          name: ${{ inputs.name }}
+          count: ${{ fromJSON(inputs.count) }}

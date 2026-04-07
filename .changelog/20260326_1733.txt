@@ -1,0 +1,3 @@
+type:fix
+Fix issues with the directory watch system
+Fixes an issue where renaming a policy file causes it to be dropped from the index.

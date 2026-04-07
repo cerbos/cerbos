@@ -10,7 +10,6 @@
 package policyv1
 
 import (
-	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"

@@ -15,3 +15,6 @@ nav:
   - modules/releases/nav.adoc
   - modules/glossary/nav.adoc
   - modules/engineering/nav.adoc
+asciidoc:
+  attributes:
+    app-name: "cerbos"

@@ -23,6 +23,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/conditions/types"
 	"github.com/cerbos/cerbos/internal/test"
 )
 
@@ -264,7 +265,7 @@ func TestREPL(t *testing.T) {
 						t.Helper()
 						require.Equal(t, "C", m.resultName)
 
-						want := map[string]any{"foo": float64(42)}
+						want := types.VariablesMap{"foo": float64(42)}
 						require.Equal(t, want, m.resultVal.Value())
 					},
 				},
@@ -287,7 +288,7 @@ func TestREPL(t *testing.T) {
 						t.Helper()
 						require.Equal(t, "V", m.resultName)
 
-						want := map[string]any{"foo": "bar"}
+						want := types.VariablesMap{"foo": "bar"}
 						require.Equal(t, want, m.resultVal.Value())
 					},
 				},
@@ -310,7 +311,7 @@ func TestREPL(t *testing.T) {
 						t.Helper()
 						require.Equal(t, "G", m.resultName)
 
-						want := map[string]any{"foo": "bar"}
+						want := types.VariablesMap{"foo": "bar"}
 						require.Equal(t, want, m.resultVal.Value())
 					},
 				},

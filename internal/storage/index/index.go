@@ -76,8 +76,8 @@ type index struct {
 	dependencies map[namer.ModuleID]ModuleIDSet
 	modIDToFile  map[namer.ModuleID]string
 	schemaLoader *SchemaLoader
-	stats        storage.RepoStats
 	buildOpts    buildOptions
+	stats        storage.RepoStats
 	mu           sync.RWMutex
 }
 

@@ -2,18 +2,30 @@
 name: E2E Tests
 on:
   workflow_dispatch:
+    inputs:
+      package:
+        description: "Package"
+        required: false
+        type: string
+        default: ""
   schedule:
     - cron: 0 1 * * 1-5
+permissions: {}
 jobs:
   runE2ETests:
     name: Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -35,7 +47,7 @@ jobs:
         uses: jaxxstorm/action-install-gh-release@6096f2a2bbfee498ced520b6922ac2c06e990ed2 # v2.1.0
         with:
           repo: helmfile/helmfile
-          tag: v1.3.1
+          tag: v1.4.3
 
       - name: Telepresence
         run: |
@@ -66,6 +78,7 @@ jobs:
         env:
           E2E_SKIP_CLUSTER: "true"
           E2E_NO_CLEANUP: "true"
+          E2E_PACKAGE: ${{ inputs.package }}
 
       - name: Notify Slack
         if: failure()

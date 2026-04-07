@@ -38,7 +38,7 @@ resourcePolicy:
         - USER
       condition:
         match:
-          expr: now() == timestamp("2024-01-16T10:18:27.395716+13:00") && now() == now()
+          expr: now() == timestamp("2024-01-16T10:18:27.395+13:00") && now() == now()
     - actions:
         - lecture
       effect: EFFECT_DENY

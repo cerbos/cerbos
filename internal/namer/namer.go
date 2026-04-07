@@ -4,14 +4,12 @@
 package namer
 
 import (
-	"database/sql/driver"
 	"fmt"
 	"iter"
 	"regexp"
 	"strconv"
 	"strings"
 
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -40,10 +38,6 @@ type ModuleID struct {
 	hash uint64
 }
 
-func (m ModuleID) Value() (driver.Value, error) {
-	return m.hash, nil
-}
-
 func (m *ModuleID) String() string {
 	return strconv.FormatUint(m.hash, 10)
 }
@@ -56,68 +50,9 @@ func (m ModuleID) RawValue() uint64 {
 	return m.hash
 }
 
-// GenModuleID generates a short ID for the module.
-func GenModuleID(p *policyv1.Policy) ModuleID {
-	return GenModuleIDFromFQN(FQN(p))
-}
-
 // GenModuleIDFromFQN generates a short ID for the given module name.
 func GenModuleIDFromFQN(name string) ModuleID {
 	return ModuleID{hash: util.HashStr(name)}
-}
-
-// FQN returns the fully-qualified name of the policy.
-func FQN(p *policyv1.Policy) string {
-	switch pt := p.PolicyType.(type) {
-	case *policyv1.Policy_ResourcePolicy:
-		return ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, pt.ResourcePolicy.Scope)
-	case *policyv1.Policy_PrincipalPolicy:
-		return PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, pt.PrincipalPolicy.Scope)
-	case *policyv1.Policy_RolePolicy:
-		return RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Version, pt.RolePolicy.Scope)
-	case *policyv1.Policy_DerivedRoles:
-		return DerivedRolesFQN(pt.DerivedRoles.Name)
-	case *policyv1.Policy_ExportConstants:
-		return ExportConstantsFQN(pt.ExportConstants.Name)
-	case *policyv1.Policy_ExportVariables:
-		return ExportVariablesFQN(pt.ExportVariables.Name)
-	default:
-		panic(fmt.Errorf("unknown policy type %T", pt))
-	}
-}
-
-// FQNTree returns the tree of FQNs that are ancestors of the given policy (including itself) sorted by most recent to oldest.
-// For example, if the policy has scope a.b.c, the returned tree will contain the FQNs in the following order:
-// - a.b.c
-// - a.b
-// - a
-// - "" (empty scope).
-func FQNTree(p *policyv1.Policy) []string {
-	var fqn string
-	var scope string
-
-	switch pt := p.PolicyType.(type) {
-	case *policyv1.Policy_ResourcePolicy:
-		fqn = ResourcePolicyFQN(pt.ResourcePolicy.Resource, pt.ResourcePolicy.Version, "")
-		scope = pt.ResourcePolicy.Scope
-	case *policyv1.Policy_PrincipalPolicy:
-		fqn = PrincipalPolicyFQN(pt.PrincipalPolicy.Principal, pt.PrincipalPolicy.Version, "")
-		scope = pt.PrincipalPolicy.Scope
-	case *policyv1.Policy_RolePolicy:
-		// role policies don't functionally have ancestors
-		fqn = RolePolicyFQN(pt.RolePolicy.GetRole(), pt.RolePolicy.Version, pt.RolePolicy.Scope)
-		return []string{fqn}
-	case *policyv1.Policy_DerivedRoles:
-		fqn = DerivedRolesFQN(pt.DerivedRoles.Name)
-	case *policyv1.Policy_ExportConstants:
-		fqn = ExportConstantsFQN(pt.ExportConstants.Name)
-	case *policyv1.Policy_ExportVariables:
-		fqn = ExportVariablesFQN(pt.ExportVariables.Name)
-	default:
-		panic(fmt.Errorf("unknown policy type %T", pt))
-	}
-
-	return buildFQNTree(fqn, scope, func(s string) string { return s })
 }
 
 func buildFQNTree[T any](fqn, scope string, elementFn func(string) T) []T {
@@ -154,11 +89,6 @@ func ScopeParents(scope string) iter.Seq[string] {
 func ScopeFromFQN(fqn string) string {
 	_, scope, _ := strings.Cut(fqn, "/")
 	return scope
-}
-
-// PolicyKey returns a human-friendly identifier that can be used to refer to the policy in logs and other outputs.
-func PolicyKey(p *policyv1.Policy) string {
-	return PolicyKeyFromFQN(FQN(p))
 }
 
 // PolicyKeyFromFQN returns a policy key from the module name.
@@ -285,24 +215,6 @@ func sanitize(v string) string {
 		return invalidIdentifierChars.ReplaceAllLiteralString(v, "_")
 	}
 	return v
-}
-
-// ResourceRuleName returns the name of the given resource rule.
-func ResourceRuleName(rule *policyv1.ResourceRule, idx int) string {
-	if rule.Name != "" {
-		return rule.Name
-	}
-
-	return fmt.Sprintf("rule-%03d", idx)
-}
-
-// PrincipalResourceActionRuleName returns the name for an action rule defined for a particular resource.
-func PrincipalResourceActionRuleName(rule *policyv1.PrincipalRule_Action, resource string, idx int) string {
-	if rule.Name != "" {
-		return rule.Name
-	}
-
-	return fmt.Sprintf("%s_rule-%03d", resource, idx)
 }
 
 // RuleFQN returns the FQN for the resource rule or principal resource action rule with scope granularity.

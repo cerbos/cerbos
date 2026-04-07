@@ -139,20 +139,32 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	t.Run("check_stats", func(t *testing.T) {
 		stats := idx.RepoStats(t.Context())
 		require.GreaterOrEqual(t, 3, stats.SchemaCount)
+		require.Equal(t, stats.DistinctActionCount, 44)
+		require.Equal(t, stats.DistinctResourceCount, 18)
+		require.True(t, stats.HasOutput)
+		require.True(t, stats.HasScopedPolicies)
 
 		for _, k := range []policy.Kind{policy.DerivedRolesKind, policy.PrincipalKind, policy.ResourceKind} {
 			t.Run(k.String(), func(t *testing.T) {
-				require.Greater(t, stats.PolicyCount[k], 2)
-				require.Greater(t, stats.AvgConditionCount[k], float64(0.1))
+				require.Greater(t, stats.PolicyCount[k], 5)
+				require.Greater(t, stats.ConditionCount[k], 3)
+				require.Greater(t, stats.RuleCount[k], 12)
+				require.Greater(t, stats.AvgConditionCount[k], float64(0.3))
 				require.Greater(t, stats.AvgRuleCount[k], float64(1.0))
+				require.Greater(t, stats.MaxConditionCount[k], 1)
+				require.Greater(t, stats.MaxRuleCount[k], 2)
 			})
 		}
 
 		for _, k := range []policy.Kind{policy.ExportConstantsKind, policy.ExportVariablesKind} {
 			t.Run(k.String(), func(t *testing.T) {
-				require.GreaterOrEqual(t, stats.PolicyCount[k], 1)
-				require.GreaterOrEqual(t, stats.AvgRuleCount[k], float64(1.0))
+				require.Equal(t, stats.PolicyCount[k], 1)
+				require.Zero(t, stats.ConditionCount[k])
+				require.Equal(t, stats.RuleCount[k], 2)
 				require.Zero(t, stats.AvgConditionCount[k])
+				require.Equal(t, stats.AvgRuleCount[k], float64(2))
+				require.Zero(t, stats.MaxConditionCount[k])
+				require.Equal(t, stats.MaxRuleCount[k], 2)
 			})
 		}
 	})

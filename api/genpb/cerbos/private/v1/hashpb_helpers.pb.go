@@ -2411,36 +2411,6 @@ func cerbos_policy_v1_Variables_hashpb_sum(m *v12.Variables, hasher hash.Hash, i
 	}
 }
 
-func cerbos_private_v1_AttrWrapper_hashpb_sum(m *AttrWrapper, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
-	if _, ok := ignore["cerbos.private.v1.AttrWrapper.attr"]; !ok {
-		if len(m.Attr) > 0 {
-			if len(m.Attr) <= 32 {
-				keys := hashpb_stringKeyPool.Get().([]string)[:0]
-				for k := range m.Attr {
-					keys = append(keys, k)
-				}
-				slices.Sort(keys)
-				for _, k := range keys {
-					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
-					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-					if m.Attr[k] != nil {
-						google_protobuf_Value_hashpb_sum(m.Attr[k], hasher, ignore, b)
-					}
-				}
-				hashpb_stringKeyPool.Put(keys)
-			} else {
-				for _, k := range slices.Sorted(maps.Keys(m.Attr)) {
-					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
-					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
-					if m.Attr[k] != nil {
-						google_protobuf_Value_hashpb_sum(m.Attr[k], hasher, ignore, b)
-					}
-				}
-			}
-		}
-	}
-}
-
 func cerbos_private_v1_BlobClonerTestCase_File_AddOrUpdate_hashpb_sum(m *BlobClonerTestCase_File_AddOrUpdate, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetName()))))

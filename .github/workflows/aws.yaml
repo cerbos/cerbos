@@ -12,25 +12,30 @@ jobs:
       contents: read
       packages: write
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
+
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           lfs: true
+          persist-credentials: false
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
 
       - name: Set up QEMU
         id: qemu
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
         with:
           image: tonistiigi/binfmt:latest
           platforms: arm64
 
       - name: Set up Docker Buildx
         id: buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
@@ -39,7 +44,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to ECR
-        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2.0.1
+        uses: aws-actions/amazon-ecr-login@183a1442edf41672e66566b7fc560e297a290896 # v2.1.1
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
@@ -50,10 +55,10 @@ jobs:
           write_build_cache: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6.4.0
+        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
         with:
           version: latest
           args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
@@ -66,7 +71,9 @@ jobs:
 
       - name: Push Cerbos dev images to ECR
         run: |
-          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
-          docker push ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64
-          docker manifest create ${{ vars.AWS_CONTAINER_REPO }}:dev ${{ vars.AWS_CONTAINER_REPO }}:dev-arm64 ${{ vars.AWS_CONTAINER_REPO }}:dev-amd64
-          docker manifest push ${{ vars.AWS_CONTAINER_REPO }}:dev
+          docker push ${VARS_AWS_CONTAINER_REPO}:dev-amd64
+          docker push ${VARS_AWS_CONTAINER_REPO}:dev-arm64
+          docker manifest create ${VARS_AWS_CONTAINER_REPO}:dev ${VARS_AWS_CONTAINER_REPO}:dev-arm64 ${VARS_AWS_CONTAINER_REPO}:dev-amd64
+          docker manifest push ${VARS_AWS_CONTAINER_REPO}:dev
+        env:
+          VARS_AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}

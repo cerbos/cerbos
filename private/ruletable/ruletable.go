@@ -15,7 +15,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	internalruletable "github.com/cerbos/cerbos/internal/ruletable"
-	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/schema"
 )
 
@@ -25,7 +24,7 @@ type Evaluator interface {
 }
 
 func NewRuleTableFromProto(protoRT *runtimev1.RuleTable, conf *epdpv2.Config) (Evaluator, error) {
-	rt, err := internalruletable.NewRuleTable(index.NewMem(), protoRT)
+	rt, err := internalruletable.NewRuleTable(protoRT)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule table: %w", err)
 	}

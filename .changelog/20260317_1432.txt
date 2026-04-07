@@ -1,0 +1,3 @@
+type:feature
+Add path functions to Cerbos CEL library
+It is now possible to use file path functions `basePath`, `dirPath`, `extPath`, `joinPath`, `pathHasPrefix`, `pathMatch`, `pathMatchAnyOf`, `relPath` and `volumeName` in CEL expressions.

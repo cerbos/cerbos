@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"reflect"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -17,6 +18,7 @@ import (
 	"github.com/google/cel-go/interpreter"
 	"github.com/google/cel-go/interpreter/functions"
 
+	"github.com/cerbos/cerbos/internal/conditions/crosspath"
 	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
 )
 
@@ -31,6 +33,15 @@ const (
 	nowFn                       = "now"
 	timeSinceFn                 = "timeSince"
 	IDFn                        = "id"
+	basePathFn                  = "basePath"
+	dirPathFn                   = "dirPath"
+	extPathFn                   = "extPath"
+	joinPathFn                  = "joinPath"
+	pathHasPrefixFn             = "pathHasPrefix"
+	pathMatchFn                 = "pathMatch"
+	pathMatchAnyOfFn            = "pathMatchAnyOf"
+	relPathFn                   = "relPath"
+	volumeNameFn                = "volumeName"
 	CELNowFnActivationKey       = "_cerbos_now_fn"
 )
 
@@ -122,6 +133,105 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 				[]*cel.Type{cel.DynType},
 				cel.DynType,
 				cel.UnaryBinding(func(value ref.Val) ref.Val { return value }),
+			),
+		),
+		cel.Function(
+			basePathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", basePathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Base)),
+			),
+		),
+		cel.Function(
+			dirPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", dirPathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Dir)),
+			),
+		),
+		cel.Function(
+			extPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", extPathFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutStringErr(crosspath.Ext)),
+			),
+		),
+		cel.Function(
+			joinPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_stringarray", joinPathFn),
+				[]*cel.Type{cel.ListType(cel.StringType)},
+				cel.StringType,
+				cel.UnaryBinding(callInStringSliceOutStringErr(crosspath.Join)),
+			),
+		),
+		cel.Function(
+			pathHasPrefixFn,
+			cel.Overload(
+				fmt.Sprintf("%s_overload", pathHasPrefixFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(pathHasPrefix)),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", pathHasPrefixFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(pathHasPrefix)),
+			),
+		),
+		cel.Function(
+			pathMatchFn,
+			cel.Overload(
+				fmt.Sprintf("%s_overload", pathMatchFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(crosspath.Match)),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", pathMatchFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringOutBool(crosspath.Match)),
+			),
+		),
+		cel.Function(
+			pathMatchAnyOfFn,
+			cel.Overload(
+				fmt.Sprintf("%s_overload", pathMatchAnyOfFn),
+				[]*cel.Type{cel.StringType, cel.ListType(cel.StringType)},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringSliceOutBoolErr(pathMatchAnyOf)),
+			),
+			cel.MemberOverload(
+				fmt.Sprintf("%s_member_overload", pathMatchAnyOfFn),
+				[]*cel.Type{cel.StringType, cel.ListType(cel.StringType)},
+				cel.BoolType,
+				cel.BinaryBinding(callInStringStringSliceOutBoolErr(pathMatchAnyOf)),
+			),
+		),
+		cel.Function(
+			relPathFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string_string", relPathFn),
+				[]*cel.Type{cel.StringType, cel.StringType},
+				cel.StringType,
+				cel.BinaryBinding(callInStringStringOutStringErr(crosspath.Rel)),
+			),
+		),
+		cel.Function(
+			volumeNameFn,
+			cel.Overload(
+				fmt.Sprintf("%s_string", volumeNameFn),
+				[]*cel.Type{cel.StringType},
+				cel.StringType,
+				cel.UnaryBinding(callInStringOutString(crosspath.VolumeName)),
 			),
 		),
 		customtypes.HierarchyFunc,
@@ -483,6 +593,34 @@ func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error)
 	return cidr.Contains(ipAddr), nil
 }
 
+func pathHasPrefix(path, prefix string) (bool, error) {
+	if prefix == path {
+		return true, nil
+	}
+
+	rel, err := crosspath.Rel(prefix, path)
+	if err != nil {
+		return false, err
+	}
+
+	return len(rel) > 0 && rel[0] != '.' && rel[0] != '/', nil
+}
+
+func pathMatchAnyOf(path string, patterns ...string) (bool, error) {
+	for _, pattern := range patterns {
+		matched, err := crosspath.Match(path, pattern)
+		if err != nil {
+			return false, err
+		}
+
+		if matched {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func callInStringStringOutBool(fn func(string, string) (bool, error)) functions.BinaryOp {
 	return func(lhsVal, rhsVal ref.Val) ref.Val {
 		lhs, ok := lhsVal.(types.String)
@@ -518,5 +656,110 @@ func callInTimestampOutDuration(fn func(time.Time) time.Duration) functions.Unar
 func callInNothingOutTimestamp(fn func() time.Time) functions.FunctionOp {
 	return func(_ ...ref.Val) ref.Val {
 		return types.DefaultTypeAdapter.NativeToValue(fn())
+	}
+}
+
+func callInStringOutString(fn func(string) string) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		stringVal, ok := val.Value().(string)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(fn(stringVal))
+	}
+}
+
+func callInStringOutStringErr(fn func(string) (string, error)) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		stringVal, ok := val.Value().(string)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		retVal, err := fn(stringVal)
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
+	}
+}
+
+func callInStringStringOutStringErr(fn func(string, string) (string, error)) functions.BinaryOp {
+	return func(lhsVal, rhsVal ref.Val) ref.Val {
+		lhs, ok := lhsVal.(types.String)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(lhsVal)
+		}
+
+		rhs, ok := rhsVal.(types.String)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(rhsVal)
+		}
+
+		retVal, err := fn(string(lhs), string(rhs))
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
+	}
+}
+
+func callInStringSliceOutStringErr(fn func(...string) (string, error)) functions.UnaryOp {
+	return func(val ref.Val) ref.Val {
+		list, ok := val.(traits.Lister)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(val)
+		}
+
+		native, err := list.ConvertToNative(reflect.SliceOf(reflect.TypeFor[string]()))
+		if err != nil {
+			return types.NewErr("failed to convert list to string slice: %v", err)
+		}
+
+		elements, ok := native.([]string)
+		if !ok {
+			return types.NewErr("expected string slice but got %T", native)
+		}
+
+		retVal, err := fn(elements...)
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
+	}
+}
+
+func callInStringStringSliceOutBoolErr(fn func(string, ...string) (bool, error)) functions.BinaryOp {
+	return func(lhsVal, rhsVal ref.Val) ref.Val {
+		lhs, ok := lhsVal.(types.String)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(lhsVal)
+		}
+
+		rhs, ok := rhsVal.(traits.Lister)
+		if !ok {
+			return types.MaybeNoSuchOverloadErr(rhsVal)
+		}
+
+		native, err := rhs.ConvertToNative(reflect.SliceOf(reflect.TypeFor[string]()))
+		if err != nil {
+			return types.NewErr("failed to convert list to string slice: %v", err)
+		}
+
+		elements, ok := native.([]string)
+		if !ok {
+			return types.NewErr("expected string slice but got %T", native)
+		}
+
+		retVal, err := fn(string(lhs), elements...)
+		if err != nil {
+			return types.NewErr("%s", err.Error()) //nolint:govet
+		}
+
+		return types.DefaultTypeAdapter.NativeToValue(retVal)
 	}
 }

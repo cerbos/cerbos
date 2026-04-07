@@ -795,7 +795,13 @@ func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 
 	return func() error {
 		err := commitToGitRepo(sourceGitDir, "Delete all", func(wt *git.Worktree) error {
-			if err := filepath.WalkDir(sourceGitDir, func(path string, d fs.DirEntry, err error) error {
+			root, err := os.OpenRoot(sourceGitDir)
+			if err != nil {
+				return fmt.Errorf("failed to open %s: %w", sourceGitDir, err)
+			}
+			defer root.Close()
+
+			if err := fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
@@ -812,7 +818,7 @@ func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 					return nil
 				}
 
-				if err := os.Remove(path); err != nil {
+				if err := root.Remove(path); err != nil {
 					return fmt.Errorf("failed to remove while deleting from the store: %w", err)
 				}
 
@@ -821,7 +827,7 @@ func mkDeleteFn(t *testing.T, sourceGitDir string) internal.MutateStoreFn {
 				return fmt.Errorf("failed to walk git directory: %w", err)
 			}
 
-			_, err := wt.Add(".")
+			_, err = wt.Add(".")
 			return err
 		})
 		if err != nil {
@@ -1016,7 +1022,11 @@ func copySchemas(t *testing.T, dir string) {
 	t.Helper()
 
 	src := test.PathToDir(t, filepath.Join("schema", "fs", "_schemas"))
-	err := filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+	root, err := os.OpenRoot(src)
+	require.NoError(t, err)
+	defer root.Close()
+
+	require.NoError(t, fs.WalkDir(root.FS(), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -1025,18 +1035,13 @@ func copySchemas(t *testing.T, dir string) {
 			return nil
 		}
 
-		relPath, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-
-		in, err := os.Open(path)
+		in, err := root.Open(path)
 		if err != nil {
 			return fmt.Errorf("failed to open %s: %w", path, err)
 		}
 		defer in.Close()
 
-		outFile := filepath.Join(dir, schema.Directory, relPath)
+		outFile := filepath.Join(dir, schema.Directory, path)
 		if err := os.MkdirAll(filepath.Dir(outFile), 0o744); err != nil {
 			return err
 		}
@@ -1049,7 +1054,7 @@ func copySchemas(t *testing.T, dir string) {
 
 		_, err = io.Copy(out, in)
 		return err
-	})
+	}))
 
 	require.NoError(t, err)
 }

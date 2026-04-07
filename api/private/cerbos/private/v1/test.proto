@@ -237,10 +237,6 @@ message ValidationErrContainer {
   repeated cerbos.schema.v1.ValidationError errors = 1;
 }
 
-message AttrWrapper {
-  map<string, google.protobuf.Value> attr = 1;
-}
-
 message QueryPlannerTestSuite {
   string description = 1;
   cerbos.engine.v1.Principal principal = 2;

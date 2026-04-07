@@ -3,7 +3,7 @@
     <div class="navbar-brand">
       <div class="navbar-item">
         <a href="{{or site.url (or siteRootUrl siteRootPath)}}" style="vertical-align: middle;">
-            <img src="{{uiRootPath}}/cerbos.svg" alt="Cerbos" width="134" height="50"/>
+          <img src="{{uiRootPath}}/cerbos.svg" alt="Cerbos" width="134" height="50" />
         </a>
       </div>
 
@@ -17,10 +17,12 @@
     <div id="topbar-nav" class="navbar-menu">
       <div class="navbar-end">
         <div class="navbar-item hide-for-print">
-            <div id="docsearch"></div>
+          <div id="docsearch"></div>
         </div>
 
-        <a class="navbar-item" href="https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text" target="_blank">Talk to an engineer</a>
+        <a class="navbar-item"
+          href="https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text"
+          target="_blank">Talk to an engineer</a>
 
         <div class="navbar-item has-dropdown is-hoverable">
           <div class="navbar-link">Cerbos PDP</div>
@@ -37,6 +39,14 @@
           <div class="navbar-dropdown">
             <a class="navbar-item" href="https://hub.cerbos.cloud">Sign up</a>
             <a class="navbar-item" href="{{site.url}}/cerbos-hub/">Documentation</a>
+          </div>
+        </div>
+
+        <div class="navbar-item has-dropdown is-hoverable">
+          <div class="navbar-link">Cerbos Synapse</div>
+          <div class="navbar-dropdown">
+            <a class="navbar-item" href="https://www.cerbos.dev/product-cerbos-synapse">About</a>
+            <a class="navbar-item" href="https://docs.cerbos.dev/synapse/latest/">Documentation</a>
           </div>
         </div>
 

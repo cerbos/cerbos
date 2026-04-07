@@ -25,7 +25,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common"
 	"github.com/google/cel-go/common/decls"
-	"github.com/google/cel-go/common/types"
+	celtypes "github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
@@ -40,6 +40,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/conditions/types"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/parser"
@@ -90,8 +91,8 @@ type REPL struct {
 	parser       *participle.Parser[REPLDirective]
 	toRefVal     func(any) ref.Val
 	policy       *policyHolder
-	varC         map[string]any
-	varV         map[string]any
+	varC         types.VariablesMap
+	varV         types.VariablesMap
 	constExports map[string]map[string]*structpb.Value
 	varExports   map[string]map[string]string
 }
@@ -363,7 +364,7 @@ func (r *REPL) setSpecialVar(ctx context.Context, name, value string) error {
 		r.output.PrintResult(name, r.vars[conditions.CELVariablesIdent])
 
 	case conditions.CELGlobalsIdent, conditions.CELGlobalsAbbrev:
-		var globals map[string]any
+		var globals types.VariablesMap
 		if err := json.Unmarshal([]byte(value), &globals); err != nil {
 			return fmt.Errorf("failed to unmarshal JSON as %q: %w", name, err)
 		}
@@ -418,7 +419,7 @@ func (r *REPL) processExpr(ctx context.Context, name, expr string) error {
 	return nil
 }
 
-func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *types.Type, error) {
+func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *celtypes.Type, error) {
 	env, err := r.mkEnv()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create environment: %w", err)
@@ -440,7 +441,7 @@ func (r *REPL) evalExpr(ctx context.Context, expr string) (ref.Val, *types.Type,
 		return nil, nil, err
 	}
 
-	tpe := types.DynType
+	tpe := celtypes.DynType
 	if t, ok := env.CELTypeProvider().FindStructType(val.Type().TypeName()); ok {
 		tpe = t
 	}
@@ -704,7 +705,7 @@ func (r *REPL) evalPolicyVariables(ctx context.Context) {
 	for name, expr := range r.policy.variables {
 		v, _, err := r.evalExpr(ctx, expr)
 		if err != nil {
-			result[name] = types.NewErr("failed to evaluate '%s = %s': %v", name, expr, err)
+			result[name] = celtypes.NewErr("failed to evaluate '%s = %s': %v", name, expr, err)
 		} else {
 			result[name] = v
 		}
@@ -1037,18 +1038,18 @@ func (po *PrinterOutput) PrintRule(id int, rule proto.Message) error {
 func (po *PrinterOutput) PrintResult(name string, value ref.Val) {
 	po.Printf("%s = ", colored.REPLVar(name))
 
-	if types.IsPrimitiveType(value) {
+	if celtypes.IsPrimitiveType(value) {
 		po.PrintJSON(value.Value())
 		return
 	}
 
 	switch value.Type() {
-	case types.MapType:
+	case celtypes.MapType:
 		if v, err := value.ConvertToNative(mapType); err == nil {
 			po.PrintJSON(v)
 			return
 		}
-	case types.ListType:
+	case celtypes.ListType:
 		if v, err := value.ConvertToNative(listType); err == nil {
 			po.PrintJSON(v)
 			return
