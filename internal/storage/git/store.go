@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -138,6 +138,14 @@ func (s *Store) init(ctx context.Context) error {
 	return loadAndStartPoller()
 }
 
+func (s *Store) Close() error {
+	if err := s.idx.Close(); err != nil {
+		return err
+	}
+
+	return s.repo.Close()
+}
+
 func (s *Store) Driver() string {
 	return DriverName
 }
@@ -253,9 +261,11 @@ func (s *Store) cloneRepo(ctx context.Context) error {
 	ctx, cancelFunc := s.conf.getOpCtx(ctx)
 	defer cancelFunc()
 
-	if _, err := git.PlainCloneContext(ctx, s.conf.CheckoutDir, false, opts); err != nil {
+	repo, err := git.PlainCloneContext(ctx, s.conf.CheckoutDir, opts)
+	if err != nil {
 		return fmt.Errorf("failed to clone from %s to %s: %w", s.conf.URL, s.conf.CheckoutDir, err)
 	}
+	defer repo.Close()
 
 	return s.openRepo()
 }

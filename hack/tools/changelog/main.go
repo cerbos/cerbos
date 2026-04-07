@@ -16,10 +16,10 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/utils/merkletrie"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/utils/merkletrie"
 )
 
 //go:embed templates
@@ -183,6 +183,7 @@ func getChangelogEntries(workingDir string, fromRevision plumbing.Revision) (map
 	if err != nil {
 		return nil, fmt.Errorf("failed to open git repo: %w", err)
 	}
+	defer repo.Close()
 
 	fromTree, err := getTree(repo, fromRevision)
 	if err != nil {

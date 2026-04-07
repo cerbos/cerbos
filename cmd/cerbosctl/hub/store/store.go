@@ -15,8 +15,8 @@ import (
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 	"github.com/cerbos/cloud-api/store"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

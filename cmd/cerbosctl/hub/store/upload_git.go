@@ -15,9 +15,9 @@ import (
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 	"github.com/cerbos/cloud-api/store"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
 
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -86,6 +86,8 @@ func (ugc *UploadGitCmd) Validate() error {
 }
 
 func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
+	defer ugc.repository.Close()
+
 	client, err := cmd.storeClient()
 	if err != nil {
 		return ugc.toCommandError(k.Stderr, err)
@@ -141,6 +143,7 @@ func (ugc *UploadGitCmd) Run(k *kong.Kong, cmd *Cmd) error {
 	if err != nil {
 		return ugc.toCommandError(k.Stderr, fmt.Errorf("failed to open git repository: %w", err))
 	}
+	defer repository.Close()
 
 	gitChangeDetails, err := changeDetailsFromHash(repository, diffToApply.hash)
 	if err != nil {
@@ -361,8 +364,8 @@ func (ugc *UploadGitCmd) normalize(name string) (normalized string, skipped bool
 }
 
 type diff struct {
-	changes []*change
 	hash    plumbing.Hash
+	changes []*change
 }
 
 type change struct {
