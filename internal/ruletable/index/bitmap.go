@@ -300,3 +300,33 @@ func (it *BitmapIterator) nextWord() {
 		it.metaW = it.bm.meta[it.metaIdx]
 	}
 }
+
+// intersectionNonEmpty returns true if the intersection of all bitmaps is
+// non-empty without allocating any new bitmaps. It ANDs words across all
+// bitmaps, checking 64 bits at a time, with a meta-level early exit.
+func intersectionNonEmpty(bitmaps ...*Bitmap) bool {
+	if !MetaIntersects(bitmaps...) {
+		return false
+	}
+
+	minWords := bitmaps[0].WordsLen()
+	for _, bm := range bitmaps[1:] {
+		if bm.WordsLen() < minWords {
+			minWords = bm.WordsLen()
+		}
+	}
+
+	for w := range minWords {
+		val := bitmaps[0].words[w]
+		for _, bm := range bitmaps[1:] {
+			val &= bm.words[w]
+			if val == 0 {
+				break
+			}
+		}
+		if val != 0 {
+			return true
+		}
+	}
+	return false
+}

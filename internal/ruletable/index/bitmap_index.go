@@ -12,14 +12,14 @@ import (
 
 // dimStats holds size statistics for a single dimension.
 type dimStats struct {
-	Name        string
-	Keys        int
-	MinWords    int
-	MaxWords    int
-	AvgWords    int
-	MinCard     uint64
-	MaxCard     uint64
-	AvgCard     uint64
+	Name     string
+	Keys     int
+	MinWords int
+	MaxWords int
+	AvgWords int
+	MinCard  uint64
+	MaxCard  uint64
+	AvgCard  uint64
 }
 
 func collectBitmapStats(s *dimStats, bm *Bitmap) {
