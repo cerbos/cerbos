@@ -87,7 +87,8 @@ echo "Starting Cerbos..."
 STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
   ${GOMAXPROCS:+GOMAXPROCS=${GOMAXPROCS}} \
   nohup ${REMOTE_BASE}/bin/cerbos server \
-  --config=${REMOTE_BASE}/conf/cerbos.yaml \
+ --debug-listen-addr=:6666 \
+ --config=${REMOTE_BASE}/conf/cerbos.yaml \
   --log-level=warn \
   > ${REMOTE_BASE}/cerbos.log 2>&1 &
 echo "Cerbos PID: \$!"
