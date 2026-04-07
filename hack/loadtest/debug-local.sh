@@ -23,10 +23,12 @@ if [[ ! -f "$CERBOS_BINARY_PATH" ]]; then
   exit 1
 fi
 
+pkill -9 cerbos && sleep 2
+
 AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" ${CERBOS_BINARY_PATH} server \
   --config=./conf/cerbos/.cerbos.yaml \
   --set=storage.disk.directory="${WORK_DIR}/policies" \
-  --log-level=warn \
+  --log-level=debug \
   --debug-listen-addr=:6666 > "${WORK_DIR}/cerbos.log" 2>&1 &
 
 echo "Cerbos PID: $!"
