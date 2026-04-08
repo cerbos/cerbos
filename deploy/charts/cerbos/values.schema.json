@@ -232,7 +232,7 @@
           "title": "repository"
         },
         "tag": {
-          "default": "",
+          "default": "@sha256:8d35a64e4a9989d732ff01a4046f879600c8e3b70cae47527236b759b07c3687",
           "description": "Image tag to use. Defaults to the chart appVersion.",
           "required": [],
           "title": "tag",

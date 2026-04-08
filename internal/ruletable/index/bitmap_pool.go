@@ -3,27 +3,28 @@
 
 package index
 
-import (
-	"sync"
-
-	"github.com/RoaringBitmap/roaring/v2"
-)
+import "sync"
 
 var bitmapPool = sync.Pool{
-	New: func() any { return roaring.New() },
+	New: func() any {
+		b := NewBitmap()
+		b.words = make([]uint64, 0, 4) //nolint:mnd
+		b.meta = make([]uint64, 0, 1)  //nolint:mnd
+		return b
+	},
 }
 
 // emptyBitmap is shared. Callers must not mutate it.
-var emptyBitmap = roaring.New()
+var emptyBitmap = NewBitmap()
 
 // bitmapArena tracks pooled bitmaps acquired during a single query so they can
 // be released in bulk when the query completes.
 type bitmapArena struct {
-	used []*roaring.Bitmap
+	used []*Bitmap
 }
 
 func newBitmapArena() *bitmapArena {
-	return &bitmapArena{used: make([]*roaring.Bitmap, 0, 8)} //nolint:mnd
+	return &bitmapArena{used: make([]*Bitmap, 0, 8)} //nolint:mnd
 }
 
 func (a *bitmapArena) release() {
@@ -34,32 +35,37 @@ func (a *bitmapArena) release() {
 }
 
 // get returns a cleared bitmap from the pool and tracks it for later release.
-func (a *bitmapArena) get() *roaring.Bitmap {
-	bm := bitmapPool.Get().(*roaring.Bitmap) //nolint:forcetypeassert
+func (a *bitmapArena) get() *Bitmap {
+	bm := bitmapPool.Get().(*Bitmap) //nolint:forcetypeassert
 	a.used = append(a.used, bm)
 	return bm
 }
 
-// orInto ORs all parts into a pooled bitmap using in-place Or. This avoids
-// roaring.FastOr's lazy-OR path, which allocates N-1 intermediate array
-// containers that become immediate GC pressure. In-place Or merges directly
-// into the destination's containers, which grow once and are reused.
-func (a *bitmapArena) orInto(parts []*roaring.Bitmap) *roaring.Bitmap {
+// orInto ORs all parts into a pooled bitmap using in-place Or, avoiding
+// intermediate bitmap allocations. Starts with the largest bitmap so that
+// ensure allocates once to the final size.
+func (a *bitmapArena) orInto(parts []*Bitmap) *Bitmap {
+	maxIdx := 0
+	for i := 1; i < len(parts); i++ {
+		if parts[i].WordsLen() > parts[maxIdx].WordsLen() {
+			maxIdx = i
+		}
+	}
 	bm := a.get()
-	for _, p := range parts {
-		bm.Or(p)
+	bm.Or(parts[maxIdx])
+	for i, p := range parts {
+		if i != maxIdx {
+			bm.Or(p)
+		}
 	}
 	return bm
 }
 
-// and2 ANDs exactly two bitmaps into a fresh pooled bitmap, avoiding a
-// heap-allocated slice.
-func (a *bitmapArena) and2(x, y *roaring.Bitmap) *roaring.Bitmap {
-	if x.IsEmpty() || y.IsEmpty() {
-		return emptyBitmap
-	}
+// and2 ANDs exactly two bitmaps into a fresh pooled bitmap. Copies the
+// shorter bitmap first to minimise intermediate work.
+func (a *bitmapArena) and2(x, y *Bitmap) *Bitmap {
 	bm := a.get()
-	if x.GetCardinality() <= y.GetCardinality() {
+	if x.WordsLen() <= y.WordsLen() {
 		bm.Or(x)
 		bm.And(y)
 	} else {
@@ -69,22 +75,17 @@ func (a *bitmapArena) and2(x, y *roaring.Bitmap) *roaring.Bitmap {
 	return bm
 }
 
-// andInto ANDs bitmaps into a fresh pooled bitmap. The smallest bitmap is
-// copied first to minimise intermediate work.
-func (a *bitmapArena) andInto(bitmaps []*roaring.Bitmap) *roaring.Bitmap {
+// andInto ANDs bitmaps into a fresh pooled bitmap. Copies the shortest
+// bitmap first to minimise intermediate work.
+func (a *bitmapArena) andInto(bitmaps []*Bitmap) *Bitmap {
 	minIdx := 0
-	minCard := bitmaps[0].GetCardinality()
 	for i := 1; i < len(bitmaps); i++ {
-		if c := bitmaps[i].GetCardinality(); c < minCard {
-			minCard = c
+		if bitmaps[i].WordsLen() < bitmaps[minIdx].WordsLen() {
 			minIdx = i
 		}
 	}
-	if minCard == 0 {
-		return emptyBitmap
-	}
 	bm := a.get()
-	bm.Or(bitmaps[minIdx]) // copy smallest
+	bm.Or(bitmaps[minIdx])
 	for i, other := range bitmaps {
 		if i != minIdx {
 			bm.And(other)

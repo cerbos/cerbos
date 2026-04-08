@@ -4,13 +4,114 @@
 package index
 
 import (
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"math"
 
-	"github.com/RoaringBitmap/roaring/v2"
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"go.uber.org/zap"
 )
 
+// dimStats holds size statistics for a single dimension.
+type dimStats struct {
+	Name     string
+	Keys     int
+	MinWords int
+	MaxWords int
+	AvgWords int
+	MinCard  uint64
+	MaxCard  uint64
+	AvgCard  uint64
+}
+
+func collectBitmapStats(s *dimStats, bm *Bitmap) {
+	wl := bm.WordsLen()
+	if wl > s.MaxWords {
+		s.MaxWords = wl
+	}
+	if wl < s.MinWords {
+		s.MinWords = wl
+	}
+	c := bm.GetCardinality()
+	if c > s.MaxCard {
+		s.MaxCard = c
+	}
+	if c < s.MinCard {
+		s.MinCard = c
+	}
+}
+
+func dimensionStats[T comparable](name string, d dimension[T]) dimStats {
+	s := dimStats{Name: name, Keys: len(d.m), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	totalWords := 0
+	totalCard := uint64(0)
+	for _, bm := range d.m {
+		collectBitmapStats(&s, bm)
+		totalWords += bm.WordsLen()
+		totalCard += bm.GetCardinality()
+	}
+	if s.Keys == 0 {
+		s.MinWords = 0
+		s.MinCard = 0
+	} else {
+		s.AvgWords = totalWords / s.Keys
+		s.AvgCard = totalCard / uint64(s.Keys)
+	}
+	return s
+}
+
+func globDimensionStats(name string, gd *globDimension) dimStats {
+	s := dimStats{Name: name, Keys: len(gd.literals) + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	totalWords := 0
+	totalCard := uint64(0)
+	for _, bm := range gd.literals {
+		collectBitmapStats(&s, bm)
+		totalWords += bm.WordsLen()
+		totalCard += bm.GetCardinality()
+	}
+	for _, bm := range gd.globs {
+		collectBitmapStats(&s, bm)
+		totalWords += bm.WordsLen()
+		totalCard += bm.GetCardinality()
+	}
+	if s.Keys == 0 {
+		s.MinWords = 0
+		s.MinCard = 0
+	} else {
+		s.AvgWords = totalWords / s.Keys
+		s.AvgCard = totalCard / uint64(s.Keys)
+	}
+	return s
+}
+
+func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) {
+	stats := []dimStats{
+		dimensionStats("version", idx.version),
+		dimensionStats("scope", idx.scope),
+		globDimensionStats("role", idx.role),
+		globDimensionStats("resource", idx.resource),
+		globDimensionStats("action", idx.action),
+		dimensionStats("policyKind", idx.policyKind),
+		dimensionStats("principal", idx.principal),
+		dimensionStats("fqnBindings", idx.fqnBindings),
+	}
+
+	fields := make([]any, 0, 2+len(stats)*8) //nolint:mnd
+	fields = append(fields, "bindings", len(idx.bindings), "universe_words", idx.universe.WordsLen())
+	for _, s := range stats {
+		fields = append(fields,
+			s.Name+"_keys", s.Keys,
+			s.Name+"_min_words", s.MinWords,
+			s.Name+"_avg_words", s.AvgWords,
+			s.Name+"_max_words", s.MaxWords,
+			s.Name+"_min_card", s.MinCard,
+			s.Name+"_avg_card", s.AvgCard,
+			s.Name+"_max_card", s.MaxCard,
+		)
+	}
+	log.Debugw("Bitmap index stats", fields...)
+}
+
 // bitmapIndex is the core in-memory bitmap index. Each binding gets a uint32 ID,
-// and each (dimension, value) pair has a roaring bitmap tracking which binding IDs
+// and each (dimension, value) pair has a bitmap tracking which binding IDs
 // have that value. Queries are flat bitmap AND operations.
 type bitmapIndex struct {
 	action             *globDimension
@@ -22,8 +123,8 @@ type bitmapIndex struct {
 	resource           *globDimension
 	fqnBindings        dimension[string]
 	principal          dimension[string]
-	universe           *roaring.Bitmap
-	allowActionsBitmap *roaring.Bitmap
+	universe           *Bitmap
+	allowActionsBitmap *Bitmap
 	freeIDs            []uint32
 	bindings           []*Binding
 }
@@ -37,8 +138,8 @@ func newBitmapIndex() *bitmapIndex {
 		resource:           newGlobDimension(),
 		policyKind:         newDimension[policyv1.Kind](),
 		principal:          newDimension[string](),
-		universe:           roaring.New(),
-		allowActionsBitmap: roaring.New(),
+		universe:           NewBitmap(),
+		allowActionsBitmap: NewBitmap(),
 		fqnBindings:        newDimension[string](),
 		coresBySum:         make(map[uint64]*FunctionalCore),
 	}
@@ -126,19 +227,19 @@ func (idx *bitmapIndex) getBinding(id uint32) *Binding {
 	return idx.bindings[id]
 }
 
-// dimension is a thin wrapper around map[T]*roaring.Bitmap for exact-match dimensions.
+// dimension is a thin wrapper around map[T]*Bitmap for exact-match dimensions.
 type dimension[T comparable] struct {
-	m map[T]*roaring.Bitmap
+	m map[T]*Bitmap
 }
 
 func newDimension[T comparable]() dimension[T] {
-	return dimension[T]{m: make(map[T]*roaring.Bitmap)}
+	return dimension[T]{m: make(map[T]*Bitmap)}
 }
 
 func (d dimension[T]) Add(key T, id uint32) {
 	bm, ok := d.m[key]
 	if !ok {
-		bm = roaring.New()
+		bm = NewBitmap()
 		d.m[key] = bm
 	}
 	bm.Add(id)
@@ -153,7 +254,7 @@ func (d dimension[T]) Remove(key T, id uint32) {
 	}
 }
 
-func (d dimension[T]) Get(key T) (*roaring.Bitmap, bool) {
+func (d dimension[T]) Get(key T) (*Bitmap, bool) {
 	bm, ok := d.m[key]
 	return bm, ok
 }
@@ -172,8 +273,8 @@ func (d dimension[T]) Keys() []T {
 
 // Query returns OR(d[k] for k in keys).
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func (d dimension[T]) Query(arena *bitmapArena, keys []T) *roaring.Bitmap {
-	parts := make([]*roaring.Bitmap, 0, len(keys))
+func (d dimension[T]) Query(arena *bitmapArena, keys []T) *Bitmap {
+	parts := make([]*Bitmap, 0, len(keys))
 	for _, k := range keys {
 		if bm, ok := d.m[k]; ok {
 			parts = append(parts, bm)
