@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/cespare/xxhash/v2"
-	"go.uber.org/zap"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"

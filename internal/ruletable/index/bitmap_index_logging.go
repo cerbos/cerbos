@@ -12,7 +12,7 @@ import (
 )
 
 // dimStats holds size statistics for a single dimension.
-type dimStats struct {
+type dimStats struct { //nolint:unused
 	Name     string
 	Keys     int
 	MinWords int
@@ -23,7 +23,7 @@ type dimStats struct {
 	AvgCard  uint64
 }
 
-func collectBitmapStats(s *dimStats, bm *Bitmap) {
+func collectBitmapStats(s *dimStats, bm *Bitmap) { //nolint:unused
 	wl := bm.WordsLen()
 	if wl > s.MaxWords {
 		s.MaxWords = wl
@@ -40,7 +40,7 @@ func collectBitmapStats(s *dimStats, bm *Bitmap) {
 	}
 }
 
-func dimensionStats[T comparable](name string, d dimension[T]) dimStats {
+func dimensionStats[T comparable](name string, d dimension[T]) dimStats { //nolint:unused
 	s := dimStats{Name: name, Keys: len(d.m), MinWords: math.MaxInt, MinCard: math.MaxUint64}
 	totalWords := 0
 	totalCard := uint64(0)
@@ -59,7 +59,7 @@ func dimensionStats[T comparable](name string, d dimension[T]) dimStats {
 	return s
 }
 
-func globDimensionStats(name string, gd *globDimension) dimStats {
+func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unused
 	s := dimStats{Name: name, Keys: len(gd.literals) + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
 	totalWords := 0
 	totalCard := uint64(0)
@@ -83,7 +83,7 @@ func globDimensionStats(name string, gd *globDimension) dimStats {
 	return s
 }
 
-func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) {
+func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 	stats := []dimStats{
 		dimensionStats("version", idx.version),
 		dimensionStats("scope", idx.scope),
