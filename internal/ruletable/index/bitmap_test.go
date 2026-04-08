@@ -296,7 +296,7 @@ func TestBitmapWordsLen(t *testing.T) {
 
 func TestBitmapGetCardinalityFullWord(t *testing.T) {
 	b := NewBitmap()
-	for i := uint32(0); i < 64; i++ {
+	for i := range uint32(64) {
 		b.Add(i)
 	}
 	require.Equal(t, uint64(64), b.GetCardinality())
@@ -421,7 +421,7 @@ func TestBitmapArenaAnd2(t *testing.T) {
 
 func TestBitmapArenaAndInto(t *testing.T) {
 	a := NewBitmap()
-	for i := uint32(0); i < 100; i++ {
+	for i := range uint32(100) {
 		a.Add(i)
 	}
 

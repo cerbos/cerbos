@@ -4,7 +4,6 @@
 package store
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,10 +11,9 @@ import (
 	"strings"
 
 	"buf.build/go/protovalidate"
-	
+
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
-	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/auth"
 	"github.com/cerbos/cloud-api/base"
 	authv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/auth/v1"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"

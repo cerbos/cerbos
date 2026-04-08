@@ -23,9 +23,9 @@ require (
 	github.com/aws/smithy-go v1.24.2
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.3
-	github.com/cerbos/cerbos-sdk-go v0.3.17
+	github.com/cerbos/cerbos-sdk-go v0.3.18
 	github.com/cerbos/cerbos/api/genpb v0.51.1-0.20260319142619-f166a6dd503b
-	github.com/cerbos/cloud-api v0.1.71
+	github.com/cerbos/cloud-api v0.1.72
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.9.1
@@ -226,6 +226,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v1.6.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
@@ -286,8 +287,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
-	github.com/yuin/gopher-lua v1.1.1 // indirect
-	github.com/zalando/go-keyring v0.2.6 // indirect
+	github.com/zalando/go-keyring v0.2.8 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.42.0 // indirect
