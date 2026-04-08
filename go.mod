@@ -92,17 +92,17 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.67.0
 	go.opentelemetry.io/contrib/propagators/autoprop v0.67.0
 	go.opentelemetry.io/contrib/propagators/b3 v1.42.0
-	go.opentelemetry.io/otel v1.42.0
+	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.42.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.42.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.42.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.43.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.42.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.42.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.43.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.64.0
-	go.opentelemetry.io/otel/metric v1.42.0
-	go.opentelemetry.io/otel/sdk v1.42.0
-	go.opentelemetry.io/otel/sdk/metric v1.42.0
-	go.opentelemetry.io/otel/trace v1.42.0
+	go.opentelemetry.io/otel/metric v1.43.0
+	go.opentelemetry.io/otel/sdk v1.43.0
+	go.opentelemetry.io/otel/sdk/metric v1.43.0
+	go.opentelemetry.io/otel/trace v1.43.0
 	go.uber.org/automaxprocs v1.6.0
 	go.uber.org/config v1.4.0
 	go.uber.org/multierr v1.11.0
@@ -113,8 +113,8 @@ require (
 	golang.org/x/sync v0.20.0
 	golang.org/x/tools v0.43.0
 	gonum.org/v1/gonum v0.17.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260226221140-a57be14db171
-	google.golang.org/grpc v1.79.3
+	google.golang.org/genproto/googleapis/api v0.0.0-20260401024825-9d38bb4040a9
+	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -141,7 +141,7 @@ require (
 	filippo.io/edwards25519 v1.1.1 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.31.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.54.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.54.0 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
@@ -278,7 +278,7 @@ require (
 	go.opentelemetry.io/contrib/propagators/aws v1.42.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.42.0 // indirect
 	go.opentelemetry.io/contrib/propagators/ot v1.42.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
@@ -292,7 +292,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.256.0 // indirect
 	google.golang.org/genproto v0.0.0-20251124214823-79d6a2a48846 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260226221140-a57be14db171 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260401024825-9d38bb4040a9 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
