@@ -110,6 +110,309 @@ func cerbos_policy_v1_SourceAttributes_hashpb_sum(m *v1.SourceAttributes, hasher
 	}
 }
 
+func cerbos_runtime_v1_BitmapIndex_AllowActions_hashpb_sum(m *BitmapIndex_AllowActions, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.AllowActions.actions"]; !ok {
+		if len(m.Actions) > 0 {
+			for _, v := range m.Actions {
+				_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_Binding_hashpb_sum(m *BitmapIndex_Binding, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetId())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.core_index"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetCoreIndex())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.role"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetRole()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetRole()), len(m.GetRole())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetScope()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetScope()), len(m.GetScope())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetVersion()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetVersion()), len(m.GetVersion())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetResource()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetResource()), len(m.GetResource())))
+	}
+	if m.ActionSet != nil {
+		if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.action_set"]; !ok {
+			switch t := m.ActionSet.(type) {
+			case *BitmapIndex_Binding_Action:
+				_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(t.Action))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(t.Action), len(t.Action)))
+			case *BitmapIndex_Binding_AllowActions:
+				if t.AllowActions != nil {
+					cerbos_runtime_v1_BitmapIndex_AllowActions_hashpb_sum(t.AllowActions, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.principal"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetPrincipal()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPrincipal()), len(m.GetPrincipal())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.origin_fqn"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetOriginFqn()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetOriginFqn()), len(m.GetOriginFqn())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.origin_derived_role"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetOriginDerivedRole()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetOriginDerivedRole()), len(m.GetOriginDerivedRole())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetName()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetName()), len(m.GetName())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.evaluation_key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetEvaluationKey()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetEvaluationKey()), len(m.GetEvaluationKey())))
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(m *BitmapIndex_Entry, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Entry.key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetKey()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetKey()), len(m.GetKey())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Entry.bitmap"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetBitmap()))))
+		_, _ = hasher.Write(m.GetBitmap())
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_FunctionalCore_hashpb_sum(m *BitmapIndex_FunctionalCore, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.effect"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetEffect())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.condition"]; !ok {
+		if m.GetCondition() != nil {
+			cerbos_runtime_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.derived_role_condition"]; !ok {
+		if m.GetDerivedRoleCondition() != nil {
+			cerbos_runtime_v1_Condition_hashpb_sum(m.GetDerivedRoleCondition(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.emit_output"]; !ok {
+		if m.GetEmitOutput() != nil {
+			cerbos_runtime_v1_Output_hashpb_sum(m.GetEmitOutput(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetScopePermissions())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.policy_kind"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetPolicyKind())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.from_role_policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetFromRolePolicy())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.params"]; !ok {
+		if m.GetParams() != nil {
+			cerbos_runtime_v1_RuleTable_RuleRow_Params_hashpb_sum(m.GetParams(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.FunctionalCore.derived_role_params"]; !ok {
+		if m.GetDerivedRoleParams() != nil {
+			cerbos_runtime_v1_RuleTable_RuleRow_Params_hashpb_sum(m.GetDerivedRoleParams(), hasher, ignore, b)
+		}
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_GlobDimension_hashpb_sum(m *BitmapIndex_GlobDimension, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.GlobDimension.literals"]; !ok {
+		if len(m.Literals) > 0 {
+			for _, v := range m.Literals {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.GlobDimension.globs"]; !ok {
+		if len(m.Globs) > 0 {
+			for _, v := range m.Globs {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_Parents_hashpb_sum(m *BitmapIndex_Parents, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Parents.parents"]; !ok {
+		if len(m.Parents) > 0 {
+			for _, v := range m.Parents {
+				_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(v))))
+				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m *BitmapIndex_RoleParents, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.RoleParents.roles"]; !ok {
+		if len(m.Roles) > 0 {
+			if len(m.Roles) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Roles {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Roles[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_Parents_hashpb_sum(m.Roles[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Roles)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Roles[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_Parents_hashpb_sum(m.Roles[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+}
+
+func cerbos_runtime_v1_BitmapIndex_hashpb_sum(m *BitmapIndex, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.version"]; !ok {
+		if len(m.Version) > 0 {
+			for _, v := range m.Version {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.scope"]; !ok {
+		if len(m.Scope) > 0 {
+			for _, v := range m.Scope {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.role"]; !ok {
+		if m.GetRole() != nil {
+			cerbos_runtime_v1_BitmapIndex_GlobDimension_hashpb_sum(m.GetRole(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.action"]; !ok {
+		if m.GetAction() != nil {
+			cerbos_runtime_v1_BitmapIndex_GlobDimension_hashpb_sum(m.GetAction(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.resource"]; !ok {
+		if m.GetResource() != nil {
+			cerbos_runtime_v1_BitmapIndex_GlobDimension_hashpb_sum(m.GetResource(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.policy_kind"]; !ok {
+		if len(m.PolicyKind) > 0 {
+			if len(m.PolicyKind) <= 32 {
+				keys := hashpb_int32KeyPool.Get().([]int32)[:0]
+				for k := range m.PolicyKind {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(k)))
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.PolicyKind[k]))))
+					_, _ = hasher.Write(m.PolicyKind[k])
+				}
+				hashpb_int32KeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.PolicyKind)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(k)))
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.PolicyKind[k]))))
+					_, _ = hasher.Write(m.PolicyKind[k])
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.principal"]; !ok {
+		if len(m.Principal) > 0 {
+			for _, v := range m.Principal {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.universe"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetUniverse()))))
+		_, _ = hasher.Write(m.GetUniverse())
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.allow_actions_bitmap"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetAllowActionsBitmap()))))
+		_, _ = hasher.Write(m.GetAllowActionsBitmap())
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.bindings"]; !ok {
+		if len(m.Bindings) > 0 {
+			for _, v := range m.Bindings {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_Binding_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.cores"]; !ok {
+		if len(m.Cores) > 0 {
+			for _, v := range m.Cores {
+				if v != nil {
+					cerbos_runtime_v1_BitmapIndex_FunctionalCore_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.parent_roles"]; !ok {
+		if len(m.ParentRoles) > 0 {
+			if len(m.ParentRoles) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.ParentRoles {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.ParentRoles[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m.ParentRoles[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.ParentRoles)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.ParentRoles[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m.ParentRoles[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_CompileErrors_Err_hashpb_sum(m *CompileErrors_Err, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.runtime.v1.CompileErrors.Err.file"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetFile()))))

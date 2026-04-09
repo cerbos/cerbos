@@ -112,8 +112,7 @@ func TestParamsIndex(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 
 		require.Same(t, allRows[0].Core.Params, allRows[1].Core.Params, "expected shared RowParams pointer from params interning")
@@ -134,8 +133,7 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 		require.Same(t, allRows[0].Core, allRows[1].Core, "functionally identical rows should share a FunctionalCore")
 	})
@@ -152,8 +150,7 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 		require.NotSame(t, allRows[0].Core, allRows[1].Core, "rows with different conditions should not share a FunctionalCore")
 	})
@@ -170,8 +167,7 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 		require.NotSame(t, allRows[0].Core, allRows[1].Core, "rows with different emit_output should not share a FunctionalCore")
 	})
@@ -186,20 +182,17 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 
 		require.NoError(t, impl.DeletePolicy(fqnA))
 
-		allRows, err = impl.GetAllRows()
-		require.NoError(t, err)
+		allRows = impl.GetAllRows()
 		require.Len(t, allRows, 1, "only fqnB's binding should remain")
 
 		require.NoError(t, impl.DeletePolicy(fqnB))
 
-		allRows, err = impl.GetAllRows()
-		require.NoError(t, err)
+		allRows = impl.GetAllRows()
 		require.Len(t, allRows, 0, "all bindings should be removed")
 	})
 
@@ -239,8 +232,7 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.DeletePolicy(imgPolicyFQN))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 0, "all bindings should be removed after deleting all origins")
 	})
 
@@ -264,8 +256,7 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 		require.Same(t, allRows[0].Core, allRows[1].Core, "functionally identical rows should share a FunctionalCore")
 		require.NotNil(t, allRows[0].Core.Params, "shared core should have compiled params")
@@ -282,21 +273,18 @@ func TestFunctionalChecksum(t *testing.T) {
 			makeRow(fqnB),
 		}))
 
-		allRows, err := impl.GetAllRows()
-		require.NoError(t, err)
+		allRows := impl.GetAllRows()
 		require.Len(t, allRows, 2)
 		require.Same(t, allRows[0].Core, allRows[1].Core, "incremental indexing should share FunctionalCore")
 
 		require.NoError(t, impl.DeletePolicy(fqnA))
 
-		allRows, err = impl.GetAllRows()
-		require.NoError(t, err)
+		allRows = impl.GetAllRows()
 		require.Len(t, allRows, 1, "only fqnB's binding should remain")
 
 		require.NoError(t, impl.DeletePolicy(fqnB))
 
-		allRows, err = impl.GetAllRows()
-		require.NoError(t, err)
+		allRows = impl.GetAllRows()
 		require.Len(t, allRows, 0, "row should be removed after all origins deleted")
 	})
 }

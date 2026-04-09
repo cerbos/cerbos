@@ -30,7 +30,6 @@ type FunctionalCore struct {
 // uint32 ID used as a position in the bitmap index.
 type Binding struct {
 	Core                       *FunctionalCore
-	SourceRow                  *runtimev1.RuleTable_RuleRow // set only when WithSourceRows is enabled
 	AllowActions               map[string]struct{}
 	Role                       string
 	Scope                      string

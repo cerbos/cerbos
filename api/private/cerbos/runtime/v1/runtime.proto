@@ -351,3 +351,76 @@ message Errors {
     CompileErrors compile_errors = 2;
   }
 }
+
+// BitmapIndex is a wire-only format for persisting a pre-computed roaring
+// bitmap index. It is not a runtime type; consumers unmarshal it into the
+// existing in-memory index structures.
+message BitmapIndex {
+  message Entry {
+    string key = 1;
+    bytes bitmap = 2;
+  }
+
+  message GlobDimension {
+    repeated Entry literals = 1;
+    repeated Entry globs = 2;
+  }
+
+  message AllowActions {
+    repeated string actions = 1;
+  }
+
+  message Binding {
+    uint32 id = 1;
+    uint32 core_index = 2;
+    string role = 3;
+    string scope = 4;
+    string version = 5;
+    string resource = 6;
+    string principal = 8;
+    string origin_fqn = 9;
+    string origin_derived_role = 10;
+    string name = 11;
+    string evaluation_key = 12;
+    oneof action_set {
+      string action = 7;
+      AllowActions allow_actions = 13;
+    }
+  }
+
+  // FunctionalCore captures the behavioral part of a rule. Fields only needed
+  // for mutation (origins, sum, fqnBindings) are omitted because the
+  // unmarshaled index is static (no DeletePolicy or incremental IndexRules).
+  message FunctionalCore {
+    cerbos.effect.v1.Effect effect = 1;
+    Condition condition = 2;
+    Condition derived_role_condition = 3;
+    Output emit_output = 4;
+    cerbos.policy.v1.ScopePermissions scope_permissions = 5;
+    cerbos.policy.v1.Kind policy_kind = 6;
+    bool from_role_policy = 7;
+    RuleTable.RuleRow.Params params = 8;
+    RuleTable.RuleRow.Params derived_role_params = 9;
+  }
+
+  message Parents {
+    repeated string parents = 1;
+  }
+
+  message RoleParents {
+    map<string, Parents> roles = 1;
+  }
+
+  repeated Entry version = 1;
+  repeated Entry scope = 2;
+  GlobDimension role = 3;
+  GlobDimension action = 4;
+  GlobDimension resource = 5;
+  map<int32, bytes> policy_kind = 6;
+  repeated Entry principal = 7;
+  bytes universe = 8;
+  bytes allow_actions_bitmap = 9;
+  repeated Binding bindings = 10;
+  repeated FunctionalCore cores = 11;
+  map<string, RoleParents> parent_roles = 12;
+}

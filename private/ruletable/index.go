@@ -18,6 +18,6 @@ type (
 )
 
 var (
-	New            = index.New
-	WithSourceRows = index.WithSourceRows
+	New       = index.New
+	Unmarshal = index.Unmarshal
 )

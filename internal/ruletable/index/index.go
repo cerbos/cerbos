@@ -52,16 +52,9 @@ type CelProgram struct {
 
 type Option func(*Index)
 
-// WithSourceRows retains the original proto row on each Binding, preventing
-// GC of the proto rows after indexing.
-func WithSourceRows() Option {
-	return func(idx *Index) { idx.retainSourceRows = true }
-}
-
 type Index struct {
-	bi               *bitmapIndex
-	parentRoles      map[string]map[string][]string
-	retainSourceRows bool
+	bi          *bitmapIndex
+	parentRoles map[string]map[string][]string
 }
 
 func New(opts ...Option) *Index {
@@ -173,9 +166,6 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			AllowActions:      allowActions,
 			Core:              core,
 		}
-		if m.retainSourceRows {
-			b.SourceRow = rule
-		}
 
 		m.bi.addBinding(b)
 	}
@@ -183,14 +173,14 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	return nil
 }
 
-func (m *Index) GetAllRows() ([]*Binding, error) {
+func (m *Index) GetAllRows() []*Binding {
 	res := make([]*Binding, 0, m.bi.universe.GetCardinality())
 	for _, b := range m.bi.bindings {
 		if b != nil {
 			res = append(res, b)
 		}
 	}
-	return res, nil
+	return res
 }
 
 // Query returns bindings matching the given dimensions. Nil or zero-values mean
