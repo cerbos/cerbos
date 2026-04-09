@@ -1041,6 +1041,7 @@ type PolicySource_Git struct {
 	RepositoryUrl string                 `protobuf:"bytes,1,opt,name=repository_url,json=repositoryUrl,proto3" json:"repository_url,omitempty"`
 	Branch        string                 `protobuf:"bytes,2,opt,name=branch,proto3" json:"branch,omitempty"`
 	Subdirectory  string                 `protobuf:"bytes,3,opt,name=subdirectory,proto3" json:"subdirectory,omitempty"`
+	Hash          string                 `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1092,6 +1093,13 @@ func (x *PolicySource_Git) GetBranch() string {
 func (x *PolicySource_Git) GetSubdirectory() string {
 	if x != nil {
 		return x.Subdirectory
+	}
+	return ""
+}
+
+func (x *PolicySource_Git) GetHash() string {
+	if x != nil {
+		return x.Hash
 	}
 	return ""
 }
@@ -1462,7 +1470,7 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x12effective_policies\x18\x01 \x03(\v22.cerbos.audit.v1.AuditTrail.EffectivePoliciesEntryR\x11effectivePolicies\x1ah\n" +
 	"\x16EffectivePoliciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xe2\v\n" +
+	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xf6\v\n" +
 	"\fPolicySource\x128\n" +
 	"\x04blob\x18\x01 \x01(\v2\".cerbos.audit.v1.PolicySource.BlobH\x00R\x04blob\x12D\n" +
 	"\bdatabase\x18\x02 \x01(\v2&.cerbos.audit.v1.PolicySource.DatabaseH\x00R\bdatabase\x128\n" +
@@ -1487,11 +1495,12 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1f\n" +
 	"\vcommit_hash\x18\x02 \x01(\tR\n" +
 	"commitHash\x125\n" +
-	"\bbuilt_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\abuiltAt\x1ah\n" +
+	"\bbuilt_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\abuiltAt\x1a|\n" +
 	"\x03Git\x12%\n" +
 	"\x0erepository_url\x18\x01 \x01(\tR\rrepositoryUrl\x12\x16\n" +
 	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\"\n" +
-	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x1a\xd6\x04\n" +
+	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x12\x12\n" +
+	"\x04hash\x18\x04 \x01(\tR\x04hash\x1a\xd6\x04\n" +
 	"\x03Hub\x12\x16\n" +
 	"\x05label\x18\x01 \x01(\tH\x00R\x05label\x12)\n" +
 	"\rdeployment_id\x18\x02 \x01(\tB\x02\x18\x01H\x00R\fdeploymentId\x12%\n" +

@@ -55,11 +55,12 @@ func init() {
 }
 
 type Store struct {
-	log  *zap.SugaredLogger
-	conf *Conf
-	idx  index.Index
-	repo *git.Repository
-	sf   singleflight.Group
+	log    *zap.SugaredLogger
+	conf   *Conf
+	idx    index.Index
+	repo   *git.Repository
+	source *auditv1.PolicySource
+	sf     singleflight.Group
 	*storage.SubscriptionManager
 	subDir string
 }
@@ -85,11 +86,22 @@ func (s *Store) init(ctx context.Context) error {
 	if s.conf.ScratchDir != "" {
 		s.log.Warnf("ScratchDir storage option is deprecated and will be removed in a future release")
 	}
+
 	finfo, err := os.Stat(s.conf.CheckoutDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("failed to stat %s: %w", s.conf.CheckoutDir, err)
 	} else if finfo != nil && !finfo.IsDir() {
 		return fmt.Errorf("not a directory: %s", s.conf.CheckoutDir)
+	}
+
+	s.source = &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Git_{
+			Git: &auditv1.PolicySource_Git{
+				RepositoryUrl: s.conf.URL,
+				Branch:        s.conf.getBranch(),
+				Subdirectory:  s.conf.getSubDir(),
+			},
+		},
 	}
 
 	loadAndStartPoller := func() error {
@@ -133,6 +145,10 @@ func (s *Store) init(ctx context.Context) error {
 	// if not empty, assume it is a git repo and try to pull the latest changes
 	if _, err := s.pullAndCompare(ctx); err != nil {
 		return err
+	}
+
+	if err := s.setHash(); err != nil {
+		return fmt.Errorf("failed to set hash: %w", err)
 	}
 
 	return loadAndStartPoller()
@@ -200,6 +216,10 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to pull: %w", err)
 	}
 
+	if err := s.setHash(); err != nil {
+		return fmt.Errorf("failed to set hash: %w", err)
+	}
+
 	evts, err := s.idx.Reload(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to reload index: %w", err)
@@ -212,15 +232,28 @@ func (s *Store) Reload(ctx context.Context) error {
 }
 
 func (s *Store) Source() *auditv1.PolicySource {
-	return &auditv1.PolicySource{
-		Source: &auditv1.PolicySource_Git_{
-			Git: &auditv1.PolicySource_Git{
-				RepositoryUrl: s.conf.URL,
-				Branch:        s.conf.getBranch(),
-				Subdirectory:  s.conf.getSubDir(),
-			},
-		},
+	return s.source
+}
+
+// setHash sets hash field of the git policy source.
+func (s *Store) setHash() error {
+	if s.source == nil &&
+		s.repo == nil {
+		return nil
 	}
+
+	head, err := s.repo.Head()
+	if err != nil {
+		return fmt.Errorf("failed to get HEAD: %w", err)
+	}
+
+	g, ok := s.source.Source.(*auditv1.PolicySource_Git_)
+	if !ok {
+		return nil
+	}
+
+	g.Git.Hash = head.Hash().String()
+	return nil
 }
 
 func isEmptyDir(dir string) (bool, error) {
@@ -435,6 +468,10 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	changes, err := s.pullAndCompare(ctx)
 	if err != nil {
 		return err
+	}
+
+	if err := s.setHash(); err != nil {
+		return fmt.Errorf("failed to set hash: %w", err)
 	}
 
 	if changes == nil {

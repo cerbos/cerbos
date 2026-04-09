@@ -107,6 +107,7 @@ message PolicySource {
     string repository_url = 1;
     string branch = 2;
     string subdirectory = 3;
+    string hash = 4;
   }
 
   message Hub {

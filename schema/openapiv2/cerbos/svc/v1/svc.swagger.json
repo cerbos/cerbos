@@ -1599,6 +1599,9 @@
         },
         "subdirectory": {
           "type": "string"
+        },
+        "hash": {
+          "type": "string"
         }
       }
     },

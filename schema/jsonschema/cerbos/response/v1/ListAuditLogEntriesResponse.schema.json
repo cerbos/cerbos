@@ -256,6 +256,9 @@
         "branch": {
           "type": "string"
         },
+        "hash": {
+          "type": "string"
+        },
         "repositoryUrl": {
           "type": "string"
         },
