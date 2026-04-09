@@ -1,5 +1,10 @@
 [build]
 publish = "docs/build"
+edge_functions = "docs/edge_functions"
+
+[[edge_functions]]
+path = "/*"
+function = "siteline"
 
 [[headers]]
 for = "/*"
