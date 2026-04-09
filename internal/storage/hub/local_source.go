@@ -208,6 +208,7 @@ func (ls *LocalSource) loadBundle() error {
 	prevCleanupFn := ls.cleanup
 	ls.cleanup = cleanupFn
 	ls.bundle = b
+	ls.setBundleID(ls.bundle.ID())
 	ls.mu.Unlock()
 
 	ls.NotifySubscribers(storage.NewReloadEvent())
@@ -219,6 +220,28 @@ func (ls *LocalSource) loadBundle() error {
 	}
 
 	return nil
+}
+
+// setBundleID sets bundle ID field of the local hub policy source.
+func (ls *LocalSource) setBundleID(bundleID string) {
+	if ls.bundle == nil &&
+		ls.source == nil &&
+		ls.params.BundleVersion != cloudapi.Version2 &&
+		ls.bundle.Type() != bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+		return
+	}
+
+	h, ok := ls.source.Source.(*auditv1.PolicySource_Hub_)
+	if !ok {
+		return
+	}
+
+	lb, ok := h.Hub.Source.(*auditv1.PolicySource_Hub_LocalBundle_)
+	if !ok {
+		return
+	}
+
+	lb.LocalBundle.BundleId = bundleID
 }
 
 func (ls *LocalSource) Driver() string {

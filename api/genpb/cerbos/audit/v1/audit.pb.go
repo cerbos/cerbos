@@ -1105,6 +1105,7 @@ type PolicySource_Hub struct {
 	//	*PolicySource_Hub_PlaygroundId
 	//	*PolicySource_Hub_LocalBundle_
 	//	*PolicySource_Hub_EmbeddedBundle_
+	//	*PolicySource_Hub_RemoteBundle_
 	Source        isPolicySource_Hub_Source `protobuf_oneof:"source"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1156,6 +1157,7 @@ func (x *PolicySource_Hub) GetLabel() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in cerbos/audit/v1/audit.proto.
 func (x *PolicySource_Hub) GetDeploymentId() string {
 	if x != nil {
 		if x, ok := x.Source.(*PolicySource_Hub_DeploymentId); ok {
@@ -1192,6 +1194,15 @@ func (x *PolicySource_Hub) GetEmbeddedBundle() *PolicySource_Hub_EmbeddedBundle 
 	return nil
 }
 
+func (x *PolicySource_Hub) GetRemoteBundle() *PolicySource_Hub_RemoteBundle {
+	if x != nil {
+		if x, ok := x.Source.(*PolicySource_Hub_RemoteBundle_); ok {
+			return x.RemoteBundle
+		}
+	}
+	return nil
+}
+
 type isPolicySource_Hub_Source interface {
 	isPolicySource_Hub_Source()
 }
@@ -1201,6 +1212,7 @@ type PolicySource_Hub_Label struct {
 }
 
 type PolicySource_Hub_DeploymentId struct {
+	// Deprecated: Marked as deprecated in cerbos/audit/v1/audit.proto.
 	DeploymentId string `protobuf:"bytes,2,opt,name=deployment_id,json=deploymentId,proto3,oneof"`
 }
 
@@ -1216,6 +1228,10 @@ type PolicySource_Hub_EmbeddedBundle_ struct {
 	EmbeddedBundle *PolicySource_Hub_EmbeddedBundle `protobuf:"bytes,5,opt,name=embedded_bundle,json=embeddedBundle,proto3,oneof"`
 }
 
+type PolicySource_Hub_RemoteBundle_ struct {
+	RemoteBundle *PolicySource_Hub_RemoteBundle `protobuf:"bytes,6,opt,name=remote_bundle,json=remoteBundle,proto3,oneof"`
+}
+
 func (*PolicySource_Hub_Label) isPolicySource_Hub_Source() {}
 
 func (*PolicySource_Hub_DeploymentId) isPolicySource_Hub_Source() {}
@@ -1225,6 +1241,8 @@ func (*PolicySource_Hub_PlaygroundId) isPolicySource_Hub_Source() {}
 func (*PolicySource_Hub_LocalBundle_) isPolicySource_Hub_Source() {}
 
 func (*PolicySource_Hub_EmbeddedBundle_) isPolicySource_Hub_Source() {}
+
+func (*PolicySource_Hub_RemoteBundle_) isPolicySource_Hub_Source() {}
 
 type PolicySource_Hub_EmbeddedBundle struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1281,6 +1299,7 @@ func (x *PolicySource_Hub_EmbeddedBundle) GetScopes() []string {
 type PolicySource_Hub_LocalBundle struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	BundleId      string                 `protobuf:"bytes,2,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1318,6 +1337,65 @@ func (*PolicySource_Hub_LocalBundle) Descriptor() ([]byte, []int) {
 func (x *PolicySource_Hub_LocalBundle) GetPath() string {
 	if x != nil {
 		return x.Path
+	}
+	return ""
+}
+
+func (x *PolicySource_Hub_LocalBundle) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
+}
+
+type PolicySource_Hub_RemoteBundle struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DeploymentId  string                 `protobuf:"bytes,1,opt,name=deployment_id,json=deploymentId,proto3" json:"deployment_id,omitempty"`
+	BundleId      string                 `protobuf:"bytes,2,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolicySource_Hub_RemoteBundle) Reset() {
+	*x = PolicySource_Hub_RemoteBundle{}
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolicySource_Hub_RemoteBundle) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolicySource_Hub_RemoteBundle) ProtoMessage() {}
+
+func (x *PolicySource_Hub_RemoteBundle) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_audit_v1_audit_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolicySource_Hub_RemoteBundle.ProtoReflect.Descriptor instead.
+func (*PolicySource_Hub_RemoteBundle) Descriptor() ([]byte, []int) {
+	return file_cerbos_audit_v1_audit_proto_rawDescGZIP(), []int{5, 5, 2}
+}
+
+func (x *PolicySource_Hub_RemoteBundle) GetDeploymentId() string {
+	if x != nil {
+		return x.DeploymentId
+	}
+	return ""
+}
+
+func (x *PolicySource_Hub_RemoteBundle) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
 	}
 	return ""
 }
@@ -1384,8 +1462,7 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x12effective_policies\x18\x01 \x03(\v22.cerbos.audit.v1.AuditTrail.EffectivePoliciesEntryR\x11effectivePolicies\x1ah\n" +
 	"\x16EffectivePoliciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\x98\n" +
-	"\n" +
+	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xe2\v\n" +
 	"\fPolicySource\x128\n" +
 	"\x04blob\x18\x01 \x01(\v2\".cerbos.audit.v1.PolicySource.BlobH\x00R\x04blob\x12D\n" +
 	"\bdatabase\x18\x02 \x01(\v2&.cerbos.audit.v1.PolicySource.DatabaseH\x00R\bdatabase\x128\n" +
@@ -1414,18 +1491,23 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x03Git\x12%\n" +
 	"\x0erepository_url\x18\x01 \x01(\tR\rrepositoryUrl\x12\x16\n" +
 	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\"\n" +
-	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x1a\x8c\x03\n" +
+	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x1a\xd6\x04\n" +
 	"\x03Hub\x12\x16\n" +
-	"\x05label\x18\x01 \x01(\tH\x00R\x05label\x12%\n" +
-	"\rdeployment_id\x18\x02 \x01(\tH\x00R\fdeploymentId\x12%\n" +
+	"\x05label\x18\x01 \x01(\tH\x00R\x05label\x12)\n" +
+	"\rdeployment_id\x18\x02 \x01(\tB\x02\x18\x01H\x00R\fdeploymentId\x12%\n" +
 	"\rplayground_id\x18\x03 \x01(\tH\x00R\fplaygroundId\x12R\n" +
 	"\flocal_bundle\x18\x04 \x01(\v2-.cerbos.audit.v1.PolicySource.Hub.LocalBundleH\x00R\vlocalBundle\x12[\n" +
-	"\x0fembedded_bundle\x18\x05 \x01(\v20.cerbos.audit.v1.PolicySource.Hub.EmbeddedBundleH\x00R\x0eembeddedBundle\x1aA\n" +
+	"\x0fembedded_bundle\x18\x05 \x01(\v20.cerbos.audit.v1.PolicySource.Hub.EmbeddedBundleH\x00R\x0eembeddedBundle\x12U\n" +
+	"\rremote_bundle\x18\x06 \x01(\v2..cerbos.audit.v1.PolicySource.Hub.RemoteBundleH\x00R\fremoteBundle\x1aA\n" +
 	"\x0eEmbeddedBundle\x12\x17\n" +
 	"\arule_id\x18\x01 \x01(\tR\x06ruleId\x12\x16\n" +
-	"\x06scopes\x18\x02 \x03(\tR\x06scopes\x1a!\n" +
+	"\x06scopes\x18\x02 \x03(\tR\x06scopes\x1a>\n" +
 	"\vLocalBundle\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04pathB\b\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1b\n" +
+	"\tbundle_id\x18\x02 \x01(\tR\bbundleId\x1aP\n" +
+	"\fRemoteBundle\x12#\n" +
+	"\rdeployment_id\x18\x01 \x01(\tR\fdeploymentId\x12\x1b\n" +
+	"\tbundle_id\x18\x02 \x01(\tR\bbundleIdB\b\n" +
 	"\x06sourceB\b\n" +
 	"\x06source\"\xae\x03\n" +
 	"\x0eRequestContext\x12\xbc\x01\n" +
@@ -1449,7 +1531,7 @@ func file_cerbos_audit_v1_audit_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_audit_v1_audit_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cerbos_audit_v1_audit_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_cerbos_audit_v1_audit_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_cerbos_audit_v1_audit_proto_goTypes = []any{
 	(PolicySource_Database_Driver)(0),       // 0: cerbos.audit.v1.PolicySource.Database.Driver
 	(*AccessLogEntry)(nil),                  // 1: cerbos.audit.v1.AccessLogEntry
@@ -1472,25 +1554,26 @@ var file_cerbos_audit_v1_audit_proto_goTypes = []any{
 	(*PolicySource_Hub)(nil),                // 18: cerbos.audit.v1.PolicySource.Hub
 	(*PolicySource_Hub_EmbeddedBundle)(nil), // 19: cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle
 	(*PolicySource_Hub_LocalBundle)(nil),    // 20: cerbos.audit.v1.PolicySource.Hub.LocalBundle
-	nil,                                     // 21: cerbos.audit.v1.RequestContext.AnnotationsEntry
-	(*timestamppb.Timestamp)(nil),           // 22: google.protobuf.Timestamp
-	(*v1.CheckInput)(nil),                   // 23: cerbos.engine.v1.CheckInput
-	(*v1.CheckOutput)(nil),                  // 24: cerbos.engine.v1.CheckOutput
-	(*v1.PlanResourcesInput)(nil),           // 25: cerbos.engine.v1.PlanResourcesInput
-	(*v1.PlanResourcesOutput)(nil),          // 26: cerbos.engine.v1.PlanResourcesOutput
-	(*v11.SourceAttributes)(nil),            // 27: cerbos.policy.v1.SourceAttributes
-	(*structpb.Value)(nil),                  // 28: google.protobuf.Value
+	(*PolicySource_Hub_RemoteBundle)(nil),   // 21: cerbos.audit.v1.PolicySource.Hub.RemoteBundle
+	nil,                                     // 22: cerbos.audit.v1.RequestContext.AnnotationsEntry
+	(*timestamppb.Timestamp)(nil),           // 23: google.protobuf.Timestamp
+	(*v1.CheckInput)(nil),                   // 24: cerbos.engine.v1.CheckInput
+	(*v1.CheckOutput)(nil),                  // 25: cerbos.engine.v1.CheckOutput
+	(*v1.PlanResourcesInput)(nil),           // 26: cerbos.engine.v1.PlanResourcesInput
+	(*v1.PlanResourcesOutput)(nil),          // 27: cerbos.engine.v1.PlanResourcesOutput
+	(*v11.SourceAttributes)(nil),            // 28: cerbos.policy.v1.SourceAttributes
+	(*structpb.Value)(nil),                  // 29: google.protobuf.Value
 }
 var file_cerbos_audit_v1_audit_proto_depIdxs = []int32{
-	22, // 0: cerbos.audit.v1.AccessLogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	23, // 0: cerbos.audit.v1.AccessLogEntry.timestamp:type_name -> google.protobuf.Timestamp
 	4,  // 1: cerbos.audit.v1.AccessLogEntry.peer:type_name -> cerbos.audit.v1.Peer
 	8,  // 2: cerbos.audit.v1.AccessLogEntry.metadata:type_name -> cerbos.audit.v1.AccessLogEntry.MetadataEntry
 	6,  // 3: cerbos.audit.v1.AccessLogEntry.policy_source:type_name -> cerbos.audit.v1.PolicySource
 	7,  // 4: cerbos.audit.v1.AccessLogEntry.request_context:type_name -> cerbos.audit.v1.RequestContext
-	22, // 5: cerbos.audit.v1.DecisionLogEntry.timestamp:type_name -> google.protobuf.Timestamp
+	23, // 5: cerbos.audit.v1.DecisionLogEntry.timestamp:type_name -> google.protobuf.Timestamp
 	4,  // 6: cerbos.audit.v1.DecisionLogEntry.peer:type_name -> cerbos.audit.v1.Peer
-	23, // 7: cerbos.audit.v1.DecisionLogEntry.inputs:type_name -> cerbos.engine.v1.CheckInput
-	24, // 8: cerbos.audit.v1.DecisionLogEntry.outputs:type_name -> cerbos.engine.v1.CheckOutput
+	24, // 7: cerbos.audit.v1.DecisionLogEntry.inputs:type_name -> cerbos.engine.v1.CheckInput
+	25, // 8: cerbos.audit.v1.DecisionLogEntry.outputs:type_name -> cerbos.engine.v1.CheckOutput
 	9,  // 9: cerbos.audit.v1.DecisionLogEntry.check_resources:type_name -> cerbos.audit.v1.DecisionLogEntry.CheckResources
 	10, // 10: cerbos.audit.v1.DecisionLogEntry.plan_resources:type_name -> cerbos.audit.v1.DecisionLogEntry.PlanResources
 	11, // 11: cerbos.audit.v1.DecisionLogEntry.metadata:type_name -> cerbos.audit.v1.DecisionLogEntry.MetadataEntry
@@ -1504,24 +1587,25 @@ var file_cerbos_audit_v1_audit_proto_depIdxs = []int32{
 	17, // 19: cerbos.audit.v1.PolicySource.git:type_name -> cerbos.audit.v1.PolicySource.Git
 	18, // 20: cerbos.audit.v1.PolicySource.hub:type_name -> cerbos.audit.v1.PolicySource.Hub
 	16, // 21: cerbos.audit.v1.PolicySource.embedded_pdp:type_name -> cerbos.audit.v1.PolicySource.EmbeddedPDP
-	21, // 22: cerbos.audit.v1.RequestContext.annotations:type_name -> cerbos.audit.v1.RequestContext.AnnotationsEntry
+	22, // 22: cerbos.audit.v1.RequestContext.annotations:type_name -> cerbos.audit.v1.RequestContext.AnnotationsEntry
 	3,  // 23: cerbos.audit.v1.AccessLogEntry.MetadataEntry.value:type_name -> cerbos.audit.v1.MetaValues
-	23, // 24: cerbos.audit.v1.DecisionLogEntry.CheckResources.inputs:type_name -> cerbos.engine.v1.CheckInput
-	24, // 25: cerbos.audit.v1.DecisionLogEntry.CheckResources.outputs:type_name -> cerbos.engine.v1.CheckOutput
-	25, // 26: cerbos.audit.v1.DecisionLogEntry.PlanResources.input:type_name -> cerbos.engine.v1.PlanResourcesInput
-	26, // 27: cerbos.audit.v1.DecisionLogEntry.PlanResources.output:type_name -> cerbos.engine.v1.PlanResourcesOutput
+	24, // 24: cerbos.audit.v1.DecisionLogEntry.CheckResources.inputs:type_name -> cerbos.engine.v1.CheckInput
+	25, // 25: cerbos.audit.v1.DecisionLogEntry.CheckResources.outputs:type_name -> cerbos.engine.v1.CheckOutput
+	26, // 26: cerbos.audit.v1.DecisionLogEntry.PlanResources.input:type_name -> cerbos.engine.v1.PlanResourcesInput
+	27, // 27: cerbos.audit.v1.DecisionLogEntry.PlanResources.output:type_name -> cerbos.engine.v1.PlanResourcesOutput
 	3,  // 28: cerbos.audit.v1.DecisionLogEntry.MetadataEntry.value:type_name -> cerbos.audit.v1.MetaValues
-	27, // 29: cerbos.audit.v1.AuditTrail.EffectivePoliciesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	28, // 29: cerbos.audit.v1.AuditTrail.EffectivePoliciesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
 	0,  // 30: cerbos.audit.v1.PolicySource.Database.driver:type_name -> cerbos.audit.v1.PolicySource.Database.Driver
-	22, // 31: cerbos.audit.v1.PolicySource.EmbeddedPDP.built_at:type_name -> google.protobuf.Timestamp
+	23, // 31: cerbos.audit.v1.PolicySource.EmbeddedPDP.built_at:type_name -> google.protobuf.Timestamp
 	20, // 32: cerbos.audit.v1.PolicySource.Hub.local_bundle:type_name -> cerbos.audit.v1.PolicySource.Hub.LocalBundle
 	19, // 33: cerbos.audit.v1.PolicySource.Hub.embedded_bundle:type_name -> cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle
-	28, // 34: cerbos.audit.v1.RequestContext.AnnotationsEntry.value:type_name -> google.protobuf.Value
-	35, // [35:35] is the sub-list for method output_type
-	35, // [35:35] is the sub-list for method input_type
-	35, // [35:35] is the sub-list for extension type_name
-	35, // [35:35] is the sub-list for extension extendee
-	0,  // [0:35] is the sub-list for field type_name
+	21, // 34: cerbos.audit.v1.PolicySource.Hub.remote_bundle:type_name -> cerbos.audit.v1.PolicySource.Hub.RemoteBundle
+	29, // 35: cerbos.audit.v1.RequestContext.AnnotationsEntry.value:type_name -> google.protobuf.Value
+	36, // [36:36] is the sub-list for method output_type
+	36, // [36:36] is the sub-list for method input_type
+	36, // [36:36] is the sub-list for extension type_name
+	36, // [36:36] is the sub-list for extension extendee
+	0,  // [0:36] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_audit_v1_audit_proto_init() }
@@ -1548,6 +1632,7 @@ func file_cerbos_audit_v1_audit_proto_init() {
 		(*PolicySource_Hub_PlaygroundId)(nil),
 		(*PolicySource_Hub_LocalBundle_)(nil),
 		(*PolicySource_Hub_EmbeddedBundle_)(nil),
+		(*PolicySource_Hub_RemoteBundle_)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1555,7 +1640,7 @@ func file_cerbos_audit_v1_audit_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_audit_v1_audit_proto_rawDesc), len(file_cerbos_audit_v1_audit_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   21,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

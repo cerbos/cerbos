@@ -1290,6 +1290,20 @@
       "properties": {
         "path": {
           "type": "string"
+        },
+        "bundleId": {
+          "type": "string"
+        }
+      }
+    },
+    "HubRemoteBundle": {
+      "type": "object",
+      "properties": {
+        "deploymentId": {
+          "type": "string"
+        },
+        "bundleId": {
+          "type": "string"
         }
       }
     },
@@ -1605,6 +1619,9 @@
         },
         "embeddedBundle": {
           "$ref": "#/definitions/HubEmbeddedBundle"
+        },
+        "remoteBundle": {
+          "$ref": "#/definitions/HubRemoteBundle"
         }
       }
     },

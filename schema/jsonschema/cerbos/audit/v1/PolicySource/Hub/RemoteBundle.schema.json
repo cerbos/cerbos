@@ -1,5 +1,5 @@
 {
-  "$id": "https://api.cerbos.dev/cerbos/audit/v1/PolicySource/Hub/LocalBundle.schema.json",
+  "$id": "https://api.cerbos.dev/cerbos/audit/v1/PolicySource/Hub/RemoteBundle.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
@@ -7,7 +7,7 @@
     "bundleId": {
       "type": "string"
     },
-    "path": {
+    "deploymentId": {
       "type": "string"
     }
   }
