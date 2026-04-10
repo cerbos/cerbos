@@ -249,6 +249,7 @@ func (s *Store) setCurrentCommitHash() {
 
 	head, err := s.repo.Head()
 	if err != nil {
+		s.currCommitHash = "UNKNOWN"
 		return
 	}
 
