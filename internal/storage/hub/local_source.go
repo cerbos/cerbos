@@ -39,7 +39,6 @@ var (
 type LocalSource struct {
 	bundle  Bundle
 	cleanup func() error
-	source  *auditv1.PolicySource
 	*storage.SubscriptionManager
 	params LocalParams
 	mu     sync.RWMutex
@@ -112,17 +111,6 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 	ls := &LocalSource{
 		params:              params,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
-		source: &auditv1.PolicySource{
-			Source: &auditv1.PolicySource_Hub_{
-				Hub: &auditv1.PolicySource_Hub{
-					Source: &auditv1.PolicySource_Hub_LocalBundle_{
-						LocalBundle: &auditv1.PolicySource_Hub_LocalBundle{
-							Path: params.BundlePath,
-						},
-					},
-				},
-			},
-		},
 	}
 
 	if err := ls.loadBundle(); err != nil {
@@ -208,7 +196,6 @@ func (ls *LocalSource) loadBundle() error {
 	prevCleanupFn := ls.cleanup
 	ls.cleanup = cleanupFn
 	ls.bundle = b
-	ls.setBundleID(ls.bundle.ID())
 	ls.mu.Unlock()
 
 	ls.NotifySubscribers(storage.NewReloadEvent())
@@ -222,26 +209,11 @@ func (ls *LocalSource) loadBundle() error {
 	return nil
 }
 
-// setBundleID sets bundle ID field of the local hub policy source.
-func (ls *LocalSource) setBundleID(bundleID string) {
-	if ls.bundle == nil &&
-		ls.source == nil &&
-		ls.params.BundleVersion != cloudapi.Version2 &&
-		ls.bundle.Type() != bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return
-	}
+func (ls *LocalSource) activeBundleID() string {
+	ls.mu.RLock()
+	defer ls.mu.RUnlock()
 
-	h, ok := ls.source.Source.(*auditv1.PolicySource_Hub_)
-	if !ok {
-		return
-	}
-
-	lb, ok := h.Hub.Source.(*auditv1.PolicySource_Hub_LocalBundle_)
-	if !ok {
-		return
-	}
-
-	lb.LocalBundle.BundleId = bundleID
+	return ls.bundle.ID()
 }
 
 func (ls *LocalSource) Driver() string {
@@ -323,7 +295,18 @@ func (ls *LocalSource) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (ls *LocalSource) Source() *auditv1.PolicySource {
-	return ls.source
+	return &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Hub_{
+			Hub: &auditv1.PolicySource_Hub{
+				Source: &auditv1.PolicySource_Hub_LocalBundle_{
+					LocalBundle: &auditv1.PolicySource_Hub_LocalBundle{
+						Path:     ls.params.BundlePath,
+						BundleId: ls.activeBundleID(),
+					},
+				},
+			},
+		},
+	}
 }
 
 func (ls *LocalSource) Close() error {

@@ -144,7 +144,6 @@ type RemoteSource struct {
 	log       *zap.Logger
 	conf      *Conf
 	bundle    Bundle
-	source    *auditv1.PolicySource
 	*storage.SubscriptionManager
 	bundleVersion bundleapi.Version
 	mu            sync.RWMutex
@@ -231,17 +230,12 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		BundleType: bundleType,
 	}
 
-	hub := &auditv1.PolicySource_Hub{}
-	s.source = &auditv1.PolicySource{Source: &auditv1.PolicySource_Hub_{Hub: hub}}
-
 	switch s.bundleVersion {
 	case bundleapi.Version1:
 		clientv1, err := s.hub.V1(clientConf)
 		if err != nil {
 			return fmt.Errorf("failed to create API client v1: %w", err)
 		}
-
-		hub.Source = &auditv1.PolicySource_Hub_Label{Label: s.conf.Remote.BundleLabel}
 
 		s.client = &cloudAPIv1{
 			client:      clientv1,
@@ -259,14 +253,8 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		var source bundleapiv2.Source
 		switch {
 		case s.conf.Remote.DeploymentID != "":
-			hub.Source = &auditv1.PolicySource_Hub_RemoteBundle_{
-				RemoteBundle: &auditv1.PolicySource_Hub_RemoteBundle{
-					DeploymentId: s.conf.Remote.DeploymentID,
-				},
-			}
 			source = bundleapiv2.DeploymentID(s.conf.Remote.DeploymentID)
 		case s.conf.Remote.PlaygroundID != "":
-			hub.Source = &auditv1.PolicySource_Hub_PlaygroundId{PlaygroundId: s.conf.Remote.PlaygroundID}
 			source = bundleapiv2.PlaygroundID(s.conf.Remote.PlaygroundID)
 		default:
 			return errors.New("no bundle source configured")
@@ -390,7 +378,6 @@ func (s *RemoteSource) removeBundle(healthy bool) {
 	s.mu.Lock()
 	oldBundle = s.bundle
 	s.bundle = nil
-	s.setBundleID("")
 	s.healthy = healthy
 	s.mu.Unlock()
 
@@ -440,7 +427,6 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 	oldBundle = s.bundle
 	s.bundle = newBundle
 	s.healthy = true
-	s.setBundleID(s.bundle.ID())
 	s.mu.Unlock()
 
 	s.NotifySubscribers(storage.NewReloadEvent())
@@ -455,28 +441,6 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 	metrics.Record(context.Background(), metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 
 	return nil
-}
-
-// setBundleID sets bundle ID field of the remote hub policy source.
-func (s *RemoteSource) setBundleID(bundleID string) {
-	if s.bundle == nil &&
-		s.source == nil &&
-		s.bundleVersion != bundleapi.Version2 &&
-		s.bundle.Type() != bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		return
-	}
-
-	h, ok := s.source.Source.(*auditv1.PolicySource_Hub_)
-	if !ok {
-		return
-	}
-
-	rb, ok := h.Hub.Source.(*auditv1.PolicySource_Hub_RemoteBundle_)
-	if !ok {
-		return
-	}
-
-	rb.RemoteBundle.BundleId = bundleID
 }
 
 func (s *RemoteSource) activeBundleID() string {
@@ -740,7 +704,34 @@ func (s *RemoteSource) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *RemoteSource) Source() *auditv1.PolicySource {
-	return s.source
+	hubPolicySource := &auditv1.PolicySource_Hub{}
+	switch s.bundleVersion {
+	case bundleapi.Version1:
+		hubPolicySource.Source = &auditv1.PolicySource_Hub_Label{
+			Label: s.conf.Remote.BundleLabel,
+		}
+	case bundleapi.Version2:
+		switch {
+		case s.conf.Remote.DeploymentID != "":
+			hubPolicySource.Source = &auditv1.PolicySource_Hub_RemoteBundle_{
+				RemoteBundle: &auditv1.PolicySource_Hub_RemoteBundle{
+					DeploymentId: s.conf.Remote.DeploymentID,
+					BundleId:     s.activeBundleID(),
+				},
+			}
+		case s.conf.Remote.PlaygroundID != "":
+			hubPolicySource.Source = &auditv1.PolicySource_Hub_PlaygroundId{
+				PlaygroundId: s.conf.Remote.PlaygroundID,
+			}
+		}
+	default:
+	}
+
+	return &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Hub_{
+			Hub: hubPolicySource,
+		},
+	}
 }
 
 func (s *RemoteSource) SourceKind() string {
@@ -757,6 +748,5 @@ func (s *RemoteSource) Close() error {
 
 	err := s.bundle.Close()
 	s.bundle = nil
-	s.setBundleID("")
 	return err
 }

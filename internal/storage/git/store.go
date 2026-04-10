@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-git/go-git/v6"
@@ -55,14 +56,15 @@ func init() {
 }
 
 type Store struct {
-	log    *zap.SugaredLogger
-	conf   *Conf
-	idx    index.Index
-	repo   *git.Repository
-	source *auditv1.PolicySource
-	sf     singleflight.Group
+	log  *zap.SugaredLogger
+	conf *Conf
+	idx  index.Index
+	repo *git.Repository
+	sf   singleflight.Group
 	*storage.SubscriptionManager
-	subDir string
+	subDir         string
+	currCommitHash string
+	mu             sync.RWMutex
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
@@ -92,16 +94,6 @@ func (s *Store) init(ctx context.Context) error {
 		return fmt.Errorf("failed to stat %s: %w", s.conf.CheckoutDir, err)
 	} else if finfo != nil && !finfo.IsDir() {
 		return fmt.Errorf("not a directory: %s", s.conf.CheckoutDir)
-	}
-
-	s.source = &auditv1.PolicySource{
-		Source: &auditv1.PolicySource_Git_{
-			Git: &auditv1.PolicySource_Git{
-				RepositoryUrl: s.conf.URL,
-				Branch:        s.conf.getBranch(),
-				Subdirectory:  s.conf.getSubDir(),
-			},
-		},
 	}
 
 	loadAndStartPoller := func() error {
@@ -147,9 +139,7 @@ func (s *Store) init(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.setHash(); err != nil {
-		return fmt.Errorf("failed to set hash: %w", err)
-	}
+	s.setCurrentCommitHash()
 
 	return loadAndStartPoller()
 }
@@ -216,9 +206,7 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to pull: %w", err)
 	}
 
-	if err := s.setHash(); err != nil {
-		return fmt.Errorf("failed to set hash: %w", err)
-	}
+	s.setCurrentCommitHash()
 
 	evts, err := s.idx.Reload(ctx)
 	if err != nil {
@@ -232,28 +220,39 @@ func (s *Store) Reload(ctx context.Context) error {
 }
 
 func (s *Store) Source() *auditv1.PolicySource {
-	return s.source
+	return &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Git_{
+			Git: &auditv1.PolicySource_Git{
+				RepositoryUrl: s.conf.URL,
+				Branch:        s.conf.getBranch(),
+				Subdirectory:  s.conf.getSubDir(),
+				Hash:          s.currentCommitHash(),
+			},
+		},
+	}
 }
 
-// setHash sets hash field of the git policy source.
-func (s *Store) setHash() error {
-	if s.source == nil &&
-		s.repo == nil {
-		return nil
+func (s *Store) currentCommitHash() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.currCommitHash
+}
+
+func (s *Store) setCurrentCommitHash() {
+	if s.repo == nil {
+		return
 	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	head, err := s.repo.Head()
 	if err != nil {
-		return fmt.Errorf("failed to get HEAD: %w", err)
+		return
 	}
 
-	g, ok := s.source.Source.(*auditv1.PolicySource_Git_)
-	if !ok {
-		return nil
-	}
-
-	g.Git.Hash = head.Hash().String()
-	return nil
+	s.currCommitHash = head.Hash().String()
 }
 
 func isEmptyDir(dir string) (bool, error) {
@@ -470,9 +469,7 @@ func (s *Store) updateIndex(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.setHash(); err != nil {
-		return fmt.Errorf("failed to set hash: %w", err)
-	}
+	s.setCurrentCommitHash()
 
 	if changes == nil {
 		s.log.Debug("No new commits")
