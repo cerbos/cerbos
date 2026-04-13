@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/hack/tools/changelog
 go 1.26
 
 require (
-	github.com/alecthomas/kong v1.14.0
+	github.com/alecthomas/kong v1.15.0
 	github.com/go-git/go-git/v6 v6.0.0-alpha.1
 )
 

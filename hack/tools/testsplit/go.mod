@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/hack/tools/testsplit
 go 1.26
 
 require (
-	github.com/alecthomas/kong v1.14.0
+	github.com/alecthomas/kong v1.15.0
 	github.com/gobwas/glob v0.2.3
 	golang.org/x/tools v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
