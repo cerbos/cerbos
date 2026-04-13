@@ -173,7 +173,7 @@ jobs:
           path: junit.*.xml
 
       - name: Upload unit coverage to Coveralls
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
+        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
         continue-on-error: true
         with:
           path-to-profile: unit.cover
@@ -181,7 +181,7 @@ jobs:
           parallel: true
 
       - name: Upload integration coverage to Coveralls
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
+        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
         continue-on-error: true
         with:
           path-to-profile: integration.cover
@@ -237,7 +237,7 @@ jobs:
           path: test-times.json
 
       - name: Complete coveralls report
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
+        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
         continue-on-error: true
         with:
           parallel-finished: true
