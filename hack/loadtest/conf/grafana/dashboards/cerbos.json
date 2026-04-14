@@ -102,7 +102,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 3
       },
@@ -121,7 +121,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "sum(increase(cerbos_dev_engine_check_latency_bucket[$__interval])) by (le)",
+          "expr": "sum(increase(cerbos_dev_engine_check_latency_milliseconds_bucket[$__interval])) by (le)",
           "format": "heatmap",
           "interval": "",
           "intervalFactor": 5,
@@ -161,8 +161,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
+        "w": 12,
+        "x": 12,
         "y": 3
       },
       "heatmap": {},
@@ -180,7 +180,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "sum(increase(grpc_io_server_server_latency_bucket[$__interval])) by (le)",
+          "expr": "sum(increase(rpc_server_duration_milliseconds_bucket[$__interval])) by (le)",
           "format": "heatmap",
           "interval": "",
           "intervalFactor": 5,
@@ -189,65 +189,6 @@
         }
       ],
       "title": "gRPC",
-      "tooltip": {
-        "show": true,
-        "showHistogram": true
-      },
-      "type": "heatmap",
-      "xAxis": {
-        "show": true
-      },
-      "yAxis": {
-        "format": "ms",
-        "logBase": 1,
-        "show": true
-      },
-      "yBucketBound": "auto"
-    },
-    {
-      "cards": {},
-      "color": {
-        "cardColor": "#b4ff00",
-        "colorScale": "sqrt",
-        "colorScheme": "interpolateSpectral",
-        "exponent": 0.5,
-        "mode": "spectrum"
-      },
-      "dataFormat": "tsbuckets",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 3
-      },
-      "heatmap": {},
-      "hideZeroBuckets": true,
-      "highlightCards": true,
-      "id": 30,
-      "legend": {
-        "show": true
-      },
-      "reverseYBuckets": false,
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": false,
-          "expr": "sum(increase(opencensus_io_http_server_latency_bucket[$__interval])) by (le)",
-          "format": "heatmap",
-          "interval": "",
-          "intervalFactor": 5,
-          "legendFormat": "{{le}}",
-          "refId": "A"
-        }
-      ],
-      "title": "HTTP",
       "tooltip": {
         "show": true,
         "showHistogram": true
@@ -350,7 +291,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(grpc_io_server_server_latency_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(rpc_server_duration_milliseconds_bucket[$__rate_interval])) by (le))",
           "format": "time_series",
           "interval": "",
           "legendFormat": "gRPC Server",
@@ -362,11 +303,11 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(opencensus_io_http_server_latency_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(cerbos_dev_engine_check_latency_milliseconds_bucket[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "interval": "",
-          "legendFormat": "HTTP",
+          "legendFormat": "Engine",
           "refId": "B"
         },
         {
@@ -375,38 +316,12 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": false,
-          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(cerbos_dev_engine_check_latency_bucket[$__rate_interval])) by (le))",
-          "format": "time_series",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "Engine",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": false,
-          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(grpc_io_client_roundtrip_latency_bucket[$__rate_interval])) by (le))",
-          "format": "time_series",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "gRPC client",
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": false,
-          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(cerbos_dev_compiler_compile_duration_bucket[$__rate_interval])) by (le))",
+          "expr": "histogram_quantile(${Percentile:raw}, sum(rate(cerbos_dev_compiler_compile_duration_milliseconds_bucket[$__rate_interval])) by (le))",
           "format": "time_series",
           "hide": false,
           "interval": "",
           "legendFormat": "Compile",
-          "refId": "E"
+          "refId": "C"
         }
       ],
       "title": "Latency ($Percentile)",
@@ -495,22 +410,10 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "sum(rate(grpc_io_server_completed_rpcs[$__rate_interval])) by (grpc_server_method, grpc_server_status)",
+          "expr": "sum(rate(rpc_server_duration_milliseconds_count[$__rate_interval])) by (rpc_method, rpc_grpc_status_code)",
           "interval": "",
-          "legendFormat": "{{grpc_server_method}}-{{grpc_server_status}}",
+          "legendFormat": "{{rpc_method}}-{{rpc_grpc_status_code}}",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "exemplar": true,
-          "expr": "sum(rate(opencensus_io_http_server_request_count_by_method[$__rate_interval])) by (http_method)",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "HTTP-{{http_method}}",
-          "refId": "B"
         }
       ],
       "title": "Request Rate",
