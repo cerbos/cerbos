@@ -242,10 +242,7 @@ func Unmarshal(data []byte) (*Index, error) {
 	}
 
 	bi := newBitmapIndex()
-	bi.bindings, err = unmarshalBindings(msg.Bindings, cores)
-	if err != nil {
-		return nil, err
-	}
+	bi.bindings = unmarshalBindings(msg.Bindings, cores)
 
 	bi.version, err = unmarshalEntries(msg.Version)
 	if err != nil {
@@ -338,9 +335,9 @@ func unmarshalCores(pbCores []*runtimev1.BitmapIndex_FunctionalCore) ([]*Functio
 	return cores, nil
 }
 
-func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) ([]*Binding, error) {
+func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) []*Binding {
 	if len(pbBindings) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	// find the max ID to size the bindings slice.
@@ -381,7 +378,7 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 		bindings[pb.Id] = b
 	}
 
-	return bindings, nil
+	return bindings
 }
 
 func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string], error) {

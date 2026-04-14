@@ -16,7 +16,7 @@ import (
 )
 
 // BindingSource provides access to index bindings for inspection.
-// It exists here to prevent a circular dependency between `inspect`, `ruletable` and `storage`
+// It exists here to prevent a circular dependency between `inspect`, `ruletable` and `storage`.
 type BindingSource interface {
 	GetAllRows() []*index.Binding
 }
