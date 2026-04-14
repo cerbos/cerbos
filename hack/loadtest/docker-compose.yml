@@ -48,6 +48,7 @@ services:
     container_name: prometheus
     image: prom/prometheus:latest@sha256:4a61322ac1103a0e3aea2a61ef1718422a48fa046441f299d71e660a3bc71ae9
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--log.level=warn"]
+    user: "0:0"
     volumes:
       - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -57,6 +58,7 @@ services:
   grafana:
     container_name: grafana
     image: grafana/grafana:latest@sha256:83749231c3835e390a3144e5e940203e42b9589761f20ef3169c716e734ad505
+    user: "0:0"
     environment:
       - GF_LOG_LEVEL=warn
     volumes:
