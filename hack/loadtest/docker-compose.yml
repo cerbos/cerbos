@@ -2,6 +2,7 @@ services:
   cerbos:
     container_name: cerbos
     image: ghcr.io/cerbos/cerbos:${CERBOS_VERSION:-dev}
+    profiles: [pdp]
     restart: always
     command: ["server", "--config=/conf/.cerbos.yaml", "--log-level=warn"]
     depends_on:
@@ -61,6 +62,7 @@ services:
     user: "0:0"
     environment:
       - GF_LOG_LEVEL=warn
+      - PROMETHEUS_URL=${PROMETHEUS_URL:-http://prometheus:9090}
     volumes:
       - ./conf/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
       - ./conf/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml

@@ -128,6 +128,7 @@ put() {
 }
 
 composeProfiles() {
+  echo "--profile" "pdp"
   if [[ "${STORE}" == "postgres" ]]; then
     echo "--profile" "postgres"
   fi
