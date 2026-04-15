@@ -7,5 +7,6 @@ datasources:
     type: prometheus
     access: proxy
     orgId: 1
-    url: http://prometheus:9090
+    uid: PBFA97CFB590B2093
+    url: $PROMETHEUS_URL
     version: 1
