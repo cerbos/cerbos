@@ -64,6 +64,7 @@ if [[ "$BINARY_ONLY" == false ]]; then
   rm -f /tmp/cerbos-loadtest-client.tar.gz
 
   log "Uploading client configs to Client VM..."
+  PARENT_DIR="${SCRIPT_DIR}/.."
   CLIENT_STAGING=$(mktemp -d)
   trap "rm -rf '$CLIENT_STAGING'" EXIT
   mkdir -p "${CLIENT_STAGING}/conf/prometheus" "${CLIENT_STAGING}/conf/grafana/dashboards"
@@ -77,13 +78,14 @@ scrape_configs:
     static_configs:
       - targets: ["${PDP_IP}:3592"]
 PROMEOF
-  cp "${SCRIPT_DIR}/conf/docker-compose.yml" "${CLIENT_STAGING}/conf/docker-compose.yml"
-  cp "${SCRIPT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_STAGING}/conf/grafana/datasources.yaml"
-  cp "${SCRIPT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_STAGING}/conf/grafana/dashboards.yaml"
-  cp "${SCRIPT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_STAGING}/conf/grafana/dashboards/cerbos.json"
-  cp "${SCRIPT_DIR}/../flake.nix" "${CLIENT_STAGING}/flake.nix"
-  cp "${SCRIPT_DIR}/../flake.lock" "${CLIENT_STAGING}/flake.lock"
-  cp "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_STAGING}/loadtest.sh"
+  cp "${PARENT_DIR}/docker-compose.yml" "${CLIENT_STAGING}/docker-compose.yml"
+  cp "${PARENT_DIR}/docker-compose.gcp.yml" "${CLIENT_STAGING}/docker-compose.gcp.yml"
+  cp "${PARENT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_STAGING}/conf/grafana/datasources.yaml"
+  cp "${PARENT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_STAGING}/conf/grafana/dashboards.yaml"
+  cp "${PARENT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_STAGING}/conf/grafana/dashboards/cerbos.json"
+  cp "${PARENT_DIR}/flake.nix" "${CLIENT_STAGING}/flake.nix"
+  cp "${PARENT_DIR}/flake.lock" "${CLIENT_STAGING}/flake.lock"
+  cp "${PARENT_DIR}/loadtest.sh" "${CLIENT_STAGING}/loadtest.sh"
   if [[ -n "${PROTOSET:-}" ]]; then
     if [[ ! -f "$PROTOSET" ]]; then
       err "PROTOSET set but file not found: $PROTOSET"
@@ -152,8 +154,8 @@ if [[ "$BINARY_ONLY" == false ]]; then
   log "Starting Prometheus + Grafana on Client VM..."
   GSSH "$CLIENT_VM" <<ENDSSH
 set -euo pipefail
-cd ${REMOTE_BASE}/conf
-docker compose up -d
+cd ${REMOTE_BASE}
+docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d
 ENDSSH
 fi
 

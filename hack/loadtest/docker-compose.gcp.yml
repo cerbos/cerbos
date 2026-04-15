@@ -1,0 +1,7 @@
+services:
+  prometheus:
+    network_mode: host
+  grafana:
+    network_mode: host
+    environment:
+      - PROMETHEUS_URL=http://localhost:9090
