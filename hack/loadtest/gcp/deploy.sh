@@ -81,8 +81,8 @@ PROMEOF
   cp "${SCRIPT_DIR}/conf/grafana/datasources.yaml" "${CLIENT_STAGING}/conf/grafana/datasources.yaml"
   cp "${SCRIPT_DIR}/conf/grafana/dashboards.yaml" "${CLIENT_STAGING}/conf/grafana/dashboards.yaml"
   cp "${SCRIPT_DIR}/conf/grafana/dashboards/cerbos.json" "${CLIENT_STAGING}/conf/grafana/dashboards/cerbos.json"
-  cp "${SCRIPT_DIR}/flake.nix" "${CLIENT_STAGING}/flake.nix"
-  cp "${SCRIPT_DIR}/flake.lock" "${CLIENT_STAGING}/flake.lock"
+  cp "${SCRIPT_DIR}/../flake.nix" "${CLIENT_STAGING}/flake.nix"
+  cp "${SCRIPT_DIR}/../flake.lock" "${CLIENT_STAGING}/flake.lock"
   cp "${SCRIPT_DIR}/../loadtest.sh" "${CLIENT_STAGING}/loadtest.sh"
   if [[ -n "${PROTOSET:-}" ]]; then
     if [[ ! -f "$PROTOSET" ]]; then
