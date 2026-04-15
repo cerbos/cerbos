@@ -189,8 +189,12 @@ func getOrInitStringSet(m map[string]util.StringSet, key string) util.StringSet 
 }
 
 func listActions(b *index.Binding) []string {
-	var actions []string
+	n := len(b.AllowActions)
+	if b.Action != "" {
+		n++
+	}
 
+	actions := make([]string, 0, n)
 	if b.Action != "" {
 		actions = append(actions, b.Action)
 	}
