@@ -23,14 +23,19 @@ type BindingSource interface {
 
 func RuleTables(src BindingSource) *RuleTable {
 	return &RuleTable{
-		src:     src,
-		results: make(map[string]*responsev1.InspectPoliciesResponse_Result),
+		src:            src,
+		results:        make(map[string]*responsev1.InspectPoliciesResponse_Result),
+		constantsCache: make(map[*index.FunctionalCore][]*responsev1.InspectPoliciesResponse_Constant),
+		variablesCache: make(map[*index.FunctionalCore][]*responsev1.InspectPoliciesResponse_Variable),
 	}
 }
 
+// RuleTable is not safe for concurrent use: the internal caches are unsynchronized.
 type RuleTable struct {
-	src     BindingSource
-	results map[string]*responsev1.InspectPoliciesResponse_Result
+	src            BindingSource
+	results        map[string]*responsev1.InspectPoliciesResponse_Result
+	constantsCache map[*index.FunctionalCore][]*responsev1.InspectPoliciesResponse_Constant
+	variablesCache map[*index.FunctionalCore][]*responsev1.InspectPoliciesResponse_Variable
 }
 
 // Inspect inspects the given rule table and caches the inspection related information internally.
@@ -100,7 +105,7 @@ func (rt *RuleTable) inspectBinding(
 		}
 	}
 
-	rowConstants, err := listConstants(b)
+	rowConstants, err := rt.listConstants(b)
 	if err != nil {
 		return err
 	}
@@ -118,7 +123,7 @@ func (rt *RuleTable) inspectBinding(
 		}
 	}
 
-	for _, variable := range listVariables(b) {
+	for _, variable := range rt.listVariables(b) {
 		if !variableSet.Contains(variable.Name) {
 			variableSet[variable.Name] = struct{}{}
 			result.Variables = append(result.GetVariables(), variable)
@@ -209,7 +214,13 @@ func listActions(b *index.Binding) []string {
 	return actions
 }
 
-func listConstants(b *index.Binding) ([]*responsev1.InspectPoliciesResponse_Constant, error) {
+// Results are cached per-Core because many bindings share the same Core pointer
+// (they differ only in routing dimensions) and structpb conversion is non-trivial.
+func (rt *RuleTable) listConstants(b *index.Binding) ([]*responsev1.InspectPoliciesResponse_Constant, error) {
+	if cached, ok := rt.constantsCache[b.Core]; ok {
+		return cached, nil
+	}
+
 	var nParams, nDRParams int
 	if b.Core.Params != nil {
 		nParams = len(b.Core.Params.Constants)
@@ -256,6 +267,7 @@ func listConstants(b *index.Binding) ([]*responsev1.InspectPoliciesResponse_Cons
 		})
 	}
 
+	rt.constantsCache[b.Core] = constants
 	return constants, nil
 }
 
@@ -270,8 +282,15 @@ func getDerivedRole(b *index.Binding) *responsev1.InspectPoliciesResponse_Derive
 	}
 }
 
-func listVariables(b *index.Binding) []*responsev1.InspectPoliciesResponse_Variable {
+// Results are cached per-Core because many bindings share the same Core pointer
+// (they differ only in routing dimensions).
+func (rt *RuleTable) listVariables(b *index.Binding) []*responsev1.InspectPoliciesResponse_Variable {
+	if cached, ok := rt.variablesCache[b.Core]; ok {
+		return cached
+	}
+
 	if b.Core.Params == nil {
+		rt.variablesCache[b.Core] = nil
 		return nil
 	}
 
@@ -294,5 +313,6 @@ func listVariables(b *index.Binding) []*responsev1.InspectPoliciesResponse_Varia
 		})
 	}
 
+	rt.variablesCache[b.Core] = variables
 	return variables
 }
