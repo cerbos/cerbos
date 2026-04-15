@@ -1,0 +1,9 @@
+# Copyright 2021-2026 Zenauth Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
+open-grafana-port:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # shellcheck source=env.sh
+    source "{{ justfile_directory() }}/env.sh"
+    gcloud compute ssh cerbos-loadtest-client --zone="${GCP_ZONE}" --tunnel-through-iap -- -L 3000:localhost:3000
