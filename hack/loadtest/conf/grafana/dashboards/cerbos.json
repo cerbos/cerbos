@@ -499,7 +499,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "process_open_fds{instance=\"cerbos:3592\"}",
+          "expr": "process_open_fds{}",
           "interval": "",
           "intervalFactor": 2,
           "legendFormat": "open file descriptors",
@@ -589,7 +589,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "go_goroutines{instance=\"cerbos:3592\"}",
+          "expr": "go_goroutines{}",
           "interval": "",
           "intervalFactor": 2,
           "legendFormat": "Go Routines",
@@ -680,7 +680,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "process_resident_memory_bytes{instance=\"cerbos:3592\"}",
+          "expr": "process_resident_memory_bytes{}",
           "interval": "",
           "legendFormat": "resident",
           "refId": "A"
@@ -691,7 +691,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "process_virtual_memory_bytes{instance=\"cerbos:3592\"}",
+          "expr": "process_virtual_memory_bytes{}",
           "hide": false,
           "interval": "",
           "legendFormat": "virtual",
@@ -782,7 +782,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "go_memstats_alloc_bytes{instance=\"cerbos:3592\"}",
+          "expr": "go_memstats_alloc_bytes{}",
           "interval": "",
           "intervalFactor": 2,
           "legendFormat": "bytes allocated",
@@ -794,7 +794,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "rate(go_memstats_alloc_bytes_total{instance=\"cerbos:3592\"}[$__interval])",
+          "expr": "rate(go_memstats_alloc_bytes_total{}[$__interval])",
           "hide": true,
           "interval": "",
           "intervalFactor": 2,
@@ -807,7 +807,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "go_memstats_stack_inuse_bytes{instance=\"cerbos:3592\"}",
+          "expr": "go_memstats_stack_inuse_bytes{}",
           "hide": false,
           "interval": "",
           "intervalFactor": 2,
@@ -820,7 +820,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "go_memstats_heap_inuse_bytes{instance=\"cerbos:3592\"}",
+          "expr": "go_memstats_heap_inuse_bytes{}",
           "hide": false,
           "interval": "",
           "intervalFactor": 2,
@@ -912,7 +912,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "go_gc_duration_seconds{instance=\"cerbos:3592\"}",
+          "expr": "go_gc_duration_seconds{}",
           "interval": "",
           "intervalFactor": 2,
           "legendFormat": "gc duration {{quantile}}",
