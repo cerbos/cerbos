@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+// Marshal produces an immutable artefact: indexes reconstructed via Unmarshal are read-only snapshots and must not be passed to any mutating method on Index.
 func (m *Index) Marshal() ([]byte, error) {
 	bi := m.bi
 
@@ -32,9 +33,12 @@ func (m *Index) Marshal() ([]byte, error) {
 		pbCores[i] = pc
 	}
 
-	pbBindings := make([]*runtimev1.BitmapIndex_Binding, len(bi.bindings))
-	for i, b := range bi.bindings {
-		pbBindings[i] = marshalBinding(b, coreIndex)
+	pbBindings := make([]*runtimev1.BitmapIndex_Binding, 0, len(bi.bindings)-len(bi.freeIDs))
+	for _, b := range bi.bindings {
+		if b == nil {
+			continue
+		}
+		pbBindings = append(pbBindings, marshalBinding(b, coreIndex))
 	}
 
 	version, err := marshalEntries(bi.version.m)
