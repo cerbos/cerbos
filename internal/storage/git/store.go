@@ -277,16 +277,16 @@ func isEmptyDir(dir string) (bool, error) {
 }
 
 func (s *Store) cloneRepo(ctx context.Context) error {
-	auth, err := s.conf.getAuth()
-	if err != nil {
-		return fmt.Errorf("failed to create git auth credentials: %w", err)
-	}
-
 	opts := &git.CloneOptions{
 		URL:           s.conf.URL,
-		Auth:          auth,
 		ReferenceName: plumbing.NewBranchReferenceName(s.conf.getBranch()),
 		SingleBranch:  true,
+	}
+
+	if opt, err := s.conf.getAuth(); err != nil {
+		return fmt.Errorf("failed to create git auth credentials: %w", err)
+	} else if opt != nil {
+		opts.ClientOptions = append(opts.ClientOptions, opt)
 	}
 
 	s.log.Infof("Cloning git repo from %s", s.conf.URL)
@@ -341,16 +341,16 @@ func (s *Store) pullAndCompare(ctx context.Context) (object.Changes, error) {
 
 		branch := s.conf.getBranch()
 
-		auth, err := s.conf.getAuth()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
-		}
-
 		// Now pull from remote
 		opts := &git.PullOptions{
-			Auth:          auth,
 			ReferenceName: plumbing.NewBranchReferenceName(branch),
 			SingleBranch:  true,
+		}
+
+		if opt, err := s.conf.getAuth(); err != nil {
+			return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
+		} else if opt != nil {
+			opts.ClientOptions = append(opts.ClientOptions, opt)
 		}
 
 		pullCtx, pullCancel := s.conf.getOpCtx(ctx)

@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-git/go-git/v6/plumbing/transport"
+	"github.com/go-git/go-git/v6/plumbing/client"
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
 	"github.com/go-git/go-git/v6/plumbing/transport/ssh"
 	"go.uber.org/multierr"
@@ -65,7 +65,7 @@ type SSHAuth struct {
 	Password string `yaml:"password" conf:",example=pw"` //nolint:gosec
 }
 
-func (sa *SSHAuth) Auth() (transport.AuthMethod, error) {
+func (sa *SSHAuth) Auth() (client.SSHAuth, error) {
 	if sa == nil || sa.PrivateKeyFile == "" {
 		return nil, nil
 	}
@@ -86,7 +86,7 @@ type HTTPSAuth struct {
 	Password string `yaml:"password" conf:",example=${GITHUB_TOKEN}"` //nolint:gosec
 }
 
-func (ha *HTTPSAuth) Auth() (transport.AuthMethod, error) {
+func (ha *HTTPSAuth) Auth() (client.HTTPAuth, error) {
 	if ha == nil || (ha.Username == "" && ha.Password == "") {
 		return nil, nil
 	}
@@ -152,12 +152,22 @@ func (conf *Conf) getBranch() string {
 	return branch
 }
 
-func (conf *Conf) getAuth() (transport.AuthMethod, error) {
+func (conf *Conf) getAuth() (client.Option, error) {
 	switch conf.Protocol {
 	case "https":
-		return conf.HTTPS.Auth()
+		httpAuth, err := conf.HTTPS.Auth()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get HTTP credentials: %w", err)
+		}
+
+		return client.WithHTTPAuth(httpAuth), nil
 	case "ssh":
-		return conf.SSH.Auth()
+		sshAuth, err := conf.SSH.Auth()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get SSH credentials: %w", err)
+		}
+
+		return client.WithSSHAuth(sshAuth), nil
 	default:
 		return nil, nil
 	}
