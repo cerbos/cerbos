@@ -2,6 +2,217 @@
   "$id": "https://api.cerbos.test/cerbos/private/v1/ServerTestCase.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "authzen.authorization.v1.AccessEvaluationBatchRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/authzen.authorization.v1.Action"
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation"
+          },
+          "minItems": 1
+        },
+        "options": {
+          "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationsOptions"
+        },
+        "resource": {
+          "$ref": "#/definitions/authzen.authorization.v1.Resource"
+        },
+        "subject": {
+          "$ref": "#/definitions/authzen.authorization.v1.Subject"
+        }
+      }
+    },
+    "authzen.authorization.v1.AccessEvaluationBatchRequest.Evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/authzen.authorization.v1.Action"
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "resource": {
+          "$ref": "#/definitions/authzen.authorization.v1.Resource"
+        },
+        "subject": {
+          "$ref": "#/definitions/authzen.authorization.v1.Subject"
+        }
+      }
+    },
+    "authzen.authorization.v1.AccessEvaluationBatchResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse"
+          }
+        }
+      }
+    },
+    "authzen.authorization.v1.AccessEvaluationRequest": {
+      "type": "object",
+      "required": [
+        "subject",
+        "resource",
+        "action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/authzen.authorization.v1.Action"
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "resource": {
+          "$ref": "#/definitions/authzen.authorization.v1.Resource"
+        },
+        "subject": {
+          "$ref": "#/definitions/authzen.authorization.v1.Subject"
+        }
+      }
+    },
+    "authzen.authorization.v1.AccessEvaluationResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "decision": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authzen.authorization.v1.AccessEvaluationsOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluationsSemantic": {
+          "type": "string",
+          "enum": [
+            "",
+            "execute_all",
+            "deny_on_first_deny",
+            "permit_on_first_permit"
+          ]
+        }
+      }
+    },
+    "authzen.authorization.v1.Action": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "authzen.authorization.v1.Resource": {
+      "type": "object",
+      "required": [
+        "type",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "authzen.authorization.v1.Subject": {
+      "type": "object",
+      "required": [
+        "type",
+        "id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "cerbos.audit.v1.RequestContext": {
       "type": "object",
       "additionalProperties": false,
@@ -1319,6 +1530,30 @@
         }
       }
     },
+    "cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationBatchRequest"
+        },
+        "wantResponse": {
+          "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationBatchResponse"
+        }
+      }
+    },
+    "cerbos.private.v1.ServerTestCase.AccessEvaluationCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationRequest"
+        },
+        "wantResponse": {
+          "$ref": "#/definitions/authzen.authorization.v1.AccessEvaluationResponse"
+        }
+      }
+    },
     "cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall": {
       "type": "object",
       "additionalProperties": false,
@@ -2432,6 +2667,12 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "accessEvaluation": {
+      "$ref": "#/definitions/cerbos.private.v1.ServerTestCase.AccessEvaluationCall"
+    },
+    "accessEvaluationBatch": {
+      "$ref": "#/definitions/cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall"
+    },
     "adminAddOrUpdatePolicy": {
       "$ref": "#/definitions/cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall"
     },

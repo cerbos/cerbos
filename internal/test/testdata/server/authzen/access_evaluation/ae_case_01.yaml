@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
+---
+description: "Allow"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+accessEvaluation:
+  input:
+    {
+      "subject":
+        {
+          "type": "user",
+          "id": "donald_duck",
+          "properties":
+            {
+              "cerbos.policyVersion": "20210210",
+              "cerbos.roles": ["employee"],
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+            },
+        },
+      "resource":
+        {
+          "type": "leave_request",
+          "id": "XX125",
+          "properties":
+            {
+              "cerbos.policyVersion": "20210210",
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+      "action": {"name": "view:public", "properties": {}},
+      "context":
+        {
+          "cerbos.requestId": "test",
+          "cerbos.auxData":
+            {
+              "jwt":
+                {
+                  "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iL\
+                    CJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjd\
+                    XN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3Vz\
+                    dG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21\
+                    TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcm\
+                    Jvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrg\
+                    cF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-F\
+                    Ku6oNRHnSEWdMFmnArwPw-YDJWfylLFX",
+                },
+            },
+          "cerbos.includeMeta": true,
+        },
+    }
+  wantResponse:
+    {
+      "decision": true,
+      "context":
+        {
+          "cerbos.response":
+            {
+              "requestId": "test",
+              "results":
+                [
+                  {
+                      "actions": {"view:public": "EFFECT_ALLOW"},
+                      "meta":
+                        {
+                          "actions": {"view:public": {"matchedPolicy": "resource.leave_request.v20210210"}},
+                          "effectiveDerivedRoles": ["any_employee"],
+                        },
+                      "resource": {"id": "XX125", "kind": "leave_request", "policyVersion": "20210210"},
+                    },
+                ],
+            },
+        },
+    }
