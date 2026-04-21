@@ -228,7 +228,6 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 			return
 		}
 
-		t.Log(protojson.Format(have))
 		require.NoError(t, err)
 		compareProto(t, want, have)
 	}
@@ -452,6 +451,7 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.IgnoreFields(&responsev1.CheckResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlanResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlaygroundFailure_ErrorDetails{}, "context"),
+		protocmp.IgnoreFields(&authorizationv1.AccessEvaluationResponse{}, "context"),
 	))
 
 	if h, ok := have.(interface{ GetCerbosCallId() string }); ok {
