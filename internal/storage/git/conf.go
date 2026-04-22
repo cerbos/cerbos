@@ -160,11 +160,19 @@ func (conf *Conf) getAuth() (client.Option, error) {
 			return nil, fmt.Errorf("failed to get HTTP credentials: %w", err)
 		}
 
+		if httpAuth == nil {
+			return nil, nil
+		}
+
 		return client.WithHTTPAuth(httpAuth), nil
 	case "ssh":
 		sshAuth, err := conf.SSH.Auth()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get SSH credentials: %w", err)
+		}
+
+		if sshAuth == nil {
+			return nil, nil
 		}
 
 		return client.WithSSHAuth(sshAuth), nil
