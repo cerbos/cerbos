@@ -289,6 +289,27 @@ func TestFunctionalChecksum(t *testing.T) {
 	})
 }
 
+func TestDimensionAccessorsDropEmpty(t *testing.T) {
+	// Principal-policy noop rows carry no role/resource; those "" values must
+	// not leak into the role/resource/version dimension keys.
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		{
+			OriginFqn:  namer.PrincipalPolicyFQN("alice", "default", ""),
+			PolicyKind: policyv1.Kind_KIND_PRINCIPAL,
+			Principal:  "alice",
+			Version:    "default",
+			Params:     &runtimev1.RuleTable_RuleRow_Params{},
+		},
+		makeRow(namer.ResourcePolicyFQN("document", "default", "")),
+	}))
+
+	require.ElementsMatch(t, []string{"viewer"}, impl.GetRoles())
+	require.ElementsMatch(t, []string{"document"}, impl.GetResources())
+	require.ElementsMatch(t, []string{"default"}, impl.GetVersions())
+	require.ElementsMatch(t, []string{""}, impl.GetScopes(), "root scope is a legitimate empty-string key")
+}
+
 func TestGetVersions(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
@@ -345,12 +366,12 @@ func TestQueryMulti(t *testing.T) {
 	}))
 
 	t.Run("all nil returns everything", func(t *testing.T) {
-		res := impl.QueryMulti(nil, nil, nil, nil, nil)
+		res := impl.QueryMulti(nil, nil, nil, nil, nil, false)
 		require.Len(t, res, 3)
 	})
 
 	t.Run("filter by version", func(t *testing.T) {
-		res := impl.QueryMulti([]string{"v1"}, nil, nil, nil, nil)
+		res := impl.QueryMulti([]string{"v1"}, nil, nil, nil, nil, false)
 		require.Len(t, res, 2)
 		for _, b := range res {
 			require.Equal(t, "v1", b.Version)
@@ -358,25 +379,25 @@ func TestQueryMulti(t *testing.T) {
 	})
 
 	t.Run("filter by multiple roles", func(t *testing.T) {
-		res := impl.QueryMulti(nil, nil, nil, []string{"viewer", "editor"}, nil)
+		res := impl.QueryMulti(nil, nil, nil, []string{"viewer", "editor"}, nil, false)
 		require.Len(t, res, 3)
 	})
 
 	t.Run("filter by action", func(t *testing.T) {
-		res := impl.QueryMulti(nil, nil, nil, nil, []string{"edit"})
+		res := impl.QueryMulti(nil, nil, nil, nil, []string{"edit"}, false)
 		require.Len(t, res, 1)
 		require.Equal(t, "editor", res[0].Role)
 	})
 
 	t.Run("AND across dimensions", func(t *testing.T) {
-		res := impl.QueryMulti([]string{"v1"}, []string{"document"}, nil, []string{"viewer"}, []string{"view"})
+		res := impl.QueryMulti([]string{"v1"}, []string{"document"}, nil, []string{"viewer"}, []string{"view"}, false)
 		require.Len(t, res, 1)
 		require.Equal(t, "viewer", res[0].Role)
 		require.Equal(t, "document", res[0].Resource)
 	})
 
 	t.Run("no match returns nil", func(t *testing.T) {
-		res := impl.QueryMulti([]string{"v99"}, nil, nil, nil, nil)
+		res := impl.QueryMulti([]string{"v99"}, nil, nil, nil, nil, false)
 		require.Nil(t, res)
 	})
 }
@@ -397,15 +418,233 @@ func TestQueryMultiAllowActions(t *testing.T) {
 		}),
 	}))
 
-	t.Run("action filter includes AllowActions bindings", func(t *testing.T) {
-		res := impl.QueryMulti(nil, nil, nil, nil, []string{"view"})
+	t.Run("action filter returns exact matches plus raw AllowActions bindings", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, nil, nil, []string{"view"}, false)
 		require.Len(t, res, 2)
 	})
 
 	t.Run("no action filter returns all including AllowActions", func(t *testing.T) {
-		res := impl.QueryMulti(nil, nil, nil, nil, nil)
+		res := impl.QueryMulti(nil, nil, nil, nil, nil, false)
 		require.Len(t, res, 2)
 	})
+}
+
+func TestQueryMultiSynthesis(t *testing.T) {
+	t.Run("uncovered action produces unconditional DENY", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"delete"}, true)
+		denies := collectDenies(res)
+		require.Len(t, denies, 1)
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, denies[0].Core.Effect)
+		require.True(t, denies[0].Core.FromRolePolicy)
+		require.True(t, denies[0].NoMatchForScopePermissions)
+		require.Equal(t, "viewer", denies[0].Role)
+		require.Equal(t, "delete", denies[0].Action)
+	})
+
+	t.Run("unconditionally covered action yields no deny", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"view"}, true)
+		require.Empty(t, collectDenies(res))
+	})
+
+	t.Run("conditional cover produces Condition_None-wrapped DENY", func(t *testing.T) {
+		impl := index.New()
+		cond := &runtimev1.Condition{
+			Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: "request.resource.attr.public == true"}},
+		}
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.Condition = cond
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"view"}, true)
+		denies := collectDenies(res)
+		require.Len(t, denies, 1)
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, denies[0].Core.Effect)
+		require.Equal(t, policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS, denies[0].Core.ScopePermissions)
+		noneOp, ok := denies[0].Core.Condition.Op.(*runtimev1.Condition_None)
+		require.True(t, ok)
+		require.Equal(t, cond, noneOp.None.Expr[0])
+	})
+
+	t.Run("fans out across multiple target actions", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+						Actions: map[string]*emptypb.Empty{"view": {}},
+					},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"edit", "delete"}, true)
+		denies := collectDenies(res)
+		require.Len(t, denies, 2)
+		require.ElementsMatch(t, []string{"edit", "delete"}, []string{denies[0].Action, denies[1].Action})
+	})
+
+	t.Run("unconditional cover does not suppress conditional DENY for same action", func(t *testing.T) {
+		impl := index.New()
+		cond := &runtimev1.Condition{
+			Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: "true"}},
+		}
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Name = "unconditional"
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view": {}}},
+				}
+			}),
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Name = "conditional"
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.Condition = cond
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view": {}}},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"view"}, true)
+		denies := collectDenies(res)
+		require.Len(t, denies, 1)
+		noneOp, ok := denies[0].Core.Condition.Op.(*runtimev1.Condition_None)
+		require.True(t, ok)
+		require.Equal(t, cond, noneOp.None.Expr[0])
+	})
+
+	t.Run("glob AllowActions covers matching target action", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view:*": {}}},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"view:summary"}, true)
+		require.Empty(t, collectDenies(res))
+	})
+
+	t.Run("role has policy for other resource produces NoMatch DENY", func(t *testing.T) {
+		// viewer has a role policy for "document" but not for "image". Querying
+		// for "image" must still synthesise a deny: the role has a role policy
+		// somewhere, so implicit deny applies to any resource it doesn't cover.
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view": {}}},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"image"}, nil, []string{"viewer"}, []string{"view"}, true)
+		require.Len(t, res, 1)
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, res[0].Core.Effect)
+		require.True(t, res[0].NoMatchForScopePermissions)
+		require.Equal(t, "image", res[0].Resource)
+		require.Equal(t, "view", res[0].Action)
+	})
+
+	t.Run("non-AllowActions rows don't trigger synthesis", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.FromRolePolicy = false
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
+				r.Params = &runtimev1.RuleTable_RuleRow_Params{
+					OrderedVariables: []*runtimev1.Variable{},
+					Constants:        map[string]*structpb.Value{},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, []string{"delete"}, true)
+		require.Empty(t, collectDenies(res))
+	})
+
+	t.Run("multiple resources synthesise per-resource NoMatch denies", func(t *testing.T) {
+		// viewer has a policy for "document" only. Querying resources=[document,image]
+		// yields one deny for (image, delete) and one for (document, delete): both
+		// go via the NoMatch path but image hits the "no resource-matched bindings"
+		// branch while document hits the "action not in AllowActions" branch.
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view": {}}},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document", "image"}, nil, []string{"viewer"}, []string{"delete"}, true)
+		denies := collectDenies(res)
+		require.Len(t, denies, 2)
+		resources := []string{denies[0].Resource, denies[1].Resource}
+		require.ElementsMatch(t, []string{"document", "image"}, resources)
+		for _, d := range denies {
+			require.True(t, d.NoMatchForScopePermissions)
+			require.Equal(t, "delete", d.Action)
+		}
+	})
+}
+
+func collectDenies(bindings []*index.Binding) []*index.Binding {
+	var denies []*index.Binding
+	for _, b := range bindings {
+		if b.Core.Effect == effectv1.Effect_EFFECT_DENY {
+			denies = append(denies, b)
+		}
+	}
+	return denies
 }
 
 func TestQueryAllowActionsSyntheticDeny(t *testing.T) {

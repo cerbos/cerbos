@@ -70,11 +70,19 @@ func (idx *bitmapIndex) addBinding(b *Binding) {
 
 	idx.universe.Add(id)
 
-	idx.version.Add(b.Version, id)
+	// Scope "" is a valid literal (root scope), always indexed. Other dimensions
+	// skip "" to avoid leaking empties from policies that don't participate in
+	// them (e.g. principal-policy noop rows have no role/resource).
 	idx.scope.Add(b.Scope, id)
-
-	idx.role.Set(b.Role, id)
-	idx.resource.Set(b.Resource, id)
+	if b.Version != "" {
+		idx.version.Add(b.Version, id)
+	}
+	if b.Role != "" {
+		idx.role.Set(b.Role, id)
+	}
+	if b.Resource != "" {
+		idx.resource.Set(b.Resource, id)
+	}
 
 	if b.AllowActions != nil {
 		idx.allowActionsBitmap.Add(id)
@@ -112,10 +120,7 @@ func (idx *bitmapIndex) removeBinding(b *Binding) {
 	}
 
 	idx.policyKind.Remove(b.Core.PolicyKind, id)
-
-	if b.Principal != "" {
-		idx.principal.Remove(b.Principal, id)
-	}
+	idx.principal.Remove(b.Principal, id)
 
 	idx.freeID(id)
 }
