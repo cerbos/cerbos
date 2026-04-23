@@ -11,12 +11,13 @@ testsplit_dir := join(justfile_directory(), "hack", "tools", "testsplit")
 tools_mod_dir := join(justfile_directory(), "tools")
 
 export TOOLS_BIN_DIR := join(env_var_or_default("XDG_CACHE_HOME", join(env_var("HOME"), ".cache")), "cerbos/bin")
+export PATH := TOOLS_BIN_DIR + ":" + env_var("PATH")
 
 default:
     @just --list
 
 align PKG='./...': _betteralign
-    @ GOFLAGS="-tags=tests,integration" "${TOOLS_BIN_DIR}/betteralign" -apply {{ PKG }}
+    @ GOFLAGS="-tags=tests,integration" betteralign -apply {{ PKG }}
 
 build: generate lint tests package
 
@@ -42,7 +43,7 @@ cover PKG='./...' TEST='.*': _cover
     COVERFILE="$(mktemp -t cerbos-XXXXX)"
     trap 'rm -rf "$COVERFILE"' EXIT
     go test -tags=tests,integration -coverprofile="$COVERFILE" -count=1 -run='{{ TEST }}' '{{ PKG }}'
-    "${TOOLS_BIN_DIR}/cover" -p "$COVERFILE"
+    cover -p "$COVERFILE"
 
 docs: generate-confdocs
     @ docs/build.sh
@@ -65,7 +66,7 @@ generate-confdocs:
 generate-helm: _helm-schema
     #!/usr/bin/env bash
     set -euo pipefail
-    "${TOOLS_BIN_DIR}/helm-schema" -c "{{ helm_chart_dir }}"
+    helm-schema -c "{{ helm_chart_dir }}"
 
 generate-json-schemas: _buf
     #!/usr/bin/env bash
@@ -73,7 +74,7 @@ generate-json-schemas: _buf
     rm -rf {{ json_schema_dir }}
     (
         cd {{ tools_mod_dir }}
-        "${TOOLS_BIN_DIR}/buf" generate --template=jsonschema.gen.yaml --output=.. ../api/public
+        buf generate --template=jsonschema.gen.yaml --output=.. ../api/public
     )
 
 generate-mocks QUIET='--log-level=""': _mockery
@@ -81,14 +82,14 @@ generate-mocks QUIET='--log-level=""': _mockery
     set -euo pipefail
     cd {{ justfile_directory() }}
     rm -rf {{ genmocks_dir }}
-    "${TOOLS_BIN_DIR}/mockery" {{ QUIET }}
+    mockery {{ QUIET }}
 
 generate-notice: _go_licence_detector
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{ justfile_directory() }}
     go mod download
-    GOWORK=off go list -m -json all | "${TOOLS_BIN_DIR}/go-licence-detector" -includeIndirect \
+    GOWORK=off go list -m -json all | go-licence-detector -includeIndirect \
         -noticeTemplate=hack/notice/templates/NOTICE.txt.tmpl \
         -overrides=hack/notice/overrides/overrides.json \
         -rules=hack/notice/rules.json \
@@ -101,11 +102,11 @@ generate-proto-code: _buf
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{ justfile_directory() }}
-    "${TOOLS_BIN_DIR}/buf" format -w
+    buf format -w
     rm -rf {{ genpb_dir }}/cerbos
     (
         cd {{ tools_mod_dir }}
-        "${TOOLS_BIN_DIR}/buf" generate --template=api.gen.yaml --output=..
+        buf generate --template=api.gen.yaml --output=..
     )
     hack/scripts/remove-unused-protobuf-imports.sh
     GOWORK=off go mod tidy -C {{ genpb_dir }}
@@ -116,27 +117,30 @@ generate-testdata-json-schemas: _buf
     rm -rf {{ testdata_json_schema_dir }}
     (
         cd {{ tools_mod_dir }}
-        "${TOOLS_BIN_DIR}/buf" generate --template=testdata_jsonschema.gen.yaml --output=.. ../api/private
+        buf generate --template=testdata_jsonschema.gen.yaml --output=.. ../api/private
     )
     mv {{ testdata_json_schema_dir }}/cerbos/private/v1/*TestCase.schema.json {{ testdata_json_schema_dir }}/cerbos/private/v1/QueryPlannerTestSuite.schema.json {{ testdata_json_schema_dir }}
     rm -rf {{ testdata_json_schema_dir }}/cerbos
 
-lint: lint-modernize _golangcilint _buf
-    @ "${TOOLS_BIN_DIR}/golangci-lint" run --config=.golangci.yaml --fix
-    @ "${TOOLS_BIN_DIR}/buf" lint
-    @ "${TOOLS_BIN_DIR}/buf" format --diff --exit-code
+lint: lint-actions lint-modernize _golangcilint _buf
+    @ golangci-lint run --config=.golangci.yaml --fix
+    @ buf lint
+    @ buf format --diff --exit-code
+
+lint-actions *WORKFLOWS: _actionlint _shellcheck
+    @ actionlint {{ WORKFLOWS }}
 
 lint-helm:
     @ deploy/charts/validate.sh
 
 lint-modernize: _modernize
-    @ GOFLAGS=-tags=tests,integration "${TOOLS_BIN_DIR}/modernize" -fix -test ./...
+    @ GOFLAGS=-tags=tests,integration modernize -fix -test ./...
 
 package $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='' $AWS_CONTAINER_REPO='aws.local/cerbos/cerbos' $AWS_PRODUCT_CODE='': _goreleaser
-    @ "${TOOLS_BIN_DIR}/goreleaser"  release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
+    @ goreleaser release --config=.goreleaser.yml --snapshot --skip=announce,publish,validate,sign --clean
 
 package-build BUILD_ID $TELEMETRY_WRITE_KEY='' $TELEMETRY_URL='': _goreleaser
-    "${TOOLS_BIN_DIR}/goreleaser"  build --config=.goreleaser.yml --snapshot --id '{{ BUILD_ID }}' --clean
+    @ goreleaser build --config=.goreleaser.yml --snapshot --id '{{ BUILD_ID }}' --clean
 
 pre-commit: lint-helm generate lint tests
 
@@ -144,17 +148,17 @@ test PKG='./...' TEST='.*':
     @ go test -v -tags=tests,integration -failfast -cover -count=1 -run='{{ TEST }}' '{{ PKG }}'
 
 tests PKG='./...' TEST='.*': _gotestsum
-    @ "${TOOLS_BIN_DIR}/gotestsum" --format=dots-v2 --format-hide-empty-pkg -- -tags=tests,integration -failfast -count=1 -run='{{ TEST }}' '{{ PKG }}'
+    @ gotestsum --format=dots-v2 --format-hide-empty-pkg -- -tags=tests,integration -failfast -count=1 -run='{{ TEST }}' '{{ PKG }}'
 
 test-all TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': (test-race TESTSPLIT_INDEX TESTSPLIT_TOTAL) (test-integration TESTSPLIT_INDEX TESTSPLIT_TOTAL)
 
 test-integration TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
-    @ "${TOOLS_BIN_DIR}/testsplit" split \
+    @ testsplit split \
         --kind=integration \
         --index={{ TESTSPLIT_INDEX }} \
         --total={{ TESTSPLIT_TOTAL }} \
         --ignore-file=.ignore-packages.yaml | \
-        xargs "${TOOLS_BIN_DIR}/gotestsum" \
+        xargs gotestsum \
         --junitfile=junit.integration.{{ TESTSPLIT_INDEX }}.xml \
         -- -tags=tests,integration -race -cover -covermode=atomic -coverprofile=integration.cover
 
@@ -162,17 +166,20 @@ test-npm-packages:
     @ cd npm && corepack npm test
 
 test-race TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
-    @ "${TOOLS_BIN_DIR}/testsplit" split \
+    @ testsplit split \
         --kind=unit \
         --index={{ TESTSPLIT_INDEX }} \
         --total={{ TESTSPLIT_TOTAL }} \
         --ignore-file=.ignore-packages.yaml | \
-        xargs "${TOOLS_BIN_DIR}/gotestsum" \
+        xargs gotestsum \
         --junitfile=junit.unit.{{ TESTSPLIT_INDEX }}.xml \
         -- -tags=tests -race -cover -covermode=atomic -coverprofile=unit.cover
 
 test-times TESTSPLIT_TOTAL='1': _testsplit
-    @ "${TOOLS_BIN_DIR}/testsplit" combine --kinds=unit,integration --total={{ TESTSPLIT_TOTAL }}
+    @ testsplit combine --kinds=unit,integration --total={{ TESTSPLIT_TOTAL }}
+
+vulnerability-check: _govulncheck
+    @ govulncheck ./...
 
 warm-cache: compile _gotestsum _mockery _testsplit
 
@@ -205,32 +212,40 @@ check-http PROTOCOL='https' HOST='localhost' PORT='3592':
 
 # Executables
 
-_betteralign: (_install "betteralign" "github.com/dkorunic/betteralign" "cmd/betteralign")
+_actionlint: (_install "actionlint")
 
-_buf: (_install "buf" "github.com/bufbuild/buf" "cmd/buf")
+_betteralign: (_go-install "betteralign" "github.com/dkorunic/betteralign" "cmd/betteralign")
 
-_cover: (_install "cover" "nikand.dev/go/cover@master" )
+_buf: (_install "buf")
 
-_dlv: (_install "dlv" "github.com/go-delve/delve" "cmd/dlv")
+_cover: (_go-install "cover" "nikand.dev/go/cover")
 
-_go_licence_detector: (_install "go-licence-detector" "go.elastic.co/go-licence-detector")
+_dlv: (_go-install "dlv" "github.com/go-delve/delve" "cmd/dlv")
 
-_golangcilint: (_install "golangci-lint" "github.com/golangci/golangci-lint/v2" "cmd/golangci-lint")
+_go_licence_detector: (_go-install "go-licence-detector" "go.elastic.co/go-licence-detector")
 
-_gotestsum: (_install "gotestsum" "gotest.tools/gotestsum")
+_golangcilint: (_install "golangci-lint")
 
-_goreleaser: (_install "goreleaser" "github.com/goreleaser/goreleaser/v2")
+_goreleaser: (_install "goreleaser")
 
-_helm-schema: (_install "helm-schema" "github.com/dadav/helm-schema" "cmd/helm-schema")
+_gotestsum: (_go-install "gotestsum" "gotest.tools/gotestsum")
 
-_mockery: (_install "mockery" "github.com/vektra/mockery/v3")
+_govulncheck: (_go-install "govulncheck" "golang.org/x/vuln" "cmd/govulncheck")
 
-_modernize: (_install "modernize" "golang.org/x/tools/gopls" "internal/analysis/modernize/cmd/modernize")
+_helm-schema: (_go-install "helm-schema" "github.com/dadav/helm-schema" "cmd/helm-schema")
+
+_install-tools: (_go-install "install-tools" "github.com/cerbos/actions" "cmd/install-tools")
+
+_mockery: (_go-install "mockery" "github.com/vektra/mockery/v3")
+
+_modernize: (_go-install "modernize" "golang.org/x/tools/gopls" "internal/analysis/modernize/cmd/modernize")
+
+_shellcheck: (_install "shellcheck")
 
 _testsplit:
     @ GOWORK=off GOBIN="$TOOLS_BIN_DIR" go install -C {{ testsplit_dir }}
 
-_install EXECUTABLE MODULE CMD_PKG="":
+_go-install EXECUTABLE MODULE CMD_PKG="":
     #!/usr/bin/env bash
     set -euo pipefail
     cd {{ tools_mod_dir }}
@@ -242,14 +257,26 @@ _install EXECUTABLE MODULE CMD_PKG="":
       echo "Installing $SYMLINK" 1>&2
       mkdir -p "$TOOLS_BIN_DIR"
       find "${TOOLS_BIN_DIR}" -lname "$BINARY" -delete
-      if [[ "{{ EXECUTABLE }}" == "golangci-lint" ]]; then
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$TOOLS_BIN_DIR" "v${VERSION}"
-      else
-        export CGO_ENABLED={{ if EXECUTABLE =~ "(^sql|^tbls)" { "1" } else { "0" } }}
-        GOWORK=off GOBIN="$TOOLS_BIN_DIR" go install {{ if CMD_PKG != "" { MODULE + "/" + CMD_PKG } else { MODULE } }}@v${VERSION}
-      fi
+      export CGO_ENABLED={{ if EXECUTABLE =~ "(^sql|^tbls)" { "1" } else { "0" } }}
+      GOWORK=off GOBIN="$TOOLS_BIN_DIR" go install {{ if CMD_PKG != "" { MODULE + "/" + CMD_PKG } else { MODULE } }}@v${VERSION}
       ln -s "$BINARY" "$SYMLINK"
     fi
+
+[positional-arguments]
+_install *EXECUTABLES:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [[ "${CI:-}" = "true" ]]; then
+    for executable in "$@"; do
+      if ! hash "${executable}" 2>/dev/null; then
+        printf "\e[31m%s not found\e[0m\nUse cerbos/actions/install-tools to install it\n" "${executable}"
+      fi
+    done
+  else
+    just _install-tools
+    cd "${TOOLS_BIN_DIR}"
+    install-tools "$@"
+  fi
 
 cerbos *ARGS:
     @ go run cmd/cerbos/main.go {{ ARGS }}

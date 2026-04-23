@@ -15,10 +15,6 @@ jobs:
     timeout-minutes: 30
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -35,20 +31,18 @@ jobs:
           cross_compiling: true
           write_build_cache: true
 
-      - name: Install just
-        uses: ./.github/actions/setup-just
+      - name: Install tools
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: |-
+            buf
+            just
 
       - name: Generate
         run: just generate
 
       - name: Check repo status
-        run: |-
-          REPO_STATUS="$(git status --porcelain)"
-          if [[ ! -z $REPO_STATUS ]]; then
-            echo "::error::Uncommitted changes detected"
-            echo "$REPO_STATUS"
-            exit 1
-          fi
+        uses: cerbos/actions/check-repo-status@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
 
       - name: Test
         run: just test-all
@@ -79,10 +73,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -138,14 +128,15 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - name: Install tools
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: |-
+            goreleaser
+            syft
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
-        with:
-          version: latest
-          args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
+        run: goreleaser release --config=.goreleaser.yml --clean --snapshot --skip=publish
         env:
           AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
           AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
@@ -192,16 +183,12 @@ jobs:
     permissions: {}
     needs: ["tests"]
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
+        uses: cerbos/actions/buf@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}

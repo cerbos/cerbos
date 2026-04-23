@@ -66,6 +66,14 @@
             "rangeStrategy": "pin"
         },
         {
+            "matchPackageNames": [
+                "cerbos/actions",
+                "github.com/cerbos/actions"
+            ],
+            "groupName": "cerbos/actions",
+            "groupSlug": "cerbos-actions"
+        },
+        {
             "description": "Don't update dependencies for npm test cases (they should be kept set to 'latest' because they're pulled from the private registry)",
             "matchFileNames": [
                 "npm/test/cases/*/package.json"

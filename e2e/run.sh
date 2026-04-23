@@ -11,7 +11,7 @@ E2E_PACKAGE=${E2E_PACKAGE:-"./..."}
 CI=${CI:-"false"}
 
 check_prerequisites() {
-    for EXE in helm helmfile kind kubectl telepresence; do
+    for EXE in helm helmfile kind kubectl stern telepresence; do
         command -v "$EXE" >/dev/null 2>&1 || {
             echo "$EXE is required but cannot be found in PATH"
             exit 1
@@ -21,7 +21,7 @@ check_prerequisites() {
 
 start_kind() {
     if [[ "$E2E_SKIP_CLUSTER" == "false" ]]; then
-        kind create cluster --name="$E2E_CLUSTER" --config="${SCRIPT_DIR}/kind.yaml"
+        kind create cluster --name="$E2E_CLUSTER" --config="${SCRIPT_DIR}/kind.yaml" --wait=180s
     fi
 }
 

@@ -27,10 +27,6 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -45,19 +41,20 @@ jobs:
         with:
           cross_compiling: true
 
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - name: Install tools
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: |-
+            goreleaser
+            syft
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
-        with:
-          version: latest
-          args: build --config=.goreleaser.yml --snapshot --id cerbos-aws-lambda-ext --id cerbos-aws-lambda-func --clean
+        run: goreleaser build --config=.goreleaser.yml --snapshot --id cerbos-aws-lambda-ext --id cerbos-aws-lambda-func --clean
         env:
           TELEMETRY_WRITE_KEY: ${{ secrets.TELEMETRY_WRITE_KEY }}
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
-      - name: Upload artifacts as goreleaser build does not upload them
+      - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artifacts
@@ -74,10 +71,6 @@ jobs:
     env:
       AWS_REGION: us-east-2
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -102,7 +95,9 @@ jobs:
           use-installer: true
 
       - name: Install just
-        uses: ./.github/actions/setup-just
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: just
 
       - name: Test Lambda function publishing
         run: |

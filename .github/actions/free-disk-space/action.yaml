@@ -3,12 +3,16 @@ description: Remove unused files to free-up disk space
 runs:
   using: composite
   steps:
-    - shell: bash
-      run: |-
-        wget -O /tmp/rmz --quiet https://github.com/SUPERCILEX/fuc/releases/download/3.1.1/x86_64-unknown-linux-gnu-rmz
-        chmod +x /tmp/rmz
+    - name: Install rmz
+      uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+      with:
+        tools: rmz
+
+    - name: Remove unused files
+      shell: bash
+      run: |
         df -h
-        sudo /tmp/rmz -f \
+        sudo env PATH="${PATH}" rmz -f \
           /opt/az \
           /opt/ghc \
           /opt/google \

@@ -20,10 +20,6 @@ jobs:
       npm: ${{ steps.filter.outputs.npm }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
@@ -56,10 +52,6 @@ jobs:
     timeout-minutes: 15
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -71,20 +63,18 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
-      - name: Install just
-        uses: ./.github/actions/setup-just
+      - name: Install tools
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: |-
+            buf
+            just
 
       - name: Generate
         run: just generate
 
       - name: Check repo status
-        run: |-
-          REPO_STATUS="$(git status --porcelain)"
-          if [[ ! -z $REPO_STATUS ]]; then
-            echo "::error::Uncommitted changes detected"
-            echo "$REPO_STATUS"
-            exit 1
-          fi
+        uses: cerbos/actions/check-repo-status@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
 
   download-test-times:
     name: Download test times
@@ -92,10 +82,6 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Download previous test times
         continue-on-error: true
         uses: dawidd6/action-download-artifact@8a338493df3d275e4a7a63bcff3b8fe97e51a927 # v19
@@ -126,10 +112,6 @@ jobs:
     outputs:
       job-total: ${{ strategy.job-total }}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -143,7 +125,9 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: ./.github/actions/setup-just
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: just
 
       - name: Download previous test times
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -151,7 +135,7 @@ jobs:
           name: previous-test-times
 
       - name: Test
-        run: just test-all ${STRATEGY_JOB_INDEX} ${STRATEGY_JOB_TOTAL}
+        run: just test-all "${STRATEGY_JOB_INDEX}" "${STRATEGY_JOB_TOTAL}"
         env:
           GOEXPERIMENT: loopvar # https://github.com/golang/go/wiki/LoopvarExperiment
           CERBOS_LOG_LEVEL: "debug"
@@ -196,10 +180,6 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check test results
         run: test "${NEEDS_TEST_RESULT}" = "success"
         env:
@@ -218,7 +198,9 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: ./.github/actions/setup-just
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: just
 
       - name: Download JUnit reports
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -226,7 +208,7 @@ jobs:
       - name: Combine JUnit reports
         run: |-
           mv junit-reports-*/junit.*.xml .
-          just test-times ${NEEDS_TEST_OUTPUTS_JOB_TOTAL}
+          just test-times "${NEEDS_TEST_OUTPUTS_JOB_TOTAL}"
         env:
           NEEDS_TEST_OUTPUTS_JOB_TOTAL: ${{ needs.test.outputs.job-total }}
 
@@ -250,10 +232,6 @@ jobs:
     timeout-minutes: 10
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -273,10 +251,6 @@ jobs:
     timeout-minutes: 10
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -289,7 +263,9 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: ./.github/actions/setup-just
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: just
 
       - name: Compile
         run: just compile
@@ -298,7 +274,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: ./.github/actions/golangci-lint
+        uses: cerbos/actions/golangci-lint@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
 
   buf:
     needs: changes
@@ -309,10 +285,6 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
@@ -320,7 +292,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint protos
-        uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
+        uses: cerbos/actions/buf@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
         with:
           breaking: false
           format: true
@@ -328,14 +300,14 @@ jobs:
 
       - name: Find latest release
         id: latest-release
-        run: gh release view --json tagName --jq '"tag=\(.tagName)"' >> $GITHUB_OUTPUT
+        run: gh release view --json tagName --jq '"tag=\(.tagName)"' >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ github.token }}
 
       - name: Set latest release commit ID
         id: latest_release_commit_id
         run: |
-          echo "LATEST_RELEASE_COMMIT_ID=$(git rev-list -n 1 tags/${STEPS_LATEST_RELEASE_OUTPUTS_TAG})" >> "$GITHUB_OUTPUT"
+          echo "LATEST_RELEASE_COMMIT_ID=$(git rev-list -n 1 "tags/${STEPS_LATEST_RELEASE_OUTPUTS_TAG}")" >> "$GITHUB_OUTPUT"
         env:
           STEPS_LATEST_RELEASE_OUTPUTS_TAG: ${{ steps.latest-release.outputs.tag }}
 
@@ -353,10 +325,6 @@ jobs:
     timeout-minutes: 10
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
@@ -376,10 +344,6 @@ jobs:
     timeout-minutes: 20
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -394,14 +358,15 @@ jobs:
         with:
           cross_compiling: true
 
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - name: Install tools
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: |-
+            goreleaser
+            syft
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
-        with:
-          version: latest
-          args: build --config=.goreleaser.yml --clean --snapshot
+        run: goreleaser build --config=.goreleaser.yml --clean --snapshot
         env:
           AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
           AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
@@ -430,10 +395,6 @@ jobs:
     timeout-minutes: 10
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out .node-version file
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -458,10 +419,6 @@ jobs:
           cache-dependency-path: npm/test/registry/package-lock.json
           node-version-file: .node-version
 
-      # https://github.com/actions/runner-images/issues/9626
-      - name: Don't force curl to use IPv4
-        run: rm -f ~/.curlrc
-
       - name: Install corepack
         run: hack/scripts/install-corepack.sh
 
@@ -477,17 +434,13 @@ jobs:
     needs:
       - test-npm
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check test results
         run: test "${NEEDS_TEST_NPM_RESULT}" = "success"
         env:
           NEEDS_TEST_NPM_RESULT: ${{ needs.test-npm.result }}
 
-  zizmor:
-    name: Run zizmor
+  lint-actions:
+    name: Lint GitHub Actions
     runs-on: ubuntu-latest
     needs: changes
     if: ${{ needs.changes.outputs.actions == 'true' }}
@@ -499,5 +452,5 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run zizmor
-        uses: zizmorcore/zizmor-action@b1d7e1fb5de872772f31590499237e7cce841e8e # v0.5.3
+      - name: Lint GitHub Actions
+        uses: cerbos/actions/lint-actions@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main

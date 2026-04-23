@@ -12,10 +12,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -57,11 +53,13 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
-      - name: GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
+      - name: Install goreleaser
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
         with:
-          version: latest
-          args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
+          tools: goreleaser
+
+      - name: GoReleaser
+        run: goreleaser release --config=.goreleaser.yml --clean --snapshot --skip=publish
         env:
           AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
           AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
@@ -71,9 +69,9 @@ jobs:
 
       - name: Push Cerbos dev images to ECR
         run: |
-          docker push ${VARS_AWS_CONTAINER_REPO}:dev-amd64
-          docker push ${VARS_AWS_CONTAINER_REPO}:dev-arm64
-          docker manifest create ${VARS_AWS_CONTAINER_REPO}:dev ${VARS_AWS_CONTAINER_REPO}:dev-arm64 ${VARS_AWS_CONTAINER_REPO}:dev-amd64
-          docker manifest push ${VARS_AWS_CONTAINER_REPO}:dev
+          docker push "${VARS_AWS_CONTAINER_REPO}:dev-amd64"
+          docker push "${VARS_AWS_CONTAINER_REPO}:dev-arm64"
+          docker manifest create "${VARS_AWS_CONTAINER_REPO}:dev" "${VARS_AWS_CONTAINER_REPO}:dev-arm64" "${VARS_AWS_CONTAINER_REPO}:dev-amd64"
+          docker manifest push "${VARS_AWS_CONTAINER_REPO}:dev"
         env:
           VARS_AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}

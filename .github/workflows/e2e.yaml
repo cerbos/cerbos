@@ -17,10 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -33,59 +29,41 @@ jobs:
       - name: Install Go and restore cached dependencies
         uses: ./.github/actions/setup-go
 
-      - name: Install Helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+      - name: Install tools
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
         with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
-          version: v3.19.4
+          tools: |-
+            helm
+            helmfile
+            kind
+            kubectl
+            stern
+            telepresence
 
       - name: Install Helm Secrets
         shell: bash
-        run: |-
-          helm plugin install https://github.com/jkroepke/helm-secrets --version v4.6.5
-      - name: Install Helmfile
-        uses: jaxxstorm/action-install-gh-release@6096f2a2bbfee498ced520b6922ac2c06e990ed2 # v2.1.0
-        with:
-          repo: helmfile/helmfile
-          tag: v1.4.4
+        run: helm plugin install https://github.com/jkroepke/helm-secrets --version v4.7.6
 
-      - name: Telepresence
+      - name: Configure Telepresence
         run: |
-          mkdir bin
-          curl -fL https://ambassador-labs.gateway.scarf.sh/telepresenceio/telepresence/releases/download/v2.25.1/telepresence-linux-amd64 -o bin/telepresence
-          chmod +x bin/telepresence
-          echo "$(pwd)/bin" >> $GITHUB_PATH
           mkdir -p ~/.config/telepresence
           cat >~/.config/telepresence/config.yml <<EOF
           timeouts:
             helm: 60s
             trafficManagerAPI: 30s
           EOF
-          go install github.com/stern/stern@latest
 
       - name: Initialize Helmfile
         run: helmfile init --force
 
-      - name: Install KinD
-        uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1.14.0
-        with:
-          cluster_name: cerbos-e2e
-          config: e2e/kind.yaml
-          wait: 180s
-
       - name: Run E2E Tests
         run: e2e/run.sh
         env:
-          E2E_SKIP_CLUSTER: "true"
           E2E_NO_CLEANUP: "true"
           E2E_PACKAGE: ${{ inputs.package }}
 
-      - name: Notify Slack
+      - name: Notify Slack on failure
         if: failure()
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        uses: voxmedia/github-action-slack-notify-build@373da97827332b19e753c84d1e5b7937dbe0fbfa # v2
+        uses: cerbos/actions/notify-slack@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
         with:
-          channel_id: C02TMGNNL4V
-          status: FAILED
-          color: danger
+          webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}
