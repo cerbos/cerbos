@@ -18,6 +18,8 @@ set -euo pipefail
 WINDOW_SECS=1
 THRESHOLD_MS=""
 PERCENTILE=""
+STALL_THRESHOLD=10
+GAP_THRESHOLD=75
 
 usage() {
   cat <<EOF
@@ -27,6 +29,8 @@ Options:
   -w SECS     Time window size in seconds (default: 1)
   -t MS       Latency threshold in ms — requests above this are "slow"
   -p PCTILE   Use percentile as threshold (e.g. 95, 99). Overrides -t.
+  -s PCT      Stall threshold: slow% above this = potential stall (default: 10)
+  -g PCT      Gap threshold: total below this % of mean = throughput gap (default: 75)
   -h          Show this help
 
 If neither -t nor -p is given, p95 is used as the default threshold.
@@ -34,11 +38,13 @@ EOF
   exit 1
 }
 
-while getopts "w:t:p:h" opt; do
+while getopts "w:t:p:s:g:h" opt; do
   case "$opt" in
     w) WINDOW_SECS="$OPTARG" ;;
     t) THRESHOLD_MS="$OPTARG" ;;
     p) PERCENTILE="$OPTARG" ;;
+    s) STALL_THRESHOLD="$OPTARG" ;;
+    g) GAP_THRESHOLD="$OPTARG" ;;
     h) usage ;;
     *) usage ;;
   esac
@@ -140,8 +146,8 @@ printf "  CV:              %s%%\n" "$CV"
 
 # Stall and throughput gap detection
 MEAN_TOTAL=$(sqlite3 "$DB" "SELECT ROUND(AVG(total), 0) FROM windows;")
-STALL_THRESHOLD=50  # slow% above this = potential stall
-GAP_THRESHOLD=50    # total below this % of mean = throughput gap
+# STALL_THRESHOLD set via -s flag (default: 10)
+# GAP_THRESHOLD set via -g flag (default: 75)
 
 # Exclude the last window (often partial — test ends mid-window)
 LAST_WIN=$(sqlite3 "$DB" "SELECT MAX(window) FROM windows;")
