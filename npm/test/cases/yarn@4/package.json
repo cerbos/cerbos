@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "yarn@4.13.0",
+  "packageManager": "yarn@4.14.1",
   "dependencies": {
     "cerbos": "latest",
     "cerbosctl": "latest"
