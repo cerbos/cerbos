@@ -153,7 +153,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 		if len(eval.Context) > 0 {
 			context = eval.Context
 			var err error
-			auxData, err = aas.extractAuxData(ctx, defaultContext)
+			auxData, err = aas.extractAuxData(ctx, context)
 			if err != nil {
 				log.Error("Failed to extract auxData from evaluation", zap.Error(err), zap.Int("evaluation_index", i))
 				return nil, status.Error(codes.InvalidArgument, "invalid auxData")
