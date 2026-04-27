@@ -1,0 +1,42 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.52.0]
+= Cerbos v0.52.0
+
+This release contains a few bug fixes, some user experience improvements, and many internal changes that are not directly visible to users but improves performance and resource utilization of the PDP. See https://github.com/cerbos/cerbos/compare/v0.51.0...v0.52.0 for the full set of included commits.
+
+
+== Changelog
+
+=== Breaking changes
+
+[unordered]
+Update OpenTelemetry Semantic Conventions to 1.39.0:: The latest version of the Semantic Conventions includes https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.39.0[breaking changes] to span and metric attributes that may affect dashboards.
+
+
+=== Features
+
+[unordered]
+Add path functions to Cerbos CEL library:: It is now possible to use file path functions `basePath`, `dirPath`, `extPath`, `joinPath`, `pathHasPrefix`, `pathMatch`, `pathMatchAnyOf`, `relPath` and `volumeName` in CEL expressions.
+
+
+Add `cerbosctl hub auth` command to save credentials:: Adds ability to securely store Cerbos Hub credentials to the operating system key ring. Once logged in, any `cerbosctl hub` commands will use the saved credentials automatically if no credentials are explicitly provided.
+
+
+=== Enhancements
+
+[unordered]
+Record store version information such as commit hash or bundle ID in audit log entries.:: {empty}
+
+Engine performance improvements:: Includes a host of optimizations to the internal data structures used by the Cerbos policy engine that, according to benchmarks, significantly improves the time taken to produce a decision while reducing the CPU and memory resources consumed. More details about these improvements will be published soon.
+
+
+=== Bug fixes
+
+[unordered]
+Fix stale parent role relationships persisting after role policy deletion:: This fixes a bug where deleting a role policy would not remove its parent role relationships from the index. A subsequent policy update would then rebuild the parent role index from stale state, effectively restoring the deleted role policy's inheritance rules. For example, if a role policy defined `employee` as inheriting from `user`, deleting that role policy and then adding or updating any other policy would cause `employee` to continue inheriting from `user`.
+
+
+Fix issues with the directory watch system:: Fixes an issue where renaming a policy file causes it to be dropped from the index.
+
+

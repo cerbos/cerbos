@@ -1,0 +1,3 @@
+type:enhancement
+Engine performance improvements
+Includes a host of optimizations to the internal data structures used by the Cerbos policy engine that, according to benchmarks, significantly improves the time taken to produce a decision while reducing the CPU and memory resources consumed. More details about these improvements will be published soon.
