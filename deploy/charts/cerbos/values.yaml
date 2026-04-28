@@ -178,13 +178,12 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
-  # @schema
-  # type: [object, null]
-  # additionalProperties: true
-  # @schema
-  # Node selector for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
+# @schema
+# type: [object, null]
+# additionalProperties: true
+# @schema
+# Node selector for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
 nodeSelector: {}
 
 # @schema
