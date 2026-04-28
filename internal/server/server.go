@@ -492,17 +492,31 @@ func mkGatewayMux(grpcConn grpc.ClientConnInterface) *grpcruntime.ServeMux {
 	return grpcruntime.NewServeMux(
 		grpcruntime.WithForwardResponseOption(customHTTPResponseCode),
 		grpcruntime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
-		grpcruntime.WithMarshalerOption("application/json+pretty", &grpcruntime.JSONPb{
-			MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
-			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+		grpcruntime.WithMarshalerOption("application/json+pretty", &grpcJSONPb{
+			JSONPb: grpcruntime.JSONPb{
+				MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
+				UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+			},
 		}),
-		grpcruntime.WithMarshalerOption(grpcruntime.MIMEWildcard, &grpcruntime.JSONPb{
-			UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+		grpcruntime.WithMarshalerOption(grpcruntime.MIMEWildcard, &grpcJSONPb{
+			JSONPb: grpcruntime.JSONPb{
+				UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
+			},
 		}),
 		grpcruntime.WithMetadata(setPeerMetadata),
 		grpcruntime.WithRoutingErrorHandler(handleRoutingError),
 		grpcruntime.WithHealthEndpointAt(healthpb.NewHealthClient(grpcConn), healthEndpoint),
 	)
+}
+
+type grpcJSONPb struct {
+	grpcruntime.JSONPb
+}
+
+var _ grpcruntime.StreamContentType = (*grpcJSONPb)(nil)
+
+func (*grpcJSONPb) StreamContentType(any) string {
+	return "application/x-ndjson"
 }
 
 func defaultGRPCDialOpts() []grpc.DialOption {
