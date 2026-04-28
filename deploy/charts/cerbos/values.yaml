@@ -44,7 +44,7 @@ image:
   # type: [string,null]
   # @schema
   # Image tag to use. Defaults to the chart appVersion.
-  tag: "@sha256:8d35a64e4a9989d732ff01a4046f879600c8e3b70cae47527236b759b07c3687"
+  tag: ""
 
 # @schema
 # type: [array,null]
@@ -145,8 +145,7 @@ securityContext: {}
 # additionalProperties: true
 # @schema
 # Resource limits for the pod. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#resources.
-resources:
-  {}
+resources: {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
@@ -179,7 +178,6 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
 
 # @schema
 # type: [object, null]
@@ -211,8 +209,8 @@ affinity: {}
 #   additionalProperties: true
 # @schema
 # Topology Spread Constraints rules. See https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#scheduling.
-topologySpreadConstraints:
-  [] # @schema type:[array,null]
+topologySpreadConstraints: []
+  # @schema type:[array,null]
   # - topologyKey: topology.kubernetes.io/zone
   #   maxSkew: 1
   #   whenUnsatisfiable: ScheduleAnyway
