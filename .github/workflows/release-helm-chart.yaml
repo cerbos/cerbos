@@ -1,0 +1,56 @@
+---
+name: Release Helm chart
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - helm/v*
+
+jobs:
+  publishHelm:
+    name: Publish Helm chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      CHARTS_DIR: deploy/out/helm-charts
+      OCI_REGISTRY: ghcr.io/cerbos/helm-charts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Helm
+        uses: cerbos/actions/install-tools@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
+        with:
+          tools: helm
+
+      - name: GCloud Auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY}}
+
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Package Helm chart
+        run: |-
+          mkdir -p ${{ env.CHARTS_DIR }}/cerbos
+          helm package -d ${{ env.CHARTS_DIR }}/cerbos deploy/charts/cerbos
+
+      - name: Publish to download site
+        run: |-
+          gsutil cp "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml" "${{ env.CHARTS_DIR }}/index.yaml"
+          helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
+          gsutil rsync -r ${{ env.CHARTS_DIR }}/ "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/"
+
+      - name: Publish to OCI registry
+        run: |-
+          helm registry login ${{ env.OCI_REGISTRY }} -u ${{ secrets.HELM_CHARTS_REPO_USER }} -p ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
+          CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); helm push "$CHART" oci://${{ env.OCI_REGISTRY }}
+          helm registry logout ${{ env.OCI_REGISTRY }}
+        env:
+          HELM_EXPERIMENTAL_OCI: "1"
