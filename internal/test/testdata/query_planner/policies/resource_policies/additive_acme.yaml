@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "additive"
+  version: "2025_11"
+  scope: "acme"
+  rules:
+    - actions: ['*']
+      effect: EFFECT_DENY
+      roles:
+        - '*'
