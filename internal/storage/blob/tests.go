@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -28,7 +29,6 @@ import (
 const (
 	seaweedUsername = "weedadmin"
 	seaweedPassword = "weedadmin"
-	bucketName      = "test"
 )
 
 const timeout = 5 * time.Minute
@@ -69,7 +69,7 @@ func CopyDirToBucket(tb testing.TB, ctx context.Context, param UploadParam) *blo
 	return bucket
 }
 
-func newSeaweedFSBucket(t *testing.T, path, prefix string) *blob.Bucket {
+func newSeaweedFSBucket(t *testing.T, seaweedFS *SeaweedFS, path, prefix string) *blob.Bucket {
 	t.Helper()
 
 	deadline, ok := t.Deadline()
@@ -81,7 +81,7 @@ func newSeaweedFSBucket(t *testing.T, path, prefix string) *blob.Bucket {
 	defer cancelFunc()
 
 	param := UploadParam{
-		BucketURL:    SeaweedFSBucketURL(bucketName, StartSeaweedFS(t, bucketName)),
+		BucketURL:    seaweedFS.CreateBucket(t),
 		BucketPrefix: prefix,
 		Username:     seaweedUsername,
 		Password:     seaweedPassword,
@@ -154,7 +154,32 @@ func bucketDelete(tb testing.TB, bucket *blob.Bucket, key string) {
 	tb.Logf("[END] Deleting %s", key)
 }
 
-func StartSeaweedFS(t *testing.T, bucketName string) string {
+type SeaweedFS struct {
+	endpoint string
+	buckets  atomic.Int64
+}
+
+func (s *SeaweedFS) CreateBucket(t *testing.T) string {
+	t.Helper()
+
+	cfg, err := config.LoadDefaultConfig(
+		t.Context(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(seaweedUsername, seaweedPassword, "")),
+		config.WithRegion("local"),
+		config.WithBaseEndpoint("http://"+s.endpoint),
+	)
+	require.NoError(t, err, "Failed to load AWS config")
+
+	bucket := fmt.Sprintf("test-%d", s.buckets.Add(1))
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = true })
+	_, err = client.CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &bucket})
+	require.NoError(t, err, "Failed to create bucket %q: %v", bucket, err)
+
+	return SeaweedFSBucketURL(bucket, s.endpoint)
+}
+
+func StartSeaweedFS(t *testing.T) *SeaweedFS {
 	t.Helper()
 
 	is := require.New(t)
@@ -192,21 +217,8 @@ func StartSeaweedFS(t *testing.T, bucketName string) string {
 	})
 	is.NoError(err, "Could not connect to docker: %s", err)
 
-	s3APIEndpoint := "http://" + endpoint
-	cfg, err := config.LoadDefaultConfig(
-		t.Context(),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(seaweedUsername, seaweedPassword, "")),
-		config.WithRegion("local"),
-		config.WithBaseEndpoint(s3APIEndpoint),
-	)
-	is.NoError(err, "Failed to load AWS config")
-
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = true })
-	_, err = client.CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &bucketName})
-	is.NoError(err, "Failed to create bucket %q: %v", bucketName, err)
-
 	t.Setenv("AWS_ACCESS_KEY_ID", seaweedUsername)
 	t.Setenv("AWS_SECRET_ACCESS_KEY", seaweedPassword)
 
-	return endpoint
+	return &SeaweedFS{endpoint: endpoint}
 }

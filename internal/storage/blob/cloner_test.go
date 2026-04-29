@@ -25,6 +25,7 @@ func TestCloneResult(t *testing.T) {
 		t.Skip()
 	}
 
+	seaweedFS := StartSeaweedFS(t)
 	testCases := test.LoadTestCases(t, "blob_cloner")
 	for _, testMetadata := range testCases {
 		testCase := readTestCase(t, testMetadata.Input)
@@ -33,7 +34,7 @@ func TestCloneResult(t *testing.T) {
 		bucketDir := filepath.Join(dir, "bucket")
 		require.NoError(t, os.MkdirAll(bucketDir, perm775))
 		cacheDir := cacheDir(bucketDir, dir)
-		bucket := newSeaweedFSBucket(t, bucketDir, "")
+		bucket := newSeaweedFSBucket(t, seaweedFS, bucketDir, "")
 		applyFiles(t, bucket, testCase.Inputs)
 
 		cloner, err := NewCloner(bucket, cacheDir)
