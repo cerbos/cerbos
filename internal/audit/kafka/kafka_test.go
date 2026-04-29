@@ -17,9 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/api/types/network"
-	mobyclient "github.com/moby/moby/client"
 	"github.com/ory/dockertest/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/twmb/franz-go/pkg/kadm"
@@ -289,16 +287,7 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 	clientOpts = append(clientOpts, kgo.SeedBrokers(brokerAddr))
 
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
-		go func() {
-			logs, err := pool.Client().ContainerLogs(t.Context(), resource.Container().ID, mobyclient.ContainerLogsOptions{
-				ShowStdout: true,
-				ShowStderr: true,
-				Follow:     true,
-			})
-			if err == nil {
-				_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
-			}
-		}()
+		go func() { _ = resource.FollowLogs(t.Context(), os.Stdout, os.Stderr) }()
 	}
 
 	client, err := kgo.NewClient(clientOpts...)

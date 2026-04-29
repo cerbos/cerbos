@@ -20,8 +20,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/moby/moby/api/pkg/stdcopy"
-	mobyclient "github.com/moby/moby/client"
 	"github.com/ory/dockertest/v4"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
@@ -168,17 +166,7 @@ func StartSeaweedFS(t *testing.T, bucketName string) string {
 		dockertest.WithEnv([]string{"AWS_ACCESS_KEY_ID=" + strings.TrimPrefix(seaweedUsername, "admin-"), "AWS_SECRET_ACCESS_KEY=" + seaweedPassword}),
 	)
 
-	go func() {
-		logs, err := pool.Client().ContainerLogs(t.Context(), resource.Container().ID, mobyclient.ContainerLogsOptions{
-			ShowStdout: true,
-			ShowStderr: true,
-			Follow:     true,
-			Timestamps: true,
-		})
-		if err == nil {
-			_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
-		}
-	}()
+	go func() { _ = resource.FollowLogs(t.Context(), os.Stdout, os.Stderr) }()
 
 	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("8333/tcp"))
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
