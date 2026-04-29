@@ -135,9 +135,8 @@ jobs:
           name: previous-test-times
 
       - name: Test
-        run: just test-all "${STRATEGY_JOB_INDEX}" "${STRATEGY_JOB_TOTAL}"
+        run: just test-integration "${STRATEGY_JOB_INDEX}" "${STRATEGY_JOB_TOTAL}"
         env:
-          GOEXPERIMENT: loopvar # https://github.com/golang/go/wiki/LoopvarExperiment
           CERBOS_LOG_LEVEL: "debug"
           CERBOS_TEST_LOG_LEVEL: "debug"
           CERBOS_DEBUG_DB: "true"

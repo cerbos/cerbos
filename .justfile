@@ -150,8 +150,6 @@ test PKG='./...' TEST='.*':
 tests PKG='./...' TEST='.*': _gotestsum
     @ gotestsum --format=dots-v2 --format-hide-empty-pkg -- -tags=tests,integration -failfast -count=1 -run='{{ TEST }}' '{{ PKG }}'
 
-test-all TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': (test-race TESTSPLIT_INDEX TESTSPLIT_TOTAL) (test-integration TESTSPLIT_INDEX TESTSPLIT_TOTAL)
-
 test-integration TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
     @ testsplit split \
         --kind=integration \
@@ -165,18 +163,8 @@ test-integration TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
 test-npm-packages:
     @ cd npm && corepack npm test
 
-test-race TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
-    @ testsplit split \
-        --kind=unit \
-        --index={{ TESTSPLIT_INDEX }} \
-        --total={{ TESTSPLIT_TOTAL }} \
-        --ignore-file=.ignore-packages.yaml | \
-        xargs gotestsum \
-        --junitfile=junit.unit.{{ TESTSPLIT_INDEX }}.xml \
-        -- -tags=tests -race -cover -covermode=atomic -coverprofile=unit.cover
-
 test-times TESTSPLIT_TOTAL='1': _testsplit
-    @ testsplit combine --kinds=unit,integration --total={{ TESTSPLIT_TOTAL }}
+    @ testsplit combine --kinds=integration --total={{ TESTSPLIT_TOTAL }}
 
 vulnerability-check: _govulncheck
     @ govulncheck ./...

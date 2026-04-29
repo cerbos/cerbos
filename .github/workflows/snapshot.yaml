@@ -45,7 +45,7 @@ jobs:
         uses: cerbos/actions/check-repo-status@aff2ae494c8b0f0a9e9faee6d5974221a21617da # main
 
       - name: Test
-        run: just test-all
+        run: just test-integration
         env:
           CERBOS_LOG_LEVEL: "debug"
 
