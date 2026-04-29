@@ -20,8 +20,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
+	"github.com/moby/moby/api/pkg/stdcopy"
+	mobyclient "github.com/moby/moby/client"
+	"github.com/ory/dockertest/v4"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
 )
@@ -70,7 +71,7 @@ func CopyDirToBucket(tb testing.TB, ctx context.Context, param UploadParam) *blo
 	return bucket
 }
 
-func newSeaweedFSBucket(ctx context.Context, t *testing.T, path, prefix string) *blob.Bucket {
+func newSeaweedFSBucket(t *testing.T, path, prefix string) *blob.Bucket {
 	t.Helper()
 
 	deadline, ok := t.Deadline()
@@ -78,11 +79,11 @@ func newSeaweedFSBucket(ctx context.Context, t *testing.T, path, prefix string) 
 		deadline = time.Now().Add(timeout)
 	}
 
-	ctx, cancelFunc := context.WithDeadline(ctx, deadline)
+	ctx, cancelFunc := context.WithDeadline(t.Context(), deadline)
 	defer cancelFunc()
 
 	param := UploadParam{
-		BucketURL:    SeaweedFSBucketURL(bucketName, StartSeaweedFS(ctx, t, bucketName)),
+		BucketURL:    SeaweedFSBucketURL(bucketName, StartSeaweedFS(t, bucketName)),
 		BucketPrefix: prefix,
 		Username:     seaweedUsername,
 		Password:     seaweedPassword,
@@ -134,60 +135,57 @@ func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *b
 	return files, err
 }
 
-func bucketAdd(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key string, data []byte) {
+func bucketAdd(tb testing.TB, bucket *blob.Bucket, key string, data []byte) {
 	tb.Helper()
 
 	tb.Logf("[START] Adding %s", key)
 	//nolint:gosec
 	sum := md5.Sum(data)
 	tb.Logf("key: %s, etag: %s", key, hex.EncodeToString(sum[:]))
-	require.NoError(tb, bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
+	require.NoError(tb, bucket.WriteAll(tb.Context(), key, data, &blob.WriterOptions{
 		ContentMD5: sum[:],
 	}))
 	tb.Logf("[END] Adding %s", key)
 }
 
-func bucketDelete(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key string) {
+func bucketDelete(tb testing.TB, bucket *blob.Bucket, key string) {
 	tb.Helper()
 
 	tb.Logf("[START] Deleting %s", key)
-	require.NoError(tb, bucket.Delete(ctx, key))
+	require.NoError(tb, bucket.Delete(tb.Context(), key))
 	tb.Logf("[END] Deleting %s", key)
 }
 
-func StartSeaweedFS(ctx context.Context, t *testing.T, bucketName string) string {
+func StartSeaweedFS(t *testing.T, bucketName string) string {
 	t.Helper()
 
 	is := require.New(t)
-	pool, err := dockertest.NewPool("")
-	is.NoError(err, "Could not connect to docker: %s", err)
+	pool := dockertest.NewPoolT(t, "")
 
-	options := &dockertest.RunOptions{
-		Repository: "chrislusf/seaweedfs",
-		Tag:        "latest",
-		Cmd:        []string{"server", "-s3"},
-		Env:        []string{"AWS_ACCESS_KEY_ID=" + strings.TrimPrefix(seaweedUsername, "admin-"), "AWS_SECRET_ACCESS_KEY=" + seaweedPassword},
-	}
-
-	resource, err := pool.RunWithOptions(options)
-	is.NoError(err, "Could not start resource: %s", err)
+	resource := pool.RunT(t, "chrislusf/seaweedfs",
+		dockertest.WithTag("latest"),
+		dockertest.WithCmd([]string{"server", "-s3"}),
+		dockertest.WithEnv([]string{"AWS_ACCESS_KEY_ID=" + strings.TrimPrefix(seaweedUsername, "admin-"), "AWS_SECRET_ACCESS_KEY=" + seaweedPassword}),
+	)
 
 	go func() {
-		_ = pool.Client.Logs(docker.LogsOptions{
-			Context:      ctx,
-			Stderr:       true,
-			Stdout:       true,
-			Follow:       true,
-			Timestamps:   true,
-			RawTerminal:  true,
-			Container:    resource.Container.ID,
-			OutputStream: os.Stdout,
+		logs, err := pool.Client().ContainerLogs(t.Context(), resource.Container().ID, mobyclient.ContainerLogsOptions{
+			ShowStdout: true,
+			ShowStderr: true,
+			Follow:     true,
+			Timestamps: true,
 		})
+		if err == nil {
+			_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, logs)
+		}
 	}()
 
 	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("8333/tcp"))
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	err = pool.Retry(func() error {
+	err := pool.Retry(t.Context(), timeout, func() error {
+		ctx, cancel := context.WithTimeout(t.Context(), 1*time.Second)
+		defer cancel()
+
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%s/healthz", endpoint), nil)
 		if err != nil {
 			return err
@@ -205,11 +203,6 @@ func StartSeaweedFS(ctx context.Context, t *testing.T, bucketName string) string
 		return nil
 	})
 	is.NoError(err, "Could not connect to docker: %s", err)
-
-	t.Cleanup(func() {
-		err = pool.Purge(resource)
-		is.NoError(err, "Could not purge resource: %s", err)
-	})
 
 	s3APIEndpoint := "http://" + endpoint
 	cfg, err := config.LoadDefaultConfig(

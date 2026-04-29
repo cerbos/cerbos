@@ -65,7 +65,7 @@ func TestNewStore(t *testing.T) {
 		conf.SetDefaults()
 
 		cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
-		endpoint := StartSeaweedFS(ctx, t, bucketName)
+		endpoint := StartSeaweedFS(t, bucketName)
 		conf.Bucket = SeaweedFSBucketURL(bucketName, endpoint)
 
 		must := require.New(t)
@@ -228,7 +228,7 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
 	t.Helper()
 
-	endpoint := StartSeaweedFS(t.Context(), t, bucketName)
+	endpoint := StartSeaweedFS(t, bucketName)
 	conf := mkConf(t, dir, bucketName, endpoint)
 	bucket, _, err := newBucket(t.Context(), conf)
 	require.NoError(t, err)

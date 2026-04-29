@@ -20,7 +20,7 @@ import (
 
 	"github.com/cerbos/cerbos/internal/storage/db/internal"
 	"github.com/cerbos/cerbos/internal/storage/db/mysql"
-	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v4"
 )
 
 //go:embed schema.sql
@@ -31,17 +31,12 @@ func TestMySQL(t *testing.T) {
 		t.Skip()
 	}
 
-	pool, err := dockertest.NewPool("")
-	require.NoError(t, err, "Failed to connect to Docker")
+	pool := dockertest.NewPoolT(t, "")
 
-	resource, err := pool.Run("mysql", "8", []string{"MYSQL_ROOT_PASSWORD=secret"})
-	require.NoError(t, err, "Failed to start container")
-
-	t.Cleanup(func() {
-		if err := pool.Purge(resource); err != nil {
-			t.Errorf("Failed to cleanup resources: %v", err)
-		}
-	})
+	resource := pool.RunT(t, "mysql",
+		dockertest.WithTag("8"),
+		dockertest.WithEnv([]string{"MYSQL_ROOT_PASSWORD=secret"}),
+	)
 
 	deadline, ok := t.Deadline()
 	if !ok {
@@ -52,7 +47,7 @@ func TestMySQL(t *testing.T) {
 	defer cancelFunc()
 
 	rootDSN := fmt.Sprintf("root:secret@(localhost:%s)/mysql", resource.GetPort("3306/tcp"))
-	require.NoError(t, pool.Retry(func() error {
+	require.NoError(t, pool.Retry(ctx, time.Until(deadline), func() error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
