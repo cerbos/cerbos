@@ -49,7 +49,7 @@ When keysets are fetched from a `remote` source, if the `refreshInterval` is not
 
 You can disable JWT verification by setting `disableVerification` to `true`. When verification is disabled, Cerbos will not perform cryptographic verification of the JWT but the `exp` and `nbf` claims are still checked to ensure that the token is valid. You can configure the acceptable time skew for those claims by setting `acceptableTimeSkew` to a positive time duration.
 
-WARNING: Disabling JWT verification is not recommended because it makes the system insecure by forcing Cerbos to evaluate policies using potentially tampered data. Similarly, it's not recommended to set `acceptableTimeSkew` to more than a few seconds.
+WARNING: Don't disable JWT verification unless you are certain that the token cannot be tampered with before it reaches the PDP. Similarly, it's not recommended to set `acceptableTimeSkew` to more than a few seconds to prevent replay attacks.
 
 [source,yaml,linenums]
 ----

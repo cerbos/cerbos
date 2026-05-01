@@ -23,10 +23,14 @@ type Conf struct {
 }
 
 type JWTConf struct {
-	CacheSize           *int          `yaml:"cacheSize" conf:",ignore"`
-	KeySets             []JWTKeySet   `yaml:"keySets"`
-	AcceptableTimeSkew  time.Duration `yaml:"acceptableTimeSkew" conf:",example=2s"`
-	DisableVerification bool          `yaml:"disableVerification" conf:",example=false"`
+	// Deprecated: Verified tokens are no longer cached.
+	CacheSize *int `yaml:"cacheSize" conf:",ignore"`
+	// KeySets is the list of keysets to be used to verify tokens.
+	KeySets []JWTKeySet `yaml:"keySets"`
+	// AcceptableTimeSkew sets the acceptable skew when checking exp and nbf claims.
+	AcceptableTimeSkew time.Duration `yaml:"acceptableTimeSkew" conf:",example=2s"`
+	// DisableVerification disables JWT verification.
+	DisableVerification bool `yaml:"disableVerification" conf:",example=false"`
 }
 
 type JWTKeySet struct {
