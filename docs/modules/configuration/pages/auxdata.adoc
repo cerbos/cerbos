@@ -14,6 +14,8 @@ Cerbos supports reading claims from a JWT issued by an authentication system. Th
 
 In order to verify the JWT, the Cerbos instance must have access to the appropriate keysets. They can be fetched from a URL or read from the local file system. Verification involves checking that the signature is valid and that the token has not expired.
 
+IMPORTANT: Although Cerbos verifies JWTs, it's intended as a convenience rather than an authoritative check. We recommend that the tokens are independently verified at the gateway or application level before being sent to the PDP. The verification at the PDP is purely a precaution against tampering in-flight, which should not be possible in a production deployment where TLS is enforced between the application and the PDP.
+
 
 .Using multiple keysets
 [source,yaml,linenums]
