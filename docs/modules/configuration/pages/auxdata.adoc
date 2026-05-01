@@ -57,19 +57,6 @@ auxData:
     acceptableTimeSkew: 2s
 ----
 
-Cerbos maintains an in-memory cache of verified JWTs to avoid repeating the cryptographic verification step on each request. Cached tokens are still validated on each request to make sure they are still valid for use. You can increase the size of the cache by setting `cacheSize`.
-
-[source,yaml,linenums]
-----
-auxData:
-  jwt:
-    cacheSize: 256
-    keySets:
-      - id: default
-        remote:
-          url: https://domain.tld/.well-known/keys.jwks
-----
-
 Some legacy authentication systems have key sets that do not contain `alg` or `kid` fields. Not having these fields defined is a security risk and the default behaviour of Cerbos is to fail the parsing of JWT. If you are aware of the risks and still want to enable those tokens to be parsed, set the `optionalAlg` and `optionalKid` options.
 
 [source,yaml,linenums]
