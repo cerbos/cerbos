@@ -60,7 +60,7 @@ if [[ "$BINARY_ONLY" == false ]]; then
   log "Uploading requests and printsummary to Client VM..."
   tar czf /tmp/cerbos-loadtest-client.tar.gz -C "${WORK_DIR}" requests printsummary
   GSCP /tmp/cerbos-loadtest-client.tar.gz "${CLIENT_VM}:/tmp/"
-  GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
+  GSSH "$CLIENT_VM" "rm -rf ${REMOTE_BASE}/requests && tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
   rm -f /tmp/cerbos-loadtest-client.tar.gz
 
   log "Uploading client configs to Client VM..."
