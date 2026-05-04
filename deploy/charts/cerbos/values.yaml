@@ -44,7 +44,7 @@ image:
   # type: [string,null]
   # @schema
   # Image tag to use. Defaults to the chart appVersion.
-  tag: ""
+  tag: "@sha256:b36b1057f359bf6c5d982b095557291231c0f199bd0a29272bbe0bba54d2d092"
 
 # @schema
 # type: [array,null]
