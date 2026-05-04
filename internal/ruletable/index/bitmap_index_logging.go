@@ -83,6 +83,28 @@ func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unus
 	return s
 }
 
+func fqnDimensionStats(name string, d fqnDimension) dimStats { //nolint:unused
+	s := dimStats{Name: name, Keys: len(d.m), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	totalCard := uint64(0)
+	for _, ids := range d.m {
+		c := uint64(len(ids))
+		if c > s.MaxCard {
+			s.MaxCard = c
+		}
+		if c < s.MinCard {
+			s.MinCard = c
+		}
+		totalCard += c
+	}
+	if s.Keys == 0 {
+		s.MinWords = 0
+		s.MinCard = 0
+	} else {
+		s.AvgCard = totalCard / uint64(s.Keys)
+	}
+	return s
+}
+
 func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 	stats := []dimStats{
 		dimensionStats("version", idx.version),
@@ -92,7 +114,7 @@ func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 		globDimensionStats("action", idx.action),
 		dimensionStats("policyKind", idx.policyKind),
 		dimensionStats("principal", idx.principal),
-		dimensionStats("fqnBindings", idx.fqnBindings),
+		fqnDimensionStats("fqnBindings", idx.fqnBindings),
 	}
 
 	fields := make([]any, 0, 2+len(stats)*8) //nolint:mnd

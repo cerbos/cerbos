@@ -74,6 +74,10 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		m.bi.bindings = slices.Grow(m.bi.bindings, newBindings)
 	}
 
+	if len(m.bi.fqnBindings.m) == 0 {
+		m.bi.fqnBindings = newFqnDimension()
+	}
+
 	paramsCache := make(map[uint64]*RowParams)
 	drParamsCache := make(map[uint64]*RowParams)
 
@@ -666,14 +670,13 @@ func (m *Index) DeletePolicy(fqn string) error {
 		return nil
 	}
 
-	fqnBM, ok := m.bi.fqnBindings.Get(fqn)
+	ids, ok := m.bi.fqnBindings.Get(fqn)
 	if !ok {
 		return nil
 	}
 
-	iter := fqnBM.Iterator()
-	for iter.HasNext() {
-		b := m.bi.getBinding(iter.Next())
+	for _, id := range ids {
+		b := m.bi.getBinding(id)
 		if b == nil {
 			continue
 		}
