@@ -3,7 +3,7 @@
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "npm@11.12.1",
+  "packageManager": "npm@11.13.0",
   "scripts": {
     "test": "test/run.sh"
   },
