@@ -378,7 +378,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 			t.Run("Reconnect", func(t *testing.T) {
 				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 				wh := mkWatchHandle()
-				var callCount int32
+				var callCount atomic.Int32
 				events := []bundleapi.ServerEvent{
 					{Kind: bundleapi.ServerEventNewBundle, NewBundlePath: tctx.bundlePath, BundleType: tctx.bundleType},
 					{Kind: bundleapi.ServerEventReconnect, ReconnectBackoff: 100 * time.Millisecond},
@@ -391,7 +391,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
 					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).
 						Run(func(context.Context, string) {
-							if atomic.AddInt32(&callCount, 1) == 2 {
+							if callCount.Add(1) == 2 {
 								close(wh.callsDone)
 							}
 						}).
@@ -408,7 +408,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					// Reconnect error should force a reconnect, resulting in two calls to WatchBundle.
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
 						Run(func(context.Context, bundleapiv2.Source) {
-							if atomic.AddInt32(&callCount, 1) == 2 {
+							if callCount.Add(1) == 2 {
 								close(wh.callsDone)
 							}
 						}).
@@ -442,7 +442,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 
 				rs, mockClientV1, mockClientV2 := mkRemoteSource(t, tctx, conf)
 
-				var callCount int32
+				var callCount atomic.Int32
 				callsDone := make(chan struct{})
 
 				switch tctx.version {
@@ -452,7 +452,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					// Returning an error should force the caller to retry
 					mockClientV1.EXPECT().WatchBundle(mock.Anything, label).
 						Run(func(context.Context, string) {
-							if atomic.AddInt32(&callCount, 1) == 3 {
+							if callCount.Add(1) == 3 {
 								close(callsDone)
 							}
 						}).
@@ -464,7 +464,7 @@ func runRemoteTests(tctx testCtx) func(t *testing.T) {
 					// Returning an error should force the caller to retry
 					mockClientV2.EXPECT().WatchBundle(mock.Anything, deploymentID).
 						Run(func(context.Context, bundleapiv2.Source) {
-							if atomic.AddInt32(&callCount, 1) == 3 {
+							if callCount.Add(1) == 3 {
 								close(callsDone)
 							}
 						}).

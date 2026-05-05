@@ -17,7 +17,7 @@ import (
 
 const collectorBufferSize = 64
 
-var totalReqCount uint64
+var totalReqCount atomic.Uint64
 
 type Interceptors interface {
 	UnaryServerInterceptor() grpc.UnaryServerInterceptor
@@ -112,7 +112,7 @@ func (i *statsInterceptors) doTally(interval time.Duration, shutdown <-chan stru
 		case m := <-i.collector:
 			i.methodTally[m.name]++
 			i.uaTally[m.userAgent]++
-			atomic.AddUint64(&totalReqCount, 1)
+			totalReqCount.Add(1)
 		}
 	}
 }

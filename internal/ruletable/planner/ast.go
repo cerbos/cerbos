@@ -6,6 +6,7 @@ package planner
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -413,8 +414,8 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 
 		if e == nil {
 			var sb strings.Builder
-			for i := len(names) - 1; i >= 0; i-- {
-				sb.WriteString(names[i])
+			for i, v := range slices.Backward(names) {
+				sb.WriteString(v)
 				if i > 0 {
 					sb.WriteString(".")
 				}

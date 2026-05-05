@@ -226,7 +226,7 @@ _install-tools: (_go-install "install-tools" "github.com/cerbos/actions" "cmd/in
 
 _mockery: (_go-install "mockery" "github.com/vektra/mockery/v3")
 
-_modernize: (_go-install "modernize" "golang.org/x/tools/gopls" "internal/analysis/modernize/cmd/modernize")
+_modernize: (_go-install "modernize" "golang.org/x/tools" "go/analysis/passes/modernize/cmd/modernize")
 
 _shellcheck: (_install "shellcheck")
 

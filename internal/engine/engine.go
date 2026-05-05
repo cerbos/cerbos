@@ -51,7 +51,7 @@ type Engine struct {
 	conf              *evaluator.Conf
 	metadataExtractor audit.MetadataExtractor
 	workerPool        []chan<- workIn
-	workerIndex       uint64
+	workerIndex       atomic.Uint64
 }
 
 type Components struct {
@@ -133,7 +133,7 @@ func (engine *Engine) startWorker(ctx context.Context, num int, inputChan <-chan
 func (engine *Engine) submitWork(ctx context.Context, work workIn) error {
 	numWorkers := uint64(engine.conf.NumWorkers)
 	for {
-		index := int(atomic.AddUint64(&engine.workerIndex, 1) % numWorkers)
+		index := int(engine.workerIndex.Add(1) % numWorkers)
 		select {
 		case engine.workerPool[index] <- work:
 			return nil

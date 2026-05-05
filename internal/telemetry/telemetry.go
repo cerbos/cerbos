@@ -13,7 +13,6 @@ import (
 	"slices"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	statev1 "github.com/cerbos/cerbos/api/genpb/cerbos/state/v1"
@@ -290,7 +289,7 @@ func (r *analyticsReporter) reportServerStop() {
 	event := &telemetryv1.ServerStop{
 		Version:       "1.0.0",
 		Uptime:        durationpb.New(time.Since(startTime)),
-		RequestsTotal: atomic.LoadUint64(&totalReqCount),
+		RequestsTotal: totalReqCount.Load(),
 	}
 
 	if err := r.send("server_stop", event); err != nil {
