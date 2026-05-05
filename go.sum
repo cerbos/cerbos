@@ -156,8 +156,8 @@ github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=
 github.com/cenkalti/backoff/v5 v5.0.3/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
-github.com/cerbos/cerbos-sdk-go v0.3.19 h1:2j1KdljmaAUJQCvaIHg0PfqhmAECdLAd/BQAv/Ym/MU=
-github.com/cerbos/cerbos-sdk-go v0.3.19/go.mod h1:NazPudKja7vvBDm8TzejqGvSEQkqPD6XT6Uve/ihPFo=
+github.com/cerbos/cerbos-sdk-go v0.3.20 h1:feFhE+AYwMBAk0PiExNYZ+IeszJXpojaUAG+nVAOUuM=
+github.com/cerbos/cerbos-sdk-go v0.3.20/go.mod h1:BLRrhV58p+qH9xfkbovgt/ZneMRJslwG+zZnmK1tZ5U=
 github.com/cerbos/cerbos/api/genpb v0.53.0 h1:8uW1R8bxTyz726fhfM1mdb6lxcmDhTBKv2lnP5DrHM0=
 github.com/cerbos/cerbos/api/genpb v0.53.0/go.mod h1:l84RSVWM1rrBptX+ek8yRz2csD2XjaOFFVi32arHSJc=
 github.com/cerbos/cloud-api v0.1.74 h1:Iwm35haskLRwe8Vn7LAUbT6x4ZGIxlV/EDVy0kRaTZc=
