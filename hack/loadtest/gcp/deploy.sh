@@ -63,10 +63,12 @@ if [[ "$BINARY_ONLY" == false ]]; then
   log "Uploading Cerbos config to PDP VM..."
   GSCP "${SCRIPT_DIR}/conf/cerbos.yaml" "${PDP_VM}:${REMOTE_BASE}/conf/cerbos.yaml"
 
-  # --- Deploy printsummary to Client VM ---
-  log "Uploading printsummary to Client VM..."
-  GSCP "${WORK_DIR}/printsummary" "${CLIENT_VM}:${REMOTE_BASE}/printsummary"
-  GSSH "$CLIENT_VM" "chmod +x ${REMOTE_BASE}/printsummary"
+  # --- Deploy printsummary to Client VM (skip if already present) ---
+  if ! GSSH "$CLIENT_VM" "test -x ${REMOTE_BASE}/printsummary" 2>/dev/null; then
+    log "Uploading printsummary to Client VM..."
+    GSCP "${WORK_DIR}/printsummary" "${CLIENT_VM}:${REMOTE_BASE}/printsummary"
+    GSSH "$CLIENT_VM" "chmod +x ${REMOTE_BASE}/printsummary"
+  fi
 
   log "Uploading client configs to Client VM..."
   PARENT_DIR="${SCRIPT_DIR}/.."
