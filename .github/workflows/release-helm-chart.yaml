@@ -46,11 +46,3 @@ jobs:
           gsutil cp "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml" "${{ env.CHARTS_DIR }}/index.yaml"
           helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
           gsutil rsync -r ${{ env.CHARTS_DIR }}/ "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/"
-
-      - name: Publish to OCI registry
-        run: |-
-          helm registry login ${{ env.OCI_REGISTRY }} -u ${{ secrets.HELM_CHARTS_REPO_USER }} -p ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
-          CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); helm push "$CHART" oci://${{ env.OCI_REGISTRY }}
-          helm registry logout ${{ env.OCI_REGISTRY }}
-        env:
-          HELM_EXPERIMENTAL_OCI: "1"
