@@ -46,6 +46,13 @@ if [[ "$BINARY_ONLY" == false ]]; then
   GSSH "$PDP_VM" "rm -rf ${REMOTE_BASE}/policies && tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
   rm -f /tmp/cerbos-loadtest-policies.tar.gz
 
+  # --- Deploy requests to Client VM ---
+  log "Uploading requests to Client VM..."
+  tar czf /tmp/cerbos-loadtest-requests.tar.gz -C "${WORK_DIR}" requests
+  GSCP /tmp/cerbos-loadtest-requests.tar.gz "${CLIENT_VM}:/tmp/"
+  GSSH "$CLIENT_VM" "rm -rf ${REMOTE_BASE}/requests && tar xzf /tmp/cerbos-loadtest-requests.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-requests.tar.gz"
+  rm -f /tmp/cerbos-loadtest-requests.tar.gz
+
   if [[ "$POLICIES_ONLY" == true ]]; then
     restart_cerbos
     log "Policies redeployed — Cerbos is healthy"
@@ -56,12 +63,10 @@ if [[ "$BINARY_ONLY" == false ]]; then
   log "Uploading Cerbos config to PDP VM..."
   GSCP "${SCRIPT_DIR}/conf/cerbos.yaml" "${PDP_VM}:${REMOTE_BASE}/conf/cerbos.yaml"
 
-  # --- Deploy to Client VM ---
-  log "Uploading requests and printsummary to Client VM..."
-  tar czf /tmp/cerbos-loadtest-client.tar.gz -C "${WORK_DIR}" requests printsummary
-  GSCP /tmp/cerbos-loadtest-client.tar.gz "${CLIENT_VM}:/tmp/"
-  GSSH "$CLIENT_VM" "rm -rf ${REMOTE_BASE}/requests && tar xzf /tmp/cerbos-loadtest-client.tar.gz -C ${REMOTE_BASE} && chmod +x ${REMOTE_BASE}/printsummary && rm /tmp/cerbos-loadtest-client.tar.gz"
-  rm -f /tmp/cerbos-loadtest-client.tar.gz
+  # --- Deploy printsummary to Client VM ---
+  log "Uploading printsummary to Client VM..."
+  GSCP "${WORK_DIR}/printsummary" "${CLIENT_VM}:${REMOTE_BASE}/printsummary"
+  GSSH "$CLIENT_VM" "chmod +x ${REMOTE_BASE}/printsummary"
 
   log "Uploading client configs to Client VM..."
   PARENT_DIR="${SCRIPT_DIR}/.."
