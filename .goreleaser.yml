@@ -6,7 +6,8 @@ snapshot:
 
 git:
   ignore_tags:
-    - "api/genpb/*"
+    - api/genpb/*
+    - helm/*
 
 builds:
   - main: ./cmd/cerbos
