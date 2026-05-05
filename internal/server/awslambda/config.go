@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/kong"
-	"helm.sh/helm/v3/pkg/strvals"
+	"helm.sh/helm/v4/pkg/strvals"
 
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
 )

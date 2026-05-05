@@ -22,7 +22,7 @@ import (
 	gomaxecs "github.com/rdforte/gomaxecs/maxprocs"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
-	"helm.sh/helm/v3/pkg/strvals"
+	"helm.sh/helm/v4/pkg/strvals"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/logging"
