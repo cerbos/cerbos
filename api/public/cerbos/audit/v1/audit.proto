@@ -114,6 +114,7 @@ message PolicySource {
     message EmbeddedBundle {
       string rule_id = 1;
       repeated string scopes = 2;
+      string bundle_id = 3;
     }
 
     message LocalBundle {

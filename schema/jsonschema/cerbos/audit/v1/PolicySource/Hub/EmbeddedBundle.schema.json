@@ -4,6 +4,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "bundleId": {
+      "type": "string"
+    },
     "ruleId": {
       "type": "string"
     },

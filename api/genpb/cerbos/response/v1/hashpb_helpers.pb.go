@@ -381,6 +381,10 @@ func cerbos_audit_v1_PolicySource_Hub_EmbeddedBundle_hashpb_sum(m *v1.PolicySour
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.audit.v1.PolicySource.Hub.EmbeddedBundle.bundle_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetBundleId()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetBundleId()), len(m.GetBundleId())))
+	}
 }
 
 func cerbos_audit_v1_PolicySource_Hub_LocalBundle_hashpb_sum(m *v1.PolicySource_Hub_LocalBundle, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {

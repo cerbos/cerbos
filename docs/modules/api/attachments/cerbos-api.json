@@ -1282,6 +1282,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "bundleId": {
+          "type": "string"
         }
       }
     },

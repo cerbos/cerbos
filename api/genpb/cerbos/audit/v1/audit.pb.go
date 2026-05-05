@@ -1256,6 +1256,7 @@ type PolicySource_Hub_EmbeddedBundle struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RuleId        string                 `protobuf:"bytes,1,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
 	Scopes        []string               `protobuf:"bytes,2,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	BundleId      string                 `protobuf:"bytes,3,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1302,6 +1303,13 @@ func (x *PolicySource_Hub_EmbeddedBundle) GetScopes() []string {
 		return x.Scopes
 	}
 	return nil
+}
+
+func (x *PolicySource_Hub_EmbeddedBundle) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
 }
 
 type PolicySource_Hub_LocalBundle struct {
@@ -1470,7 +1478,7 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x12effective_policies\x18\x01 \x03(\v22.cerbos.audit.v1.AuditTrail.EffectivePoliciesEntryR\x11effectivePolicies\x1ah\n" +
 	"\x16EffectivePoliciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\xf6\v\n" +
+	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\x93\f\n" +
 	"\fPolicySource\x128\n" +
 	"\x04blob\x18\x01 \x01(\v2\".cerbos.audit.v1.PolicySource.BlobH\x00R\x04blob\x12D\n" +
 	"\bdatabase\x18\x02 \x01(\v2&.cerbos.audit.v1.PolicySource.DatabaseH\x00R\bdatabase\x128\n" +
@@ -1500,17 +1508,18 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x0erepository_url\x18\x01 \x01(\tR\rrepositoryUrl\x12\x16\n" +
 	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\"\n" +
 	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x12\x12\n" +
-	"\x04hash\x18\x04 \x01(\tR\x04hash\x1a\xd6\x04\n" +
+	"\x04hash\x18\x04 \x01(\tR\x04hash\x1a\xf3\x04\n" +
 	"\x03Hub\x12\x16\n" +
 	"\x05label\x18\x01 \x01(\tH\x00R\x05label\x12)\n" +
 	"\rdeployment_id\x18\x02 \x01(\tB\x02\x18\x01H\x00R\fdeploymentId\x12%\n" +
 	"\rplayground_id\x18\x03 \x01(\tH\x00R\fplaygroundId\x12R\n" +
 	"\flocal_bundle\x18\x04 \x01(\v2-.cerbos.audit.v1.PolicySource.Hub.LocalBundleH\x00R\vlocalBundle\x12[\n" +
 	"\x0fembedded_bundle\x18\x05 \x01(\v20.cerbos.audit.v1.PolicySource.Hub.EmbeddedBundleH\x00R\x0eembeddedBundle\x12U\n" +
-	"\rremote_bundle\x18\x06 \x01(\v2..cerbos.audit.v1.PolicySource.Hub.RemoteBundleH\x00R\fremoteBundle\x1aA\n" +
+	"\rremote_bundle\x18\x06 \x01(\v2..cerbos.audit.v1.PolicySource.Hub.RemoteBundleH\x00R\fremoteBundle\x1a^\n" +
 	"\x0eEmbeddedBundle\x12\x17\n" +
 	"\arule_id\x18\x01 \x01(\tR\x06ruleId\x12\x16\n" +
-	"\x06scopes\x18\x02 \x03(\tR\x06scopes\x1a>\n" +
+	"\x06scopes\x18\x02 \x03(\tR\x06scopes\x12\x1b\n" +
+	"\tbundle_id\x18\x03 \x01(\tR\bbundleId\x1a>\n" +
 	"\vLocalBundle\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1b\n" +
 	"\tbundle_id\x18\x02 \x01(\tR\bbundleId\x1aP\n" +
