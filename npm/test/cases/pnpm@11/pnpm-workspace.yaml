@@ -1,0 +1,5 @@
+cacheDir: .pnpm/cache
+registries:
+  default: http://localhost:4873
+stateDir: .pnpm/state
+storeDir: .pnpm/store
