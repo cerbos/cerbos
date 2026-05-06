@@ -425,6 +425,7 @@ func compileOutput(modCtx *moduleCtx, path string, out *policyv1.Output) *runtim
 	}
 
 	when := &runtimev1.Output_When{}
+	// TODO: Remove this block when output.expr field no longer exists
 	//nolint:staticcheck
 	if out.Expr != "" {
 		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.Expr, true)
