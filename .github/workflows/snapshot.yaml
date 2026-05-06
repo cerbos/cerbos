@@ -49,13 +49,6 @@ jobs:
         env:
           CERBOS_LOG_LEVEL: "debug"
 
-      - name: Upload unit coverage to Coveralls
-        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
-        continue-on-error: true
-        with:
-          path-to-profile: unit.cover
-          flag-name: unit-main
-
       - name: Upload integration coverage to Coveralls
         uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
         continue-on-error: true
