@@ -394,6 +394,10 @@ jobs:
     timeout-minutes: 10
     permissions: {}
     steps:
+      - name: Install bash
+        if: runner.os == 'macOS'
+        run: brew install bash
+
       - name: Check out .node-version file
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
