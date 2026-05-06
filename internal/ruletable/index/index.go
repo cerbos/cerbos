@@ -74,10 +74,6 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		m.bi.bindings = slices.Grow(m.bi.bindings, newBindings)
 	}
 
-	if len(m.bi.fqnBindings.m) == 0 {
-		m.bi.fqnBindings = newFqnDimension()
-	}
-
 	paramsCache := make(map[uint64]*RowParams)
 	drParamsCache := make(map[uint64]*RowParams)
 
