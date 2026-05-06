@@ -138,7 +138,13 @@ func Dependencies(p *policyv1.Policy) ([]string, []string) {
 		importVariables = pt.DerivedRoles.Variables.GetImport()
 		importVariablesProtoPath = "derived_roles.variables.import"
 
-	case *policyv1.Policy_RolePolicy, *policyv1.Policy_ExportConstants, *policyv1.Policy_ExportVariables:
+	case *policyv1.Policy_RolePolicy:
+		importConstants = pt.RolePolicy.Constants.GetImport()
+		importConstantsProtoPath = "role_policy.constants.import"
+		importVariables = pt.RolePolicy.Variables.GetImport()
+		importVariablesProtoPath = "role_policy.variables.import"
+
+	case *policyv1.Policy_ExportConstants, *policyv1.Policy_ExportVariables:
 
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
@@ -501,6 +507,19 @@ func ListConstants(p *policyv1.Policy) map[string]*responsev1.InspectPoliciesRes
 				Source: policyKey,
 			}
 		}
+	case *policyv1.Policy_RolePolicy:
+		if pt.RolePolicy.Constants == nil {
+			return constants
+		}
+
+		for name, value := range pt.RolePolicy.Constants.Local {
+			constants[name] = &responsev1.InspectPoliciesResponse_Constant{
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Constant_KIND_LOCAL,
+				Source: policyKey,
+			}
+		}
 	}
 
 	return constants
@@ -556,6 +575,19 @@ func ListVariables(p *policyv1.Policy) map[string]*responsev1.InspectPoliciesRes
 		}
 
 		for name, value := range pt.ResourcePolicy.Variables.Local {
+			variables[name] = &responsev1.InspectPoliciesResponse_Variable{
+				Name:   name,
+				Value:  value,
+				Kind:   responsev1.InspectPoliciesResponse_Variable_KIND_LOCAL,
+				Source: policyKey,
+			}
+		}
+	case *policyv1.Policy_RolePolicy:
+		if pt.RolePolicy.Variables == nil {
+			return variables
+		}
+
+		for name, value := range pt.RolePolicy.Variables.Local {
 			variables[name] = &responsev1.InspectPoliciesResponse_Variable{
 				Name:   name,
 				Value:  value,

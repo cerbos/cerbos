@@ -130,6 +130,8 @@ message RunnableRolePolicySet {
   cerbos.policy.v1.ScopePermissions scope_permissions = 5 [deprecated = true];
   repeated string parent_roles = 6;
   map<string, RuleList> resources = 7;
+  repeated Variable ordered_variables = 8;
+  map<string, google.protobuf.Value> constants = 9;
 }
 
 // RunnableResourcePolicySet is a container for all "compiled" resource policies

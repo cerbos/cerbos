@@ -81,6 +81,9 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
+	compilePolicyConstants(modCtx, rp.Constants)
+	compilePolicyVariables(modCtx, rp.Variables)
+
 	version := rp.Version
 	if version == "" {
 		version = namer.DefaultVersion
@@ -106,24 +109,29 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		})
 	}
 
+	rrps := &runtimev1.RunnableRolePolicySet{
+		Meta: &runtimev1.RunnableRolePolicySet_Metadata{
+			Fqn:     modCtx.fqn,
+			Version: version,
+			SourceAttributes: map[string]*policyv1.SourceAttributes{
+				namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
+			},
+			Annotations: modCtx.def.GetMetadata().GetAnnotations(),
+		},
+		Role:        rp.GetRole(),
+		ParentRoles: rp.ParentRoles,
+		Scope:       rp.Scope,
+		Resources:   resources,
+	}
+
+	rrps.Constants = modCtx.constants.Used()
+	rrps.OrderedVariables, _ = modCtx.variables.Used()
+
 	return &runtimev1.RunnablePolicySet{
 		CompilerVersion: compilerVersion,
 		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
-			RolePolicy: &runtimev1.RunnableRolePolicySet{
-				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
-					Fqn:     modCtx.fqn,
-					Version: version,
-					SourceAttributes: map[string]*policyv1.SourceAttributes{
-						namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
-					},
-					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
-				},
-				Role:        rp.GetRole(),
-				ParentRoles: rp.ParentRoles,
-				Scope:       rp.Scope,
-				Resources:   resources,
-			},
+			RolePolicy: rrps,
 		},
 	}
 }

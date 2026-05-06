@@ -82,19 +82,17 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 
 		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
-			if !rule.FromRolePolicy {
-				p, err := getOrGenerateParams(paramsCache, rule.Params)
+			p, err := getOrGenerateParams(paramsCache, rule.Params)
+			if err != nil {
+				return err
+			}
+			params = p
+			if rule.OriginDerivedRole != "" {
+				drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
 				if err != nil {
 					return err
 				}
-				params = p
-				if rule.OriginDerivedRole != "" {
-					drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
-					if err != nil {
-						return err
-					}
-					drParams = drp
-				}
+				drParams = drp
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
 			p, err := getOrGenerateParams(paramsCache, rule.Params)
@@ -426,6 +424,7 @@ func (m *Index) appendRolePolicyDenies(
 									EmitOutput:     mb.Core.EmitOutput,
 									PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 									FromRolePolicy: true,
+									Params:         mb.Core.Params,
 								},
 								Action:        action,
 								Name:          mb.Name,
@@ -464,6 +463,7 @@ func (m *Index) appendRolePolicyDenies(
 							ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
 							PolicyKind:       policyv1.Kind_KIND_RESOURCE,
 							FromRolePolicy:   true,
+							Params:           mb.Core.Params,
 						},
 						Action:        action,
 						Name:          mb.Name,
@@ -811,14 +811,14 @@ func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable
 	if cached, ok := cache[h]; ok {
 		return cached, nil
 	}
-	progs, err := getCelProgramsFromExpressions(proto.OrderedVariables)
+	progs, err := getCelProgramsFromExpressions(proto.GetOrderedVariables())
 	if err != nil {
 		return nil, err
 	}
 	params := &RowParams{
 		Key:         h,
-		Variables:   proto.OrderedVariables,
-		Constants:   (&structpb.Struct{Fields: proto.Constants}).AsMap(),
+		Variables:   proto.GetOrderedVariables(),
+		Constants:   (&structpb.Struct{Fields: proto.GetConstants()}).AsMap(),
 		CelPrograms: progs,
 	}
 	cache[h] = params

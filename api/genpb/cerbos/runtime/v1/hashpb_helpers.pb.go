@@ -2103,6 +2103,42 @@ func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.ordered_variables"]; !ok {
+		if len(m.OrderedVariables) > 0 {
+			for _, v := range m.OrderedVariables {
+				if v != nil {
+					cerbos_runtime_v1_Variable_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.constants"]; !ok {
+		if len(m.Constants) > 0 {
+			if len(m.Constants) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Constants {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Constants[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Constants)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Constants[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Constants[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableVariablesSet_Metadata_hashpb_sum(m *RunnableVariablesSet_Metadata, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {

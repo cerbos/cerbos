@@ -83,6 +83,8 @@ func policyKind(p *policyv1.Policy) string {
 		return "resource_policy"
 	case *policyv1.Policy_PrincipalPolicy:
 		return "principal_policy"
+	case *policyv1.Policy_RolePolicy:
+		return "role_policy"
 	case *policyv1.Policy_DerivedRoles:
 		return "derived_roles"
 	case *policyv1.Policy_ExportConstants:

@@ -150,6 +150,8 @@ message RolePolicy {
     },
     deprecated = true
   ];
+  Variables variables = 7;
+  Constants constants = 8;
 }
 
 message RoleRule {

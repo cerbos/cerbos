@@ -3380,6 +3380,12 @@
         "scopePermissions": {
           "$ref": "#/definitions/v1ScopePermissions",
           "description": "Deprecated: no-op."
+        },
+        "variables": {
+          "$ref": "#/definitions/v1Variables"
+        },
+        "constants": {
+          "$ref": "#/definitions/v1Constants"
         }
       }
     },

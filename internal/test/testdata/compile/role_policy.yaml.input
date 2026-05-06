@@ -5,6 +5,12 @@ rolePolicy:
   role: leave_request
   version: "default"
   scope: "acme"
+  constants:
+    local:
+      public: true
+  variables:
+    local:
+      is_public_report: request.resource.attr.public == constants.public
   rules:
     - resource: acme_admin
       allowActions: ['*']
@@ -16,7 +22,7 @@ rolePolicy:
         - delete
       condition:
         match:
-          expr: request.resource.attr.public == true
+          expr: variables.is_public_report
       output:
         when:
           ruleActivated: |-

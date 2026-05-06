@@ -34,6 +34,26 @@
         }
       ]
     },
+    "cerbos.policy.v1.Constants": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
+          },
+          "uniqueItems": true
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.policy.v1.Match": {
       "allOf": [
         {
@@ -156,6 +176,30 @@
           "minLength": 1
         }
       }
+    },
+    "cerbos.policy.v1.Variables": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
+          },
+          "uniqueItems": true
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "allOf": [
@@ -163,6 +207,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "$ref": "#/definitions/cerbos.policy.v1.Constants"
+        },
         "parentRoles": {
           "type": "array",
           "items": {
@@ -191,6 +238,9 @@
             "SCOPE_PERMISSIONS_UNSPECIFIED",
             "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
           ]
+        },
+        "variables": {
+          "$ref": "#/definitions/cerbos.policy.v1.Variables"
         },
         "version": {
           "type": "string",
