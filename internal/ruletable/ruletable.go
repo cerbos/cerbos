@@ -376,6 +376,8 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 					},
 				},
 				Condition:      rule.Condition,
+				EmitOutput:     rule.EmitOutput,
+				Name:           rule.Name,
 				Scope:          p.Scope,
 				Version:        p.Meta.Version,
 				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Meta.Version, p.Scope)), p.Role, idx),

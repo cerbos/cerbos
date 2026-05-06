@@ -3397,6 +3397,12 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
+        },
+        "name": {
+          "type": "string"
+        },
+        "output": {
+          "$ref": "#/definitions/v1Output"
         }
       }
     },

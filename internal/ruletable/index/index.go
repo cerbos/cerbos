@@ -416,11 +416,40 @@ func (m *Index) appendRolePolicyDenies(
 				}
 
 				for _, mb := range matched {
-					// no condition, role policy ACL allows--do nothing and fall through
 					if mb.Core.Condition == nil {
+						// Pure ACL allow: fall through. Role-policy bindings are
+						// otherwise dropped here, so emit any output via a no-effect
+						// binding.
+						if mb.Core.EmitOutput != nil {
+							res = append(res, &Binding{
+								Core: &FunctionalCore{
+									EmitOutput:     mb.Core.EmitOutput,
+									PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+									FromRolePolicy: true,
+								},
+								Action:        action,
+								Name:          mb.Name,
+								OriginFqn:     mb.OriginFqn,
+								Resource:      mb.Resource,
+								Role:          mb.Role,
+								Scope:         mb.Scope,
+								Version:       mb.Version,
+								EvaluationKey: mb.EvaluationKey,
+							})
+						}
 						continue
 					}
-					// else, negate conditions
+					// Synthetic DENY for the negated condition. Outputs are swapped
+					// because synthetic-activated == user-condition-not-met.
+					var emitOutput *runtimev1.Output
+					if mb.Core.EmitOutput != nil && mb.Core.EmitOutput.When != nil {
+						emitOutput = &runtimev1.Output{
+							When: &runtimev1.Output_When{
+								RuleActivated:   mb.Core.EmitOutput.When.ConditionNotMet,
+								ConditionNotMet: mb.Core.EmitOutput.When.RuleActivated,
+							},
+						}
+					}
 					res = append(res, &Binding{
 						Core: &FunctionalCore{
 							Effect: effectv1.Effect_EFFECT_DENY,
@@ -431,11 +460,13 @@ func (m *Index) appendRolePolicyDenies(
 									},
 								},
 							},
+							EmitOutput:       emitOutput,
 							ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
 							PolicyKind:       policyv1.Kind_KIND_RESOURCE,
 							FromRolePolicy:   true,
 						},
 						Action:        action,
+						Name:          mb.Name,
 						OriginFqn:     mb.OriginFqn,
 						Resource:      mb.Resource,
 						Role:          mb.Role,

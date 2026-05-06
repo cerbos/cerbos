@@ -2040,6 +2040,15 @@ func cerbos_runtime_v1_RunnableRolePolicySet_Rule_hashpb_sum(m *RunnableRolePoli
 			cerbos_runtime_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore, b)
 		}
 	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetName()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetName()), len(m.GetName())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RunnableRolePolicySet.Rule.emit_output"]; !ok {
+		if m.GetEmitOutput() != nil {
+			cerbos_runtime_v1_Output_hashpb_sum(m.GetEmitOutput(), hasher, ignore, b)
+		}
+	}
 }
 
 func cerbos_runtime_v1_RunnableRolePolicySet_hashpb_sum(m *RunnableRolePolicySet, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {

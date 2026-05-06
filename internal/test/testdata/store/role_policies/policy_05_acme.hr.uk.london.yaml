@@ -8,10 +8,22 @@ rolePolicy:
     - "employee"
   rules:
     - resource: "*"
+      name: city_check
       allowActions: ["create"]
       condition:
         match:
           expr: P.attr.city == "london"
+      output:
+        when:
+          ruleActivated: |-
+            "%s_in_london".format([request.principal.id])
+          conditionNotMet: |-
+            "%s_not_in_london".format([request.principal.id])
 
     - resource: "leave_request"
+      name: anonymise_rule
       allowActions: ["anonymise"]
+      output:
+        when:
+          ruleActivated: |-
+            "anonymise_allowed:%s".format([request.principal.id])

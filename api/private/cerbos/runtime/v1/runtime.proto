@@ -115,6 +115,8 @@ message RunnableRolePolicySet {
     string resource = 1;
     map<string, google.protobuf.Empty> allow_actions = 2;
     Condition condition = 3;
+    string name = 4;
+    Output emit_output = 5;
   }
 
   message RuleList {

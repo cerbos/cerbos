@@ -52,6 +52,14 @@ wantOutputs:
         },
       "effectiveDerivedRoles":
         ["any_employee", "employee_that_owns_the_record"],
+      "outputs":
+        [
+          {
+            "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
+            "val": "john_in_london",
+            "action": "create",
+          },
+        ],
     },
   ]
 wantDecisionLogs:
@@ -109,6 +117,14 @@ wantDecisionLogs:
                   },
                 "effectiveDerivedRoles":
                   ["any_employee", "employee_that_owns_the_record"],
+                "outputs":
+                  [
+                    {
+                      "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
+                      "val": "john_in_london",
+                      "action": "create",
+                    },
+                  ],
               },
             ],
         },

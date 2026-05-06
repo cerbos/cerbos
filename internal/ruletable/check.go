@@ -372,7 +372,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								octx := rulectx.StartOutput(b.Name)
 								output := &enginev1.OutputEntry{
 									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, b.Core.Params.Constants, variables),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
@@ -400,7 +400,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								octx := rulectx.StartOutput(b.Name)
 								output := &enginev1.OutputEntry{
 									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, b.Core.EmitOutput.When.ConditionNotMet.Checked, b.Core.Params.Constants, variables),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, b.Core.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)

@@ -1189,6 +1189,13 @@
         "condition": {
           "$ref": "#/definitions/cerbos.policy.v1.Condition"
         },
+        "name": {
+          "type": "string",
+          "pattern": "^([A-Za-z][\\-\\.0-9@-Z_a-z]*)*$"
+        },
+        "output": {
+          "$ref": "#/definitions/cerbos.policy.v1.Output"
+        },
         "resource": {
           "type": "string",
           "minLength": 1

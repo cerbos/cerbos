@@ -2069,6 +2069,8 @@ type RunnableRolePolicySet_Rule struct {
 	Resource      string                    `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	AllowActions  map[string]*emptypb.Empty `protobuf:"bytes,2,rep,name=allow_actions,json=allowActions,proto3" json:"allow_actions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Condition     *Condition                `protobuf:"bytes,3,opt,name=condition,proto3" json:"condition,omitempty"`
+	Name          string                    `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	EmitOutput    *Output                   `protobuf:"bytes,5,opt,name=emit_output,json=emitOutput,proto3" json:"emit_output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2120,6 +2122,20 @@ func (x *RunnableRolePolicySet_Rule) GetAllowActions() map[string]*emptypb.Empty
 func (x *RunnableRolePolicySet_Rule) GetCondition() *Condition {
 	if x != nil {
 		return x.Condition
+	}
+	return nil
+}
+
+func (x *RunnableRolePolicySet_Rule) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RunnableRolePolicySet_Rule) GetEmitOutput() *Output {
+	if x != nil {
+		return x.EmitOutput
 	}
 	return nil
 }
@@ -4020,7 +4036,8 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x06\n" +
-	"\x04name\"\xf7\t\n" +
+	"\x04name\"\xc7\n" +
+	"\n" +
 	"\x15RunnableRolePolicySet\x12E\n" +
 	"\x04meta\x18\x01 \x01(\v21.cerbos.runtime.v1.RunnableRolePolicySet.MetadataR\x04meta\x12\x12\n" +
 	"\x04role\x18\x02 \x01(\tR\x04role\x12\x14\n" +
@@ -4038,11 +4055,14 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\x1a>\n" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\x9d\x02\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a\xed\x02\n" +
 	"\x04Rule\x12\x1a\n" +
 	"\bresource\x18\x01 \x01(\tR\bresource\x12d\n" +
 	"\rallow_actions\x18\x02 \x03(\v2?.cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntryR\fallowActions\x12:\n" +
-	"\tcondition\x18\x03 \x01(\v2\x1c.cerbos.runtime.v1.ConditionR\tcondition\x1aW\n" +
+	"\tcondition\x18\x03 \x01(\v2\x1c.cerbos.runtime.v1.ConditionR\tcondition\x12\x12\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12:\n" +
+	"\vemit_output\x18\x05 \x01(\v2\x19.cerbos.runtime.v1.OutputR\n" +
+	"emitOutput\x1aW\n" +
 	"\x11AllowActionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.EmptyR\x05value:\x028\x01\x1aO\n" +
@@ -4529,83 +4549,84 @@ var file_cerbos_runtime_v1_runtime_proto_depIdxs = []int32{
 	41,  // 82: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Metadata.AnnotationsEntry
 	42,  // 83: cerbos.runtime.v1.RunnableRolePolicySet.Rule.allow_actions:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry
 	12,  // 84: cerbos.runtime.v1.RunnableRolePolicySet.Rule.condition:type_name -> cerbos.runtime.v1.Condition
-	37,  // 85: cerbos.runtime.v1.RunnableRolePolicySet.RuleList.rules:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule
-	38,  // 86: cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry.value:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.RuleList
-	98,  // 87: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	96,  // 88: cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry.value:type_name -> google.protobuf.Empty
-	45,  // 89: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
-	46,  // 90: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.AnnotationsEntry
-	48,  // 91: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
-	49,  // 92: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
-	47,  // 93: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.rules:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
-	92,  // 94: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.schemas:type_name -> cerbos.policy.v1.Schemas
-	11,  // 95: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	91,  // 96: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	50,  // 97: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry
-	98,  // 98: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	51,  // 99: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.actions:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
-	52,  // 100: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
-	53,  // 101: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
-	12,  // 102: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.condition:type_name -> cerbos.runtime.v1.Condition
-	94,  // 103: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect:type_name -> cerbos.effect.v1.Effect
-	9,   // 104: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output:type_name -> cerbos.runtime.v1.Expr
-	10,  // 105: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
-	5,   // 106: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
-	9,   // 107: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	97,  // 108: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
-	96,  // 109: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry.value:type_name -> google.protobuf.Empty
-	96,  // 110: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry.value:type_name -> google.protobuf.Empty
-	96,  // 111: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry.value:type_name -> google.protobuf.Empty
-	96,  // 112: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry.value:type_name -> google.protobuf.Empty
-	9,   // 113: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	97,  // 114: cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry.value:type_name -> google.protobuf.Value
-	59,  // 115: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.AnnotationsEntry
-	5,   // 116: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
-	62,  // 117: cerbos.runtime.v1.RunnableVariablesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableVariablesSet.Metadata.AnnotationsEntry
-	9,   // 118: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	65,  // 119: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
-	66,  // 120: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.AnnotationsEntry
-	69,  // 121: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
-	70,  // 122: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.resource_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
-	11,  // 123: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
-	91,  // 124: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	71,  // 125: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry
-	98,  // 126: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
-	12,  // 127: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.condition:type_name -> cerbos.runtime.v1.Condition
-	94,  // 128: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.effect:type_name -> cerbos.effect.v1.Effect
-	9,   // 129: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output:type_name -> cerbos.runtime.v1.Expr
-	10,  // 130: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output:type_name -> cerbos.runtime.v1.Output
-	67,  // 131: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
-	9,   // 132: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
-	68,  // 133: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry.value:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
-	97,  // 134: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
-	9,   // 135: cerbos.runtime.v1.Output.When.rule_activated:type_name -> cerbos.runtime.v1.Expr
-	9,   // 136: cerbos.runtime.v1.Output.When.condition_not_met:type_name -> cerbos.runtime.v1.Expr
-	12,  // 137: cerbos.runtime.v1.Condition.ExprList.expr:type_name -> cerbos.runtime.v1.Condition
-	99,  // 138: cerbos.runtime.v1.CompileErrors.Err.position:type_name -> cerbos.source.v1.Position
-	99,  // 139: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position:type_name -> cerbos.source.v1.Position
-	99,  // 140: cerbos.runtime.v1.IndexBuildErrors.MissingImport.position:type_name -> cerbos.source.v1.Position
-	100, // 141: cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_details:type_name -> cerbos.source.v1.Error
-	99,  // 142: cerbos.runtime.v1.IndexBuildErrors.Disabled.position:type_name -> cerbos.source.v1.Position
-	81,  // 143: cerbos.runtime.v1.BitmapIndex.GlobDimension.literals:type_name -> cerbos.runtime.v1.BitmapIndex.Entry
-	81,  // 144: cerbos.runtime.v1.BitmapIndex.GlobDimension.globs:type_name -> cerbos.runtime.v1.BitmapIndex.Entry
-	83,  // 145: cerbos.runtime.v1.BitmapIndex.Binding.allow_actions:type_name -> cerbos.runtime.v1.BitmapIndex.AllowActions
-	94,  // 146: cerbos.runtime.v1.BitmapIndex.FunctionalCore.effect:type_name -> cerbos.effect.v1.Effect
-	12,  // 147: cerbos.runtime.v1.BitmapIndex.FunctionalCore.condition:type_name -> cerbos.runtime.v1.Condition
-	12,  // 148: cerbos.runtime.v1.BitmapIndex.FunctionalCore.derived_role_condition:type_name -> cerbos.runtime.v1.Condition
-	10,  // 149: cerbos.runtime.v1.BitmapIndex.FunctionalCore.emit_output:type_name -> cerbos.runtime.v1.Output
-	91,  // 150: cerbos.runtime.v1.BitmapIndex.FunctionalCore.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	95,  // 151: cerbos.runtime.v1.BitmapIndex.FunctionalCore.policy_kind:type_name -> cerbos.policy.v1.Kind
-	28,  // 152: cerbos.runtime.v1.BitmapIndex.FunctionalCore.params:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params
-	28,  // 153: cerbos.runtime.v1.BitmapIndex.FunctionalCore.derived_role_params:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params
-	90,  // 154: cerbos.runtime.v1.BitmapIndex.RoleParents.roles:type_name -> cerbos.runtime.v1.BitmapIndex.RoleParents.RolesEntry
-	87,  // 155: cerbos.runtime.v1.BitmapIndex.ParentRolesEntry.value:type_name -> cerbos.runtime.v1.BitmapIndex.RoleParents
-	86,  // 156: cerbos.runtime.v1.BitmapIndex.RoleParents.RolesEntry.value:type_name -> cerbos.runtime.v1.BitmapIndex.Parents
-	157, // [157:157] is the sub-list for method output_type
-	157, // [157:157] is the sub-list for method input_type
-	157, // [157:157] is the sub-list for extension type_name
-	157, // [157:157] is the sub-list for extension extendee
-	0,   // [0:157] is the sub-list for field type_name
+	10,  // 85: cerbos.runtime.v1.RunnableRolePolicySet.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
+	37,  // 86: cerbos.runtime.v1.RunnableRolePolicySet.RuleList.rules:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.Rule
+	38,  // 87: cerbos.runtime.v1.RunnableRolePolicySet.ResourcesEntry.value:type_name -> cerbos.runtime.v1.RunnableRolePolicySet.RuleList
+	98,  // 88: cerbos.runtime.v1.RunnableRolePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	96,  // 89: cerbos.runtime.v1.RunnableRolePolicySet.Rule.AllowActionsEntry.value:type_name -> google.protobuf.Empty
+	45,  // 90: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry
+	46,  // 91: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.AnnotationsEntry
+	48,  // 92: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry
+	49,  // 93: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry
+	47,  // 94: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.rules:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule
+	92,  // 95: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.schemas:type_name -> cerbos.policy.v1.Schemas
+	11,  // 96: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	91,  // 97: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	50,  // 98: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry
+	98,  // 99: cerbos.runtime.v1.RunnableResourcePolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	51,  // 100: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.actions:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry
+	52,  // 101: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.derived_roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry
+	53,  // 102: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.roles:type_name -> cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry
+	12,  // 103: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.condition:type_name -> cerbos.runtime.v1.Condition
+	94,  // 104: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.effect:type_name -> cerbos.effect.v1.Effect
+	9,   // 105: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.output:type_name -> cerbos.runtime.v1.Expr
+	10,  // 106: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.emit_output:type_name -> cerbos.runtime.v1.Output
+	5,   // 107: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	9,   // 108: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	97,  // 109: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
+	96,  // 110: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.ActionsEntry.value:type_name -> google.protobuf.Empty
+	96,  // 111: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.DerivedRolesEntry.value:type_name -> google.protobuf.Empty
+	96,  // 112: cerbos.runtime.v1.RunnableResourcePolicySet.Policy.Rule.RolesEntry.value:type_name -> google.protobuf.Empty
+	96,  // 113: cerbos.runtime.v1.RunnableDerivedRole.ParentRolesEntry.value:type_name -> google.protobuf.Empty
+	9,   // 114: cerbos.runtime.v1.RunnableDerivedRole.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	97,  // 115: cerbos.runtime.v1.RunnableDerivedRole.ConstantsEntry.value:type_name -> google.protobuf.Value
+	59,  // 116: cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableDerivedRolesSet.Metadata.AnnotationsEntry
+	5,   // 117: cerbos.runtime.v1.RunnableDerivedRolesSet.DerivedRolesEntry.value:type_name -> cerbos.runtime.v1.RunnableDerivedRole
+	62,  // 118: cerbos.runtime.v1.RunnableVariablesSet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnableVariablesSet.Metadata.AnnotationsEntry
+	9,   // 119: cerbos.runtime.v1.RunnableVariablesSet.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	65,  // 120: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.source_attributes:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry
+	66,  // 121: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.annotations:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.AnnotationsEntry
+	69,  // 122: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.variables:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry
+	70,  // 123: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.resource_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry
+	11,  // 124: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ordered_variables:type_name -> cerbos.runtime.v1.Variable
+	91,  // 125: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	71,  // 126: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.constants:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry
+	98,  // 127: cerbos.runtime.v1.RunnablePrincipalPolicySet.Metadata.SourceAttributesEntry.value:type_name -> cerbos.policy.v1.SourceAttributes
+	12,  // 128: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.condition:type_name -> cerbos.runtime.v1.Condition
+	94,  // 129: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.effect:type_name -> cerbos.effect.v1.Effect
+	9,   // 130: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.output:type_name -> cerbos.runtime.v1.Expr
+	10,  // 131: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule.emit_output:type_name -> cerbos.runtime.v1.Output
+	67,  // 132: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules.action_rules:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ActionRule
+	9,   // 133: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.VariablesEntry.value:type_name -> cerbos.runtime.v1.Expr
+	68,  // 134: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRulesEntry.value:type_name -> cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ResourceRules
+	97,  // 135: cerbos.runtime.v1.RunnablePrincipalPolicySet.Policy.ConstantsEntry.value:type_name -> google.protobuf.Value
+	9,   // 136: cerbos.runtime.v1.Output.When.rule_activated:type_name -> cerbos.runtime.v1.Expr
+	9,   // 137: cerbos.runtime.v1.Output.When.condition_not_met:type_name -> cerbos.runtime.v1.Expr
+	12,  // 138: cerbos.runtime.v1.Condition.ExprList.expr:type_name -> cerbos.runtime.v1.Condition
+	99,  // 139: cerbos.runtime.v1.CompileErrors.Err.position:type_name -> cerbos.source.v1.Position
+	99,  // 140: cerbos.runtime.v1.IndexBuildErrors.DuplicateDef.position:type_name -> cerbos.source.v1.Position
+	99,  // 141: cerbos.runtime.v1.IndexBuildErrors.MissingImport.position:type_name -> cerbos.source.v1.Position
+	100, // 142: cerbos.runtime.v1.IndexBuildErrors.LoadFailure.error_details:type_name -> cerbos.source.v1.Error
+	99,  // 143: cerbos.runtime.v1.IndexBuildErrors.Disabled.position:type_name -> cerbos.source.v1.Position
+	81,  // 144: cerbos.runtime.v1.BitmapIndex.GlobDimension.literals:type_name -> cerbos.runtime.v1.BitmapIndex.Entry
+	81,  // 145: cerbos.runtime.v1.BitmapIndex.GlobDimension.globs:type_name -> cerbos.runtime.v1.BitmapIndex.Entry
+	83,  // 146: cerbos.runtime.v1.BitmapIndex.Binding.allow_actions:type_name -> cerbos.runtime.v1.BitmapIndex.AllowActions
+	94,  // 147: cerbos.runtime.v1.BitmapIndex.FunctionalCore.effect:type_name -> cerbos.effect.v1.Effect
+	12,  // 148: cerbos.runtime.v1.BitmapIndex.FunctionalCore.condition:type_name -> cerbos.runtime.v1.Condition
+	12,  // 149: cerbos.runtime.v1.BitmapIndex.FunctionalCore.derived_role_condition:type_name -> cerbos.runtime.v1.Condition
+	10,  // 150: cerbos.runtime.v1.BitmapIndex.FunctionalCore.emit_output:type_name -> cerbos.runtime.v1.Output
+	91,  // 151: cerbos.runtime.v1.BitmapIndex.FunctionalCore.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	95,  // 152: cerbos.runtime.v1.BitmapIndex.FunctionalCore.policy_kind:type_name -> cerbos.policy.v1.Kind
+	28,  // 153: cerbos.runtime.v1.BitmapIndex.FunctionalCore.params:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params
+	28,  // 154: cerbos.runtime.v1.BitmapIndex.FunctionalCore.derived_role_params:type_name -> cerbos.runtime.v1.RuleTable.RuleRow.Params
+	90,  // 155: cerbos.runtime.v1.BitmapIndex.RoleParents.roles:type_name -> cerbos.runtime.v1.BitmapIndex.RoleParents.RolesEntry
+	87,  // 156: cerbos.runtime.v1.BitmapIndex.ParentRolesEntry.value:type_name -> cerbos.runtime.v1.BitmapIndex.RoleParents
+	86,  // 157: cerbos.runtime.v1.BitmapIndex.RoleParents.RolesEntry.value:type_name -> cerbos.runtime.v1.BitmapIndex.Parents
+	158, // [158:158] is the sub-list for method output_type
+	158, // [158:158] is the sub-list for method input_type
+	158, // [158:158] is the sub-list for extension type_name
+	158, // [158:158] is the sub-list for extension extendee
+	0,   // [0:158] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_runtime_v1_runtime_proto_init() }

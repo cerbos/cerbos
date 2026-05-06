@@ -1668,6 +1668,15 @@ func cerbos_policy_v1_RoleRule_hashpb_sum(m *v12.RoleRule, hasher hash.Hash, ign
 			cerbos_policy_v1_Condition_hashpb_sum(m.GetCondition(), hasher, ignore, b)
 		}
 	}
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetName()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetName()), len(m.GetName())))
+	}
+	if _, ok := ignore["cerbos.policy.v1.RoleRule.output"]; !ok {
+		if m.GetOutput() != nil {
+			cerbos_policy_v1_Output_hashpb_sum(m.GetOutput(), hasher, ignore, b)
+		}
+	}
 }
 
 func cerbos_policy_v1_Schemas_IgnoreWhen_hashpb_sum(m *v12.Schemas_IgnoreWhen, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
