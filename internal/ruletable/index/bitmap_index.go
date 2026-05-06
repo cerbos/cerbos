@@ -193,9 +193,6 @@ func (d dimension[T]) Query(arena *bitmapArena, keys []T) *Bitmap {
 }
 
 // fqnDimension maps policy FQNs to the binding IDs that originated from them.
-// Unlike dimension[string] it stores plain slices instead of bitmaps because
-// fqnBindings is never used in bitmap AND/OR queries — only for enumeration
-// during DeletePolicy.
 type fqnDimension struct {
 	m map[string][]uint32
 }
