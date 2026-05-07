@@ -63,7 +63,7 @@ jobs:
           E2E_PACKAGE: ${{ inputs.package }}
 
       - name: Notify Slack on failure
-        if: failure()
+        if: "!success()"
         uses: cerbos/actions/notify-slack@6e173289a5f7dbcc0a62e6cb761e18f22f0b2070 # main
         with:
           webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}
