@@ -312,7 +312,13 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 //
 // When roles is empty, iterates every role whose policy matches the
 // non-resource dims (in binding-discovery order). Returns res unchanged if
-// resources or targetActions is empty.
+// resources is empty.
+//
+// When targetActions is empty, the action set for synthesis is derived
+// per-resource from the bindings (excluding principal-policy bindings) for
+// that resource intersected with versionBM ∩ scopeBM. The role filter is
+// deliberately ignored when deriving actions, so the action set reflects the
+// resource's full surface, not just actions referenced by filtered roles.
 func (m *Index) appendRolePolicyDenies(
 	arena *bitmapArena, bi *bitmapIndex,
 	resources, roles, targetActions []string,
@@ -381,6 +387,14 @@ func (m *Index) appendRolePolicyDenies(
 			resourceMatchedByRole[b.Role] = append(resourceMatchedByRole[b.Role], b)
 		}
 
+		resourceActions := targetActions
+		if len(resourceActions) == 0 {
+			resourceActions = collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
+			if len(resourceActions) == 0 {
+				continue
+			}
+		}
+
 		for _, role := range roles {
 			rep, ok := rolePolicyRep[role]
 			if !ok {
@@ -389,13 +403,13 @@ func (m *Index) appendRolePolicyDenies(
 			roleBindings := resourceMatchedByRole[role]
 			// role policy exists, but no resource bindings present
 			if len(roleBindings) == 0 {
-				for _, action := range targetActions {
+				for _, action := range resourceActions {
 					res = append(res, newNoMatchRolePolicyDeny(role, rep.Version, rep.Scope, resource, action))
 				}
 				continue
 			}
 
-			for _, action := range targetActions {
+			for _, action := range resourceActions {
 				matched = matched[:0]
 				for _, rb := range roleBindings {
 					for a := range rb.AllowActions {
@@ -480,6 +494,56 @@ func (m *Index) appendRolePolicyDenies(
 	}
 
 	return res
+}
+
+// collectResourceActions returns the action names referenced by bindings on
+// the given resource (intersected with version/scope). Principal-policy
+// actions are excluded — they're principal-specific and shouldn't widen the
+// resource's action set.
+func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionBM, scopeBM *Bitmap) []string {
+	if resBM.IsEmpty() {
+		return nil
+	}
+
+	dims := make([]*Bitmap, 0, 3) //nolint:mnd
+	dims = append(dims, resBM)
+	if versionBM != nil {
+		dims = append(dims, versionBM)
+	}
+	if scopeBM != nil {
+		dims = append(dims, scopeBM)
+	}
+
+	var bm *Bitmap
+	if len(dims) == 1 {
+		bm = dims[0]
+	} else {
+		bm = arena.andInto(dims)
+	}
+	if bm.IsEmpty() {
+		return nil
+	}
+
+	actionSet := make(map[string]struct{})
+	iter := bm.Iterator()
+	for iter.HasNext() {
+		b := bi.getBinding(iter.Next())
+		if b == nil || b.Core.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
+			continue
+		}
+		if b.Action != "" {
+			actionSet[b.Action] = struct{}{}
+		}
+		for a := range b.AllowActions {
+			actionSet[a] = struct{}{}
+		}
+	}
+
+	actions := make([]string, 0, len(actionSet))
+	for a := range actionSet {
+		actions = append(actions, a)
+	}
+	return actions
 }
 
 func newNoMatchRolePolicyDeny(role, version, scope, resource, action string) *Binding {
@@ -580,9 +644,6 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 
 	if !withRolePolicyDenies {
 		return res
-	}
-	if len(actions) == 0 {
-		actions = m.GetActions()
 	}
 	return m.appendRolePolicyDenies(arena, bi, resources, roles, actions, versionBM, scopeBM, roleBM, res)
 }

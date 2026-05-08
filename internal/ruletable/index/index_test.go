@@ -609,6 +609,59 @@ func TestQueryMultiSynthesis(t *testing.T) {
 		require.Empty(t, collectDenies(res))
 	})
 
+	t.Run("empty actions scopes synthesis to the resource's own actions", func(t *testing.T) {
+		// viewer has a role policy with allowActions=[view] for "document".
+		// "image" has its own resource policy with action=delete for editor.
+		// Querying for "document" with actions=[] must synthesise denies
+		// only for "document"'s own actions ([view] and [edit]) — "delete"
+		// belongs to "image" and must not leak in.
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Resource = "document"
+				r.Role = "editor"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "edit"}
+			}),
+			makeRow(namer.ResourcePolicyFQN("image", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Resource = "image"
+				r.Role = "editor"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "delete"}
+			}),
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view": {}}},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"document"}, nil, []string{"viewer"}, nil, true)
+		denies := collectDenies(res)
+		require.Len(t, denies, 1)
+		require.Equal(t, "edit", denies[0].Action)
+		require.Equal(t, "document", denies[0].Resource)
+		require.True(t, denies[0].Core.FromRolePolicy)
+	})
+
+	t.Run("empty actions on resource with no rules synthesises nothing", func(t *testing.T) {
+		// Querying a resource that has no bindings at all must not synthesise
+		// denies — there are no actions to attribute them to.
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.RolePolicyFQN("viewer", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.Role = "viewer"
+				r.Resource = "document"
+				r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+					AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{Actions: map[string]*emptypb.Empty{"view": {}}},
+				}
+			}),
+		}))
+
+		res := impl.QueryMulti(nil, []string{"image"}, nil, []string{"viewer"}, nil, true)
+		require.Empty(t, collectDenies(res))
+	})
+
 	t.Run("multiple resources synthesise per-resource NoMatch denies", func(t *testing.T) {
 		// viewer has a policy for "document" only. Querying resources=[document,image]
 		// yields one deny for (image, delete) and one for (document, delete): both
