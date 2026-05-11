@@ -32,7 +32,7 @@ jobs:
           write_build_cache: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@b65bfbd7621d9a89a06901a7daaed0cfc72eb690 # main
+        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
         with:
           tools: |-
             buf
@@ -42,7 +42,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@b65bfbd7621d9a89a06901a7daaed0cfc72eb690 # main
+        uses: cerbos/actions/check-repo-status@148106e618c65e91a0026179ccf0cff043e6b962 # main
 
       - name: Test
         run: just test-integration
@@ -122,7 +122,7 @@ jobs:
         uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@b65bfbd7621d9a89a06901a7daaed0cfc72eb690 # main
+        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
         with:
           tools: |-
             goreleaser
@@ -181,7 +181,7 @@ jobs:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: cerbos/actions/buf@b65bfbd7621d9a89a06901a7daaed0cfc72eb690 # main
+        uses: cerbos/actions/buf@148106e618c65e91a0026179ccf0cff043e6b962 # main
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}
