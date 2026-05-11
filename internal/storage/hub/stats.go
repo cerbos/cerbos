@@ -150,7 +150,7 @@ func (s *statsCollector) addRunnablePolicySet(rps *runtimev1.RunnablePolicySet) 
 	case *runtimev1.RunnablePolicySet_ResourcePolicy:
 		kind = policy.ResourceKind
 		ps = s.procRunnableResourcePolicySet(policySet.ResourcePolicy)
-		resource := strings.Split(strings.TrimPrefix(fqn, namer.ResourcePoliciesPrefix+"."), ".")[0]
+		resource, _, _ := strings.Cut(strings.TrimPrefix(fqn, namer.ResourcePoliciesPrefix+"."), ".")
 		s.uniqueResources[util.HashStr(resource)] = struct{}{}
 	case *runtimev1.RunnablePolicySet_RolePolicy:
 		kind = policy.RolePolicyKind

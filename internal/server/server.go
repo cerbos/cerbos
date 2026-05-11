@@ -28,8 +28,6 @@ import (
 	"github.com/sourcegraph/conc/pool"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/admin"
 	"google.golang.org/grpc/credentials"
@@ -453,10 +451,15 @@ func (s *Server) startHTTPServer(ctx context.Context, l net.Listener, grpcSrv *g
 	}
 
 	httpHandler := withCORS(s.conf, cerbosMux)
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+	protocols.SetUnencryptedHTTP2(true)
 
 	h := &http.Server{
 		ErrorLog:          zap.NewStdLog(zap.L().Named("http.error")),
-		Handler:           h2c.NewHandler(httpHandler, &http2.Server{}),
+		Handler:           httpHandler,
+		Protocols:         protocols,
 		ReadHeaderTimeout: s.conf.Advanced.HTTP.ReadHeaderTimeout,
 		ReadTimeout:       s.conf.Advanced.HTTP.ReadTimeout,
 		WriteTimeout:      s.conf.Advanced.HTTP.WriteTimeout,
