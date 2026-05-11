@@ -95,6 +95,16 @@
                 "major"
             ],
             "enabled": false
+        },
+        {
+            "description": "Prevent Renovate from incorrectly updating the Helm chart values.yaml",
+            "matchPackageNames": [
+                "ghcr.io/cerbos/cerbos"
+            ],
+            "matchFileNames": [
+                "deploy/charts/cerbos/*"
+            ],
+            "enabled": false
         }
     ],
     "labels": [
