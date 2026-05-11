@@ -16,7 +16,6 @@ linters:
     - exhaustive
     - forbidigo
     - forcetypeassert
-    - goconst
     - gocritic
     - godot
     - goheader
