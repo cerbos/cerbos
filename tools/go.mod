@@ -7,7 +7,7 @@ require (
 	github.com/cerbos/actions v0.0.0-20260505094010-6e173289a5f7
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
-	github.com/dadav/helm-schema v0.0.0-20260414120644-050a5cc4580c
+	github.com/dadav/helm-schema v0.0.0-20260504180029-72b95654c2af
 	github.com/dkorunic/betteralign v0.9.1
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0

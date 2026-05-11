@@ -43,8 +43,8 @@ github.com/cyphar/filepath-securejoin v0.6.1 h1:5CeZ1jPXEiYt3+Z6zqprSAgSWiggmpVy
 github.com/cyphar/filepath-securejoin v0.6.1/go.mod h1:A8hd4EnAeyujCJRrICiOWqjS1AX0a9kM5XL+NwKoYSc=
 github.com/dadav/go-jsonpointer v0.0.0-20240918181927-335cbee8c279 h1:GxxxrAMM6YJK4Tf7c6APwkhXzzpJm2hGeWKpD3OKpHY=
 github.com/dadav/go-jsonpointer v0.0.0-20240918181927-335cbee8c279/go.mod h1:JoQhlwhuWFnmxzDNgByW0ONYJZjQGnUnRu9H7+C0lTU=
-github.com/dadav/helm-schema v0.0.0-20260414120644-050a5cc4580c h1:IKFgDYZYbR3G79bCQltZVjAKdMZ4K7uS3KSepFsr8Ak=
-github.com/dadav/helm-schema v0.0.0-20260414120644-050a5cc4580c/go.mod h1:A0uWXrhpmwaR/uF3IuvBZLnR9FF5S7OQfUe9smgZRTM=
+github.com/dadav/helm-schema v0.0.0-20260504180029-72b95654c2af h1:AXTTGzRDH3gX/TiqsGHj2II9ExMHZ8w9wpuRcXGh4hs=
+github.com/dadav/helm-schema v0.0.0-20260504180029-72b95654c2af/go.mod h1:HW6gdfrqRCfO9TEnNI5XrWaqrcr4Cl9Z1eqk9Q5wAZs=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
