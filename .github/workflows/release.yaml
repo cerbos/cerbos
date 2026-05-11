@@ -192,7 +192,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Install SAM CLI
-        uses: aws-actions/setup-sam@f84ec7d548307efafe33230528756de3c5841a17 # v2
+        uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
 
       - name: Download GoReleaser artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
