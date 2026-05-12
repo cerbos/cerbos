@@ -23,7 +23,8 @@ if [[ ! -f "$CERBOS_BINARY_PATH" ]]; then
   exit 1
 fi
 
-pkill -9 cerbos && sleep 2
+pkill -9 -f "^${CERBOS_BINARY_PATH}" 2>/dev/null || true
+pidwait -f "^${CERBOS_BINARY_PATH}" 2>/dev/null || true
 
 AUDIT_ENABLED="$AUDIT_ENABLED" SCHEMA_ENFORCEMENT="$SCHEMA_ENFORCEMENT" STORE="$STORE" ${CERBOS_BINARY_PATH} server \
   --config=./conf/cerbos/.cerbos.yaml \
@@ -36,7 +37,7 @@ echo "Cerbos PID: $!"
 echo "Waiting for Cerbos to become healthy..."
 healthy=false
 for i in {1..30}; do
-  sleep 2
+  sleep 5
   if curl -sf http://localhost:3592/_cerbos/health >/dev/null 2>&1; then
     echo "Cerbos is healthy"
     healthy=true
