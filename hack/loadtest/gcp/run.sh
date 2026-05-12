@@ -86,4 +86,21 @@ GSCP "${CLIENT_VM}:/tmp/client-results.tar.gz" "/tmp/client-results.tar.gz"
 tar xzf /tmp/client-results.tar.gz -C "$LOCAL_RESULTS"
 rm -f /tmp/client-results.tar.gz
 
+# --- CPU utilization summary ---
+# Extract avg and max %idle from mpstat "all" rows, convert to %used.
+cpu_summary() {
+  local label="$1" logfile="$2"
+  if [[ ! -f "$logfile" ]]; then
+    printf "  %-10s (no data)\n" "$label"
+    return
+  fi
+  awk '/^ *[0-9].*all/ { idle = $NF; sum += idle; n++; if (n == 1 || idle < min_idle) min_idle = idle }
+       END { if (n > 0) printf "  %-10s avg %5.1f%%   max %5.1f%%   (%d samples)\n", label, 100 - sum/n, 100 - min_idle, n }' \
+    label="$label" "$logfile"
+}
+
+printf "\nCPU utilization (%% of all cores):\n"
+cpu_summary "PDP" "$LOCAL_RESULTS/pdp_cpu_usage.log"
+cpu_summary "Client" "$LOCAL_RESULTS/client_cpu_usage.log"
+
 log "Results saved to hack/loadtest/results/gcp/"
