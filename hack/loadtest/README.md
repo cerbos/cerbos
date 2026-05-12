@@ -59,12 +59,12 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 | `CONCURRENCY` | Number of concurrent ghz workers | `100` |
 | `CONNECTIONS` | Number of gRPC connections | `5` |
 | `DURATION_SECS` | Duration of the sustained-rate test in seconds | `120` |
-| `ITERATIONS` | Number of requests for the throughput test | `1000000` |
+| `ITERATIONS` | Number of requests for the throughput test | `100000` |
 | `METRICS_URL` | Cerbos metrics endpoint URL | `http://localhost:3592/_cerbos/metrics` |
 | `NUM_POLICIES` | Number of policy sets to generate | `1000` |
 | `PASSWORD` | Cerbos Admin API password | `cerbosAdmin` |
 | `POLICY_SET` | Policy template set to use (see below) | `classic` |
-| `REQ_KIND` | Request template prefix to use | `cr_req01` |
+| `REQ_KIND` | Request template prefix — files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types, or `cr_req01` for a single type | `cr` |
 | `RPS` | Target requests per second for the sustained-rate test | `500` |
 | `SCHEMA_ENFORCEMENT` | Schema enforcement level | `none` |
 | `SERVER` | Cerbos gRPC server address | `localhost:3593` |
@@ -77,8 +77,8 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 
 | Set | Description | `REQ_KIND` values |
 |-----|-------------|-------------------|
-| `classic` | Resource policies with derived roles and scopes | `cr_req01`, `cr_req02` |
-| `multitenant` | Role policies with tenant scoping (12 resource kinds) | `cr_req01`, `cr_req02` |
+| `classic` | Resource policies with derived roles and scopes | `cr` (all), `cr_req01`, `cr_req02` |
+| `multitenant` | Role policies with tenant scoping (12 resource kinds) | `cr` (all), `cr_req01`, `cr_req02` |
 
 Example using the multitenant set:
 

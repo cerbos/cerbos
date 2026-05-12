@@ -113,7 +113,7 @@ All variables have sensible defaults and can be overridden:
 | `ITERATIONS` | Total requests for throughput test | `1000000` |
 | `CONCURRENCY` | Number of concurrent ghz workers | `100` |
 | `CONNECTIONS` | Number of gRPC connections | `5` |
-| `REQ_KIND` | Request template prefix | `cr_req01` |
+| `REQ_KIND` | Request template prefix — files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types | `cr` |
 | `NUM_POLICIES` | Number of policy sets (for result file naming) | `1000` |
 
 ## Verification
