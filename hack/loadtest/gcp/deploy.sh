@@ -158,10 +158,12 @@ fi
 
 if [[ "$BINARY_ONLY" == false ]]; then
   # --- Start observability stack on Client VM ---
+  # Recreate containers and drop volumes so Prometheus starts with a clean TSDB.
   log "Starting Prometheus + Grafana on Client VM..."
   GSSH "$CLIENT_VM" <<ENDSSH
 set -euo pipefail
 cd ${REMOTE_BASE}
+docker compose -f docker-compose.yml -f docker-compose.gcp.yml down -v 2>/dev/null || true
 docker compose -f docker-compose.yml -f docker-compose.gcp.yml up -d
 ENDSSH
 fi
