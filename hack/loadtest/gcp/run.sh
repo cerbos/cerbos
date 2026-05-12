@@ -20,6 +20,11 @@ else
 fi
 log "PDP internal IP: ${PDP_IP}"
 
+# --- Clear results from previous runs ---
+log "Clearing previous results..."
+GSSH "$PDP_VM" "rm -rf ${REMOTE_BASE}/results/*"
+GSSH "$CLIENT_VM" "rm -rf ${REMOTE_BASE}/results/*"
+
 # --- Start CPU monitoring on both VMs ---
 log "Starting CPU monitors..."
 GSSH "$PDP_VM" <<ENDSSH
