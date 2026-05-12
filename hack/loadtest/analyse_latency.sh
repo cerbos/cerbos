@@ -70,8 +70,8 @@ DB=$(mktemp -t latency-XXXXX.db)
 trap "rm -f '$DB'" EXIT
 
 # Extract details to CSV via jq, load into SQLite
-sqlite3 "$DB" "CREATE TABLE req (ts TEXT, latency_ns INTEGER);"
-jq -r '.details[] | [.timestamp, .latency] | @csv' "$JSON_FILE" \
+sqlite3 "$DB" "CREATE TABLE req (ts TEXT, latency_ns INTEGER, status TEXT);"
+jq -r '.details[] | [.timestamp, .latency, (.status // "OK")] | @csv' "$JSON_FILE" \
   | sqlite3 "$DB" ".mode csv" ".import /dev/stdin req"
 
 # Compute relative time in seconds and latency in ms
@@ -187,6 +187,37 @@ SQL
   fi
 else
   printf "\nNo stalls or throughput gaps detected.\n"
+fi
+
+# Error clustering
+ERROR_COUNT=$(sqlite3 "$DB" "SELECT COUNT(*) FROM req WHERE status != 'OK';")
+if [[ "$ERROR_COUNT" -gt 0 ]]; then
+  printf "\nErrors: %s total\n" "$ERROR_COUNT"
+  sqlite3 -header -column "$DB" <<SQL
+SELECT status, COUNT(*) AS count FROM req WHERE status != 'OK' GROUP BY status ORDER BY count DESC;
+SQL
+
+  ERROR_WINDOWS=$(sqlite3 "$DB" "SELECT COUNT(DISTINCT CAST(t_sec / ${WINDOW_SECS} AS INTEGER)) FROM req WHERE status != 'OK';")
+  TOTAL_WINDOWS=$(sqlite3 "$DB" "SELECT COUNT(*) FROM windows;")
+  printf "\n  Errors span %s of %s windows" "$ERROR_WINDOWS" "$TOTAL_WINDOWS"
+  if [[ "$ERROR_WINDOWS" -le 3 && "$ERROR_COUNT" -gt 5 ]]; then
+    printf " — clustered (likely a single event)\n"
+  else
+    printf "\n"
+  fi
+
+  sqlite3 -header -column "$DB" <<SQL
+SELECT
+  CAST(t_sec / ${WINDOW_SECS} AS INTEGER) AS win,
+  COUNT(*) AS errors,
+  GROUP_CONCAT(DISTINCT status) AS statuses,
+  ROUND(MIN(t_sec), 2) AS first_sec,
+  ROUND(MAX(t_sec), 2) AS last_sec
+FROM req
+WHERE status != 'OK'
+GROUP BY 1
+ORDER BY 1;
+SQL
 fi
 
 # Per-window breakdown
