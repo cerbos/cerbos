@@ -6,12 +6,30 @@ rolePolicy:
   scope: acme.hr.uk.london
   parentRoles:
     - "employee"
+  constants:
+    local:
+      home_city: "london"
+  variables:
+    local:
+      principal_in_home_city: P.attr.city == constants.home_city
   rules:
     - resource: "*"
+      name: city_check
       allowActions: ["create"]
       condition:
         match:
-          expr: P.attr.city == "london"
+          expr: V.principal_in_home_city
+      output:
+        when:
+          ruleActivated: |-
+            "%s_in_%s".format([request.principal.id, constants.home_city])
+          conditionNotMet: |-
+            "%s_not_in_%s".format([request.principal.id, constants.home_city])
 
     - resource: "leave_request"
+      name: anonymise_rule
       allowActions: ["anonymise"]
+      output:
+        when:
+          ruleActivated: |-
+            "anonymise_allowed:%s".format([request.principal.id])

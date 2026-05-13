@@ -4,6 +4,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "bundleId": {
+      "type": "string"
+    },
     "path": {
       "type": "string"
     }

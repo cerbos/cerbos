@@ -104,7 +104,6 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 
 const (
 	evalSemanticExecuteAll          = "execute_all"
-	evalSemanticDenyOnFirstDeny     = "deny_on_first_deny"
 	evalSemanticPermitOnFirstPermit = "permit_on_first_permit"
 )
 
@@ -136,19 +135,27 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 
 	evals := make([]evalRequest, len(r.Evaluations)) // evaluations with default values taken into account
 
-	defaultAuxData, err := aas.extractAuxData(ctx, r.Context)
-	if err != nil {
-		log.Error("Failed to extract default auxData", zap.Error(err))
-		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
+	var defaultContext map[string]*structpb.Value
+	var defaultAuxData *enginev1.AuxData
+	if len(r.Context) > 0 {
+		defaultContext = r.Context
+		var err error
+		defaultAuxData, err = aas.extractAuxData(ctx, r.Context)
+		if err != nil {
+			log.Error("Failed to extract default auxData", zap.Error(err))
+			return nil, status.Error(codes.InvalidArgument, "invalid auxData")
+		}
 	}
+
 	for i, eval := range r.Evaluations {
-		defaultContext := r.Context
+		context := defaultContext
 		auxData := defaultAuxData
 		if len(eval.Context) > 0 {
-			defaultContext = eval.Context
-			auxData, err = aas.extractAuxData(ctx, defaultContext)
+			context = eval.Context
+			var err error
+			auxData, err = aas.extractAuxData(ctx, context)
 			if err != nil {
-				log.Error("Failed to extract auxData", zap.Error(err))
+				log.Error("Failed to extract auxData from evaluation", zap.Error(err), zap.Int("evaluation_index", i))
 				return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 			}
 		}
@@ -156,7 +163,7 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			subject:  merge(r.Subject, eval.Subject),
 			resource: merge(r.Resource, eval.Resource),
 			action:   merge(r.Action, eval.Action),
-			context:  defaultContext,
+			context:  context,
 			auxData:  auxData,
 			index:    i,
 		}
@@ -344,6 +351,10 @@ func cerbosProp(s string) string {
 }
 
 func lookup[T any](m map[string]*T, k string) *T {
+	if len(m) == 0 {
+		return nil
+	}
+
 	if v, ok := m[cerbosProp(k)]; ok {
 		return v
 	}

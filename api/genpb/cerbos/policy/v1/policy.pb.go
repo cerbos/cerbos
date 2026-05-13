@@ -734,6 +734,8 @@ type RolePolicy struct {
 	//
 	// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
 	ScopePermissions ScopePermissions `protobuf:"varint,4,opt,name=scope_permissions,json=scopePermissions,proto3,enum=cerbos.policy.v1.ScopePermissions" json:"scope_permissions,omitempty"`
+	Variables        *Variables       `protobuf:"bytes,7,opt,name=variables,proto3" json:"variables,omitempty"`
+	Constants        *Constants       `protobuf:"bytes,8,opt,name=constants,proto3" json:"constants,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -820,6 +822,20 @@ func (x *RolePolicy) GetScopePermissions() ScopePermissions {
 	return ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
 }
 
+func (x *RolePolicy) GetVariables() *Variables {
+	if x != nil {
+		return x.Variables
+	}
+	return nil
+}
+
+func (x *RolePolicy) GetConstants() *Constants {
+	if x != nil {
+		return x.Constants
+	}
+	return nil
+}
+
 type isRolePolicy_PolicyType interface {
 	isRolePolicy_PolicyType()
 }
@@ -835,6 +851,8 @@ type RoleRule struct {
 	Resource      string                 `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
 	AllowActions  []string               `protobuf:"bytes,2,rep,name=allow_actions,json=allowActions,proto3" json:"allow_actions,omitempty"`
 	Condition     *Condition             `protobuf:"bytes,3,opt,name=condition,proto3" json:"condition,omitempty"`
+	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Output        *Output                `protobuf:"bytes,5,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -886,6 +904,20 @@ func (x *RoleRule) GetAllowActions() []string {
 func (x *RoleRule) GetCondition() *Condition {
 	if x != nil {
 		return x.Condition
+	}
+	return nil
+}
+
+func (x *RoleRule) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RoleRule) GetOutput() *Output {
+	if x != nil {
+		return x.Output
 	}
 	return nil
 }
@@ -3987,7 +4019,7 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x06effect\x18\x05 \x01(\x0e2\x18.cerbos.effect.v1.EffectB\r\xbaH\n" +
 	"\xc8\x01\x01\x82\x01\x04\x18\x01\x18\x02R\x06effect\x123\n" +
 	"\x04name\x18\x06 \x01(\tB\x1f\xbaH\x1cr\x1a2\x18^([a-zA-Z][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
-	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\x87\x03\n" +
+	"\x06output\x18\a \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xfd\x03\n" +
 	"\n" +
 	"RolePolicy\x12,\n" +
 	"\x04role\x18\x01 \x01(\tB\x16\xbaH\x13r\x112\x0f^[^!*?\\[\\]{}]+$H\x00R\x04role\x12(\n" +
@@ -3995,14 +4027,18 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\fparent_roles\x18\x05 \x03(\tB\x0e\xbaH\v\x92\x01\b\x18\x01\"\x04r\x02\x10\x01R\vparentRoles\x12G\n" +
 	"\x05scope\x18\x02 \x01(\tB1\xbaH.r,2*^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$R\x05scope\x120\n" +
 	"\x05rules\x18\x03 \x03(\v2\x1a.cerbos.policy.v1.RoleRuleR\x05rules\x12]\n" +
-	"\x11scope_permissions\x18\x04 \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsB\f\xbaH\a\x82\x01\x04\x18\x00\x18\x02\x18\x01R\x10scopePermissionsB\x14\n" +
-	"\vpolicy_type\x12\x05\xbaH\x02\b\x01\"\xa7\x01\n" +
+	"\x11scope_permissions\x18\x04 \x01(\x0e2\".cerbos.policy.v1.ScopePermissionsB\f\xbaH\a\x82\x01\x04\x18\x00\x18\x02\x18\x01R\x10scopePermissions\x129\n" +
+	"\tvariables\x18\a \x01(\v2\x1b.cerbos.policy.v1.VariablesR\tvariables\x129\n" +
+	"\tconstants\x18\b \x01(\v2\x1b.cerbos.policy.v1.ConstantsR\tconstantsB\x14\n" +
+	"\vpolicy_type\x12\x05\xbaH\x02\b\x01\"\x8e\x02\n" +
 	"\bRoleRule\x12&\n" +
 	"\bresource\x18\x01 \x01(\tB\n" +
 	"\xbaH\a\xc8\x01\x01r\x02\x10\x01R\bresource\x128\n" +
 	"\rallow_actions\x18\x02 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
 	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\fallowActions\x129\n" +
-	"\tcondition\x18\x03 \x01(\v2\x1b.cerbos.policy.v1.ConditionR\tcondition\"\xbe\x03\n" +
+	"\tcondition\x18\x03 \x01(\v2\x1b.cerbos.policy.v1.ConditionR\tcondition\x123\n" +
+	"\x04name\x18\x04 \x01(\tB\x1f\xbaH\x1cr\x1a2\x18^([a-zA-Z][\\w\\@\\.\\-]*)*$R\x04name\x120\n" +
+	"\x06output\x18\x05 \x01(\v2\x18.cerbos.policy.v1.OutputR\x06output\"\xbe\x03\n" +
 	"\x0fPrincipalPolicy\x127\n" +
 	"\tprincipal\x18\x01 \x01(\tB\x19\xbaH\x16\xc8\x01\x01r\x112\x0f^[^!*?\\[\\]{}]+$R\tprincipal\x12+\n" +
 	"\aversion\x18\x02 \x01(\tB\x11\xbaH\x0e\xc8\x01\x01r\t2\a^[\\w]+$R\aversion\x125\n" +
@@ -4459,108 +4495,111 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	20,  // 19: cerbos.policy.v1.ResourceRule.output:type_name -> cerbos.policy.v1.Output
 	9,   // 20: cerbos.policy.v1.RolePolicy.rules:type_name -> cerbos.policy.v1.RoleRule
 	1,   // 21: cerbos.policy.v1.RolePolicy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	18,  // 22: cerbos.policy.v1.RoleRule.condition:type_name -> cerbos.policy.v1.Condition
-	11,  // 23: cerbos.policy.v1.PrincipalPolicy.rules:type_name -> cerbos.policy.v1.PrincipalRule
-	17,  // 24: cerbos.policy.v1.PrincipalPolicy.variables:type_name -> cerbos.policy.v1.Variables
-	1,   // 25: cerbos.policy.v1.PrincipalPolicy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
-	15,  // 26: cerbos.policy.v1.PrincipalPolicy.constants:type_name -> cerbos.policy.v1.Constants
-	32,  // 27: cerbos.policy.v1.PrincipalRule.actions:type_name -> cerbos.policy.v1.PrincipalRule.Action
-	13,  // 28: cerbos.policy.v1.DerivedRoles.definitions:type_name -> cerbos.policy.v1.RoleDef
-	17,  // 29: cerbos.policy.v1.DerivedRoles.variables:type_name -> cerbos.policy.v1.Variables
-	15,  // 30: cerbos.policy.v1.DerivedRoles.constants:type_name -> cerbos.policy.v1.Constants
-	18,  // 31: cerbos.policy.v1.RoleDef.condition:type_name -> cerbos.policy.v1.Condition
-	33,  // 32: cerbos.policy.v1.ExportConstants.definitions:type_name -> cerbos.policy.v1.ExportConstants.DefinitionsEntry
-	34,  // 33: cerbos.policy.v1.Constants.local:type_name -> cerbos.policy.v1.Constants.LocalEntry
-	35,  // 34: cerbos.policy.v1.ExportVariables.definitions:type_name -> cerbos.policy.v1.ExportVariables.DefinitionsEntry
-	36,  // 35: cerbos.policy.v1.Variables.local:type_name -> cerbos.policy.v1.Variables.LocalEntry
-	19,  // 36: cerbos.policy.v1.Condition.match:type_name -> cerbos.policy.v1.Match
-	37,  // 37: cerbos.policy.v1.Match.all:type_name -> cerbos.policy.v1.Match.ExprList
-	37,  // 38: cerbos.policy.v1.Match.any:type_name -> cerbos.policy.v1.Match.ExprList
-	37,  // 39: cerbos.policy.v1.Match.none:type_name -> cerbos.policy.v1.Match.ExprList
-	38,  // 40: cerbos.policy.v1.Output.when:type_name -> cerbos.policy.v1.Output.When
-	40,  // 41: cerbos.policy.v1.Schemas.principal_schema:type_name -> cerbos.policy.v1.Schemas.Schema
-	40,  // 42: cerbos.policy.v1.Schemas.resource_schema:type_name -> cerbos.policy.v1.Schemas.Schema
-	81,  // 43: cerbos.policy.v1.TestOptions.now:type_name -> google.protobuf.Timestamp
-	51,  // 44: cerbos.policy.v1.TestOptions.globals:type_name -> cerbos.policy.v1.TestOptions.GlobalsEntry
-	26,  // 45: cerbos.policy.v1.TestSuite.tests:type_name -> cerbos.policy.v1.TestTable
-	52,  // 46: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
-	53,  // 47: cerbos.policy.v1.TestSuite.resources:type_name -> cerbos.policy.v1.TestSuite.ResourcesEntry
-	54,  // 48: cerbos.policy.v1.TestSuite.aux_data:type_name -> cerbos.policy.v1.TestSuite.AuxDataEntry
-	24,  // 49: cerbos.policy.v1.TestSuite.options:type_name -> cerbos.policy.v1.TestOptions
-	55,  // 50: cerbos.policy.v1.TestSuite.principal_groups:type_name -> cerbos.policy.v1.TestSuite.PrincipalGroupsEntry
-	56,  // 51: cerbos.policy.v1.TestSuite.resource_groups:type_name -> cerbos.policy.v1.TestSuite.ResourceGroupsEntry
-	57,  // 52: cerbos.policy.v1.TestTable.input:type_name -> cerbos.policy.v1.TestTable.Input
-	59,  // 53: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.Expectation
-	24,  // 54: cerbos.policy.v1.TestTable.options:type_name -> cerbos.policy.v1.TestOptions
-	61,  // 55: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
-	82,  // 56: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
-	63,  // 57: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
-	24,  // 58: cerbos.policy.v1.Test.options:type_name -> cerbos.policy.v1.TestOptions
-	64,  // 59: cerbos.policy.v1.Test.expected_outputs:type_name -> cerbos.policy.v1.Test.ExpectedOutputsEntry
-	68,  // 60: cerbos.policy.v1.TestResults.suites:type_name -> cerbos.policy.v1.TestResults.Suite
-	67,  // 61: cerbos.policy.v1.TestResults.summary:type_name -> cerbos.policy.v1.TestResults.Summary
-	83,  // 62: cerbos.policy.v1.SourceAttributes.AttributesEntry.value:type_name -> google.protobuf.Value
-	18,  // 63: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
-	80,  // 64: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
-	20,  // 65: cerbos.policy.v1.PrincipalRule.Action.output:type_name -> cerbos.policy.v1.Output
-	83,  // 66: cerbos.policy.v1.ExportConstants.DefinitionsEntry.value:type_name -> google.protobuf.Value
-	83,  // 67: cerbos.policy.v1.Constants.LocalEntry.value:type_name -> google.protobuf.Value
-	19,  // 68: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
-	39,  // 69: cerbos.policy.v1.Schemas.Schema.ignore_when:type_name -> cerbos.policy.v1.Schemas.IgnoreWhen
-	44,  // 70: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
-	45,  // 71: cerbos.policy.v1.TestFixture.Principals.principal_groups:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalGroupsEntry
-	46,  // 72: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
-	47,  // 73: cerbos.policy.v1.TestFixture.Resources.resource_groups:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourceGroupsEntry
-	48,  // 74: cerbos.policy.v1.TestFixture.AuxData.aux_data:type_name -> cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
-	84,  // 75: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	49,  // 76: cerbos.policy.v1.TestFixture.Principals.PrincipalGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Principals
-	85,  // 77: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	50,  // 78: cerbos.policy.v1.TestFixture.Resources.ResourceGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Resources
-	86,  // 79: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
-	83,  // 80: cerbos.policy.v1.TestOptions.GlobalsEntry.value:type_name -> google.protobuf.Value
-	84,  // 81: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	85,  // 82: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	86,  // 83: cerbos.policy.v1.TestSuite.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
-	49,  // 84: cerbos.policy.v1.TestSuite.PrincipalGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Principals
-	50,  // 85: cerbos.policy.v1.TestSuite.ResourceGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Resources
-	87,  // 86: cerbos.policy.v1.TestTable.OutputExpectations.expected:type_name -> cerbos.engine.v1.OutputEntry
-	60,  // 87: cerbos.policy.v1.TestTable.Expectation.actions:type_name -> cerbos.policy.v1.TestTable.Expectation.ActionsEntry
-	58,  // 88: cerbos.policy.v1.TestTable.Expectation.outputs:type_name -> cerbos.policy.v1.TestTable.OutputExpectations
-	80,  // 89: cerbos.policy.v1.TestTable.Expectation.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
-	65,  // 90: cerbos.policy.v1.Test.OutputEntries.entries:type_name -> cerbos.policy.v1.Test.OutputEntries.EntriesEntry
-	80,  // 91: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
-	62,  // 92: cerbos.policy.v1.Test.ExpectedOutputsEntry.value:type_name -> cerbos.policy.v1.Test.OutputEntries
-	83,  // 93: cerbos.policy.v1.Test.OutputEntries.EntriesEntry.value:type_name -> google.protobuf.Value
-	2,   // 94: cerbos.policy.v1.TestResults.Tally.result:type_name -> cerbos.policy.v1.TestResults.Result
-	2,   // 95: cerbos.policy.v1.TestResults.Summary.overall_result:type_name -> cerbos.policy.v1.TestResults.Result
-	66,  // 96: cerbos.policy.v1.TestResults.Summary.result_counts:type_name -> cerbos.policy.v1.TestResults.Tally
-	70,  // 97: cerbos.policy.v1.TestResults.Suite.principals:type_name -> cerbos.policy.v1.TestResults.Principal
-	67,  // 98: cerbos.policy.v1.TestResults.Suite.summary:type_name -> cerbos.policy.v1.TestResults.Summary
-	69,  // 99: cerbos.policy.v1.TestResults.Suite.test_cases:type_name -> cerbos.policy.v1.TestResults.TestCase
-	70,  // 100: cerbos.policy.v1.TestResults.TestCase.principals:type_name -> cerbos.policy.v1.TestResults.Principal
-	71,  // 101: cerbos.policy.v1.TestResults.Principal.resources:type_name -> cerbos.policy.v1.TestResults.Resource
-	72,  // 102: cerbos.policy.v1.TestResults.Resource.actions:type_name -> cerbos.policy.v1.TestResults.Action
-	73,  // 103: cerbos.policy.v1.TestResults.Action.details:type_name -> cerbos.policy.v1.TestResults.Details
-	2,   // 104: cerbos.policy.v1.TestResults.Details.result:type_name -> cerbos.policy.v1.TestResults.Result
-	75,  // 105: cerbos.policy.v1.TestResults.Details.failure:type_name -> cerbos.policy.v1.TestResults.Failure
-	76,  // 106: cerbos.policy.v1.TestResults.Details.success:type_name -> cerbos.policy.v1.TestResults.Success
-	88,  // 107: cerbos.policy.v1.TestResults.Details.engine_trace:type_name -> cerbos.engine.v1.Trace
-	89,  // 108: cerbos.policy.v1.TestResults.Details.engine_trace_batch:type_name -> cerbos.engine.v1.TraceBatch
-	77,  // 109: cerbos.policy.v1.TestResults.OutputFailure.mismatched:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue
-	78,  // 110: cerbos.policy.v1.TestResults.OutputFailure.missing:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MissingValue
-	80,  // 111: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
-	80,  // 112: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
-	74,  // 113: cerbos.policy.v1.TestResults.Failure.outputs:type_name -> cerbos.policy.v1.TestResults.OutputFailure
-	80,  // 114: cerbos.policy.v1.TestResults.Success.effect:type_name -> cerbos.effect.v1.Effect
-	87,  // 115: cerbos.policy.v1.TestResults.Success.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	83,  // 116: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected:type_name -> google.protobuf.Value
-	83,  // 117: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual:type_name -> google.protobuf.Value
-	83,  // 118: cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected:type_name -> google.protobuf.Value
-	119, // [119:119] is the sub-list for method output_type
-	119, // [119:119] is the sub-list for method input_type
-	119, // [119:119] is the sub-list for extension type_name
-	119, // [119:119] is the sub-list for extension extendee
-	0,   // [0:119] is the sub-list for field type_name
+	17,  // 22: cerbos.policy.v1.RolePolicy.variables:type_name -> cerbos.policy.v1.Variables
+	15,  // 23: cerbos.policy.v1.RolePolicy.constants:type_name -> cerbos.policy.v1.Constants
+	18,  // 24: cerbos.policy.v1.RoleRule.condition:type_name -> cerbos.policy.v1.Condition
+	20,  // 25: cerbos.policy.v1.RoleRule.output:type_name -> cerbos.policy.v1.Output
+	11,  // 26: cerbos.policy.v1.PrincipalPolicy.rules:type_name -> cerbos.policy.v1.PrincipalRule
+	17,  // 27: cerbos.policy.v1.PrincipalPolicy.variables:type_name -> cerbos.policy.v1.Variables
+	1,   // 28: cerbos.policy.v1.PrincipalPolicy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
+	15,  // 29: cerbos.policy.v1.PrincipalPolicy.constants:type_name -> cerbos.policy.v1.Constants
+	32,  // 30: cerbos.policy.v1.PrincipalRule.actions:type_name -> cerbos.policy.v1.PrincipalRule.Action
+	13,  // 31: cerbos.policy.v1.DerivedRoles.definitions:type_name -> cerbos.policy.v1.RoleDef
+	17,  // 32: cerbos.policy.v1.DerivedRoles.variables:type_name -> cerbos.policy.v1.Variables
+	15,  // 33: cerbos.policy.v1.DerivedRoles.constants:type_name -> cerbos.policy.v1.Constants
+	18,  // 34: cerbos.policy.v1.RoleDef.condition:type_name -> cerbos.policy.v1.Condition
+	33,  // 35: cerbos.policy.v1.ExportConstants.definitions:type_name -> cerbos.policy.v1.ExportConstants.DefinitionsEntry
+	34,  // 36: cerbos.policy.v1.Constants.local:type_name -> cerbos.policy.v1.Constants.LocalEntry
+	35,  // 37: cerbos.policy.v1.ExportVariables.definitions:type_name -> cerbos.policy.v1.ExportVariables.DefinitionsEntry
+	36,  // 38: cerbos.policy.v1.Variables.local:type_name -> cerbos.policy.v1.Variables.LocalEntry
+	19,  // 39: cerbos.policy.v1.Condition.match:type_name -> cerbos.policy.v1.Match
+	37,  // 40: cerbos.policy.v1.Match.all:type_name -> cerbos.policy.v1.Match.ExprList
+	37,  // 41: cerbos.policy.v1.Match.any:type_name -> cerbos.policy.v1.Match.ExprList
+	37,  // 42: cerbos.policy.v1.Match.none:type_name -> cerbos.policy.v1.Match.ExprList
+	38,  // 43: cerbos.policy.v1.Output.when:type_name -> cerbos.policy.v1.Output.When
+	40,  // 44: cerbos.policy.v1.Schemas.principal_schema:type_name -> cerbos.policy.v1.Schemas.Schema
+	40,  // 45: cerbos.policy.v1.Schemas.resource_schema:type_name -> cerbos.policy.v1.Schemas.Schema
+	81,  // 46: cerbos.policy.v1.TestOptions.now:type_name -> google.protobuf.Timestamp
+	51,  // 47: cerbos.policy.v1.TestOptions.globals:type_name -> cerbos.policy.v1.TestOptions.GlobalsEntry
+	26,  // 48: cerbos.policy.v1.TestSuite.tests:type_name -> cerbos.policy.v1.TestTable
+	52,  // 49: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
+	53,  // 50: cerbos.policy.v1.TestSuite.resources:type_name -> cerbos.policy.v1.TestSuite.ResourcesEntry
+	54,  // 51: cerbos.policy.v1.TestSuite.aux_data:type_name -> cerbos.policy.v1.TestSuite.AuxDataEntry
+	24,  // 52: cerbos.policy.v1.TestSuite.options:type_name -> cerbos.policy.v1.TestOptions
+	55,  // 53: cerbos.policy.v1.TestSuite.principal_groups:type_name -> cerbos.policy.v1.TestSuite.PrincipalGroupsEntry
+	56,  // 54: cerbos.policy.v1.TestSuite.resource_groups:type_name -> cerbos.policy.v1.TestSuite.ResourceGroupsEntry
+	57,  // 55: cerbos.policy.v1.TestTable.input:type_name -> cerbos.policy.v1.TestTable.Input
+	59,  // 56: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.Expectation
+	24,  // 57: cerbos.policy.v1.TestTable.options:type_name -> cerbos.policy.v1.TestOptions
+	61,  // 58: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
+	82,  // 59: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
+	63,  // 60: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
+	24,  // 61: cerbos.policy.v1.Test.options:type_name -> cerbos.policy.v1.TestOptions
+	64,  // 62: cerbos.policy.v1.Test.expected_outputs:type_name -> cerbos.policy.v1.Test.ExpectedOutputsEntry
+	68,  // 63: cerbos.policy.v1.TestResults.suites:type_name -> cerbos.policy.v1.TestResults.Suite
+	67,  // 64: cerbos.policy.v1.TestResults.summary:type_name -> cerbos.policy.v1.TestResults.Summary
+	83,  // 65: cerbos.policy.v1.SourceAttributes.AttributesEntry.value:type_name -> google.protobuf.Value
+	18,  // 66: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
+	80,  // 67: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
+	20,  // 68: cerbos.policy.v1.PrincipalRule.Action.output:type_name -> cerbos.policy.v1.Output
+	83,  // 69: cerbos.policy.v1.ExportConstants.DefinitionsEntry.value:type_name -> google.protobuf.Value
+	83,  // 70: cerbos.policy.v1.Constants.LocalEntry.value:type_name -> google.protobuf.Value
+	19,  // 71: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
+	39,  // 72: cerbos.policy.v1.Schemas.Schema.ignore_when:type_name -> cerbos.policy.v1.Schemas.IgnoreWhen
+	44,  // 73: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
+	45,  // 74: cerbos.policy.v1.TestFixture.Principals.principal_groups:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalGroupsEntry
+	46,  // 75: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
+	47,  // 76: cerbos.policy.v1.TestFixture.Resources.resource_groups:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourceGroupsEntry
+	48,  // 77: cerbos.policy.v1.TestFixture.AuxData.aux_data:type_name -> cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
+	84,  // 78: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	49,  // 79: cerbos.policy.v1.TestFixture.Principals.PrincipalGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Principals
+	85,  // 80: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	50,  // 81: cerbos.policy.v1.TestFixture.Resources.ResourceGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Resources
+	86,  // 82: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
+	83,  // 83: cerbos.policy.v1.TestOptions.GlobalsEntry.value:type_name -> google.protobuf.Value
+	84,  // 84: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	85,  // 85: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	86,  // 86: cerbos.policy.v1.TestSuite.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
+	49,  // 87: cerbos.policy.v1.TestSuite.PrincipalGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Principals
+	50,  // 88: cerbos.policy.v1.TestSuite.ResourceGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Resources
+	87,  // 89: cerbos.policy.v1.TestTable.OutputExpectations.expected:type_name -> cerbos.engine.v1.OutputEntry
+	60,  // 90: cerbos.policy.v1.TestTable.Expectation.actions:type_name -> cerbos.policy.v1.TestTable.Expectation.ActionsEntry
+	58,  // 91: cerbos.policy.v1.TestTable.Expectation.outputs:type_name -> cerbos.policy.v1.TestTable.OutputExpectations
+	80,  // 92: cerbos.policy.v1.TestTable.Expectation.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	65,  // 93: cerbos.policy.v1.Test.OutputEntries.entries:type_name -> cerbos.policy.v1.Test.OutputEntries.EntriesEntry
+	80,  // 94: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
+	62,  // 95: cerbos.policy.v1.Test.ExpectedOutputsEntry.value:type_name -> cerbos.policy.v1.Test.OutputEntries
+	83,  // 96: cerbos.policy.v1.Test.OutputEntries.EntriesEntry.value:type_name -> google.protobuf.Value
+	2,   // 97: cerbos.policy.v1.TestResults.Tally.result:type_name -> cerbos.policy.v1.TestResults.Result
+	2,   // 98: cerbos.policy.v1.TestResults.Summary.overall_result:type_name -> cerbos.policy.v1.TestResults.Result
+	66,  // 99: cerbos.policy.v1.TestResults.Summary.result_counts:type_name -> cerbos.policy.v1.TestResults.Tally
+	70,  // 100: cerbos.policy.v1.TestResults.Suite.principals:type_name -> cerbos.policy.v1.TestResults.Principal
+	67,  // 101: cerbos.policy.v1.TestResults.Suite.summary:type_name -> cerbos.policy.v1.TestResults.Summary
+	69,  // 102: cerbos.policy.v1.TestResults.Suite.test_cases:type_name -> cerbos.policy.v1.TestResults.TestCase
+	70,  // 103: cerbos.policy.v1.TestResults.TestCase.principals:type_name -> cerbos.policy.v1.TestResults.Principal
+	71,  // 104: cerbos.policy.v1.TestResults.Principal.resources:type_name -> cerbos.policy.v1.TestResults.Resource
+	72,  // 105: cerbos.policy.v1.TestResults.Resource.actions:type_name -> cerbos.policy.v1.TestResults.Action
+	73,  // 106: cerbos.policy.v1.TestResults.Action.details:type_name -> cerbos.policy.v1.TestResults.Details
+	2,   // 107: cerbos.policy.v1.TestResults.Details.result:type_name -> cerbos.policy.v1.TestResults.Result
+	75,  // 108: cerbos.policy.v1.TestResults.Details.failure:type_name -> cerbos.policy.v1.TestResults.Failure
+	76,  // 109: cerbos.policy.v1.TestResults.Details.success:type_name -> cerbos.policy.v1.TestResults.Success
+	88,  // 110: cerbos.policy.v1.TestResults.Details.engine_trace:type_name -> cerbos.engine.v1.Trace
+	89,  // 111: cerbos.policy.v1.TestResults.Details.engine_trace_batch:type_name -> cerbos.engine.v1.TraceBatch
+	77,  // 112: cerbos.policy.v1.TestResults.OutputFailure.mismatched:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue
+	78,  // 113: cerbos.policy.v1.TestResults.OutputFailure.missing:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MissingValue
+	80,  // 114: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
+	80,  // 115: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
+	74,  // 116: cerbos.policy.v1.TestResults.Failure.outputs:type_name -> cerbos.policy.v1.TestResults.OutputFailure
+	80,  // 117: cerbos.policy.v1.TestResults.Success.effect:type_name -> cerbos.effect.v1.Effect
+	87,  // 118: cerbos.policy.v1.TestResults.Success.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	83,  // 119: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected:type_name -> google.protobuf.Value
+	83,  // 120: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual:type_name -> google.protobuf.Value
+	83,  // 121: cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected:type_name -> google.protobuf.Value
+	122, // [122:122] is the sub-list for method output_type
+	122, // [122:122] is the sub-list for method input_type
+	122, // [122:122] is the sub-list for extension type_name
+	122, // [122:122] is the sub-list for extension extendee
+	0,   // [0:122] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_policy_v1_policy_proto_init() }

@@ -174,7 +174,24 @@ func visitPolicy(policy *policyv1.Policy, visitor ast.Visitor) error {
 
 		return nil
 
-	case *policyv1.Policy_ExportConstants, *policyv1.Policy_RolePolicy:
+	case *policyv1.Policy_RolePolicy:
+		if err := visitVariables(pt.RolePolicy.GetVariables().GetLocal(), visitor); err != nil {
+			return fmt.Errorf("failed in role policy local variables: %w", err)
+		}
+
+		for _, rule := range pt.RolePolicy.Rules {
+			if err := visitCondition(rule.Condition, visitor); err != nil {
+				return fmt.Errorf("failed in role policy rule: %w", err)
+			}
+
+			if err := visitOutput(rule.Output, visitor); err != nil {
+				return fmt.Errorf("failed in role policy rule: %w", err)
+			}
+		}
+
+		return nil
+
+	case *policyv1.Policy_ExportConstants:
 		return nil
 
 	default:

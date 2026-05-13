@@ -1,0 +1,136 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Field-level and column-level security
+
+include::ROOT:partial$version-check.adoc[]
+
+
+Applications often need to control access not just at the resource level but at the field level. For example, an HR system might allow all employees to view a colleague's name and department, but restrict salary information to HR staff and managers.
+
+
+== Pattern 1: Actions as field operations
+
+Model each field-action combination as a distinct action using the hierarchical action naming convention (`:` delimiter).
+
+.Resource policy with field-level actions
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "employee_record"
+  version: "default"
+  rules:
+    - actions: ["name:view", "department:view", "title:view"]
+      effect: EFFECT_ALLOW
+      roles: ["employee"]
+
+    - actions: ["salary:*"]
+      effect: EFFECT_ALLOW
+      roles: ["hr_admin"]
+
+    - actions: ["salary:view"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - direct_manager
+----
+
+Check multiple field-level actions in a single request:
+
+.Request
+[source,json,linenums]
+----
+{
+  "principal": {
+    "id": "alice",
+    "roles": ["employee"]
+  },
+  "resources": [
+    {
+      "resource": {
+        "kind": "employee_record",
+        "id": "emp-001"
+      },
+      "actions": ["name:view", "department:view", "salary:view"]
+    }
+  ]
+}
+----
+
+.Response
+[source,json,linenums]
+----
+{
+  "results": [
+    {
+      "resource": { "id": "emp-001", "kind": "employee_record" },
+      "actions": {
+        "name:view": "EFFECT_ALLOW",
+        "department:view": "EFFECT_ALLOW",
+        "salary:view": "EFFECT_DENY"
+      }
+    }
+  ]
+}
+----
+
+Alice can view name and department but not salary.
+
+TIP: Wildcards respect the `:` delimiter. A rule with `actions: ["salary:*"]` matches both `salary:view` and `salary:edit`.
+
+
+== Pattern 2: Output expressions for permitted fields
+
+Use xref:policies:outputs.adoc[output expressions] to return the set of fields a user can access, so your application can dynamically build responses.
+
+.Resource policy with output expressions
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "employee_record"
+  version: "default"
+  rules:
+    - name: base-fields
+      actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["employee"]
+      output:
+        when:
+          ruleActivated: |-
+            {"viewable_fields": ["name", "department", "title"]}
+
+    - name: sensitive-fields
+      actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["hr_admin"]
+      output:
+        when:
+          ruleActivated: |-
+            {"viewable_fields": ["name", "department", "title", "salary", "ssn"]}
+----
+
+The response `outputs` array contains the field lists from all matched rules. Your application merges these to determine the full set of accessible fields.
+
+.Response outputs
+[source,json,linenums]
+----
+{
+  "outputs": [
+    {
+      "src": "resource.employee_record.vdefault#base-fields",
+      "val": {
+        "viewable_fields": ["name", "department", "title"]
+      }
+    }
+  ]
+}
+----
+
+
+== Choosing a pattern
+
+Actions as field operations:: Best when you need yes/no decisions per field and want to leverage Cerbos wildcard matching. Works well with xref:api:index.adoc#resources-query-plan[PlanResources] for query-level filtering.
+
+Output expressions:: Best when you want to return a dynamic set of permitted fields from a single action check. More flexible but requires application-side logic to process the output.
+
+These patterns can be combined — for example, use action-based checks for write operations and output expressions for read operations.

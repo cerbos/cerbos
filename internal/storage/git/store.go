@@ -12,11 +12,12 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -61,7 +62,9 @@ type Store struct {
 	repo *git.Repository
 	sf   singleflight.Group
 	*storage.SubscriptionManager
-	subDir string
+	subDir         string
+	currCommitHash string
+	mu             sync.RWMutex
 }
 
 func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
@@ -85,6 +88,7 @@ func (s *Store) init(ctx context.Context) error {
 	if s.conf.ScratchDir != "" {
 		s.log.Warnf("ScratchDir storage option is deprecated and will be removed in a future release")
 	}
+
 	finfo, err := os.Stat(s.conf.CheckoutDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("failed to stat %s: %w", s.conf.CheckoutDir, err)
@@ -135,7 +139,17 @@ func (s *Store) init(ctx context.Context) error {
 		return err
 	}
 
+	s.setCurrentCommitHash()
+
 	return loadAndStartPoller()
+}
+
+func (s *Store) Close() error {
+	if err := s.idx.Close(); err != nil {
+		return err
+	}
+
+	return s.repo.Close()
 }
 
 func (s *Store) Driver() string {
@@ -192,6 +206,8 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to pull: %w", err)
 	}
 
+	s.setCurrentCommitHash()
+
 	evts, err := s.idx.Reload(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to reload index: %w", err)
@@ -210,9 +226,34 @@ func (s *Store) Source() *auditv1.PolicySource {
 				RepositoryUrl: s.conf.URL,
 				Branch:        s.conf.getBranch(),
 				Subdirectory:  s.conf.getSubDir(),
+				Hash:          s.currentCommitHash(),
 			},
 		},
 	}
+}
+
+func (s *Store) currentCommitHash() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return s.currCommitHash
+}
+
+func (s *Store) setCurrentCommitHash() {
+	if s.repo == nil {
+		return
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	head, err := s.repo.Head()
+	if err != nil {
+		s.currCommitHash = "UNKNOWN"
+		return
+	}
+
+	s.currCommitHash = head.Hash().String()
 }
 
 func isEmptyDir(dir string) (bool, error) {
@@ -236,16 +277,16 @@ func isEmptyDir(dir string) (bool, error) {
 }
 
 func (s *Store) cloneRepo(ctx context.Context) error {
-	auth, err := s.conf.getAuth()
-	if err != nil {
-		return fmt.Errorf("failed to create git auth credentials: %w", err)
-	}
-
 	opts := &git.CloneOptions{
 		URL:           s.conf.URL,
-		Auth:          auth,
 		ReferenceName: plumbing.NewBranchReferenceName(s.conf.getBranch()),
 		SingleBranch:  true,
+	}
+
+	if opt, err := s.conf.getAuth(); err != nil {
+		return fmt.Errorf("failed to create git auth credentials: %w", err)
+	} else if opt != nil {
+		opts.ClientOptions = append(opts.ClientOptions, opt)
 	}
 
 	s.log.Infof("Cloning git repo from %s", s.conf.URL)
@@ -253,9 +294,11 @@ func (s *Store) cloneRepo(ctx context.Context) error {
 	ctx, cancelFunc := s.conf.getOpCtx(ctx)
 	defer cancelFunc()
 
-	if _, err := git.PlainCloneContext(ctx, s.conf.CheckoutDir, false, opts); err != nil {
+	repo, err := git.PlainCloneContext(ctx, s.conf.CheckoutDir, opts)
+	if err != nil {
 		return fmt.Errorf("failed to clone from %s to %s: %w", s.conf.URL, s.conf.CheckoutDir, err)
 	}
+	defer repo.Close()
 
 	return s.openRepo()
 }
@@ -298,16 +341,16 @@ func (s *Store) pullAndCompare(ctx context.Context) (object.Changes, error) {
 
 		branch := s.conf.getBranch()
 
-		auth, err := s.conf.getAuth()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
-		}
-
 		// Now pull from remote
 		opts := &git.PullOptions{
-			Auth:          auth,
 			ReferenceName: plumbing.NewBranchReferenceName(branch),
 			SingleBranch:  true,
+		}
+
+		if opt, err := s.conf.getAuth(); err != nil {
+			return nil, fmt.Errorf("failed to create git auth credentials: %w", err)
+		} else if opt != nil {
+			opts.ClientOptions = append(opts.ClientOptions, opt)
 		}
 
 		pullCtx, pullCancel := s.conf.getOpCtx(ctx)
@@ -426,6 +469,8 @@ func (s *Store) updateIndex(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	s.setCurrentCommitHash()
 
 	if changes == nil {
 		s.log.Debug("No new commits")

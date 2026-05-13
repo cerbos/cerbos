@@ -55,6 +55,19 @@ wantOutputs:
         },
       "effectiveDerivedRoles":
         ["employee_that_owns_the_record"],
+      "outputs":
+        [
+          {
+            "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#anonymise_rule",
+            "val": "anonymise_allowed:john",
+            "action": "anonymise",
+          },
+          {
+            "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
+            "val": "john_not_in_london",
+            "action": "create",
+          },
+        ],
     },
   ]
 wantDecisionLogs:
@@ -114,6 +127,19 @@ wantDecisionLogs:
                   },
                 "effectiveDerivedRoles":
                   ["employee_that_owns_the_record"],
+                "outputs":
+                  [
+                    {
+                      "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#anonymise_rule",
+                      "val": "anonymise_allowed:john",
+                      "action": "anonymise",
+                    },
+                    {
+                      "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
+                      "val": "john_not_in_london",
+                      "action": "create",
+                    },
+                  ],
               },
             ],
         },

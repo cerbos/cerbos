@@ -1,0 +1,93 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Filtering resources by permission
+
+include::ROOT:partial$version-check.adoc[]
+
+
+Applications often need to display only the resources a user is authorized to see — for example, showing only the projects a user can view, or the documents they can edit. Because Cerbos is stateless and doesn't store your data, it can't return a list of resource IDs directly. Instead, Cerbos provides the `PlanResources` API, which returns a query plan that your application converts into a database filter.
+
+
+== The approach: PlanResources
+
+The xref:api:index.adoc#resources-query-plan[`PlanResources` API] takes a principal, a resource kind, and an action. It returns an abstract syntax tree (AST) of the conditions that must be satisfied for the principal to access resources of that kind for that action. Your application converts this AST into a native database query.
+
+.PlanResources request
+[source,json,linenums]
+----
+{
+  "requestId": "filter-example",
+  "action": "view",
+  "principal": {
+    "id": "alice",
+    "roles": ["user"],
+    "attr": {
+      "department": "engineering"
+    }
+  },
+  "resource": {
+    "kind": "document",
+    "policyVersion": "default"
+  }
+}
+----
+
+
+== Plan result kinds
+
+The response contains one of three result kinds:
+
+`ALWAYS_ALLOWED`:: The principal can access all resources of this kind for this action. No filtering is needed.
+
+`ALWAYS_DENIED`:: The principal cannot access any resources of this kind. Return an empty result set.
+
+`CONDITIONAL`:: The response includes a filter condition as an AST. Convert this to a database query to fetch only the resources the principal can access.
+
+.Example CONDITIONAL response
+[source,json,linenums]
+----
+{
+  "requestId": "filter-example",
+  "action": "view",
+  "resourceKind": "document",
+  "filter": {
+    "kind": "KIND_CONDITIONAL",
+    "condition": {
+      "expression": {
+        "operator": "eq",
+        "operands": [
+          { "variable": "request.resource.attr.department" },
+          { "value": "engineering" }
+        ]
+      }
+    }
+  }
+}
+----
+
+In this example, the plan tells your application to filter documents where `department = "engineering"`.
+
+
+== Query plan adapters
+
+Cerbos provides reference adapter implementations for common data layers as guidance for your own implementations.
+
+See xref:query-plan-adapters/index.adoc[query plan adapters] for the full list, which includes:
+
+* xref:query-plan-adapters/prisma.adoc[Prisma] (TypeScript)
+* xref:query-plan-adapters/drizzle.adoc[Drizzle] (TypeScript)
+* xref:query-plan-adapters/mongoose.adoc[Mongoose] (TypeScript)
+* xref:query-plan-adapters/sqlalchemy.adoc[SQLAlchemy] (Python)
+* xref:query-plan-adapters/convex.adoc[Convex] (TypeScript)
+* xref:query-plan-adapters/langchain-chromadb.adoc[LangChain / ChromaDB] (TypeScript)
+
+
+== When to use CheckResources vs PlanResources
+
+Use xref:api:index.adoc#check-resources[`CheckResources`] when you already have specific resource instances and need a yes/no decision for each.
+
+Use `PlanResources` when you need to fetch resources from a data store and want to filter them by permission at the query level.
+
+TIP: For best performance, use `PlanResources` to push authorization filters into your database query rather than fetching all resources and checking each one individually with `CheckResources`.
+
+NOTE: `PlanResources` evaluates policies based on the xref:policies:conditions.adoc[conditions] defined in your policies. Conditions that reference resource attributes will appear in the AST. Conditions that reference only principal attributes are resolved immediately and won't appear in the filter.

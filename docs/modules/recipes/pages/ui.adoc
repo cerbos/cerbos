@@ -47,3 +47,41 @@ You might also want to use a separate deployment with only a subset of your poli
 
 You can use link:https://docs.cerbos.dev/cerbos-hub/decision-points-embedded[Cerbos Hub's embedded PDPs] to evaluate your authorization policies directly in the browser.
 This allows you to perform permission checks on the front end without changing the back end.
+
+
+== Handling CORS
+
+If you call the Cerbos PDP directly from a browser, you may encounter CORS (Cross-Origin Resource Sharing) errors. This happens when your web application and the Cerbos PDP are served from different origins.
+
+To resolve this, configure CORS in your Cerbos server configuration:
+
+[source,yaml,linenums]
+----
+server:
+  cors:
+    allowedOrigins:
+      - "https://your-app.example.com"
+    allowedHeaders:
+      - "content-type"
+      - "authorization"
+----
+
+See xref:configuration:server.adoc[server configuration] for all available CORS options.
+
+CAUTION: Avoid setting `allowedOrigins` to `*` in production. Be as specific as possible with the origins you allow.
+
+If your Cerbos PDP sits behind a reverse proxy (such as Nginx or Envoy), ensure that only one layer is adding CORS headers. Duplicate `Access-Control-Allow-Origin` headers will cause browsers to reject the response.
+
+
+== Should you call Cerbos from the browser?
+
+For most applications, the recommended approach is to call Cerbos from your back end and include the permission results in your API responses. This has several advantages:
+
+* Your Cerbos PDP doesn't need to be exposed to the internet.
+* You avoid CORS configuration entirely.
+* Sensitive context data (like resource attributes) stays server-side.
+* Permission checks and data fetching happen in a single round trip.
+
+See <<_including_permissions_in_api_responses>> above for this approach.
+
+Calling Cerbos directly from the browser can be useful during development or for applications that use the Cerbos PDP as a shared service accessible from multiple front-end clients. If you take this approach, be aware that any data sent in the request (principal attributes, resource attributes) is visible to the end user via browser developer tools.

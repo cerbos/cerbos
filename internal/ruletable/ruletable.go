@@ -375,9 +375,15 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 						Actions: rule.AllowActions,
 					},
 				},
-				Condition:      rule.Condition,
-				Scope:          p.Scope,
-				Version:        p.Meta.Version,
+				Condition:  rule.Condition,
+				EmitOutput: rule.EmitOutput,
+				Name:       rule.Name,
+				Scope:      p.Scope,
+				Version:    p.Meta.Version,
+				Params: &runtimev1.RuleTable_RuleRow_Params{
+					OrderedVariables: p.OrderedVariables,
+					Constants:        p.Constants,
+				},
 				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Meta.Version, p.Scope)), p.Role, idx),
 				PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 				FromRolePolicy: true,
@@ -582,7 +588,7 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	return rt.idx.IndexParentRoles(rt.ScopeParentRoles)
 }
 
-func (rt *RuleTable) GetAllRows() ([]*index.Binding, error) {
+func (rt *RuleTable) GetAllRows() []*index.Binding {
 	return rt.idx.GetAllRows()
 }
 

@@ -39,7 +39,6 @@ var (
 type LocalSource struct {
 	bundle  Bundle
 	cleanup func() error
-	source  *auditv1.PolicySource
 	*storage.SubscriptionManager
 	params LocalParams
 	mu     sync.RWMutex
@@ -112,17 +111,6 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 	ls := &LocalSource{
 		params:              params,
 		SubscriptionManager: storage.NewSubscriptionManager(ctx),
-		source: &auditv1.PolicySource{
-			Source: &auditv1.PolicySource_Hub_{
-				Hub: &auditv1.PolicySource_Hub{
-					Source: &auditv1.PolicySource_Hub_LocalBundle_{
-						LocalBundle: &auditv1.PolicySource_Hub_LocalBundle{
-							Path: params.BundlePath,
-						},
-					},
-				},
-			},
-		},
 	}
 
 	if err := ls.loadBundle(); err != nil {
@@ -221,6 +209,13 @@ func (ls *LocalSource) loadBundle() error {
 	return nil
 }
 
+func (ls *LocalSource) activeBundleID() string {
+	ls.mu.RLock()
+	defer ls.mu.RUnlock()
+
+	return ls.bundle.ID()
+}
+
 func (ls *LocalSource) Driver() string {
 	return DriverName
 }
@@ -300,7 +295,18 @@ func (ls *LocalSource) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (ls *LocalSource) Source() *auditv1.PolicySource {
-	return ls.source
+	return &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Hub_{
+			Hub: &auditv1.PolicySource_Hub{
+				Source: &auditv1.PolicySource_Hub_LocalBundle_{
+					LocalBundle: &auditv1.PolicySource_Hub_LocalBundle{
+						Path:     ls.params.BundlePath,
+						BundleId: ls.activeBundleID(),
+					},
+				},
+			},
+		},
+	}
 }
 
 func (ls *LocalSource) Close() error {

@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -78,10 +78,13 @@ func TestNewStore(t *testing.T) {
 		checkoutDir := t.TempDir()
 
 		// checkout the master branch of the source git repo
-		_, err := git.PlainClone(checkoutDir, false, &git.CloneOptions{
+		repo, err := git.PlainClone(checkoutDir, &git.CloneOptions{
 			URL: fmt.Sprintf("file://%s", sourceGitDir),
 		})
 		require.NoError(t, err, "Failed to clone repo")
+		t.Cleanup(func() {
+			require.NoError(t, repo.Close())
+		})
 
 		conf := mkConf(t, sourceGitDir, checkoutDir)
 
@@ -1064,6 +1067,7 @@ func commitToGitRepo(dir, msg string, work func(*git.Worktree) error) error {
 	if err != nil {
 		return fmt.Errorf("failed to open Git repo: %w", err)
 	}
+	defer repo.Close()
 
 	wt, err := repo.Worktree()
 	if err != nil {

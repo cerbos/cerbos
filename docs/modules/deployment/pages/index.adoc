@@ -7,6 +7,8 @@ include::ROOT:partial$version-check.adoc[]
 
 Cerbos can be deployed as a service or as a sidecar. Which mode to choose depends on your requirements.
 
+IMPORTANT: Cerbos PDP is a stateless system that makes decisions solely based on information passed to it by the calling application. This assumes that the communication link between the application and the PDP is secure and tamper-proof. We strongly recommend enabling TLS for the communication link regardless of the deployment model.
+
 [#service]
 == Service model
 
@@ -34,3 +36,54 @@ image:daemonset_deployment.png[DaemonSet model,role="center-img"]
 * Each cluster node gets its own Cerbos instance — ensuring high performance and efficient resource usage.
 * Policy updates must roll out to nodes individually — resulting in a period where both the old and new policies are in effect at the same time.
 * When deployed as a daemonset the service `internalTrafficPolicy` defaults to `Local`. This causes all requests to the service to be forced to the local node for minimum latency. Upgrades to Cerbos could result in application seeing a short outage to the cerbos instance on their own node, client retries may be neccessary. If this is unacceptable you can set `service.internalTrafficPolicy` to `Cluster`. You may be able to improve availability via the `service.kubernetes.io/topology-mode: Auto` annotation.
+
+[#choosing]
+== Choosing a deployment model
+
+[cols="1h,3*^",options="header"]
+|===
+| | Service | Sidecar | DaemonSet
+
+| Latency
+| Network hop to central service
+| Local (localhost/loopback)
+| Local (same node)
+
+| Resource efficiency
+| Shared instance, lower total overhead
+| One instance per pod, higher total overhead
+| One instance per node, moderate overhead
+
+| Scaling
+| Scale independently of applications
+| Scales with application pods
+| Scales with cluster nodes
+
+| Upgrades
+| Independent of application deployments
+| Requires rolling update of application pods
+| Independent of application deployments
+
+| Policy propagation
+| Updates propagate to each replica in the service group individually
+| Updates propagate to each sidecar individually
+| Updates propagate to each node individually
+
+| Availability
+| Depends on how many replicas are in the service
+| High — each pod has its own instance
+| High — each node has its own instance
+
+| Best for
+| Non-Kubernetes deployments such as bare metal or Kubernetes deployments where it's preferable to manage and scale a single service rather than multiple sidecars.
+| Latency-sensitive applications, strict isolation requirements
+| Less resource consumption than sidecars (one per node compared to one per pod) with similar latency characteristics.
+|===
+
+For most Kubernetes deployments, the *sidecar* model provides the best balance of performance and reliability. Each application pod gets its own Cerbos instance, eliminating network latency concerns and single points of failure.
+
+The *service* model is the most flexible method of deployment. It can be as simple as a single instance on a VM or as complicated as a globally-distributed and load-balanced service deployed to multiple data centres.
+
+The *DaemonSet* model is efficient for large deployments where running a sidecar per pod would be wasteful. It provides node-local performance without the overhead of one Cerbos instance per application pod.
+
+TIP: Cerbos is designed to handle high request volumes with low latency. In benchmarks, the network hop to a central service is typically sub-millisecond within a cluster. Start with the simplest model that meets your requirements.

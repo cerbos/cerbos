@@ -11,12 +11,15 @@ import (
 	"strings"
 
 	"buf.build/go/protovalidate"
+
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
+	"github.com/cerbos/cloud-api/base"
+	authv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/auth/v1"
 	storev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/store/v1"
 	"github.com/cerbos/cloud-api/store"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -41,15 +44,32 @@ type Conn struct {
 	TLSClientCert string `name:"tls-client-cert" hidden:"" help:"Path to the TLS client certificate" type:"existingfile" env:"CERBOS_HUB_TLS_CLIENT_CERT" and:"tls-client-key"`
 	TLSClientKey  string `name:"tls-client-key" hidden:"" help:"Path to the TLS client key" type:"existingfile" env:"CERBOS_HUB_TLS_CLIENT_KEY" and:"tls-client-cert"`
 	StoreID       string `name:"store-id" help:"ID of the store to operate on" env:"CERBOS_HUB_STORE_ID" required:""`
-	ClientID      string `name:"client-id" help:"Client ID of the access credential" env:"CERBOS_HUB_CLIENT_ID" required:""`
-	ClientSecret  string `name:"client-secret" help:"Client secret of the access credential" env:"CERBOS_HUB_CLIENT_SECRET" required:""` //nolint:gosec
+	ClientID      string `name:"client-id" help:"Client ID of the access credential" env:"CERBOS_HUB_CLIENT_ID"`
+	ClientSecret  string `name:"client-secret" help:"Client secret of the access credential" env:"CERBOS_HUB_CLIENT_SECRET"` //nolint:gosec
 	TLSInsecure   bool   `name:"tls-insecure" hidden:"" help:"Skip validating server certificate" env:"CERBOS_HUB_TLS_INSECURE"`
 }
 
 func (c Conn) storeClient() (*hub.StoreClient, error) {
 	hubOpts := []cerbos.HubOpt{
 		cerbos.WithHubAPIEndpoint(c.APIEndpoint),
-		cerbos.WithHubCredentials(c.ClientID, c.ClientSecret),
+	}
+
+	if c.ClientID != "" && c.ClientSecret != "" {
+		hubOpts = append(hubOpts, cerbos.WithHubCredentials(c.ClientID, c.ClientSecret))
+	} else {
+		saved, err := base.GetSavedCredentials(c.APIEndpoint)
+		if err != nil {
+			return nil, fmt.Errorf("no valid credentials: %w", err)
+		}
+
+		switch creds := saved.GetCredentials().(type) {
+		case *authv1.SavedCredentials_ClientCredentials:
+			hubOpts = append(hubOpts, cerbos.WithHubCredentials(creds.ClientCredentials.GetClientId(), creds.ClientCredentials.GetClientSecret()))
+		case *authv1.SavedCredentials_DeviceToken:
+			hubOpts = append(hubOpts, cerbos.WithSavedCredentials(saved))
+		default:
+			return nil, errors.New("unable to load saved credentials")
+		}
 	}
 
 	var advancedOpts []cerbos.Opt

@@ -1,0 +1,130 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Debugging authorization decisions
+
+include::ROOT:partial$version-check.adoc[]
+
+
+When a request returns an unexpected `EFFECT_ALLOW` or `EFFECT_DENY`, Cerbos provides several tools to help you understand why.
+
+[#include-meta]
+== Using `includeMeta` in requests
+
+Add `"includeMeta": true` to your `CheckResources` request to receive metadata about how Cerbos reached each decision.
+
+.Request with `includeMeta`
+[source,json,linenums]
+----
+{
+  "requestId": "debug-example",
+  "includeMeta": true,
+  "principal": {
+    "id": "alice",
+    "roles": ["employee"],
+    "attr": {
+      "department": "marketing"
+    }
+  },
+  "resources": [
+    {
+      "resource": {
+        "kind": "leave_request",
+        "id": "xx125",
+        "policyVersion": "20210210",
+        "attr": {
+          "owner": "alice"
+        }
+      },
+      "actions": ["view", "approve"]
+    }
+  ]
+}
+----
+
+The response includes a `meta` block for each resource:
+
+.Response meta block
+[source,json,linenums]
+----
+{
+  "meta": {
+    "actions": {
+      "view": {
+        "matchedPolicy": "resource.leave_request.v20210210/acme.corp",
+        "matchedScope": "acme",
+        "effectiveDerivedRoles": ["owner"]
+      },
+      "approve": {
+        "matchedPolicy": "resource.leave_request.v20210210/acme.corp"
+      }
+    }
+  }
+}
+----
+
+`matchedPolicy`:: The full identifier of the policy that produced the decision.
+`matchedScope`:: The scope that was active when the decision was made (relevant when using xref:scoped_policies.adoc[scoped policies]).
+`effectiveDerivedRoles`:: The xref:derived_roles.adoc[derived roles] that were activated for the principal on this resource. If a role you expected is missing, check the derived roles definition and its conditions.
+
+
+[#audit-logging]
+== Audit logging
+
+Enable decision logging to record every authorization decision made by the Cerbos PDP. This is useful for post-hoc analysis and for correlating decisions with application behaviour.
+
+.Minimal audit configuration
+[source,yaml,linenums]
+----
+audit:
+  enabled: true
+  decisionLogsEnabled: true
+  backend: file
+  file:
+    path: stdout
+----
+
+Every API response includes a `cerbosCallId` field. Use this identifier to locate the corresponding entry in the audit log.
+
+See xref:configuration:audit.adoc[audit configuration] for the full set of options including filtering, retention, and alternative backends.
+
+
+[#repl]
+== Testing CEL expressions with the REPL
+
+The Cerbos REPL lets you evaluate CEL expressions interactively, which is useful for debugging xref:conditions.adoc[conditions] that aren't behaving as expected.
+
+
+You can load request data and test expressions against it without running a full policy evaluation cycle. See xref:cli:cerbos.adoc#repl[the REPL documentation] for usage details.
+
+
+[#unexpected-deny]
+== Common causes of unexpected DENY
+
+If a request is denied when you expect it to be allowed, check the following:
+
+No matching policy:: No policy exists for the `kind` and `policyVersion` combination in the request. Use `includeMeta` to confirm whether a policy was matched.
+
+Missing derived roles import:: The xref:derived_roles.adoc[derived roles] policy is not imported into the resource policy via `importDerivedRoles`. The derived roles must be explicitly imported before they can take effect.
+
+Condition evaluated to false:: A xref:conditions.adoc[condition] on the matching rule returned `false`. Verify that the attribute names and types in the request match what the condition expects. Use the Cerbos REPL to execute the rule with your input or write a policy test and execute it with the `--verbose` option to see how the expression is evaluated. 
+
+Explicit DENY matched:: A `DENY` rule matched for the same action. In Cerbos, deny always takes precedence over allow when both apply to the same role and action. See xref:evaluation.adoc[how Cerbos evaluates requests].
+
+Role mismatch:: The principal's `roles` in the request don't match any rule in the policy. Roles are case-sensitive and must match exactly. They must be the actual role names and not the derived role names. 
+
+
+[#unexpected-allow]
+== Common causes of unexpected ALLOW
+
+Overly broad wildcards:: A rule using `actions: ['*']` or `roles: ['*']` matches more than intended. Narrow the rule to list specific actions or roles.
+
+Derived role condition too permissive:: A xref:derived_roles.adoc[derived role] condition is matching more principals than expected. Review the condition expression and test it in the xref:cli:cerbos.adoc#repl[REPL].
+
+
+[#validation]
+== Validating and inspecting policies
+
+Use `cerbos compile` to validate policies and run tests before deploying them. This catches syntax errors, missing imports, and failing test cases.
+
+
+See xref:compile.adoc[validating and testing] for the full guide on policy compilation and test suites.

@@ -1,0 +1,194 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Modeling hierarchies and multi-tenancy
+
+include::ROOT:partial$version-check.adoc[]
+
+
+Many applications need to model organizational hierarchies (departments, teams, regions) or multi-tenant access patterns. Cerbos supports these through a combination of principal attributes, hierarchy functions, scoped policies, and derived roles.
+
+
+== Organizational hierarchies
+
+When a manager needs access to their reports' resources, or a regional admin needs access to resources in their region, pass hierarchy information as principal attributes and use the hierarchy CEL functions in conditions.
+
+=== Example: manager access to direct reports
+
+.Derived role definition
+[source,yaml,linenums]
+----
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: hr_roles
+  definitions:
+    - name: direct_manager
+      parentRoles: ["manager"]
+      condition:
+        match:
+          expr: >
+            hierarchy(P.attr.managed_scope).immediateParentOf(hierarchy(R.attr.scope))
+----
+
+.Resource policy using the derived role
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "leave_request"
+  version: "default"
+  importDerivedRoles:
+    - hr_roles
+  rules:
+    - actions: ["view", "approve"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - direct_manager
+----
+
+.Request with hierarchy attributes
+[source,json,linenums]
+----
+{
+  "principal": {
+    "id": "alice",
+    "roles": ["manager"],
+    "attr": {
+      "managed_scope": "acme.engineering"
+    }
+  },
+  "resources": [
+    {
+      "resource": {
+        "kind": "leave_request",
+        "id": "lr-001",
+        "attr": {
+          "scope": "acme.engineering.backend"
+        }
+      },
+      "actions": ["view", "approve"]
+    }
+  ]
+}
+----
+
+In this example, Alice manages `acme.engineering`. The leave request belongs to `acme.engineering.backend`, which is an immediate child of her scope, so the `direct_manager` derived role activates.
+
+=== Available hierarchy functions
+
+[cols="1,3"]
+|===
+| Function | Description
+
+| `ancestorOf` | Returns true if the hierarchy is an ancestor of another
+| `descendentOf` | Returns true if the hierarchy is a descendent of another
+| `immediateChildOf` | Returns true if the hierarchy is a first-level child
+| `immediateParentOf` | Returns true if the hierarchy is a first-level parent
+| `commonAncestors` | Returns the common ancestor hierarchy
+| `overlaps` | Returns true if one hierarchy is a prefix of the other
+| `siblingOf` | Returns true if both hierarchies share the same parent
+|===
+
+See xref:policies:conditions.adoc#hierarchies[hierarchy functions] for the full reference.
+
+
+== Multi-tenancy with scoped policies
+
+When different tenants need different access rules, use xref:policies:scoped_policies.adoc[scoped policies] to define a base set of rules with tenant-specific overrides.
+
+.Base policy (no scope)
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "document"
+  version: "default"
+  rules:
+    - actions: ["view"]
+      effect: EFFECT_ALLOW
+      roles: ["user"]
+----
+
+.Scoped policy for tenant "acme"
+[source,yaml,linenums]
+----
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: "document"
+  version: "default"
+  scope: "acme"
+  rules:
+    - actions: ["view", "share"]
+      effect: EFFECT_ALLOW
+      roles: ["user"]
+----
+
+The request must include the scope on the resource (and optionally the principal) to activate tenant-specific rules:
+
+[source,json,linenums]
+----
+{
+  "principal": {
+    "id": "bob",
+    "roles": ["user"],
+    "scope": "acme"
+  },
+  "resources": [
+    {
+      "resource": {
+        "kind": "document",
+        "id": "doc-001",
+        "scope": "acme",
+        "attr": {}
+      },
+      "actions": ["view", "share"]
+    }
+  ]
+}
+----
+
+With scope `acme` on the resource, the scoped policy is evaluated and Bob can both view and share documents. Without a scope (or with a different scope), only the base policy applies and Bob can only view.
+
+NOTE: Scopes can be set independently on both the resource and the principal. The resource scope controls which resource policy chain is evaluated, and the principal scope controls which principal policy chain is evaluated. See xref:policies:scoped_policies.adoc[scoped policies] for the full evaluation flow.
+
+
+== Tenant-specific custom roles
+
+When tenants can define their own roles and permissions, use the "static policy / dynamic context" approach. Define a single set of policies and pass tenant-specific role assignments as principal attributes.
+
+.Request with per-workspace role assignments
+[source,json,linenums]
+----
+{
+  "principal": {
+    "id": "charlie",
+    "roles": ["USER"],
+    "attr": {
+      "workspaces": {
+        "ws-001": { "role": "EDITOR" },
+        "ws-002": { "role": "VIEWER" }
+      }
+    }
+  }
+}
+----
+
+.Condition checking the workspace role
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: P.attr.workspaces[R.id].role == "EDITOR"
+----
+
+This approach lets tenants manage role assignments in your application without changing policies. See xref:policies:best_practices.adoc[best practices] for a detailed walkthrough of this pattern.
+
+
+== Choosing a pattern
+
+Hierarchy functions:: Best for org structures, reporting lines, and geographic regions.
+Scoped policies:: Best when tenants need entirely different rule sets.
+Dynamic context:: Best when tenants customize permissions within the same rule structure.
+
+These patterns can be combined. For example, scoped policies for tenant-level rule overrides combined with hierarchy functions for org-structure checks within a tenant.
+
+For a full working example, see the link:https://github.com/cerbos/demo-multitenant-saas[multi-tenant SaaS demo].

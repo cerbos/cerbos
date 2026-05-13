@@ -14,14 +14,14 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
+	"github.com/ory/dockertest/v4"
 	"github.com/stretchr/testify/require"
 	"gocloud.dev/blob"
 )
@@ -29,7 +29,6 @@ import (
 const (
 	seaweedUsername = "weedadmin"
 	seaweedPassword = "weedadmin"
-	bucketName      = "test"
 )
 
 const timeout = 5 * time.Minute
@@ -70,7 +69,7 @@ func CopyDirToBucket(tb testing.TB, ctx context.Context, param UploadParam) *blo
 	return bucket
 }
 
-func newSeaweedFSBucket(ctx context.Context, t *testing.T, path, prefix string) *blob.Bucket {
+func newSeaweedFSBucket(t *testing.T, seaweedFS *SeaweedFS, path, prefix string) *blob.Bucket {
 	t.Helper()
 
 	deadline, ok := t.Deadline()
@@ -78,11 +77,11 @@ func newSeaweedFSBucket(ctx context.Context, t *testing.T, path, prefix string) 
 		deadline = time.Now().Add(timeout)
 	}
 
-	ctx, cancelFunc := context.WithDeadline(ctx, deadline)
+	ctx, cancelFunc := context.WithDeadline(t.Context(), deadline)
 	defer cancelFunc()
 
 	param := UploadParam{
-		BucketURL:    SeaweedFSBucketURL(bucketName, StartSeaweedFS(ctx, t, bucketName)),
+		BucketURL:    seaweedFS.CreateBucket(t),
 		BucketPrefix: prefix,
 		Username:     seaweedUsername,
 		Password:     seaweedPassword,
@@ -134,60 +133,72 @@ func uploadDirToBucket(tb testing.TB, ctx context.Context, dir string, bucket *b
 	return files, err
 }
 
-func bucketAdd(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key string, data []byte) {
+func bucketAdd(tb testing.TB, bucket *blob.Bucket, key string, data []byte) {
 	tb.Helper()
 
 	tb.Logf("[START] Adding %s", key)
 	//nolint:gosec
 	sum := md5.Sum(data)
 	tb.Logf("key: %s, etag: %s", key, hex.EncodeToString(sum[:]))
-	require.NoError(tb, bucket.WriteAll(ctx, key, data, &blob.WriterOptions{
+	require.NoError(tb, bucket.WriteAll(tb.Context(), key, data, &blob.WriterOptions{
 		ContentMD5: sum[:],
 	}))
 	tb.Logf("[END] Adding %s", key)
 }
 
-func bucketDelete(ctx context.Context, tb testing.TB, bucket *blob.Bucket, key string) {
+func bucketDelete(tb testing.TB, bucket *blob.Bucket, key string) {
 	tb.Helper()
 
 	tb.Logf("[START] Deleting %s", key)
-	require.NoError(tb, bucket.Delete(ctx, key))
+	require.NoError(tb, bucket.Delete(tb.Context(), key))
 	tb.Logf("[END] Deleting %s", key)
 }
 
-func StartSeaweedFS(ctx context.Context, t *testing.T, bucketName string) string {
+type SeaweedFS struct {
+	endpoint string
+	buckets  atomic.Int64
+}
+
+func (s *SeaweedFS) CreateBucket(t *testing.T) string {
+	t.Helper()
+
+	cfg, err := config.LoadDefaultConfig(
+		t.Context(),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(seaweedUsername, seaweedPassword, "")),
+		config.WithRegion("local"),
+		config.WithBaseEndpoint("http://"+s.endpoint),
+	)
+	require.NoError(t, err, "Failed to load AWS config")
+
+	bucket := fmt.Sprintf("test-%d", s.buckets.Add(1))
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = true })
+	_, err = client.CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &bucket})
+	require.NoError(t, err, "Failed to create bucket %q: %v", bucket, err)
+
+	return SeaweedFSBucketURL(bucket, s.endpoint)
+}
+
+func StartSeaweedFS(t *testing.T) *SeaweedFS {
 	t.Helper()
 
 	is := require.New(t)
-	pool, err := dockertest.NewPool("")
-	is.NoError(err, "Could not connect to docker: %s", err)
+	pool := dockertest.NewPoolT(t, "")
 
-	options := &dockertest.RunOptions{
-		Repository: "chrislusf/seaweedfs",
-		Tag:        "latest",
-		Cmd:        []string{"server", "-s3"},
-		Env:        []string{"AWS_ACCESS_KEY_ID=" + strings.TrimPrefix(seaweedUsername, "admin-"), "AWS_SECRET_ACCESS_KEY=" + seaweedPassword},
-	}
+	resource := pool.RunT(t, "chrislusf/seaweedfs",
+		dockertest.WithTag("latest"),
+		dockertest.WithCmd([]string{"server", "-s3"}),
+		dockertest.WithEnv([]string{"AWS_ACCESS_KEY_ID=" + strings.TrimPrefix(seaweedUsername, "admin-"), "AWS_SECRET_ACCESS_KEY=" + seaweedPassword}),
+	)
 
-	resource, err := pool.RunWithOptions(options)
-	is.NoError(err, "Could not start resource: %s", err)
-
-	go func() {
-		_ = pool.Client.Logs(docker.LogsOptions{
-			Context:      ctx,
-			Stderr:       true,
-			Stdout:       true,
-			Follow:       true,
-			Timestamps:   true,
-			RawTerminal:  true,
-			Container:    resource.Container.ID,
-			OutputStream: os.Stdout,
-		})
-	}()
+	go func() { _ = resource.FollowLogs(t.Context(), os.Stdout, os.Stderr) }()
 
 	endpoint := fmt.Sprintf("localhost:%s", resource.GetPort("8333/tcp"))
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	err = pool.Retry(func() error {
+	err := pool.Retry(t.Context(), timeout, func() error {
+		ctx, cancel := context.WithTimeout(t.Context(), 1*time.Second)
+		defer cancel()
+
 		req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("http://%s/healthz", endpoint), nil)
 		if err != nil {
 			return err
@@ -206,26 +217,8 @@ func StartSeaweedFS(ctx context.Context, t *testing.T, bucketName string) string
 	})
 	is.NoError(err, "Could not connect to docker: %s", err)
 
-	t.Cleanup(func() {
-		err = pool.Purge(resource)
-		is.NoError(err, "Could not purge resource: %s", err)
-	})
-
-	s3APIEndpoint := "http://" + endpoint
-	cfg, err := config.LoadDefaultConfig(
-		t.Context(),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(seaweedUsername, seaweedPassword, "")),
-		config.WithRegion("local"),
-		config.WithBaseEndpoint(s3APIEndpoint),
-	)
-	is.NoError(err, "Failed to load AWS config")
-
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.UsePathStyle = true })
-	_, err = client.CreateBucket(t.Context(), &s3.CreateBucketInput{Bucket: &bucketName})
-	is.NoError(err, "Failed to create bucket %q: %v", bucketName, err)
-
 	t.Setenv("AWS_ACCESS_KEY_ID", seaweedUsername)
 	t.Setenv("AWS_SECRET_ACCESS_KEY", seaweedPassword)
 
-	return endpoint
+	return &SeaweedFS{endpoint: endpoint}
 }

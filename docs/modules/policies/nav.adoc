@@ -1,4 +1,5 @@
 .xref:index.adoc[Policies]
+* xref:evaluation.adoc[How Cerbos evaluates requests]
 * xref:authoring_tips.adoc[Policy authoring]
 * xref:derived_roles.adoc[Derived roles]
 * xref:resource_policies.adoc[Resource policies]
@@ -12,3 +13,5 @@
 * xref:schemas.adoc[Schemas]
 * xref:compile.adoc[Validating and testing]
 * xref:best_practices.adoc[Best practices]
+* xref:debugging.adoc[Debugging authorization decisions]
+* link:https://github.com/cerbos/skills[Agent skill]

@@ -1,0 +1,2 @@
+type:enhancement
+Record store version information such as commit hash or bundle ID in audit log entries.

@@ -82,7 +82,7 @@ func (ug *IDGen) NewForTS(ts uint64) (ID, error) {
 // randPool is a pool of rand objects used to produce random bytes for ID generation.
 type randPool struct {
 	pool    []io.Reader
-	counter uint64
+	counter atomic.Uint64
 	size    uint64
 }
 
@@ -104,7 +104,7 @@ func newRandPool(size uint64, seed int64) *randPool {
 
 func (rp *randPool) get() io.Reader {
 	// fast modulo of powers of 2
-	idx := atomic.AddUint64(&rp.counter, 1) & (rp.size - 1)
+	idx := rp.counter.Add(1) & (rp.size - 1)
 	return rp.pool[idx]
 }
 

@@ -224,11 +224,6 @@ message AccessEvaluationBatchRequest {
     message: "either the default resource must be set or all evaluations must have a resource"
     expression: "has(this.resource) || this.evaluations.all(x, has(x.resource))"
   };
-  option (buf.validate.message).cel = {
-    id: "contexts"
-    message: "either the default context must be set or all evaluations must have a context"
-    expression: "has(this.context) || this.evaluations.all(x, has(x.context))"
-  };
 }
 
 // AuthZEN evaluations response message

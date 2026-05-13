@@ -457,3 +457,83 @@ func (m *Errors) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 		hashpb_bufPool.Put(b)
 	}
 }
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_Entry) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_GlobDimension) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_GlobDimension_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_AllowActions) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_AllowActions_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_Binding) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_Binding_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_FunctionalCore) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_FunctionalCore_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_Parents) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_Parents_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *BitmapIndex_RoleParents) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}

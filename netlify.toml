@@ -1,5 +1,10 @@
 [build]
 publish = "docs/build"
+edge_functions = "docs/edge_functions"
+
+[[edge_functions]]
+path = "/*"
+function = "siteline"
 
 [[headers]]
 for = "/*"
@@ -308,6 +313,30 @@ force = true
 
 [[redirects]]
 from = "/cerbos/0.51.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.52.0/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.52.0/:module/_images/*"
+to = "/cerbos/prerelease/:module/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.53.0/_images/*"
+to = "/cerbos/prerelease/_images/:splat"
+status = 302
+force = true
+
+[[redirects]]
+from = "/cerbos/0.53.0/:module/_images/*"
 to = "/cerbos/prerelease/:module/_images/:splat"
 status = 302
 force = true

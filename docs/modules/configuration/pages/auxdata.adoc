@@ -14,6 +14,8 @@ Cerbos supports reading claims from a JWT issued by an authentication system. Th
 
 In order to verify the JWT, the Cerbos instance must have access to the appropriate keysets. They can be fetched from a URL or read from the local file system. Verification involves checking that the signature is valid and that the token has not expired.
 
+IMPORTANT: Although Cerbos verifies JWTs, it's intended as a convenience rather than an authoritative check. We recommend that the tokens are independently verified at the gateway or application level before being sent to the PDP. The verification at the PDP is purely a precaution against tampering in-flight, which should not be possible in a production deployment where TLS is enforced between the application and the PDP.
+
 
 .Using multiple keysets
 [source,yaml,linenums]
@@ -47,7 +49,7 @@ When keysets are fetched from a `remote` source, if the `refreshInterval` is not
 
 You can disable JWT verification by setting `disableVerification` to `true`. When verification is disabled, Cerbos will not perform cryptographic verification of the JWT but the `exp` and `nbf` claims are still checked to ensure that the token is valid. You can configure the acceptable time skew for those claims by setting `acceptableTimeSkew` to a positive time duration.
 
-WARNING: Disabling JWT verification is not recommended because it makes the system insecure by forcing Cerbos to evaluate policies using potentially tampered data. Similarly, it's not recommended to set `acceptableTimeSkew` to more than a few seconds.
+WARNING: Don't disable JWT verification unless you are certain that the token cannot be tampered with before it reaches the PDP. Similarly, it's not recommended to set `acceptableTimeSkew` to more than a few seconds to prevent replay attacks.
 
 [source,yaml,linenums]
 ----
@@ -55,19 +57,6 @@ auxData:
   jwt:
     disableVerification: true
     acceptableTimeSkew: 2s
-----
-
-Cerbos maintains an in-memory cache of verified JWTs to avoid repeating the cryptographic verification step on each request. Cached tokens are still validated on each request to make sure they are still valid for use. You can increase the size of the cache by setting `cacheSize`.
-
-[source,yaml,linenums]
-----
-auxData:
-  jwt:
-    cacheSize: 256
-    keySets:
-      - id: default
-        remote:
-          url: https://domain.tld/.well-known/keys.jwks
 ----
 
 Some legacy authentication systems have key sets that do not contain `alg` or `kid` fields. Not having these fields defined is a security risk and the default behaviour of Cerbos is to fail the parsing of JWT. If you are aware of the risks and still want to enable those tokens to be parsed, set the `optionalAlg` and `optionalKid` options.

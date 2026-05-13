@@ -15,10 +15,6 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -45,47 +41,48 @@ jobs:
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to ECR
-        uses: aws-actions/amazon-ecr-login@183a1442edf41672e66566b7fc560e297a290896 # v2.1.1
+        uses: aws-actions/amazon-ecr-login@19d944daaa35f0fa1d3f7f8af1d3f2e5de25c5b7 # v2.1.4
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - name: Install tools
+        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
+        with:
+          tools: |-
+            goreleaser
+            syft
 
       - name: Install Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version-file: .node-version
           package-manager-cache: false
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
-        with:
-          version: latest
-          args: release --config=.goreleaser.yml --clean
+        run: goreleaser release --config=.goreleaser.yml --clean
         env:
           AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
           AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
@@ -95,7 +92,7 @@ jobs:
           TELEMETRY_URL: ${{ secrets.TELEMETRY_URL }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: artifacts
           path: dist/
@@ -109,16 +106,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
+        uses: cerbos/actions/buf@148106e618c65e91a0026179ccf0cff043e6b962 # main
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}
@@ -131,10 +124,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Check out code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -160,10 +149,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -181,59 +166,6 @@ jobs:
           auth_token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           site_id: ${{ secrets.NETLIFY_SITE_ID }}
 
-  publishHelm:
-    name: Publish Helm chart
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      id-token: write
-      contents: read
-    env:
-      CHARTS_DIR: deploy/out/helm-charts
-      OCI_REGISTRY: ghcr.io/cerbos/helm-charts
-    steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Install Helm
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
-        with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
-          version: v3.19.4
-
-      - name: GCloud Auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY}}
-
-      - name: Install Cloud SDK
-        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
-
-      - name: Package Helm chart
-        run: |-
-          mkdir -p ${{ env.CHARTS_DIR }}/cerbos
-          helm package -d ${{ env.CHARTS_DIR }}/cerbos deploy/charts/cerbos
-
-      - name: Publish to download site
-        run: |-
-          gsutil cp "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml" "${{ env.CHARTS_DIR }}/index.yaml"
-          helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
-          gsutil rsync -r ${{ env.CHARTS_DIR }}/ "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/"
-
-      - name: Publish to OCI registry
-        run: |-
-          helm registry login ${{ env.OCI_REGISTRY }} -u ${{ secrets.HELM_CHARTS_REPO_USER }} -p ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
-          CHART=$(ls ${{ env.CHARTS_DIR }}/cerbos/*.tgz); helm push $CHART oci://${{ env.OCI_REGISTRY }}
-          helm registry logout ${{ env.OCI_REGISTRY }}
-        env:
-          HELM_EXPERIMENTAL_OCI: "1"
-
   publishLambdaFunction:
     name: Publish AWS Lambda Function to SAR
     runs-on: ubuntu-latest
@@ -248,23 +180,19 @@ jobs:
           - arch: amd64
           - arch: arm64
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Install SAM CLI
-        uses: aws-actions/setup-sam@d78e1a4a9656d3b223e59b80676a797f20093133 # v2
+        uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
 
       - name: Download GoReleaser artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -273,7 +201,9 @@ jobs:
           path: dist/
 
       - name: Install just
-        uses: ./.github/actions/setup-just
+        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
+        with:
+          tools: just
 
       - name: Prepare, package and publish Lambda function to AWS SARs
         run: |-

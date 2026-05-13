@@ -79,3 +79,57 @@ derivedRoles:
 ----
 
 ****
+
+
+[#troubleshooting]
+== Troubleshooting derived roles
+
+=== My derived role isn't being activated
+
+If a derived role isn't taking effect, work through this checklist:
+
+. *The derived roles policy is imported into the resource policy.* The resource policy must include an `importDerivedRoles` entry matching the `name` field of the derived roles policy.
++
+[source,yaml,linenums]
+----
+resourcePolicy:
+  resource: "document"
+  version: "default"
+  importDerivedRoles:
+    - my_derived_roles  # must match the `name` in the derived roles policy
+  rules:
+    - actions: ["edit"]
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - owner
+----
+
+. *The principal's static roles match `parentRoles`.* The roles sent in the API request must include at least one of the roles listed in the derived role's `parentRoles` field. These are case-sensitive.
+
+. *The condition evaluates to true.* If the derived role has a condition, verify that the attribute names and types in the request match what the expression expects. Use the xref:cli:cerbos.adoc#repl[Cerbos REPL] to test expressions interactively.
+
+. *The resource policy has a rule referencing the derived role.* A rule must include the derived role name in its `derivedRoles` list for it to grant or deny access.
+
+=== How do I see which derived roles were activated?
+
+Add `"includeMeta": true` to the `CheckResources` request. The response `meta` block includes an `effectiveDerivedRoles` list showing which derived roles were activated for the principal on each resource.
+
+See xref:debugging.adoc[debugging authorization decisions] for more details.
+
+=== A derived role does not automatically grant access
+
+Defining a derived role only creates a named condition. You must still write a rule in a resource policy that references the derived role in its `derivedRoles` list for it to have any effect on authorization decisions.
+
+=== Derived roles and wildcards
+
+The special value `*` can be used in `parentRoles` to match any static role. This is useful for derived roles based purely on resource attributes (for example, ownership) regardless of the principal's static role.
+
+[source,yaml,linenums]
+----
+definitions:
+  - name: owner
+    parentRoles: ["*"]
+    condition:
+      match:
+        expr: R.attr.owner == P.id
+----

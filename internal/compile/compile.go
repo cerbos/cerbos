@@ -81,6 +81,9 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 		return nil
 	}
 
+	compilePolicyConstants(modCtx, rp.Constants)
+	compilePolicyVariables(modCtx, rp.Variables)
+
 	version := rp.Version
 	if version == "" {
 		version = namer.DefaultVersion
@@ -99,29 +102,36 @@ func compileRolePolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
 
 		resources[r.Resource].Rules = append(resources[r.Resource].Rules, &runtimev1.RunnableRolePolicySet_Rule{
 			Resource:     r.Resource,
+			Name:         r.Name,
 			AllowActions: allowActions,
 			Condition:    compileCondition(modCtx, policy.RolePolicyConditionProtoPath(i), r.Condition, true),
+			EmitOutput:   compileOutput(modCtx, policy.RolePolicyRuleProtoPath(i), r.Output),
 		})
 	}
+
+	rrps := &runtimev1.RunnableRolePolicySet{
+		Meta: &runtimev1.RunnableRolePolicySet_Metadata{
+			Fqn:     modCtx.fqn,
+			Version: version,
+			SourceAttributes: map[string]*policyv1.SourceAttributes{
+				namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
+			},
+			Annotations: modCtx.def.GetMetadata().GetAnnotations(),
+		},
+		Role:        rp.GetRole(),
+		ParentRoles: rp.ParentRoles,
+		Scope:       rp.Scope,
+		Resources:   resources,
+	}
+
+	rrps.Constants = modCtx.constants.Used()
+	rrps.OrderedVariables, _ = modCtx.variables.Used()
 
 	return &runtimev1.RunnablePolicySet{
 		CompilerVersion: compilerVersion,
 		Fqn:             modCtx.fqn,
 		PolicySet: &runtimev1.RunnablePolicySet_RolePolicy{
-			RolePolicy: &runtimev1.RunnableRolePolicySet{
-				Meta: &runtimev1.RunnableRolePolicySet_Metadata{
-					Fqn:     modCtx.fqn,
-					Version: version,
-					SourceAttributes: map[string]*policyv1.SourceAttributes{
-						namer.PolicyKeyFromFQN(modCtx.fqn): modCtx.def.GetMetadata().GetSourceAttributes(),
-					},
-					Annotations: modCtx.def.GetMetadata().GetAnnotations(),
-				},
-				Role:        rp.GetRole(),
-				ParentRoles: rp.ParentRoles,
-				Scope:       rp.Scope,
-				Resources:   resources,
-			},
+			RolePolicy: rrps,
 		},
 	}
 }
@@ -412,27 +422,32 @@ func compileResourceRule(modCtx *moduleCtx, path string, rule *policyv1.Resource
 		}
 	}
 
-	//nolint:dupl
-	if rule.Output != nil {
-		when := &runtimev1.Output_When{}
-		// TODO: Remove this block when output.expr field no longer exists
-		//nolint:staticcheck
-		if rule.Output.Expr != "" {
-			when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", rule.Output.Expr, true)
-		}
-
-		if rule.Output.When != nil && rule.Output.When.RuleActivated != "" {
-			when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", rule.Output.When.RuleActivated, true)
-		}
-
-		if rule.Output.When != nil && rule.Output.When.ConditionNotMet != "" {
-			when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", rule.Output.When.ConditionNotMet, true)
-		}
-
-		cr.EmitOutput = &runtimev1.Output{When: when}
-	}
+	cr.EmitOutput = compileOutput(modCtx, path, rule.Output)
 
 	return cr
+}
+
+func compileOutput(modCtx *moduleCtx, path string, out *policyv1.Output) *runtimev1.Output {
+	if out == nil {
+		return nil
+	}
+
+	when := &runtimev1.Output_When{}
+	// TODO: Remove this block when output.expr field no longer exists
+	//nolint:staticcheck
+	if out.Expr != "" {
+		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.Expr, true)
+	}
+
+	if out.When != nil && out.When.RuleActivated != "" {
+		when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", out.When.RuleActivated, true)
+	}
+
+	if out.When != nil && out.When.ConditionNotMet != "" {
+		when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", out.When.ConditionNotMet, true)
+	}
+
+	return &runtimev1.Output{When: when}
 }
 
 func compilePrincipalPolicySet(modCtx *moduleCtx) *runtimev1.RunnablePolicySet {
@@ -516,25 +531,7 @@ func compilePrincipalPolicy(modCtx *moduleCtx) (*runtimev1.RunnablePrincipalPoli
 				Condition: compileCondition(modCtx, path+".condition", action.Condition, true),
 			}
 
-			//nolint:dupl
-			if action.Output != nil {
-				when := &runtimev1.Output_When{}
-				// TODO: Remove this block when output.expr field no longer exists
-				//nolint:staticcheck
-				if action.Output.Expr != "" {
-					when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", action.Output.Expr, true)
-				}
-
-				if action.Output.When != nil && action.Output.When.RuleActivated != "" {
-					when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", action.Output.When.RuleActivated, true)
-				}
-
-				if action.Output.When != nil && action.Output.When.ConditionNotMet != "" {
-					when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", action.Output.When.ConditionNotMet, true)
-				}
-
-				actionRule.EmitOutput = &runtimev1.Output{When: when}
-			}
+			actionRule.EmitOutput = compileOutput(modCtx, path, action.Output)
 
 			rr.ActionRules[i] = actionRule
 		}

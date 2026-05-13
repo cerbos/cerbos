@@ -1,0 +1,105 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Working with JWT claims in policies
+
+include::ROOT:partial$version-check.adoc[]
+
+
+When xref:configuration:auxdata.adoc[auxiliary data] is configured, Cerbos can verify and decode JWTs sent with requests. The decoded claims are available in policy conditions as `request.auxData.jwt`. This page covers common patterns for using JWT claims in xref:policies:conditions.adoc[conditions].
+
+
+== Accessing claims
+
+Claims are accessed using dot notation from the `request.auxData.jwt` object.
+
+.Simple string claim
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: request.auxData.jwt.iss == "https://auth.example.com"
+----
+
+.Nested claim
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: request.auxData.jwt.custom.department == "engineering"
+----
+
+TIP: Use the `has()` macro to safely check for the existence of optional claims before accessing them: `has(request.auxData.jwt.custom) && request.auxData.jwt.custom.role == "admin"`.
+
+
+== Array claims
+
+JWT claims like `roles`, `groups`, or `scope` are often arrays or space-delimited strings.
+
+.Check if a value exists in an array claim
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: >
+      "admin" in request.auxData.jwt.roles
+----
+
+.Check if any value from one list exists in another
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: >
+      request.auxData.jwt.groups.exists(g, g in ["engineering", "platform"])
+----
+
+.Space-delimited scope strings (common in OAuth2)
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: >
+      "read:documents" in request.auxData.jwt.scope.split(" ")
+----
+
+
+== Numeric claims
+
+JWT numeric values may arrive as different types depending on the token issuer. Use explicit type conversion for safe comparisons:
+
+[source,yaml,linenums]
+----
+condition:
+  match:
+    expr: >
+      int(request.auxData.jwt.org_id) == int(R.attr.org_id)
+----
+
+
+== Using JWT claims in derived roles
+
+A common pattern is to create xref:policies:derived_roles.adoc[derived roles] based on JWT claims.
+
+.Grant an `internal_user` derived role based on a custom claim
+[source,yaml,linenums]
+----
+apiVersion: "api.cerbos.dev/v1"
+derivedRoles:
+  name: jwt_roles
+  definitions:
+    - name: internal_user
+      parentRoles: ["user"]
+      condition:
+        match:
+          expr: >
+            has(request.auxData.jwt.is_internal) && request.auxData.jwt.is_internal == true
+----
+
+
+== Configuration
+
+JWT verification must be configured in the Cerbos server config under `auxData`. See xref:configuration:auxdata.adoc[AuxData configuration] for setup details including JWKS endpoints, local keys, and accepted issuers.
+
+NOTE: JWT claims are read-only context data. JWKS keys are cached for performance, but individual JWTs are validated on every request. Cerbos does not store or cache the tokens themselves.
+
+For a complete example of integrating Cerbos with a JWT-based authentication flow, see the xref:authentication/jwt/index.adoc[JWT tutorial].

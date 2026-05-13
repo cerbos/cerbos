@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
+---
+description: "No context"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+accessEvaluationBatch:
+  input:
+    {
+      "subject":
+        {
+          "type": "user",
+          "id": "donald_duck",
+          "properties":
+            {
+              "cerbos.policyVersion": "20210210",
+              "cerbos.roles": ["employee"],
+              "department": "marketing",
+              "geography": "GB",
+              "team": "design",
+            },
+        },
+      "resource":
+        {
+          "type": "leave_request",
+          "id": "XX125",
+          "properties":
+            {
+              "cerbos.policyVersion": "20210210",
+              "department": "marketing",
+              "geography": "GB",
+              "id": "XX125",
+              "owner": "john",
+              "team": "design",
+            },
+        },
+      "evaluations": [{"action": {"name": "view:public", "properties": {}}}],
+    }
+  wantResponse: {"evaluations": [{"decision": true}]}

@@ -6,14 +6,15 @@ package privatev1
 
 import (
 	fmt "fmt"
+	v15 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"
 	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	v17 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
+	v17 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
+	v18 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	anypb "github.com/planetscale/vtprotobuf/types/known/anypb"
 	durationpb "github.com/planetscale/vtprotobuf/types/known/durationpb"
@@ -1187,6 +1188,160 @@ func (m *EngineTestCase) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *ServerTestCase_AccessEvaluationCall) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ServerTestCase_AccessEvaluationCall) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ServerTestCase_AccessEvaluationCall) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.WantResponse != nil {
+		if vtmsg, ok := interface{}(m.WantResponse).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.WantResponse)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Input != nil {
+		if vtmsg, ok := interface{}(m.Input).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Input)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ServerTestCase_AccessEvaluationBatchCall) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ServerTestCase_AccessEvaluationBatchCall) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ServerTestCase_AccessEvaluationBatchCall) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.WantResponse != nil {
+		if vtmsg, ok := interface{}(m.WantResponse).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.WantResponse)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Input != nil {
+		if vtmsg, ok := interface{}(m.Input).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Input)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *ServerTestCase_PlanResourcesCall) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -2303,6 +2458,56 @@ func (m *ServerTestCase_CheckResources) MarshalToSizedBufferVT(dAtA []byte) (int
 		i = protohelpers.EncodeVarint(dAtA, i, 0)
 		i--
 		dAtA[i] = 0x72
+	}
+	return len(dAtA) - i, nil
+}
+func (m *ServerTestCase_AccessEvaluation) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ServerTestCase_AccessEvaluation) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.AccessEvaluation != nil {
+		size, err := m.AccessEvaluation.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x7a
+	} else {
+		i = protohelpers.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x7a
+	}
+	return len(dAtA) - i, nil
+}
+func (m *ServerTestCase_AccessEvaluationBatch) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ServerTestCase_AccessEvaluationBatch) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.AccessEvaluationBatch != nil {
+		size, err := m.AccessEvaluationBatch.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
+	} else {
+		i = protohelpers.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
 	}
 	return len(dAtA) - i, nil
 }
@@ -4625,6 +4830,66 @@ func (m *EngineTestCase) SizeVT() (n int) {
 	return n
 }
 
+func (m *ServerTestCase_AccessEvaluationCall) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Input != nil {
+		if size, ok := interface{}(m.Input).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Input)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.WantResponse != nil {
+		if size, ok := interface{}(m.WantResponse).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.WantResponse)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *ServerTestCase_AccessEvaluationBatchCall) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Input != nil {
+		if size, ok := interface{}(m.Input).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Input)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.WantResponse != nil {
+		if size, ok := interface{}(m.WantResponse).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.WantResponse)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *ServerTestCase_PlanResourcesCall) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -5106,6 +5371,34 @@ func (m *ServerTestCase_CheckResources) SizeVT() (n int) {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	} else {
 		n += 2
+	}
+	return n
+}
+func (m *ServerTestCase_AccessEvaluation) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.AccessEvaluation != nil {
+		l = m.AccessEvaluation.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	} else {
+		n += 2
+	}
+	return n
+}
+func (m *ServerTestCase_AccessEvaluationBatch) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.AccessEvaluationBatch != nil {
+		l = m.AccessEvaluationBatch.SizeVT()
+		n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+	} else {
+		n += 3
 	}
 	return n
 }
@@ -8325,6 +8618,284 @@ func (m *EngineTestCase) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *ServerTestCase_AccessEvaluationCall) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ServerTestCase_AccessEvaluationCall: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ServerTestCase_AccessEvaluationCall: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Input", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Input == nil {
+				m.Input = &v15.AccessEvaluationRequest{}
+			}
+			if unmarshal, ok := interface{}(m.Input).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Input); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WantResponse", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.WantResponse == nil {
+				m.WantResponse = &v15.AccessEvaluationResponse{}
+			}
+			if unmarshal, ok := interface{}(m.WantResponse).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.WantResponse); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ServerTestCase_AccessEvaluationBatchCall) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ServerTestCase_AccessEvaluationBatchCall: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ServerTestCase_AccessEvaluationBatchCall: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Input", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Input == nil {
+				m.Input = &v15.AccessEvaluationBatchRequest{}
+			}
+			if unmarshal, ok := interface{}(m.Input).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Input); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WantResponse", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.WantResponse == nil {
+				m.WantResponse = &v15.AccessEvaluationBatchResponse{}
+			}
+			if unmarshal, ok := interface{}(m.WantResponse).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.WantResponse); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ServerTestCase_PlanResourcesCall) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -8384,7 +8955,7 @@ func (m *ServerTestCase_PlanResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.PlanResourcesRequest{}
+				m.Input = &v16.PlanResourcesRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -8523,7 +9094,7 @@ func (m *ServerTestCase_CheckResourceSetCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.CheckResourceSetRequest{}
+				m.Input = &v16.CheckResourceSetRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -8662,7 +9233,7 @@ func (m *ServerTestCase_CheckResourceBatchCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.CheckResourceBatchRequest{}
+				m.Input = &v16.CheckResourceBatchRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -8801,7 +9372,7 @@ func (m *ServerTestCase_CheckResourcesCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.CheckResourcesRequest{}
+				m.Input = &v16.CheckResourcesRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -8940,7 +9511,7 @@ func (m *ServerTestCase_PlaygroundValidateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.PlaygroundValidateRequest{}
+				m.Input = &v16.PlaygroundValidateRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -9079,7 +9650,7 @@ func (m *ServerTestCase_PlaygroundTestCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.PlaygroundTestRequest{}
+				m.Input = &v16.PlaygroundTestRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -9218,7 +9789,7 @@ func (m *ServerTestCase_PlaygroundEvaluateCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.PlaygroundEvaluateRequest{}
+				m.Input = &v16.PlaygroundEvaluateRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -9357,7 +9928,7 @@ func (m *ServerTestCase_PlaygroundProxyCall) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.PlaygroundProxyRequest{}
+				m.Input = &v16.PlaygroundProxyRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -9496,7 +10067,7 @@ func (m *ServerTestCase_AdminAddOrUpdatePolicyCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.AddOrUpdatePolicyRequest{}
+				m.Input = &v16.AddOrUpdatePolicyRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -9635,7 +10206,7 @@ func (m *ServerTestCase_AdminAddOrUpdateSchemaCall) UnmarshalVT(dAtA []byte) err
 				return io.ErrUnexpectedEOF
 			}
 			if m.Input == nil {
-				m.Input = &v15.AddOrUpdateSchemaRequest{}
+				m.Input = &v16.AddOrUpdateSchemaRequest{}
 			}
 			if unmarshal, ok := interface{}(m.Input).(interface {
 				UnmarshalVT([]byte) error
@@ -10361,6 +10932,88 @@ func (m *ServerTestCase) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 				m.CallKind = &ServerTestCase_CheckResources{CheckResources: v}
+			}
+			iNdEx = postIndex
+		case 15:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccessEvaluation", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.CallKind.(*ServerTestCase_AccessEvaluation); ok {
+				if err := oneof.AccessEvaluation.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &ServerTestCase_AccessEvaluationCall{}
+				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+				m.CallKind = &ServerTestCase_AccessEvaluation{AccessEvaluation: v}
+			}
+			iNdEx = postIndex
+		case 16:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccessEvaluationBatch", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.CallKind.(*ServerTestCase_AccessEvaluationBatch); ok {
+				if err := oneof.AccessEvaluationBatch.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &ServerTestCase_AccessEvaluationBatchCall{}
+				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+				m.CallKind = &ServerTestCase_AccessEvaluationBatch{AccessEvaluationBatch: v}
 			}
 			iNdEx = postIndex
 		default:
@@ -11754,7 +12407,7 @@ func (m *SchemaTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantValidationErrors = append(m.WantValidationErrors, &v16.ValidationError{})
+			m.WantValidationErrors = append(m.WantValidationErrors, &v17.ValidationError{})
 			if unmarshal, ok := interface{}(m.WantValidationErrors[len(m.WantValidationErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -11847,7 +12500,7 @@ func (m *ValidationErrContainer) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Errors = append(m.Errors, &v16.ValidationError{})
+			m.Errors = append(m.Errors, &v17.ValidationError{})
 			if unmarshal, ok := interface{}(m.Errors[len(m.Errors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -13026,7 +13679,7 @@ func (m *ProtoYamlTestCase_Want) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Errors = append(m.Errors, &v17.Error{})
+			m.Errors = append(m.Errors, &v18.Error{})
 			if unmarshal, ok := interface{}(m.Errors[len(m.Errors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {
@@ -13185,7 +13838,7 @@ func (m *ProtoYamlTestCase) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WantErrors = append(m.WantErrors, &v17.Error{})
+			m.WantErrors = append(m.WantErrors, &v18.Error{})
 			if unmarshal, ok := interface{}(m.WantErrors[len(m.WantErrors)-1]).(interface {
 				UnmarshalVT([]byte) error
 			}); ok {

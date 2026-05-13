@@ -126,11 +126,18 @@ func (rt *RuleTable) planWithAuditTrail(
 				var roleDenyNode *planner.QpN
 				var roleDenyRolePolicyNode *planner.QpN
 				var pendingAllow bool
+				var childOverrideAllow *planner.QpN
 
 				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
 				var bindings []*index.Binding
 				for _, scope := range scopes {
+					// Once a child OVERRIDE_PARENT scope has matched an unconditional ALLOW, no
+					// parent-scope rule can change the outcome, so we skip
+					if bv, ok := planner.IsNodeConstBool(childOverrideAllow); ok && bv {
+						break
+					}
+
 					var scopeAllowNode *planner.QpN
 					var scopeDenyNode *planner.QpN
 					var scopeDenyRolePolicyNode *planner.QpN
@@ -243,6 +250,10 @@ func (rt *RuleTable) planWithAuditTrail(
 							}
 						}
 					}
+
+					scopeDenyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyNode)
+					scopeDenyRolePolicyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyRolePolicyNode)
+
 					roleDenyNode = addNode(roleDenyNode, scopeDenyNode, planner.MkOrNode)
 					roleDenyRolePolicyNode = addNode(roleDenyRolePolicyNode, scopeDenyRolePolicyNode, planner.MkOrNode)
 
@@ -266,6 +277,11 @@ func (rt *RuleTable) planWithAuditTrail(
 					if (scopeDenyNode != nil || scopeDenyRolePolicyNode != nil || scopeAllowNode != nil) &&
 						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
 						matchedScopes[action] = scope
+					}
+
+					if scopeAllowNode != nil &&
+						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+						childOverrideAllow = addNode(childOverrideAllow, scopeAllowNode, planner.MkOrNode)
 					}
 				}
 
@@ -383,4 +399,17 @@ func addNode(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN)
 		return next
 	}
 	return combine([]*planner.QpN{curr, next})
+}
+
+// gateByChildOverrideAllow narrows a parent-scope DENY to only fire when no child OVERRIDE_PARENT
+// scope has already produced an ALLOW.
+func gateByChildOverrideAllow(childOverrideAllow, deny *planner.QpN) *planner.QpN {
+	if deny == nil || childOverrideAllow == nil {
+		return deny
+	}
+	inv := planner.InvertNodeBooleanValue(childOverrideAllow)
+	if bv, ok := planner.IsNodeConstBool(deny); ok && bv {
+		return inv
+	}
+	return planner.MkAndNode([]*planner.QpN{inv, deny})
 }

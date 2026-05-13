@@ -5,11 +5,27 @@ rolePolicy:
   role: leave_request
   version: "default"
   scope: "acme"
+  constants:
+    local:
+      public: true
+  variables:
+    local:
+      is_public_report: request.resource.attr.public == constants.public
   rules:
     - resource: acme_admin
       allowActions: ['*']
     - resource: expenses_report
+      name: expenses_report_rule
       allowActions:
         - view
         - create
         - delete
+      condition:
+        match:
+          expr: variables.is_public_report
+      output:
+        when:
+          ruleActivated: |-
+            "expenses_report_allowed:%s".format([request.principal.id])
+          conditionNotMet: |-
+            "expenses_report_blocked:%s".format([request.principal.id])

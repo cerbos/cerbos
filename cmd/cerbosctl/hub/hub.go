@@ -6,6 +6,7 @@ package hub
 import (
 	"github.com/alecthomas/kong"
 
+	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/auth"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/epdp"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/hub/store"
 )
@@ -24,6 +25,7 @@ var hideGlobals = map[string]struct{}{
 }
 
 type Cmd struct { //betteralign:ignore
+	Auth        auth.Cmd  `cmd:"" name:"auth"`
 	EmbeddedPDP epdp.Cmd  `cmd:"" name:"embedded_pdp" aliases:"epdp"`
 	Store       store.Cmd `cmd:"" name:"store"`
 }

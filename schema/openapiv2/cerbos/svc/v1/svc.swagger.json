@@ -1282,6 +1282,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "bundleId": {
+          "type": "string"
         }
       }
     },
@@ -1289,6 +1292,20 @@
       "type": "object",
       "properties": {
         "path": {
+          "type": "string"
+        },
+        "bundleId": {
+          "type": "string"
+        }
+      }
+    },
+    "HubRemoteBundle": {
+      "type": "object",
+      "properties": {
+        "deploymentId": {
+          "type": "string"
+        },
+        "bundleId": {
           "type": "string"
         }
       }
@@ -1585,6 +1602,9 @@
         },
         "subdirectory": {
           "type": "string"
+        },
+        "hash": {
+          "type": "string"
         }
       }
     },
@@ -1605,6 +1625,9 @@
         },
         "embeddedBundle": {
           "$ref": "#/definitions/HubEmbeddedBundle"
+        },
+        "remoteBundle": {
+          "$ref": "#/definitions/HubRemoteBundle"
         }
       }
     },
@@ -3357,6 +3380,12 @@
         "scopePermissions": {
           "$ref": "#/definitions/v1ScopePermissions",
           "description": "Deprecated: no-op."
+        },
+        "variables": {
+          "$ref": "#/definitions/v1Variables"
+        },
+        "constants": {
+          "$ref": "#/definitions/v1Constants"
         }
       }
     },
@@ -3374,6 +3403,12 @@
         },
         "condition": {
           "$ref": "#/definitions/v1Condition"
+        },
+        "name": {
+          "type": "string"
+        },
+        "output": {
+          "$ref": "#/definitions/v1Output"
         }
       }
     },

@@ -88,3 +88,5 @@ whether the rule is activated or not activated because of a condition failure.
 <15> Optional section for defining schemas that apply to this resource kind.
 <16> Optional schema for validating the principal attributes.
 <17> Optional schema for validating the resource attributes.
+
+IMPORTANT: Each policy must be defined in its own file. You cannot define multiple policies in a single YAML or JSON file. See xref:best_practices.adoc#_policy_repository_layout[policy repository layout] for details on organizing your policy files.

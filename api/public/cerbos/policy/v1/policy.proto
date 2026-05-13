@@ -150,6 +150,8 @@ message RolePolicy {
     },
     deprecated = true
   ];
+  Variables variables = 7;
+  Constants constants = 8;
 }
 
 message RoleRule {
@@ -168,6 +170,8 @@ message RoleRule {
     (buf.validate.field).required = true
   ];
   Condition condition = 3;
+  string name = 4 [(buf.validate.field).string.pattern = "^([a-zA-Z][\\w\\@\\.\\-]*)*$"];
+  Output output = 5;
 }
 
 message PrincipalPolicy {

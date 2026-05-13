@@ -10,14 +10,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
+	"github.com/moby/moby/api/types/network"
+	"github.com/ory/dockertest/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/twmb/franz-go/pkg/kadm"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -249,15 +250,18 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 	tempDir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "redpanda.yaml"), cfg, 0o644))
 
-	pool, err := dockertest.NewPool("")
-	require.NoError(t, err, "Failed to connect to Docker")
-	pool.MaxWait = maxWait
+	pool := dockertest.NewPoolT(t, "")
 
-	runOpts := &dockertest.RunOptions{
-		Repository: redpandaImage,
-		Tag:        redpandaVersion,
-		Entrypoint: []string{"/opt/redpanda/bin/redpanda"},
-		Cmd: []string{
+	var clientOpts []kgo.Opt
+	exposedPort := "9092/tcp"
+	if tlsConfig != nil {
+		clientOpts = append(clientOpts, kgo.DialTLSConfig(tlsConfig))
+	}
+
+	resource := pool.RunT(t, redpandaImage,
+		dockertest.WithTag(redpandaVersion),
+		dockertest.WithEntrypoint([]string{"/opt/redpanda/bin/redpanda"}),
+		dockertest.WithCmd([]string{
 			"--redpanda-cfg",
 			"/etc/redpanda/redpanda.yaml",
 			"--unsafe-bypass-fsync=true",
@@ -266,62 +270,30 @@ func startKafkaBroker(t *testing.T, topic string, tlsConfig *tls.Config) string 
 			"--lock-memory=false",
 			"--default-log-level=error",
 			"--logger-log-level=kafka=info:request_auth=debug:security=debug",
-		},
-		ExposedPorts: []string{
-			"9092/tcp",
-		},
-		PortBindings: map[docker.Port][]docker.PortBinding{
-			"9092/tcp": {
-				{HostIP: "::1", HostPort: strconv.Itoa(port)},
-				{HostIP: "127.0.0.1", HostPort: strconv.Itoa(port)},
+		}),
+		dockertest.WithPortBindings(network.PortMap{
+			network.MustParsePort("9092/tcp"): {
+				{HostIP: netip.MustParseAddr("::1"), HostPort: strconv.Itoa(port)},
+				{HostIP: netip.MustParseAddr("127.0.0.1"), HostPort: strconv.Itoa(port)},
 			},
-		},
-		Mounts: []string{
+		}),
+		dockertest.WithMounts([]string{
 			fmt.Sprintf("%s:/certs", filepath.Join(testDataAbsPath, "certs")),
 			fmt.Sprintf("%s:/etc/redpanda", tempDir),
-		},
-	}
-
-	var clientOpts []kgo.Opt
-	exposedPort := "9092/tcp"
-	if tlsConfig != nil {
-		clientOpts = append(clientOpts, kgo.DialTLSConfig(tlsConfig))
-	}
-
-	resource, err := pool.RunWithOptions(runOpts, func(config *docker.HostConfig) {
-		config.AutoRemove = true
-	})
-	require.NoError(t, err, "Failed to start container")
-
-	t.Cleanup(func() {
-		_ = pool.Purge(resource)
-	})
+		}),
+	)
 
 	brokerAddr := net.JoinHostPort("localhost", resource.GetPort(exposedPort))
 	clientOpts = append(clientOpts, kgo.SeedBrokers(brokerAddr))
 
 	if _, ok := os.LookupEnv("CERBOS_DEBUG_KAFKA"); ok {
-		ctx, cancelFunc := context.WithCancel(context.Background())
-		go func() {
-			if err := pool.Client.Logs(docker.LogsOptions{
-				Context:      ctx,
-				Container:    resource.Container.ID,
-				OutputStream: os.Stdout,
-				ErrorStream:  os.Stderr,
-				Stdout:       true,
-				Stderr:       true,
-				Follow:       true,
-			}); err != nil {
-				cancelFunc()
-			}
-		}()
-		t.Cleanup(cancelFunc)
+		go func() { _ = resource.FollowLogs(t.Context(), os.Stdout, os.Stderr) }()
 	}
 
 	client, err := kgo.NewClient(clientOpts...)
 	require.NoError(t, err)
 
-	require.NoError(t, pool.Retry(func() error {
+	require.NoError(t, pool.Retry(t.Context(), maxWait, func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancel()
 

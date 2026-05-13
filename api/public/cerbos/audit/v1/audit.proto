@@ -107,24 +107,33 @@ message PolicySource {
     string repository_url = 1;
     string branch = 2;
     string subdirectory = 3;
+    string hash = 4;
   }
 
   message Hub {
     message EmbeddedBundle {
       string rule_id = 1;
       repeated string scopes = 2;
+      string bundle_id = 3;
     }
 
     message LocalBundle {
       string path = 1;
+      string bundle_id = 2;
+    }
+
+    message RemoteBundle {
+      string deployment_id = 1;
+      string bundle_id = 2;
     }
 
     oneof source {
       string label = 1;
-      string deployment_id = 2;
+      string deployment_id = 2 [deprecated = true];
       string playground_id = 3;
       LocalBundle local_bundle = 4;
       EmbeddedBundle embedded_bundle = 5;
+      RemoteBundle remote_bundle = 6;
     }
   }
 

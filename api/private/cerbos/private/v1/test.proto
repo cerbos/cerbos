@@ -5,6 +5,7 @@ syntax = "proto3";
 
 package cerbos.private.v1;
 
+import "authzen/authorization/v1/evaluation.proto";
 import "cerbos/audit/v1/audit.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
@@ -110,6 +111,16 @@ message EngineTestCase {
 }
 
 message ServerTestCase {
+  message AccessEvaluationCall {
+    authzen.authorization.v1.AccessEvaluationRequest input = 1;
+    authzen.authorization.v1.AccessEvaluationResponse want_response = 2;
+  }
+
+  message AccessEvaluationBatchCall {
+    authzen.authorization.v1.AccessEvaluationBatchRequest input = 1;
+    authzen.authorization.v1.AccessEvaluationBatchResponse want_response = 2;
+  }
+
   message PlanResourcesCall {
     cerbos.request.v1.PlanResourcesRequest input = 1;
     cerbos.response.v1.PlanResourcesResponse want_response = 2;
@@ -180,6 +191,8 @@ message ServerTestCase {
     AdminAddOrUpdateSchemaCall admin_add_or_update_schema = 12;
     PlaygroundTestCall playground_test = 13;
     CheckResourcesCall check_resources = 14;
+    AccessEvaluationCall access_evaluation = 15;
+    AccessEvaluationBatchCall access_evaluation_batch = 16;
   }
 }
 

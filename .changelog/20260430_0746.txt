@@ -1,0 +1,3 @@
+type:fix
+Honour OVERRIDE_PARENT scope semantics for parent-scope DENYs in query plans
+This fixes a bug introduced in Cerbos v0.50 where an unconditional `DENY` rule at a parent scope could cause `PlanResources` to return `KIND_ALWAYS_DENIED`, even when a child scope using `SCOPE_PERMISSIONS_OVERRIDE_PARENT` granted the action.

@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "yarn@2.4.3",
+  "packageManager": "yarn@2.4.3+sha512.8dd9fedc5451829619e526c56f42609ad88ae4776d9d3f9456d578ac085115c0c2f0fb02bb7d57fd2e1b6e1ac96efba35e80a20a056668f61c96934f67694fd0",
   "dependencies": {
     "cerbos": "latest",
     "cerbosctl": "latest"

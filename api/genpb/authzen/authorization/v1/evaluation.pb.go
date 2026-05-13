@@ -713,7 +713,7 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:)\x92A&\n" +
 	"$2\"AuthZEN access evaluation responseB\v\n" +
-	"\t_decision\"\xa4\x0f\n" +
+	"\t_decision\"\x8a\x0e\n" +
 	"\x1cAccessEvaluationBatchRequest\x12;\n" +
 	"\asubject\x18\x01 \x01(\v2!.authzen.authorization.v1.SubjectR\asubject\x12>\n" +
 	"\bresource\x18\x02 \x01(\v2\".authzen.authorization.v1.ResourceR\bresource\x128\n" +
@@ -733,12 +733,11 @@ const file_authzen_authorization_v1_evaluation_proto_rawDesc = "" +
 	"\fContextEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:\x14\x92A\x11\n" +
-	"\x0f2\rAn evaluation:\x96\x05\x92A&\n" +
-	"$2\"AuthZEN access evaluations request\xbaH\xe9\x04\x1a\x93\x01\n" +
+	"\x0f2\rAn evaluation:\xfc\x03\x92A&\n" +
+	"$2\"AuthZEN access evaluations request\xbaH\xcf\x03\x1a\x93\x01\n" +
 	"\aactions\x12Leither the default action must be set or all evaluations must have an action\x1a:has(this.action) || this.evaluations.all(x, has(x.action))\x1a\x97\x01\n" +
 	"\bsubjects\x12Meither the default subject must be set or all evaluations must have a subject\x1a<has(this.subject) || this.evaluations.all(x, has(x.subject))\x1a\x9c\x01\n" +
-	"\tresources\x12Oeither the default resource must be set or all evaluations must have a resource\x1a>has(this.resource) || this.evaluations.all(x, has(x.resource))\x1a\x97\x01\n" +
-	"\bcontexts\x12Meither the default context must be set or all evaluations must have a context\x1a<has(this.context) || this.evaluations.all(x, has(x.context))\"\xa1\x01\n" +
+	"\tresources\x12Oeither the default resource must be set or all evaluations must have a resource\x1a>has(this.resource) || this.evaluations.all(x, has(x.resource))\"\xa1\x01\n" +
 	"\x1dAccessEvaluationBatchResponse\x12T\n" +
 	"\vevaluations\x18\x01 \x03(\v22.authzen.authorization.v1.AccessEvaluationResponseR\vevaluations:*\x92A'\n" +
 	"%2#AuthZEN access evaluations response\"H\n" +

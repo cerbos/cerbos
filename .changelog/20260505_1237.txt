@@ -1,0 +1,3 @@
+type:deprecation
+Stop publishing the Helm chart to oci://ghcr.io/cerbos/helm-charts/cerbos
+Starting from v0.54.0, new releases of the Cerbos Helm chart will only be available from the main repository at {app-helm-chart-repo}. The OCI registry at ghcr.io/cerbos/helm-charts/cerbos will no longer be updated to include new chart versions. This is due to low uptake which doesn't justify the complexity of managing the OCI registry publishing workflow.

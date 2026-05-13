@@ -656,6 +656,26 @@ func (m *RolePolicy) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		}
 		i -= size
 	}
+	if m.Constants != nil {
+		size, err := m.Constants.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.Variables != nil {
+		size, err := m.Variables.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x3a
+	}
 	if len(m.Version) > 0 {
 		i -= len(m.Version)
 		copy(dAtA[i:], m.Version)
@@ -742,6 +762,23 @@ func (m *RoleRule) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.Output != nil {
+		size, err := m.Output.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0x22
 	}
 	if m.Condition != nil {
 		size, err := m.Condition.MarshalToSizedBufferVT(dAtA[:i])
@@ -4448,6 +4485,14 @@ func (m *RolePolicy) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if m.Variables != nil {
+		l = m.Variables.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.Constants != nil {
+		l = m.Constants.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -4480,6 +4525,14 @@ func (m *RoleRule) SizeVT() (n int) {
 	}
 	if m.Condition != nil {
 		l = m.Condition.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.Output != nil {
+		l = m.Output.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -7855,6 +7908,78 @@ func (m *RolePolicy) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Version = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Variables", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Variables == nil {
+				m.Variables = &Variables{}
+			}
+			if err := m.Variables.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Constants", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Constants == nil {
+				m.Constants = &Constants{}
+			}
+			if err := m.Constants.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -8003,6 +8128,74 @@ func (m *RoleRule) UnmarshalVT(dAtA []byte) error {
 				m.Condition = &Condition{}
 			}
 			if err := m.Condition.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Output", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Output == nil {
+				m.Output = &Output{}
+			}
+			if err := m.Output.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

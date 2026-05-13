@@ -9,6 +9,10 @@ You can define an optional expression to be evaluated when a policy rule is full
 `derivedRoles` match and `condition` is satisfied) or partially activated (`condition` is not satisfied).
 The collected outputs from all the rules are included in the Cerbos API response.
 
+Outputs are supported on rules in xref:resource_policies.adoc[resource policies],
+xref:principal_policies.adoc[principal policies], and xref:role_policies.adoc[role policies].
+The example below uses a resource policy; the `output` field has the same shape on all three.
+
 Output expressions are useful if you want to take specific actions in your application based on the triggered rules.
 For example, if your policy contains a rule that denies access if the request is issued outside working hours, it could
 output a string that explains the restriction. Your application could then display that back to the user so that they

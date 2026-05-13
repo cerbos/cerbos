@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/hack/loadtest
 go 1.26
 
 require (
-	github.com/alecthomas/kong v1.14.0
+	github.com/alecthomas/kong v1.15.0
 	github.com/bojand/ghz v0.121.0
 )
 
@@ -44,7 +44,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
-	go.opentelemetry.io/otel v1.40.0 // indirect
+	go.opentelemetry.io/otel v1.41.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect

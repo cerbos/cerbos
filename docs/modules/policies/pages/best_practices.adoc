@@ -146,9 +146,9 @@ resourcePolicy:
         match:
           all:
             of:
-              - expr: has(request.aux_data.jwt.aud)
+              - expr: has(request.auxData.jwt.aud)
               - expr: >
-                  "my.custom.audience" in request.aux_data.jwt.aud
+                  "my.custom.audience" in request.auxData.jwt.aud
 ----
 
 In the above, we blanket-allow all actions and roles, but specifically rely on the `aud` key parsed from the JWT to determine access.

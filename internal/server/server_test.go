@@ -140,7 +140,7 @@ func TestServer(t *testing.T) {
 
 func apiTests(tpg testParamGen) func(*testing.T) {
 	return func(t *testing.T) {
-		tr := LoadTestCases(t, nil, "checks", "playground", "plan_resources")
+		tr := LoadTestCases(t, nil, "authzen", "checks", "playground", "plan_resources")
 
 		t.Run("with_tls", func(t *testing.T) {
 			testdataDir := test.PathToDir(t, "server")

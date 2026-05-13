@@ -5,7 +5,6 @@ package blob
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,7 +25,7 @@ func TestCloneResult(t *testing.T) {
 		t.Skip()
 	}
 
-	ctx := t.Context()
+	seaweedFS := StartSeaweedFS(t)
 	testCases := test.LoadTestCases(t, "blob_cloner")
 	for _, testMetadata := range testCases {
 		testCase := readTestCase(t, testMetadata.Input)
@@ -35,8 +34,8 @@ func TestCloneResult(t *testing.T) {
 		bucketDir := filepath.Join(dir, "bucket")
 		require.NoError(t, os.MkdirAll(bucketDir, perm775))
 		cacheDir := cacheDir(bucketDir, dir)
-		bucket := newSeaweedFSBucket(ctx, t, bucketDir, "")
-		applyFiles(ctx, t, bucket, testCase.Inputs)
+		bucket := newSeaweedFSBucket(t, seaweedFS, bucketDir, "")
+		applyFiles(t, bucket, testCase.Inputs)
 
 		cloner, err := NewCloner(bucket, cacheDir)
 		require.NoError(t, err)
@@ -46,9 +45,9 @@ func TestCloneResult(t *testing.T) {
 				t.Run(fmt.Sprint(idx), func(t *testing.T) {
 					switch step := s.Op.(type) {
 					case *privatev1.BlobClonerTestCase_Step_Differences_:
-						applyFiles(ctx, t, bucket, step.Differences.Files)
+						applyFiles(t, bucket, step.Differences.Files)
 					case *privatev1.BlobClonerTestCase_Step_Expectation_:
-						cr, err := cloner.Clone(ctx)
+						cr, err := cloner.Clone(t.Context())
 						require.NoError(t, err)
 
 						require.Empty(t, cmp.Diff(step.Expectation.All, toExpectedAllMap(cr.all), protocmp.Transform()))
@@ -62,15 +61,15 @@ func TestCloneResult(t *testing.T) {
 	}
 }
 
-func applyFiles(ctx context.Context, t *testing.T, bucket *blob.Bucket, files []*privatev1.BlobClonerTestCase_File) {
+func applyFiles(t *testing.T, bucket *blob.Bucket, files []*privatev1.BlobClonerTestCase_File) {
 	t.Helper()
 
 	for _, file := range files {
 		switch f := file.Operation.(type) {
 		case *privatev1.BlobClonerTestCase_File_AddOrUpdate_:
-			bucketAdd(ctx, t, bucket, f.AddOrUpdate.Name, []byte(f.AddOrUpdate.Content))
+			bucketAdd(t, bucket, f.AddOrUpdate.Name, []byte(f.AddOrUpdate.Content))
 		case *privatev1.BlobClonerTestCase_File_Delete_:
-			bucketDelete(ctx, t, bucket, f.Delete.Name)
+			bucketDelete(t, bucket, f.Delete.Name)
 		default:
 			t.Fatal("unspecified kind")
 		}

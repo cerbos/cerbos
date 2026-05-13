@@ -65,8 +65,7 @@ func TestNewStore(t *testing.T) {
 		conf.SetDefaults()
 
 		cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
-		endpoint := StartSeaweedFS(ctx, t, bucketName)
-		conf.Bucket = SeaweedFSBucketURL(bucketName, endpoint)
+		conf.Bucket = StartSeaweedFS(t).CreateBucket(t)
 
 		must := require.New(t)
 
@@ -92,8 +91,7 @@ func TestReloadable(t *testing.T) {
 	t.Setenv("AWS_ACCESS_KEY_ID", seaweedUsername)
 	t.Setenv("AWS_SECRET_ACCESS_KEY", seaweedPassword)
 
-	dir := t.TempDir()
-	store, bucket := mkStore(t, dir)
+	store, bucket := mkStore(t)
 	internal.TestSuiteReloadable(store, mkInitFn(t, bucket), mkAddFn(t, bucket), mkDeleteFn(t, bucket))(t)
 }
 
@@ -225,18 +223,17 @@ func mkAddFn(t *testing.T, bucket *blob.Bucket) internal.MutateStoreFn {
 	}
 }
 
-func mkStore(t *testing.T, dir string) (*Store, *blob.Bucket) {
+func mkStore(t *testing.T) (*Store, *blob.Bucket) {
 	t.Helper()
 
-	endpoint := StartSeaweedFS(t.Context(), t, bucketName)
-	conf := mkConf(t, dir, bucketName, endpoint)
+	conf := mkConf(t, StartSeaweedFS(t))
 	bucket, _, err := newBucket(t.Context(), conf)
 	require.NoError(t, err)
 	cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
 	cloner, err := NewCloner(bucket, cacheDir)
 	require.NoError(t, err)
 
-	store, err := NewStore(t.Context(), conf, newBlobFS(dir), cloner, mkSymlinker(cacheDir, dir), nil)
+	store, err := NewStore(t.Context(), conf, newBlobFS(conf.WorkDir), cloner, mkSymlinker(cacheDir, conf.WorkDir), nil)
 	require.NoError(t, err)
 
 	return store, bucket
@@ -251,12 +248,12 @@ func mkSymlinker(cacheDir, workDir string) symlinker {
 	})
 }
 
-func mkConf(t *testing.T, dir, bucketName, endpoint string) *Conf {
+func mkConf(t *testing.T, seaweedFS *SeaweedFS) *Conf {
 	t.Helper()
 
-	conf := &Conf{WorkDir: dir}
+	conf := &Conf{WorkDir: t.TempDir()}
 	conf.SetDefaults()
-	conf.Bucket = SeaweedFSBucketURL(bucketName, endpoint)
+	conf.Bucket = seaweedFS.CreateBucket(t)
 
 	return conf
 }

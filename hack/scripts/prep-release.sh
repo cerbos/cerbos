@@ -84,6 +84,7 @@ set_branch "HEAD"
 git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
 git tag "v${VERSION}" -m "v${VERSION}"
 git tag "api/genpb/v${VERSION}" -m "api/genpb/v${VERSION}"
+git tag "helm/v${VERSION}" -m "helm/v${VERSION}"
 # Create a release branch
 SEGMENTS=(${VERSION//./ })
 RELEASE_BRANCH="v${SEGMENTS[0]}.${SEGMENTS[1]}"
@@ -97,4 +98,4 @@ set_branch "HEAD"
 git -C "$PROJECT_DIR" commit -s -a -m "chore(version): Bump version to $NEXT_VERSION"
 
 echo "Run the following commands to trigger the release"
-echo "git push --atomic upstream main ${RELEASE_BRANCH} v${VERSION} api/genpb/v${VERSION}"
+echo "git push --atomic upstream main ${RELEASE_BRANCH} v${VERSION} api/genpb/v${VERSION} helm/v${VERSION}"

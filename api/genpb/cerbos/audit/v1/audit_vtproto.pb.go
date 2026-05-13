@@ -943,6 +943,13 @@ func (m *PolicySource_Git) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x22
+	}
 	if len(m.Subdirectory) > 0 {
 		i -= len(m.Subdirectory)
 		copy(dAtA[i:], m.Subdirectory)
@@ -997,6 +1004,13 @@ func (m *PolicySource_Hub_EmbeddedBundle) MarshalToSizedBufferVT(dAtA []byte) (i
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.BundleId) > 0 {
+		i -= len(m.BundleId)
+		copy(dAtA[i:], m.BundleId)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.BundleId)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Scopes) > 0 {
 		for iNdEx := len(m.Scopes) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.Scopes[iNdEx])
@@ -1046,10 +1060,64 @@ func (m *PolicySource_Hub_LocalBundle) MarshalToSizedBufferVT(dAtA []byte) (int,
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.BundleId) > 0 {
+		i -= len(m.BundleId)
+		copy(dAtA[i:], m.BundleId)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.BundleId)))
+		i--
+		dAtA[i] = 0x12
+	}
 	if len(m.Path) > 0 {
 		i -= len(m.Path)
 		copy(dAtA[i:], m.Path)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Path)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *PolicySource_Hub_RemoteBundle) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *PolicySource_Hub_RemoteBundle) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *PolicySource_Hub_RemoteBundle) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.BundleId) > 0 {
+		i -= len(m.BundleId)
+		copy(dAtA[i:], m.BundleId)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.BundleId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.DeploymentId) > 0 {
+		i -= len(m.DeploymentId)
+		copy(dAtA[i:], m.DeploymentId)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.DeploymentId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1183,6 +1251,29 @@ func (m *PolicySource_Hub_EmbeddedBundle_) MarshalToSizedBufferVT(dAtA []byte) (
 		i = protohelpers.EncodeVarint(dAtA, i, 0)
 		i--
 		dAtA[i] = 0x2a
+	}
+	return len(dAtA) - i, nil
+}
+func (m *PolicySource_Hub_RemoteBundle_) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *PolicySource_Hub_RemoteBundle_) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.RemoteBundle != nil {
+		size, err := m.RemoteBundle.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x32
+	} else {
+		i = protohelpers.EncodeVarint(dAtA, i, 0)
+		i--
+		dAtA[i] = 0x32
 	}
 	return len(dAtA) - i, nil
 }
@@ -1811,6 +1902,10 @@ func (m *PolicySource_Git) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1831,6 +1926,10 @@ func (m *PolicySource_Hub_EmbeddedBundle) SizeVT() (n int) {
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
+	l = len(m.BundleId)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1842,6 +1941,28 @@ func (m *PolicySource_Hub_LocalBundle) SizeVT() (n int) {
 	var l int
 	_ = l
 	l = len(m.Path)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.BundleId)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
+func (m *PolicySource_Hub_RemoteBundle) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.DeploymentId)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.BundleId)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -1914,6 +2035,20 @@ func (m *PolicySource_Hub_EmbeddedBundle_) SizeVT() (n int) {
 	_ = l
 	if m.EmbeddedBundle != nil {
 		l = m.EmbeddedBundle.SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	} else {
+		n += 2
+	}
+	return n
+}
+func (m *PolicySource_Hub_RemoteBundle_) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.RemoteBundle != nil {
+		l = m.RemoteBundle.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	} else {
 		n += 2
@@ -4409,6 +4544,38 @@ func (m *PolicySource_Git) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Subdirectory = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -4524,6 +4691,38 @@ func (m *PolicySource_Hub_EmbeddedBundle) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Scopes = append(m.Scopes, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BundleId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BundleId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -4606,6 +4805,153 @@ func (m *PolicySource_Hub_LocalBundle) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Path = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BundleId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BundleId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *PolicySource_Hub_RemoteBundle) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: PolicySource_Hub_RemoteBundle: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: PolicySource_Hub_RemoteBundle: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DeploymentId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DeploymentId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BundleId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BundleId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4834,6 +5180,47 @@ func (m *PolicySource_Hub) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 				m.Source = &PolicySource_Hub_EmbeddedBundle_{EmbeddedBundle: v}
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RemoteBundle", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if oneof, ok := m.Source.(*PolicySource_Hub_RemoteBundle_); ok {
+				if err := oneof.RemoteBundle.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				v := &PolicySource_Hub_RemoteBundle{}
+				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+				m.Source = &PolicySource_Hub_RemoteBundle_{RemoteBundle: v}
 			}
 			iNdEx = postIndex
 		default:

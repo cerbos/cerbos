@@ -1,0 +1,3 @@
+type:fix
+Set `Content-Type` to `application/x-ndjson` on streaming responses
+The `ListAuditLogEntries` is a streaming RPC, which returns newline-delimited JSON when accessed via HTTP. Previously, responses from this RPC had a `Content-Type` of `application/json`, which meant that the API explorer UI failed to render them. Now, responses from this RPC have the correct `Content-Type` of `application/x-ndjson`, and the API explorer UI renders them correctly.

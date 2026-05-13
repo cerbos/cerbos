@@ -15,10 +15,6 @@ jobs:
     timeout-minutes: 30
     permissions: {}
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -35,35 +31,26 @@ jobs:
           cross_compiling: true
           write_build_cache: true
 
-      - name: Install just
-        uses: ./.github/actions/setup-just
+      - name: Install tools
+        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
+        with:
+          tools: |-
+            buf
+            just
 
       - name: Generate
         run: just generate
 
       - name: Check repo status
-        run: |-
-          REPO_STATUS="$(git status --porcelain)"
-          if [[ ! -z $REPO_STATUS ]]; then
-            echo "::error::Uncommitted changes detected"
-            echo "$REPO_STATUS"
-            exit 1
-          fi
+        uses: cerbos/actions/check-repo-status@148106e618c65e91a0026179ccf0cff043e6b962 # main
 
       - name: Test
-        run: just test-all
+        run: just test-integration
         env:
           CERBOS_LOG_LEVEL: "debug"
 
-      - name: Upload unit coverage to Coveralls
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
-        continue-on-error: true
-        with:
-          path-to-profile: unit.cover
-          flag-name: unit-main
-
       - name: Upload integration coverage to Coveralls
-        uses: shogo82148/actions-goveralls@25f5320d970fb565100cf1993ada29be1bb196a1 # v1.10.0
+        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
         continue-on-error: true
         with:
           path-to-profile: integration.cover
@@ -79,10 +66,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -105,27 +88,27 @@ jobs:
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to ECR
-        uses: aws-actions/amazon-ecr-login@183a1442edf41672e66566b7fc560e297a290896 # v2.1.1
+        uses: aws-actions/amazon-ecr-login@19d944daaa35f0fa1d3f7f8af1d3f2e5de25c5b7 # v2.1.4
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
@@ -136,16 +119,17 @@ jobs:
           write_build_cache: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
-      - name: Install Syft
-        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+      - name: Install tools
+        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
+        with:
+          tools: |-
+            goreleaser
+            syft
 
       - name: GoReleaser
-        uses: goreleaser/goreleaser-action@ec59f474b9834571250b370d4735c50f8e2d1e29 # v7.0.0
-        with:
-          version: latest
-          args: release --config=.goreleaser.yml --clean --snapshot --skip=publish
+        run: goreleaser release --config=.goreleaser.yml --clean --snapshot --skip=publish
         env:
           AWS_CONTAINER_REPO: ${{ vars.AWS_CONTAINER_REPO }}
           AWS_PRODUCT_CODE: ${{ vars.AWS_PRODUCT_CODE }}
@@ -192,16 +176,12 @@ jobs:
     permissions: {}
     needs: ["tests"]
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@bf82d13b9b10051d224345ab9184f5ede0a94289 # v1.0.2-beta9
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
-
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
+        uses: cerbos/actions/buf@148106e618c65e91a0026179ccf0cff043e6b962 # main
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}

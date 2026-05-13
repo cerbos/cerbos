@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"go.uber.org/multierr"
+
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -21,14 +23,14 @@ type Conf struct {
 }
 
 type JWTConf struct {
+	// Deprecated: Verified tokens are no longer cached.
+	CacheSize *int `yaml:"cacheSize" conf:",ignore"`
 	// KeySets is the list of keysets to be used to verify tokens.
 	KeySets []JWTKeySet `yaml:"keySets"`
-	// DisableVerification disables JWT verification.
-	DisableVerification bool `yaml:"disableVerification" conf:",example=false"`
-	// CacheSize sets the number of verified tokens cached in memory. Set to negative value to disable caching.
-	CacheSize int `yaml:"cacheSize" conf:",example=256"`
 	// AcceptableTimeSkew sets the acceptable skew when checking exp and nbf claims.
 	AcceptableTimeSkew time.Duration `yaml:"acceptableTimeSkew" conf:",example=2s"`
+	// DisableVerification disables JWT verification.
+	DisableVerification bool `yaml:"disableVerification" conf:",example=false"`
 }
 
 type JWTKeySet struct {
@@ -74,8 +76,8 @@ func (c *Conf) Validate() (errs error) {
 		return nil
 	}
 
-	if c.JWT.CacheSize == 0 {
-		c.JWT.CacheSize = defaultCacheSize
+	if c.JWT.CacheSize != nil {
+		util.DeprecationWarning("auxData.jwt.cacheSize")
 	}
 
 	if c.JWT.AcceptableTimeSkew < 0 {

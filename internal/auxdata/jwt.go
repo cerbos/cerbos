@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/lestrrat-go/httprc/v3"
@@ -19,26 +18,18 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-const (
-	defaultCacheExpiry = 10 * time.Minute
-	defaultCacheSize   = 256
-)
-
 var (
-	cacheEntry          = struct{}{}
 	errNilLocalKeySet   = errors.New("nil local keyset")
 	errNoKeySetToVerify = errors.New("cannot determine keyset to use for validating the JWT")
 )
 
 type jwtHelper struct {
 	keySets        map[string]keySet
-	cache          *cache.Cache[string, struct{}]
 	verify         bool
 	acceptableSkew time.Duration
 }
@@ -80,10 +71,6 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, opts)
 			}
 		}
-
-		if conf.CacheSize > 0 {
-			jh.cache = cache.New[string, struct{}]("jwt", uint(conf.CacheSize))
-		}
 	}
 
 	return jh
@@ -114,23 +101,15 @@ func (j *jwtHelper) extract(ctx context.Context, auxJWT *requestv1.AuxData_JWT) 
 	ctx, span := tracing.StartSpan(ctx, "aux_data.ExtractJWT")
 	defer span.End()
 
-	cacheKey := ""
-	if j.cache != nil {
-		if lastIdx := strings.LastIndexByte(auxJWT.Token, '.'); lastIdx > 0 {
-			// use the token signature as the cache key
-			cacheKey = auxJWT.Token[lastIdx:]
-		}
-	}
-
-	parseOpts, err := j.parseOptions(ctx, auxJWT, cacheKey)
+	parseOpts, err := j.parseOptions(ctx, auxJWT)
 	if err != nil {
 		return nil, err
 	}
 
-	return j.doExtract(ctx, auxJWT, parseOpts, cacheKey)
+	return j.doExtract(ctx, auxJWT, parseOpts)
 }
 
-func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_JWT, cacheKey string) (opts []jwt.ParseOption, _ error) {
+func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_JWT) (opts []jwt.ParseOption, _ error) {
 	if j.acceptableSkew > 0 {
 		opts = []jwt.ParseOption{jwt.WithAcceptableSkew(j.acceptableSkew)}
 	}
@@ -139,15 +118,7 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 		return append(opts, jwt.WithVerify(false), jwt.WithValidate(true)), nil
 	}
 
-	// Check whether this token has already been verified
-	if cacheKey != "" {
-		if _, ok := j.cache.Get(cacheKey); ok {
-			return append(opts, jwt.WithVerify(false), jwt.WithValidate(true)), nil
-		}
-	}
-
 	var ks keySet
-
 	// if keyset ID is not provided and we only have one keyset configured, use that as the default.
 	if auxJWT.KeySetId == "" {
 		if len(j.keySets) != 1 {
@@ -173,20 +144,10 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 	return append(opts, jwt.WithKeySet(jwks, jwksOpts...), jwt.WithValidate(true)), nil
 }
 
-func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption, cacheKey string) (map[string]*structpb.Value, error) {
+func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
 	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT: %w", err)
-	}
-
-	if cacheKey != "" {
-		expiration, ok := token.Expiration()
-		expiry := time.Until(expiration)
-		if !ok || expiry <= 0 {
-			expiry = defaultCacheExpiry
-		}
-
-		j.cache.SetWithExpire(cacheKey, cacheEntry, expiry)
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)

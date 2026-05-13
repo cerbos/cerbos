@@ -34,6 +34,26 @@
         }
       ]
     },
+    "cerbos.policy.v1.Constants": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
+          },
+          "uniqueItems": true
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "cerbos.policy.v1.Match": {
       "allOf": [
         {
@@ -100,6 +120,30 @@
         }
       }
     },
+    "cerbos.policy.v1.Output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expr": {
+          "type": "string"
+        },
+        "when": {
+          "$ref": "#/definitions/cerbos.policy.v1.Output.When"
+        }
+      }
+    },
+    "cerbos.policy.v1.Output.When": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "conditionNotMet": {
+          "type": "string"
+        },
+        "ruleActivated": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.policy.v1.RoleRule": {
       "type": "object",
       "required": [
@@ -120,11 +164,42 @@
         "condition": {
           "$ref": "#/definitions/cerbos.policy.v1.Condition"
         },
+        "name": {
+          "type": "string",
+          "pattern": "^([A-Za-z][\\-\\.0-9@-Z_a-z]*)*$"
+        },
+        "output": {
+          "$ref": "#/definitions/cerbos.policy.v1.Output"
+        },
         "resource": {
           "type": "string",
           "minLength": 1
         }
       }
+    },
+    "cerbos.policy.v1.Variables": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "import": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[\\-\\.0-9A-Z_a-z]+$"
+          },
+          "uniqueItems": true
+        },
+        "local": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "google.protobuf.Value": {
+      "title": "Value",
+      "description": "A dynamically-typed value."
     }
   },
   "allOf": [
@@ -132,6 +207,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "constants": {
+          "$ref": "#/definitions/cerbos.policy.v1.Constants"
+        },
         "parentRoles": {
           "type": "array",
           "items": {
@@ -160,6 +238,9 @@
             "SCOPE_PERMISSIONS_UNSPECIFIED",
             "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
           ]
+        },
+        "variables": {
+          "$ref": "#/definitions/cerbos.policy.v1.Variables"
         },
         "version": {
           "type": "string",

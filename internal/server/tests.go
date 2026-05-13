@@ -25,6 +25,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	authorizationv1 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -154,6 +155,18 @@ func (tr *TestRunner) executeGRPCTestCase(grpcConn *grpc.ClientConn, tc *private
 		}
 
 		switch call := tc.CallKind.(type) {
+		case *privatev1.ServerTestCase_AccessEvaluation:
+			authzenClient := authorizationv1.NewAuthorizationServiceClient(grpcConn)
+			want = call.AccessEvaluation.GetWantResponse()
+			have, err = retry(func() (proto.Message, error) {
+				return authzenClient.AccessEvaluation(ctx, call.AccessEvaluation.GetInput())
+			})
+		case *privatev1.ServerTestCase_AccessEvaluationBatch:
+			authzenClient := authorizationv1.NewAuthorizationServiceClient(grpcConn)
+			want = call.AccessEvaluationBatch.GetWantResponse()
+			have, err = retry(func() (proto.Message, error) {
+				return authzenClient.AccessEvaluationBatch(ctx, call.AccessEvaluationBatch.GetInput())
+			})
 		case *privatev1.ServerTestCase_CheckResourceSet:
 			cerbosClient := svcv1.NewCerbosServiceClient(grpcConn)
 			want = call.CheckResourceSet.WantResponse
@@ -255,6 +268,16 @@ func (tr *TestRunner) executeHTTPTestCase(c *http.Client, hostAddr string, creds
 		var addr string
 
 		switch call := tc.CallKind.(type) {
+		case *privatev1.ServerTestCase_AccessEvaluation:
+			addr = fmt.Sprintf("%s/access/v1/evaluation", hostAddr)
+			input = call.AccessEvaluation.GetInput()
+			want = call.AccessEvaluation.GetWantResponse()
+			have = &authorizationv1.AccessEvaluationResponse{}
+		case *privatev1.ServerTestCase_AccessEvaluationBatch:
+			addr = fmt.Sprintf("%s/access/v1/evaluations", hostAddr)
+			input = call.AccessEvaluationBatch.GetInput()
+			want = call.AccessEvaluationBatch.GetWantResponse()
+			have = &authorizationv1.AccessEvaluationBatchResponse{}
 		case *privatev1.ServerTestCase_CheckResourceSet:
 			addr = fmt.Sprintf("%s/api/check", hostAddr)
 			input = call.CheckResourceSet.Input
@@ -428,6 +451,7 @@ func compareProto(t *testing.T, want, have proto.Message) {
 		protocmp.IgnoreFields(&responsev1.CheckResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlanResourcesResponse{}, "cerbos_call_id"),
 		protocmp.IgnoreFields(&responsev1.PlaygroundFailure_ErrorDetails{}, "context"),
+		protocmp.IgnoreFields(&authorizationv1.AccessEvaluationResponse{}, "context"),
 	))
 
 	if h, ok := have.(interface{ GetCerbosCallId() string }); ok {

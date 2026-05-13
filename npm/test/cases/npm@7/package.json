@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "npm@7.24.2",
+  "packageManager": "npm@7.24.2+sha512.d76d29d75e8213c54c319fa193c2006f58a708f9380e3dd5670dbdfe7da0e9423beeeac929561bec56540d6f2163e1019dfb2323fdb2ae86c1805cb3a3b62955",
   "dependencies": {
     "cerbos": "latest",
     "cerbosctl": "latest"

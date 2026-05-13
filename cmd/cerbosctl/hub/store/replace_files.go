@@ -14,7 +14,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/cerbos/cerbos-sdk-go/cerbos/hub"
-	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v6"
 )
 
 const (

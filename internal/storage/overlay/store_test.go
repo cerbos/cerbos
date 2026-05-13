@@ -30,10 +30,6 @@ var (
 )
 
 func TestDriverInstantiation(t *testing.T) {
-	ctx := t.Context()
-
-	bucketName := "test"
-
 	conf := map[string]any{
 		"storage": map[string]any{
 			"driver": "overlay",
@@ -43,7 +39,7 @@ func TestDriverInstantiation(t *testing.T) {
 				"fallbackErrorThreshold": 3,
 			},
 			"blob": map[string]any{
-				"bucket":             blob.SeaweedFSBucketURL(bucketName, blob.StartSeaweedFS(ctx, t, bucketName)),
+				"bucket":             blob.StartSeaweedFS(t).CreateBucket(t),
 				"workDir":            t.TempDir(),
 				"updatePollInterval": "10s",
 			},

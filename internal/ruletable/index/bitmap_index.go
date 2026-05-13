@@ -4,111 +4,8 @@
 package index
 
 import (
-	"math"
-
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"go.uber.org/zap"
 )
-
-// dimStats holds size statistics for a single dimension.
-type dimStats struct {
-	Name     string
-	Keys     int
-	MinWords int
-	MaxWords int
-	AvgWords int
-	MinCard  uint64
-	MaxCard  uint64
-	AvgCard  uint64
-}
-
-func collectBitmapStats(s *dimStats, bm *Bitmap) {
-	wl := bm.WordsLen()
-	if wl > s.MaxWords {
-		s.MaxWords = wl
-	}
-	if wl < s.MinWords {
-		s.MinWords = wl
-	}
-	c := bm.GetCardinality()
-	if c > s.MaxCard {
-		s.MaxCard = c
-	}
-	if c < s.MinCard {
-		s.MinCard = c
-	}
-}
-
-func dimensionStats[T comparable](name string, d dimension[T]) dimStats {
-	s := dimStats{Name: name, Keys: len(d.m), MinWords: math.MaxInt, MinCard: math.MaxUint64}
-	totalWords := 0
-	totalCard := uint64(0)
-	for _, bm := range d.m {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
-	}
-	if s.Keys == 0 {
-		s.MinWords = 0
-		s.MinCard = 0
-	} else {
-		s.AvgWords = totalWords / s.Keys
-		s.AvgCard = totalCard / uint64(s.Keys)
-	}
-	return s
-}
-
-func globDimensionStats(name string, gd *globDimension) dimStats {
-	s := dimStats{Name: name, Keys: len(gd.literals) + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
-	totalWords := 0
-	totalCard := uint64(0)
-	for _, bm := range gd.literals {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
-	}
-	for _, bm := range gd.globs {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
-	}
-	if s.Keys == 0 {
-		s.MinWords = 0
-		s.MinCard = 0
-	} else {
-		s.AvgWords = totalWords / s.Keys
-		s.AvgCard = totalCard / uint64(s.Keys)
-	}
-	return s
-}
-
-func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) {
-	stats := []dimStats{
-		dimensionStats("version", idx.version),
-		dimensionStats("scope", idx.scope),
-		globDimensionStats("role", idx.role),
-		globDimensionStats("resource", idx.resource),
-		globDimensionStats("action", idx.action),
-		dimensionStats("policyKind", idx.policyKind),
-		dimensionStats("principal", idx.principal),
-		dimensionStats("fqnBindings", idx.fqnBindings),
-	}
-
-	fields := make([]any, 0, 2+len(stats)*8) //nolint:mnd
-	fields = append(fields, "bindings", len(idx.bindings), "universe_words", idx.universe.WordsLen())
-	for _, s := range stats {
-		fields = append(fields,
-			s.Name+"_keys", s.Keys,
-			s.Name+"_min_words", s.MinWords,
-			s.Name+"_avg_words", s.AvgWords,
-			s.Name+"_max_words", s.MaxWords,
-			s.Name+"_min_card", s.MinCard,
-			s.Name+"_avg_card", s.AvgCard,
-			s.Name+"_max_card", s.MaxCard,
-		)
-	}
-	log.Debugw("Bitmap index stats", fields...)
-}
 
 // bitmapIndex is the core in-memory bitmap index. Each binding gets a uint32 ID,
 // and each (dimension, value) pair has a bitmap tracking which binding IDs
@@ -121,7 +18,7 @@ type bitmapIndex struct {
 	role               *globDimension
 	policyKind         dimension[policyv1.Kind]
 	resource           *globDimension
-	fqnBindings        dimension[string]
+	fqnBindings        fqnDimension
 	principal          dimension[string]
 	universe           *Bitmap
 	allowActionsBitmap *Bitmap
@@ -140,7 +37,7 @@ func newBitmapIndex() *bitmapIndex {
 		principal:          newDimension[string](),
 		universe:           NewBitmap(),
 		allowActionsBitmap: NewBitmap(),
-		fqnBindings:        newDimension[string](),
+		fqnBindings:        newFqnDimension(),
 		coresBySum:         make(map[uint64]*FunctionalCore),
 	}
 }
@@ -173,11 +70,19 @@ func (idx *bitmapIndex) addBinding(b *Binding) {
 
 	idx.universe.Add(id)
 
-	idx.version.Add(b.Version, id)
+	// Scope "" is a valid literal (root scope), always indexed. Other dimensions
+	// skip "" to avoid leaking empties from policies that don't participate in
+	// them (e.g. principal-policy noop rows have no role/resource).
 	idx.scope.Add(b.Scope, id)
-
-	idx.role.Set(b.Role, id)
-	idx.resource.Set(b.Resource, id)
+	if b.Version != "" {
+		idx.version.Add(b.Version, id)
+	}
+	if b.Role != "" {
+		idx.role.Set(b.Role, id)
+	}
+	if b.Resource != "" {
+		idx.resource.Set(b.Resource, id)
+	}
 
 	if b.AllowActions != nil {
 		idx.allowActionsBitmap.Add(id)
@@ -215,10 +120,7 @@ func (idx *bitmapIndex) removeBinding(b *Binding) {
 	}
 
 	idx.policyKind.Remove(b.Core.PolicyKind, id)
-
-	if b.Principal != "" {
-		idx.principal.Remove(b.Principal, id)
-	}
+	idx.principal.Remove(b.Principal, id)
 
 	idx.freeID(id)
 }
@@ -288,4 +190,32 @@ func (d dimension[T]) Query(arena *bitmapArena, keys []T) *Bitmap {
 	default:
 		return arena.orInto(parts)
 	}
+}
+
+// fqnDimension maps policy FQNs to the binding IDs that originated from them.
+type fqnDimension struct {
+	m map[string][]uint32
+}
+
+const fqnSliceInitCap = 4
+
+func newFqnDimension() fqnDimension {
+	return fqnDimension{m: make(map[string][]uint32)}
+}
+
+func (d fqnDimension) Add(fqn string, id uint32) {
+	ids, ok := d.m[fqn]
+	if !ok {
+		ids = make([]uint32, 0, fqnSliceInitCap)
+	}
+	d.m[fqn] = append(ids, id)
+}
+
+func (d fqnDimension) Get(fqn string) ([]uint32, bool) {
+	ids, ok := d.m[fqn]
+	return ids, ok
+}
+
+func (d fqnDimension) Delete(fqn string) {
+	delete(d.m, fqn)
 }

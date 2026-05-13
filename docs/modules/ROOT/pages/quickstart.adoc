@@ -155,6 +155,8 @@ derivedRoles:
 EOF
 ----
 
+NOTE: Each Cerbos policy must be in its own file. You cannot define multiple policies in a single YAML or JSON file.
+
 Also create a resource policy that gives ``owner``s full access to their own albums. 
 
 [source,sh]

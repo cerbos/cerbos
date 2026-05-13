@@ -75,25 +75,68 @@ install_dependencies() {
   corepack "${package_manager}" install
 }
 
-execute_binary() {
+declare -A expected_output
+
+execute_binary_directly() {
+  local binary
+  binary="$1"
+  shift
+
+  if [[ ! -v expected_output[$binary] ]]; then
+    local platform
+    platform=$(node --print '`${os.platform()}-${os.arch()}`')
+
+    expected_output[$binary]=$("${root_dir}/packages/${binary}-${platform}/${binary}-${platform}" "$@")
+  fi
+}
+
+execute_binary_via_package_manager() {
   local binary
   binary="$1"
 
   local command
-  command=(exec --)
 
-  if [[ "${test_case}" = "yarn@2" ]]; then
-    command=(run)
-  fi
+  case "${test_case}" in
+    "yarn@1")
+      command=(exec --silent --)
+      ;;
+    "yarn@2")
+      command=(run)
+      ;;
+    *)
+      command=(exec --)
+      ;;
+  esac
+
+  corepack "${package_manager}" "${command[@]}" "$@"
+}
+
+execute_binary() {
+  local binary
+  binary="$1"
 
   log_subheading "Executing ${binary}"
-  corepack "${package_manager}" "${command[@]}" "$@"
+
+  local expected
+  execute_binary_directly "$@"
+  expected="${expected_output[$binary]}"
+
+  local actual
+  actual=$(execute_binary_via_package_manager "$@")
+
+  if diff <(printf "%s\n" "${expected}") <(printf "%s\n" "${actual}"); then
+    echo "OK"
+  else
+    log_error "Unexpected output"
+    exit 1
+  fi
 }
 
 export FORCE_COLOR=true
 export NPM_CONFIG_COLOR=always
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
+root_dir="${PWD}"
 
 start_registry
 

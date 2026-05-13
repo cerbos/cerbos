@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/cespare/xxhash/v2"
-	"go.uber.org/zap"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -53,16 +52,9 @@ type CelProgram struct {
 
 type Option func(*Index)
 
-// WithSourceRows retains the original proto row on each Binding, preventing
-// GC of the proto rows after indexing.
-func WithSourceRows() Option {
-	return func(idx *Index) { idx.retainSourceRows = true }
-}
-
 type Index struct {
-	bi               *bitmapIndex
-	parentRoles      map[string]map[string][]string
-	retainSourceRows bool
+	bi          *bitmapIndex
+	parentRoles map[string]map[string][]string
 }
 
 func New(opts ...Option) *Index {
@@ -90,19 +82,17 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 
 		switch rule.PolicyKind { //nolint:exhaustive
 		case policyv1.Kind_KIND_RESOURCE:
-			if !rule.FromRolePolicy {
-				p, err := getOrGenerateParams(paramsCache, rule.Params)
+			p, err := getOrGenerateParams(paramsCache, rule.Params)
+			if err != nil {
+				return err
+			}
+			params = p
+			if rule.OriginDerivedRole != "" {
+				drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
 				if err != nil {
 					return err
 				}
-				params = p
-				if rule.OriginDerivedRole != "" {
-					drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
-					if err != nil {
-						return err
-					}
-					drParams = drp
-				}
+				drParams = drp
 			}
 		case policyv1.Kind_KIND_PRINCIPAL:
 			p, err := getOrGenerateParams(paramsCache, rule.Params)
@@ -174,28 +164,21 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			AllowActions:      allowActions,
 			Core:              core,
 		}
-		if m.retainSourceRows {
-			b.SourceRow = rule
-		}
 
 		m.bi.addBinding(b)
-	}
-
-	if log := zap.L().Named("index"); log.Core().Enabled(zap.DebugLevel) {
-		m.bi.logStats(log.Sugar())
 	}
 
 	return nil
 }
 
-func (m *Index) GetAllRows() ([]*Binding, error) {
+func (m *Index) GetAllRows() []*Binding {
 	res := make([]*Binding, 0, m.bi.universe.GetCardinality())
 	for _, b := range m.bi.bindings {
 		if b != nil {
 			res = append(res, b)
 		}
 	}
-	return res, nil
+	return res
 }
 
 // Query returns bindings matching the given dimensions. Nil or zero-values mean
@@ -304,8 +287,8 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	// Role policy synthetic DENYs are prepended so the evaluator sees them
 	// before regular ALLOWs, which is required for scope permission semantics.
-	if action != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
-		buf = m.queryAllowActions(arena, bi, version, scope, action, resource, roles, versionBM, scopeBM, roleBM, resourceBM, buf)
+	if action != "" && resource != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
+		buf = m.appendRolePolicyDenies(arena, bi, []string{resource}, roles, []string{action}, versionBM, scopeBM, roleBM, buf)
 	}
 
 	// Regular bindings.
@@ -322,13 +305,28 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	return buf
 }
 
-// queryAllowActions generates synthetic DENY bindings from role policy AllowActions.
-func (m *Index) queryAllowActions(arena *bitmapArena, bi *bitmapIndex, version, scope, action, resource string, roles []string, versionBM, scopeBM, roleBM, resourceBM *Bitmap, res []*Binding,
+// appendRolePolicyDenies appends synthetic DENY bindings for each (role,
+// resource, action) triple where the role has a role policy matching
+// versionBM ∩ scopeBM ∩ roleBM but doesn't explicitly allow that action
+// for that resource.
+//
+// When roles is empty, iterates every role whose policy matches the
+// non-resource dims (in binding-discovery order). Returns res unchanged if
+// resources is empty.
+//
+// When targetActions is empty, the action set for synthesis is derived
+// per-resource from the bindings (excluding principal-policy bindings) for
+// that resource intersected with versionBM ∩ scopeBM. The role filter is
+// deliberately ignored when deriving actions, so the action set reflects the
+// resource's full surface, not just actions referenced by filtered roles.
+func (m *Index) appendRolePolicyDenies(
+	arena *bitmapArena, bi *bitmapIndex,
+	resources, roles, targetActions []string,
+	versionBM, scopeBM, roleBM *Bitmap,
+	res []*Binding,
 ) []*Binding {
-	// find candidate role policy bindings.
-	// we ignore `resource` because we need to know which roles have ANY role policies,
-	// even if the `resource` doesn't match (which implies "DENY").
-	// saml: benchmarks show a 3% speedup if we batch inputs to `FastAnd` below. In for a penny...
+	// candidateBM deliberately omits resource so we can spot roles whose
+	// policy exists but doesn't cover the requested resource.
 	candidateDims := make([]*Bitmap, 0, 4) //nolint:mnd
 	if versionBM != nil {
 		candidateDims = append(candidateDims, versionBM)
@@ -351,100 +349,144 @@ func (m *Index) queryAllowActions(arena *bitmapArena, bi *bitmapIndex, version, 
 		return res
 	}
 
-	// now AND with the resource
-	// (andInto returns a pooled copy so candidateBM isn't mutated).
-	resourceMatchedBM := candidateBM
-	if resourceBM != nil {
-		resourceMatchedBM = arena.and2(candidateBM, resourceBM)
-	}
-
-	// we need two levels because we can't determine "does this role have a role policy"
-	// from `resourceMatchedBM` alone; a role policy might exist but have no entry for
-	// the requested resource, which is still an implicit DENY.
-	// `candidateBM` tells us which roles have policies, `resourceMatchedBM` tells us
-	// which of those actually cover the requested resource.
-	rolesWithPolicy := make(map[string]struct{})
-	iter := candidateBM.Iterator()
-	for iter.HasNext() {
-		b := bi.getBinding(iter.Next())
+	// Retrieve one sample binding per role for version/scope
+	rolePolicyRep := make(map[string]*Binding)
+	var roleOrder []string
+	policyIter := candidateBM.Iterator()
+	for policyIter.HasNext() {
+		b := bi.getBinding(policyIter.Next())
 		if b == nil {
 			continue
 		}
-		rolesWithPolicy[b.Role] = struct{}{}
+		if _, ok := rolePolicyRep[b.Role]; !ok {
+			roleOrder = append(roleOrder, b.Role)
+			rolePolicyRep[b.Role] = b
+		}
 	}
 
-	// group resource-matched bindings by role.
-	resourceMatchedByRole := make(map[string][]*Binding)
-	if !resourceMatchedBM.IsEmpty() {
-		rmIter := resourceMatchedBM.Iterator()
-		for rmIter.HasNext() {
-			b := bi.getBinding(rmIter.Next())
+	// Relevant in some (external) downstream consumers
+	if len(roles) == 0 {
+		roles = roleOrder
+	}
+
+	var matched []*Binding
+	for _, resource := range resources {
+		resBM := bi.resource.Query(arena, resource)
+		resourceMatchedBM := emptyBitmap
+		if !resBM.IsEmpty() {
+			resourceMatchedBM = arena.and2(candidateBM, resBM)
+		}
+
+		resourceMatchedByRole := make(map[string][]*Binding)
+		matchedIter := resourceMatchedBM.Iterator()
+		for matchedIter.HasNext() {
+			b := bi.getBinding(matchedIter.Next())
 			if b == nil {
 				continue
 			}
 			resourceMatchedByRole[b.Role] = append(resourceMatchedByRole[b.Role], b)
 		}
-	}
 
-	// process each role in input order.
-	var matched []*Binding
-	for _, role := range roles {
-		// no role policies exist for this role, skip it
-		if _, ok := rolesWithPolicy[role]; !ok {
-			continue
-		}
-
-		// find resource-matched bindings that cover the queried action.
-		matched = matched[:0]
-		for _, ab := range resourceMatchedByRole[role] {
-			for a := range ab.AllowActions {
-				if a == action || util.MatchesGlob(a, action) {
-					matched = append(matched, ab)
-					break
-				}
+		resourceActions := targetActions
+		if len(resourceActions) == 0 {
+			resourceActions = collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
+			if len(resourceActions) == 0 {
+				continue
 			}
 		}
 
-		if len(matched) == 0 {
-			// role policy exists but no AllowActions entry covers this resource+action == unconditional deny
-			res = append(res, &Binding{
-				Core: &FunctionalCore{
-					Effect:         effectv1.Effect_EFFECT_DENY,
-					PolicyKind:     policyv1.Kind_KIND_RESOURCE,
-					FromRolePolicy: true,
-				},
-				Action:                     action,
-				OriginFqn:                  namer.RolePolicyFQN(role, version, scope),
-				Resource:                   resource,
-				Role:                       role,
-				Scope:                      scope,
-				Version:                    version,
-				NoMatchForScopePermissions: true,
-			})
-		} else {
-			for _, ab := range matched {
-				if ab.Core.Condition != nil {
+		for _, role := range roles {
+			rep, ok := rolePolicyRep[role]
+			if !ok {
+				continue
+			}
+			roleBindings := resourceMatchedByRole[role]
+			// role policy exists, but no resource bindings present
+			if len(roleBindings) == 0 {
+				for _, action := range resourceActions {
+					res = append(res, newNoMatchRolePolicyDeny(role, rep.Version, rep.Scope, resource, action))
+				}
+				continue
+			}
+
+			for _, action := range resourceActions {
+				matched = matched[:0]
+				for _, rb := range roleBindings {
+					for a := range rb.AllowActions {
+						if a == action || util.MatchesGlob(a, action) {
+							matched = append(matched, rb)
+							break
+						}
+					}
+				}
+
+				// role policy exists with resource bindings, but action not specified
+				if len(matched) == 0 {
+					rep := roleBindings[0]
+					res = append(res, newNoMatchRolePolicyDeny(role, rep.Version, rep.Scope, rep.Resource, action))
+					continue
+				}
+
+				for _, mb := range matched {
+					if mb.Core.Condition == nil {
+						// Pure ACL allow: fall through. Role-policy bindings are
+						// otherwise dropped here, so emit any output via a no-effect
+						// binding.
+						if mb.Core.EmitOutput != nil {
+							res = append(res, &Binding{
+								Core: &FunctionalCore{
+									EmitOutput:     mb.Core.EmitOutput,
+									PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+									FromRolePolicy: true,
+									Params:         mb.Core.Params,
+								},
+								Action:        action,
+								Name:          mb.Name,
+								OriginFqn:     mb.OriginFqn,
+								Resource:      mb.Resource,
+								Role:          mb.Role,
+								Scope:         mb.Scope,
+								Version:       mb.Version,
+								EvaluationKey: mb.EvaluationKey,
+							})
+						}
+						continue
+					}
+					// Synthetic DENY for the negated condition. Outputs are swapped
+					// because synthetic-activated == user-condition-not-met.
+					var emitOutput *runtimev1.Output
+					if mb.Core.EmitOutput != nil && mb.Core.EmitOutput.When != nil {
+						emitOutput = &runtimev1.Output{
+							When: &runtimev1.Output_When{
+								RuleActivated:   mb.Core.EmitOutput.When.ConditionNotMet,
+								ConditionNotMet: mb.Core.EmitOutput.When.RuleActivated,
+							},
+						}
+					}
 					res = append(res, &Binding{
 						Core: &FunctionalCore{
 							Effect: effectv1.Effect_EFFECT_DENY,
 							Condition: &runtimev1.Condition{
 								Op: &runtimev1.Condition_None{
 									None: &runtimev1.Condition_ExprList{
-										Expr: []*runtimev1.Condition{ab.Core.Condition},
+										Expr: []*runtimev1.Condition{mb.Core.Condition},
 									},
 								},
 							},
+							EmitOutput:       emitOutput,
 							ScopePermissions: policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS,
 							PolicyKind:       policyv1.Kind_KIND_RESOURCE,
 							FromRolePolicy:   true,
+							Params:           mb.Core.Params,
 						},
 						Action:        action,
-						OriginFqn:     ab.OriginFqn,
-						Resource:      resource,
-						Role:          ab.Role,
-						Scope:         scope,
-						Version:       version,
-						EvaluationKey: ab.EvaluationKey,
+						Name:          mb.Name,
+						OriginFqn:     mb.OriginFqn,
+						Resource:      mb.Resource,
+						Role:          mb.Role,
+						Scope:         mb.Scope,
+						Version:       mb.Version,
+						EvaluationKey: mb.EvaluationKey,
 					})
 				}
 			}
@@ -454,13 +496,81 @@ func (m *Index) queryAllowActions(arena *bitmapArena, bi *bitmapIndex, version, 
 	return res
 }
 
-// QueryMulti returns bindings matching across multiple values per dimension.
-// OR within each dimension, AND across dimensions.
-// Unlike Query, AllowActions bindings are included directly (no synthetic DENY
-// generation) because the caller handles action matching itself.
-func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string) []*Binding {
-	bi := m.bi
+// collectResourceActions returns the action names referenced by bindings on
+// the given resource (intersected with version/scope). Principal-policy
+// actions are excluded — they're principal-specific and shouldn't widen the
+// resource's action set.
+func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionBM, scopeBM *Bitmap) []string {
+	if resBM.IsEmpty() {
+		return nil
+	}
 
+	dims := make([]*Bitmap, 0, 3) //nolint:mnd
+	dims = append(dims, resBM)
+	if versionBM != nil {
+		dims = append(dims, versionBM)
+	}
+	if scopeBM != nil {
+		dims = append(dims, scopeBM)
+	}
+
+	var bm *Bitmap
+	if len(dims) == 1 {
+		bm = dims[0]
+	} else {
+		bm = arena.andInto(dims)
+	}
+	if bm.IsEmpty() {
+		return nil
+	}
+
+	actionSet := make(map[string]struct{})
+	iter := bm.Iterator()
+	for iter.HasNext() {
+		b := bi.getBinding(iter.Next())
+		if b == nil || b.Core.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
+			continue
+		}
+		if b.Action != "" {
+			actionSet[b.Action] = struct{}{}
+		}
+		for a := range b.AllowActions {
+			actionSet[a] = struct{}{}
+		}
+	}
+
+	actions := make([]string, 0, len(actionSet))
+	for a := range actionSet {
+		actions = append(actions, a)
+	}
+	return actions
+}
+
+func newNoMatchRolePolicyDeny(role, version, scope, resource, action string) *Binding {
+	return &Binding{
+		Core: &FunctionalCore{
+			Effect:         effectv1.Effect_EFFECT_DENY,
+			PolicyKind:     policyv1.Kind_KIND_RESOURCE,
+			FromRolePolicy: true,
+		},
+		Action:                     action,
+		OriginFqn:                  namer.RolePolicyFQN(role, version, scope),
+		Resource:                   resource,
+		Role:                       role,
+		Scope:                      scope,
+		Version:                    version,
+		NoMatchForScopePermissions: true,
+	}
+}
+
+// QueryMulti returns bindings matching across multiple values per dimension
+// (OR within each dimension, AND across dimensions). When withRolePolicyDenies
+// is true, synthetic DENY bindings are appended for each (role, resource,
+// action) triple where the role has a matching role policy that doesn't
+// explicitly allow the action. An empty actions slice expands to every action
+// in the index for synthesis.
+func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string, withRolePolicyDenies bool) []*Binding {
+	bi := m.bi
 	if bi.universe.IsEmpty() {
 		return nil
 	}
@@ -468,35 +578,44 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	arena := newBitmapArena()
 	defer arena.release()
 
-	dims := make([]*Bitmap, 0, 4) //nolint:mnd
-
+	var versionBM, scopeBM, resourceBM, roleBM *Bitmap
 	if len(versions) > 0 {
-		bm := bi.version.Query(arena, versions)
-		if bm.IsEmpty() {
+		versionBM = bi.version.Query(arena, versions)
+		if versionBM.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
 	}
 	if len(scopes) > 0 {
-		bm := bi.scope.Query(arena, scopes)
-		if bm.IsEmpty() {
+		scopeBM = bi.scope.Query(arena, scopes)
+		if scopeBM.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
-	}
-	if len(resources) > 0 {
-		bm := bi.resource.QueryMultiple(arena, resources)
-		if bm.IsEmpty() {
-			return nil
-		}
-		dims = append(dims, bm)
 	}
 	if len(roles) > 0 {
-		bm := bi.role.QueryMultiple(arena, roles)
-		if bm.IsEmpty() {
+		roleBM = bi.role.QueryMultiple(arena, roles)
+		if roleBM.IsEmpty() {
 			return nil
 		}
-		dims = append(dims, bm)
+	}
+	if len(resources) > 0 {
+		// An empty resourceBM doesn't short-circuit: role-policy synthesis
+		// still emits NoMatch denies when a role has a policy in the other
+		// dimensions but no rows for the requested resource.
+		resourceBM = bi.resource.QueryMultiple(arena, resources)
+	}
+
+	dims := make([]*Bitmap, 0, 4) //nolint:mnd
+	if versionBM != nil {
+		dims = append(dims, versionBM)
+	}
+	if scopeBM != nil {
+		dims = append(dims, scopeBM)
+	}
+	if resourceBM != nil {
+		dims = append(dims, resourceBM)
+	}
+	if roleBM != nil {
+		dims = append(dims, roleBM)
 	}
 
 	var baseBM *Bitmap
@@ -508,24 +627,25 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string)
 	default:
 		baseBM = arena.andInto(dims)
 	}
-	if baseBM.IsEmpty() {
-		return nil
-	}
 
-	resultBM := m.applyActionFilter(arena, baseBM, actions)
-
-	if resultBM.IsEmpty() {
-		return nil
-	}
-
-	res := make([]*Binding, 0, resultBM.GetCardinality())
-	iter := resultBM.Iterator()
-	for iter.HasNext() {
-		if b := bi.getBinding(iter.Next()); b != nil {
-			res = append(res, b)
+	var res []*Binding
+	if !baseBM.IsEmpty() {
+		resultBM := m.applyActionFilter(arena, baseBM, actions)
+		if !resultBM.IsEmpty() {
+			res = make([]*Binding, 0, resultBM.GetCardinality())
+			iter := resultBM.Iterator()
+			for iter.HasNext() {
+				if b := bi.getBinding(iter.Next()); b != nil {
+					res = append(res, b)
+				}
+			}
 		}
 	}
-	return res
+
+	if !withRolePolicyDenies {
+		return res
+	}
+	return m.appendRolePolicyDenies(arena, bi, resources, roles, actions, versionBM, scopeBM, roleBM, res)
 }
 
 func (m *Index) applyActionFilter(arena *bitmapArena, baseBM *Bitmap, actions []string) *Bitmap {
@@ -638,14 +758,13 @@ func (m *Index) DeletePolicy(fqn string) error {
 		return nil
 	}
 
-	fqnBM, ok := m.bi.fqnBindings.Get(fqn)
+	ids, ok := m.bi.fqnBindings.Get(fqn)
 	if !ok {
 		return nil
 	}
 
-	iter := fqnBM.Iterator()
-	for iter.HasNext() {
-		b := m.bi.getBinding(iter.Next())
+	for _, id := range ids {
+		b := m.bi.getBinding(id)
 		if b == nil {
 			continue
 		}
@@ -752,14 +871,14 @@ func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable
 	if cached, ok := cache[h]; ok {
 		return cached, nil
 	}
-	progs, err := getCelProgramsFromExpressions(proto.OrderedVariables)
+	progs, err := getCelProgramsFromExpressions(proto.GetOrderedVariables())
 	if err != nil {
 		return nil, err
 	}
 	params := &RowParams{
 		Key:         h,
-		Variables:   proto.OrderedVariables,
-		Constants:   (&structpb.Struct{Fields: proto.Constants}).AsMap(),
+		Variables:   proto.GetOrderedVariables(),
+		Constants:   (&structpb.Struct{Fields: proto.GetConstants()}).AsMap(),
 		CelPrograms: progs,
 	}
 	cache[h] = params

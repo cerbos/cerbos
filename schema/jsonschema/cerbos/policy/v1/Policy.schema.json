@@ -469,6 +469,9 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
+            "constants": {
+              "$ref": "#/definitions/cerbos.policy.v1.Constants"
+            },
             "parentRoles": {
               "type": "array",
               "items": {
@@ -497,6 +500,9 @@
                 "SCOPE_PERMISSIONS_UNSPECIFIED",
                 "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
               ]
+            },
+            "variables": {
+              "$ref": "#/definitions/cerbos.policy.v1.Variables"
             },
             "version": {
               "type": "string",
@@ -531,6 +537,13 @@
         },
         "condition": {
           "$ref": "#/definitions/cerbos.policy.v1.Condition"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^([A-Za-z][\\-\\.0-9@-Z_a-z]*)*$"
+        },
+        "output": {
+          "$ref": "#/definitions/cerbos.policy.v1.Output"
         },
         "resource": {
           "type": "string",

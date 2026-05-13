@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: A child scope's ALLOW overrides unconditional DENYs at parent scopes under OVERRIDE_PARENT.
+principal:
+    id: alice
+    policyVersion: "2025_11"
+    roles:
+        - user
+tests:
+    - action: read
+      resource:
+        kind: additive
+        scope: acme.hr
+        policyVersion: "2025_11"
+      want:
+        kind: KIND_ALWAYS_ALLOWED

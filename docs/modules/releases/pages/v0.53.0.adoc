@@ -1,0 +1,23 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.53.0]
+= Cerbos v0.53.0
+
+
+== Changelog
+
+=== Deprecations
+
+[unordered]
+Remove JWT verification cache:: The PDP no longer caches verified tokens in memory. It was used to avoid doing expensive cryptographic verification on every request but the cost of doing so is negligible on modern hardware. The reason for removal of the cache is due to a report by @lemi9090 documenting a weakness with the caching mechanism. In exceptional situations, where no other system in the request chain verifies the token before it reaches the PDP, an attacker could inject a tampered token with the same signature as an already verified token and influence policy decisions that rely on token information. We do not consider this a vulnerability because the threat model of the PDP assumes that the calling application can be trusted with the data it sends (for instance, the token has already been verified by the gateway or the application itself) and that an attacker cannot tamper with the communication between the application and the PDP. If those assumptions don't hold, the entire system is insecure by default anyway. Nevertheless, out of an abundance of caution, we decided to remove the cache. Thank you @lemi9090 for responsibly reporting the weakness of the cache mechanism.
+
+
+=== Bug fixes
+
+[unordered]
+Set `Content-Type` to `application/x-ndjson` on streaming responses:: The `ListAuditLogEntries` is a streaming RPC, which returns newline-delimited JSON when accessed via HTTP. Previously, responses from this RPC had a `Content-Type` of `application/json`, which meant that the API explorer UI failed to render them. Now, responses from this RPC have the correct `Content-Type` of `application/x-ndjson`, and the API explorer UI renders them correctly.
+
+
+Honour OVERRIDE_PARENT scope semantics for parent-scope DENYs in query plans:: This fixes a bug introduced in Cerbos v0.50 where an unconditional `DENY` rule at a parent scope could cause `PlanResources` to return `KIND_ALWAYS_DENIED`, even when a child scope using `SCOPE_PERMISSIONS_OVERRIDE_PARENT` granted the action.
+
+
