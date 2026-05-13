@@ -46,3 +46,9 @@ jobs:
         with:
           name: perf-results
           path: hack/loadtest/results/ci/
+
+      - name: Notify Slack on failure
+        if: "!success()"
+        uses: cerbos/actions/notify-slack@f66d840b0ab1a349b605cec039b667d41f749381 # main
+        with:
+          webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}
