@@ -26,7 +26,7 @@ Deploys Cerbos load tests across two GCP VMs for realistic network latency and i
 - `gcloud` CLI installed and authenticated, with a GCP project that has Compute Engine API enabled
 - Terraform ~> 1.10.5 (infrastructure provisioning)
 - Go installed locally (for `generate.go` and `printsummary` builds)
-- The cerbos repo and [infrastructure repo](https://github.com/cerbos/infrastructure) checked out locally
+- The cerbos repo and the internal infrastructure repo checked out locally
 
 ## Workflow
 
