@@ -1,10 +1,8 @@
 ---
 name: Performance Regression
 on:
-  workflow_run:
-    workflows: ["Snapshots"]
-    types: [completed]
-    branches: [main]
+  schedule:
+    - cron: "0 3 * * 1-5" # weekdays at 03:00 UTC
   workflow_dispatch:
 
 permissions: {}
@@ -13,7 +11,6 @@ jobs:
   perf-test:
     name: Perf regression test
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 10
     permissions:
       contents: read
