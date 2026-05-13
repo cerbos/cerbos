@@ -2,7 +2,7 @@
 name: Performance Regression
 on:
   schedule:
-    - cron: "0 3 * * 1-5" # weekdays at 03:00 UTC
+    - cron: "0 3 * * 2" # Tuesday at 03:00 UTC
   workflow_dispatch:
 
 defaults:
