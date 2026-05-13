@@ -1,0 +1,42 @@
+---
+name: Performance Regression
+on:
+  workflow_run:
+    workflows: ["Snapshots"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  perf-test:
+    name: Perf regression test
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Set up Cerbos
+        uses: cerbos/cerbos-setup-action@6d88cfd96db5af84489633c6a2db42bf2522933b # v1
+
+      - name: Install ghz
+        run: |
+          curl -sfL https://github.com/bojand/ghz/releases/download/v0.121.0/ghz-linux-x86_64.tar.gz | tar xz -C /usr/local/bin ghz
+
+      - name: Run performance test
+        run: hack/loadtest/ci/run-test.sh
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: perf-results
+          path: hack/loadtest/results/ci/
