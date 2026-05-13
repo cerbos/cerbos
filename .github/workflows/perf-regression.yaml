@@ -29,8 +29,6 @@ jobs:
         uses: cerbos/cerbos-setup-action@6d88cfd96db5af84489633c6a2db42bf2522933b # v1
 
       - name: Install ghz
-        run: |
-      - name: Install ghz
         uses: cerbos/actions/install-tool@f66d840b0ab1a349b605cec039b667d41f749381 # main
         with:
           tools: ghz
