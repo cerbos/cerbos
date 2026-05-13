@@ -1,0 +1,17 @@
+---
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+  metricsEnabled: true
+
+storage:
+  driver: disk
+  disk:
+    directory: /policies
+    watchForChanges: false
+
+audit:
+  enabled: false
+
+schema:
+  enforcement: none
