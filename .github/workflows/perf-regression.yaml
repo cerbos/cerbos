@@ -25,8 +25,12 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
 
-      - name: Set up Cerbos
-        uses: cerbos/cerbos-setup-action@6d88cfd96db5af84489633c6a2db42bf2522933b # v1
+      - name: Set up Cerbos (dev)
+        run: |
+          docker pull ghcr.io/cerbos/cerbos:dev
+          docker create --name cerbos-extract ghcr.io/cerbos/cerbos:dev
+          docker cp cerbos-extract:/cerbos /usr/local/bin/cerbos
+          docker rm cerbos-extract
 
       - name: Install ghz
         uses: cerbos/actions/install-tool@f66d840b0ab1a349b605cec039b667d41f749381 # main
