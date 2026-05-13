@@ -32,7 +32,10 @@ jobs:
 
       - name: Install ghz
         run: |
-          curl -sfL https://github.com/bojand/ghz/releases/download/v0.121.0/ghz-linux-x86_64.tar.gz | tar xz -C /usr/local/bin ghz
+      - name: Install ghz
+        uses: cerbos/actions/install-tool@f66d840b0ab1a349b605cec039b667d41f749381 # main
+        with:
+          tools: ghz
 
       - name: Run performance test
         run: hack/loadtest/ci/run-test.sh
