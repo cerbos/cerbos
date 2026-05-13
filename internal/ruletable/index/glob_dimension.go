@@ -140,3 +140,14 @@ func (gd *globDimension) GetAllKeys() []string {
 	}
 	return keys
 }
+
+// RangeBitmaps iterates (key, bitmap) pairs. Glob keys (e.g. "manager:*")
+// appear verbatim. Each bitmap aliases a stored bitmap; do not mutate.
+func (gd *globDimension) RangeBitmaps(fn func(key string, bm *Bitmap)) {
+	for k, bm := range gd.literals {
+		fn(k, bm)
+	}
+	for k, bm := range gd.globs {
+		fn(k, bm)
+	}
+}

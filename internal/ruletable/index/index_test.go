@@ -342,6 +342,311 @@ func TestGetResources(t *testing.T) {
 	require.ElementsMatch(t, []string{"document", "image"}, impl.GetResources())
 }
 
+func TestResources(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) { r.Scope = ""; r.Resource = "document" }),
+		makeRow(namer.ResourcePolicyFQN("image", "default", "acme"), func(r *runtimev1.RuleTable_RuleRow) { r.Scope = "acme"; r.Resource = "image" }),
+		makeRow(namer.ResourcePolicyFQN("report:*", "default", "acme"), func(r *runtimev1.RuleTable_RuleRow) { r.Scope = "acme"; r.Resource = "report:*" }),
+		makeRow(namer.ResourcePolicyFQN("ticket", "v2", "acme.hr"), func(r *runtimev1.RuleTable_RuleRow) { r.Scope = "acme.hr"; r.Version = "v2"; r.Resource = "ticket" }),
+	}))
+
+	t.Run("empty filters returns all resources", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"document", "image", "report:*", "ticket"}, impl.Resources(nil, nil))
+	})
+
+	t.Run("single scope returns resources in that scope", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"image", "report:*"}, impl.Resources(nil, []string{"acme"}))
+	})
+
+	t.Run("version filter restricts resources", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"ticket"}, impl.Resources([]string{"v2"}, nil))
+	})
+
+	t.Run("version filter includes glob resource alongside literals", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"document", "image", "report:*"},
+			impl.Resources([]string{"default"}, nil),
+		)
+	})
+
+	t.Run("multi-version unions resources", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"document", "image", "report:*", "ticket"},
+			impl.Resources([]string{"default", "v2"}, nil),
+		)
+	})
+
+	t.Run("multi-scope unions resources", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"document", "image", "report:*"},
+			impl.Resources(nil, []string{"", "acme"}),
+		)
+	})
+
+	t.Run("version and scope intersect", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"image", "report:*"},
+			impl.Resources([]string{"default"}, []string{"acme"}),
+		)
+	})
+
+	t.Run("disjoint filters return nothing", func(t *testing.T) {
+		require.Empty(t, impl.Resources([]string{"v2"}, []string{""}))
+	})
+
+	t.Run("principal-policy-only resource is filtered alongside resource-policy ones", func(t *testing.T) {
+		mixed := index.New()
+		require.NoError(t, mixed.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.ResourcePolicyFQN("doc", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.FromRolePolicy = false
+				r.Resource = "doc"
+				r.Role = "viewer"
+			}),
+			{
+				OriginFqn:  namer.PrincipalPolicyFQN("bob", "default", ""),
+				PolicyKind: policyv1.Kind_KIND_PRINCIPAL,
+				Principal:  "bob",
+				Role:       "*",
+				Version:    "default",
+				Resource:   "vault",
+				ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "open"},
+				Effect:     effectv1.Effect_EFFECT_ALLOW,
+				Params:     &runtimev1.RuleTable_RuleRow_Params{},
+			},
+		}))
+		require.ElementsMatch(t, []string{"doc"}, mixed.Resources(nil, nil))
+	})
+}
+
+func TestRoles(t *testing.T) {
+	// Roles routes through the same helper as Resources; the subtests here lock
+	// in behaviour specific to the role dimension: the synthetic "*" key from
+	// principal policies.
+
+	t.Run("returns role keys from indexed bindings", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) { r.Role = "viewer" }),
+			makeRow(namer.ResourcePolicyFQN("image", "v2", "acme"), func(r *runtimev1.RuleTable_RuleRow) { r.Scope = "acme"; r.Version = "v2"; r.Role = "manager:*" }),
+		}))
+		require.ElementsMatch(t, []string{"viewer", "manager:*"}, impl.Roles(nil, nil))
+		require.ElementsMatch(t, []string{"manager:*"}, impl.Roles([]string{"v2"}, nil))
+	})
+
+	t.Run("principal-only index returns nothing", func(t *testing.T) {
+		principalOnly := index.New()
+		require.NoError(t, principalOnly.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			{
+				OriginFqn:  namer.PrincipalPolicyFQN("bob", "default", ""),
+				PolicyKind: policyv1.Kind_KIND_PRINCIPAL,
+				Principal:  "bob",
+				Role:       "*",
+				Version:    "default",
+				Resource:   "doc",
+				ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "read"},
+				Effect:     effectv1.Effect_EFFECT_ALLOW,
+				Params:     &runtimev1.RuleTable_RuleRow_Params{},
+			},
+		}))
+		require.Empty(t, principalOnly.Roles(nil, nil))
+	})
+
+	t.Run("synthetic * is filtered alongside resource-policy roles", func(t *testing.T) {
+		mixed := index.New()
+		require.NoError(t, mixed.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			makeRow(namer.ResourcePolicyFQN("doc", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+				r.FromRolePolicy = false
+				r.Resource = "doc"
+				r.Role = "viewer"
+			}),
+			{
+				OriginFqn:  namer.PrincipalPolicyFQN("bob", "default", ""),
+				PolicyKind: policyv1.Kind_KIND_PRINCIPAL,
+				Principal:  "bob",
+				Role:       "*",
+				Version:    "default",
+				Resource:   "doc",
+				ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "read"},
+				Effect:     effectv1.Effect_EFFECT_ALLOW,
+				Params:     &runtimev1.RuleTable_RuleRow_Params{},
+			},
+		}))
+		require.ElementsMatch(t, []string{"viewer"}, mixed.Roles(nil, nil))
+	})
+}
+
+func TestActionsForResource(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow(namer.ResourcePolicyFQN("document", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = ""
+			r.Resource = "document"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "view"}
+		}),
+		makeRow(namer.ResourcePolicyFQN("document", "default", "acme"), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = "acme"
+			r.Resource = "document"
+			r.Role = "editor"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "edit"}
+		}),
+		makeRow(namer.ResourcePolicyFQN("document", "v2", "acme"), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = "acme"
+			r.Version = "v2"
+			r.Resource = "document"
+			r.Role = "editor"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "archive"}
+		}),
+		makeRow(namer.RolePolicyFQN("acme::auditor", "default", "acme"), func(r *runtimev1.RuleTable_RuleRow) {
+			r.Scope = "acme"
+			r.Resource = "document"
+			r.Role = "acme::auditor"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+				AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+					Actions: map[string]*emptypb.Empty{"approve": {}, "reject": {}},
+				},
+			}
+		}),
+		makeRow(namer.RolePolicyFQN("widget_admin", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.Scope = ""
+			r.Resource = "widget"
+			r.Role = "widget_admin"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_AllowActions_{
+				AllowActions: &runtimev1.RuleTable_RuleRow_AllowActions{
+					Actions: map[string]*emptypb.Empty{"configure": {}, "decommission": {}},
+				},
+			}
+		}),
+		makeRow(namer.ResourcePolicyFQN("image", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = ""
+			r.Resource = "image"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "render"}
+		}),
+		makeRow(namer.ResourcePolicyFQN("report:*", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = ""
+			r.Resource = "report:*"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "download"}
+		}),
+		{
+			OriginFqn:  namer.PrincipalPolicyFQN("alice", "default", "acme"),
+			PolicyKind: policyv1.Kind_KIND_PRINCIPAL,
+			Principal:  "alice",
+			Role:       "*",
+			Scope:      "acme",
+			Version:    "default",
+			Resource:   "document",
+			ActionSet:  &runtimev1.RuleTable_RuleRow_Action{Action: "principal_only"},
+			Effect:     effectv1.Effect_EFFECT_ALLOW,
+			Params:     &runtimev1.RuleTable_RuleRow_Params{},
+		},
+	}))
+
+	t.Run("returns resource-policy and role-policy actions", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"view", "edit", "archive", "approve", "reject"},
+			impl.ActionsForResource("document", nil, nil),
+		)
+	})
+
+	t.Run("scope-bounded excludes other scopes", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"view"}, impl.ActionsForResource("document", nil, []string{""}))
+	})
+
+	t.Run("scope-bounded includes role-policy AllowActions", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"edit", "approve", "reject"},
+			impl.ActionsForResource("document", []string{"default"}, []string{"acme"}),
+		)
+	})
+
+	t.Run("version filter excludes other-version role-policy AllowActions", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"archive"},
+			impl.ActionsForResource("document", []string{"v2"}, []string{"acme"}),
+		)
+	})
+
+	t.Run("multi-version unions actions", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"edit", "archive", "approve", "reject"},
+			impl.ActionsForResource("document", []string{"default", "v2"}, []string{"acme"}),
+		)
+	})
+
+	t.Run("different resource returns its own actions only", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"render"}, impl.ActionsForResource("image", nil, nil))
+	})
+
+	t.Run("literal resource matches glob-pattern binding", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"download"}, impl.ActionsForResource("report:weekly", nil, nil))
+	})
+
+	t.Run("glob-pattern resource value matches its own binding", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"download"}, impl.ActionsForResource("report:*", nil, nil))
+	})
+
+	t.Run("resource reached only via role-policy AllowActions", func(t *testing.T) {
+		require.ElementsMatch(t,
+			[]string{"configure", "decommission"},
+			impl.ActionsForResource("widget", nil, nil),
+		)
+	})
+
+	t.Run("unknown resource returns nothing", func(t *testing.T) {
+		require.Empty(t, impl.ActionsForResource("nope", nil, nil))
+	})
+
+	t.Run("unknown version on known resource returns nothing", func(t *testing.T) {
+		require.Empty(t, impl.ActionsForResource("document", []string{"vNope"}, nil))
+	})
+
+	t.Run("empty resource returns nothing", func(t *testing.T) {
+		require.Empty(t, impl.ActionsForResource("", nil, nil))
+	})
+
+	t.Run("principal-policy actions are excluded", func(t *testing.T) {
+		actions := impl.ActionsForResource("document", []string{"default"}, []string{"acme"})
+		require.NotContains(t, actions, "principal_only")
+	})
+}
+
+func TestActionsForResourceGlobAcrossVersions(t *testing.T) {
+	impl := index.New()
+	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+		makeRow(namer.ResourcePolicyFQN("report:*", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = ""
+			r.Resource = "report:*"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "download"}
+		}),
+		makeRow(namer.ResourcePolicyFQN("report:*", "v2", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.FromRolePolicy = false
+			r.Scope = ""
+			r.Version = "v2"
+			r.Resource = "report:*"
+			r.Role = "viewer"
+			r.ActionSet = &runtimev1.RuleTable_RuleRow_Action{Action: "archive"}
+		}),
+	}))
+
+	t.Run("default-version filter picks default-version glob action", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"download"}, impl.ActionsForResource("report:weekly", []string{"default"}, nil))
+	})
+
+	t.Run("v2 filter picks v2 glob action", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"archive"}, impl.ActionsForResource("report:weekly", []string{"v2"}, nil))
+	})
+}
+
 func TestQueryMulti(t *testing.T) {
 	impl := index.New()
 	require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
@@ -398,6 +703,11 @@ func TestQueryMulti(t *testing.T) {
 
 	t.Run("no match returns nil", func(t *testing.T) {
 		res := impl.QueryMulti([]string{"v99"}, nil, nil, nil, nil, false)
+		require.Nil(t, res)
+	})
+
+	t.Run("unknown scope short-circuits", func(t *testing.T) {
+		res := impl.QueryMulti(nil, nil, []string{"never_indexed"}, nil, nil, false)
 		require.Nil(t, res)
 	})
 }

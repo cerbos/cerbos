@@ -578,19 +578,12 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 	arena := newBitmapArena()
 	defer arena.release()
 
-	var versionBM, scopeBM, resourceBM, roleBM *Bitmap
-	if len(versions) > 0 {
-		versionBM = bi.version.Query(arena, versions)
-		if versionBM.IsEmpty() {
-			return nil
-		}
+	versionBM, scopeBM, ok := bi.versionScopeFilters(arena, versions, scopes)
+	if !ok {
+		return nil
 	}
-	if len(scopes) > 0 {
-		scopeBM = bi.scope.Query(arena, scopes)
-		if scopeBM.IsEmpty() {
-			return nil
-		}
-	}
+
+	var resourceBM, roleBM *Bitmap
 	if len(roles) > 0 {
 		roleBM = bi.role.QueryMultiple(arena, roles)
 		if roleBM.IsEmpty() {
@@ -802,14 +795,111 @@ func (m *Index) GetResources() []string {
 	return m.bi.resource.GetAllKeys()
 }
 
-func (m *Index) ScopedResourceExists(version, resource string, scopes []string) (bool, error) {
+// Roles returns role keys matching the filters. An empty filter means
+// match-all on that dimension. Glob keys (e.g. "manager:*") appear verbatim.
+// Principal-policy rows are excluded.
+func (m *Index) Roles(versions, scopes []string) []string {
+	return m.bi.nonPrincipalDimensionKeys(m.bi.role, versions, scopes)
+}
+
+// Resources returns resource keys matching the filters.
+// Matches `Roles` semantics above.
+func (m *Index) Resources(versions, scopes []string) []string {
+	return m.bi.nonPrincipalDimensionKeys(m.bi.resource, versions, scopes)
+}
+
+// ActionsForResource returns distinct actions on resource, filtered by
+// versions and scopes. Empty filter = match-all; empty resource = nil.
+//
+// resource is matched as at evaluation: literal lookup plus any matching
+// glob patterns. Principal-policy rows are excluded.
+func (m *Index) ActionsForResource(resource string, versions, scopes []string) []string {
+	if resource == "" {
+		return nil
+	}
+
+	bi := m.bi
+	arena := newBitmapArena()
+	defer arena.release()
+
+	versionBM, scopeBM, ok := bi.versionScopeFilters(arena, versions, scopes)
+	if !ok {
+		return nil
+	}
+
+	resBM := bi.resource.Query(arena, resource)
+	return collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
+}
+
+// nonPrincipalDimensionKeys returns keys of gd matching the filters,
+// excluding principal-policy bindings. Returns nil if no KIND_RESOURCE
+// bindings are indexed.
+func (bi *bitmapIndex) nonPrincipalDimensionKeys(gd *globDimension, versions, scopes []string) []string {
+	resourceKindBM, ok := bi.policyKind.Get(policyv1.Kind_KIND_RESOURCE)
+	if !ok {
+		return nil
+	}
+
+	arena := newBitmapArena()
+	defer arena.release()
+
+	versionBM, scopeBM, ok := bi.versionScopeFilters(arena, versions, scopes)
+	if !ok {
+		return nil
+	}
+
+	filters := make([]*Bitmap, 0, 3) //nolint:mnd
+	filters = append(filters, resourceKindBM)
+	if versionBM != nil {
+		filters = append(filters, versionBM)
+	}
+	if scopeBM != nil {
+		filters = append(filters, scopeBM)
+	}
+
+	filterBM := filters[0]
+	if len(filters) > 1 {
+		filterBM = arena.andInto(filters)
+		if filterBM.IsEmpty() {
+			return nil
+		}
+	}
+
+	var keys []string
+	gd.RangeBitmaps(func(k string, bm *Bitmap) {
+		if intersectionNonEmpty(bm, filterBM) {
+			keys = append(keys, k)
+		}
+	})
+	return keys
+}
+
+// versionScopeFilters builds the filter bitmaps. ok=false means a non-empty
+// input matched nothing. A nil bitmap means "no filter" for that dimension.
+func (bi *bitmapIndex) versionScopeFilters(arena *bitmapArena, versions, scopes []string) (versionBM, scopeBM *Bitmap, ok bool) {
+	if len(versions) > 0 {
+		versionBM = bi.version.Query(arena, versions)
+		if versionBM.IsEmpty() {
+			return nil, nil, false
+		}
+	}
+	if len(scopes) > 0 {
+		scopeBM = bi.scope.Query(arena, scopes)
+		if scopeBM.IsEmpty() {
+			return nil, nil, false
+		}
+	}
+	return versionBM, scopeBM, true
+}
+
+func (m *Index) ScopedResourceExists(version, resource string, scopes []string) bool {
 	if len(scopes) == 0 {
-		return false, nil
+		return false
 	}
 
 	versionBM, ok := m.bi.version.Get(version)
 	if !ok {
-		return false, nil
+		return false
 	}
 
 	arena := newBitmapArena()
@@ -817,30 +907,30 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 
 	scopeBM := m.bi.scope.Query(arena, scopes)
 	if scopeBM.IsEmpty() {
-		return false, nil
+		return false
 	}
 
 	resourceBM := m.bi.resource.Query(arena, resource)
 	if resourceBM.IsEmpty() {
-		return false, nil
+		return false
 	}
 
 	kindBM, ok := m.bi.policyKind.Get(policyv1.Kind_KIND_RESOURCE)
 	if !ok {
-		return false, nil
+		return false
 	}
 
-	return intersectionNonEmpty(versionBM, scopeBM, resourceBM, kindBM), nil
+	return intersectionNonEmpty(versionBM, scopeBM, resourceBM, kindBM)
 }
 
-func (m *Index) ScopedPrincipalExists(version string, scopes []string) (bool, error) {
+func (m *Index) ScopedPrincipalExists(version string, scopes []string) bool {
 	if len(scopes) == 0 {
-		return false, nil
+		return false
 	}
 
 	versionBM, ok := m.bi.version.Get(version)
 	if !ok {
-		return false, nil
+		return false
 	}
 
 	arena := newBitmapArena()
@@ -848,15 +938,15 @@ func (m *Index) ScopedPrincipalExists(version string, scopes []string) (bool, er
 
 	scopeBM := m.bi.scope.Query(arena, scopes)
 	if scopeBM.IsEmpty() {
-		return false, nil
+		return false
 	}
 
 	kindBM, ok := m.bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
 	if !ok {
-		return false, nil
+		return false
 	}
 
-	return intersectionNonEmpty(versionBM, scopeBM, kindBM), nil
+	return intersectionNonEmpty(versionBM, scopeBM, kindBM)
 }
 
 func (m *Index) Reset() {
