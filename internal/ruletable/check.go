@@ -159,14 +159,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	}
 
 	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
-	scopedPrincipalExists, err := rt.idx.ScopedPrincipalExists(principalVersion, principalScopes)
-	if err != nil {
-		return nil, err
-	}
-	scopedResourceExists, err := rt.idx.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
-	if err != nil {
-		return nil, err
-	}
+	scopedPrincipalExists := rt.idx.ScopedPrincipalExists(principalVersion, principalScopes)
+	scopedResourceExists := rt.idx.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
 
 	if !scopedPrincipalExists && !scopedResourceExists {
 		return result, nil
