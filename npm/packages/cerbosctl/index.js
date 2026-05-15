@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+const { execFileSync } = require("child_process");
 
 const { platform: os, arch } = process;
 const currentPlatform = `${os}-${arch}`;
@@ -31,4 +31,8 @@ Make sure optional dependencies are installed.`, { cause: error });
   }
 })();
 
-require("child_process").execFileSync(binaryPath, process.argv.slice(2), { stdio: "inherit" });
+function run(...args) {
+  execFileSync(binaryPath, args, { stdio: "inherit" });
+}
+
+module.exports = { binaryPath, run };

@@ -14,9 +14,13 @@
   "author": "Cerbos <help@cerbos.dev> (https://cerbos.dev)",
   "license": "Apache-2.0",
   "bin": {
-    "cerbosctl": "index.js"
+    "cerbosctl": "bin.js"
   },
+  "main": "index.js",
+  "types": "index.d.ts",
   "files": [
+    "bin.js",
+    "index.d.ts",
     "index.js"
   ],
   "keywords": [
