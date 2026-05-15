@@ -97,24 +97,24 @@ All variables have sensible defaults and can be overridden:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CERBOS_VERSION` | Cerbos release version to download | `latest` |
-| `CERBOS_BINARY_PATH` | Path to a locally built Cerbos binary; when set, skips downloading a release | *(unset)* |
-| `PROTOSET` | Path to a compiled proto descriptor set; uploaded to client VM and passed to ghz to bypass gRPC server reflection. Generate with `just generate-protoset` | *(unset)* |
-| `STORE` | Storage backend (`disk`) | `disk` |
 | `AUDIT_ENABLED` | Enable audit logging | `false` |
+| `CERBOS_BINARY_PATH` | Path to a locally built Cerbos binary; when set, skips downloading a release | *(unset)* |
+| `CERBOS_VERSION` | Cerbos release version to download | `latest` |
+| `PROTOSET` | Path to a compiled proto descriptor set; uploaded to client VM and passed to ghz to bypass gRPC server reflection. Generate with `just generate-protoset` | *(unset)* |
 | `SCHEMA_ENFORCEMENT` | Schema enforcement level | `none` |
+| `STORE` | Storage backend (`disk`) | `disk` |
 
 ### Test Parameters
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `RPS` | Target requests/sec for sustained-rate test | `500` |
-| `DURATION_SECS` | Duration of sustained-rate test | `120` |
-| `ITERATIONS` | Total requests for throughput test | `1000000` |
 | `CONCURRENCY` | Number of concurrent ghz workers | `100` |
 | `CONNECTIONS` | Number of gRPC connections | `5` |
-| `REQ_KIND` | Request template prefix — files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types | `cr` |
+| `DURATION_SECS` | Duration of sustained-rate test | `120` |
+| `ITERATIONS` | Total requests for throughput test | `1000000` |
 | `NUM_POLICIES` | Number of policy sets (for result file naming) | `1000` |
+| `REQ_KIND` | Request template prefix. Files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types | `cr` |
+| `RPS` | Target requests/sec for sustained-rate test | `500` |
 
 ## Verification
 

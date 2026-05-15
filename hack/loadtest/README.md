@@ -64,7 +64,7 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 | `NUM_POLICIES` | Number of policy sets to generate | `1000` |
 | `PASSWORD` | Cerbos Admin API password | `cerbosAdmin` |
 | `POLICY_SET` | Policy template set to use (see below) | `classic` |
-| `REQ_KIND` | Request template prefix — files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types, or `cr_req01` for a single type | `cr` |
+| `REQ_KIND` | Request template prefix. Files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types, or `cr_req01` for a single type | `cr` |
 | `RPS` | Target requests per second for the sustained-rate test | `500` |
 | `SCHEMA_ENFORCEMENT` | Schema enforcement level | `none` |
 | `SERVER` | Cerbos gRPC server address | `localhost:3593` |
