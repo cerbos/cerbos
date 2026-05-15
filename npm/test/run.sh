@@ -90,10 +90,7 @@ execute_binary_directly() {
   fi
 }
 
-execute_binary_via_package_manager() {
-  local binary
-  binary="$1"
-
+execute_via_package_manager() {
   local command
 
   case "${test_case}" in
@@ -114,20 +111,32 @@ execute_binary_via_package_manager() {
 execute_binary() {
   local binary
   binary="$1"
+  shift
 
   log_subheading "Executing ${binary}"
 
-  local expected
-  execute_binary_directly "$@"
+  local expected actual
+  execute_binary_directly "${binary}" "$@"
   expected="${expected_output[$binary]}"
+  actual=$(execute_via_package_manager "${binary}" "$@")
+  compare "${expected}" "${actual}" "Executing via package manager"
 
-  local actual
-  actual=$(execute_binary_via_package_manager "$@")
+  local path
+  path=$(execute_via_package_manager node --print "require('${binary}').binaryPath")
+  actual=$("${path}" "$@")
+  compare "${expected}" "${actual}" "Executing via exported path"
+}
+
+compare() {
+  local expected actual message
+  expected="$1"
+  actual="$2"
+  message="$3"
 
   if diff <(printf "%s\n" "${expected}") <(printf "%s\n" "${actual}"); then
-    echo "OK"
+    printf "%s: OK\n" "${message}"
   else
-    log_error "Unexpected output"
+    log_error "${message}: unexpected output"
     exit 1
   fi
 }
