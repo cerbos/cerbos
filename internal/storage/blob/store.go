@@ -180,7 +180,7 @@ func (s symlinkerFunc) Symlink(destination, source string) error {
 }
 
 type Store struct {
-	*storage.SubscriptionManager
+	subs        *storage.SubscriptionManager
 	log         *zap.SugaredLogger
 	conf        *Conf
 	source      *auditv1.PolicySource
@@ -193,7 +193,11 @@ type Store struct {
 }
 
 func (s *Store) Subscribe(sub storage.Subscriber) {
-	s.SubscriptionManager.Subscribe(sub)
+	s.subs.Subscribe(sub)
+}
+
+func (s *Store) Unsubscribe(sub storage.Subscriber) {
+	s.subs.Unsubscribe(sub)
 }
 
 func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, symlink symlinker, source *auditv1.PolicySource) (*Store, error) {
@@ -207,7 +211,7 @@ func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, s
 		workFS:              workFS,
 		cloner:              cloner,
 		symlink:             symlink,
-		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		subs:                storage.NewSubscriptionManager(ctx),
 		source:              source,
 	}
 
@@ -308,7 +312,7 @@ func (s *Store) updateIndex(ctx context.Context) (err error) {
 	// we need to emit all events regardless of validity as some subscribers (such as the rule table)
 	// need to be kept in sync.
 	defer func() {
-		s.NotifySubscribers(evts...)
+		s.subs.NotifySubscribers(evts...)
 	}()
 
 	idx, err := s.buildIndexFromWorkDir(ctx, dir, dirName, ts)
@@ -568,7 +572,7 @@ func (s *Store) Reload(ctx context.Context) error {
 	oldDirName := s.currDirName
 	s.currDirName = dirName
 	s.idx = idx
-	s.NotifySubscribers(storage.NewReloadEvent())
+	s.subs.NotifySubscribers(storage.NewReloadEvent())
 
 	if err := s.cloner.Clean(); err != nil {
 		s.log.Warnw("Failed to clean up the cache", "error", err)
