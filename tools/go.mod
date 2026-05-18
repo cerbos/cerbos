@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	connectrpc.com/connect v1.19.2
-	github.com/cerbos/actions v0.0.0-20260511114635-148106e618c6
+	github.com/cerbos/actions v0.0.0-20260518062417-3a471f833bf3
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260504180029-72b95654c2af
@@ -108,9 +108,9 @@ require (
 	golang.org/x/telemetry v0.0.0-20260508192327-42602be52be6 // indirect
 	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260504160031-60b97b32f348 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
-	google.golang.org/grpc v1.81.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260511170946-3700d4141b60 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260511170946-3700d4141b60 // indirect
+	google.golang.org/grpc v1.81.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	helm.sh/helm/v3 v3.20.2 // indirect
 	nikand.dev/go/cbor v0.0.0-20250209114510-2072ad4734c5 // indirect
