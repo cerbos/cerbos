@@ -16,7 +16,7 @@ require (
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools v0.45.0
 	golang.org/x/vuln v1.3.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.2
 	google.golang.org/protobuf v1.36.11
 	gotest.tools/gotestsum v1.13.0
 	nikand.dev/go/cover v0.3.1-0.20250213020420-581f8c29634b
