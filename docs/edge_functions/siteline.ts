@@ -1,10 +1,14 @@
-
+import { Config } from "@netlify/edge-functions"
+export const config: Config = {
+    path: "/*",
+    onError: "bypass"
+}
 
 type NetlifyContext = {
     next: () => Promise<Response>;
 };
 
-const SITELINE_WEBSITE_KEY = process.env.SITELINE_WEBSITE_KEY;
+const SITELINE_WEBSITE_KEY = Netlify.env.get("SITELINE_WEBSITE_KEY");
 const SITELINE_DEBUG = false;
 const SITELINE_ENDPOINT = 'https://api.siteline.ai/v1/intake/pageview'
 
