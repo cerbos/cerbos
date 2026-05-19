@@ -1,4 +1,8 @@
-
+import { Config } from "@netlify/edge-functions"
+export const config: Config = {
+    path: "/*",
+    onError: "bypass"
+}
 
 type NetlifyContext = {
     next: () => Promise<Response>;
