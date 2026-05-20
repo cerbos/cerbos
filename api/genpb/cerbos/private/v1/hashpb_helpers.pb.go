@@ -908,6 +908,10 @@ func cerbos_engine_v1_OutputEntry_hashpb_sum(m *v12.OutputEntry, hasher hash.Has
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetAction()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAction()), len(m.GetAction())))
 	}
+	if _, ok := ignore["cerbos.engine.v1.OutputEntry.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetError()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetError()), len(m.GetError())))
+	}
 }
 
 func cerbos_engine_v1_PlanResourcesFilter_Expression_Operand_hashpb_sum(m *v12.PlanResourcesFilter_Expression_Operand, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
