@@ -1164,6 +1164,18 @@ func cerbos_policy_v1_TestResults_Failure_hashpb_sum(m *TestResults_Failure, has
 	}
 }
 
+func cerbos_policy_v1_TestResults_OutputFailure_EvaluationError_hashpb_sum(m *TestResults_OutputFailure_EvaluationError, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.EvaluationError.expected"]; !ok {
+		if m.GetExpected() != nil {
+			google_protobuf_Value_hashpb_sum(m.GetExpected(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.EvaluationError.error"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetError()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetError()), len(m.GetError())))
+	}
+}
+
 func cerbos_policy_v1_TestResults_OutputFailure_MismatchedValue_hashpb_sum(m *TestResults_OutputFailure_MismatchedValue, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected"]; !ok {
 		if m.GetExpected() != nil {
@@ -1200,6 +1212,10 @@ func cerbos_policy_v1_TestResults_OutputFailure_hashpb_sum(m *TestResults_Output
 			case *TestResults_OutputFailure_Missing:
 				if t.Missing != nil {
 					cerbos_policy_v1_TestResults_OutputFailure_MissingValue_hashpb_sum(t.Missing, hasher, ignore, b)
+				}
+			case *TestResults_OutputFailure_Errored:
+				if t.Errored != nil {
+					cerbos_policy_v1_TestResults_OutputFailure_EvaluationError_hashpb_sum(t.Errored, hasher, ignore, b)
 				}
 			}
 		}

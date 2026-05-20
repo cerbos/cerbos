@@ -67,6 +67,7 @@ tests:
         - view:public
         - approve
         - create
+        - error
     expected:
       - principal: john
         resource: john_equipment_request
@@ -74,6 +75,7 @@ tests:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
           create: EFFECT_ALLOW
+          error: EFFECT_ALLOW
         outputs:
           - action: view:public
             expected:
@@ -95,12 +97,18 @@ tests:
               - src: "resource.equipment_request.vdefault/acme#rule-001"
                 val: "create_allowed:john"
 
+          - action: error
+            expected:
+              - src: "resource.equipment_request.vdefault#output-error"
+                val: "infinity"
+
       - principal: bev
         resource: john_equipment_request
         actions:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
           create: EFFECT_ALLOW
+          error: EFFECT_ALLOW
         outputs:
           - action: view:public
             expected:
@@ -128,6 +136,7 @@ tests:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
           create: EFFECT_ALLOW
+          error: EFFECT_ALLOW
         outputs:
           - action: create
             expected:
@@ -140,6 +149,7 @@ tests:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
           create: EFFECT_ALLOW
+          error: EFFECT_ALLOW
 
       - principal: bev
         resource: john_pending_equipment_request
@@ -147,6 +157,7 @@ tests:
           view:public: EFFECT_ALLOW
           approve: EFFECT_ALLOW
           create: EFFECT_ALLOW
+          error: EFFECT_ALLOW
         outputs:
           - action: view:public
             expected:
@@ -169,6 +180,7 @@ tests:
           view:public: EFFECT_ALLOW
           approve: EFFECT_DENY
           create: EFFECT_ALLOW
+          error: EFFECT_ALLOW
         outputs:
           - action: create
             expected:

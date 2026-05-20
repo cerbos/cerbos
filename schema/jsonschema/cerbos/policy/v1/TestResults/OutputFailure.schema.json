@@ -2,6 +2,18 @@
   "$id": "https://api.cerbos.dev/cerbos/policy/v1/TestResults/OutputFailure.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.policy.v1.TestResults.OutputFailure.EvaluationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "expected": {
+          "$ref": "#/definitions/google.protobuf.Value"
+        }
+      }
+    },
     "cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue": {
       "type": "object",
       "additionalProperties": false,
@@ -31,6 +43,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "errored": {
+      "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure.EvaluationError"
+    },
     "mismatched": {
       "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue"
     },
