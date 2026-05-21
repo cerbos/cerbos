@@ -302,13 +302,13 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		}
 		return results
 	}
-	actualOutputs := make(map[string]*structpb.Value, len(actual[0].Outputs))
+	actualOutputs := make(map[string]*enginev1.OutputEntry, len(actual[0].Outputs))
 	for _, action := range actions {
 		clear(actualOutputs)
 		var outputs []*enginev1.OutputEntry
 		for _, output := range actual[0].Outputs {
 			if output.Action == action {
-				actualOutputs[output.Src] = output.Val
+				actualOutputs[output.Src] = output
 				outputs = append(outputs, output)
 			}
 		}
@@ -342,7 +342,7 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 		if expectedOutputs, ok := test.ExpectedOutputs[action]; ok {
 			var failures []*policyv1.TestResults_OutputFailure
 			for wantKey, wantValue := range expectedOutputs.Entries {
-				haveValue, ok := actualOutputs[wantKey]
+				actualOutput, ok := actualOutputs[wantKey]
 				if !ok {
 					failures = append(failures, &policyv1.TestResults_OutputFailure{
 						Src: wantKey,
@@ -355,12 +355,25 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 					continue
 				}
 
-				if !cmp.Equal(wantValue, haveValue, protocmp.Transform()) {
+				if actualOutput.Error != "" {
+					failures = append(failures, &policyv1.TestResults_OutputFailure{
+						Src: wantKey,
+						Outcome: &policyv1.TestResults_OutputFailure_Errored{
+							Errored: &policyv1.TestResults_OutputFailure_EvaluationError{
+								Expected: wantValue,
+								Error:    actualOutput.Error,
+							},
+						},
+					})
+					continue
+				}
+
+				if !cmp.Equal(wantValue, actualOutput.Val, protocmp.Transform()) {
 					failures = append(failures, &policyv1.TestResults_OutputFailure{
 						Src: wantKey,
 						Outcome: &policyv1.TestResults_OutputFailure_Mismatched{
 							Mismatched: &policyv1.TestResults_OutputFailure_MismatchedValue{
-								Actual:   haveValue,
+								Actual:   actualOutput.Val,
 								Expected: wantValue,
 							},
 						},

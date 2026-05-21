@@ -248,6 +248,9 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 			for _, output := range failure.Outputs {
 				o.appendNode(outputSrcLevel, colored.TestOutputSrc(output.Src))
 				switch t := output.Outcome.(type) {
+				case *policyv1.TestResults_OutputFailure_Errored:
+					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("EXPECTED:"), singleLineJSON(t.Errored.Expected)))
+					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s %s", colored.TestOutputVal("ACTUAL:"), colored.ErrorMsg("ERROR:"), t.Errored.Error))
 				case *policyv1.TestResults_OutputFailure_Mismatched:
 					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("EXPECTED:"), singleLineJSON(t.Mismatched.Expected)))
 					o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.TestOutputVal("ACTUAL:"), singleLineJSON(t.Mismatched.Actual)))
