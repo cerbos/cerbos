@@ -361,13 +361,12 @@ func runTest(ctx context.Context, eng Checker, test *policyv1.Test, actions []st
 						Outcome: &policyv1.TestResults_OutputFailure_Errored{
 							Errored: &policyv1.TestResults_OutputFailure_EvaluationError{
 								Expected: wantValue,
-								Error: actualOutput.Error,
+								Error:    actualOutput.Error,
 							},
 						},
 					})
 					continue
 				}
-
 
 				if !cmp.Equal(wantValue, actualOutput.Val, protocmp.Transform()) {
 					failures = append(failures, &policyv1.TestResults_OutputFailure{
