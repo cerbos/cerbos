@@ -432,19 +432,31 @@ func compileOutput(modCtx *moduleCtx, path string, out *policyv1.Output) *runtim
 		return nil
 	}
 
-	when := &runtimev1.Output_When{}
-	// TODO: Remove this block when output.expr field no longer exists
 	//nolint:staticcheck
-	if out.Expr != "" {
-		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.Expr, true)
+	if out.Expr == nil && out.When == nil {
+		modCtx.addErrForValueAtProtoPath(path+".output", errOutputWithNoFieldSet, "output must have at least one field set")
+		return nil
 	}
 
-	if out.When != nil && out.When.RuleActivated != "" {
-		when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", out.When.RuleActivated, true)
+	when := &runtimev1.Output_When{}
+	//nolint:staticcheck
+	if out.Expr != nil { // TODO: Remove this block when output.expr field no longer exists
+		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.GetExpr(), true)
 	}
 
-	if out.When != nil && out.When.ConditionNotMet != "" {
-		when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", out.When.ConditionNotMet, true)
+	if out.When != nil {
+		if out.When.RuleActivated == nil && out.When.ConditionNotMet == nil {
+			modCtx.addErrForValueAtProtoPath(path+".output.when", errOutputWithNoFieldSet, "output.when must have at least one field set")
+			return nil
+		}
+
+		if out.When.RuleActivated != nil {
+			when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", out.GetWhen().GetRuleActivated(), true)
+		}
+
+		if out.When.ConditionNotMet != nil {
+			when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", out.GetWhen().GetConditionNotMet(), true)
+		}
 	}
 
 	return &runtimev1.Output{When: when}

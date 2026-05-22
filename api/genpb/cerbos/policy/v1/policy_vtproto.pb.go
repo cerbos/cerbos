@@ -1680,17 +1680,17 @@ func (m *Output_When) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.ConditionNotMet) > 0 {
-		i -= len(m.ConditionNotMet)
-		copy(dAtA[i:], m.ConditionNotMet)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ConditionNotMet)))
+	if m.ConditionNotMet != nil {
+		i -= len(*m.ConditionNotMet)
+		copy(dAtA[i:], *m.ConditionNotMet)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(*m.ConditionNotMet)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.RuleActivated) > 0 {
-		i -= len(m.RuleActivated)
-		copy(dAtA[i:], m.RuleActivated)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.RuleActivated)))
+	if m.RuleActivated != nil {
+		i -= len(*m.RuleActivated)
+		copy(dAtA[i:], *m.RuleActivated)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(*m.RuleActivated)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1737,10 +1737,10 @@ func (m *Output) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Expr) > 0 {
-		i -= len(m.Expr)
-		copy(dAtA[i:], m.Expr)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Expr)))
+	if m.Expr != nil {
+		i -= len(*m.Expr)
+		copy(dAtA[i:], *m.Expr)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(*m.Expr)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -4978,12 +4978,12 @@ func (m *Output_When) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.RuleActivated)
-	if l > 0 {
+	if m.RuleActivated != nil {
+		l = len(*m.RuleActivated)
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.ConditionNotMet)
-	if l > 0 {
+	if m.ConditionNotMet != nil {
+		l = len(*m.ConditionNotMet)
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -4996,8 +4996,8 @@ func (m *Output) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Expr)
-	if l > 0 {
+	if m.Expr != nil {
+		l = len(*m.Expr)
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	if m.When != nil {
@@ -10579,7 +10579,8 @@ func (m *Output_When) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RuleActivated = string(dAtA[iNdEx:postIndex])
+			s := string(dAtA[iNdEx:postIndex])
+			m.RuleActivated = &s
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -10611,7 +10612,8 @@ func (m *Output_When) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ConditionNotMet = string(dAtA[iNdEx:postIndex])
+			s := string(dAtA[iNdEx:postIndex])
+			m.ConditionNotMet = &s
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -10694,7 +10696,8 @@ func (m *Output) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Expr = string(dAtA[iNdEx:postIndex])
+			s := string(dAtA[iNdEx:postIndex])
+			m.Expr = &s
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

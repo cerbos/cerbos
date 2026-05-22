@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+mainDef: resource_policies/invalid_output.yaml
+wantErrors:
+  - file: resource_policies/invalid_output.yaml
+    error: output with no field set
+    description: output must have at least one field set
+    position:
+      line: 12
+      column: 7
+      path: |-
+        $.resourcePolicy.rules[0].output
+
+  - file: resource_policies/invalid_output.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression ``: [Syntax error: mismatched input '<EOF>' expecting {'[', '{', '(', '.', '-', '!', 'true', 'false', 'null', NUM_FLOAT, NUM_INT, NUM_UINT, STRING, BYTES, IDENTIFIER}]
+    position:
+      line: 20
+      column: 9
+      path: |-
+        $.resourcePolicy.rules[1].output.expr
+
+  - file: resource_policies/invalid_output.yaml
+    error: output with no field set
+    description: output.when must have at least one field set
+    position:
+      line: 28
+      column: 9
+      path: |-
+        $.resourcePolicy.rules[2].output.when
+
+  - file: resource_policies/invalid_output.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression ``: [Syntax error: mismatched input '<EOF>' expecting {'[', '{', '(', '.', '-', '!', 'true', 'false', 'null', NUM_FLOAT, NUM_INT, NUM_UINT, STRING, BYTES, IDENTIFIER}]
+    position:
+      line: 37
+      column: 11
+      path: |-
+        $.resourcePolicy.rules[3].output.when.ruleActivated
+
+  - file: resource_policies/invalid_output.yaml
+    error: invalid expression
+    description: |-
+      Invalid expression ``: [Syntax error: mismatched input '<EOF>' expecting {'[', '{', '(', '.', '-', '!', 'true', 'false', 'null', NUM_FLOAT, NUM_INT, NUM_UINT, STRING, BYTES, IDENTIFIER}]
+    position:
+      line: 46
+      column: 11
+      path: |-
+        $.resourcePolicy.rules[4].output.when.conditionNotMet
+

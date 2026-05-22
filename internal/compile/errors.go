@@ -30,6 +30,7 @@ var (
 	errInvalidSchema          = errors.New("invalid schema")
 	errMissingDefinition      = errors.New("missing policy definition")
 	errScriptsUnsupported     = errors.New("scripts in conditions are no longer supported")
+	errOutputWithNoFieldSet   = errors.New("output with no field set")
 	errUndefinedConstant      = errors.New("undefined constant")
 	errUndefinedVariable      = errors.New("undefined variable")
 	errUnexpectedErr          = errors.New("unexpected error")
