@@ -26,16 +26,6 @@ resourcePolicy:
       roles:
         - user
       output:
-        expr: |-
-          {"principal": P.id}
-        when: {}
-
-    - actions:
-        - something
-      effect: EFFECT_ALLOW
-      roles:
-        - user
-      output:
         when: {}
 
     - actions:

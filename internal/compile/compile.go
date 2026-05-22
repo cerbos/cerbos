@@ -432,31 +432,26 @@ func compileOutput(modCtx *moduleCtx, path string, out *policyv1.Output) *runtim
 		return nil
 	}
 
-	//nolint:staticcheck
-	if out.GetExpr() == "" && out.When.GetRuleActivated() == "" && out.When.GetConditionNotMet() == "" {
-		modCtx.addErrForValueAtProtoPath(path+".output", errOutputWithNoFieldSet, "output must have at least one field set")
-		return nil
-	}
-
 	when := &runtimev1.Output_When{}
+	empty := true
 	//nolint:staticcheck
 	if out.Expr != "" {
-		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.GetExpr(), true)
+		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.Expr, true)
+		empty = false
 	}
 
-	if out.When != nil {
-		if out.When.RuleActivated == "" && out.When.ConditionNotMet == "" {
-			modCtx.addErrForValueAtProtoPath(path+".output.when", errOutputWithNoFieldSet, "output.when must have at least one field set")
-			return nil
-		}
+	if expr := out.When.GetRuleActivated(); expr != "" {
+		when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", expr, true)
+		empty = false
+	}
 
-		if out.When.RuleActivated != "" {
-			when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", out.GetWhen().GetRuleActivated(), true)
-		}
+	if expr := out.When.GetConditionNotMet(); expr != "" {
+		when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", expr, true)
+		empty = false
+	}
 
-		if out.When.ConditionNotMet != "" {
-			when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", out.GetWhen().GetConditionNotMet(), true)
-		}
+	if empty {
+		modCtx.addErrForValueAtProtoPath(path+".output", errEmptyOutput, "output must have at least one expression")
 	}
 
 	return &runtimev1.Output{When: when}
