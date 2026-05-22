@@ -24,6 +24,7 @@ var (
 	errAmbiguousDerivedRole   = errors.New("ambiguous derived role")
 	errConstantRedefined      = errors.New("constant redefined")
 	errCyclicalVariables      = errors.New("cyclical variable definitions")
+	errEmptyOutput            = errors.New("empty output")
 	errImportNotFound         = errors.New("import not found")
 	errInvalidCompilationUnit = errors.New("invalid compilation unit")
 	errInvalidResourceRule    = errors.New("invalid resource rule")

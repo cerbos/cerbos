@@ -433,18 +433,25 @@ func compileOutput(modCtx *moduleCtx, path string, out *policyv1.Output) *runtim
 	}
 
 	when := &runtimev1.Output_When{}
-	// TODO: Remove this block when output.expr field no longer exists
+	empty := true
 	//nolint:staticcheck
 	if out.Expr != "" {
 		when.RuleActivated = compileCELExpr(modCtx, path+".output.expr", out.Expr, true)
+		empty = false
 	}
 
-	if out.When != nil && out.When.RuleActivated != "" {
-		when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", out.When.RuleActivated, true)
+	if expr := out.When.GetRuleActivated(); expr != "" {
+		when.RuleActivated = compileCELExpr(modCtx, path+".output.when.rule_activated", expr, true)
+		empty = false
 	}
 
-	if out.When != nil && out.When.ConditionNotMet != "" {
-		when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", out.When.ConditionNotMet, true)
+	if expr := out.When.GetConditionNotMet(); expr != "" {
+		when.ConditionNotMet = compileCELExpr(modCtx, path+".output.when.condition_not_met", expr, true)
+		empty = false
+	}
+
+	if empty {
+		modCtx.addErrForValueAtProtoPath(path+".output", errEmptyOutput, "output must have at least one expression")
 	}
 
 	return &runtimev1.Output{When: when}

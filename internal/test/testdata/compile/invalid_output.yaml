@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=../.jsonschema/CompileTestCase.schema.json
+---
+mainDef: resource_policies/invalid_output.yaml
+wantErrors:
+  - file: resource_policies/invalid_output.yaml
+    error: empty output
+    description: output must have at least one expression
+    position:
+      line: 12
+      column: 7
+      path: |-
+        $.resourcePolicy.rules[0].output
+
+  - file: resource_policies/invalid_output.yaml
+    error: empty output
+    description: output must have at least one expression
+    position:
+      line: 19
+      column: 7
+      path: |-
+        $.resourcePolicy.rules[1].output
+
+  - file: resource_policies/invalid_output.yaml
+    error: empty output
+    description: output must have at least one expression
+    position:
+      line: 27
+      column: 7
+      path: |-
+        $.resourcePolicy.rules[2].output
+
+  - file: resource_policies/invalid_output.yaml
+    error: empty output
+    description: output must have at least one expression
+    position:
+      line: 35
+      column: 7
+      path: |-
+        $.resourcePolicy.rules[3].output
+
+  - file: resource_policies/invalid_output.yaml
+    error: empty output
+    description: output must have at least one expression
+    position:
+      line: 44
+      column: 7
+      path: |-
+        $.resourcePolicy.rules[4].output
