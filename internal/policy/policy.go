@@ -782,8 +782,15 @@ func ListPolicySetVariables(ps *runtimev1.RunnablePolicySet) []*responsev1.Inspe
 
 // Wrap augments a policy with useful information about itself.
 func Wrap(p *policyv1.Policy) Wrapper {
-	w := Wrapper{Policy: p}
+	w := Wrapper{}
+	w.Init(p)
+	return w
+}
 
+// Init populates the wrapper for p in place, allowing callers to reuse a
+// preallocated Wrapper instead of allocating a new one per policy.
+func (w *Wrapper) Init(p *policyv1.Policy) {
+	w.Policy = p
 	switch pt := p.PolicyType.(type) {
 	case *policyv1.Policy_ResourcePolicy:
 		w.Kind = ResourceKind
@@ -835,8 +842,6 @@ func Wrap(p *policyv1.Policy) Wrapper {
 	default:
 		panic(fmt.Errorf("unknown policy type %T", pt))
 	}
-
-	return w
 }
 
 func (w Wrapper) Dependencies() []namer.ModuleID {

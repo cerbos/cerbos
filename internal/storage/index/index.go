@@ -535,6 +535,7 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 	idx.mu.RLock()
 	defer idx.mu.RUnlock()
 
+	pool := make([]policy.Wrapper, len(file))
 	policies := make([]*policy.Wrapper, len(file))
 	for i, f := range file {
 		p, _, err := idx.loadPolicy(idx.fileToModID[f])
@@ -542,8 +543,8 @@ func (idx *index) LoadPolicy(_ context.Context, file ...string) ([]*policy.Wrapp
 			return nil, fmt.Errorf("failed to load policy file with file path %s: %w", f, err)
 		}
 
-		pw := policy.Wrap(p)
-		policies[i] = &pw
+		pool[i].Init(p)
+		policies[i] = &pool[i]
 	}
 
 	return policies, nil
