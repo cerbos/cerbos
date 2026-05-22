@@ -323,11 +323,11 @@ message Match {
 
 message Output {
   message When {
-    optional string rule_activated = 1;
-    optional string condition_not_met = 2;
+    string rule_activated = 1;
+    string condition_not_met = 2;
   }
 
-  optional string expr = 1 [deprecated = true];
+  string expr = 1 [deprecated = true];
   When when = 2;
 }
 

@@ -1601,7 +1601,7 @@ func (*Match_Expr) isMatch_Op() {}
 type Output struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
-	Expr          *string      `protobuf:"bytes,1,opt,name=expr,proto3,oneof" json:"expr,omitempty"`
+	Expr          string       `protobuf:"bytes,1,opt,name=expr,proto3" json:"expr,omitempty"`
 	When          *Output_When `protobuf:"bytes,2,opt,name=when,proto3" json:"when,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1639,8 +1639,8 @@ func (*Output) Descriptor() ([]byte, []int) {
 
 // Deprecated: Marked as deprecated in cerbos/policy/v1/policy.proto.
 func (x *Output) GetExpr() string {
-	if x != nil && x.Expr != nil {
-		return *x.Expr
+	if x != nil {
+		return x.Expr
 	}
 	return ""
 }
@@ -2350,8 +2350,8 @@ func (x *Match_ExprList) GetOf() []*Match {
 
 type Output_When struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	RuleActivated   *string                `protobuf:"bytes,1,opt,name=rule_activated,json=ruleActivated,proto3,oneof" json:"rule_activated,omitempty"`
-	ConditionNotMet *string                `protobuf:"bytes,2,opt,name=condition_not_met,json=conditionNotMet,proto3,oneof" json:"condition_not_met,omitempty"`
+	RuleActivated   string                 `protobuf:"bytes,1,opt,name=rule_activated,json=ruleActivated,proto3" json:"rule_activated,omitempty"`
+	ConditionNotMet string                 `protobuf:"bytes,2,opt,name=condition_not_met,json=conditionNotMet,proto3" json:"condition_not_met,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -2387,15 +2387,15 @@ func (*Output_When) Descriptor() ([]byte, []int) {
 }
 
 func (x *Output_When) GetRuleActivated() string {
-	if x != nil && x.RuleActivated != nil {
-		return *x.RuleActivated
+	if x != nil {
+		return x.RuleActivated
 	}
 	return ""
 }
 
 func (x *Output_When) GetConditionNotMet() string {
-	if x != nil && x.ConditionNotMet != nil {
-		return *x.ConditionNotMet
+	if x != nil {
+		return x.ConditionNotMet
 	}
 	return ""
 }
@@ -4174,16 +4174,13 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x04expr\x18\x04 \x01(\tH\x00R\x04expr\x1a@\n" +
 	"\bExprList\x124\n" +
 	"\x02of\x18\x01 \x03(\v2\x17.cerbos.policy.v1.MatchB\v\xbaH\b\xc8\x01\x01\x92\x01\x02\b\x01R\x02ofB\v\n" +
-	"\x02op\x12\x05\xbaH\x02\b\x01\"\xf0\x01\n" +
-	"\x06Output\x12\x1b\n" +
-	"\x04expr\x18\x01 \x01(\tB\x02\x18\x01H\x00R\x04expr\x88\x01\x01\x121\n" +
-	"\x04when\x18\x02 \x01(\v2\x1d.cerbos.policy.v1.Output.WhenR\x04when\x1a\x8c\x01\n" +
-	"\x04When\x12*\n" +
-	"\x0erule_activated\x18\x01 \x01(\tH\x00R\rruleActivated\x88\x01\x01\x12/\n" +
-	"\x11condition_not_met\x18\x02 \x01(\tH\x01R\x0fconditionNotMet\x88\x01\x01B\x11\n" +
-	"\x0f_rule_activatedB\x14\n" +
-	"\x12_condition_not_metB\a\n" +
-	"\x05_expr\"\xcd\x02\n" +
+	"\x02op\x12\x05\xbaH\x02\b\x01\"\xae\x01\n" +
+	"\x06Output\x12\x16\n" +
+	"\x04expr\x18\x01 \x01(\tB\x02\x18\x01R\x04expr\x121\n" +
+	"\x04when\x18\x02 \x01(\v2\x1d.cerbos.policy.v1.Output.WhenR\x04when\x1aY\n" +
+	"\x04When\x12%\n" +
+	"\x0erule_activated\x18\x01 \x01(\tR\rruleActivated\x12*\n" +
+	"\x11condition_not_met\x18\x02 \x01(\tR\x0fconditionNotMet\"\xcd\x02\n" +
 	"\aSchemas\x12K\n" +
 	"\x10principal_schema\x18\x01 \x01(\v2 .cerbos.policy.v1.Schemas.SchemaR\x0fprincipalSchema\x12I\n" +
 	"\x0fresource_schema\x18\x02 \x01(\v2 .cerbos.policy.v1.Schemas.SchemaR\x0eresourceSchema\x1a;\n" +
@@ -4706,8 +4703,6 @@ func file_cerbos_policy_v1_policy_proto_init() {
 		(*Match_None)(nil),
 		(*Match_Expr)(nil),
 	}
-	file_cerbos_policy_v1_policy_proto_msgTypes[17].OneofWrappers = []any{}
-	file_cerbos_policy_v1_policy_proto_msgTypes[35].OneofWrappers = []any{}
 	file_cerbos_policy_v1_policy_proto_msgTypes[70].OneofWrappers = []any{
 		(*TestResults_Details_Failure)(nil),
 		(*TestResults_Details_Error)(nil),
