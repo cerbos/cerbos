@@ -23,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
+	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -435,6 +436,7 @@ type RuleTable struct {
 	scopeScopePermissions map[string]policyv1.ScopePermissions
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	programCache          *ProgramCache
+	planExprCache         *planner.ExprCache
 }
 
 type WrappedRunnableDerivedRole struct {
@@ -514,8 +516,9 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 
 func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
-		idx:          index.New(),
-		programCache: NewProgramCache(),
+		idx:           index.New(),
+		programCache:  NewProgramCache(),
+		planExprCache: planner.NewExprCache(),
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -538,6 +541,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
 	rt.programCache.Clear()
+	rt.planExprCache.Clear()
 
 	rt.idx.Reset()
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
