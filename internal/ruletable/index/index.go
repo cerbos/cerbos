@@ -979,8 +979,13 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	progs := make([]*CelProgram, len(vars))
 
 	for i, v := range vars {
+		ast, iss := conditions.StdEnv.Compile(v.Expr.Original)
+		if iss != nil && iss.Err() != nil {
+			return nil, iss.Err()
+		}
+
 		p, err := conditions.StdEnv.Program(
-			cel.CheckedExprToAst(v.Expr.Checked),
+			ast,
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {
