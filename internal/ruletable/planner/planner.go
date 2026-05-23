@@ -390,8 +390,11 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 			res.Node = &qpNLO{LogicalOperation: MkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		expr := t.Expr.GetChecked().GetExpr()
-		ex, err := celast.ProtoToExpr(expr)
+		protoExpr, err := recompiledExpr(t.Expr)
+		if err != nil {
+			return nil, err
+		}
+		ex, err := celast.ProtoToExpr(protoExpr)
 		if err != nil {
 			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
 		}
@@ -701,6 +704,20 @@ func residualExpr(ast *celast.AST, details *cel.EvalDetails) celast.Expr {
 	return prunedAST.Expr()
 }
 
+// recompiledExpr re-derives the type-checked CEL AST proto from the original source text,
+// reproducing what was stored in Expr.Checked before it was released to save memory.
+func recompiledExpr(e *runtimev1.Expr) (*exprpb.Expr, error) {
+	ast, iss := conditions.StdEnv.Compile(e.Original)
+	if iss != nil && iss.Err() != nil {
+		return nil, fmt.Errorf("failed to compile %q: %w", e.Original, iss.Err())
+	}
+	checked, err := cel.AstToCheckedExpr(ast)
+	if err != nil {
+		return nil, fmt.Errorf("cel.AstToCheckedExpr: %w", err)
+	}
+	return checked.GetExpr(), nil
+}
+
 func VariableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, error) {
 	if len(variables) == 0 {
 		return nil, nil
@@ -708,7 +725,11 @@ func VariableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, err
 
 	exprs := make(map[string]celast.Expr, len(variables))
 	for _, variable := range variables {
-		e, err := celast.ProtoToExpr(variable.Expr.GetChecked().GetExpr())
+		protoExpr, err := recompiledExpr(variable.Expr)
+		if err != nil {
+			return nil, err
+		}
+		e, err := celast.ProtoToExpr(protoExpr)
 		if err != nil {
 			return nil, err
 		}
