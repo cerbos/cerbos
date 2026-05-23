@@ -187,8 +187,18 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	if err := mgr.indexRules(AddPolicy(mgr.RuleTable.RuleTable, rps)); err != nil {
+	rows := AddPolicy(mgr.RuleTable.RuleTable, rps)
+	if err := mgr.indexRules(rows); err != nil {
 		return fmt.Errorf("failed to index and purge rules: %w", err)
+	}
+
+	// Release the CheckedExpr trees this policy contributed, matching the bulk-load path
+	// (init -> releaseCheckedExprs). The index cores share these proto pointers (see
+	// index.IndexRules), so nil-ing Checked on the rows also frees the retained copies;
+	// eval and plan recompile from Expr.Original on demand. Derived roles defined but not
+	// referenced by any rule aren't reachable from the rows and are released on full reload.
+	for _, row := range rows {
+		conditions.WalkExprs(row, func(e *runtimev1.Expr) { e.Checked = nil })
 	}
 
 	return nil
@@ -209,6 +219,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	}
 
 	mgr.programCache.Clear()
+	mgr.planExprCache.Clear()
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 
