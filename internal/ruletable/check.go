@@ -14,7 +14,6 @@ import (
 	celtypes "github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -357,9 +356,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						}
 
 						if satisfiesCondition { //nolint:nestif
-							var outputExpr *exprpb.CheckedExpr
+							var outputExpr *runtimev1.Expr
 							if b.Core.EmitOutput != nil && b.Core.EmitOutput.When != nil && b.Core.EmitOutput.When.RuleActivated != nil {
-								outputExpr = b.Core.EmitOutput.When.RuleActivated.Checked
+								outputExpr = b.Core.EmitOutput.When.RuleActivated
 							}
 
 							if outputExpr != nil {
@@ -394,7 +393,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								octx := rulectx.StartOutput(b.Name)
 								output := &enginev1.OutputEntry{
 									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, b.Core.EmitOutput.When.ConditionNotMet.Checked, constants, variables),
+									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, b.Core.EmitOutput.When.ConditionNotMet, constants, variables),
 									Action: action,
 								}
 								result.outputs = append(result.outputs, output)
@@ -582,7 +581,7 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 	evalVars := make(map[string]any, len(variables))
 	for _, variable := range variables {
 		vctx := tctx.StartVariable(variable.Name, variable.Expr.Original)
-		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr.Checked, constants, evalVars)
+		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr, constants, evalVars)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
 			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
@@ -648,7 +647,7 @@ func (ec *EvalContext) SatisfiesCondition(ctx context.Context, tctx tracer.Conte
 	switch t := cond.Op.(type) {
 	case *runtimev1.Condition_Expr:
 		ectx := tctx.StartExpr(t.Expr.Original)
-		val, err := ec.evaluateBoolCELExpr(ctx, t.Expr.Checked, constants, variables)
+		val, err := ec.evaluateBoolCELExpr(ctx, t.Expr, constants, variables)
 		if err != nil {
 			ectx.ComputedBoolResult(false, err, "Failed to evaluate expression")
 			return false, fmt.Errorf("failed to evaluate `%s`: %w", t.Expr.Original, err)
@@ -718,7 +717,7 @@ func (ec *EvalContext) SatisfiesCondition(ctx context.Context, tctx tracer.Conte
 	}
 }
 
-func (ec *EvalContext) evaluateBoolCELExpr(ctx context.Context, expr *exprpb.CheckedExpr, constants, variables map[string]any) (bool, error) {
+func (ec *EvalContext) evaluateBoolCELExpr(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) (bool, error) {
 	val, err := ec.evaluateCELExprToRaw(ctx, expr, constants, variables)
 	if err != nil {
 		return false, err
@@ -736,7 +735,7 @@ func (ec *EvalContext) evaluateBoolCELExpr(ctx context.Context, expr *exprpb.Che
 	return boolVal, nil
 }
 
-func (ec *EvalContext) evaluateProtobufValueCELExpr(ctx context.Context, expr *exprpb.CheckedExpr, constants, variables map[string]any) *structpb.Value {
+func (ec *EvalContext) evaluateProtobufValueCELExpr(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) *structpb.Value {
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
 		return structpb.NewStringValue("<failed to evaluate expression>")
@@ -760,7 +759,7 @@ func (ec *EvalContext) evaluateProtobufValueCELExpr(ctx context.Context, expr *e
 	return pbVal
 }
 
-func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *exprpb.CheckedExpr, constants, variables map[string]any) (ref.Val, error) {
+func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) (ref.Val, error) {
 	if expr == nil {
 		return nil, nil
 	}
@@ -781,7 +780,7 @@ func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *exprpb.Checked
 	return result, nil
 }
 
-func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *exprpb.CheckedExpr, constants, variables map[string]any) (any, error) {
+func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) (any, error) {
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
 		return nil, err

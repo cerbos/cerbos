@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strings"
 	"sync"
 
 	"github.com/google/cel-go/cel"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -443,16 +443,17 @@ type WrappedRunnableDerivedRole struct {
 	VarCacheKey uint64
 }
 
-// ProgramCache caches compiled CEL programs keyed by CheckedExpr pointer to avoid repeated compilation.
-// Programs are compiled with CacheFriendlyTimeDecorator which looks up NowFunc from activation at eval time.
+// ProgramCache caches compiled CEL programs keyed by source expression to avoid repeated
+// compilation. Programs are compiled from Expr.Original (the CheckedExpr trees are released
+// after load) with CacheFriendlyTimeDecorator which looks up NowFunc from activation at eval time.
 type ProgramCache struct {
-	m  map[*exprpb.CheckedExpr]cel.Program
+	m  map[string]cel.Program
 	mu sync.RWMutex
 }
 
 func NewProgramCache() *ProgramCache {
 	return &ProgramCache{
-		m: make(map[*exprpb.CheckedExpr]cel.Program),
+		m: make(map[string]cel.Program),
 	}
 }
 
@@ -465,33 +466,40 @@ func (c *ProgramCache) Clear() {
 	c.mu.Unlock()
 }
 
-func (c *ProgramCache) GetOrCreate(expr *exprpb.CheckedExpr) (cel.Program, error) {
+func (c *ProgramCache) GetOrCreate(expr *runtimev1.Expr) (cel.Program, error) {
 	if c == nil {
-		return conditions.StdEnv.Program(
-			cel.CheckedExprToAst(expr),
-			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
-		)
+		return compileFromSource(expr.Original)
 	}
 
 	c.mu.RLock()
-	if prg, ok := c.m[expr]; ok {
+	if prg, ok := c.m[expr.Original]; ok {
 		c.mu.RUnlock()
 		return prg, nil
 	}
 	c.mu.RUnlock()
 
-	prg, err := conditions.StdEnv.Program(
-		cel.CheckedExprToAst(expr),
-		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
-	)
+	prg, err := compileFromSource(expr.Original)
 	if err != nil {
 		return nil, err
 	}
 
 	c.mu.Lock()
-	c.m[expr] = prg
+	c.m[expr.Original] = prg
 	c.mu.Unlock()
 	return prg, nil
+}
+
+// compileFromSource parses, type-checks and builds a CEL program from the original source
+// text, reproducing what the compile pipeline did (it also used conditions.StdEnv.Compile).
+func compileFromSource(src string) (cel.Program, error) {
+	ast, iss := conditions.StdEnv.Compile(src)
+	if iss != nil && iss.Err() != nil {
+		return nil, iss.Err()
+	}
+	return conditions.StdEnv.Program(
+		ast,
+		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
+	)
 }
 
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
@@ -547,7 +555,56 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 
 	clear(rt.PolicyDerivedRoles)
 
+	// The CheckedExpr trees are not needed at runtime: conditions/outputs are recompiled
+	// from Expr.Original on demand (ProgramCache) and variable programs were already built
+	// during indexing. Release them and return the freed pages to the OS.
+	rt.releaseCheckedExprs()
+	debug.FreeOSMemory()
+
 	return nil
+}
+
+// releaseCheckedExprs nils every retained Expr.Checked so the CheckedExpr proto trees can be
+// garbage-collected; eval recompiles programs from Expr.Original.
+func (rt *RuleTable) releaseCheckedExprs() {
+	nilChecked := func(e *runtimev1.Expr) { e.Checked = nil }
+	seen := make(map[*index.FunctionalCore]struct{})
+	for _, b := range rt.GetAllRows() {
+		c := b.Core
+		if c == nil {
+			continue
+		}
+		if _, ok := seen[c]; ok {
+			continue
+		}
+		seen[c] = struct{}{}
+		if c.Condition != nil {
+			conditions.WalkExprs(c.Condition, nilChecked)
+		}
+		if c.DerivedRoleCondition != nil {
+			conditions.WalkExprs(c.DerivedRoleCondition, nilChecked)
+		}
+		if c.EmitOutput != nil {
+			conditions.WalkExprs(c.EmitOutput, nilChecked)
+		}
+		if c.Params != nil {
+			for _, v := range c.Params.Variables {
+				conditions.WalkExprs(v, nilChecked)
+			}
+		}
+		if c.DerivedRoleParams != nil {
+			for _, v := range c.DerivedRoleParams.Variables {
+				conditions.WalkExprs(v, nilChecked)
+			}
+		}
+	}
+	for _, drs := range rt.policyDerivedRoles {
+		for _, dr := range drs {
+			if dr.RunnableDerivedRole != nil {
+				conditions.WalkExprs(dr.RunnableDerivedRole, nilChecked)
+			}
+		}
+	}
 }
 
 func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
