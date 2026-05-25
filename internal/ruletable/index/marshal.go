@@ -61,7 +61,7 @@ func (m *Index) Marshal() ([]byte, error) {
 		}
 	}
 
-	principal, err := marshalEntries(bi.principal.m)
+	principal, err := marshalSparseEntries(bi.principal.m)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling principal dimension: %w", err)
 	}
@@ -268,7 +268,7 @@ func Unmarshal(data []byte) (*Index, error) {
 		}
 	}
 
-	bi.principal, err = unmarshalEntries(msg.Principal)
+	bi.principal, err = unmarshalSparseEntries(msg.Principal)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling principal dimension: %w", err)
 	}
@@ -395,6 +395,47 @@ func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string]
 			return d, fmt.Errorf("unmarshaling bitmap for key %q: %w", e.Key, err)
 		}
 		d.m[e.Key] = bm
+	}
+	return d, nil
+}
+
+// marshalSparseEntries serialises a sparseDimension into the same on-wire entry
+// format as marshalEntries by densifying each ID list into a bitmap, so the
+// stored format (and reader) is unchanged. A single scratch bitmap is reused.
+func marshalSparseEntries(m map[string][]uint32) ([]*runtimev1.BitmapIndex_Entry, error) {
+	entries := make([]*runtimev1.BitmapIndex_Entry, 0, len(m))
+	scratch := NewBitmap()
+	for k, ids := range m {
+		scratch.Clear()
+		for _, id := range ids {
+			scratch.Add(id)
+		}
+		b, err := scratch.MarshalBinary()
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, &runtimev1.BitmapIndex_Entry{
+			Key:    k,
+			Bitmap: b,
+		})
+	}
+	return entries, nil
+}
+
+// unmarshalSparseEntries reverses marshalSparseEntries: each stored bitmap is
+// walked in ascending order back into a sorted ID list.
+func unmarshalSparseEntries(entries []*runtimev1.BitmapIndex_Entry) (sparseDimension, error) {
+	d := sparseDimension{m: make(map[string][]uint32, len(entries))}
+	for _, e := range entries {
+		bm, err := bitmapFromBytes(e.Bitmap)
+		if err != nil {
+			return d, fmt.Errorf("unmarshaling bitmap for key %q: %w", e.Key, err)
+		}
+		ids := make([]uint32, 0, bm.GetCardinality())
+		for it := bm.Iterator(); it.HasNext(); {
+			ids = append(ids, it.Next())
+		}
+		d.m[e.Key] = ids
 	}
 	return d, nil
 }

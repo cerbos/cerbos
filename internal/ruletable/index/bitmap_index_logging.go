@@ -105,6 +105,44 @@ func fqnDimensionStats(name string, d fqnDimension) dimStats { //nolint:unused
 	return s
 }
 
+// sparseDimensionStats mirrors dimensionStats for a sparseDimension. Card is the
+// number of IDs per key; Words reports the dense-equivalent word count (highest
+// ID / 64) the old bitmap representation would have allocated, for comparison.
+func sparseDimensionStats(name string, d sparseDimension) dimStats { //nolint:unused
+	s := dimStats{Name: name, Keys: len(d.m), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	totalWords := 0
+	totalCard := uint64(0)
+	for _, ids := range d.m {
+		wl := 0
+		if n := len(ids); n > 0 {
+			wl = int(ids[n-1]/64) + 1 //nolint:mnd
+		}
+		if wl > s.MaxWords {
+			s.MaxWords = wl
+		}
+		if wl < s.MinWords {
+			s.MinWords = wl
+		}
+		c := uint64(len(ids))
+		if c > s.MaxCard {
+			s.MaxCard = c
+		}
+		if c < s.MinCard {
+			s.MinCard = c
+		}
+		totalWords += wl
+		totalCard += c
+	}
+	if s.Keys == 0 {
+		s.MinWords = 0
+		s.MinCard = 0
+	} else {
+		s.AvgWords = totalWords / s.Keys
+		s.AvgCard = totalCard / uint64(s.Keys)
+	}
+	return s
+}
+
 func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 	stats := []dimStats{
 		dimensionStats("version", idx.version),
@@ -113,7 +151,7 @@ func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 		globDimensionStats("resource", idx.resource),
 		globDimensionStats("action", idx.action),
 		dimensionStats("policyKind", idx.policyKind),
-		dimensionStats("principal", idx.principal),
+		sparseDimensionStats("principal", idx.principal),
 		fqnDimensionStats("fqnBindings", idx.fqnBindings),
 	}
 

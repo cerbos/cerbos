@@ -202,6 +202,20 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	var scopeBM, versionBM, resourceBM, roleBM, policyKindBM, principalBM *Bitmap
 
+	// Principal is resolved first: it's a cheap O(1) lookup and, because principal
+	// policies are a small minority, a query for a specific principal usually finds
+	// no matching rows — returning early here skips the costlier resource/role glob
+	// lookups below.
+	if principalID != "" {
+		ids, ok := bi.principal.Get(principalID)
+		if !ok {
+			return buf
+		}
+		// principal is stored sparsely (sorted IDs); densify the queried
+		// value into a pooled bitmap for intersection with the other dims.
+		principalBM = arena.fromIDs(ids)
+	}
+
 	// scope is always filtered because "" is a valid literal scope (root scope).
 	bm, ok := bi.scope.Get(scope)
 	if !ok {
@@ -235,13 +249,6 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 			return buf
 		}
 		policyKindBM = bm
-	}
-	if principalID != "" {
-		bm, ok := bi.principal.Get(principalID)
-		if !ok {
-			return buf
-		}
-		principalBM = bm
 	}
 
 	dims := make([]*Bitmap, 0, 6) //nolint:mnd

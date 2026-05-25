@@ -19,7 +19,7 @@ type bitmapIndex struct {
 	policyKind         dimension[policyv1.Kind]
 	resource           *globDimension
 	fqnBindings        fqnDimension
-	principal          dimension[string]
+	principal          sparseDimension
 	universe           *Bitmap
 	allowActionsBitmap *Bitmap
 	freeIDs            []uint32
@@ -34,7 +34,7 @@ func newBitmapIndex() *bitmapIndex {
 		action:             newGlobDimension(),
 		resource:           newGlobDimension(),
 		policyKind:         newDimension[policyv1.Kind](),
-		principal:          newDimension[string](),
+		principal:          newSparseDimension(),
 		universe:           NewBitmap(),
 		allowActionsBitmap: NewBitmap(),
 		fqnBindings:        newFqnDimension(),
@@ -72,9 +72,7 @@ func (idx *bitmapIndex) compact() {
 	for _, bm := range idx.policyKind.m {
 		bm.shrinkToFit()
 	}
-	for _, bm := range idx.principal.m {
-		bm.shrinkToFit()
-	}
+	idx.principal.compact()
 	shrink := func(_ string, bm *Bitmap) { bm.shrinkToFit() }
 	idx.role.RangeBitmaps(shrink)
 	idx.action.RangeBitmaps(shrink)
