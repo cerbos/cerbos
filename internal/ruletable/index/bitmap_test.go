@@ -105,6 +105,32 @@ func TestBitmapIteratorSparse(t *testing.T) {
 	require.Equal(t, ids, collectIterator(b))
 }
 
+func TestBitmapShrinkToFit(t *testing.T) {
+	b := NewBitmap()
+	// Spread bits across many words so ensure's exponential doubling leaves
+	// capacity slack beyond the used length.
+	for w := uint32(0); w <= 100; w++ {
+		b.Add(w*64 + 3)
+	}
+	require.Greater(t, cap(b.words), len(b.words), "precondition: doubling should leave slack")
+
+	card := b.GetCardinality()
+	before := collectIterator(b)
+
+	b.shrinkToFit()
+
+	require.Equal(t, len(b.words), cap(b.words), "words cap should equal len after shrink")
+	require.Equal(t, len(b.meta), cap(b.meta), "meta cap should equal len after shrink")
+	require.Equal(t, card, b.GetCardinality(), "cardinality unchanged by shrink")
+	require.Equal(t, before, collectIterator(b), "set bits unchanged by shrink")
+
+	// Still usable after shrink: a higher id must re-grow the backing arrays.
+	hi := uint32(200 * 64)
+	b.Add(hi)
+	require.True(t, b.Contains(hi))
+	require.Equal(t, card+1, b.GetCardinality())
+}
+
 func TestBitmapOr(t *testing.T) {
 	a := NewBitmap()
 	a.Add(1)

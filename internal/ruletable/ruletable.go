@@ -573,6 +573,9 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 
 	clear(rt.PolicyDerivedRoles)
 
+	// Release the per-bitmap capacity slack left by exponential growth during indexing.
+	rt.idx.Compact()
+
 	// The CheckedExpr trees are not needed at runtime: conditions/outputs are recompiled
 	// from Expr.Original on demand (ProgramCache) and variable programs were already built
 	// during indexing. Release them and return the freed pages to the OS.

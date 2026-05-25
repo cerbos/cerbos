@@ -59,6 +59,30 @@ func (idx *bitmapIndex) freeID(id uint32) {
 	idx.freeIDs = append(idx.freeIDs, id)
 }
 
+// compact drops the per-bitmap capacity slack left by exponential growth across
+// every persistent dimension bitmap. Called once after a full build/reload, not
+// on the incremental-update path (which re-grows bitmaps as policies are added).
+func (idx *bitmapIndex) compact() {
+	for _, bm := range idx.version.m {
+		bm.shrinkToFit()
+	}
+	for _, bm := range idx.scope.m {
+		bm.shrinkToFit()
+	}
+	for _, bm := range idx.policyKind.m {
+		bm.shrinkToFit()
+	}
+	for _, bm := range idx.principal.m {
+		bm.shrinkToFit()
+	}
+	shrink := func(_ string, bm *Bitmap) { bm.shrinkToFit() }
+	idx.role.RangeBitmaps(shrink)
+	idx.action.RangeBitmaps(shrink)
+	idx.resource.RangeBitmaps(shrink)
+	idx.universe.shrinkToFit()
+	idx.allowActionsBitmap.shrinkToFit()
+}
+
 func (idx *bitmapIndex) addBinding(b *Binding) {
 	id := idx.allocID()
 	b.ID = id

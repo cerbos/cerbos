@@ -65,6 +65,12 @@ func New(opts ...Option) *Index {
 	return idx
 }
 
+// Compact releases the bitmap capacity slack left by exponential growth during
+// indexing. Call once after a full build/reload; not on the incremental path.
+func (m *Index) Compact() {
+	m.bi.compact()
+}
+
 func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	if len(rules) == 0 {
 		return nil
