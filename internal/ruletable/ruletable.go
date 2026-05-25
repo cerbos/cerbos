@@ -260,6 +260,20 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 
 		ruleFqn := namer.RuleFQN(rt.Meta[moduleID.RawValue()], p.Scope, rule.Name)
 		evaluationKey := fmt.Sprintf("%s#%s", namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope), ruleFqn)
+
+		// Derived-role evaluation keys depend only on the derived role and the rule FQN,
+		// not on the action, so build them once per rule rather than once per action
+		// (the latter retained one identical copy per action in the rule rows).
+		var derivedRoleEvalKeys map[string]string
+		if len(rule.DerivedRoles) > 0 {
+			derivedRoleEvalKeys = make(map[string]string, len(rule.DerivedRoles))
+			for dr := range rule.DerivedRoles {
+				if _, ok := p.DerivedRoles[dr]; ok {
+					derivedRoleEvalKeys[dr] = fmt.Sprintf("%s#%s", namer.DerivedRolesFQN(dr), ruleFqn)
+				}
+			}
+		}
+
 		for a := range rule.Actions {
 			for r := range rule.Roles {
 				row := &runtimev1.RuleTable_RuleRow{
@@ -303,7 +317,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 			// merge derived roles as roles with added conditions
 			for dr := range rule.DerivedRoles {
 				if rdr, ok := p.DerivedRoles[dr]; ok {
-					evaluationKey := fmt.Sprintf("%s#%s", namer.DerivedRolesFQN(dr), ruleFqn)
+					evaluationKey := derivedRoleEvalKeys[dr]
 					for pr := range rdr.ParentRoles {
 						row := &runtimev1.RuleTable_RuleRow{
 							OriginFqn: rrps.Meta.Fqn,
