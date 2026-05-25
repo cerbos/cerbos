@@ -69,7 +69,7 @@ jobs:
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@3a471f833bf3a721a88efc92c251a98e5df8a343 # main
+        uses: cerbos/actions/install-tools@b9f76b0e84f6e22b19391a32883de34e29b6ce87 # main
         with:
           tools: |-
             goreleaser
@@ -111,7 +111,7 @@ jobs:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: cerbos/actions/buf@3a471f833bf3a721a88efc92c251a98e5df8a343 # main
+        uses: cerbos/actions/buf@b9f76b0e84f6e22b19391a32883de34e29b6ce87 # main
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}
@@ -201,7 +201,7 @@ jobs:
           path: dist/
 
       - name: Install just
-        uses: cerbos/actions/install-tools@3a471f833bf3a721a88efc92c251a98e5df8a343 # main
+        uses: cerbos/actions/install-tools@b9f76b0e84f6e22b19391a32883de34e29b6ce87 # main
         with:
           tools: just
 
