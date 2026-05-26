@@ -110,6 +110,12 @@ func (d lazyDimension) Keys() []string {
 
 func (d lazyDimension) len() int { return len(d.m) }
 
+// has reports whether key is present (without materialising it).
+func (d lazyDimension) has(key string) bool {
+	_, ok := d.m[key]
+	return ok
+}
+
 // compact finalises every cold entry built so far, picking the smaller backing
 // store for each. A value dense enough is materialised now - smaller footprint AND a free first query;
 // sparser values keep their slice (trimmed of append slack) and materialise
@@ -166,9 +172,7 @@ func (d lazyDimension) forEachBitmap(fn func(key string, bm *Bitmap) error) erro
 	return nil
 }
 
-// intersectingKeys returns the keys whose binding IDs intersect filter. Cold
-// entries are probed with filter.Contains rather than materialised, so this scan
-// does not force the whole dimension dense.
+// intersectingKeys returns the keys whose binding IDs intersect filter.
 func (d lazyDimension) intersectingKeys(filter *Bitmap) []string {
 	var keys []string
 	for k, e := range d.m {
