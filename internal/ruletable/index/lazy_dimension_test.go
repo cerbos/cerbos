@@ -74,6 +74,37 @@ func TestLazyDimensionMarshalSymmetryViaIDs(t *testing.T) {
 	require.Nil(t, d.m["p"].state.Load().bm, "forEachBitmap must not materialise/cache")
 }
 
+func TestLazyDimensionCompactPicksSmaller(t *testing.T) {
+	d := newLazyDimension()
+	// dense: 300 contiguous IDs -> bitmap (~48 B) far smaller than slice (1200 B).
+	for i := range uint32(300) {
+		d.Add("dense", i)
+	}
+	// sparse: 3 IDs scattered to a high max -> slice (12 B) smaller than bitmap (~2.5 KB).
+	for _, id := range []uint32{1, 5000, 20000} {
+		d.Add("sparse", id)
+	}
+
+	d.compact()
+
+	dense := d.m["dense"].state.Load()
+	require.NotNil(t, dense.bm, "dense entry should be materialised by compact")
+	require.Nil(t, dense.ids, "dense entry should drop its slice")
+
+	sparse := d.m["sparse"].state.Load()
+	require.Nil(t, sparse.bm, "sparse entry should stay a slice")
+	require.NotNil(t, sparse.ids, "sparse entry should keep its IDs")
+
+	// Both must still query correctly.
+	dbm, ok := d.Bitmap("dense")
+	require.True(t, ok)
+	require.Equal(t, uint64(300), dbm.GetCardinality())
+	sbm, ok := d.Bitmap("sparse")
+	require.True(t, ok)
+	require.Equal(t, uint64(3), sbm.GetCardinality())
+	require.True(t, sbm.Contains(20000))
+}
+
 // TestLazyDimensionConcurrentMaterialize hammers Bitmap() from many goroutines on
 // a single cold entry to exercise the materialise CAS. Run with -race.
 func TestLazyDimensionConcurrentMaterialize(t *testing.T) {

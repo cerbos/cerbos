@@ -114,12 +114,34 @@ func (d lazyDimension) Keys() []string {
 
 func (d lazyDimension) len() int { return len(d.m) }
 
-// compact trims the capacity slack left by append growth on cold ID slices (hot
-// entries already dropped theirs). Build/reload only.
+// compact finalises every cold entry built so far, picking the smaller backing
+// store for each. A value dense enough that its dense bitmap is no larger than
+// its ID slice is materialised now — smaller footprint AND a free first query;
+// sparser values keep their slice (trimmed of append slack) and materialise
+// lazily on first query. This bounds the resident footprint to min(slice, bitmap)
+// per entry, so a dimension of mostly-dense values is never heavier than an
+// all-bitmap index. Build/reload only (runs under the exclusive lock, before
+// queries), so plain Store is safe.
 func (d lazyDimension) compact() {
+	const (
+		uint32Bytes  = 4
+		bitsPerWord  = 64 // bits in a data word
+		wordsPerMeta = 64 // data words tracked per meta word
+	)
 	for _, e := range d.m {
 		st := e.state.Load()
-		if st.bm == nil && cap(st.ids) > len(st.ids) {
+		if st.bm != nil || len(st.ids) == 0 {
+			continue
+		}
+		words := int(st.ids[len(st.ids)-1]/bitsPerWord) + 1
+		metaWords := (words + wordsPerMeta - 1) / wordsPerMeta
+		bitmapBytes := (words + metaWords) * wordSize
+		sliceBytes := len(st.ids) * uint32Bytes
+		if bitmapBytes <= sliceBytes {
+			e.state.Store(&lazyState{bm: newBitmapFromIDs(st.ids)})
+			continue
+		}
+		if cap(st.ids) > len(st.ids) {
 			trimmed := make([]uint32, len(st.ids))
 			copy(trimmed, st.ids)
 			st.ids = trimmed
