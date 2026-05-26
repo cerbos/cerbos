@@ -122,7 +122,6 @@ func (d lazyDimension) has(key string) bool {
 // lazily on first query.
 func (d lazyDimension) compact() {
 	const (
-		uint32Bytes  = 4
 		bitsPerWord  = 64 // bits in a data word
 		wordsPerMeta = 64 // data words tracked per meta word
 	)
@@ -133,9 +132,7 @@ func (d lazyDimension) compact() {
 		}
 		words := int(st.ids[len(st.ids)-1]/bitsPerWord) + 1
 		metaWords := (words + wordsPerMeta - 1) / wordsPerMeta // ⌈words / wordsPerMeta⌉
-		bitmapBytes := (words + metaWords) * wordSize
-		sliceBytes := len(st.ids) * uint32Bytes
-		if bitmapBytes <= sliceBytes {
+		if preferBitmap(words, metaWords, len(st.ids)) {
 			e.Store(&lazyState{bm: newBitmapFromIDs(st.ids)})
 			continue
 		}
@@ -147,17 +144,33 @@ func (d lazyDimension) compact() {
 	}
 }
 
-// setCold installs key as a cold entry with the given sorted IDs. Used by
-// Unmarshal so a reloaded index starts lazy (slices, materialised on demand).
-func (d lazyDimension) setCold(key string, ids []uint32) {
+// preferBitmap reports whether a dense bitmap of the given word/meta counts is no
+// larger than a sorted []uint32 holding the same cardinality IDs.
+func preferBitmap(words, metaWords, cardinality int) bool {
+	const uint32Bytes = 4
+	return (words+metaWords)*wordSize <= cardinality*uint32Bytes
+}
+
+// setFromBitmap installs key from a freshly decoded bitmap, keeping that bitmap
+// when it is the smaller representation (dense) and otherwise extracting a cold
+// sorted ID slice (sparse).
+func (d lazyDimension) setFromBitmap(key string, bm *Bitmap) {
 	e := new(atomic.Pointer[lazyState])
-	e.Store(&lazyState{ids: ids})
+	card := int(bm.GetCardinality())
+	if preferBitmap(len(bm.words), len(bm.meta), card) {
+		e.Store(&lazyState{bm: bm})
+	} else {
+		ids := make([]uint32, 0, card)
+		for it := bm.Iterator(); it.HasNext(); {
+			ids = append(ids, it.Next())
+		}
+		e.Store(&lazyState{ids: ids})
+	}
 	d.m[key] = e
 }
 
 // forEachBitmap yields a bitmap per key for marshalling. Cold entries are
-// densified into a transient bitmap that is NOT cached, so marshalling does not
-// mutate shared state (it may run concurrently with queries under RLock).
+// densified into a transient bitmap that is NOT cached, so safe to run concurrently.
 func (d lazyDimension) forEachBitmap(fn func(key string, bm *Bitmap) error) error {
 	for k, e := range d.m {
 		st := e.Load()

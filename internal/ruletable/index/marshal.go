@@ -421,9 +421,9 @@ func marshalLazyEntries(d lazyDimension) ([]*runtimev1.BitmapIndex_Entry, error)
 	return entries, nil
 }
 
-// unmarshalLazyEntries reverses marshalLazyEntries: each stored bitmap is walked
-// (ascending) back into a sorted ID list, so the reloaded dimension starts cold
-// and materialises lazily on first query.
+// unmarshalLazyEntries reverses marshalLazyEntries: each stored bitmap is decoded
+// and installed per entry, keeping the bitmap when it's the smaller representation
+// and otherwise extracting a cold ID slice (see lazyDimension.setFromBitmap).
 func unmarshalLazyEntries(entries []*runtimev1.BitmapIndex_Entry) (lazyDimension, error) {
 	d := newLazyDimension()
 	for _, e := range entries {
@@ -431,11 +431,7 @@ func unmarshalLazyEntries(entries []*runtimev1.BitmapIndex_Entry) (lazyDimension
 		if err != nil {
 			return d, fmt.Errorf("unmarshaling bitmap for key %q: %w", e.Key, err)
 		}
-		ids := make([]uint32, 0, bm.GetCardinality())
-		for it := bm.Iterator(); it.HasNext(); {
-			ids = append(ids, it.Next())
-		}
-		d.setCold(e.Key, ids)
+		d.setFromBitmap(e.Key, bm)
 	}
 	return d, nil
 }
@@ -460,11 +456,7 @@ func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimen
 		if g == nil {
 			return nil, fmt.Errorf("failed to compile glob pattern %q", e.Key)
 		}
-		ids := make([]uint32, 0, bm.GetCardinality())
-		for it := bm.Iterator(); it.HasNext(); {
-			ids = append(ids, it.Next())
-		}
-		gd.globs.setCold(e.Key, ids)
+		gd.globs.setFromBitmap(e.Key, bm)
 		gd.compiled[e.Key] = g
 	}
 

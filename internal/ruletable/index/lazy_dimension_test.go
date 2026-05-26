@@ -76,11 +76,11 @@ func TestLazyDimensionMarshalSymmetryViaIDs(t *testing.T) {
 
 func TestLazyDimensionCompactPicksSmaller(t *testing.T) {
 	d := newLazyDimension()
-	// dense: 300 contiguous IDs -> bitmap (~48 B) far smaller than slice (1200 B).
+	// dense: 300 contiguous IDs, so bitmap is smaller.
 	for i := range uint32(300) {
 		d.Add("dense", i)
 	}
-	// sparse: 3 IDs scattered to a high max -> slice (12 B) smaller than bitmap (~2.5 KB).
+	// sparse: 3 IDs scattered to a high max, so slice is smaller.
 	for _, id := range []uint32{1, 5000, 20000} {
 		d.Add("sparse", id)
 	}
@@ -105,13 +105,46 @@ func TestLazyDimensionCompactPicksSmaller(t *testing.T) {
 	require.True(t, sbm.Contains(20000))
 }
 
+func TestLazyDimensionSetFromBitmap(t *testing.T) {
+	d := newLazyDimension()
+
+	// dense: 300 contiguous IDs, so bitmap is smaller.
+	dense := NewBitmap()
+	for i := range uint32(300) {
+		dense.Add(i)
+	}
+	d.setFromBitmap("dense", dense)
+
+	// sparse: 3 IDs scattered to a high max, so slice is smaller.
+	sparse := NewBitmap()
+	for _, id := range []uint32{1, 5000, 20000} {
+		sparse.Add(id)
+	}
+	d.setFromBitmap("sparse", sparse)
+
+	require.Same(t, dense, d.m["dense"].Load().bm, "dense should reuse the decoded bitmap, not rebuild")
+	require.Nil(t, d.m["dense"].Load().ids)
+
+	require.Nil(t, d.m["sparse"].Load().bm, "sparse should become a cold slice")
+	require.NotNil(t, d.m["sparse"].Load().ids)
+
+	// Both query correctly.
+	dbm, ok := d.Bitmap("dense")
+	require.True(t, ok)
+	require.Equal(t, uint64(300), dbm.GetCardinality())
+	sbm, ok := d.Bitmap("sparse")
+	require.True(t, ok)
+	require.Equal(t, uint64(3), sbm.GetCardinality())
+	require.True(t, sbm.Contains(20000))
+}
+
 // TestLazyDimensionConcurrentMaterialize hammers Bitmap() from many goroutines on
 // a single cold entry to exercise the materialise CAS. Run with -race.
 func TestLazyDimensionConcurrentMaterialize(t *testing.T) {
 	d := newLazyDimension()
 	const n = 500
 	for i := range uint32(n) {
-		d.Add("p", i*64+1) // scattered across words
+		d.Add("p", i*64+1) // scattered across words, so becomes a slice
 	}
 
 	const goroutines = 32
