@@ -14,48 +14,40 @@ import (
 // and glob pattern keys. It mirrors the semantics of internal.GlobMap,
 // returning bitmaps for queried values.
 type globDimension struct {
-	// literals is stored lazily (sorted IDs per value, materialised to a bitmap on
-	// first query) — it's the high-cardinality part (e.g. one key per resource).
 	literals lazyDimension
-	// `globs` and `compiled` share the same key. Globs are few, so kept dense.
-	globs    map[string]*Bitmap
+	globs    lazyDimension
 	compiled map[string]glob.Glob
 }
 
 func newGlobDimension() *globDimension {
 	return &globDimension{
 		literals: newLazyDimension(),
-		globs:    make(map[string]*Bitmap),
+		globs:    newLazyDimension(),
 		compiled: make(map[string]glob.Glob),
 	}
 }
 
 func (gd *globDimension) Set(key string, id uint32) {
-	if strings.ContainsRune(key, '*') { //nolint:nestif
-		bm, ok := gd.globs[key]
-		if !ok {
+	if strings.ContainsRune(key, '*') {
+		if _, ok := gd.compiled[key]; !ok {
 			g := util.GetOrCompileGlob(key)
 			if g == nil {
 				return
 			}
 			gd.compiled[key] = g
-			bm = NewBitmap()
-			gd.globs[key] = bm
 		}
-		bm.Add(id)
+		gd.globs.Add(key, id)
 	} else {
 		gd.literals.Add(key, id)
 	}
 }
 
 func (gd *globDimension) Remove(key string, id uint32) {
-	if strings.ContainsRune(key, '*') { //nolint:nestif
-		if bm, ok := gd.globs[key]; ok {
-			bm.Remove(id)
-			if bm.IsEmpty() {
-				delete(gd.globs, key)
-				delete(gd.compiled, key)
-			}
+	if strings.ContainsRune(key, '*') {
+		gd.globs.Remove(key, id)
+		// globs.Remove drops the key when it empties; keep compiled in step.
+		if !gd.globs.has(key) {
+			delete(gd.compiled, key)
 		}
 	} else {
 		gd.literals.Remove(key, id)
@@ -82,7 +74,9 @@ func (gd *globDimension) Query(arena *bitmapArena, value string) *Bitmap {
 	}
 	for pattern, compiled := range gd.compiled {
 		if compiled.Match(value) {
-			parts = append(parts, gd.globs[pattern])
+			if bm, ok := gd.globs.Bitmap(pattern); ok {
+				parts = append(parts, bm)
+			}
 		}
 	}
 
@@ -106,7 +100,9 @@ func (gd *globDimension) QueryMultiple(arena *bitmapArena, values []string) *Bit
 		}
 		for pattern, compiled := range gd.compiled {
 			if compiled.Match(v) {
-				parts = append(parts, gd.globs[pattern])
+				if bm, ok := gd.globs.Bitmap(pattern); ok {
+					parts = append(parts, bm)
+				}
 			}
 		}
 	}
@@ -121,32 +117,22 @@ func (gd *globDimension) QueryMultiple(arena *bitmapArena, values []string) *Bit
 }
 
 func (gd *globDimension) GetAllKeys() []string {
-	keys := make([]string, 0, gd.literals.len()+len(gd.globs))
+	keys := make([]string, 0, gd.literals.len()+gd.globs.len())
 	keys = append(keys, gd.literals.Keys()...)
-	for k := range gd.globs {
-		keys = append(keys, k)
-	}
+	keys = append(keys, gd.globs.Keys()...)
 	return keys
 }
 
 // intersectingKeys returns the keys (literal values and glob patterns) whose
-// binding IDs intersect filter. Cold literals are probed via filter.Contains so
-// the lazy literals are not materialised by this scan.
+// binding IDs intersect filter. Cold entries are probed via filter.Contains so
+// the lazy literals/globs are not materialised by this scan.
 func (gd *globDimension) intersectingKeys(filter *Bitmap) []string {
 	keys := gd.literals.intersectingKeys(filter)
-	for pattern, bm := range gd.globs {
-		if intersectionNonEmpty(bm, filter) {
-			keys = append(keys, pattern)
-		}
-	}
-	return keys
+	return append(keys, gd.globs.intersectingKeys(filter)...)
 }
 
-// compact trims the lazy literals' slice slack and shrinks the (dense) glob
-// bitmaps. Build/reload only.
+// compact finalises the representation of both literals and globs. Build/reload only.
 func (gd *globDimension) compact() {
 	gd.literals.compact()
-	for _, bm := range gd.globs {
-		bm.shrinkToFit()
-	}
+	gd.globs.compact()
 }

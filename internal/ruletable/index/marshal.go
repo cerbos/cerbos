@@ -192,7 +192,7 @@ func marshalGlobDimension(gd *globDimension) (*runtimev1.BitmapIndex_GlobDimensi
 	if err != nil {
 		return nil, err
 	}
-	globs, err := marshalEntries(gd.globs)
+	globs, err := marshalLazyEntries(gd.globs)
 	if err != nil {
 		return nil, err
 	}
@@ -456,11 +456,15 @@ func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimen
 		if err != nil {
 			return nil, fmt.Errorf("unmarshaling glob bitmap for key %q: %w", e.Key, err)
 		}
-		gd.globs[e.Key] = bm
 		g := util.GetOrCompileGlob(e.Key)
 		if g == nil {
 			return nil, fmt.Errorf("failed to compile glob pattern %q", e.Key)
 		}
+		ids := make([]uint32, 0, bm.GetCardinality())
+		for it := bm.Iterator(); it.HasNext(); {
+			ids = append(ids, it.Next())
+		}
+		gd.globs.setCold(e.Key, ids)
 		gd.compiled[e.Key] = g
 	}
 
