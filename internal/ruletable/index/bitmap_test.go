@@ -155,35 +155,6 @@ func TestBitmapAddSortedBatch(t *testing.T) {
 	}
 }
 
-func BenchmarkBitmapAddSorted(b *testing.B) {
-	const n = 500
-	scattered := make([]uint32, n) // one id per word — worst case for coalescing
-	clustered := make([]uint32, n) // consecutive ids — best case
-	for i := range uint32(n) {
-		scattered[i] = i*64 + 1
-		clustered[i] = i
-	}
-	for _, tc := range []struct {
-		name string
-		ids  []uint32
-	}{{"scattered", scattered}, {"clustered", clustered}} {
-		b.Run("batch/"+tc.name, func(b *testing.B) {
-			for b.Loop() {
-				NewBitmap().AddSortedBatch(tc.ids)
-			}
-		})
-		b.Run("repeated/"+tc.name, func(b *testing.B) {
-			for b.Loop() {
-				bm := NewBitmap()
-				bm.ensure(int(tc.ids[len(tc.ids)-1]/64) + 1)
-				for _, id := range tc.ids {
-					bm.Add(id)
-				}
-			}
-		})
-	}
-}
-
 func TestBitmapOr(t *testing.T) {
 	a := NewBitmap()
 	a.Add(1)
