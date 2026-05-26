@@ -36,9 +36,7 @@ func (b *Bitmap) Add(id uint32) {
 }
 
 // AddSortedBatch sets all of ids, which must be in ascending order (it grows the
-// backing storage once to the last/largest id). It is faster than repeated Add
-// for materialising a bitmap from a sorted ID slice: it skips the per-id ensure
-// call and coalesces the data- and meta-word writes for ids sharing a word.
+// backing storage once to the last/largest id).
 func (b *Bitmap) AddSortedBatch(ids []uint32) {
 	if len(ids) == 0 {
 		return

@@ -64,7 +64,7 @@ func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unus
 	totalWords := 0
 	totalCard := uint64(0)
 	for _, e := range gd.literals.m {
-		st := e.state.Load()
+		st := e.Load()
 		var c uint64
 		wl := 0
 		if st.bm != nil {
@@ -137,7 +137,7 @@ func lazyDimensionStats(name string, d lazyDimension) dimStats { //nolint:unused
 	totalWords := 0
 	totalCard := uint64(0)
 	for _, e := range d.m {
-		st := e.state.Load()
+		st := e.Load()
 		var c uint64
 		wl := 0
 		if st.bm != nil {

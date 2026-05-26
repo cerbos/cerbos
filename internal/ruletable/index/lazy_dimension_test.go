@@ -18,7 +18,7 @@ func TestLazyDimensionAddBitmap(t *testing.T) {
 	d.Add("a", 64) // duplicate -> ignored
 	d.Add("b", 1)
 
-	require.Nil(t, d.m["a"].state.Load().bm, "entry should be cold before first Bitmap()")
+	require.Nil(t, d.m["a"].Load().bm, "entry should be cold before first Bitmap()")
 
 	bm, ok := d.Bitmap("a")
 	require.True(t, ok)
@@ -27,7 +27,7 @@ func TestLazyDimensionAddBitmap(t *testing.T) {
 	require.True(t, bm.Contains(64))
 	require.True(t, bm.Contains(200))
 
-	st := d.m["a"].state.Load()
+	st := d.m["a"].Load()
 	require.NotNil(t, st.bm, "entry should be hot after Bitmap()")
 	require.Nil(t, st.ids, "ID slice should be dropped on materialisation")
 
@@ -71,7 +71,7 @@ func TestLazyDimensionMarshalSymmetryViaIDs(t *testing.T) {
 		return nil
 	}))
 	require.Equal(t, ids, got)
-	require.Nil(t, d.m["p"].state.Load().bm, "forEachBitmap must not materialise/cache")
+	require.Nil(t, d.m["p"].Load().bm, "forEachBitmap must not materialise/cache")
 }
 
 func TestLazyDimensionCompactPicksSmaller(t *testing.T) {
@@ -87,11 +87,11 @@ func TestLazyDimensionCompactPicksSmaller(t *testing.T) {
 
 	d.compact()
 
-	dense := d.m["dense"].state.Load()
+	dense := d.m["dense"].Load()
 	require.NotNil(t, dense.bm, "dense entry should be materialised by compact")
 	require.Nil(t, dense.ids, "dense entry should drop its slice")
 
-	sparse := d.m["sparse"].state.Load()
+	sparse := d.m["sparse"].Load()
 	require.Nil(t, sparse.bm, "sparse entry should stay a slice")
 	require.NotNil(t, sparse.ids, "sparse entry should keep its IDs")
 
