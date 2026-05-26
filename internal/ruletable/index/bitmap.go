@@ -182,8 +182,7 @@ func MetaIntersects(bitmaps ...*Bitmap) bool {
 
 // shrinkToFit reallocates words and meta to drop the capacity slack left by
 // exponential growth in ensure. It is meant to be called once after the index
-// is built or reloaded; subsequent Add calls re-grow as needed, so it must not
-// be used on the incremental-update path.
+// is built or reloaded.
 func (b *Bitmap) shrinkToFit() {
 	if cap(b.words) > len(b.words) {
 		w := make([]uint64, len(b.words))

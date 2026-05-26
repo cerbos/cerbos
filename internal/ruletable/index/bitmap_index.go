@@ -60,8 +60,7 @@ func (idx *bitmapIndex) freeID(id uint32) {
 }
 
 // compact drops the per-bitmap capacity slack left by exponential growth across
-// every persistent dimension bitmap. Called once after a full build/reload, not
-// on the incremental-update path (which re-grows bitmaps as policies are added).
+// every persistent dimension bitmap. Called once after a full build/reload.
 func (idx *bitmapIndex) compact() {
 	for _, bm := range idx.version.m {
 		bm.shrinkToFit()
