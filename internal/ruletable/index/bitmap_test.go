@@ -131,6 +131,59 @@ func TestBitmapShrinkToFit(t *testing.T) {
 	require.Equal(t, card+1, b.GetCardinality())
 }
 
+func TestBitmapAddSortedBatch(t *testing.T) {
+	cases := [][]uint32{
+		{},
+		{0},
+		{0, 1, 63, 64, 65, 127, 128}, // clustered, spanning word & meta boundaries
+		{3, 70, 4096, 100000},        // scattered, one id per word
+		{63 * 64, 64 * 64, 127 * 64}, // meta-word boundaries
+	}
+	for _, ids := range cases {
+		batch := NewBitmap()
+		batch.AddSortedBatch(ids)
+
+		seq := NewBitmap()
+		for _, id := range ids {
+			seq.Add(id)
+		}
+
+		require.Equal(t, seq.GetCardinality(), batch.GetCardinality(), "ids=%v", ids)
+		require.Equal(t, collectIterator(seq), collectIterator(batch), "ids=%v", ids)
+		require.Equal(t, seq.words, batch.words, "words must match repeated Add for ids=%v", ids)
+		require.Equal(t, seq.meta, batch.meta, "meta must match repeated Add for ids=%v", ids)
+	}
+}
+
+func BenchmarkBitmapAddSorted(b *testing.B) {
+	const n = 500
+	scattered := make([]uint32, n) // one id per word — worst case for coalescing
+	clustered := make([]uint32, n) // consecutive ids — best case
+	for i := range uint32(n) {
+		scattered[i] = i*64 + 1
+		clustered[i] = i
+	}
+	for _, tc := range []struct {
+		name string
+		ids  []uint32
+	}{{"scattered", scattered}, {"clustered", clustered}} {
+		b.Run("batch/"+tc.name, func(b *testing.B) {
+			for b.Loop() {
+				NewBitmap().AddSortedBatch(tc.ids)
+			}
+		})
+		b.Run("repeated/"+tc.name, func(b *testing.B) {
+			for b.Loop() {
+				bm := NewBitmap()
+				bm.ensure(int(tc.ids[len(tc.ids)-1]/64) + 1)
+				for _, id := range tc.ids {
+					bm.Add(id)
+				}
+			}
+		})
+	}
+}
+
 func TestBitmapOr(t *testing.T) {
 	a := NewBitmap()
 	a.Add(1)

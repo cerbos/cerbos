@@ -61,7 +61,7 @@ func (m *Index) Marshal() ([]byte, error) {
 		}
 	}
 
-	principal, err := marshalSparseEntries(bi.principal.m)
+	principal, err := marshalLazyEntries(bi.principal)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling principal dimension: %w", err)
 	}
@@ -188,7 +188,7 @@ func marshalBinding(b *Binding, coreIndex map[*FunctionalCore]uint32) *runtimev1
 }
 
 func marshalGlobDimension(gd *globDimension) (*runtimev1.BitmapIndex_GlobDimension, error) {
-	literals, err := marshalEntries(gd.literals)
+	literals, err := marshalLazyEntries(gd.literals)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func Unmarshal(data []byte) (*Index, error) {
 		}
 	}
 
-	bi.principal, err = unmarshalSparseEntries(msg.Principal)
+	bi.principal, err = unmarshalLazyEntries(msg.Principal)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling principal dimension: %w", err)
 	}
@@ -399,33 +399,33 @@ func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string]
 	return d, nil
 }
 
-// marshalSparseEntries serialises a sparseDimension into the same on-wire entry
-// format as marshalEntries by densifying each ID list into a bitmap, so the
-// stored format (and reader) is unchanged. A single scratch bitmap is reused.
-func marshalSparseEntries(m map[string][]uint32) ([]*runtimev1.BitmapIndex_Entry, error) {
-	entries := make([]*runtimev1.BitmapIndex_Entry, 0, len(m))
-	scratch := NewBitmap()
-	for k, ids := range m {
-		scratch.Clear()
-		for _, id := range ids {
-			scratch.Add(id)
-		}
-		b, err := scratch.MarshalBinary()
+// marshalLazyEntries serialises a lazyDimension into the same on-wire entry
+// format as marshalEntries (densifying cold ID slices into a transient bitmap),
+// so the stored format and reader are unchanged.
+func marshalLazyEntries(d lazyDimension) ([]*runtimev1.BitmapIndex_Entry, error) {
+	entries := make([]*runtimev1.BitmapIndex_Entry, 0, d.len())
+	err := d.forEachBitmap(func(key string, bm *Bitmap) error {
+		b, err := bm.MarshalBinary()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		entries = append(entries, &runtimev1.BitmapIndex_Entry{
-			Key:    k,
+			Key:    key,
 			Bitmap: b,
 		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	return entries, nil
 }
 
-// unmarshalSparseEntries reverses marshalSparseEntries: each stored bitmap is
-// walked in ascending order back into a sorted ID list.
-func unmarshalSparseEntries(entries []*runtimev1.BitmapIndex_Entry) (sparseDimension, error) {
-	d := sparseDimension{m: make(map[string][]uint32, len(entries))}
+// unmarshalLazyEntries reverses marshalLazyEntries: each stored bitmap is walked
+// (ascending) back into a sorted ID list, so the reloaded dimension starts cold
+// and materialises lazily on first query.
+func unmarshalLazyEntries(entries []*runtimev1.BitmapIndex_Entry) (lazyDimension, error) {
+	d := newLazyDimension()
 	for _, e := range entries {
 		bm, err := bitmapFromBytes(e.Bitmap)
 		if err != nil {
@@ -435,19 +435,19 @@ func unmarshalSparseEntries(entries []*runtimev1.BitmapIndex_Entry) (sparseDimen
 		for it := bm.Iterator(); it.HasNext(); {
 			ids = append(ids, it.Next())
 		}
-		d.m[e.Key] = ids
+		d.setCold(e.Key, ids)
 	}
 	return d, nil
 }
 
 func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimension, error) {
-	literals, err := unmarshalEntries(pb.Literals)
+	literals, err := unmarshalLazyEntries(pb.Literals)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling literal dimension: %w", err)
 	}
 
 	gd := newGlobDimension()
-	gd.literals = literals.m
+	gd.literals = literals
 
 	// can't use `unmarshalEntries` because each glob entry also
 	// needs its pattern compiled into gd.compiled.

@@ -35,6 +35,32 @@ func (b *Bitmap) Add(id uint32) {
 	b.meta[i/64] |= 1 << (uint(i) % 64) //nolint:mnd
 }
 
+// AddSortedBatch sets all of ids, which must be in ascending order (it grows the
+// backing storage once to the last/largest id). It is faster than repeated Add
+// for materialising a bitmap from a sorted ID slice: it skips the per-id ensure
+// call and coalesces the data- and meta-word writes for ids sharing a word.
+func (b *Bitmap) AddSortedBatch(ids []uint32) {
+	if len(ids) == 0 {
+		return
+	}
+	b.ensure(int(ids[len(ids)-1]/64) + 1) //nolint:mnd
+
+	wi := int(ids[0] / 64) //nolint:mnd // index of the word currently being accumulated
+	var w uint64           // bits destined for words[wi]
+	for _, id := range ids {
+		i := int(id / 64) //nolint:mnd
+		if i != wi {
+			b.words[wi] |= w
+			b.meta[wi/64] |= 1 << (uint(wi) % 64) //nolint:mnd
+			wi = i
+			w = 0
+		}
+		w |= 1 << (id % 64) //nolint:mnd
+	}
+	b.words[wi] |= w
+	b.meta[wi/64] |= 1 << (uint(wi) % 64) //nolint:mnd
+}
+
 func (b *Bitmap) Remove(id uint32) {
 	i := int(id / 64) //nolint:mnd
 	if i >= len(b.words) {

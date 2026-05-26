@@ -207,13 +207,13 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 	// no matching rows — returning early here skips the costlier resource/role glob
 	// lookups below.
 	if principalID != "" {
-		ids, ok := bi.principal.Get(principalID)
+		// principal is stored lazily (sorted IDs); the bitmap is materialised and
+		// cached on first use.
+		bm, ok := bi.principal.Bitmap(principalID)
 		if !ok {
 			return buf
 		}
-		// principal is stored sparsely (sorted IDs); densify the queried
-		// value into a pooled bitmap for intersection with the other dims.
-		principalBM = arena.fromIDs(ids)
+		principalBM = bm
 	}
 
 	// scope is always filtered because "" is a valid literal scope (root scope).
@@ -878,13 +878,7 @@ func (bi *bitmapIndex) nonPrincipalDimensionKeys(gd *globDimension, versions, sc
 		}
 	}
 
-	var keys []string
-	gd.RangeBitmaps(func(k string, bm *Bitmap) {
-		if intersectionNonEmpty(bm, filterBM) {
-			keys = append(keys, k)
-		}
-	})
-	return keys
+	return gd.intersectingKeys(filterBM)
 }
 
 // versionScopeFilters builds the filter bitmaps. ok=false means a non-empty

@@ -60,13 +60,36 @@ func dimensionStats[T comparable](name string, d dimension[T]) dimStats { //noli
 }
 
 func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unused
-	s := dimStats{Name: name, Keys: len(gd.literals) + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	s := dimStats{Name: name, Keys: gd.literals.len() + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
 	totalWords := 0
 	totalCard := uint64(0)
-	for _, bm := range gd.literals {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
+	for _, e := range gd.literals.m {
+		st := e.state.Load()
+		var c uint64
+		wl := 0
+		if st.bm != nil {
+			c = st.bm.GetCardinality()
+			wl = st.bm.WordsLen()
+		} else {
+			c = uint64(len(st.ids))
+			if n := len(st.ids); n > 0 {
+				wl = int(st.ids[n-1]/64) + 1 //nolint:mnd
+			}
+		}
+		if wl > s.MaxWords {
+			s.MaxWords = wl
+		}
+		if wl < s.MinWords {
+			s.MinWords = wl
+		}
+		if c > s.MaxCard {
+			s.MaxCard = c
+		}
+		if c < s.MinCard {
+			s.MinCard = c
+		}
+		totalWords += wl
+		totalCard += c
 	}
 	for _, bm := range gd.globs {
 		collectBitmapStats(&s, bm)
@@ -105,17 +128,26 @@ func fqnDimensionStats(name string, d fqnDimension) dimStats { //nolint:unused
 	return s
 }
 
-// sparseDimensionStats mirrors dimensionStats for a sparseDimension. Card is the
-// number of IDs per key; Words reports the dense-equivalent word count (highest
-// ID / 64) the old bitmap representation would have allocated, for comparison.
-func sparseDimensionStats(name string, d sparseDimension) dimStats { //nolint:unused
-	s := dimStats{Name: name, Keys: len(d.m), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+// lazyDimensionStats mirrors dimensionStats for a lazyDimension without
+// materialising cold entries. Card is the number of IDs per key; Words is the
+// actual word count for hot (materialised) entries, or the dense-equivalent
+// (highest ID / 64) for cold ones.
+func lazyDimensionStats(name string, d lazyDimension) dimStats { //nolint:unused
+	s := dimStats{Name: name, Keys: d.len(), MinWords: math.MaxInt, MinCard: math.MaxUint64}
 	totalWords := 0
 	totalCard := uint64(0)
-	for _, ids := range d.m {
+	for _, e := range d.m {
+		st := e.state.Load()
+		var c uint64
 		wl := 0
-		if n := len(ids); n > 0 {
-			wl = int(ids[n-1]/64) + 1 //nolint:mnd
+		if st.bm != nil {
+			c = st.bm.GetCardinality()
+			wl = st.bm.WordsLen()
+		} else {
+			c = uint64(len(st.ids))
+			if n := len(st.ids); n > 0 {
+				wl = int(st.ids[n-1]/64) + 1 //nolint:mnd
+			}
 		}
 		if wl > s.MaxWords {
 			s.MaxWords = wl
@@ -123,7 +155,6 @@ func sparseDimensionStats(name string, d sparseDimension) dimStats { //nolint:un
 		if wl < s.MinWords {
 			s.MinWords = wl
 		}
-		c := uint64(len(ids))
 		if c > s.MaxCard {
 			s.MaxCard = c
 		}
@@ -151,7 +182,7 @@ func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 		globDimensionStats("resource", idx.resource),
 		globDimensionStats("action", idx.action),
 		dimensionStats("policyKind", idx.policyKind),
-		sparseDimensionStats("principal", idx.principal),
+		lazyDimensionStats("principal", idx.principal),
 		fqnDimensionStats("fqnBindings", idx.fqnBindings),
 	}
 

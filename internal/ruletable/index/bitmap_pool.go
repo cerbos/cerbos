@@ -41,22 +41,6 @@ func (a *bitmapArena) get() *Bitmap {
 	return bm
 }
 
-// fromIDs returns a pooled bitmap with the given sorted IDs set, densifying a
-// sparseDimension entry so it can be intersected with the dense dimensions. The
-// list is sorted ascending, so a single ensure to the top word avoids repeated
-// growth during the Adds.
-func (a *bitmapArena) fromIDs(ids []uint32) *Bitmap {
-	bm := a.get()
-	if len(ids) == 0 {
-		return bm
-	}
-	bm.ensure(int(ids[len(ids)-1]/64) + 1) //nolint:mnd
-	for _, id := range ids {
-		bm.Add(id)
-	}
-	return bm
-}
-
 // orInto ORs all parts into a pooled bitmap using in-place Or, avoiding
 // intermediate bitmap allocations. Starts with the largest bitmap so that
 // ensure allocates once to the final size.
