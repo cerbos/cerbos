@@ -59,11 +59,11 @@ func dimensionStats[T comparable](name string, d dimension[T]) dimStats { //noli
 	return s
 }
 
-func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unused
-	s := dimStats{Name: name, Keys: gd.literals.len() + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
-	totalWords := 0
-	totalCard := uint64(0)
-	for _, e := range gd.literals.m {
+// accumulateLazyStats folds a lazyDimension's per-entry word/cardinality stats
+// into s without materialising cold entries (cold entries report the dense-
+// equivalent word count; hot ones report their actual size).
+func accumulateLazyStats(s *dimStats, d lazyDimension) (totalWords int, totalCard uint64) { //nolint:unused
+	for _, e := range d.m {
 		st := e.Load()
 		var c uint64
 		wl := 0
@@ -91,18 +91,24 @@ func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unus
 		totalWords += wl
 		totalCard += c
 	}
-	for _, bm := range gd.globs {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
-	}
+	return totalWords, totalCard
+}
+
+func finalizeStats(s *dimStats, totalWords int, totalCard uint64) { //nolint:unused
 	if s.Keys == 0 {
 		s.MinWords = 0
 		s.MinCard = 0
-	} else {
-		s.AvgWords = totalWords / s.Keys
-		s.AvgCard = totalCard / uint64(s.Keys)
+		return
 	}
+	s.AvgWords = totalWords / s.Keys
+	s.AvgCard = totalCard / uint64(s.Keys)
+}
+
+func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unused
+	s := dimStats{Name: name, Keys: gd.literals.len() + gd.globs.len(), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	lw, lc := accumulateLazyStats(&s, gd.literals)
+	gw, gc := accumulateLazyStats(&s, gd.globs)
+	finalizeStats(&s, lw+gw, lc+gc)
 	return s
 }
 
@@ -134,43 +140,8 @@ func fqnDimensionStats(name string, d fqnDimension) dimStats { //nolint:unused
 // (highest ID / 64) for cold ones.
 func lazyDimensionStats(name string, d lazyDimension) dimStats { //nolint:unused
 	s := dimStats{Name: name, Keys: d.len(), MinWords: math.MaxInt, MinCard: math.MaxUint64}
-	totalWords := 0
-	totalCard := uint64(0)
-	for _, e := range d.m {
-		st := e.Load()
-		var c uint64
-		wl := 0
-		if st.bm != nil {
-			c = st.bm.GetCardinality()
-			wl = st.bm.WordsLen()
-		} else {
-			c = uint64(len(st.ids))
-			if n := len(st.ids); n > 0 {
-				wl = int(st.ids[n-1]/64) + 1 //nolint:mnd
-			}
-		}
-		if wl > s.MaxWords {
-			s.MaxWords = wl
-		}
-		if wl < s.MinWords {
-			s.MinWords = wl
-		}
-		if c > s.MaxCard {
-			s.MaxCard = c
-		}
-		if c < s.MinCard {
-			s.MinCard = c
-		}
-		totalWords += wl
-		totalCard += c
-	}
-	if s.Keys == 0 {
-		s.MinWords = 0
-		s.MinCard = 0
-	} else {
-		s.AvgWords = totalWords / s.Keys
-		s.AvgCard = totalCard / uint64(s.Keys)
-	}
+	tw, tc := accumulateLazyStats(&s, d)
+	finalizeStats(&s, tw, tc)
 	return s
 }
 
