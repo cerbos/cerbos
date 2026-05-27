@@ -282,6 +282,12 @@ func visitCompiledExpr(expr *runtimev1.Expr, visitor ast.Visitor) error {
 		return nil
 	}
 
+	// The CheckedExpr is released once a rule table is loaded
+	// (RuleTable.releaseCheckedExprs); recompile from Original in that case.
+	if expr.Checked == nil {
+		return visitExpr(expr.Original, visitor)
+	}
+
 	exprAST, err := ast.ToAST(expr.Checked)
 	if err != nil {
 		return fmt.Errorf("failed to convert checked expression %q to AST: %w", expr.Original, err)
