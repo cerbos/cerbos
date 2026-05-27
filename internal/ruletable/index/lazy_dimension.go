@@ -8,10 +8,9 @@ import (
 	"sync/atomic"
 )
 
-// lazyDimension stores each value's binding IDs as a sorted slice and materialises
-// a dense Bitmap on first query, caching it for later queries — "pay the bitmap
-// cost lazily, for the working set only". Building only slices up front makes
-// index build/reload cheaper, and values never queried stay as cheap slices.
+// lazyDimension stores each value's binding IDs as a sorted slice, unless
+// bitmap is smaller, and materialises a Bitmap on first query, caching it
+// for later queries — "pay the bitmap cost lazily, for the working set only".
 //
 // Concurrency. Queries run under the rule-table RLock (concurrent readers) and are
 // the only path that materialises, so each key maps to an atomic pointer to an
@@ -23,9 +22,9 @@ type lazyDimension struct {
 	m map[string]*atomic.Pointer[lazyState]
 }
 
-// lazyState is an immutable snapshot of an entry: cold (ids set, bm nil) until a
-// query materialises it to hot (bm set). The ID slice is dropped on
-// materialisation, so a hot entry costs no more than the eager bitmap would have.
+// lazyState is an immutable snapshot of an entry: cold (ids set, bm nil)
+// until a query materialises it to hot (bm set). The ID slice is dropped on
+// materialisation.
 type lazyState struct {
 	bm  *Bitmap
 	ids []uint32
@@ -117,9 +116,9 @@ func (d lazyDimension) has(key string) bool {
 }
 
 // compact finalises every cold entry built so far, picking the smaller backing
-// store for each. A value dense enough is materialised now - smaller footprint AND a free first query;
-// sparser values keep their slice (trimmed of append slack) and materialise
-// lazily on first query.
+// store for each. a value dense enough is materialised now - smaller footprint
+// and a free first query; sparser values keep their slice (trimmed of append
+// slack) and materialise lazily on first query.
 func (d lazyDimension) compact() {
 	const (
 		bitsPerWord  = 64 // bits in a data word
