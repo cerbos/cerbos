@@ -15,6 +15,7 @@ import (
 // returning bitmaps for queried values.
 type globDimension struct {
 	literals lazyDimension
+	// `globs` and `compiled` share the same key
 	globs    lazyDimension
 	compiled map[string]glob.Glob
 }
