@@ -90,10 +90,10 @@ func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cool
 }
 
 type dirWatch struct {
-	lastEventTime time.Time
-	watcher       *fsnotify.Watcher
-	idx           index.Index
-	log           *zap.SugaredLogger
+	lastEventTime  time.Time
+	watcher        *fsnotify.Watcher
+	idx            index.Index
+	log            *zap.SugaredLogger
 	eventBatch     map[string]struct{}
 	notifier       notifier
 	dir            string

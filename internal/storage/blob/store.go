@@ -206,13 +206,13 @@ func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, s
 			"bucket", conf.Bucket,
 			"workDir", conf.WorkDir,
 		),
-		conf:                conf,
-		workDir:             conf.WorkDir,
-		workFS:              workFS,
-		cloner:              cloner,
-		symlink:             symlink,
-		subs:                storage.NewSubscriptionManager(ctx),
-		source:              source,
+		conf:    conf,
+		workDir: conf.WorkDir,
+		workFS:  workFS,
+		cloner:  cloner,
+		symlink: symlink,
+		subs:    storage.NewSubscriptionManager(ctx),
+		source:  source,
 	}
 
 	if err := s.init(ctx); err != nil {
