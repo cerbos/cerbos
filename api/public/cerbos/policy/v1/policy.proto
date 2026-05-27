@@ -700,10 +700,16 @@ message TestResults {
       google.protobuf.Value expected = 1;
     }
 
+    message EvaluationError {
+      google.protobuf.Value expected = 1;
+      string error = 2;
+    }
+
     string src = 1;
     oneof outcome {
       MismatchedValue mismatched = 2;
       MissingValue missing = 3;
+      EvaluationError errored = 4;
     }
   }
 

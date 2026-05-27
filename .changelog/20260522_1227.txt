@@ -1,0 +1,3 @@
+type:fix
+Return an error when empty expressions are provided in outputs
+Previously, output blocks with no expressions set were silently ignored during compilation. Now, a compile-time error is returned when an output block is provided with no expressions.

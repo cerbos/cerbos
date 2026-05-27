@@ -176,6 +176,10 @@ message OutputEntry {
     description: "Action that was being evaluated when this output was produced."
     example: "\"view\""
   }];
+  string error = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+    description: "Error encountered when evaluating the output expression (if any). `val` will not be set if an error was encountered."
+    example: "\"division by zero\""
+  }];
 }
 
 message Resource {

@@ -55,7 +55,7 @@ jobs:
           write_build_cache: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@148106e618c65e91a0026179ccf0cff043e6b962 # main
+        uses: cerbos/actions/install-tools@b9f76b0e84f6e22b19391a32883de34e29b6ce87 # main
         with:
           tools: just
 

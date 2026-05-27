@@ -15,6 +15,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "errored": {
+          "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure.EvaluationError"
+        },
         "mismatched": {
           "$ref": "#/definitions/cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue"
         },
@@ -23,6 +26,18 @@
         },
         "src": {
           "type": "string"
+        }
+      }
+    },
+    "cerbos.policy.v1.TestResults.OutputFailure.EvaluationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "expected": {
+          "$ref": "#/definitions/google.protobuf.Value"
         }
       }
     },

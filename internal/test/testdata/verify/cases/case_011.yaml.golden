@@ -5,15 +5,15 @@
       "name": "TestSuite",
       "summary": {
         "overallResult": "RESULT_FAILED",
-        "testsCount": 18,
+        "testsCount": 24,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 16
+            "count": 21
           },
           {
             "result": "RESULT_FAILED",
-            "count": 2
+            "count": 3
           }
         ]
       },
@@ -85,6 +85,25 @@
                           ]
                         }
                       }
+                    },
+                    {
+                      "name": "error",
+                      "details": {
+                        "result": "RESULT_FAILED",
+                        "failure": {
+                          "expected": "EFFECT_ALLOW",
+                          "actual": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#output-error",
+                              "errored": {
+                                "expected": "infinity",
+                                "error": "division by zero"
+                              }
+                            }
+                          ]
+                        }
+                      }
                     }
                   ]
                 },
@@ -145,6 +164,22 @@
                               "src": "resource.equipment_request.vdefault/acme#rule-001",
                               "val": "create_allowed:john",
                               "action": "create"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "error",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#output-error",
+                              "action": "error",
+                              "error": "division by zero"
                             }
                           ]
                         }
@@ -246,6 +281,22 @@
                           ]
                         }
                       }
+                    },
+                    {
+                      "name": "error",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#output-error",
+                              "action": "error",
+                              "error": "division by zero"
+                            }
+                          ]
+                        }
+                      }
                     }
                   ]
                 },
@@ -297,6 +348,22 @@
                               "src": "resource.equipment_request.vdefault/acme#rule-001",
                               "val": "create_allowed:bev",
                               "action": "create"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "name": "error",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#output-error",
+                              "action": "error",
+                              "error": "division by zero"
                             }
                           ]
                         }
@@ -376,6 +443,22 @@
                           ]
                         }
                       }
+                    },
+                    {
+                      "name": "error",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#output-error",
+                              "action": "error",
+                              "error": "division by zero"
+                            }
+                          ]
+                        }
+                      }
                     }
                   ]
                 },
@@ -446,6 +529,22 @@
                           ]
                         }
                       }
+                    },
+                    {
+                      "name": "error",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW",
+                          "outputs": [
+                            {
+                              "src": "resource.equipment_request.vdefault#output-error",
+                              "action": "error",
+                              "error": "division by zero"
+                            }
+                          ]
+                        }
+                      }
                     }
                   ]
                 }
@@ -459,15 +558,15 @@
   ],
   "summary": {
     "overallResult": "RESULT_FAILED",
-    "testsCount": 18,
+    "testsCount": 24,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 16
+        "count": 21
       },
       {
         "result": "RESULT_FAILED",
-        "count": 2
+        "count": 3
       }
     ]
   }

@@ -5,6 +5,7 @@ package ruletable
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"reflect"
@@ -362,14 +363,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							}
 
 							if outputExpr != nil {
-								octx := rulectx.StartOutput(b.Name)
-								output := &enginev1.OutputEntry{
-									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, outputExpr, constants, variables),
-									Action: action,
-								}
-								result.outputs = append(result.outputs, output)
-								octx.ComputedOutput(output)
+								result.outputs = append(result.outputs, evalCtx.evaluateOutput(ctx, rulectx, b.Name, namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name), action, outputExpr, constants, variables))
 							}
 
 							if b.Core.Effect == effectv1.Effect_EFFECT_ALLOW {
@@ -390,14 +384,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							}
 						} else {
 							if b.Core.EmitOutput != nil && b.Core.EmitOutput.When != nil && b.Core.EmitOutput.When.ConditionNotMet != nil {
-								octx := rulectx.StartOutput(b.Name)
-								output := &enginev1.OutputEntry{
-									Src:    namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name),
-									Val:    evalCtx.evaluateProtobufValueCELExpr(ctx, b.Core.EmitOutput.When.ConditionNotMet, constants, variables),
-									Action: action,
-								}
-								result.outputs = append(result.outputs, output)
-								octx.ComputedOutput(output)
+								result.outputs = append(result.outputs, evalCtx.evaluateOutput(ctx, rulectx, b.Name, namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name), action, b.Core.EmitOutput.When.ConditionNotMet, constants, variables))
 							}
 							rulectx.Skipped(nil, conditionNotSatisfied)
 						}
@@ -620,7 +607,7 @@ func (ec *EvalContext) evaluatePrograms(tctx tracer.Context, constants map[strin
 		result, _, err := prg.Prog.Eval(ec.buildEvalVars(constants, evalVars))
 		if err != nil {
 			// Ignore errors for expressions that evaluate to an error value (e.g., missing keys).
-			// This matches the behavior of evaluateCELExpr which returns nil for such cases.
+			// This matches the behavior of evaluateCELExprToRaw which returns nil for such cases.
 			if celtypes.IsError(result) {
 				vctx.ComputedResult(nil)
 				continue
@@ -735,28 +722,37 @@ func (ec *EvalContext) evaluateBoolCELExpr(ctx context.Context, expr *runtimev1.
 	return boolVal, nil
 }
 
-func (ec *EvalContext) evaluateProtobufValueCELExpr(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) *structpb.Value {
+func (ec *EvalContext) evaluateOutput(ctx context.Context, tctx tracer.Context, name, src, action string, expr *runtimev1.Expr, constants, variables map[string]any) *enginev1.OutputEntry {
+	octx := tctx.StartOutput(name)
+	output := &enginev1.OutputEntry{Src: src, Action: action}
+	val, err := ec.evaluateOutputExpr(ctx, expr, constants, variables)
+	if err == nil {
+		output.Val = val
+	} else {
+		output.Error = err.Error()
+	}
+	octx.ComputedOutput(output)
+	return output
+}
+
+func (ec *EvalContext) evaluateOutputExpr(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) (*structpb.Value, error) {
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
-		return structpb.NewStringValue("<failed to evaluate expression>")
-	}
-
-	if result == nil {
-		return nil
+		return nil, err
 	}
 
 	val, err := result.ConvertToNative(reflect.TypeFor[*structpb.Value]())
 	if err != nil {
-		return structpb.NewStringValue("<failed to convert evaluation to protobuf value>")
+		return nil, err
 	}
 
 	pbVal, ok := val.(*structpb.Value)
 	if !ok {
 		// Something is broken in `ConvertToNative`
-		return structpb.NewStringValue("<failed to convert evaluation to protobuf value>")
+		return nil, errors.New("failed to convert evaluation to protobuf value")
 	}
 
-	return pbVal
+	return pbVal, nil
 }
 
 func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) (ref.Val, error) {
@@ -770,24 +766,16 @@ func (ec *EvalContext) evaluateCELExpr(ctx context.Context, expr *runtimev1.Expr
 	}
 
 	result, _, err := prg.ContextEval(ctx, ec.buildEvalVars(constants, variables))
-	if err != nil {
-		// ignore expressions that are invalid
-		if celtypes.IsError(result) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return result, nil
+	return result, err
 }
 
 func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *runtimev1.Expr, constants, variables map[string]any) (any, error) {
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
+		if celtypes.IsError(result) {
+			return nil, nil
+		}
 		return nil, err
-	}
-
-	if result == nil {
-		return nil, nil
 	}
 
 	return result.Value(), nil

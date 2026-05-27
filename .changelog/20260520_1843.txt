@@ -1,0 +1,3 @@
+type:enhancement
+Surface errors evaluating outputs
+If an error is encountered when evaluating an xref:policies:outputs.adoc[output expression], the `val` field of the `OutputEntry` in the response is not set. Previously, it was not possible to gain any further insight into why the evaluation failed. Now, there is also an `error` field on the `OutputEntry` that contains the error message. The error message is also surfaced in xref:policies:compile.adoc#testing[test results] when an assertion for the output is set in `expected.outputs`.

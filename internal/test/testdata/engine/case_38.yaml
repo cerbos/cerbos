@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Error evaluating output
+
+inputs:
+  - requestId: bad-output
+    actions:
+      - error
+    principal:
+      id: john
+      roles:
+        - employee
+    resource:
+      kind: equipment_request
+      id: equipment_request_1
+      attr:
+        ownerId: john
+
+wantOutputs:
+  - requestId: bad-output
+    resourceId: equipment_request_1
+    effectiveDerivedRoles:
+      - any_employee
+    actions:
+      error:
+        effect: EFFECT_ALLOW
+        policy: resource.equipment_request.vdefault
+    outputs:
+      - src: resource.equipment_request.vdefault#output-error
+        action: error
+        error: division by zero
+
+wantDecisionLogs:
+  - callId: 01KS2X0MGK5ZCG2EXV26A0CTW8
+    timestamp: 2026-05-20T14:37:22.884187572Z
+    auditTrail:
+      effectivePolicies:
+        resource.equipment_request.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_07.yaml
+    policySource:
+      disk: {}
+    checkResources:
+      inputs:
+        - requestId: bad-output
+          actions:
+            - error
+          principal:
+            id: john
+            roles:
+              - employee
+          resource:
+            kind: equipment_request
+            id: equipment_request_1
+            attr:
+              ownerId: john
+      outputs:
+        - requestId: bad-output
+          resourceId: equipment_request_1
+          actions:
+            error:
+              effect: EFFECT_ALLOW
+              policy: resource.equipment_request.vdefault
+          effectiveDerivedRoles:
+            - any_employee
+          outputs:
+            - src: resource.equipment_request.vdefault#output-error
+              action: error
+              error: division by zero

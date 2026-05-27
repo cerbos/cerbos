@@ -2753,6 +2753,11 @@
           "type": "string",
           "example": "view",
           "description": "Action that was being evaluated when this output was produced."
+        },
+        "error": {
+          "type": "string",
+          "example": "division by zero",
+          "description": "Error encountered when evaluating the output expression (if any). `val` will not be set if an error was encountered."
         }
       }
     },

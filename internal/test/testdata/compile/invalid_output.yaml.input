@@ -1,0 +1,47 @@
+-- resource_policies/invalid_output.yaml --
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: invalid_output
+  rules:
+    - actions:
+        - something
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output: {}
+
+    - actions:
+        - something
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        expr:
+
+    - actions:
+        - something
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        when: {}
+
+    - actions:
+        - something
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        when:
+          ruleActivated:
+
+    - actions:
+        - something
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      output:
+        when:
+          conditionNotMet:

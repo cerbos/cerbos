@@ -180,6 +180,7 @@ func (c *context) ComputedOutput(output *enginev1.OutputEntry) {
 	c.addTrace(&enginev1.Trace_Event{
 		Status: enginev1.Trace_Event_STATUS_ACTIVATED,
 		Result: protobufValue(output),
+		Error:  output.Error,
 	})
 }
 

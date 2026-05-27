@@ -1,10 +1,10 @@
 {
   "private": true,
-  "packageManager": "npm@11.13.0+sha512.7119a16a0843580d65160977520e3f5710c974f04afd4fad36d9eb97d917ba716a856c35c78c4be6dc64367eeaccfb957ef5ce997ca31e9330b2e936ba2b1b92",
+  "packageManager": "npm@11.14.1+sha512.6a8a4d67478497a2dbc6815cad72e64c43f33413717e242756047d466241ab39bee61e691683a64658e94496ec5f1a1c05e4a5ec62dcc773280dfd949443a367",
   "scripts": {
     "start": "verdaccio"
   },
   "dependencies": {
-    "verdaccio": "6.5.2"
+    "verdaccio": "6.7.1"
   }
 }

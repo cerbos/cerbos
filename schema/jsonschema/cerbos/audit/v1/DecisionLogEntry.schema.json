@@ -367,6 +367,9 @@
         "action": {
           "type": "string"
         },
+        "error": {
+          "type": "string"
+        },
         "src": {
           "type": "string"
         },

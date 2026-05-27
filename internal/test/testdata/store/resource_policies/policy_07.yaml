@@ -103,3 +103,14 @@ resourcePolicy:
       output:
         expr: |-
           "deprecated_rule_activated"
+
+    - name: output-error
+      actions:
+        - error
+      effect: EFFECT_ALLOW
+      derivedRoles:
+        - any_employee
+      output:
+        when:
+          ruleActivated: |-
+            1 / 0

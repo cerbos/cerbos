@@ -3665,6 +3665,7 @@ type TestResults_OutputFailure struct {
 	//
 	//	*TestResults_OutputFailure_Mismatched
 	//	*TestResults_OutputFailure_Missing
+	//	*TestResults_OutputFailure_Errored
 	Outcome       isTestResults_OutputFailure_Outcome `protobuf_oneof:"outcome"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -3732,6 +3733,15 @@ func (x *TestResults_OutputFailure) GetMissing() *TestResults_OutputFailure_Miss
 	return nil
 }
 
+func (x *TestResults_OutputFailure) GetErrored() *TestResults_OutputFailure_EvaluationError {
+	if x != nil {
+		if x, ok := x.Outcome.(*TestResults_OutputFailure_Errored); ok {
+			return x.Errored
+		}
+	}
+	return nil
+}
+
 type isTestResults_OutputFailure_Outcome interface {
 	isTestResults_OutputFailure_Outcome()
 }
@@ -3744,9 +3754,15 @@ type TestResults_OutputFailure_Missing struct {
 	Missing *TestResults_OutputFailure_MissingValue `protobuf:"bytes,3,opt,name=missing,proto3,oneof"`
 }
 
+type TestResults_OutputFailure_Errored struct {
+	Errored *TestResults_OutputFailure_EvaluationError `protobuf:"bytes,4,opt,name=errored,proto3,oneof"`
+}
+
 func (*TestResults_OutputFailure_Mismatched) isTestResults_OutputFailure_Outcome() {}
 
 func (*TestResults_OutputFailure_Missing) isTestResults_OutputFailure_Outcome() {}
+
+func (*TestResults_OutputFailure_Errored) isTestResults_OutputFailure_Outcome() {}
 
 type TestResults_Failure struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
@@ -3954,6 +3970,58 @@ func (x *TestResults_OutputFailure_MissingValue) GetExpected() *structpb.Value {
 		return x.Expected
 	}
 	return nil
+}
+
+type TestResults_OutputFailure_EvaluationError struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Expected      *structpb.Value        `protobuf:"bytes,1,opt,name=expected,proto3" json:"expected,omitempty"`
+	Error         string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestResults_OutputFailure_EvaluationError) Reset() {
+	*x = TestResults_OutputFailure_EvaluationError{}
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestResults_OutputFailure_EvaluationError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestResults_OutputFailure_EvaluationError) ProtoMessage() {}
+
+func (x *TestResults_OutputFailure_EvaluationError) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_policy_v1_policy_proto_msgTypes[76]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestResults_OutputFailure_EvaluationError.ProtoReflect.Descriptor instead.
+func (*TestResults_OutputFailure_EvaluationError) Descriptor() ([]byte, []int) {
+	return file_cerbos_policy_v1_policy_proto_rawDescGZIP(), []int{25, 8, 2}
+}
+
+func (x *TestResults_OutputFailure_EvaluationError) GetExpected() *structpb.Value {
+	if x != nil {
+		return x.Expected
+	}
+	return nil
+}
+
+func (x *TestResults_OutputFailure_EvaluationError) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
 }
 
 var File_cerbos_policy_v1_policy_proto protoreflect.FileDescriptor
@@ -4278,7 +4346,7 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\x0e2\x18.cerbos.effect.v1.EffectR\x05value:\x028\x01\x1ah\n" +
 	"\x14ExpectedOutputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12:\n" +
-	"\x05value\x18\x02 \x01(\v2$.cerbos.policy.v1.Test.OutputEntriesR\x05value:\x028\x01\"\xfd\x12\n" +
+	"\x05value\x18\x02 \x01(\v2$.cerbos.policy.v1.Test.OutputEntriesR\x05value:\x028\x01\"\xb3\x14\n" +
 	"\vTestResults\x12;\n" +
 	"\x06suites\x18\x01 \x03(\v2#.cerbos.policy.v1.TestResults.SuiteR\x06suites\x12?\n" +
 	"\asummary\x18\x02 \x01(\v2%.cerbos.policy.v1.TestResults.SummaryR\asummary\x1a[\n" +
@@ -4326,18 +4394,22 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"skipReason\x12>\n" +
 	"\fengine_trace\x18\x04 \x03(\v2\x17.cerbos.engine.v1.TraceB\x02\x18\x01R\vengineTrace\x12J\n" +
 	"\x12engine_trace_batch\x18\a \x01(\v2\x1c.cerbos.engine.v1.TraceBatchR\x10engineTraceBatchB\t\n" +
-	"\aoutcome\x1a\x9c\x03\n" +
+	"\aoutcome\x1a\xd2\x04\n" +
 	"\rOutputFailure\x12\x10\n" +
 	"\x03src\x18\x01 \x01(\tR\x03src\x12]\n" +
 	"\n" +
 	"mismatched\x18\x02 \x01(\v2;.cerbos.policy.v1.TestResults.OutputFailure.MismatchedValueH\x00R\n" +
 	"mismatched\x12T\n" +
-	"\amissing\x18\x03 \x01(\v28.cerbos.policy.v1.TestResults.OutputFailure.MissingValueH\x00R\amissing\x1au\n" +
+	"\amissing\x18\x03 \x01(\v28.cerbos.policy.v1.TestResults.OutputFailure.MissingValueH\x00R\amissing\x12W\n" +
+	"\aerrored\x18\x04 \x01(\v2;.cerbos.policy.v1.TestResults.OutputFailure.EvaluationErrorH\x00R\aerrored\x1au\n" +
 	"\x0fMismatchedValue\x122\n" +
 	"\bexpected\x18\x01 \x01(\v2\x16.google.protobuf.ValueR\bexpected\x12.\n" +
 	"\x06actual\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x06actual\x1aB\n" +
 	"\fMissingValue\x122\n" +
-	"\bexpected\x18\x01 \x01(\v2\x16.google.protobuf.ValueR\bexpectedB\t\n" +
+	"\bexpected\x18\x01 \x01(\v2\x16.google.protobuf.ValueR\bexpected\x1a[\n" +
+	"\x0fEvaluationError\x122\n" +
+	"\bexpected\x18\x01 \x01(\v2\x16.google.protobuf.ValueR\bexpected\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05errorB\t\n" +
 	"\aoutcome\x1a\xb8\x01\n" +
 	"\aFailure\x124\n" +
 	"\bexpected\x18\x01 \x01(\x0e2\x18.cerbos.effect.v1.EffectR\bexpected\x120\n" +
@@ -4379,7 +4451,7 @@ func file_cerbos_policy_v1_policy_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_policy_v1_policy_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_cerbos_policy_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
+var file_cerbos_policy_v1_policy_proto_msgTypes = make([]protoimpl.MessageInfo, 77)
 var file_cerbos_policy_v1_policy_proto_goTypes = []any{
 	(Kind)(0),                            // 0: cerbos.policy.v1.Kind
 	(ScopePermissions)(0),                // 1: cerbos.policy.v1.ScopePermissions
@@ -4460,17 +4532,18 @@ var file_cerbos_policy_v1_policy_proto_goTypes = []any{
 	(*TestResults_Success)(nil),          // 76: cerbos.policy.v1.TestResults.Success
 	(*TestResults_OutputFailure_MismatchedValue)(nil), // 77: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue
 	(*TestResults_OutputFailure_MissingValue)(nil),    // 78: cerbos.policy.v1.TestResults.OutputFailure.MissingValue
-	(*wrapperspb.UInt64Value)(nil),                    // 79: google.protobuf.UInt64Value
-	(v1.Effect)(0),                                    // 80: cerbos.effect.v1.Effect
-	(*timestamppb.Timestamp)(nil),                     // 81: google.protobuf.Timestamp
-	(*v11.CheckInput)(nil),                            // 82: cerbos.engine.v1.CheckInput
-	(*structpb.Value)(nil),                            // 83: google.protobuf.Value
-	(*v11.Principal)(nil),                             // 84: cerbos.engine.v1.Principal
-	(*v11.Resource)(nil),                              // 85: cerbos.engine.v1.Resource
-	(*v11.AuxData)(nil),                               // 86: cerbos.engine.v1.AuxData
-	(*v11.OutputEntry)(nil),                           // 87: cerbos.engine.v1.OutputEntry
-	(*v11.Trace)(nil),                                 // 88: cerbos.engine.v1.Trace
-	(*v11.TraceBatch)(nil),                            // 89: cerbos.engine.v1.TraceBatch
+	(*TestResults_OutputFailure_EvaluationError)(nil), // 79: cerbos.policy.v1.TestResults.OutputFailure.EvaluationError
+	(*wrapperspb.UInt64Value)(nil),                    // 80: google.protobuf.UInt64Value
+	(v1.Effect)(0),                                    // 81: cerbos.effect.v1.Effect
+	(*timestamppb.Timestamp)(nil),                     // 82: google.protobuf.Timestamp
+	(*v11.CheckInput)(nil),                            // 83: cerbos.engine.v1.CheckInput
+	(*structpb.Value)(nil),                            // 84: google.protobuf.Value
+	(*v11.Principal)(nil),                             // 85: cerbos.engine.v1.Principal
+	(*v11.Resource)(nil),                              // 86: cerbos.engine.v1.Resource
+	(*v11.AuxData)(nil),                               // 87: cerbos.engine.v1.AuxData
+	(*v11.OutputEntry)(nil),                           // 88: cerbos.engine.v1.OutputEntry
+	(*v11.Trace)(nil),                                 // 89: cerbos.engine.v1.Trace
+	(*v11.TraceBatch)(nil),                            // 90: cerbos.engine.v1.TraceBatch
 }
 var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	5,   // 0: cerbos.policy.v1.Policy.metadata:type_name -> cerbos.policy.v1.Metadata
@@ -4483,7 +4556,7 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	29,  // 7: cerbos.policy.v1.Policy.variables:type_name -> cerbos.policy.v1.Policy.VariablesEntry
 	30,  // 8: cerbos.policy.v1.SourceAttributes.attributes:type_name -> cerbos.policy.v1.SourceAttributes.AttributesEntry
 	31,  // 9: cerbos.policy.v1.Metadata.annotations:type_name -> cerbos.policy.v1.Metadata.AnnotationsEntry
-	79,  // 10: cerbos.policy.v1.Metadata.hash:type_name -> google.protobuf.UInt64Value
+	80,  // 10: cerbos.policy.v1.Metadata.hash:type_name -> google.protobuf.UInt64Value
 	4,   // 11: cerbos.policy.v1.Metadata.source_attributes:type_name -> cerbos.policy.v1.SourceAttributes
 	7,   // 12: cerbos.policy.v1.ResourcePolicy.rules:type_name -> cerbos.policy.v1.ResourceRule
 	21,  // 13: cerbos.policy.v1.ResourcePolicy.schemas:type_name -> cerbos.policy.v1.Schemas
@@ -4491,7 +4564,7 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	1,   // 15: cerbos.policy.v1.ResourcePolicy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
 	15,  // 16: cerbos.policy.v1.ResourcePolicy.constants:type_name -> cerbos.policy.v1.Constants
 	18,  // 17: cerbos.policy.v1.ResourceRule.condition:type_name -> cerbos.policy.v1.Condition
-	80,  // 18: cerbos.policy.v1.ResourceRule.effect:type_name -> cerbos.effect.v1.Effect
+	81,  // 18: cerbos.policy.v1.ResourceRule.effect:type_name -> cerbos.effect.v1.Effect
 	20,  // 19: cerbos.policy.v1.ResourceRule.output:type_name -> cerbos.policy.v1.Output
 	9,   // 20: cerbos.policy.v1.RolePolicy.rules:type_name -> cerbos.policy.v1.RoleRule
 	1,   // 21: cerbos.policy.v1.RolePolicy.scope_permissions:type_name -> cerbos.policy.v1.ScopePermissions
@@ -4519,7 +4592,7 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	38,  // 43: cerbos.policy.v1.Output.when:type_name -> cerbos.policy.v1.Output.When
 	40,  // 44: cerbos.policy.v1.Schemas.principal_schema:type_name -> cerbos.policy.v1.Schemas.Schema
 	40,  // 45: cerbos.policy.v1.Schemas.resource_schema:type_name -> cerbos.policy.v1.Schemas.Schema
-	81,  // 46: cerbos.policy.v1.TestOptions.now:type_name -> google.protobuf.Timestamp
+	82,  // 46: cerbos.policy.v1.TestOptions.now:type_name -> google.protobuf.Timestamp
 	51,  // 47: cerbos.policy.v1.TestOptions.globals:type_name -> cerbos.policy.v1.TestOptions.GlobalsEntry
 	26,  // 48: cerbos.policy.v1.TestSuite.tests:type_name -> cerbos.policy.v1.TestTable
 	52,  // 49: cerbos.policy.v1.TestSuite.principals:type_name -> cerbos.policy.v1.TestSuite.PrincipalsEntry
@@ -4532,18 +4605,18 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	59,  // 56: cerbos.policy.v1.TestTable.expected:type_name -> cerbos.policy.v1.TestTable.Expectation
 	24,  // 57: cerbos.policy.v1.TestTable.options:type_name -> cerbos.policy.v1.TestOptions
 	61,  // 58: cerbos.policy.v1.Test.name:type_name -> cerbos.policy.v1.Test.TestName
-	82,  // 59: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
+	83,  // 59: cerbos.policy.v1.Test.input:type_name -> cerbos.engine.v1.CheckInput
 	63,  // 60: cerbos.policy.v1.Test.expected:type_name -> cerbos.policy.v1.Test.ExpectedEntry
 	24,  // 61: cerbos.policy.v1.Test.options:type_name -> cerbos.policy.v1.TestOptions
 	64,  // 62: cerbos.policy.v1.Test.expected_outputs:type_name -> cerbos.policy.v1.Test.ExpectedOutputsEntry
 	68,  // 63: cerbos.policy.v1.TestResults.suites:type_name -> cerbos.policy.v1.TestResults.Suite
 	67,  // 64: cerbos.policy.v1.TestResults.summary:type_name -> cerbos.policy.v1.TestResults.Summary
-	83,  // 65: cerbos.policy.v1.SourceAttributes.AttributesEntry.value:type_name -> google.protobuf.Value
+	84,  // 65: cerbos.policy.v1.SourceAttributes.AttributesEntry.value:type_name -> google.protobuf.Value
 	18,  // 66: cerbos.policy.v1.PrincipalRule.Action.condition:type_name -> cerbos.policy.v1.Condition
-	80,  // 67: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
+	81,  // 67: cerbos.policy.v1.PrincipalRule.Action.effect:type_name -> cerbos.effect.v1.Effect
 	20,  // 68: cerbos.policy.v1.PrincipalRule.Action.output:type_name -> cerbos.policy.v1.Output
-	83,  // 69: cerbos.policy.v1.ExportConstants.DefinitionsEntry.value:type_name -> google.protobuf.Value
-	83,  // 70: cerbos.policy.v1.Constants.LocalEntry.value:type_name -> google.protobuf.Value
+	84,  // 69: cerbos.policy.v1.ExportConstants.DefinitionsEntry.value:type_name -> google.protobuf.Value
+	84,  // 70: cerbos.policy.v1.Constants.LocalEntry.value:type_name -> google.protobuf.Value
 	19,  // 71: cerbos.policy.v1.Match.ExprList.of:type_name -> cerbos.policy.v1.Match
 	39,  // 72: cerbos.policy.v1.Schemas.Schema.ignore_when:type_name -> cerbos.policy.v1.Schemas.IgnoreWhen
 	44,  // 73: cerbos.policy.v1.TestFixture.Principals.principals:type_name -> cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry
@@ -4551,25 +4624,25 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	46,  // 75: cerbos.policy.v1.TestFixture.Resources.resources:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourcesEntry
 	47,  // 76: cerbos.policy.v1.TestFixture.Resources.resource_groups:type_name -> cerbos.policy.v1.TestFixture.Resources.ResourceGroupsEntry
 	48,  // 77: cerbos.policy.v1.TestFixture.AuxData.aux_data:type_name -> cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry
-	84,  // 78: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	85,  // 78: cerbos.policy.v1.TestFixture.Principals.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
 	49,  // 79: cerbos.policy.v1.TestFixture.Principals.PrincipalGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Principals
-	85,  // 80: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	86,  // 80: cerbos.policy.v1.TestFixture.Resources.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
 	50,  // 81: cerbos.policy.v1.TestFixture.Resources.ResourceGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Resources
-	86,  // 82: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
-	83,  // 83: cerbos.policy.v1.TestOptions.GlobalsEntry.value:type_name -> google.protobuf.Value
-	84,  // 84: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
-	85,  // 85: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
-	86,  // 86: cerbos.policy.v1.TestSuite.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
+	87,  // 82: cerbos.policy.v1.TestFixture.AuxData.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
+	84,  // 83: cerbos.policy.v1.TestOptions.GlobalsEntry.value:type_name -> google.protobuf.Value
+	85,  // 84: cerbos.policy.v1.TestSuite.PrincipalsEntry.value:type_name -> cerbos.engine.v1.Principal
+	86,  // 85: cerbos.policy.v1.TestSuite.ResourcesEntry.value:type_name -> cerbos.engine.v1.Resource
+	87,  // 86: cerbos.policy.v1.TestSuite.AuxDataEntry.value:type_name -> cerbos.engine.v1.AuxData
 	49,  // 87: cerbos.policy.v1.TestSuite.PrincipalGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Principals
 	50,  // 88: cerbos.policy.v1.TestSuite.ResourceGroupsEntry.value:type_name -> cerbos.policy.v1.TestFixtureGroup.Resources
-	87,  // 89: cerbos.policy.v1.TestTable.OutputExpectations.expected:type_name -> cerbos.engine.v1.OutputEntry
+	88,  // 89: cerbos.policy.v1.TestTable.OutputExpectations.expected:type_name -> cerbos.engine.v1.OutputEntry
 	60,  // 90: cerbos.policy.v1.TestTable.Expectation.actions:type_name -> cerbos.policy.v1.TestTable.Expectation.ActionsEntry
 	58,  // 91: cerbos.policy.v1.TestTable.Expectation.outputs:type_name -> cerbos.policy.v1.TestTable.OutputExpectations
-	80,  // 92: cerbos.policy.v1.TestTable.Expectation.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
+	81,  // 92: cerbos.policy.v1.TestTable.Expectation.ActionsEntry.value:type_name -> cerbos.effect.v1.Effect
 	65,  // 93: cerbos.policy.v1.Test.OutputEntries.entries:type_name -> cerbos.policy.v1.Test.OutputEntries.EntriesEntry
-	80,  // 94: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
+	81,  // 94: cerbos.policy.v1.Test.ExpectedEntry.value:type_name -> cerbos.effect.v1.Effect
 	62,  // 95: cerbos.policy.v1.Test.ExpectedOutputsEntry.value:type_name -> cerbos.policy.v1.Test.OutputEntries
-	83,  // 96: cerbos.policy.v1.Test.OutputEntries.EntriesEntry.value:type_name -> google.protobuf.Value
+	84,  // 96: cerbos.policy.v1.Test.OutputEntries.EntriesEntry.value:type_name -> google.protobuf.Value
 	2,   // 97: cerbos.policy.v1.TestResults.Tally.result:type_name -> cerbos.policy.v1.TestResults.Result
 	2,   // 98: cerbos.policy.v1.TestResults.Summary.overall_result:type_name -> cerbos.policy.v1.TestResults.Result
 	66,  // 99: cerbos.policy.v1.TestResults.Summary.result_counts:type_name -> cerbos.policy.v1.TestResults.Tally
@@ -4583,23 +4656,25 @@ var file_cerbos_policy_v1_policy_proto_depIdxs = []int32{
 	2,   // 107: cerbos.policy.v1.TestResults.Details.result:type_name -> cerbos.policy.v1.TestResults.Result
 	75,  // 108: cerbos.policy.v1.TestResults.Details.failure:type_name -> cerbos.policy.v1.TestResults.Failure
 	76,  // 109: cerbos.policy.v1.TestResults.Details.success:type_name -> cerbos.policy.v1.TestResults.Success
-	88,  // 110: cerbos.policy.v1.TestResults.Details.engine_trace:type_name -> cerbos.engine.v1.Trace
-	89,  // 111: cerbos.policy.v1.TestResults.Details.engine_trace_batch:type_name -> cerbos.engine.v1.TraceBatch
+	89,  // 110: cerbos.policy.v1.TestResults.Details.engine_trace:type_name -> cerbos.engine.v1.Trace
+	90,  // 111: cerbos.policy.v1.TestResults.Details.engine_trace_batch:type_name -> cerbos.engine.v1.TraceBatch
 	77,  // 112: cerbos.policy.v1.TestResults.OutputFailure.mismatched:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue
 	78,  // 113: cerbos.policy.v1.TestResults.OutputFailure.missing:type_name -> cerbos.policy.v1.TestResults.OutputFailure.MissingValue
-	80,  // 114: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
-	80,  // 115: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
-	74,  // 116: cerbos.policy.v1.TestResults.Failure.outputs:type_name -> cerbos.policy.v1.TestResults.OutputFailure
-	80,  // 117: cerbos.policy.v1.TestResults.Success.effect:type_name -> cerbos.effect.v1.Effect
-	87,  // 118: cerbos.policy.v1.TestResults.Success.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	83,  // 119: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected:type_name -> google.protobuf.Value
-	83,  // 120: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual:type_name -> google.protobuf.Value
-	83,  // 121: cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected:type_name -> google.protobuf.Value
-	122, // [122:122] is the sub-list for method output_type
-	122, // [122:122] is the sub-list for method input_type
-	122, // [122:122] is the sub-list for extension type_name
-	122, // [122:122] is the sub-list for extension extendee
-	0,   // [0:122] is the sub-list for field type_name
+	79,  // 114: cerbos.policy.v1.TestResults.OutputFailure.errored:type_name -> cerbos.policy.v1.TestResults.OutputFailure.EvaluationError
+	81,  // 115: cerbos.policy.v1.TestResults.Failure.expected:type_name -> cerbos.effect.v1.Effect
+	81,  // 116: cerbos.policy.v1.TestResults.Failure.actual:type_name -> cerbos.effect.v1.Effect
+	74,  // 117: cerbos.policy.v1.TestResults.Failure.outputs:type_name -> cerbos.policy.v1.TestResults.OutputFailure
+	81,  // 118: cerbos.policy.v1.TestResults.Success.effect:type_name -> cerbos.effect.v1.Effect
+	88,  // 119: cerbos.policy.v1.TestResults.Success.outputs:type_name -> cerbos.engine.v1.OutputEntry
+	84,  // 120: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.expected:type_name -> google.protobuf.Value
+	84,  // 121: cerbos.policy.v1.TestResults.OutputFailure.MismatchedValue.actual:type_name -> google.protobuf.Value
+	84,  // 122: cerbos.policy.v1.TestResults.OutputFailure.MissingValue.expected:type_name -> google.protobuf.Value
+	84,  // 123: cerbos.policy.v1.TestResults.OutputFailure.EvaluationError.expected:type_name -> google.protobuf.Value
+	124, // [124:124] is the sub-list for method output_type
+	124, // [124:124] is the sub-list for method input_type
+	124, // [124:124] is the sub-list for extension type_name
+	124, // [124:124] is the sub-list for extension extendee
+	0,   // [0:124] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_policy_v1_policy_proto_init() }
@@ -4637,6 +4712,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 	file_cerbos_policy_v1_policy_proto_msgTypes[71].OneofWrappers = []any{
 		(*TestResults_OutputFailure_Mismatched)(nil),
 		(*TestResults_OutputFailure_Missing)(nil),
+		(*TestResults_OutputFailure_Errored)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -4644,7 +4720,7 @@ func file_cerbos_policy_v1_policy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_policy_v1_policy_proto_rawDesc), len(file_cerbos_policy_v1_policy_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   76,
+			NumMessages:   77,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
