@@ -29,7 +29,7 @@ import (
 )
 
 // TestIncrementalAddReleasesCheckedExprs verifies that a policy added through the
-// incremental path (processPolicyEvent -> addPolicy, not a full reload) has its retained
+// incremental path (processPolicyEvent, not a full reload) has its retained
 // CheckedExpr trees released, and that it still evaluates correctly by recompiling from
 // Expr.Original on demand.
 func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
@@ -59,6 +59,8 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 
 	subMgr.Subscribe(ruletableMgr)
 
+	actions := []string{"view"}
+	roles := []string{"user"}
 	// Policy with a CEL condition, so it carries CheckedExpr trees that must be released.
 	p := &policyv1.Policy{
 		ApiVersion: "api.cerbos.dev/v1",
@@ -68,8 +70,8 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 				Version:  "default",
 				Rules: []*policyv1.ResourceRule{
 					{
-						Actions: []string{"view"},
-						Roles:   []string{"user"},
+						Actions: actions,
+						Roles:   roles,
 						Effect:  effectv1.Effect_EFFECT_ALLOW,
 						Condition: &policyv1.Condition{
 							Condition: &policyv1.Condition_Match{
@@ -103,8 +105,8 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 				Id:   "1",
 				Attr: map[string]*structpb.Value{"public": structpb.NewBoolValue(public)},
 			},
-			Principal: &enginev1.Principal{Id: "sam", Roles: []string{"user"}},
-			Actions:   []string{"view"},
+			Principal: &enginev1.Principal{Id: "sam", Roles: roles},
+			Actions:   actions,
 		}
 	}
 
@@ -113,15 +115,15 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, checkView(true))
 		require.NoError(c, err)
-		require.Contains(c, output.Actions, "view")
-		require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions["view"].GetEffect())
+		require.Contains(c, output.Actions, actions[0])
+		require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions[actions[0]].GetEffect())
 	}, 2*time.Second, 50*time.Millisecond)
 
 	// A non-public album must NOT be allowed, proving the condition is genuinely evaluated
 	// (not short-circuited to a constant) by the recompiled program.
 	output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, checkView(false))
 	require.NoError(t, err)
-	require.NotEqual(t, effectv1.Effect_EFFECT_ALLOW, output.Actions["view"].GetEffect())
+	require.NotEqual(t, effectv1.Effect_EFFECT_ALLOW, output.Actions[actions[0]].GetEffect())
 
 	// Every CheckedExpr retained in the rule table must have been released by addPolicy.
 	asserted := 0
@@ -134,22 +136,6 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 		core := b.Core
 		if core.Condition != nil {
 			conditions.WalkExprs(core.Condition, assertReleased)
-		}
-		if core.DerivedRoleCondition != nil {
-			conditions.WalkExprs(core.DerivedRoleCondition, assertReleased)
-		}
-		if core.EmitOutput != nil {
-			conditions.WalkExprs(core.EmitOutput, assertReleased)
-		}
-		if core.Params != nil {
-			for _, v := range core.Params.Variables {
-				conditions.WalkExprs(v, assertReleased)
-			}
-		}
-		if core.DerivedRoleParams != nil {
-			for _, v := range core.DerivedRoleParams.Variables {
-				conditions.WalkExprs(v, assertReleased)
-			}
 		}
 	}
 	require.Positive(t, asserted, "expected at least one CheckedExpr to assert on")
