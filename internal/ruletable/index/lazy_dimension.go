@@ -35,9 +35,6 @@ func newLazyDimension() lazyDimension {
 }
 
 // Add appends id to key's IDs (build/incremental only, under the exclusive lock).
-// The build path hands out monotonically increasing IDs, so the common case is a
-// tail append; incremental adds after free-list reuse fall back to a sorted
-// insert. A hot entry's bitmap is updated in place.
 func (d lazyDimension) Add(key string, id uint32) {
 	e, ok := d.m[key]
 	if !ok {
@@ -116,9 +113,7 @@ func (d lazyDimension) has(key string) bool {
 }
 
 // compact finalises every cold entry built so far, picking the smaller backing
-// store for each. a value dense enough is materialised now - smaller footprint
-// and a free first query; sparser values keep their slice (trimmed of append
-// slack) and materialise lazily on first query.
+// store for each.
 func (d lazyDimension) compact() {
 	const (
 		bitsPerWord  = 64 // bits in a data word
