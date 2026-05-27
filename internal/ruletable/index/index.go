@@ -202,9 +202,8 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	var scopeBM, versionBM, resourceBM, roleBM, policyKindBM, principalBM *Bitmap
 
-	// Principal is resolved first: it's a cheap O(1) lookup and, because principal
-	// policies are a small minority, a query for a specific principal usually finds
-	// no matching rows.
+	// Principal policies are a small minority, so a query
+	// for a specific principal usually finds no matching rows.
 	if principalID != "" {
 		bm, ok := bi.principal.Bitmap(principalID)
 		if !ok {
