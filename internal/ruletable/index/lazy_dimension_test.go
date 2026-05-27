@@ -171,3 +171,40 @@ func TestLazyDimensionConcurrentMaterialize(t *testing.T) {
 		require.Same(t, final, bm, "every query must observe the single installed bitmap")
 	}
 }
+
+// warmLazyDimension returns a dimension whose one key is already materialised, so
+// Bitmap(key) exercises only the warm read path (a single atomic load).
+func warmLazyDimension() (lazyDimension, string) {
+	const key = "hot"
+	d := newLazyDimension()
+	for i := range uint32(500) {
+		d.Add(key, i*64+1)
+	}
+	d.Bitmap(key) // materialise + cache
+	return d, key
+}
+
+// BenchmarkLazyDimensionBitmap measures the warm read path: a map lookup + atomic
+// load, with no lock and no CAS (the materialise CAS is pre-warmed away). Serial
+// vs Parallel shows the read scales without serialisation.
+func BenchmarkLazyDimensionBitmap(b *testing.B) {
+	d, key := warmLazyDimension()
+	b.Run("Serial", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			if _, ok := d.Bitmap(key); !ok {
+				b.Fatal("expected hit")
+			}
+		}
+	})
+	b.Run("Parallel", func(b *testing.B) {
+		b.ReportAllocs()
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				if _, ok := d.Bitmap(key); !ok {
+					b.Error("expected hit")
+				}
+			}
+		})
+	})
+}
