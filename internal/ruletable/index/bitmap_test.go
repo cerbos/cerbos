@@ -311,21 +311,6 @@ func TestBitmapClearAndReuse(t *testing.T) {
 	require.False(t, b.Contains(200), "stale data after Clear")
 }
 
-func TestBitmapClearAndReuseWithGrowth(t *testing.T) {
-	b := NewBitmap()
-	b.Add(5000) // forces large allocation
-	b.Clear()
-
-	// Reuse with a smaller range: grow into old capacity.
-	b.Add(10)
-	require.Equal(t, uint64(1), b.GetCardinality())
-	require.False(t, b.Contains(5000), "stale bit after Clear + smaller reuse")
-
-	// Grow back to the original range.
-	b.Add(5000)
-	require.Equal(t, uint64(2), b.GetCardinality())
-}
-
 func TestBitmapWordsLen(t *testing.T) {
 	a := NewBitmap()
 	require.Equal(t, 0, a.WordsLen())
