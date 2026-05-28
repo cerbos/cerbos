@@ -706,9 +706,7 @@ func residualExpr(ast *celast.AST, details *cel.EvalDetails) celast.Expr {
 	return prunedAST.Expr()
 }
 
-// ExprCache caches the type-checked CEL AST proto recompiled from Expr.Original so the query
-// planner does not re-parse and re-check the same expression on every request. Lazily
-// populated and cleared on policy reload (mirrors the eval-side ProgramCache).
+// ExprCache caches the type-checked CEL AST proto recompiled from Expr.Original.
 type ExprCache struct {
 	m  map[string]*exprpb.Expr
 	mu sync.RWMutex
@@ -727,9 +725,6 @@ func (c *ExprCache) Clear() {
 	c.mu.Unlock()
 }
 
-// getOrCompile returns the recompiled AST proto for e, compiling and caching on first use.
-// A nil cache compiles without caching. The result is treated as read-only (callers convert
-// it to a fresh celast.Expr via ProtoToExpr), so sharing the cached value is safe.
 func (c *ExprCache) getOrCompile(e *runtimev1.Expr) (*exprpb.Expr, error) {
 	if c == nil {
 		return compileToExpr(e.Original)
@@ -753,8 +748,6 @@ func (c *ExprCache) getOrCompile(e *runtimev1.Expr) (*exprpb.Expr, error) {
 	return x, nil
 }
 
-// compileToExpr re-derives the type-checked CEL AST proto from the original source text,
-// reproducing what was stored in Expr.Checked before it was released to save memory.
 func compileToExpr(src string) (*exprpb.Expr, error) {
 	ast, iss := conditions.StdEnv.Compile(src)
 	if iss != nil && iss.Err() != nil {
