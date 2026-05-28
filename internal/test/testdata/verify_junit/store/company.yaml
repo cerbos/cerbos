@@ -21,3 +21,7 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       roles:
         - admin
+      output:
+        when:
+          ruleActivated: |-
+            1 / 0

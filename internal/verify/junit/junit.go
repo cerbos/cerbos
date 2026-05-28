@@ -8,15 +8,16 @@ import (
 	"fmt"
 
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/tidwall/pretty"
 )
 
 const (
-	skipTestCaseMessage  = "This test was skipped"
-	skipTestSuiteMessage = "This test suite was skipped"
+	skipTestCaseMessage      = "This test was skipped"
+	skipTestSuiteMessage     = "This test suite was skipped"
+	outputErrorMessagePrefix = "Failed to evaluate output expression: "
 )
 
 func Build(results *policyv1.TestResults, verbose bool) (*TestSuites, error) {
@@ -132,6 +133,12 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 								outputSet := make([]output, len(f.Outputs))
 								for i, o := range f.Outputs {
 									switch t := o.Outcome.(type) {
+									case *policyv1.TestResults_OutputFailure_Errored:
+										outputSet[i] = output{
+											Src:      o.Src,
+											Actual:   outputValue{Value: outputErrorMessagePrefix + t.Errored.Error},
+											Expected: outputValue{Value: renderValue(t.Errored.Expected)},
+										}
 									case *policyv1.TestResults_OutputFailure_Mismatched:
 										outputSet[i] = output{
 											Src:      o.Src,
@@ -169,11 +176,16 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 							if len(s.Outputs) > 0 {
 								outputSet := make([]output, len(s.Outputs))
 								for i, o := range s.Outputs {
-									val := outputValue{Value: renderValue(o.Val)}
+									expected := outputValue{Value: renderValue(o.Val)}
+									actual := expected
+									if o.Error != "" {
+										actual.Value = outputErrorMessagePrefix + o.Error
+									}
+
 									outputSet[i] = output{
 										Src:      o.Src,
-										Actual:   val,
-										Expected: val,
+										Actual:   actual,
+										Expected: expected,
 									}
 								}
 								testCase.Success.Outputs = &outputSet
@@ -198,7 +210,11 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 	return testCases, summary, nil
 }
 
-func renderValue(v proto.Message) string {
+func renderValue(v *structpb.Value) string {
+	if v == nil {
+		return "null"
+	}
+
 	vv, err := protojson.Marshal(v)
 	if err != nil {
 		return "FAILED TO RENDER"
