@@ -59,9 +59,6 @@ func dimensionStats[T comparable](name string, d dimension[T]) dimStats { //noli
 	return s
 }
 
-// accumulateLazyStats folds a lazyDimension's per-entry word/cardinality stats
-// into s without materialising cold entries (cold entries report the dense-
-// equivalent word count; hot ones report their actual size).
 func accumulateLazyStats(s *dimStats, d lazyDimension) (totalWords int, totalCard uint64) { //nolint:unused
 	for _, e := range d.m {
 		st := e.Load()
@@ -135,9 +132,7 @@ func fqnDimensionStats(name string, d fqnDimension) dimStats { //nolint:unused
 }
 
 // lazyDimensionStats mirrors dimensionStats for a lazyDimension without
-// materialising cold entries. Card is the number of IDs per key; Words is the
-// actual word count for hot (materialised) entries, or the dense-equivalent
-// (highest ID / 64) for cold ones.
+// materialising cold entries.
 func lazyDimensionStats(name string, d lazyDimension) dimStats { //nolint:unused
 	s := dimStats{Name: name, Keys: d.len(), MinWords: math.MaxInt, MinCard: math.MaxUint64}
 	tw, tc := accumulateLazyStats(&s, d)
