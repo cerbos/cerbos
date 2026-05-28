@@ -492,8 +492,6 @@ func (c *ProgramCache) GetOrCreate(expr *runtimev1.Expr) (cel.Program, error) {
 	return prg, nil
 }
 
-// compileFromSource parses, type-checks and builds a CEL program from the original source
-// text, reproducing what the compile pipeline did (it also used conditions.StdEnv.Compile).
 func compileFromSource(src string) (cel.Program, error) {
 	ast, iss := conditions.StdEnv.Compile(src)
 	if iss != nil && iss.Err() != nil {
