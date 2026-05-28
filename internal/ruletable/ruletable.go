@@ -561,19 +561,17 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.PolicyDerivedRoles)
 
 	// Release the per-bitmap capacity slack left by exponential growth during indexing.
+	// Convert sparse bitmaps to slices of integeers.
 	rt.idx.Compact()
 
-	// The CheckedExpr trees are not needed at runtime: conditions/outputs are recompiled
-	// from Expr.Original on demand (ProgramCache) and variable programs were already built
-	// during indexing. Release them and return the freed pages to the OS.
+	// The CheckedExpr are not needed at runtime. Programs are compiled from source.
 	rt.releaseCheckedExprs()
 	debug.FreeOSMemory()
 
 	return nil
 }
 
-// releaseCheckedExprs nils every retained Expr.Checked so the CheckedExpr proto trees can be
-// garbage-collected; eval recompiles programs from Expr.Original.
+// releaseCheckedExprs sets to nil every retained *Expr.Checked.
 func (rt *RuleTable) releaseCheckedExprs() {
 	nilChecked := func(e *runtimev1.Expr) { e.Checked = nil }
 	seen := make(map[*index.FunctionalCore]struct{})
