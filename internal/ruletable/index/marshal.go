@@ -399,9 +399,6 @@ func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string]
 	return d, nil
 }
 
-// marshalLazyEntries serialises a lazyDimension into the same on-wire entry
-// format as marshalEntries (densifying cold ID slices into a transient bitmap),
-// so the stored format and reader are unchanged.
 func marshalLazyEntries(d lazyDimension) ([]*runtimev1.BitmapIndex_Entry, error) {
 	entries := make([]*runtimev1.BitmapIndex_Entry, 0, d.len())
 	err := d.forEachBitmap(func(key string, bm *Bitmap) error {
@@ -421,9 +418,6 @@ func marshalLazyEntries(d lazyDimension) ([]*runtimev1.BitmapIndex_Entry, error)
 	return entries, nil
 }
 
-// unmarshalLazyEntries reverses marshalLazyEntries: each stored bitmap is decoded
-// and installed per entry, keeping the bitmap when it's the smaller representation
-// and otherwise extracting a cold ID slice (see lazyDimension.setFromBitmap).
 func unmarshalLazyEntries(entries []*runtimev1.BitmapIndex_Entry) (lazyDimension, error) {
 	d := newLazyDimension()
 	for _, e := range entries {
