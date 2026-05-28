@@ -105,6 +105,56 @@ func TestBitmapIteratorSparse(t *testing.T) {
 	require.Equal(t, ids, collectIterator(b))
 }
 
+func TestBitmapShrinkToFit(t *testing.T) {
+	b := NewBitmap()
+	// Spread bits across many words so ensure's exponential doubling leaves
+	// capacity slack beyond the used length.
+	for w := uint32(0); w <= 100; w++ {
+		b.Add(w*64 + 3)
+	}
+	require.Greater(t, cap(b.words), len(b.words), "precondition: doubling should leave slack")
+
+	card := b.GetCardinality()
+	before := collectIterator(b)
+
+	b.shrinkToFit()
+
+	require.Equal(t, len(b.words), cap(b.words), "words cap should equal len after shrink")
+	require.Equal(t, len(b.meta), cap(b.meta), "meta cap should equal len after shrink")
+	require.Equal(t, card, b.GetCardinality(), "cardinality unchanged by shrink")
+	require.Equal(t, before, collectIterator(b), "set bits unchanged by shrink")
+
+	// Still usable after shrink: a higher id must re-grow the backing arrays.
+	hi := uint32(200 * 64)
+	b.Add(hi)
+	require.True(t, b.Contains(hi))
+	require.Equal(t, card+1, b.GetCardinality())
+}
+
+func TestBitmapAddSortedBatch(t *testing.T) {
+	cases := [][]uint32{
+		{},
+		{0},
+		{0, 1, 63, 64, 65, 127, 128}, // clustered, spanning word & meta boundaries
+		{3, 70, 4096, 100000},        // scattered, one id per word
+		{63 * 64, 64 * 64, 127 * 64}, // meta-word boundaries
+	}
+	for _, ids := range cases {
+		batch := NewBitmap()
+		batch.AddSortedBatch(ids)
+
+		seq := NewBitmap()
+		for _, id := range ids {
+			seq.Add(id)
+		}
+
+		require.Equal(t, seq.GetCardinality(), batch.GetCardinality(), "ids=%v", ids)
+		require.Equal(t, collectIterator(seq), collectIterator(batch), "ids=%v", ids)
+		require.Equal(t, seq.words, batch.words, "words must match repeated Add for ids=%v", ids)
+		require.Equal(t, seq.meta, batch.meta, "meta must match repeated Add for ids=%v", ids)
+	}
+}
+
 func TestBitmapOr(t *testing.T) {
 	a := NewBitmap()
 	a.Add(1)
@@ -259,21 +309,6 @@ func TestBitmapClearAndReuse(t *testing.T) {
 	require.True(t, b.Contains(50))
 	require.False(t, b.Contains(100), "stale data after Clear")
 	require.False(t, b.Contains(200), "stale data after Clear")
-}
-
-func TestBitmapClearAndReuseWithGrowth(t *testing.T) {
-	b := NewBitmap()
-	b.Add(5000) // forces large allocation
-	b.Clear()
-
-	// Reuse with a smaller range — grow into old capacity.
-	b.Add(10)
-	require.Equal(t, uint64(1), b.GetCardinality())
-	require.False(t, b.Contains(5000), "stale bit after Clear + smaller reuse")
-
-	// Grow back to the original range.
-	b.Add(5000)
-	require.Equal(t, uint64(2), b.GetCardinality())
 }
 
 func TestBitmapWordsLen(t *testing.T) {

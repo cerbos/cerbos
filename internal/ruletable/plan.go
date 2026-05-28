@@ -66,7 +66,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: nowFunc}
+	evalCtx := &planner.EvalContext{TimeFn: nowFunc, ExprCache: rt.planExprCache}
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
@@ -155,7 +155,7 @@ func (rt *RuleTable) planWithAuditTrail(
 									}
 
 									var err error
-									variables, err := planner.VariableExprs(dr.OrderedVariables)
+									variables, err := evalCtx.VariableExprs(dr.OrderedVariables)
 									if err != nil {
 										return nil, auditTrail, err
 									}
@@ -201,7 +201,7 @@ func (rt *RuleTable) planWithAuditTrail(
 						if b.Core.Params != nil {
 							constants = b.Core.Params.Constants
 							var err error
-							variables, err = planner.VariableExprs(b.Core.Params.Variables)
+							variables, err = evalCtx.VariableExprs(b.Core.Params.Variables)
 							if err != nil {
 								return nil, auditTrail, err
 							}
@@ -216,7 +216,7 @@ func (rt *RuleTable) planWithAuditTrail(
 							var variables map[string]celast.Expr
 							if b.Core.DerivedRoleParams != nil {
 								var err error
-								variables, err = planner.VariableExprs(b.Core.DerivedRoleParams.Variables)
+								variables, err = evalCtx.VariableExprs(b.Core.DerivedRoleParams.Variables)
 								if err != nil {
 									return nil, auditTrail, err
 								}

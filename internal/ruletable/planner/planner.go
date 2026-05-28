@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/google/cel-go/cel"
@@ -303,7 +304,8 @@ func InvertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 }
 
 type EvalContext struct {
-	TimeFn func() time.Time
+	TimeFn    func() time.Time
+	ExprCache *ExprCache
 }
 
 func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
@@ -390,8 +392,11 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 			res.Node = &qpNLO{LogicalOperation: MkAndLogicalOperation(nodes)}
 		}
 	case *runtimev1.Condition_Expr:
-		expr := t.Expr.GetChecked().GetExpr()
-		ex, err := celast.ProtoToExpr(expr)
+		protoExpr, err := evalCtx.ExprCache.getOrCompile(t.Expr)
+		if err != nil {
+			return nil, err
+		}
+		ex, err := celast.ProtoToExpr(protoExpr)
 		if err != nil {
 			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
 		}
@@ -701,14 +706,72 @@ func residualExpr(ast *celast.AST, details *cel.EvalDetails) celast.Expr {
 	return prunedAST.Expr()
 }
 
-func VariableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, error) {
+// ExprCache caches the type-checked CEL AST proto recompiled from Expr.Original.
+type ExprCache struct {
+	m  map[string]*exprpb.Expr
+	mu sync.RWMutex
+}
+
+func NewExprCache() *ExprCache {
+	return &ExprCache{m: make(map[string]*exprpb.Expr)}
+}
+
+func (c *ExprCache) Clear() {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	clear(c.m)
+	c.mu.Unlock()
+}
+
+func (c *ExprCache) getOrCompile(e *runtimev1.Expr) (*exprpb.Expr, error) {
+	if c == nil {
+		return compileToExpr(e.Original)
+	}
+
+	c.mu.RLock()
+	if x, ok := c.m[e.Original]; ok {
+		c.mu.RUnlock()
+		return x, nil
+	}
+	c.mu.RUnlock()
+
+	x, err := compileToExpr(e.Original)
+	if err != nil {
+		return nil, err
+	}
+
+	c.mu.Lock()
+	c.m[e.Original] = x
+	c.mu.Unlock()
+	return x, nil
+}
+
+func compileToExpr(src string) (*exprpb.Expr, error) {
+	ast, iss := conditions.StdEnv.Compile(src)
+	if iss != nil && iss.Err() != nil {
+		return nil, fmt.Errorf("failed to compile %q: %w", src, iss.Err())
+	}
+	checked, err := cel.AstToCheckedExpr(ast)
+	if err != nil {
+		return nil, fmt.Errorf("cel.AstToCheckedExpr: %w", err)
+	}
+	return checked.GetExpr(), nil
+}
+
+func (evalCtx *EvalContext) VariableExprs(variables []*runtimev1.Variable) (map[string]celast.Expr, error) {
 	if len(variables) == 0 {
 		return nil, nil
 	}
 
 	exprs := make(map[string]celast.Expr, len(variables))
 	for _, variable := range variables {
-		e, err := celast.ProtoToExpr(variable.Expr.GetChecked().GetExpr())
+		protoExpr, err := evalCtx.ExprCache.getOrCompile(variable.Expr)
+		if err != nil {
+			return nil, err
+		}
+		e, err := celast.ProtoToExpr(protoExpr)
 		if err != nil {
 			return nil, err
 		}

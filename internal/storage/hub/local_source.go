@@ -39,9 +39,17 @@ var (
 type LocalSource struct {
 	bundle  Bundle
 	cleanup func() error
-	*storage.SubscriptionManager
-	params LocalParams
-	mu     sync.RWMutex
+	subs    *storage.SubscriptionManager
+	params  LocalParams
+	mu      sync.RWMutex
+}
+
+func (ls *LocalSource) Subscribe(sub storage.Subscriber) {
+	ls.subs.Subscribe(sub)
+}
+
+func (ls *LocalSource) Unsubscribe(sub storage.Subscriber) {
+	ls.subs.Unsubscribe(sub)
 }
 
 func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, error) {
@@ -109,8 +117,8 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 	}
 
 	ls := &LocalSource{
-		params:              params,
-		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		params: params,
+		subs:   storage.NewSubscriptionManager(ctx),
 	}
 
 	if err := ls.loadBundle(); err != nil {
@@ -198,7 +206,7 @@ func (ls *LocalSource) loadBundle() error {
 	ls.bundle = b
 	ls.mu.Unlock()
 
-	ls.NotifySubscribers(storage.NewReloadEvent())
+	ls.subs.NotifySubscribers(storage.NewReloadEvent())
 
 	if prevCleanupFn != nil {
 		if err := prevCleanupFn(); err != nil {

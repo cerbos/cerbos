@@ -41,7 +41,7 @@ func TestRuleTableManager(t *testing.T) {
 	require.NoError(t, err)
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	store.SubscriptionManager = storage.NewSubscriptionManager(ctx)
+	subMgr := storage.NewSubscriptionManager(ctx)
 
 	schemaConf := schema.NewConf(schema.EnforcementNone)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
@@ -55,7 +55,7 @@ func TestRuleTableManager(t *testing.T) {
 	ruletableMgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
 	require.NoError(t, err)
 
-	store.Subscribe(ruletableMgr)
+	subMgr.Subscribe(ruletableMgr)
 
 	// add simple, valid policy and confirm an ALLOW request
 	resourceFile := "resource_policies/rock.yaml"
@@ -76,7 +76,7 @@ func TestRuleTableManager(t *testing.T) {
 		},
 	}
 
-	addOrUpdatePolicy(t, resourceFile, p, memFsys, idx, store)
+	addOrUpdatePolicy(t, resourceFile, p, memFsys, idx, subMgr)
 
 	action := "throw"
 	input := &enginev1.CheckInput{
@@ -129,7 +129,7 @@ func TestRuleTableManager(t *testing.T) {
 			},
 		}
 
-		addOrUpdatePolicy(t, resourceFile, p, memFsys, idx, store)
+		addOrUpdatePolicy(t, resourceFile, p, memFsys, idx, subMgr)
 
 		// Check request should still return ALLOW
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -167,7 +167,7 @@ func TestRuleTableManager(t *testing.T) {
 			},
 		}
 
-		addOrUpdatePolicy(t, derivedRoleFile, p, memFsys, idx, store)
+		addOrUpdatePolicy(t, derivedRoleFile, p, memFsys, idx, subMgr)
 
 		// Check request should now return DENY
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -205,7 +205,7 @@ func TestRuleTableManager(t *testing.T) {
 			},
 		}
 
-		addOrUpdatePolicy(t, derivedRoleFile, p, memFsys, idx, store)
+		addOrUpdatePolicy(t, derivedRoleFile, p, memFsys, idx, subMgr)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, input)
@@ -230,7 +230,7 @@ func TestRuleTableManager(t *testing.T) {
 				},
 			},
 		}
-		addOrUpdatePolicy(t, constantsFile, cp, memFsys, idx, store)
+		addOrUpdatePolicy(t, constantsFile, cp, memFsys, idx, subMgr)
 
 		// update the resource policy to reference it
 		rp := &policyv1.Policy{
@@ -261,7 +261,7 @@ func TestRuleTableManager(t *testing.T) {
 				},
 			},
 		}
-		addOrUpdatePolicy(t, resourceFile, rp, memFsys, idx, store)
+		addOrUpdatePolicy(t, resourceFile, rp, memFsys, idx, subMgr)
 
 		// The check should be allowed
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -284,7 +284,7 @@ func TestRuleTableManager(t *testing.T) {
 				},
 			},
 		}
-		addOrUpdatePolicy(t, constantsFile, cp, memFsys, idx, store)
+		addOrUpdatePolicy(t, constantsFile, cp, memFsys, idx, subMgr)
 
 		// The rule table should be updated, and the check request should now be denied
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -334,8 +334,8 @@ func TestRuleTableManager(t *testing.T) {
 			},
 		}
 
-		addOrUpdatePolicy(t, resourceFile, allowUserPebbleSkip, memFsys, idx, store)
-		addOrUpdatePolicy(t, roleFile, skipperParentUser, memFsys, idx, store)
+		addOrUpdatePolicy(t, resourceFile, allowUserPebbleSkip, memFsys, idx, subMgr)
+		addOrUpdatePolicy(t, roleFile, skipperParentUser, memFsys, idx, subMgr)
 
 		action := "skip"
 		input := &enginev1.CheckInput{
@@ -359,7 +359,7 @@ func TestRuleTableManager(t *testing.T) {
 			require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions[action].GetEffect())
 		}, 1*time.Second, 50*time.Millisecond)
 
-		deletePolicy(t, roleFile, memFsys, idx, store)
+		deletePolicy(t, roleFile, memFsys, idx, subMgr)
 
 		// Parent role expansion should be cleared immediately after deletion
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -404,8 +404,8 @@ func TestRuleTableManager(t *testing.T) {
 			},
 		}
 
-		addOrUpdatePolicy(t, resourceFile, allowUserDocumentView, memFsys, idx, store)
-		addOrUpdatePolicy(t, roleFile, employeeParentUser, memFsys, idx, store)
+		addOrUpdatePolicy(t, resourceFile, allowUserDocumentView, memFsys, idx, subMgr)
+		addOrUpdatePolicy(t, roleFile, employeeParentUser, memFsys, idx, subMgr)
 
 		action := "view"
 		input := &enginev1.CheckInput{
@@ -429,7 +429,7 @@ func TestRuleTableManager(t *testing.T) {
 			require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions[action].GetEffect())
 		}, 1*time.Second, 50*time.Millisecond)
 
-		deletePolicy(t, roleFile, memFsys, idx, store)
+		deletePolicy(t, roleFile, memFsys, idx, subMgr)
 
 		unrelatedUpdate := &policyv1.Policy{
 			ApiVersion: "api.cerbos.dev/v1",
@@ -464,7 +464,7 @@ func TestRuleTableManager(t *testing.T) {
 
 		// forces reindex path which triggered the previous incorrect behaviour (building from the proto
 		// ScopeParentRoles state)
-		addOrUpdatePolicy(t, unrelatedFile, unrelatedUpdate, memFsys, idx, store)
+		addOrUpdatePolicy(t, unrelatedFile, unrelatedUpdate, memFsys, idx, subMgr)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			unrelatedOutput, _, err := ruletableMgr.Check(ctx, tctx, evalParams, unrelatedInput)
@@ -482,7 +482,7 @@ func TestRuleTableManager(t *testing.T) {
 	})
 }
 
-func addOrUpdatePolicy(t *testing.T, f string, p *policyv1.Policy, memFsys afero.Fs, idx index.Index, store *disk.Store) {
+func addOrUpdatePolicy(t *testing.T, f string, p *policyv1.Policy, memFsys afero.Fs, idx index.Index, subMgr *storage.SubscriptionManager) {
 	t.Helper()
 
 	var s bytes.Buffer
@@ -493,10 +493,10 @@ func addOrUpdatePolicy(t *testing.T, f string, p *policyv1.Policy, memFsys afero
 	evt, err := idx.AddOrUpdate(index.Entry{File: f, Policy: policy.Wrap(p)})
 	require.NoError(t, err)
 
-	store.NotifySubscribers(evt)
+	subMgr.NotifySubscribers(evt)
 }
 
-func deletePolicy(t *testing.T, f string, memFsys afero.Fs, idx index.Index, store *disk.Store) {
+func deletePolicy(t *testing.T, f string, memFsys afero.Fs, idx index.Index, subMgr *storage.SubscriptionManager) {
 	t.Helper()
 
 	require.NoError(t, memFsys.Remove(f))
@@ -504,5 +504,5 @@ func deletePolicy(t *testing.T, f string, memFsys afero.Fs, idx index.Index, sto
 	evt, err := idx.Delete(index.Entry{File: f})
 	require.NoError(t, err)
 
-	store.NotifySubscribers(evt)
+	subMgr.NotifySubscribers(evt)
 }

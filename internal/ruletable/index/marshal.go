@@ -61,7 +61,7 @@ func (m *Index) Marshal() ([]byte, error) {
 		}
 	}
 
-	principal, err := marshalEntries(bi.principal.m)
+	principal, err := marshalLazyEntries(bi.principal)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling principal dimension: %w", err)
 	}
@@ -188,11 +188,11 @@ func marshalBinding(b *Binding, coreIndex map[*FunctionalCore]uint32) *runtimev1
 }
 
 func marshalGlobDimension(gd *globDimension) (*runtimev1.BitmapIndex_GlobDimension, error) {
-	literals, err := marshalEntries(gd.literals)
+	literals, err := marshalLazyEntries(gd.literals)
 	if err != nil {
 		return nil, err
 	}
-	globs, err := marshalEntries(gd.globs)
+	globs, err := marshalLazyEntries(gd.globs)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func Unmarshal(data []byte) (*Index, error) {
 		}
 	}
 
-	bi.principal, err = unmarshalEntries(msg.Principal)
+	bi.principal, err = unmarshalLazyEntries(msg.Principal)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling principal dimension: %w", err)
 	}
@@ -399,14 +399,45 @@ func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string]
 	return d, nil
 }
 
+func marshalLazyEntries(d lazyDimension) ([]*runtimev1.BitmapIndex_Entry, error) {
+	entries := make([]*runtimev1.BitmapIndex_Entry, 0, d.len())
+	err := d.forEachBitmap(func(key string, bm *Bitmap) error {
+		b, err := bm.MarshalBinary()
+		if err != nil {
+			return err
+		}
+		entries = append(entries, &runtimev1.BitmapIndex_Entry{
+			Key:    key,
+			Bitmap: b,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func unmarshalLazyEntries(entries []*runtimev1.BitmapIndex_Entry) (lazyDimension, error) {
+	d := newLazyDimension()
+	for _, e := range entries {
+		bm, err := bitmapFromBytes(e.Bitmap)
+		if err != nil {
+			return d, fmt.Errorf("unmarshaling bitmap for key %q: %w", e.Key, err)
+		}
+		d.setFromBitmap(e.Key, bm)
+	}
+	return d, nil
+}
+
 func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimension, error) {
-	literals, err := unmarshalEntries(pb.Literals)
+	literals, err := unmarshalLazyEntries(pb.Literals)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling literal dimension: %w", err)
 	}
 
 	gd := newGlobDimension()
-	gd.literals = literals.m
+	gd.literals = literals
 
 	// can't use `unmarshalEntries` because each glob entry also
 	// needs its pattern compiled into gd.compiled.
@@ -415,11 +446,11 @@ func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimen
 		if err != nil {
 			return nil, fmt.Errorf("unmarshaling glob bitmap for key %q: %w", e.Key, err)
 		}
-		gd.globs[e.Key] = bm
 		g := util.GetOrCompileGlob(e.Key)
 		if g == nil {
 			return nil, fmt.Errorf("failed to compile glob pattern %q", e.Key)
 		}
+		gd.globs.setFromBitmap(e.Key, bm)
 		gd.compiled[e.Key] = g
 	}
 

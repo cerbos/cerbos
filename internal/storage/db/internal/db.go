@@ -85,16 +85,24 @@ func NewDBStorage(ctx context.Context, db *goqu.Database, dbOpts ...DBOpt) (DBSt
 	}
 
 	return &dbStorage{
-		opts:                opts,
-		db:                  db,
-		SubscriptionManager: storage.NewSubscriptionManager(ctx),
+		opts: opts,
+		db:   db,
+		subs: storage.NewSubscriptionManager(ctx),
 	}, nil
 }
 
 type dbStorage struct {
 	opts *dbOpt
 	db   *goqu.Database
-	*storage.SubscriptionManager
+	subs *storage.SubscriptionManager
+}
+
+func (s *dbStorage) Subscribe(sub storage.Subscriber) {
+	s.subs.Subscribe(sub)
+}
+
+func (s *dbStorage) Unsubscribe(sub storage.Subscriber) {
+	s.subs.Unsubscribe(sub)
 }
 
 func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.Schema) error {
@@ -138,7 +146,7 @@ func (s *dbStorage) AddOrUpdateSchema(ctx context.Context, schemas ...*schemav1.
 		return err
 	}
 
-	s.NotifySubscribers(events...)
+	s.subs.NotifySubscribers(events...)
 	return nil
 }
 
@@ -162,7 +170,7 @@ func (s *dbStorage) DeleteSchema(ctx context.Context, ids ...string) (uint32, er
 		return 0, fmt.Errorf("failed to discover whether the schema(s) got deleted or not: %w", err)
 	}
 
-	s.NotifySubscribers(events...)
+	s.subs.NotifySubscribers(events...)
 
 	return uint32(affected), nil
 }
@@ -333,7 +341,7 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 	metrics.Add(context.Background(), metrics.IndexCRUDCount(), int64(len(policies)), metrics.KindKey("upsert"))
 
-	s.NotifySubscribers(events...)
+	s.subs.NotifySubscribers(events...)
 	return nil
 }
 
@@ -875,7 +883,7 @@ func (s *dbStorage) Delete(ctx context.Context, policyKey ...string) (uint32, er
 		return 0, err
 	}
 
-	s.NotifySubscribers(events...)
+	s.subs.NotifySubscribers(events...)
 
 	return uint32(affected), nil
 }
@@ -922,7 +930,7 @@ func (s *dbStorage) Disable(ctx context.Context, policyKey ...string) (uint32, e
 		return 0, err
 	}
 
-	s.NotifySubscribers(events...)
+	s.subs.NotifySubscribers(events...)
 	return uint32(affected), nil
 }
 
@@ -947,7 +955,7 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 		return 0, fmt.Errorf("failed to discover whether the policies got enabled or not: %w", err)
 	}
 
-	s.NotifySubscribers(events...)
+	s.subs.NotifySubscribers(events...)
 	return uint32(affected), nil
 }
 
@@ -1290,7 +1298,7 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *dbStorage) Reload(ctx context.Context) error {
-	s.NotifySubscribers(storage.NewReloadEvent())
+	s.subs.NotifySubscribers(storage.NewReloadEvent())
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(driverName))
 	return nil
 }

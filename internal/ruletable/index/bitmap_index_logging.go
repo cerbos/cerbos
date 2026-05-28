@@ -59,27 +59,53 @@ func dimensionStats[T comparable](name string, d dimension[T]) dimStats { //noli
 	return s
 }
 
-func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unused
-	s := dimStats{Name: name, Keys: len(gd.literals) + len(gd.globs), MinWords: math.MaxInt, MinCard: math.MaxUint64}
-	totalWords := 0
-	totalCard := uint64(0)
-	for _, bm := range gd.literals {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
+func accumulateLazyStats(s *dimStats, d lazyDimension) (totalWords int, totalCard uint64) { //nolint:unused
+	for _, e := range d.m {
+		st := e.Load()
+		var c uint64
+		wl := 0
+		if st.bm != nil {
+			c = st.bm.GetCardinality()
+			wl = st.bm.WordsLen()
+		} else {
+			c = uint64(len(st.ids))
+			if n := len(st.ids); n > 0 {
+				wl = int(st.ids[n-1]/64) + 1 //nolint:mnd
+			}
+		}
+		if wl > s.MaxWords {
+			s.MaxWords = wl
+		}
+		if wl < s.MinWords {
+			s.MinWords = wl
+		}
+		if c > s.MaxCard {
+			s.MaxCard = c
+		}
+		if c < s.MinCard {
+			s.MinCard = c
+		}
+		totalWords += wl
+		totalCard += c
 	}
-	for _, bm := range gd.globs {
-		collectBitmapStats(&s, bm)
-		totalWords += bm.WordsLen()
-		totalCard += bm.GetCardinality()
-	}
+	return totalWords, totalCard
+}
+
+func finalizeStats(s *dimStats, totalWords int, totalCard uint64) { //nolint:unused
 	if s.Keys == 0 {
 		s.MinWords = 0
 		s.MinCard = 0
-	} else {
-		s.AvgWords = totalWords / s.Keys
-		s.AvgCard = totalCard / uint64(s.Keys)
+		return
 	}
+	s.AvgWords = totalWords / s.Keys
+	s.AvgCard = totalCard / uint64(s.Keys)
+}
+
+func globDimensionStats(name string, gd *globDimension) dimStats { //nolint:unused
+	s := dimStats{Name: name, Keys: gd.literals.len() + gd.globs.len(), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	lw, lc := accumulateLazyStats(&s, gd.literals)
+	gw, gc := accumulateLazyStats(&s, gd.globs)
+	finalizeStats(&s, lw+gw, lc+gc)
 	return s
 }
 
@@ -105,6 +131,15 @@ func fqnDimensionStats(name string, d fqnDimension) dimStats { //nolint:unused
 	return s
 }
 
+// lazyDimensionStats mirrors dimensionStats for a lazyDimension without
+// materialising cold entries.
+func lazyDimensionStats(name string, d lazyDimension) dimStats { //nolint:unused
+	s := dimStats{Name: name, Keys: d.len(), MinWords: math.MaxInt, MinCard: math.MaxUint64}
+	tw, tc := accumulateLazyStats(&s, d)
+	finalizeStats(&s, tw, tc)
+	return s
+}
+
 func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 	stats := []dimStats{
 		dimensionStats("version", idx.version),
@@ -113,7 +148,7 @@ func (idx *bitmapIndex) logStats(log *zap.SugaredLogger) { //nolint:unused
 		globDimensionStats("resource", idx.resource),
 		globDimensionStats("action", idx.action),
 		dimensionStats("policyKind", idx.policyKind),
-		dimensionStats("principal", idx.principal),
+		lazyDimensionStats("principal", idx.principal),
 		fqnDimensionStats("fqnBindings", idx.fqnBindings),
 	}
 

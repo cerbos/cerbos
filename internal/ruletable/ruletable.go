@@ -7,11 +7,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"runtime/debug"
 	"strings"
 	"sync"
 
 	"github.com/google/cel-go/cel"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -23,6 +23,7 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
+	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -259,6 +260,7 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 
 		ruleFqn := namer.RuleFQN(rt.Meta[moduleID.RawValue()], p.Scope, rule.Name)
 		evaluationKey := fmt.Sprintf("%s#%s", namer.ResourcePolicyFQN(sanitizedResource, rrps.Meta.Version, p.Scope), ruleFqn)
+
 		for a := range rule.Actions {
 			for r := range rule.Roles {
 				row := &runtimev1.RuleTable_RuleRow{
@@ -435,6 +437,7 @@ type RuleTable struct {
 	scopeScopePermissions map[string]policyv1.ScopePermissions
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	programCache          *ProgramCache
+	planExprCache         *planner.ExprCache
 }
 
 type WrappedRunnableDerivedRole struct {
@@ -443,16 +446,17 @@ type WrappedRunnableDerivedRole struct {
 	VarCacheKey uint64
 }
 
-// ProgramCache caches compiled CEL programs keyed by CheckedExpr pointer to avoid repeated compilation.
-// Programs are compiled with CacheFriendlyTimeDecorator which looks up NowFunc from activation at eval time.
+// ProgramCache caches compiled CEL programs keyed by source expression to avoid repeated
+// compilation. Programs are compiled from Expr.Original (the CheckedExpr trees are released
+// after load) with CacheFriendlyTimeDecorator which looks up NowFunc from activation at eval time.
 type ProgramCache struct {
-	m  map[*exprpb.CheckedExpr]cel.Program
+	m  map[string]cel.Program
 	mu sync.RWMutex
 }
 
 func NewProgramCache() *ProgramCache {
 	return &ProgramCache{
-		m: make(map[*exprpb.CheckedExpr]cel.Program),
+		m: make(map[string]cel.Program),
 	}
 }
 
@@ -465,33 +469,38 @@ func (c *ProgramCache) Clear() {
 	c.mu.Unlock()
 }
 
-func (c *ProgramCache) GetOrCreate(expr *exprpb.CheckedExpr) (cel.Program, error) {
+func (c *ProgramCache) GetOrCreate(expr *runtimev1.Expr) (cel.Program, error) {
 	if c == nil {
-		return conditions.StdEnv.Program(
-			cel.CheckedExprToAst(expr),
-			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
-		)
+		return compileFromSource(expr.Original)
 	}
 
 	c.mu.RLock()
-	if prg, ok := c.m[expr]; ok {
+	if prg, ok := c.m[expr.Original]; ok {
 		c.mu.RUnlock()
 		return prg, nil
 	}
 	c.mu.RUnlock()
 
-	prg, err := conditions.StdEnv.Program(
-		cel.CheckedExprToAst(expr),
-		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
-	)
+	prg, err := compileFromSource(expr.Original)
 	if err != nil {
 		return nil, err
 	}
 
 	c.mu.Lock()
-	c.m[expr] = prg
+	c.m[expr.Original] = prg
 	c.mu.Unlock()
 	return prg, nil
+}
+
+func compileFromSource(src string) (cel.Program, error) {
+	ast, iss := conditions.StdEnv.Compile(src)
+	if iss != nil && iss.Err() != nil {
+		return nil, iss.Err()
+	}
+	return conditions.StdEnv.Program(
+		ast,
+		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
+	)
 }
 
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
@@ -506,8 +515,9 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 
 func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
 	rt := &RuleTable{
-		idx:          index.New(),
-		programCache: NewProgramCache(),
+		idx:           index.New(),
+		programCache:  NewProgramCache(),
+		planExprCache: planner.NewExprCache(),
 	}
 
 	if err := rt.init(protoRT); err != nil {
@@ -530,6 +540,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	clear(rt.resourceScopeMap)
 	clear(rt.scopeScopePermissions)
 	rt.programCache.Clear()
+	rt.planExprCache.Clear()
 
 	rt.idx.Reset()
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
@@ -547,7 +558,57 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 
 	clear(rt.PolicyDerivedRoles)
 
+	// Release the per-bitmap capacity slack left by exponential growth during indexing.
+	// Convert sparse bitmaps to slices of integeers.
+	rt.idx.Compact()
+
+	// The CheckedExpr are not needed at runtime. Programs are compiled from source.
+	rt.releaseCheckedExprs()
+	debug.FreeOSMemory()
+
 	return nil
+}
+
+// releaseCheckedExprs sets to nil every retained *Expr.Checked.
+func (rt *RuleTable) releaseCheckedExprs() {
+	nilChecked := func(e *runtimev1.Expr) { e.Checked = nil }
+	seen := make(map[*index.FunctionalCore]struct{})
+	for _, b := range rt.GetAllRows() {
+		c := b.Core
+		if c == nil {
+			continue
+		}
+		if _, ok := seen[c]; ok {
+			continue
+		}
+		seen[c] = struct{}{}
+		if c.Condition != nil {
+			conditions.WalkExprs(c.Condition, nilChecked)
+		}
+		if c.DerivedRoleCondition != nil {
+			conditions.WalkExprs(c.DerivedRoleCondition, nilChecked)
+		}
+		if c.EmitOutput != nil {
+			conditions.WalkExprs(c.EmitOutput, nilChecked)
+		}
+		if c.Params != nil {
+			for _, v := range c.Params.Variables {
+				conditions.WalkExprs(v, nilChecked)
+			}
+		}
+		if c.DerivedRoleParams != nil {
+			for _, v := range c.DerivedRoleParams.Variables {
+				conditions.WalkExprs(v, nilChecked)
+			}
+		}
+	}
+	for _, drs := range rt.policyDerivedRoles {
+		for _, dr := range drs {
+			if dr.RunnableDerivedRole != nil {
+				conditions.WalkExprs(dr.RunnableDerivedRole, nilChecked)
+			}
+		}
+	}
 }
 
 func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {

@@ -35,7 +35,11 @@ const (
 	defaultCooldownPeriod = 2 * time.Second
 )
 
-func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.SubscriptionManager, cooldownPeriod time.Duration) error {
+type notifier interface {
+	NotifySubscribers(events ...storage.Event)
+}
+
+func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cooldownPeriod time.Duration) error {
 	resolved, err := filepath.EvalSymlinks(dir)
 	if err != nil {
 		return fmt.Errorf("failed to resolve directory %s: %w", dir, err)
@@ -71,13 +75,13 @@ func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.Sub
 	}
 
 	dw := &dirWatch{
-		watcher:             watcher,
-		idx:                 idx,
-		log:                 zap.S().Named("dir.watch").With("dir", dir),
-		eventBatch:          make(map[string]struct{}),
-		SubscriptionManager: sub,
-		dir:                 resolved,
-		cooldownPeriod:      cooldownPeriod,
+		watcher:        watcher,
+		idx:            idx,
+		log:            zap.S().Named("dir.watch").With("dir", dir),
+		eventBatch:     make(map[string]struct{}),
+		notifier:       n,
+		dir:            resolved,
+		cooldownPeriod: cooldownPeriod,
 	}
 
 	go dw.listen(ctx) //nolint:gosec
@@ -86,12 +90,12 @@ func watchDir(ctx context.Context, dir string, idx index.Index, sub *storage.Sub
 }
 
 type dirWatch struct {
-	lastEventTime time.Time
-	watcher       *fsnotify.Watcher
-	idx           index.Index
-	log           *zap.SugaredLogger
-	eventBatch    map[string]struct{}
-	*storage.SubscriptionManager
+	lastEventTime  time.Time
+	watcher        *fsnotify.Watcher
+	idx            index.Index
+	log            *zap.SugaredLogger
+	eventBatch     map[string]struct{}
+	notifier       notifier
 	dir            string
 	cooldownPeriod time.Duration
 	mu             sync.RWMutex
@@ -205,7 +209,7 @@ func (dw *dirWatch) triggerUpdate() {
 		dw.log.Debugw("Detected file removal", "file", path)
 		if sf, ok := util.RelativeSchemaPath(path); ok {
 			delete(eventBatch, path)
-			dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
+			dw.notifier.NotifySubscribers(storage.NewSchemaEvent(storage.EventDeleteSchema, sf))
 			continue
 		}
 
@@ -217,14 +221,14 @@ func (dw *dirWatch) triggerUpdate() {
 		}
 
 		delete(eventBatch, path)
-		dw.NotifySubscribers(evt)
+		dw.notifier.NotifySubscribers(evt)
 	}
 
 	for path := range eventBatch {
 		fullPath := filepath.Join(dw.dir, path)
 		dw.log.Debugw("Detected file update", "file", path)
 		if sf, ok := util.RelativeSchemaPath(path); ok {
-			dw.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sf))
+			dw.notifier.NotifySubscribers(storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, sf))
 			continue
 		}
 
@@ -242,7 +246,7 @@ func (dw *dirWatch) triggerUpdate() {
 			continue
 		}
 
-		dw.NotifySubscribers(evt)
+		dw.notifier.NotifySubscribers(evt)
 	}
 
 	if errCount > 0 {

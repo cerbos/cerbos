@@ -138,16 +138,24 @@ func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	hub       ClientProvider
-	scratchFS afero.Fs
-	client    cloudAPIClient
-	log       *zap.Logger
-	conf      *Conf
-	bundle    Bundle
-	*storage.SubscriptionManager
+	hub           ClientProvider
+	scratchFS     afero.Fs
+	client        cloudAPIClient
+	log           *zap.Logger
+	conf          *Conf
+	bundle        Bundle
+	subs          *storage.SubscriptionManager
 	bundleVersion bundleapi.Version
 	mu            sync.RWMutex
 	healthy       bool
+}
+
+func (s *RemoteSource) Subscribe(sub storage.Subscriber) {
+	s.subs.Subscribe(sub)
+}
+
+func (s *RemoteSource) Unsubscribe(sub storage.Subscriber) {
+	s.subs.Unsubscribe(sub)
 }
 
 func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
@@ -218,7 +226,7 @@ func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, erro
 }
 
 func (s *RemoteSource) Init(ctx context.Context) error {
-	s.SubscriptionManager = storage.NewSubscriptionManager(ctx)
+	s.subs = storage.NewSubscriptionManager(ctx)
 	bundleType := bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
 	if s.bundleVersion == bundleapi.Version1 {
 		bundleType = bundlev2.BundleType_BUNDLE_TYPE_LEGACY
@@ -429,7 +437,7 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 	s.healthy = true
 	s.mu.Unlock()
 
-	s.NotifySubscribers(storage.NewReloadEvent())
+	s.subs.NotifySubscribers(storage.NewReloadEvent())
 
 	if oldBundle != nil {
 		if err := oldBundle.Release(); err != nil {

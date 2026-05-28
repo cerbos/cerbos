@@ -19,7 +19,7 @@ type bitmapIndex struct {
 	policyKind         dimension[policyv1.Kind]
 	resource           *globDimension
 	fqnBindings        fqnDimension
-	principal          dimension[string]
+	principal          lazyDimension
 	universe           *Bitmap
 	allowActionsBitmap *Bitmap
 	freeIDs            []uint32
@@ -34,7 +34,7 @@ func newBitmapIndex() *bitmapIndex {
 		action:             newGlobDimension(),
 		resource:           newGlobDimension(),
 		policyKind:         newDimension[policyv1.Kind](),
-		principal:          newDimension[string](),
+		principal:          newLazyDimension(),
 		universe:           NewBitmap(),
 		allowActionsBitmap: NewBitmap(),
 		fqnBindings:        newFqnDimension(),
@@ -57,6 +57,26 @@ func (idx *bitmapIndex) allocID() uint32 {
 func (idx *bitmapIndex) freeID(id uint32) {
 	idx.bindings[id] = nil
 	idx.freeIDs = append(idx.freeIDs, id)
+}
+
+// compact drops the per-bitmap capacity slack left by exponential growth across
+// every persistent dimension bitmap. Called once after a full build/reload.
+func (idx *bitmapIndex) compact() {
+	for _, bm := range idx.version.m {
+		bm.shrinkToFit()
+	}
+	for _, bm := range idx.scope.m {
+		bm.shrinkToFit()
+	}
+	for _, bm := range idx.policyKind.m {
+		bm.shrinkToFit()
+	}
+	idx.principal.compact()
+	idx.role.compact()
+	idx.action.compact()
+	idx.resource.compact()
+	idx.universe.shrinkToFit()
+	idx.allowActionsBitmap.shrinkToFit()
 }
 
 func (idx *bitmapIndex) addBinding(b *Binding) {
@@ -101,7 +121,7 @@ func (idx *bitmapIndex) addBinding(b *Binding) {
 
 // removeBinding removes the binding from the slice and all dimension bitmaps,
 // and returns the ID to the free list.
-// It does NOT touch fqnBindings — that is managed by DeletePolicy, which needs
+// It does NOT touch fqnBindings. That is managed by DeletePolicy, which needs
 // to inspect fqnBindings across origins before deciding whether to remove the binding.
 func (idx *bitmapIndex) removeBinding(b *Binding) {
 	id := b.ID

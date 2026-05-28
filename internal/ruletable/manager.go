@@ -187,8 +187,13 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	if err := mgr.indexRules(AddPolicy(mgr.RuleTable.RuleTable, rps)); err != nil {
+	rows := AddPolicy(mgr.RuleTable.RuleTable, rps)
+	if err := mgr.indexRules(rows); err != nil {
 		return fmt.Errorf("failed to index and purge rules: %w", err)
+	}
+
+	for _, row := range rows {
+		conditions.WalkExprs(row, func(e *runtimev1.Expr) { e.Checked = nil })
 	}
 
 	return nil
@@ -209,6 +214,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	}
 
 	mgr.programCache.Clear()
+	mgr.planExprCache.Clear()
 
 	mgr.log.Debugf("Deleting policy %s", meta.GetFqn())
 

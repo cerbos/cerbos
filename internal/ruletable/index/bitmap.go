@@ -35,6 +35,30 @@ func (b *Bitmap) Add(id uint32) {
 	b.meta[i/64] |= 1 << (uint(i) % 64) //nolint:mnd
 }
 
+// AddSortedBatch sets all of ids, which must be in ascending order (it grows the
+// backing storage once to the last/largest id).
+func (b *Bitmap) AddSortedBatch(ids []uint32) {
+	if len(ids) == 0 {
+		return
+	}
+	b.ensure(int(ids[len(ids)-1]/64) + 1) //nolint:mnd
+
+	wi := int(ids[0] / 64) //nolint:mnd // index of the word currently being accumulated
+	var w uint64           // bits destined for words[wi]
+	for _, id := range ids {
+		i := int(id / 64) //nolint:mnd
+		if i != wi {
+			b.words[wi] |= w
+			b.meta[wi/64] |= 1 << (uint(wi) % 64) //nolint:mnd
+			wi = i
+			w = 0
+		}
+		w |= 1 << (id % 64) //nolint:mnd
+	}
+	b.words[wi] |= w
+	b.meta[wi/64] |= 1 << (uint(wi) % 64) //nolint:mnd
+}
+
 func (b *Bitmap) Remove(id uint32) {
 	i := int(id / 64) //nolint:mnd
 	if i >= len(b.words) {
@@ -135,7 +159,7 @@ func (b *Bitmap) And(other *Bitmap) {
 
 // MetaIntersects returns true if the meta-level intersection of all given
 // bitmaps is non-empty. This is a cheap necessary condition for the full
-// intersection being non-empty — if the meta AND is zero, the bitmaps are
+// intersection being non-empty: if the meta AND is zero, the bitmaps are
 // disjoint and no per-bit work is needed.
 func MetaIntersects(bitmaps ...*Bitmap) bool {
 	minMeta := len(bitmaps[0].meta)
@@ -154,6 +178,22 @@ func MetaIntersects(bitmaps ...*Bitmap) bool {
 		}
 	}
 	return false
+}
+
+// shrinkToFit reallocates words and meta to drop the capacity slack left by
+// exponential growth in ensure. It is meant to be called once after the index
+// is built or reloaded.
+func (b *Bitmap) shrinkToFit() {
+	if cap(b.words) > len(b.words) {
+		w := make([]uint64, len(b.words))
+		copy(w, b.words)
+		b.words = w
+	}
+	if cap(b.meta) > len(b.meta) {
+		m := make([]uint64, len(b.meta))
+		copy(m, b.meta)
+		b.meta = m
+	}
 }
 
 // Clear resets the bitmap for reuse, retaining the backing arrays.

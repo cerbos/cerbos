@@ -65,6 +65,12 @@ func New(opts ...Option) *Index {
 	return idx
 }
 
+// Compact releases the bitmap capacity slack left by exponential growth during
+// indexing. Call once after a full build/reload; not on the incremental path.
+func (m *Index) Compact() {
+	m.bi.compact()
+}
+
 func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	if len(rules) == 0 {
 		return nil
@@ -196,6 +202,16 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	var scopeBM, versionBM, resourceBM, roleBM, policyKindBM, principalBM *Bitmap
 
+	// Principal policies are a small minority, so a query
+	// for a specific principal usually finds no matching rows.
+	if principalID != "" {
+		bm, ok := bi.principal.Bitmap(principalID)
+		if !ok {
+			return buf
+		}
+		principalBM = bm
+	}
+
 	// scope is always filtered because "" is a valid literal scope (root scope).
 	bm, ok := bi.scope.Get(scope)
 	if !ok {
@@ -229,13 +245,6 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 			return buf
 		}
 		policyKindBM = bm
-	}
-	if principalID != "" {
-		bm, ok := bi.principal.Get(principalID)
-		if !ok {
-			return buf
-		}
-		principalBM = bm
 	}
 
 	dims := make([]*Bitmap, 0, 6) //nolint:mnd
@@ -307,7 +316,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 // appendRolePolicyDenies appends synthetic DENY bindings for each (role,
 // resource, action) triple where the role has a role policy matching
-// versionBM ∩ scopeBM ∩ roleBM but doesn't explicitly allow that action
+// the intersection of versionBM, scopeBM and roleBM but doesn't explicitly allow that action
 // for that resource.
 //
 // When roles is empty, iterates every role whose policy matches the
@@ -316,7 +325,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 //
 // When targetActions is empty, the action set for synthesis is derived
 // per-resource from the bindings (excluding principal-policy bindings) for
-// that resource intersected with versionBM ∩ scopeBM. The role filter is
+// that resource intersected with versionBM and scopeBM. The role filter is
 // deliberately ignored when deriving actions, so the action set reflects the
 // resource's full surface, not just actions referenced by filtered roles.
 func (m *Index) appendRolePolicyDenies(
@@ -498,7 +507,7 @@ func (m *Index) appendRolePolicyDenies(
 
 // collectResourceActions returns the action names referenced by bindings on
 // the given resource (intersected with version/scope). Principal-policy
-// actions are excluded — they're principal-specific and shouldn't widen the
+// actions are excluded: they're principal-specific and shouldn't widen the
 // resource's action set.
 func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionBM, scopeBM *Bitmap) []string {
 	if resBM.IsEmpty() {
@@ -865,13 +874,7 @@ func (bi *bitmapIndex) nonPrincipalDimensionKeys(gd *globDimension, versions, sc
 		}
 	}
 
-	var keys []string
-	gd.RangeBitmaps(func(k string, bm *Bitmap) {
-		if intersectionNonEmpty(bm, filterBM) {
-			keys = append(keys, k)
-		}
-	})
-	return keys
+	return gd.intersectingKeys(filterBM)
 }
 
 // versionScopeFilters builds the filter bitmaps. ok=false means a non-empty
@@ -979,8 +982,13 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	progs := make([]*CelProgram, len(vars))
 
 	for i, v := range vars {
+		ast, iss := conditions.StdEnv.Compile(v.Expr.Original)
+		if iss != nil && iss.Err() != nil {
+			return nil, iss.Err()
+		}
+
 		p, err := conditions.StdEnv.Program(
-			cel.CheckedExprToAst(v.Expr.Checked),
+			ast,
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {
