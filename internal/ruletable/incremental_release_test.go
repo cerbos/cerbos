@@ -28,10 +28,9 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
-// TestIncrementalAddReleasesCheckedExprs verifies that a policy added through the
-// incremental path (processPolicyEvent, not a full reload) has its retained
-// CheckedExpr trees released, and that it still evaluates correctly by recompiling from
-// Expr.Original on demand.
+// TestIncrementalAddReleasesCheckedExprs verifies that a policy added through
+// the processPolicyEvent has its retained CheckedExpr trees released, and that
+// it still evaluates correctly by recompiling from Expr.Original on demand.
 func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 	ctx, cancelFunc := context.WithCancel(t.Context())
 	defer cancelFunc()
@@ -49,8 +48,7 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
 
-	// Start from an empty rule table so the policy below can only be released by the
-	// incremental addPolicy path (a full reload would release it via init instead).
+	// Start from an empty rule table.
 	ruleTable, err := ruletable.NewRuleTable(ruletable.NewProtoRuletable())
 	require.NoError(t, err)
 
@@ -110,8 +108,7 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 		}
 	}
 
-	// The condition must evaluate to ALLOW for a public album, proving the incrementally
-	// added policy is functional via recompile-from-Original.
+	// The condition must evaluate to ALLOW for a public album.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, checkView(true))
 		require.NoError(c, err)
@@ -119,8 +116,7 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 		require.Equal(c, effectv1.Effect_EFFECT_ALLOW, output.Actions[actions[0]].GetEffect())
 	}, 2*time.Second, 50*time.Millisecond)
 
-	// A non-public album must NOT be allowed, proving the condition is genuinely evaluated
-	// (not short-circuited to a constant) by the recompiled program.
+	// A non-public album must NOT be allowed
 	output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, checkView(false))
 	require.NoError(t, err)
 	require.NotEqual(t, effectv1.Effect_EFFECT_ALLOW, output.Actions[actions[0]].GetEffect())
