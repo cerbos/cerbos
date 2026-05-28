@@ -159,7 +159,7 @@ func (b *Bitmap) And(other *Bitmap) {
 
 // MetaIntersects returns true if the meta-level intersection of all given
 // bitmaps is non-empty. This is a cheap necessary condition for the full
-// intersection being non-empty — if the meta AND is zero, the bitmaps are
+// intersection being non-empty: if the meta AND is zero, the bitmaps are
 // disjoint and no per-bit work is needed.
 func MetaIntersects(bitmaps ...*Bitmap) bool {
 	minMeta := len(bitmaps[0].meta)

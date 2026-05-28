@@ -133,7 +133,7 @@ func TestSubscription(s Subscribable) func(*testing.T, time.Duration, ...Event) 
 			cmp.Diff(
 				wantEvents,
 				haveEvents,
-				// sort top‐level Events by PolicyID.hash, then by SchemaFile for schema events
+				// sort top-level Events by PolicyID.hash, then by SchemaFile for schema events
 				cmpopts.SortSlices(func(a, b Event) bool {
 					aHash := reflect.ValueOf(a.PolicyID).FieldByName("hash").Uint()
 					bHash := reflect.ValueOf(b.PolicyID).FieldByName("hash").Uint()

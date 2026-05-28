@@ -121,7 +121,7 @@ func (idx *bitmapIndex) addBinding(b *Binding) {
 
 // removeBinding removes the binding from the slice and all dimension bitmaps,
 // and returns the ID to the free list.
-// It does NOT touch fqnBindings — that is managed by DeletePolicy, which needs
+// It does NOT touch fqnBindings. That is managed by DeletePolicy, which needs
 // to inspect fqnBindings across origins before deciding whether to remove the binding.
 func (idx *bitmapIndex) removeBinding(b *Binding) {
 	id := b.ID

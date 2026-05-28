@@ -316,7 +316,7 @@ func TestBitmapClearAndReuseWithGrowth(t *testing.T) {
 	b.Add(5000) // forces large allocation
 	b.Clear()
 
-	// Reuse with a smaller range — grow into old capacity.
+	// Reuse with a smaller range: grow into old capacity.
 	b.Add(10)
 	require.Equal(t, uint64(1), b.GetCardinality())
 	require.False(t, b.Contains(5000), "stale bit after Clear + smaller reuse")

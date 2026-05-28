@@ -507,7 +507,7 @@ func (m *Index) appendRolePolicyDenies(
 
 // collectResourceActions returns the action names referenced by bindings on
 // the given resource (intersected with version/scope). Principal-policy
-// actions are excluded — they're principal-specific and shouldn't widen the
+// actions are excluded: they're principal-specific and shouldn't widen the
 // resource's action set.
 func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionBM, scopeBM *Bitmap) []string {
 	if resBM.IsEmpty() {
