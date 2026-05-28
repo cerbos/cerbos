@@ -8,23 +8,13 @@ import (
 	"sync/atomic"
 )
 
-// lazyDimension stores each value's binding IDs as a sorted slice, unless
-// bitmap is smaller, and materialises a Bitmap on first query, caching it
-// for later queries — "pay the bitmap cost lazily, for the working set only".
-//
-// Concurrency. Queries run under the rule-table RLock (concurrent readers) and are
-// the only path that materialises, so each key maps to an atomic pointer to an
-// immutable lazyState: a query that loses the materialise race simply reloads the
-// winner's bitmap. Build and incremental updates run under the exclusive Lock (no
-// concurrent queries), so they mutate state in place. The map itself is only
-// written under the exclusive Lock.
+// lazyDimension stores each value's binding IDs as a sorted slice, unless a
+// bitmap is the smaller representation. It materialises a Bitmap on the first
+// query.
 type lazyDimension struct {
 	m map[string]*atomic.Pointer[lazyState]
 }
 
-// lazyState is an immutable snapshot of an entry: cold (ids set, bm nil)
-// until a query materialises it to hot (bm set). The ID slice is dropped on
-// materialisation.
 type lazyState struct {
 	bm  *Bitmap
 	ids []uint32
