@@ -316,7 +316,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 // appendRolePolicyDenies appends synthetic DENY bindings for each (role,
 // resource, action) triple where the role has a role policy matching
-// versionBM ∩ scopeBM ∩ roleBM but doesn't explicitly allow that action
+// the intersection of versionBM, scopeBM and roleBM but doesn't explicitly allow that action
 // for that resource.
 //
 // When roles is empty, iterates every role whose policy matches the
@@ -325,7 +325,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 //
 // When targetActions is empty, the action set for synthesis is derived
 // per-resource from the bindings (excluding principal-policy bindings) for
-// that resource intersected with versionBM ∩ scopeBM. The role filter is
+// that resource intersected with versionBM and scopeBM. The role filter is
 // deliberately ignored when deriving actions, so the action set reflects the
 // resource's full surface, not just actions referenced by filtered roles.
 func (m *Index) appendRolePolicyDenies(
