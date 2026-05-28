@@ -283,7 +283,6 @@ func visitCompiledExpr(expr *runtimev1.Expr, visitor ast.Visitor) error {
 	}
 
 	// The CheckedExpr is released once a rule table is loaded
-	// (RuleTable.releaseCheckedExprs); recompile from Original in that case.
 	if expr.Checked == nil {
 		return visitExpr(expr.Original, visitor)
 	}
