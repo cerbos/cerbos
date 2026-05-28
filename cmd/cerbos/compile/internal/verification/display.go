@@ -13,7 +13,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
@@ -34,7 +34,6 @@ const (
 	resultLevel        = 5
 	outputSrcLevel     = 6
 	outputErrKindLevel = 7
-	outputErrValLevel  = 8
 
 	listIndent = 2
 )
@@ -270,7 +269,7 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 		o.appendNode(resultLevel, fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), action.Details.GetError()))
 
 	default:
-		if o.verbose {
+		if o.verbose { //nolint:nestif
 			if success := action.Details.GetSuccess(); success != nil {
 				o.appendNode(resultLevel, fmt.Sprintf("%s %s", "RESULT:", colored.PassedTest(success.Effect)))
 				if len(success.Outputs) > 0 {
@@ -280,7 +279,11 @@ func (o *testOutput) addAction(suite *policyv1.TestResults_Suite, principal *pol
 					})
 					for _, output := range success.Outputs {
 						o.appendNode(outputSrcLevel, colored.TestOutputSrc(output.Src))
-						o.appendNode(outputErrKindLevel, singleLineJSON(output.Val))
+						if output.Error == "" {
+							o.appendNode(outputErrKindLevel, singleLineJSON(output.Val))
+						} else {
+							o.appendNode(outputErrKindLevel, fmt.Sprintf("%s %s", colored.ErrorMsg("ERROR:"), output.Error))
+						}
 					}
 				}
 			}
@@ -314,7 +317,11 @@ func tallyLabel(tally *policyv1.TestResults_Tally) string {
 	return labelColors[tally.Result](fmt.Sprintf("[%d %s]", tally.Count, labels[tally.Result]))
 }
 
-func singleLineJSON(m proto.Message) string {
+func singleLineJSON(m *structpb.Value) string {
+	if m == nil {
+		return "null"
+	}
+
 	v, err := protojson.Marshal(m)
 	if err != nil {
 		return "<unable to render value>"
