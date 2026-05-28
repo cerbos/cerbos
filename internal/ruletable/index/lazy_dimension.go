@@ -115,7 +115,7 @@ func (d lazyDimension) compact() {
 			continue
 		}
 		words := int(st.ids[len(st.ids)-1]/bitsPerWord) + 1
-		metaWords := (words + wordsPerMeta - 1) / wordsPerMeta // ⌈words / wordsPerMeta⌉
+		metaWords := (words + wordsPerMeta - 1) / wordsPerMeta // ceiling(words/wordsPerMeta)
 		if preferBitmap(words, metaWords, len(st.ids)) {
 			e.Store(&lazyState{bm: newBitmapFromIDs(st.ids)})
 			continue
