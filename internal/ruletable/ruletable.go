@@ -564,6 +564,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 
 	// The CheckedExpr are not needed at runtime. Programs are compiled from source.
 	rt.releaseCheckedExprs()
+	rt.dedupStrings()
 	debug.FreeOSMemory()
 
 	return nil
