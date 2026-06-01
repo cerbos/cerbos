@@ -9,7 +9,7 @@ NOTE: The policies for this section can be found link:{tutorial-base}/07-derived
 
 The business requirements for Cerbforce state that only an owner of Contacts and Companies are allowed to delete them from the system. With Cerbos, the aim is to keep policies as simple as possible and not repeat logic across different resources, so in this situation, a xref:policies:derived_roles.adoc[Derived Role] can enable help.
 
-Derived roles are a way of augmenting the broad roles with are attached to the user in the directory of the authentication system with contextual data to provide more fine-grained control at runtime. On every request, all the relevant derived role policies are evaluated and those matching roles are 'attached' to the user as Cerbos computes access.
+Derived roles are a way of augmenting the broad roles which are attached to the user in the directory of the authentication system with contextual data to provide more fine-grained control at runtime. On every request, all the relevant derived role policies are evaluated and those matching roles are 'attached' to the user as Cerbos computes access.
 
 == Owner derived role
 
