@@ -298,6 +298,8 @@ func Unmarshal(data []byte) (*Index, error) {
 		return nil, fmt.Errorf("unmarshaling allow_actions bitmap: %w", err)
 	}
 
+	bi.dedupStrings()
+
 	return &Index{
 		bi:          bi,
 		parentRoles: unmarshalParentRoles(msg.ParentRoles),
