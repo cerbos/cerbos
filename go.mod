@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos
 
-go 1.26
+go 1.25.5
 
 toolchain go1.26.3
 
@@ -9,7 +9,7 @@ require (
 	buf.build/go/protovalidate v1.2.0
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/adrg/xdg v0.5.3
-	github.com/alecthomas/chroma/v2 v2.25.0
+	github.com/alecthomas/chroma/v2 v2.26.1
 	github.com/alecthomas/kong v1.15.0
 	github.com/alecthomas/participle/v2 v2.1.4
 	github.com/aws/aws-lambda-go v1.54.0
@@ -177,7 +177,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.1 // indirect
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/dlclark/regexp2/v2 v2.1.0 // indirect
+	github.com/dlclark/regexp2/v2 v2.1.1 // indirect
 	github.com/docker/go-connections v0.7.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
