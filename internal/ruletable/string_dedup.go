@@ -68,7 +68,7 @@ func dedupMeta(s *index.StringDeduper, m *runtimev1.RuleTableMetadata) {
 	}
 }
 
-// dedupSourceAttributes dedupes only keys
+// dedupSourceAttributes dedupes only keys.
 func dedupSourceAttributes(s *index.StringDeduper, sa *policyv1.SourceAttributes) {
 	if sa == nil || len(sa.Attributes) == 0 {
 		return
