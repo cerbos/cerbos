@@ -13,15 +13,15 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 )
 
-// dedupStrings runs a unified string-dedup pass across both the index and the
-// RuleTable-level state, sharing a single seen-map seeded with the index's
-// routing-field canonicals. Each map keyed by string is rebuilt with interned
+// dedupStrings runs one string-dedup pass over both the RuleTable-level state
+// and the index, using a single shared seen-map so a string that appears in
+// either is stored once. Each map keyed by string is rebuilt with interned
 // keys (also reclaiming any oversize bucket slack), and reachable Condition
 // trees / Variable / Constants / source-attribute keys are interned in place.
 //
-// Build/reload only. Called from init after rt.idx.Compact() (which already
-// runs the index-internal pass with its own deduper; this pass walks the
-// index again, replacing those transient canonicals with the unified set).
+// Build/reload only. Called from init after rt.idx.Compact(), which already
+// ran the index's own dedup pass. This pass walks the index again with the
+// shared map, so its strings end up in the same set as the RuleTable ones.
 func (rt *RuleTable) dedupStrings() {
 	s := index.NewStringDeduper()
 
@@ -31,16 +31,16 @@ func (rt *RuleTable) dedupStrings() {
 
 	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles)
 
-	// canon shares structurally-identical RunnableDerivedRole trees across the
-	// resource policies that import the same derived role. compileDerivedRoles
-	// compiles a fresh copy per importer (see its TODO), and policyDerivedRoles
-	// is keyed per importing resource policy, so the same tree is retained once
-	// per importer. Canonicalising by VarCacheKey (= HashPB(dr)) collapses them
-	// to a single shared instance; the duplicates become garbage and their
-	// spans drain at the post-init FreeOSMemory.
-	canon := make(map[uint64]*runtimev1.RunnableDerivedRole)
+	// shared holds the first copy we keep of each distinct RunnableDerivedRole,
+	// keyed by VarCacheKey (= HashPB(dr)). compileDerivedRoles compiles a fresh
+	// copy per importing resource policy (see its TODO), and policyDerivedRoles
+	// is keyed per importer, so the same tree is retained once per importer.
+	// Pointing every importer at the first copy collapses those duplicates to
+	// one instance; the rest become garbage and their spans drain at the
+	// post-init FreeOSMemory.
+	shared := make(map[uint64]*runtimev1.RunnableDerivedRole)
 	for modID, drs := range rt.policyDerivedRoles {
-		rt.policyDerivedRoles[modID] = dedupDerivedRoleMap(s, canon, drs)
+		rt.policyDerivedRoles[modID] = dedupDerivedRoleMap(s, shared, drs)
 	}
 
 	rt.JsonSchemas = dedupJSONSchemas(s, rt.JsonSchemas)
@@ -127,7 +127,7 @@ func dedupScopeParentRoles(s *index.StringDeduper, m map[string]*runtimev1.RuleT
 	return out
 }
 
-func dedupDerivedRoleMap(s *index.StringDeduper, canon map[uint64]*runtimev1.RunnableDerivedRole, m map[string]*WrappedRunnableDerivedRole) map[string]*WrappedRunnableDerivedRole {
+func dedupDerivedRoleMap(s *index.StringDeduper, shared map[uint64]*runtimev1.RunnableDerivedRole, m map[string]*WrappedRunnableDerivedRole) map[string]*WrappedRunnableDerivedRole {
 	if len(m) == 0 {
 		return m
 	}
@@ -136,14 +136,14 @@ func dedupDerivedRoleMap(s *index.StringDeduper, canon map[uint64]*runtimev1.Run
 		s.Intern(&k)
 		if v != nil {
 			if v.RunnableDerivedRole != nil {
-				// Share an existing canonical only when the hash matches AND the
-				// trees are actually equal — the proto.Equal guard makes a
-				// VarCacheKey collision harmless (worst case: no sharing).
-				if c, ok := canon[v.VarCacheKey]; ok && proto.Equal(c, v.RunnableDerivedRole) {
+				// Reuse a tree we've already kept only when the hash matches and
+				// the trees are actually equal. The proto.Equal guard makes a
+				// VarCacheKey collision harmless: the worst case is no sharing.
+				if c, ok := shared[v.VarCacheKey]; ok && proto.Equal(c, v.RunnableDerivedRole) {
 					v.RunnableDerivedRole = c
 				} else {
 					dedupRunnableDerivedRole(s, v.RunnableDerivedRole)
-					canon[v.VarCacheKey] = v.RunnableDerivedRole
+					shared[v.VarCacheKey] = v.RunnableDerivedRole
 				}
 			}
 			v.Constants = dedupAnyMap(s, v.Constants)
@@ -178,14 +178,14 @@ func dedupRunnableDerivedRole(s *index.StringDeduper, rdr *runtimev1.RunnableDer
 		}
 		rdr.Constants = out
 	}
-	// Intern strings first, then relocate the trees: proto.Clone copies string
-	// headers (sharing the interned backing), so the fresh clones land in dense
-	// post-dedup spans while the original build-phase spans — now holding mostly
-	// garbage — drain back to the OS at the post-init FreeOSMemory. Same
-	// defragmentation lever as canonical-string reallocation in StringDeduper
-	// .Intern, applied to the proto wrapper structs that dominate the residual
-	// span slack. Only the canonical (first-seen) tree reaches here; shared
-	// duplicates are repointed in dedupDerivedRoleMap and never re-cloned.
+	// Intern the strings first, then relocate the trees. proto.Clone copies the
+	// string headers (so the interned backing is shared), and the fresh clones
+	// land in dense post-dedup spans. The original build-phase spans, now mostly
+	// garbage, drain back to the OS at the post-init FreeOSMemory. This is the
+	// same trick as the string reallocation in StringDeduper.Intern, applied to
+	// the proto wrapper structs that hold most of the leftover span slack. Only
+	// the first copy of each tree gets here; later duplicates are
+	// repointed to it in dedupDerivedRoleMap and never re-cloned.
 	for i, v := range rdr.OrderedVariables {
 		if v == nil {
 			continue

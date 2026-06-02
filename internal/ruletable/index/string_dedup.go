@@ -7,7 +7,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 )
 
-// StringDeduper canonicalises strings encountered during a dedup pass.
+// StringDeduper collapses repeated strings to a single shared copy.
 type StringDeduper struct {
 	seen map[string]string
 }
@@ -17,7 +17,8 @@ func NewStringDeduper() *StringDeduper {
 	return &StringDeduper{seen: make(map[string]string)}
 }
 
-// Intern replaces *p with the canonical (first-seen) copy of its value.
+// Intern replaces *p with the first re-allocated copy of the same value, so
+// equal strings share one freshly-allocated backing array.
 func (s *StringDeduper) Intern(p *string) {
 	if *p == "" {
 		return
