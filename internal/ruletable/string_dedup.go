@@ -22,7 +22,7 @@ import (
 // runs the index-internal pass with its own deduper; this pass walks the
 // index again, replacing those transient canonicals with the unified set).
 func (rt *RuleTable) dedupStrings() {
-	s := rt.idx.NewSeededStringDeduper()
+	s := index.NewStringDeduper()
 
 	for _, m := range rt.Meta {
 		dedupMeta(s, m)
