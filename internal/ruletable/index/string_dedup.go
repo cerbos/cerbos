@@ -7,7 +7,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 )
 
-// StringDeduper collapses repeated strings to a single shared copy.
 type StringDeduper struct {
 	seen map[string]string
 }
