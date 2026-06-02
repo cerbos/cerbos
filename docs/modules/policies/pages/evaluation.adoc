@@ -36,7 +36,7 @@ For each action in the request, Cerbos evaluates all rules in the matched policy
 
 . The rule's `actions` match the requested action. Wildcards are supported and respect the `:` delimiter (e.g. `view:*` matches `view:public` but not `view`).
 . The rule's `roles` or `derivedRoles` include at least one of the principal's static roles or activated derived roles.
-. If the rule has a xref:conditions.adoc[condition], it evaluates to `true`.
+. If the rule has a xref:conditions.adoc[condition], the condition evaluates to `true`.
 
 
 [#conflict-resolution]
