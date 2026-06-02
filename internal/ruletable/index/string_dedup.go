@@ -12,7 +12,6 @@ type StringDeduper struct {
 	seen map[string]string
 }
 
-// NewStringDeduper returns a fresh empty deduper.
 func NewStringDeduper() *StringDeduper {
 	return &StringDeduper{seen: make(map[string]string)}
 }
@@ -133,8 +132,6 @@ func (idx *bitmapIndex) dedupStrings() {
 	idx.dedupStringsWith(s)
 }
 
-// dedupStringsWith walks bindings + Cores using the supplied deduper, so
-// callers can share a seen-map with a wider dedup pass (e.g. RuleTable).
 func (idx *bitmapIndex) dedupStringsWith(s *StringDeduper) {
 	visitedCores := make(map[*FunctionalCore]struct{}, len(idx.coresBySum))
 	for _, b := range idx.bindings {
