@@ -194,11 +194,11 @@ func dedupRunnableDerivedRole(s *index.StringDeduper, rdr *runtimev1.RunnableDer
 		if v.Expr != nil {
 			s.Intern(&v.Expr.Original)
 		}
-		rdr.OrderedVariables[i] = proto.Clone(v).(*runtimev1.Variable)
+		rdr.OrderedVariables[i] = proto.Clone(v).(*runtimev1.Variable) //nolint:forcetypeassert
 	}
 	s.DedupCondition(rdr.Condition)
 	if rdr.Condition != nil {
-		rdr.Condition = proto.Clone(rdr.Condition).(*runtimev1.Condition)
+		rdr.Condition = proto.Clone(rdr.Condition).(*runtimev1.Condition) //nolint:forcetypeassert
 	}
 }
 
