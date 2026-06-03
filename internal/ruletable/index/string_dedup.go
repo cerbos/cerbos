@@ -4,30 +4,30 @@
 package index
 
 import (
+	"unique"
+
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 )
 
+type UniqueHandles map[unique.Handle[string]]struct{}
+
 type StringDeduper struct {
-	seen map[string]string
+	Handles UniqueHandles
 }
 
 func NewStringDeduper() *StringDeduper {
-	return &StringDeduper{seen: make(map[string]string)}
+	return &StringDeduper{Handles: make(map[unique.Handle[string]]struct{})}
 }
 
-// Intern replaces *p with the first re-allocated copy of the same value, so
-// equal strings share one freshly-allocated backing array.
+// Intern replaces *p with the canonical copy held by the unique package, so
+// equal strings share one backing array.
 func (s *StringDeduper) Intern(p *string) {
 	if *p == "" {
 		return
 	}
-	if c, ok := s.seen[*p]; ok {
-		*p = c
-		return
-	}
-	fresh := string([]byte(*p))
-	s.seen[fresh] = fresh
-	*p = fresh
+	h := unique.Make(*p)
+	s.Handles[h] = struct{}{}
+	*p = h.Value()
 }
 
 func (s *StringDeduper) DedupCondition(c *runtimev1.Condition) {
@@ -154,4 +154,5 @@ func (idx *bitmapIndex) dedupStringsWith(s *StringDeduper) {
 
 func (m *Index) DedupStrings(s *StringDeduper) {
 	m.bi.dedupStringsWith(s)
+	m.handles = s.Handles
 }
