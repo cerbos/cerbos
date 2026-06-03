@@ -126,11 +126,6 @@ func (s *StringDeduper) dedupParams(p *RowParams) {
 	}
 }
 
-func (idx *bitmapIndex) dedupStrings() {
-	s := NewStringDeduper()
-	idx.dedupStringsWith(s)
-}
-
 func (idx *bitmapIndex) dedupStringsWith(s *StringDeduper) {
 	visitedCores := make(map[*FunctionalCore]struct{}, len(idx.coresBySum))
 	for _, b := range idx.bindings {
