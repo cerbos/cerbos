@@ -55,6 +55,7 @@ type Option func(*Index)
 type Index struct {
 	bi          *bitmapIndex
 	parentRoles map[string]map[string][]string
+	handles     UniqueHandles // handles to canonical strings
 }
 
 func New(opts ...Option) *Index {

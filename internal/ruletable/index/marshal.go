@@ -298,9 +298,13 @@ func Unmarshal(data []byte) (*Index, error) {
 		return nil, fmt.Errorf("unmarshaling allow_actions bitmap: %w", err)
 	}
 
+	s := NewStringDeduper()
+	bi.dedupStringsWith(s)
+
 	return &Index{
 		bi:          bi,
 		parentRoles: unmarshalParentRoles(msg.ParentRoles),
+		handles:     s.Handles,
 	}, nil
 }
 
