@@ -2,7 +2,7 @@ module github.com/cerbos/cerbos/api/genpb
 
 go 1.25.0
 
-toolchain go1.26.3
+toolchain go1.26.4
 
 require (
 	connectrpc.com/connect v1.20.0
