@@ -15,6 +15,7 @@ builds:
     id: "cerbos"
     env:
       - CGO_ENABLED=0
+      - GOAMD64=v2
     goos:
       - linux
       - darwin
@@ -41,6 +42,7 @@ builds:
     id: cerbos-aws-lambda-ext
     env:
       - CGO_ENABLED=0
+      - GOAMD64=v2
     goos:
       - linux
     goarch:
@@ -56,6 +58,7 @@ builds:
     id: "cerbos-aws-lambda-func"
     env:
       - CGO_ENABLED=0
+      - GOAMD64=v2
     goos:
       - linux
     goarch:
@@ -73,6 +76,7 @@ builds:
     id: "cerbos-aws"
     env:
       - CGO_ENABLED=0
+      - GOAMD64=v2
     goos:
       - linux
       - darwin
@@ -90,6 +94,7 @@ builds:
     id: "cerbosctl"
     env:
       - CGO_ENABLED=0
+      - GOAMD64=v2
     goos:
       - linux
       - darwin

@@ -10,6 +10,8 @@ testdata_json_schema_dir := join(justfile_directory(), "internal", "test", "test
 testsplit_dir := join(justfile_directory(), "hack", "tools", "testsplit")
 tools_mod_dir := join(justfile_directory(), "tools")
 
+export CGO_ENABLED := '0'
+export GOAMD64 := 'v2'
 export TOOLS_BIN_DIR := join(env_var_or_default("XDG_CACHE_HOME", join(env_var("HOME"), ".cache")), "cerbos/bin")
 export PATH := TOOLS_BIN_DIR + ":" + env_var("PATH")
 
@@ -32,8 +34,8 @@ clean:
     @ rm -rf {{ genpb_dir }}/cerbos {{ genmocks_dir }}  {{ json_schema_dir }} {{ openapi_dir }}
 
 compile:
-    @ CGO_ENABLED=0 go build ./...
-    @ CGO_ENABLED=0 go test -tags=e2e,tests,integration -run=ignore  ./... > /dev/null
+    @ go build ./...
+    @ go test -tags=e2e,tests,integration -run=ignore  ./... > /dev/null
     @ GOOS=js GOARCH=wasm go build ./private/ruletable
 
 cover PKG='./...' TEST='.*': _cover
@@ -60,7 +62,7 @@ generate-confdocs:
     cd {{ justfile_directory() }}
     mkdir -p ./internal/confdocs
     go run -tags confdocs ./hack/tools/confdocs/confdocs.go > ./internal/confdocs/generated.go
-    CGO_ENABLED=0 go run ./internal/confdocs/generated.go
+    go run ./internal/confdocs/generated.go
     rm -rf ./internal/confdocs
 
 generate-helm: _helm-schema
