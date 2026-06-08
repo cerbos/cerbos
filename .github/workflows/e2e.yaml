@@ -42,7 +42,12 @@ jobs:
 
       - name: Install Helm Secrets
         shell: bash
-        run: helm plugin install https://github.com/jkroepke/helm-secrets --version v4.7.6
+        env:
+          HELM_SECRETS_VERSION: "4.7.6"
+        run: |-
+          helm plugin install "https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-${HELM_SECRETS_VERSION}.tgz"
+          helm plugin install "https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-getter-${HELM_SECRETS_VERSION}.tgz"
+          helm plugin install "https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-post-renderer-${HELM_SECRETS_VERSION}.tgz"
 
       - name: Configure Telepresence
         run: |
