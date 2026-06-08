@@ -61,7 +61,8 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 							"id":         "XX125",
 							"owner":      "john",
 							"team":       "design",
-						}), "view:public", "defer").
+						}), "view:public", "defer",
+				).
 				Add(
 					cerbos.NewResource("leave_request", "XX125").
 						WithPolicyVersion("20210210").
@@ -71,7 +72,8 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 							"id":         "XX125",
 							"owner":      "john",
 							"team":       "design",
-						}), "approve").
+						}), "approve",
+				).
 				Add(
 					cerbos.NewResource("leave_request", "XX225").
 						WithPolicyVersion("20210210").
@@ -81,7 +83,8 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 							"id":         "XX225",
 							"owner":      "mary",
 							"team":       "frontend",
-						}), "approve")
+						}), "approve",
+				)
 
 			check := func(t *testing.T, have *cerbos.CheckResourcesResponse, err error) {
 				t.Helper()
@@ -140,7 +143,8 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 							"id":         "XX125",
 							"owner":      "john",
 							"team":       "design",
-						}), "view:public", "delete", "create").
+						}), "view:public", "delete", "create",
+				).
 				Add(
 					cerbos.NewResource("leave_request", "XX225").
 						WithScope("acme.hr").
@@ -150,7 +154,8 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 							"id":         "XX225",
 							"owner":      "john",
 							"team":       "design",
-						}), "view:public", "delete", "create")
+						}), "view:public", "delete", "create",
+				)
 
 			check := func(t *testing.T, have *cerbos.CheckResourcesResponse, err error) {
 				t.Helper()
@@ -235,11 +240,13 @@ func TestSDKClient(addr string, opts ...cerbos.Opt) func(*testing.T) {
 				})
 				require.NoError(t, err, "Failed to create wanted output")
 				wantOutput1 := structpb.NewStructValue(wantStruct)
-				haveOutput1 := haveXX125.Output("resource.equipment_request.vdefault#public-view")
+				haveOutput1, err := haveXX125.Output("resource.equipment_request.vdefault#public-view")
+				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(wantOutput1, haveOutput1, protocmp.Transform()))
 
 				wantOutput2 := structpb.NewStringValue("create_allowed:john")
-				haveOutput2 := haveXX125.Output("resource.equipment_request.vdefault/acme#rule-001")
+				haveOutput2, err := haveXX125.Output("resource.equipment_request.vdefault/acme#rule-001")
+				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(wantOutput2, haveOutput2, protocmp.Transform()))
 			}
 
