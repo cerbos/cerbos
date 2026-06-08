@@ -33,7 +33,7 @@ jobs:
           docker rm cerbos-extract
 
       - name: Install ghz
-        uses: cerbos/actions/install-tools@81c84b69ba3259e9642bc3ff9b24d4a723ecb62f # main
+        uses: cerbos/actions/install-tools@f73c5fd3cd8b66cad9d757a8686cc30d0f209f84 # main
         with:
           tools: ghz
 
@@ -49,6 +49,6 @@ jobs:
 
       - name: Notify Slack on failure
         if: "!success()"
-        uses: cerbos/actions/notify-slack@81c84b69ba3259e9642bc3ff9b24d4a723ecb62f # main
+        uses: cerbos/actions/notify-slack@f73c5fd3cd8b66cad9d757a8686cc30d0f209f84 # main
         with:
           webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}
