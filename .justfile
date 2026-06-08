@@ -156,7 +156,11 @@ tests PKG='./...' TEST='.*': _gotestsum
     @ gotestsum --format=dots-v2 --format-hide-empty-pkg -- -tags=tests,integration -failfast -count=1 -run='{{ TEST }}' '{{ PKG }}'
 
 test-integration TESTSPLIT_INDEX='0' TESTSPLIT_TOTAL='1': _gotestsum _testsplit
-    @ CGO_ENABLED=1 testsplit split \
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    export CGO_ENABLED=1 # Required for race detector
+    testsplit split \
         --kind=integration \
         --index={{ TESTSPLIT_INDEX }} \
         --total={{ TESTSPLIT_TOTAL }} \
