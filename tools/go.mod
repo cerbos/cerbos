@@ -8,7 +8,7 @@ require (
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260520184502-0d5a4df7d534
-	github.com/dkorunic/betteralign v0.11.0
+	github.com/dkorunic/betteralign v0.12.0
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
@@ -82,7 +82,6 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/sirkon/dst v0.26.4 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
