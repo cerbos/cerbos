@@ -1,7 +1,6 @@
 helmDefaults:
   cleanupOnFail: true
   wait: true
-  recreatePods: true
   force: true
   createNamespace: true
 
@@ -73,7 +72,7 @@ releases:
                 maxResourcesPerRequest: 5
               adminAPI:
                 enabled: true
-                adminCredentials: 
+                adminCredentials:
                   username: cerbos
                   passwordHash: JDJ5JDEwJC5BYjQyY2RJNG5QR2NWMmJPdnNtQU93c09RYVA0eFFGdHBrbmFEeXh1NnlIVTE1cHJNY05PCgo=
             auxData:
@@ -86,11 +85,11 @@ releases:
               accessLogsEnabled: true
               decisionLogsEnabled: true
               backend: local
-              local: 
+              local:
                 storagePath: /audit/cerbos
             storage:
               driver: "sqlite3"
               sqlite3:
-                dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"  
+                dsn: "file:/data/cerbos.sqlite?mode=rwc&_fk=true"
             telemetry:
               disabled: true
