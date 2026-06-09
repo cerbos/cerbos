@@ -45,6 +45,7 @@ jobs:
         env:
           HELM_SECRETS_VERSION: "4.7.6"
         run: |-
+          curl --silent 'https://github.com/jkroepke.gpg' | gpg --import -
           helm plugin install "https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-${HELM_SECRETS_VERSION}.tgz"
           helm plugin install "https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-getter-${HELM_SECRETS_VERSION}.tgz"
           helm plugin install "https://github.com/jkroepke/helm-secrets/releases/download/v${HELM_SECRETS_VERSION}/secrets-post-renderer-${HELM_SECRETS_VERSION}.tgz"
