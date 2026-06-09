@@ -152,12 +152,12 @@ func (cc CredentialsConf) ToCredentials() (*credentials.Credentials, error) {
 
 // ConnectionConf holds configuration for the remote connection.
 type ConnectionConf struct {
-	// TLS defines settings for TLS connections.
-	TLS TLSConf `yaml:"tls"`
 	// APIEndpoint is the address of the API server.
 	APIEndpoint string `yaml:"apiEndpoint" conf:"required,example=https://api.cerbos.cloud"`
 	// BootstrapEndpoint is the addresses of the server serving the bootstrap configuration.
 	BootstrapEndpoint string `yaml:"bootstrapEndpoint" conf:"required,example=https://cdn.cerbos.cloud"`
+	// TLS defines settings for TLS connections.
+	TLS TLSConf `yaml:"tls"`
 	// MinRetryWait is the minimum amount of time to wait between retries.
 	MinRetryWait time.Duration `yaml:"minRetryWait" conf:",example=1s"`
 	// MaxRetryWait is the maximum amount of time to wait between retries.
@@ -211,6 +211,8 @@ type TLSConf struct {
 	Authority string `yaml:"authority" conf:",example=domain.tld"`
 	// CACert is the path to the CA certificate chain to use for certificate verification.
 	CACert string `yaml:"caCert" conf:",example=/path/to/CA_certificate"`
+	// InsecureSkipVerify disables verifying the TLS certificate. For testing purposes only.
+	InsecureSkipVerify bool `yaml:"insecureSkipVerify" conf:",ignore"`
 }
 
 func GetConf() (*Conf, error) {
