@@ -51,6 +51,11 @@ func getInstance() (*hub.Hub, error) {
 		}
 	}
 
+	if conf.Connection.TLS.InsecureSkipVerify {
+		logger.Warn("[INSECURE CONFIG] hub.connection.tls.insecureSkipVerify is set to true")
+		tlsConf.InsecureSkipVerify = true
+	}
+
 	return hub.Get(base.ClientConf{
 		Logger:            zapr.NewLogger(logger),
 		PDPIdentifier:     pdpID,
