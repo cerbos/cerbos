@@ -231,9 +231,10 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 
 		// Check whether we are inside a flow block (e.g. foo: {"x": "y"})
 		if tok.Indicator == token.FlowCollectionIndicator {
-			if tok.Type == token.MappingStartType || tok.Type == token.SequenceStartType {
+			switch tok.Type { //nolint:exhaustive
+			case token.MappingStartType, token.SequenceStartType:
 				flowBlock++
-			} else {
+			case token.MappingEndType, token.SequenceEndType:
 				flowBlock--
 			}
 		}

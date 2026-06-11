@@ -1,0 +1,6 @@
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: a
+  definitions:
+    b: ["c", "d"]
+    e: {"f": "g", "h": "i"}

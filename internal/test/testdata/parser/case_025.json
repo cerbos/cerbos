@@ -1,0 +1,20 @@
+{
+    "description": "False positive on malformed YAML string detection (#3222)",
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "exportConstants": {
+                    "name": "a",
+                    "definitions": {
+                        "b": ["c", "d"],
+                        "e": {
+                            "f": "g",
+                            "h": "i"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
