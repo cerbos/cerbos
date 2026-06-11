@@ -4,6 +4,7 @@
 package auxdata
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -18,102 +19,137 @@ import (
 	"github.com/lestrrat-go/httprc/v3"
 	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
-	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/test"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestKeySet(t *testing.T) {
 	t.Parallel()
 
-	keysDir := test.PathToDir(t, filepath.Join("auxdata", "keys"))
-	keys := findKeys(t, keysDir)
-
-	ts := httptest.NewServer(http.FileServer(http.Dir(keysDir)))
-	t.Cleanup(ts.Close)
-
-	for _, k := range keys {
-		isPEM := filepath.Ext(k) == ".pem"
-
-		t.Run(fmt.Sprintf("local/file/%s", filepath.Base(k)), func(t *testing.T) {
+	testCases := test.LoadTestCases(t, "auxdata")
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
 			t.Parallel()
-			conf := &LocalSource{
-				File: k,
-				PEM:  isPEM,
+
+			tc := readTestCase(t, testCase)
+			keysDir := t.TempDir()
+
+			if tc.GetWantErr() != "" && (tc.GetWantLocalErr() != "" || tc.GetWantRemoteErr() != "") {
+				t.Fatalf("specify wantError or wantLocalErr/wantRemoteErr, not both")
 			}
 
-			lks := newLocalKeySet(conf, []any{jws.WithRequireKid(false)})
-			ks, opts, err := lks.keySet(t.Context())
-			require.NoError(t, err)
-			require.NotNil(t, ks)
-			require.True(t, ks.Len() > 0)
-			require.Len(t, opts, 1)
-		})
+			fileName := filepath.Base(t.Name())
+			path := filepath.Join(keysDir, fileName)
+			require.NoError(t, os.WriteFile(path, []byte(tc.GetInput().GetKey()), 0o600))
 
-		t.Run(fmt.Sprintf("local/data/%s", filepath.Base(k)), func(t *testing.T) {
-			t.Parallel()
-			contents, err := os.ReadFile(k)
-			require.NoError(t, err, "Failed to read file %s", k)
+			ts := httptest.NewServer(http.FileServer(http.Dir(keysDir)))
+			t.Cleanup(ts.Close)
 
-			conf := &LocalSource{
-				Data: base64.StdEncoding.EncodeToString(contents),
-				PEM:  isPEM,
-			}
-
-			lks := newLocalKeySet(conf, nil)
-			ks, opts, err := lks.keySet(t.Context())
-			require.NoError(t, err)
-			require.NotNil(t, ks)
-			require.True(t, ks.Len() > 0)
-			require.Nil(t, opts)
-		})
-
-		if !isPEM {
-			t.Run(fmt.Sprintf("remote/%s", filepath.Base(k)), func(t *testing.T) {
+			t.Run("local", func(t *testing.T) {
 				t.Parallel()
-				conf := &RemoteSource{
-					URL: fmt.Sprintf("%s/%s", ts.URL, filepath.Base(k)),
-				}
 
-				ctx, cancelFn := context.WithTimeout(t.Context(), 1*time.Second)
-				defer cancelFn()
+				t.Run("data", func(t *testing.T) {
+					t.Parallel()
 
-				cache, err := jwk.NewCache(ctx, httprc.NewClient())
-				require.NoError(t, err, "Failed to create JWK cache")
-				rks := newRemoteKeySet(ctx, cache, conf, []any{jws.WithInferAlgorithmFromKey(true)})
-				ks, opts, err := rks.keySet(ctx)
+					lks := newLocalKeySet(&LocalSource{
+						Data: base64.StdEncoding.EncodeToString([]byte(tc.GetInput().GetKey())),
+						PEM:  tc.GetInput().GetPem(),
+					}, nil, nil)
 
-				require.NoError(t, err)
-				require.NotNil(t, ks)
-				require.True(t, ks.Len() > 0)
-				require.Len(t, opts, 1)
+					ks, opts, err := lks.keySet(t.Context())
+					switch {
+					case tc.GetWantErr() != "":
+						require.ErrorContains(t, err, tc.GetWantErr())
+						return
+					case tc.GetWantLocalErr() != "":
+						require.ErrorContains(t, err, tc.GetWantLocalErr())
+						return
+					}
+
+					require.NoError(t, err)
+					require.NotNil(t, ks)
+					require.True(t, ks.Len() > 0)
+					require.Nil(t, opts)
+				})
+
+				t.Run("file", func(t *testing.T) {
+					t.Parallel()
+
+					lks := newLocalKeySet(&LocalSource{
+						File: path,
+						PEM:  tc.GetInput().GetPem(),
+					}, nil, nil)
+
+					ks, opts, err := lks.keySet(t.Context())
+					switch {
+					case tc.GetWantErr() != "":
+						require.ErrorContains(t, err, tc.GetWantErr())
+						return
+					case tc.GetWantLocalErr() != "":
+						require.ErrorContains(t, err, tc.GetWantLocalErr())
+						return
+					}
+
+					require.NoError(t, err)
+					require.NotNil(t, ks)
+					require.True(t, ks.Len() > 0)
+					require.Nil(t, opts)
+				})
 			})
-		}
+
+			if !tc.Input.Pem {
+				t.Run("remote", func(t *testing.T) {
+					t.Parallel()
+
+					ctx, cancelFn := context.WithTimeout(t.Context(), 1*time.Second)
+					defer cancelFn()
+
+					cache, err := jwk.NewCache(ctx, httprc.NewClient())
+					require.NoError(t, err, "failed to create JWK cache")
+
+					rks := newRemoteKeySet(ctx, cache, &RemoteSource{
+						URL: fmt.Sprintf("%s/%s", ts.URL, fileName),
+					}, nil, nil)
+
+					ks, opts, err := rks.keySet(ctx)
+					switch {
+					case tc.GetWantErr() != "":
+						require.ErrorContains(t, err, tc.GetWantErr())
+						return
+					case tc.GetWantRemoteErr() != "":
+						require.ErrorContains(t, err, tc.GetWantRemoteErr())
+						return
+					}
+
+					require.NoError(t, err)
+					require.NotNil(t, ks)
+					require.True(t, ks.Len() > 0)
+					require.Len(t, opts, 0)
+				})
+			}
+		})
 	}
 }
 
-func findKeys(t *testing.T, keysDir string) []string {
+func readTestCase(t *testing.T, testCase test.Case) *privatev1.AuxDataTestCase {
 	t.Helper()
 
-	entries, err := os.ReadDir(keysDir)
-	require.NoError(t, err)
+	tc := &privatev1.AuxDataTestCase{}
+	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(testCase.Input), tc))
 
-	keys := make([]string, len(entries))
-	for i, entry := range entries {
-		keys[i] = filepath.Join(keysDir, entry.Name())
-	}
-
-	return keys
+	return tc
 }
 
 func TestExtract_MultipleKeySets(t *testing.T) {
 	verifyKey := "verify_key.jwk"
-	keysDir := test.PathToDir(t, "auxdata")
+	keysDir := filepath.Join(test.PathToDir(t, "auxdata"), "keys")
 
 	ts := httptest.NewServer(http.FileServer(http.Dir(keysDir)))
 	t.Cleanup(ts.Close)
@@ -248,7 +284,7 @@ func TestExtract_MultipleKeySets(t *testing.T) {
 
 func TestExtract_SingleKeySet(t *testing.T) {
 	verifyKey := "verify_key.jwk"
-	keysDir := test.PathToDir(t, "auxdata")
+	keysDir := filepath.Join(test.PathToDir(t, "auxdata"), "keys")
 
 	conf := &JWTConf{
 		AcceptableTimeSkew: 1 * time.Minute,
@@ -354,7 +390,7 @@ func mkSignedToken(t *testing.T, expiry time.Time) string {
 	require.NoError(t, token.Set("customArray", []string{"A", "B", "C"}))
 	require.NoError(t, token.Set("customMap", map[string]any{"A": "AA", "B": "BB", "C": "CC"}))
 
-	keyData, err := os.ReadFile(filepath.Join(test.PathToDir(t, "auxdata"), "signing_key.jwk"))
+	keyData, err := os.ReadFile(filepath.Join(test.PathToDir(t, "auxdata"), "keys", "signing_key.jwk"))
 	require.NoError(t, err)
 
 	keySet, err := jwk.ParseKey(keyData)

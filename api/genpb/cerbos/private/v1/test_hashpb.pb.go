@@ -10,6 +10,26 @@ import (
 
 // HashPB computes a hash of the message using the given hash function
 // The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *AuxDataTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_private_v1_AuxDataTestCase_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
+func (m *AuxDataTestCase_Input) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
+	if m != nil {
+		b := hashpb_bufPool.Get().(*[10]byte)
+		cerbos_private_v1_AuxDataTestCase_Input_hashpb_sum(m, hasher, ignore, b)
+		hashpb_bufPool.Put(b)
+	}
+}
+
+// HashPB computes a hash of the message using the given hash function
+// The ignore set must contain fully-qualified field names (pkg.msg.field) that should be ignored from the hash
 func (m *InspectTestCase) HashPB(hasher hash.Hash, ignore map[string]struct{}) {
 	if m != nil {
 		b := hashpb_bufPool.Get().(*[10]byte)

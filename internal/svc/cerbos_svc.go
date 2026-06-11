@@ -6,6 +6,7 @@ package svc
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -54,7 +55,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
 	if err != nil {
-		log.Error("Failed to extract auxData", zap.Error(err))
+		log.Error(fmt.Sprintf("Failed to extract auxData: %s", err.Error()), zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
@@ -127,7 +128,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		log.Error("Failed to extract auxData", zap.Error(err))
+		log.Error(fmt.Sprintf("Failed to extract auxData: %s", err.Error()), zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
@@ -182,7 +183,7 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		log.Error("Failed to extract auxData", zap.Error(err))
+		log.Error(fmt.Sprintf("Failed to extract auxData: %s", err.Error()), zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 
@@ -242,7 +243,7 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		log.Error("Failed to extract auxData", zap.Error(err))
+		log.Error(fmt.Sprintf("Failed to extract auxData: %s", err.Error()), zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "invalid auxData")
 	}
 

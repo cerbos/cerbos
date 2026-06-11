@@ -8,9 +8,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -66,9 +69,9 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 				if jwkCache == nil {
 					jwkCache = newJWKCache(ctx, log)
 				}
-				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, opts)
+				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, &ks.Insecure, opts)
 			case ks.Local != nil:
-				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, opts)
+				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, &ks.Insecure, opts)
 			}
 		}
 	}
@@ -147,7 +150,20 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
 	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JWT: %w", err)
+		switch {
+		case errors.Is(err, jwt.InvalidAudienceError()):
+			return nil, fmt.Errorf("invalid audience ('aud')")
+		case errors.Is(err, jwt.InvalidIssuedAtError()):
+			return nil, fmt.Errorf("issued at time is in the future ('iat')")
+		case errors.Is(err, jwt.InvalidIssuerError()):
+			return nil, fmt.Errorf("invalid issuer ('iss')")
+		case errors.Is(err, jwt.TokenExpiredError()):
+			return nil, fmt.Errorf("token has expired ('exp')")
+		case errors.Is(err, jwt.TokenNotYetValidError()):
+			return nil, fmt.Errorf("token is not yet valid ('nbf')")
+		default:
+			return nil, fmt.Errorf("failed to parse: %w", err)
+		}
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
@@ -180,55 +196,98 @@ type keySet interface {
 // remoteKeySet holds an auto-refreshing remote keyset.
 type remoteKeySet struct {
 	*jwk.Cache
-	url     string
-	options []any
+	insecure *InsecureKeySetOpt
+	url      string
+	options  []any
 }
 
-func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, options []any) *remoteKeySet {
+func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, insecure *InsecureKeySetOpt, options []any) *remoteKeySet {
 	if src.RefreshInterval > 0 {
 		_ = cache.Register(ctx, src.URL, jwk.WithConstantInterval(src.RefreshInterval))
 	} else {
 		_ = cache.Register(ctx, src.URL)
 	}
 
-	return &remoteKeySet{Cache: cache, url: src.URL, options: options}
+	return &remoteKeySet{
+		Cache:    cache,
+		insecure: insecure,
+		url:      src.URL,
+		options:  options,
+	}
 }
 
 func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	ks, err := rks.Lookup(ctx, rks.url)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := validateKeySet(ks, rks.insecure); err != nil {
+		return nil, nil, err
+	}
+
 	return ks, rks.options, err
 }
 
 // localKeySet represents a keyset defined manually through the configuration.
 type localKeySet func(context.Context) (jwk.Set, []any, error)
 
-func newLocalKeySet(src *LocalSource, options []any) localKeySet {
-	if src.Data != "" {
-		kbytes, err := base64.StdEncoding.DecodeString(src.Data)
+func newLocalKeySet(src *LocalSource, insecure *InsecureKeySetOpt, options []any) localKeySet {
+	var keyBytes []byte
+	var err error
+	switch {
+	case src.File != "":
+		f, err := os.Open(src.File)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to apply base64 decoder to key data: %w", err)
+				return nil, nil, fmt.Errorf("failed to open keyset file %s: %w", src.File, err)
 			}
 		}
+		defer f.Close()
 
-		ks, err := jwk.Parse(kbytes, jwk.WithPEM(src.PEM))
+		keyBytes, err = io.ReadAll(f)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to parse key data: %w", err)
+				return nil, nil, fmt.Errorf("failed to read from keyset file %s: %w", src.File, err)
 			}
 		}
-
-		return func(context.Context) (jwk.Set, []any, error) { return ks, options, nil }
-	}
-
-	ks, err := jwk.ReadFile(src.File, jwk.WithPEM(src.PEM))
-	if err != nil {
+	case src.Data != "":
+		keyBytes, err = base64.StdEncoding.DecodeString(src.Data)
+		if err != nil {
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, fmt.Errorf("failed to decode base64 encoded keyset data: %w", err)
+			}
+		}
+	default:
 		return func(context.Context) (jwk.Set, []any, error) {
-			return nil, nil, fmt.Errorf("failed to read keyset from '%s': %w", src.File, err)
+			return nil, nil, fmt.Errorf("one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified")
 		}
 	}
 
-	return func(context.Context) (jwk.Set, []any, error) { return ks, options, nil }
+	ks, err := jwk.Parse(keyBytes, jwk.WithPEM(src.PEM))
+	if err != nil {
+		if errors.Is(err, jwa.ErrInvalidKeyAlgorithm()) {
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, fmt.Errorf("invalid algorithm ('alg')")
+			}
+		}
+
+		return func(context.Context) (jwk.Set, []any, error) {
+			return nil, nil, fmt.Errorf("failed to parse key data: %w", err)
+		}
+	}
+
+	if !src.PEM {
+		if err := validateKeySet(ks, insecure); err != nil {
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, err
+			}
+		}
+	}
+
+	return func(context.Context) (jwk.Set, []any, error) {
+		return ks, options, nil
+	}
 }
 
 func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
@@ -237,4 +296,53 @@ func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	}
 
 	return lks(ctx)
+}
+
+func validateKeySet(keySet jwk.Set, insecure *InsecureKeySetOpt) error {
+	var optionalAlg, optionalKid bool
+	if insecure != nil {
+		optionalAlg = insecure.OptionalAlg
+		optionalKid = insecure.OptionalKid
+	}
+
+	if optionalAlg && optionalKid {
+		return nil
+	}
+
+	for idx := range keySet.Len() {
+		key, ok := keySet.Key(idx)
+		if !ok {
+			return fmt.Errorf("failed to get key at idx %d", idx)
+		}
+
+		if err := validateKey(key, optionalAlg, optionalKid); err != nil {
+			return fmt.Errorf("failed to validate key at idx %d: %w", idx, err)
+		}
+	}
+
+	return nil
+}
+
+func validateKey(key jwk.Key, optionalAlg, optionalKid bool) error {
+	if alg, ok := key.Algorithm(); !optionalAlg {
+		if !ok {
+			return fmt.Errorf("missing algorithm ('alg')")
+		}
+
+		if alg.String() == "" {
+			return fmt.Errorf("empty algorithm ('alg')")
+		}
+	}
+
+	if kid, ok := key.KeyID(); !optionalKid {
+		if !ok {
+			return fmt.Errorf("missing key ID ('kid')")
+		}
+
+		if kid == "" {
+			return fmt.Errorf("empty key ID ('kid')")
+		}
+	}
+
+	return nil
 }
