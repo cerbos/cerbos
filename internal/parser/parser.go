@@ -9,10 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"iter"
 	"math"
 	"strconv"
 	"strings"
+	"time"
+	"unicode"
 	"unsafe"
 
 	"buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
@@ -28,10 +31,11 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/validator"
 )
 
 const (
@@ -40,7 +44,10 @@ const (
 	bitSize64 = 64
 )
 
-var ErrNotFound = errors.New("not found")
+var (
+	ErrMultipleYAMLDocs = errors.New("more than one YAML document detected")
+	ErrNotFound         = errors.New("not found")
+)
 
 type PanicError struct {
 	Cause   any
@@ -113,6 +120,28 @@ func Find[T any, M ProtoMessage[T]](r io.Reader, match func(M) bool, opts ...Unm
 	return nil, SourceCtx{}, ErrNotFound
 }
 
+// Single wraps [Unmarshal] to return a single document, or an error if there are multiple documents.
+func Single[T any, M ProtoMessage[T]](documents []M, contexts []SourceCtx, err error) (M, SourceCtx, error) {
+	switch len(documents) {
+	case 0:
+		return nil, SourceCtx{}, err
+	case 1:
+		return documents[0], contexts[0], err
+	default:
+		return nil, SourceCtx{}, ErrMultipleYAMLDocs
+	}
+}
+
+func UnmarshalFile[T any, M ProtoMessage[T]](fsys fs.FS, path string, opts ...UnmarshalOpt) ([]M, []SourceCtx, error) {
+	f, err := fsys.Open(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open %s: %w", path, err)
+	}
+	defer f.Close()
+
+	return Unmarshal[T, M](f, opts...)
+}
+
 func Unmarshal[T any, M ProtoMessage[T]](r io.Reader, opts ...UnmarshalOpt) ([]M, []SourceCtx, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
@@ -141,7 +170,7 @@ func UnmarshalBytes[T any, M ProtoMessage[T]](contents []byte, opts ...Unmarshal
 		})
 	}
 
-	u := &unmarshaler[M]{unmarshalOpts: unmarshalOpts{}}
+	u := &unmarshaler[M]{unmarshalOpts: unmarshalOpts{validate: true}}
 	for _, o := range opts {
 		o(&u.unmarshalOpts)
 	}
@@ -195,7 +224,7 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 	}()
 
 	t := lexer.Tokenize(unsafe.String(unsafe.SliceData(contents), len(contents)))
-	if detectProblems && !util.IsJSON(contents) {
+	if detectProblems && !isJSON(contents) {
 		if errs := detectStringStartingWithQuote(t); len(errs) > 0 {
 			for _, err := range errs {
 				outErr = errors.Join(outErr, NewUnmarshalError(err))
@@ -294,7 +323,7 @@ func detectStringStartingWithQuote(tokens token.Tokens) (outErrs []*sourcev1.Err
 }
 
 type unmarshalOpts struct {
-	validator           protovalidate.Validator
+	validate            bool
 	ignoreUnknownFields bool
 }
 
@@ -307,10 +336,10 @@ func WithIgnoreUnknownFields() UnmarshalOpt {
 	}
 }
 
-// WithValidate validates the unmarshaled message using protovalidate.
-func WithValidator(validator protovalidate.Validator) UnmarshalOpt {
+// WithoutValidate skips validating the unmarshaled message using protovalidate.
+func WithoutValidate() UnmarshalOpt {
 	return func(uo *unmarshalOpts) {
-		uo.validator = validator
+		uo.validate = false
 	}
 }
 
@@ -898,7 +927,8 @@ func (u *unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out pr
 		return err
 	}
 
-	if out.Descriptor().FullName().Parent() == "google.protobuf" {
+	name := out.Descriptor().FullName()
+	if name.Parent() == "google.protobuf" && name != "google.protobuf.Empty" {
 		return u.unmarshalWKT(uctx, nn, out)
 	}
 
@@ -920,6 +950,9 @@ func (u *unmarshaler[T]) unmarshalWKT(uctx *unmarshalCtx, n ast.Node, out protor
 
 	case "google.protobuf.Value":
 		return u.unmarshalValue(uctx, n, out.Interface().(*structpb.Value)) //nolint:forcetypeassert
+
+	case "google.protobuf.Timestamp":
+		return u.unmarshalTimestamp(uctx, n, out.Interface().(*timestamppb.Timestamp)) //nolint:forcetypeassert
 
 	case "google.protobuf.UInt64Value":
 		return u.unmarshalUInt64Value(uctx, n, out.Interface().(*wrapperspb.UInt64Value)) //nolint:forcetypeassert
@@ -1019,6 +1052,27 @@ func (u *unmarshaler[T]) unmarshalValue(uctx *unmarshalCtx, n ast.Node, out *str
 	}
 }
 
+func (u *unmarshaler[T]) unmarshalTimestamp(uctx *unmarshalCtx, n ast.Node, out *timestamppb.Timestamp) error {
+	sn, ok := n.(*ast.StringNode)
+	if !ok {
+		return uctx.perrorf(n, "expected string got %s", n.Type())
+	}
+
+	t, err := time.Parse(time.RFC3339Nano, sn.Value)
+	if err != nil {
+		return uctx.perrorf(n, "invalid timestamp value %q: %s", sn.Value, err)
+	}
+
+	out.Seconds = t.Unix()
+	out.Nanos = int32(t.Nanosecond())
+
+	if err := out.CheckValid(); err != nil {
+		return uctx.perrorf(n, "invalid timestamp value %q: %s", sn.Value, err)
+	}
+
+	return nil
+}
+
 func (u *unmarshaler[T]) unmarshalUInt64Value(uctx *unmarshalCtx, n ast.Node, out *wrapperspb.UInt64Value) error {
 	switch t := n.(type) {
 	case *ast.IntegerNode:
@@ -1101,11 +1155,11 @@ func (u *unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd prot
 }
 
 func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
-	if u.validator == nil {
+	if !u.unmarshalOpts.validate {
 		return nil
 	}
 
-	err := u.validator.Validate(msg)
+	err := validator.Validate(msg)
 	if err == nil {
 		return nil
 	}
@@ -1370,4 +1424,8 @@ func (ue UnmarshalError) Format(state fmt.State, verb rune) {
 			fmt.Fprint(state, ue.StringWithoutContext())
 		}
 	}
+}
+
+func isJSON(src []byte) bool {
+	return bytes.HasPrefix(bytes.TrimLeftFunc(src, unicode.IsSpace), []byte("{"))
 }

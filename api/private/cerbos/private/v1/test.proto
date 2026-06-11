@@ -15,7 +15,7 @@ import "cerbos/runtime/v1/runtime.proto";
 import "cerbos/schema/v1/schema.proto";
 import "cerbos/source/v1/source.proto";
 import "google/protobuf/any.proto";
-import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
@@ -325,7 +325,15 @@ message WellKnownTypes {
   repeated google.protobuf.UInt64Value repeated_uint64_wrapper = 20;
   map<string, google.protobuf.UInt64Value> uint64_wrapper_map = 21;
 
-  WellKnownTypes nested = 22;
+  google.protobuf.Empty empty = 22;
+  repeated google.protobuf.Empty repeated_empty = 23;
+  map<string, google.protobuf.Empty> empty_map = 24;
+
+  google.protobuf.Timestamp timestamp = 25;
+  repeated google.protobuf.Timestamp repeated_timestamp = 26;
+  map<string, google.protobuf.Timestamp> timestamp_map = 27;
+
+  WellKnownTypes nested = 28;
 }
 
 message TestTracesWrapper {

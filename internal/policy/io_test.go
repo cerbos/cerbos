@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/testing/protocmp"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/validator"
 )
 
@@ -53,18 +53,7 @@ func TestReadPolicy(t *testing.T) {
 		t.Run(tc.input, func(t *testing.T) {
 			for _, format := range []string{"yaml", "json"} {
 				t.Run(format, func(t *testing.T) {
-					f, err := os.Open(filepath.Join(dir, tc.input+"."+format))
-					require.NoError(t, err)
-
-					defer f.Close()
-
-					have, err := policy.ReadPolicy(f)
-					require.NoError(t, err)
-					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
-				})
-
-				t.Run(format+"_source_context", func(t *testing.T) {
-					have, haveCtx, err := policy.ReadPolicyWithSourceContext(os.DirFS(dir), tc.input+"."+format)
+					have, haveCtx, err := policy.ReadPolicyFromFile(os.DirFS(dir), tc.input+"."+format)
 					require.NoError(t, err)
 					require.Empty(t, cmp.Diff(tc.want, have, protocmp.Transform(), protocmp.IgnoreFields(&policyv1.Policy{}, "json_schema")))
 					require.NotNil(t, haveCtx)
@@ -80,10 +69,10 @@ func TestHash(t *testing.T) {
 
 	for _, input := range inputs {
 		t.Run(input, func(t *testing.T) {
-			yamlP, err := policy.ReadPolicyFromFile(fs, input+".yaml")
+			yamlP, _, err := policy.ReadPolicyFromFile(fs, input+".yaml")
 			require.NoError(t, err)
 
-			jsonP, err := policy.ReadPolicyFromFile(fs, input+".json")
+			jsonP, _, err := policy.ReadPolicyFromFile(fs, input+".json")
 			require.NoError(t, err)
 
 			require.Equal(t, policy.GetHash(yamlP), policy.GetHash(jsonP))
@@ -119,9 +108,9 @@ func TestReadFileWithMultiplePolicies(t *testing.T) {
 
 			t.Cleanup(func() { _ = f.Close() })
 
-			_, _, err = policy.ReadPolicyWithSourceContextFromReader(f)
+			_, _, err = policy.ReadPolicy(f)
 			if tc.wantErr {
-				require.ErrorIs(t, err, util.ErrMultipleYAMLDocs)
+				require.ErrorIs(t, err, parser.ErrMultipleYAMLDocs)
 			} else {
 				require.NoError(t, err)
 			}

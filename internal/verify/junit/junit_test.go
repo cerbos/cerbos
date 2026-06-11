@@ -4,7 +4,6 @@
 package junit_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/xml"
 	"flag"
@@ -26,7 +25,6 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/internal/verify"
 	"github.com/cerbos/cerbos/internal/verify/junit"
 )
@@ -107,10 +105,7 @@ func writeGoldenFile(t *testing.T, path string, result *junit.TestSuites) {
 func readTestCase(t *testing.T, tcase test.Case) *TestCase {
 	t.Helper()
 
-	outTC := &TestCase{
-		VerifyTestCase: &privatev1.VerifyTestCase{},
-	}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(tcase.Input), outTC.VerifyTestCase), "Failed to read verify test case")
+	outTC := &TestCase{VerifyTestCase: test.Parse[privatev1.VerifyTestCase](t, tcase.Input)}
 
 	if golden, ok := tcase.Want["golden"]; ok {
 		var ts junit.TestSuites

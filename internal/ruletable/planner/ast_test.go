@@ -4,7 +4,6 @@
 package planner
 
 import (
-	"bytes"
 	_ "embed"
 	"encoding/json"
 	"testing"
@@ -20,7 +19,7 @@ import (
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 //go:embed testdata/ast_build_expr.yaml
@@ -38,11 +37,9 @@ func getExpectedExpressions(t *testing.T) map[string]*exOp {
 	require.NoError(t, err)
 	res := make(map[string]*exOp, len(raw))
 	for k, v := range raw {
-		expected := new(exOp)
 		b, err := v.MarshalJSON()
 		require.NoError(t, err)
-		err = util.ReadJSONOrYAML(bytes.NewReader(b), expected)
-		require.NoError(t, err, string(b))
+		expected := test.Parse[exOp](t, b)
 		res[k] = expected
 	}
 

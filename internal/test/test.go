@@ -43,7 +43,7 @@ func LoadPolicy(t *testing.T, path string) *policyv1.Policy {
 	inp := mkReadCloser(t, path)
 	defer inp.Close()
 
-	p, err := policy.ReadPolicy(inp)
+	p, _, err := policy.ReadPolicy(inp)
 	require.NoError(t, err, "Failed to load %s", path)
 
 	return p

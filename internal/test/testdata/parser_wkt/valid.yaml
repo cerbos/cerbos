@@ -156,6 +156,26 @@ uint64WrapperMap:
   foo: 1
   bar: "2"
 
+empty: {}
+
+repeatedEmpty:
+  - {}
+  - {}
+
+emptyMap:
+  foo: {}
+  bar: {}
+
+timestamp: 2026-06-15T10:31:01.121Z
+
+repeatedTimestamp:
+  - 2026-06-15T10:31:01Z
+  - 2026-06-15T11:31:01.121161+01:00
+
+timestampMap:
+  foo: 2026-06-15T10:31:01Z
+  bar: 2026-06-15T11:31:01.121161239+01:00
+
 nested:
   listValue:
     -
@@ -313,3 +333,23 @@ nested:
   uint64WrapperMap:
     foo: 1
     bar: "2"
+
+  empty: {}
+
+  repeatedEmpty:
+    - {}
+    - {}
+
+  emptyMap:
+    foo: {}
+    bar: {}
+
+  timestamp: 2026-06-15T10:31:01.121Z
+
+  repeatedTimestamp:
+    - 2026-06-15T10:31:01Z
+    - 2026-06-15T11:31:01.121161+01:00
+
+  timestampMap:
+    foo: 2026-06-15T10:31:01Z
+    bar: 2026-06-15T11:31:01.121161239+01:00

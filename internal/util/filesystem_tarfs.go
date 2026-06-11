@@ -14,20 +14,7 @@ import (
 	"os"
 
 	"github.com/nlepage/go-tarfs"
-	"google.golang.org/protobuf/proto"
 )
-
-// LoadFromJSONOrYAML reads a JSON or YAML encoded protobuf from the given path.
-func LoadFromJSONOrYAML(fsys fs.FS, path string, dest proto.Message) error {
-	f, err := fsys.Open(path)
-	if err != nil {
-		return fmt.Errorf("failed to open %s: %w", path, err)
-	}
-
-	defer f.Close()
-
-	return ReadJSONOrYAML(f, dest)
-}
 
 // OpenDirectoryFS attempts to open a directory FS at the given location. It'll initially check if the target file is an archive,
 // and if so, will return the appropriate type which implements the fs.FS interface.
