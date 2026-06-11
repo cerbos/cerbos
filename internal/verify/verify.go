@@ -15,9 +15,8 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
-	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cerbos/cerbos/internal/validator"
 )
 
 const (
@@ -96,22 +95,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 		workers := resolveWorkerCount(conf.Workers, len(suiteDefs))
 
 		runSuite := func(file string) *policyv1.TestResults_Suite {
-			if err := internaljsonschema.ValidateTest(fsys, file); err != nil {
-				return &policyv1.TestResults_Suite{
-					File: file,
-					Name: "Unknown",
-					Summary: &policyv1.TestResults_Summary{
-						OverallResult: policyv1.TestResults_RESULT_ERRORED,
-					},
-					Error: err.Error(),
-				}
-			}
-
-			suite := &policyv1.TestSuite{}
-			err := util.LoadFromJSONOrYAML(fsys, file, suite)
-			if err == nil {
-				err = validator.Validate(suite)
-			}
+			suite, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestSuite](fsys, file))
 			if err != nil {
 				return &policyv1.TestResults_Suite{
 					File: file,
@@ -119,7 +103,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 					Summary: &policyv1.TestResults_Summary{
 						OverallResult: policyv1.TestResults_RESULT_ERRORED,
 					},
-					Error: fmt.Sprintf("failed to load test suite: %v", err),
+					Error: fmt.Sprintf("failed to load test suite:\n%v", err),
 				}
 			}
 

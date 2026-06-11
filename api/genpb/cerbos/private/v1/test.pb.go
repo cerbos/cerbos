@@ -10,18 +10,21 @@
 package privatev1
 
 import (
-	v17 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"
+	v18 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"
 	v12 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	v11 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	v1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	v18 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
-	v16 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
+	v19 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
+	v17 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	v13 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	v14 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	v15 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
@@ -1274,7 +1277,13 @@ type WellKnownTypes struct {
 	Uint64WrapperString   *wrapperspb.UInt64Value            `protobuf:"bytes,19,opt,name=uint64_wrapper_string,json=uint64WrapperString,proto3" json:"uint64_wrapper_string,omitempty"`
 	RepeatedUint64Wrapper []*wrapperspb.UInt64Value          `protobuf:"bytes,20,rep,name=repeated_uint64_wrapper,json=repeatedUint64Wrapper,proto3" json:"repeated_uint64_wrapper,omitempty"`
 	Uint64WrapperMap      map[string]*wrapperspb.UInt64Value `protobuf:"bytes,21,rep,name=uint64_wrapper_map,json=uint64WrapperMap,proto3" json:"uint64_wrapper_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Nested                *WellKnownTypes                    `protobuf:"bytes,22,opt,name=nested,proto3" json:"nested,omitempty"`
+	Empty                 *emptypb.Empty                     `protobuf:"bytes,22,opt,name=empty,proto3" json:"empty,omitempty"`
+	RepeatedEmpty         []*emptypb.Empty                   `protobuf:"bytes,23,rep,name=repeated_empty,json=repeatedEmpty,proto3" json:"repeated_empty,omitempty"`
+	EmptyMap              map[string]*emptypb.Empty          `protobuf:"bytes,24,rep,name=empty_map,json=emptyMap,proto3" json:"empty_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Timestamp             *timestamppb.Timestamp             `protobuf:"bytes,25,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	RepeatedTimestamp     []*timestamppb.Timestamp           `protobuf:"bytes,26,rep,name=repeated_timestamp,json=repeatedTimestamp,proto3" json:"repeated_timestamp,omitempty"`
+	TimestampMap          map[string]*timestamppb.Timestamp  `protobuf:"bytes,27,rep,name=timestamp_map,json=timestampMap,proto3" json:"timestamp_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Nested                *WellKnownTypes                    `protobuf:"bytes,28,opt,name=nested,proto3" json:"nested,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -1456,6 +1465,48 @@ func (x *WellKnownTypes) GetUint64WrapperMap() map[string]*wrapperspb.UInt64Valu
 	return nil
 }
 
+func (x *WellKnownTypes) GetEmpty() *emptypb.Empty {
+	if x != nil {
+		return x.Empty
+	}
+	return nil
+}
+
+func (x *WellKnownTypes) GetRepeatedEmpty() []*emptypb.Empty {
+	if x != nil {
+		return x.RepeatedEmpty
+	}
+	return nil
+}
+
+func (x *WellKnownTypes) GetEmptyMap() map[string]*emptypb.Empty {
+	if x != nil {
+		return x.EmptyMap
+	}
+	return nil
+}
+
+func (x *WellKnownTypes) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
+func (x *WellKnownTypes) GetRepeatedTimestamp() []*timestamppb.Timestamp {
+	if x != nil {
+		return x.RepeatedTimestamp
+	}
+	return nil
+}
+
+func (x *WellKnownTypes) GetTimestampMap() map[string]*timestamppb.Timestamp {
+	if x != nil {
+		return x.TimestampMap
+	}
+	return nil
+}
+
 func (x *WellKnownTypes) GetNested() *WellKnownTypes {
 	if x != nil {
 		return x.Nested
@@ -1507,6 +1558,58 @@ func (x *TestTracesWrapper) GetEngineTrace() []*v11.Trace {
 	return nil
 }
 
+type Validation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EnumIn        v16.Effect             `protobuf:"varint,1,opt,name=enum_in,json=enumIn,proto3,enum=cerbos.effect.v1.Effect" json:"enum_in,omitempty"`
+	EnumInMap     map[string]v16.Effect  `protobuf:"bytes,2,rep,name=enum_in_map,json=enumInMap,proto3" json:"enum_in_map,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value,enum=cerbos.effect.v1.Effect"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Validation) Reset() {
+	*x = Validation{}
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Validation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Validation) ProtoMessage() {}
+
+func (x *Validation) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Validation.ProtoReflect.Descriptor instead.
+func (*Validation) Descriptor() ([]byte, []int) {
+	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *Validation) GetEnumIn() v16.Effect {
+	if x != nil {
+		return x.EnumIn
+	}
+	return v16.Effect(0)
+}
+
+func (x *Validation) GetEnumInMap() map[string]v16.Effect {
+	if x != nil {
+		return x.EnumInMap
+	}
+	return nil
+}
+
 type AuxDataTestCase_Input struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -1517,7 +1620,7 @@ type AuxDataTestCase_Input struct {
 
 func (x *AuxDataTestCase_Input) Reset() {
 	*x = AuxDataTestCase_Input{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1529,7 +1632,7 @@ func (x *AuxDataTestCase_Input) String() string {
 func (*AuxDataTestCase_Input) ProtoMessage() {}
 
 func (x *AuxDataTestCase_Input) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[17]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1568,7 +1671,7 @@ type InspectTestCase_CompileErrors struct {
 
 func (x *InspectTestCase_CompileErrors) Reset() {
 	*x = InspectTestCase_CompileErrors{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1580,7 +1683,7 @@ func (x *InspectTestCase_CompileErrors) String() string {
 func (*InspectTestCase_CompileErrors) ProtoMessage() {}
 
 func (x *InspectTestCase_CompileErrors) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[18]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1605,7 +1708,7 @@ func (x *InspectTestCase_CompileErrors) GetCompileErrors() []*v13.CompileErrors_
 
 type InspectTestCase_PoliciesExpectation struct {
 	state           protoimpl.MessageState                         `protogen:"open.v1"`
-	Policies        map[string]*v16.InspectPoliciesResponse_Result `protobuf:"bytes,1,rep,name=policies,proto3" json:"policies,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Policies        map[string]*v17.InspectPoliciesResponse_Result `protobuf:"bytes,1,rep,name=policies,proto3" json:"policies,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	MissingPolicies []string                                       `protobuf:"bytes,2,rep,name=missing_policies,json=missingPolicies,proto3" json:"missing_policies,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
@@ -1613,7 +1716,7 @@ type InspectTestCase_PoliciesExpectation struct {
 
 func (x *InspectTestCase_PoliciesExpectation) Reset() {
 	*x = InspectTestCase_PoliciesExpectation{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1625,7 +1728,7 @@ func (x *InspectTestCase_PoliciesExpectation) String() string {
 func (*InspectTestCase_PoliciesExpectation) ProtoMessage() {}
 
 func (x *InspectTestCase_PoliciesExpectation) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[19]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1641,7 +1744,7 @@ func (*InspectTestCase_PoliciesExpectation) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{1, 1}
 }
 
-func (x *InspectTestCase_PoliciesExpectation) GetPolicies() map[string]*v16.InspectPoliciesResponse_Result {
+func (x *InspectTestCase_PoliciesExpectation) GetPolicies() map[string]*v17.InspectPoliciesResponse_Result {
 	if x != nil {
 		return x.Policies
 	}
@@ -1657,7 +1760,7 @@ func (x *InspectTestCase_PoliciesExpectation) GetMissingPolicies() []string {
 
 type InspectTestCase_PolicySetsExpectation struct {
 	state      protoimpl.MessageState                         `protogen:"open.v1"`
-	PolicySets map[string]*v16.InspectPoliciesResponse_Result `protobuf:"bytes,1,rep,name=policy_sets,json=policySets,proto3" json:"policy_sets,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	PolicySets map[string]*v17.InspectPoliciesResponse_Result `protobuf:"bytes,1,rep,name=policy_sets,json=policySets,proto3" json:"policy_sets,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Types that are valid to be assigned to Errors:
 	//
 	//	*InspectTestCase_PolicySetsExpectation_CompileErrors
@@ -1669,7 +1772,7 @@ type InspectTestCase_PolicySetsExpectation struct {
 
 func (x *InspectTestCase_PolicySetsExpectation) Reset() {
 	*x = InspectTestCase_PolicySetsExpectation{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1681,7 +1784,7 @@ func (x *InspectTestCase_PolicySetsExpectation) String() string {
 func (*InspectTestCase_PolicySetsExpectation) ProtoMessage() {}
 
 func (x *InspectTestCase_PolicySetsExpectation) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[20]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1697,7 +1800,7 @@ func (*InspectTestCase_PolicySetsExpectation) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{1, 2}
 }
 
-func (x *InspectTestCase_PolicySetsExpectation) GetPolicySets() map[string]*v16.InspectPoliciesResponse_Result {
+func (x *InspectTestCase_PolicySetsExpectation) GetPolicySets() map[string]*v17.InspectPoliciesResponse_Result {
 	if x != nil {
 		return x.PolicySets
 	}
@@ -1749,7 +1852,7 @@ func (*InspectTestCase_PolicySetsExpectation_IndexBuildErrors) isInspectTestCase
 
 type InspectTestCase_RuleTablesExpectation struct {
 	state      protoimpl.MessageState                         `protogen:"open.v1"`
-	RuleTables map[string]*v16.InspectPoliciesResponse_Result `protobuf:"bytes,1,rep,name=rule_tables,json=ruleTables,proto3" json:"rule_tables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	RuleTables map[string]*v17.InspectPoliciesResponse_Result `protobuf:"bytes,1,rep,name=rule_tables,json=ruleTables,proto3" json:"rule_tables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Types that are valid to be assigned to Errors:
 	//
 	//	*InspectTestCase_RuleTablesExpectation_CompileErrors
@@ -1761,7 +1864,7 @@ type InspectTestCase_RuleTablesExpectation struct {
 
 func (x *InspectTestCase_RuleTablesExpectation) Reset() {
 	*x = InspectTestCase_RuleTablesExpectation{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1773,7 +1876,7 @@ func (x *InspectTestCase_RuleTablesExpectation) String() string {
 func (*InspectTestCase_RuleTablesExpectation) ProtoMessage() {}
 
 func (x *InspectTestCase_RuleTablesExpectation) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[21]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1789,7 +1892,7 @@ func (*InspectTestCase_RuleTablesExpectation) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{1, 3}
 }
 
-func (x *InspectTestCase_RuleTablesExpectation) GetRuleTables() map[string]*v16.InspectPoliciesResponse_Result {
+func (x *InspectTestCase_RuleTablesExpectation) GetRuleTables() map[string]*v17.InspectPoliciesResponse_Result {
 	if x != nil {
 		return x.RuleTables
 	}
@@ -1852,7 +1955,7 @@ type BlobClonerTestCase_File struct {
 
 func (x *BlobClonerTestCase_File) Reset() {
 	*x = BlobClonerTestCase_File{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1864,7 +1967,7 @@ func (x *BlobClonerTestCase_File) String() string {
 func (*BlobClonerTestCase_File) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_File) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[25]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1934,7 +2037,7 @@ type BlobClonerTestCase_Step struct {
 
 func (x *BlobClonerTestCase_Step) Reset() {
 	*x = BlobClonerTestCase_Step{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1946,7 +2049,7 @@ func (x *BlobClonerTestCase_Step) String() string {
 func (*BlobClonerTestCase_Step) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[26]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2013,7 +2116,7 @@ type BlobClonerTestCase_File_AddOrUpdate struct {
 
 func (x *BlobClonerTestCase_File_AddOrUpdate) Reset() {
 	*x = BlobClonerTestCase_File_AddOrUpdate{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2025,7 +2128,7 @@ func (x *BlobClonerTestCase_File_AddOrUpdate) String() string {
 func (*BlobClonerTestCase_File_AddOrUpdate) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_File_AddOrUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[27]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2064,7 +2167,7 @@ type BlobClonerTestCase_File_Delete struct {
 
 func (x *BlobClonerTestCase_File_Delete) Reset() {
 	*x = BlobClonerTestCase_File_Delete{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2076,7 +2179,7 @@ func (x *BlobClonerTestCase_File_Delete) String() string {
 func (*BlobClonerTestCase_File_Delete) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_File_Delete) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[28]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2108,7 +2211,7 @@ type BlobClonerTestCase_Step_Differences struct {
 
 func (x *BlobClonerTestCase_Step_Differences) Reset() {
 	*x = BlobClonerTestCase_Step_Differences{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[29]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2120,7 +2223,7 @@ func (x *BlobClonerTestCase_Step_Differences) String() string {
 func (*BlobClonerTestCase_Step_Differences) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Differences) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[29]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2154,7 +2257,7 @@ type BlobClonerTestCase_Step_Expectation struct {
 
 func (x *BlobClonerTestCase_Step_Expectation) Reset() {
 	*x = BlobClonerTestCase_Step_Expectation{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2166,7 +2269,7 @@ func (x *BlobClonerTestCase_Step_Expectation) String() string {
 func (*BlobClonerTestCase_Step_Expectation) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Expectation) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[30]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2212,7 +2315,7 @@ type BlobClonerTestCase_Step_Expectation_Files struct {
 
 func (x *BlobClonerTestCase_Step_Expectation_Files) Reset() {
 	*x = BlobClonerTestCase_Step_Expectation_Files{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2224,7 +2327,7 @@ func (x *BlobClonerTestCase_Step_Expectation_Files) String() string {
 func (*BlobClonerTestCase_Step_Expectation_Files) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Expectation_Files) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[31]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2257,7 +2360,7 @@ type BlobClonerTestCase_Step_Expectation_Info struct {
 
 func (x *BlobClonerTestCase_Step_Expectation_Info) Reset() {
 	*x = BlobClonerTestCase_Step_Expectation_Info{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2269,7 +2372,7 @@ func (x *BlobClonerTestCase_Step_Expectation_Info) String() string {
 func (*BlobClonerTestCase_Step_Expectation_Info) ProtoMessage() {}
 
 func (x *BlobClonerTestCase_Step_Expectation_Info) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[32]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2301,15 +2404,15 @@ func (x *BlobClonerTestCase_Step_Expectation_Info) GetFile() string {
 
 type ServerTestCase_AccessEvaluationCall struct {
 	state         protoimpl.MessageState        `protogen:"open.v1"`
-	Input         *v17.AccessEvaluationRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v17.AccessEvaluationResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v18.AccessEvaluationRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v18.AccessEvaluationResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_AccessEvaluationCall) Reset() {
 	*x = ServerTestCase_AccessEvaluationCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[34]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2321,7 +2424,7 @@ func (x *ServerTestCase_AccessEvaluationCall) String() string {
 func (*ServerTestCase_AccessEvaluationCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AccessEvaluationCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[34]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2337,14 +2440,14 @@ func (*ServerTestCase_AccessEvaluationCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 0}
 }
 
-func (x *ServerTestCase_AccessEvaluationCall) GetInput() *v17.AccessEvaluationRequest {
+func (x *ServerTestCase_AccessEvaluationCall) GetInput() *v18.AccessEvaluationRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_AccessEvaluationCall) GetWantResponse() *v17.AccessEvaluationResponse {
+func (x *ServerTestCase_AccessEvaluationCall) GetWantResponse() *v18.AccessEvaluationResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2353,15 +2456,15 @@ func (x *ServerTestCase_AccessEvaluationCall) GetWantResponse() *v17.AccessEvalu
 
 type ServerTestCase_AccessEvaluationBatchCall struct {
 	state         protoimpl.MessageState             `protogen:"open.v1"`
-	Input         *v17.AccessEvaluationBatchRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v17.AccessEvaluationBatchResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v18.AccessEvaluationBatchRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v18.AccessEvaluationBatchResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_AccessEvaluationBatchCall) Reset() {
 	*x = ServerTestCase_AccessEvaluationBatchCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2373,7 +2476,7 @@ func (x *ServerTestCase_AccessEvaluationBatchCall) String() string {
 func (*ServerTestCase_AccessEvaluationBatchCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AccessEvaluationBatchCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[35]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2389,14 +2492,14 @@ func (*ServerTestCase_AccessEvaluationBatchCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 1}
 }
 
-func (x *ServerTestCase_AccessEvaluationBatchCall) GetInput() *v17.AccessEvaluationBatchRequest {
+func (x *ServerTestCase_AccessEvaluationBatchCall) GetInput() *v18.AccessEvaluationBatchRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_AccessEvaluationBatchCall) GetWantResponse() *v17.AccessEvaluationBatchResponse {
+func (x *ServerTestCase_AccessEvaluationBatchCall) GetWantResponse() *v18.AccessEvaluationBatchResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2405,15 +2508,15 @@ func (x *ServerTestCase_AccessEvaluationBatchCall) GetWantResponse() *v17.Access
 
 type ServerTestCase_PlanResourcesCall struct {
 	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Input         *v18.PlanResourcesRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.PlanResourcesResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.PlanResourcesRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.PlanResourcesResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_PlanResourcesCall) Reset() {
 	*x = ServerTestCase_PlanResourcesCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2425,7 +2528,7 @@ func (x *ServerTestCase_PlanResourcesCall) String() string {
 func (*ServerTestCase_PlanResourcesCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlanResourcesCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[36]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2441,14 +2544,14 @@ func (*ServerTestCase_PlanResourcesCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 2}
 }
 
-func (x *ServerTestCase_PlanResourcesCall) GetInput() *v18.PlanResourcesRequest {
+func (x *ServerTestCase_PlanResourcesCall) GetInput() *v19.PlanResourcesRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_PlanResourcesCall) GetWantResponse() *v16.PlanResourcesResponse {
+func (x *ServerTestCase_PlanResourcesCall) GetWantResponse() *v17.PlanResourcesResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2457,15 +2560,15 @@ func (x *ServerTestCase_PlanResourcesCall) GetWantResponse() *v16.PlanResourcesR
 
 type ServerTestCase_CheckResourceSetCall struct {
 	state         protoimpl.MessageState        `protogen:"open.v1"`
-	Input         *v18.CheckResourceSetRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.CheckResourceSetResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.CheckResourceSetRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.CheckResourceSetResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_CheckResourceSetCall) Reset() {
 	*x = ServerTestCase_CheckResourceSetCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2477,7 +2580,7 @@ func (x *ServerTestCase_CheckResourceSetCall) String() string {
 func (*ServerTestCase_CheckResourceSetCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourceSetCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[37]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2493,14 +2596,14 @@ func (*ServerTestCase_CheckResourceSetCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 3}
 }
 
-func (x *ServerTestCase_CheckResourceSetCall) GetInput() *v18.CheckResourceSetRequest {
+func (x *ServerTestCase_CheckResourceSetCall) GetInput() *v19.CheckResourceSetRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_CheckResourceSetCall) GetWantResponse() *v16.CheckResourceSetResponse {
+func (x *ServerTestCase_CheckResourceSetCall) GetWantResponse() *v17.CheckResourceSetResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2509,15 +2612,15 @@ func (x *ServerTestCase_CheckResourceSetCall) GetWantResponse() *v16.CheckResour
 
 type ServerTestCase_CheckResourceBatchCall struct {
 	state         protoimpl.MessageState          `protogen:"open.v1"`
-	Input         *v18.CheckResourceBatchRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.CheckResourceBatchResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.CheckResourceBatchRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.CheckResourceBatchResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_CheckResourceBatchCall) Reset() {
 	*x = ServerTestCase_CheckResourceBatchCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2529,7 +2632,7 @@ func (x *ServerTestCase_CheckResourceBatchCall) String() string {
 func (*ServerTestCase_CheckResourceBatchCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourceBatchCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[38]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2545,14 +2648,14 @@ func (*ServerTestCase_CheckResourceBatchCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 4}
 }
 
-func (x *ServerTestCase_CheckResourceBatchCall) GetInput() *v18.CheckResourceBatchRequest {
+func (x *ServerTestCase_CheckResourceBatchCall) GetInput() *v19.CheckResourceBatchRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_CheckResourceBatchCall) GetWantResponse() *v16.CheckResourceBatchResponse {
+func (x *ServerTestCase_CheckResourceBatchCall) GetWantResponse() *v17.CheckResourceBatchResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2561,15 +2664,15 @@ func (x *ServerTestCase_CheckResourceBatchCall) GetWantResponse() *v16.CheckReso
 
 type ServerTestCase_CheckResourcesCall struct {
 	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Input         *v18.CheckResourcesRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.CheckResourcesResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.CheckResourcesRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.CheckResourcesResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_CheckResourcesCall) Reset() {
 	*x = ServerTestCase_CheckResourcesCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2581,7 +2684,7 @@ func (x *ServerTestCase_CheckResourcesCall) String() string {
 func (*ServerTestCase_CheckResourcesCall) ProtoMessage() {}
 
 func (x *ServerTestCase_CheckResourcesCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[39]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2597,14 +2700,14 @@ func (*ServerTestCase_CheckResourcesCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 5}
 }
 
-func (x *ServerTestCase_CheckResourcesCall) GetInput() *v18.CheckResourcesRequest {
+func (x *ServerTestCase_CheckResourcesCall) GetInput() *v19.CheckResourcesRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_CheckResourcesCall) GetWantResponse() *v16.CheckResourcesResponse {
+func (x *ServerTestCase_CheckResourcesCall) GetWantResponse() *v17.CheckResourcesResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2613,15 +2716,15 @@ func (x *ServerTestCase_CheckResourcesCall) GetWantResponse() *v16.CheckResource
 
 type ServerTestCase_PlaygroundValidateCall struct {
 	state         protoimpl.MessageState          `protogen:"open.v1"`
-	Input         *v18.PlaygroundValidateRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.PlaygroundValidateResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.PlaygroundValidateRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.PlaygroundValidateResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_PlaygroundValidateCall) Reset() {
 	*x = ServerTestCase_PlaygroundValidateCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2633,7 +2736,7 @@ func (x *ServerTestCase_PlaygroundValidateCall) String() string {
 func (*ServerTestCase_PlaygroundValidateCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundValidateCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[40]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2649,14 +2752,14 @@ func (*ServerTestCase_PlaygroundValidateCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 6}
 }
 
-func (x *ServerTestCase_PlaygroundValidateCall) GetInput() *v18.PlaygroundValidateRequest {
+func (x *ServerTestCase_PlaygroundValidateCall) GetInput() *v19.PlaygroundValidateRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_PlaygroundValidateCall) GetWantResponse() *v16.PlaygroundValidateResponse {
+func (x *ServerTestCase_PlaygroundValidateCall) GetWantResponse() *v17.PlaygroundValidateResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2665,15 +2768,15 @@ func (x *ServerTestCase_PlaygroundValidateCall) GetWantResponse() *v16.Playgroun
 
 type ServerTestCase_PlaygroundTestCall struct {
 	state         protoimpl.MessageState      `protogen:"open.v1"`
-	Input         *v18.PlaygroundTestRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.PlaygroundTestResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.PlaygroundTestRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.PlaygroundTestResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_PlaygroundTestCall) Reset() {
 	*x = ServerTestCase_PlaygroundTestCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2685,7 +2788,7 @@ func (x *ServerTestCase_PlaygroundTestCall) String() string {
 func (*ServerTestCase_PlaygroundTestCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundTestCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[41]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2701,14 +2804,14 @@ func (*ServerTestCase_PlaygroundTestCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 7}
 }
 
-func (x *ServerTestCase_PlaygroundTestCall) GetInput() *v18.PlaygroundTestRequest {
+func (x *ServerTestCase_PlaygroundTestCall) GetInput() *v19.PlaygroundTestRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_PlaygroundTestCall) GetWantResponse() *v16.PlaygroundTestResponse {
+func (x *ServerTestCase_PlaygroundTestCall) GetWantResponse() *v17.PlaygroundTestResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2717,15 +2820,15 @@ func (x *ServerTestCase_PlaygroundTestCall) GetWantResponse() *v16.PlaygroundTes
 
 type ServerTestCase_PlaygroundEvaluateCall struct {
 	state         protoimpl.MessageState          `protogen:"open.v1"`
-	Input         *v18.PlaygroundEvaluateRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.PlaygroundEvaluateResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.PlaygroundEvaluateRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.PlaygroundEvaluateResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_PlaygroundEvaluateCall) Reset() {
 	*x = ServerTestCase_PlaygroundEvaluateCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[42]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2737,7 +2840,7 @@ func (x *ServerTestCase_PlaygroundEvaluateCall) String() string {
 func (*ServerTestCase_PlaygroundEvaluateCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundEvaluateCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[42]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2753,14 +2856,14 @@ func (*ServerTestCase_PlaygroundEvaluateCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 8}
 }
 
-func (x *ServerTestCase_PlaygroundEvaluateCall) GetInput() *v18.PlaygroundEvaluateRequest {
+func (x *ServerTestCase_PlaygroundEvaluateCall) GetInput() *v19.PlaygroundEvaluateRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_PlaygroundEvaluateCall) GetWantResponse() *v16.PlaygroundEvaluateResponse {
+func (x *ServerTestCase_PlaygroundEvaluateCall) GetWantResponse() *v17.PlaygroundEvaluateResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2769,15 +2872,15 @@ func (x *ServerTestCase_PlaygroundEvaluateCall) GetWantResponse() *v16.Playgroun
 
 type ServerTestCase_PlaygroundProxyCall struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
-	Input         *v18.PlaygroundProxyRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.PlaygroundProxyResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.PlaygroundProxyRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.PlaygroundProxyResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_PlaygroundProxyCall) Reset() {
 	*x = ServerTestCase_PlaygroundProxyCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2789,7 +2892,7 @@ func (x *ServerTestCase_PlaygroundProxyCall) String() string {
 func (*ServerTestCase_PlaygroundProxyCall) ProtoMessage() {}
 
 func (x *ServerTestCase_PlaygroundProxyCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[43]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2805,14 +2908,14 @@ func (*ServerTestCase_PlaygroundProxyCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 9}
 }
 
-func (x *ServerTestCase_PlaygroundProxyCall) GetInput() *v18.PlaygroundProxyRequest {
+func (x *ServerTestCase_PlaygroundProxyCall) GetInput() *v19.PlaygroundProxyRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_PlaygroundProxyCall) GetWantResponse() *v16.PlaygroundProxyResponse {
+func (x *ServerTestCase_PlaygroundProxyCall) GetWantResponse() *v17.PlaygroundProxyResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2821,15 +2924,15 @@ func (x *ServerTestCase_PlaygroundProxyCall) GetWantResponse() *v16.PlaygroundPr
 
 type ServerTestCase_AdminAddOrUpdatePolicyCall struct {
 	state         protoimpl.MessageState         `protogen:"open.v1"`
-	Input         *v18.AddOrUpdatePolicyRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.AddOrUpdatePolicyResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.AddOrUpdatePolicyRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.AddOrUpdatePolicyResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) Reset() {
 	*x = ServerTestCase_AdminAddOrUpdatePolicyCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2841,7 +2944,7 @@ func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) String() string {
 func (*ServerTestCase_AdminAddOrUpdatePolicyCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[44]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2857,14 +2960,14 @@ func (*ServerTestCase_AdminAddOrUpdatePolicyCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 10}
 }
 
-func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) GetInput() *v18.AddOrUpdatePolicyRequest {
+func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) GetInput() *v19.AddOrUpdatePolicyRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) GetWantResponse() *v16.AddOrUpdatePolicyResponse {
+func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) GetWantResponse() *v17.AddOrUpdatePolicyResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2873,15 +2976,15 @@ func (x *ServerTestCase_AdminAddOrUpdatePolicyCall) GetWantResponse() *v16.AddOr
 
 type ServerTestCase_AdminAddOrUpdateSchemaCall struct {
 	state         protoimpl.MessageState         `protogen:"open.v1"`
-	Input         *v18.AddOrUpdateSchemaRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
-	WantResponse  *v16.AddOrUpdateSchemaResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
+	Input         *v19.AddOrUpdateSchemaRequest  `protobuf:"bytes,1,opt,name=input,proto3" json:"input,omitempty"`
+	WantResponse  *v17.AddOrUpdateSchemaResponse `protobuf:"bytes,2,opt,name=want_response,json=wantResponse,proto3" json:"want_response,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) Reset() {
 	*x = ServerTestCase_AdminAddOrUpdateSchemaCall{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[45]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2893,7 +2996,7 @@ func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) String() string {
 func (*ServerTestCase_AdminAddOrUpdateSchemaCall) ProtoMessage() {}
 
 func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[45]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2909,14 +3012,14 @@ func (*ServerTestCase_AdminAddOrUpdateSchemaCall) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{4, 11}
 }
 
-func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) GetInput() *v18.AddOrUpdateSchemaRequest {
+func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) GetInput() *v19.AddOrUpdateSchemaRequest {
 	if x != nil {
 		return x.Input
 	}
 	return nil
 }
 
-func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) GetWantResponse() *v16.AddOrUpdateSchemaResponse {
+func (x *ServerTestCase_AdminAddOrUpdateSchemaCall) GetWantResponse() *v17.AddOrUpdateSchemaResponse {
 	if x != nil {
 		return x.WantResponse
 	}
@@ -2933,7 +3036,7 @@ type ServerTestCase_Status struct {
 
 func (x *ServerTestCase_Status) Reset() {
 	*x = ServerTestCase_Status{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2945,7 +3048,7 @@ func (x *ServerTestCase_Status) String() string {
 func (*ServerTestCase_Status) ProtoMessage() {}
 
 func (x *ServerTestCase_Status) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[46]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2986,7 +3089,7 @@ type IndexBuilderTestCase_CompilationUnit struct {
 
 func (x *IndexBuilderTestCase_CompilationUnit) Reset() {
 	*x = IndexBuilderTestCase_CompilationUnit{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2998,7 +3101,7 @@ func (x *IndexBuilderTestCase_CompilationUnit) String() string {
 func (*IndexBuilderTestCase_CompilationUnit) ProtoMessage() {}
 
 func (x *IndexBuilderTestCase_CompilationUnit) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[47]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3047,7 +3150,7 @@ type CompileTestCase_Variables struct {
 
 func (x *CompileTestCase_Variables) Reset() {
 	*x = CompileTestCase_Variables{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[49]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3059,7 +3162,7 @@ func (x *CompileTestCase_Variables) String() string {
 func (*CompileTestCase_Variables) ProtoMessage() {}
 
 func (x *CompileTestCase_Variables) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[49]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3114,7 +3217,7 @@ type CompileTestCase_Variables_DerivedRole struct {
 
 func (x *CompileTestCase_Variables_DerivedRole) Reset() {
 	*x = CompileTestCase_Variables_DerivedRole{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[50]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3126,7 +3229,7 @@ func (x *CompileTestCase_Variables_DerivedRole) String() string {
 func (*CompileTestCase_Variables_DerivedRole) ProtoMessage() {}
 
 func (x *CompileTestCase_Variables_DerivedRole) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[50]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3176,7 +3279,7 @@ type QueryPlannerTestSuite_Test struct {
 
 func (x *QueryPlannerTestSuite_Test) Reset() {
 	*x = QueryPlannerTestSuite_Test{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[51]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3188,7 +3291,7 @@ func (x *QueryPlannerTestSuite_Test) String() string {
 func (*QueryPlannerTestSuite_Test) ProtoMessage() {}
 
 func (x *QueryPlannerTestSuite_Test) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[51]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3250,7 +3353,7 @@ type VerifyTestCase_Config struct {
 
 func (x *VerifyTestCase_Config) Reset() {
 	*x = VerifyTestCase_Config{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[52]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3262,7 +3365,7 @@ func (x *VerifyTestCase_Config) String() string {
 func (*VerifyTestCase_Config) ProtoMessage() {}
 
 func (x *VerifyTestCase_Config) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[52]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3309,7 +3412,7 @@ type ProtoYamlTestCase_Want struct {
 
 func (x *ProtoYamlTestCase_Want) Reset() {
 	*x = ProtoYamlTestCase_Want{}
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[53]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3321,7 +3424,7 @@ func (x *ProtoYamlTestCase_Want) String() string {
 func (*ProtoYamlTestCase_Want) ProtoMessage() {}
 
 func (x *ProtoYamlTestCase_Want) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_private_v1_test_proto_msgTypes[53]
+	mi := &file_cerbos_private_v1_test_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3355,7 +3458,7 @@ var File_cerbos_private_v1_test_proto protoreflect.FileDescriptor
 
 const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccerbos/private/v1/test.proto\x12\x11cerbos.private.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1fcerbos/request/v1/request.proto\x1a!cerbos/response/v1/response.proto\x1a\x1fcerbos/runtime/v1/runtime.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1dcerbos/source/v1/source.proto\x1a\x19google/protobuf/any.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\x89\x02\n" +
+	"\x1ccerbos/private/v1/test.proto\x12\x11cerbos.private.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1fcerbos/request/v1/request.proto\x1a!cerbos/response/v1/response.proto\x1a\x1fcerbos/runtime/v1/runtime.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1dcerbos/source/v1/source.proto\x1a\x19google/protobuf/any.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\x89\x02\n" +
 	"\x0fAuxDataTestCase\x12 \n" +
 	"\vdescription\x18\x01 \x01(\tR\vdescription\x12>\n" +
 	"\x05input\x18\x02 \x01(\v2(.cerbos.private.v1.AuxDataTestCase.InputR\x05input\x12\x19\n" +
@@ -3433,7 +3536,7 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\fwant_outputs\x18\x03 \x03(\v2\x1d.cerbos.engine.v1.CheckOutputR\vwantOutputs\x12\x1d\n" +
 	"\n" +
 	"want_error\x18\x04 \x01(\bR\twantError\x12O\n" +
-	"\x12want_decision_logs\x18\x05 \x03(\v2!.cerbos.audit.v1.DecisionLogEntryR\x10wantDecisionLogs\"\x80\x1d\n" +
+	"\x12want_decision_logs\x18\x05 \x03(\v2!.cerbos.audit.v1.DecisionLogEntryR\x10wantDecisionLogs\"\xe0\x1d\n" +
 	"\x0eServerTestCase\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1d\n" +
@@ -3453,42 +3556,42 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\x0fplayground_test\x18\r \x01(\v24.cerbos.private.v1.ServerTestCase.PlaygroundTestCallH\x00R\x0eplaygroundTest\x12_\n" +
 	"\x0fcheck_resources\x18\x0e \x01(\v24.cerbos.private.v1.ServerTestCase.CheckResourcesCallH\x00R\x0echeckResources\x12e\n" +
 	"\x11access_evaluation\x18\x0f \x01(\v26.cerbos.private.v1.ServerTestCase.AccessEvaluationCallH\x00R\x10accessEvaluation\x12u\n" +
-	"\x17access_evaluation_batch\x18\x10 \x01(\v2;.cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCallH\x00R\x15accessEvaluationBatch\x1a\xb8\x01\n" +
-	"\x14AccessEvaluationCall\x12G\n" +
-	"\x05input\x18\x01 \x01(\v21.authzen.authorization.v1.AccessEvaluationRequestR\x05input\x12W\n" +
-	"\rwant_response\x18\x02 \x01(\v22.authzen.authorization.v1.AccessEvaluationResponseR\fwantResponse\x1a\xc7\x01\n" +
-	"\x19AccessEvaluationBatchCall\x12L\n" +
-	"\x05input\x18\x01 \x01(\v26.authzen.authorization.v1.AccessEvaluationBatchRequestR\x05input\x12\\\n" +
-	"\rwant_response\x18\x02 \x01(\v27.authzen.authorization.v1.AccessEvaluationBatchResponseR\fwantResponse\x1a\xa2\x01\n" +
-	"\x11PlanResourcesCall\x12=\n" +
-	"\x05input\x18\x01 \x01(\v2'.cerbos.request.v1.PlanResourcesRequestR\x05input\x12N\n" +
-	"\rwant_response\x18\x02 \x01(\v2).cerbos.response.v1.PlanResourcesResponseR\fwantResponse\x1a\xab\x01\n" +
-	"\x14CheckResourceSetCall\x12@\n" +
-	"\x05input\x18\x01 \x01(\v2*.cerbos.request.v1.CheckResourceSetRequestR\x05input\x12Q\n" +
-	"\rwant_response\x18\x02 \x01(\v2,.cerbos.response.v1.CheckResourceSetResponseR\fwantResponse\x1a\xb1\x01\n" +
-	"\x16CheckResourceBatchCall\x12B\n" +
-	"\x05input\x18\x01 \x01(\v2,.cerbos.request.v1.CheckResourceBatchRequestR\x05input\x12S\n" +
-	"\rwant_response\x18\x02 \x01(\v2..cerbos.response.v1.CheckResourceBatchResponseR\fwantResponse\x1a\xa5\x01\n" +
-	"\x12CheckResourcesCall\x12>\n" +
-	"\x05input\x18\x01 \x01(\v2(.cerbos.request.v1.CheckResourcesRequestR\x05input\x12O\n" +
-	"\rwant_response\x18\x02 \x01(\v2*.cerbos.response.v1.CheckResourcesResponseR\fwantResponse\x1a\xb1\x01\n" +
-	"\x16PlaygroundValidateCall\x12B\n" +
-	"\x05input\x18\x01 \x01(\v2,.cerbos.request.v1.PlaygroundValidateRequestR\x05input\x12S\n" +
-	"\rwant_response\x18\x02 \x01(\v2..cerbos.response.v1.PlaygroundValidateResponseR\fwantResponse\x1a\xa5\x01\n" +
-	"\x12PlaygroundTestCall\x12>\n" +
-	"\x05input\x18\x01 \x01(\v2(.cerbos.request.v1.PlaygroundTestRequestR\x05input\x12O\n" +
-	"\rwant_response\x18\x02 \x01(\v2*.cerbos.response.v1.PlaygroundTestResponseR\fwantResponse\x1a\xb1\x01\n" +
-	"\x16PlaygroundEvaluateCall\x12B\n" +
-	"\x05input\x18\x01 \x01(\v2,.cerbos.request.v1.PlaygroundEvaluateRequestR\x05input\x12S\n" +
-	"\rwant_response\x18\x02 \x01(\v2..cerbos.response.v1.PlaygroundEvaluateResponseR\fwantResponse\x1a\xa8\x01\n" +
-	"\x13PlaygroundProxyCall\x12?\n" +
-	"\x05input\x18\x01 \x01(\v2).cerbos.request.v1.PlaygroundProxyRequestR\x05input\x12P\n" +
-	"\rwant_response\x18\x02 \x01(\v2+.cerbos.response.v1.PlaygroundProxyResponseR\fwantResponse\x1a\xb3\x01\n" +
-	"\x1aAdminAddOrUpdatePolicyCall\x12A\n" +
-	"\x05input\x18\x01 \x01(\v2+.cerbos.request.v1.AddOrUpdatePolicyRequestR\x05input\x12R\n" +
-	"\rwant_response\x18\x02 \x01(\v2-.cerbos.response.v1.AddOrUpdatePolicyResponseR\fwantResponse\x1a\xb3\x01\n" +
-	"\x1aAdminAddOrUpdateSchemaCall\x12A\n" +
-	"\x05input\x18\x01 \x01(\v2+.cerbos.request.v1.AddOrUpdateSchemaRequestR\x05input\x12R\n" +
+	"\x17access_evaluation_batch\x18\x10 \x01(\v2;.cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCallH\x00R\x15accessEvaluationBatch\x1a\xc0\x01\n" +
+	"\x14AccessEvaluationCall\x12O\n" +
+	"\x05input\x18\x01 \x01(\v21.authzen.authorization.v1.AccessEvaluationRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12W\n" +
+	"\rwant_response\x18\x02 \x01(\v22.authzen.authorization.v1.AccessEvaluationResponseR\fwantResponse\x1a\xcf\x01\n" +
+	"\x19AccessEvaluationBatchCall\x12T\n" +
+	"\x05input\x18\x01 \x01(\v26.authzen.authorization.v1.AccessEvaluationBatchRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12\\\n" +
+	"\rwant_response\x18\x02 \x01(\v27.authzen.authorization.v1.AccessEvaluationBatchResponseR\fwantResponse\x1a\xaa\x01\n" +
+	"\x11PlanResourcesCall\x12E\n" +
+	"\x05input\x18\x01 \x01(\v2'.cerbos.request.v1.PlanResourcesRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12N\n" +
+	"\rwant_response\x18\x02 \x01(\v2).cerbos.response.v1.PlanResourcesResponseR\fwantResponse\x1a\xb3\x01\n" +
+	"\x14CheckResourceSetCall\x12H\n" +
+	"\x05input\x18\x01 \x01(\v2*.cerbos.request.v1.CheckResourceSetRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12Q\n" +
+	"\rwant_response\x18\x02 \x01(\v2,.cerbos.response.v1.CheckResourceSetResponseR\fwantResponse\x1a\xb9\x01\n" +
+	"\x16CheckResourceBatchCall\x12J\n" +
+	"\x05input\x18\x01 \x01(\v2,.cerbos.request.v1.CheckResourceBatchRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12S\n" +
+	"\rwant_response\x18\x02 \x01(\v2..cerbos.response.v1.CheckResourceBatchResponseR\fwantResponse\x1a\xad\x01\n" +
+	"\x12CheckResourcesCall\x12F\n" +
+	"\x05input\x18\x01 \x01(\v2(.cerbos.request.v1.CheckResourcesRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12O\n" +
+	"\rwant_response\x18\x02 \x01(\v2*.cerbos.response.v1.CheckResourcesResponseR\fwantResponse\x1a\xb9\x01\n" +
+	"\x16PlaygroundValidateCall\x12J\n" +
+	"\x05input\x18\x01 \x01(\v2,.cerbos.request.v1.PlaygroundValidateRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12S\n" +
+	"\rwant_response\x18\x02 \x01(\v2..cerbos.response.v1.PlaygroundValidateResponseR\fwantResponse\x1a\xad\x01\n" +
+	"\x12PlaygroundTestCall\x12F\n" +
+	"\x05input\x18\x01 \x01(\v2(.cerbos.request.v1.PlaygroundTestRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12O\n" +
+	"\rwant_response\x18\x02 \x01(\v2*.cerbos.response.v1.PlaygroundTestResponseR\fwantResponse\x1a\xb9\x01\n" +
+	"\x16PlaygroundEvaluateCall\x12J\n" +
+	"\x05input\x18\x01 \x01(\v2,.cerbos.request.v1.PlaygroundEvaluateRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12S\n" +
+	"\rwant_response\x18\x02 \x01(\v2..cerbos.response.v1.PlaygroundEvaluateResponseR\fwantResponse\x1a\xb0\x01\n" +
+	"\x13PlaygroundProxyCall\x12G\n" +
+	"\x05input\x18\x01 \x01(\v2).cerbos.request.v1.PlaygroundProxyRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12P\n" +
+	"\rwant_response\x18\x02 \x01(\v2+.cerbos.response.v1.PlaygroundProxyResponseR\fwantResponse\x1a\xbb\x01\n" +
+	"\x1aAdminAddOrUpdatePolicyCall\x12I\n" +
+	"\x05input\x18\x01 \x01(\v2+.cerbos.request.v1.AddOrUpdatePolicyRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12R\n" +
+	"\rwant_response\x18\x02 \x01(\v2-.cerbos.response.v1.AddOrUpdatePolicyResponseR\fwantResponse\x1a\xbb\x01\n" +
+	"\x1aAdminAddOrUpdateSchemaCall\x12I\n" +
+	"\x05input\x18\x01 \x01(\v2+.cerbos.request.v1.AddOrUpdateSchemaRequestB\x06\xbaH\x03\xd8\x01\x03R\x05input\x12R\n" +
 	"\rwant_response\x18\x02 \x01(\v2-.cerbos.response.v1.AddOrUpdateSchemaResponseR\fwantResponse\x1a\\\n" +
 	"\x06Status\x12(\n" +
 	"\x10http_status_code\x18\x01 \x01(\rR\x0ehttpStatusCode\x12(\n" +
@@ -3577,7 +3680,7 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"wantErrors\x1ak\n" +
 	"\x04Want\x122\n" +
 	"\amessage\x18\x01 \x01(\v2\x18.cerbos.policy.v1.PolicyR\amessage\x12/\n" +
-	"\x06errors\x18\x02 \x03(\v2\x17.cerbos.source.v1.ErrorR\x06errors\"\xe0\x0f\n" +
+	"\x06errors\x18\x02 \x03(\v2\x17.cerbos.source.v1.ErrorR\x06errors\"\xac\x14\n" +
 	"\x0eWellKnownTypes\x129\n" +
 	"\n" +
 	"list_value\x18\x01 \x01(\v2\x1a.google.protobuf.ListValueR\tlistValue\x12J\n" +
@@ -3606,8 +3709,14 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\x15uint64_wrapper_number\x18\x12 \x01(\v2\x1c.google.protobuf.UInt64ValueR\x13uint64WrapperNumber\x12P\n" +
 	"\x15uint64_wrapper_string\x18\x13 \x01(\v2\x1c.google.protobuf.UInt64ValueR\x13uint64WrapperString\x12T\n" +
 	"\x17repeated_uint64_wrapper\x18\x14 \x03(\v2\x1c.google.protobuf.UInt64ValueR\x15repeatedUint64Wrapper\x12e\n" +
-	"\x12uint64_wrapper_map\x18\x15 \x03(\v27.cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntryR\x10uint64WrapperMap\x129\n" +
-	"\x06nested\x18\x16 \x01(\v2!.cerbos.private.v1.WellKnownTypesR\x06nested\x1a[\n" +
+	"\x12uint64_wrapper_map\x18\x15 \x03(\v27.cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntryR\x10uint64WrapperMap\x12,\n" +
+	"\x05empty\x18\x16 \x01(\v2\x16.google.protobuf.EmptyR\x05empty\x12=\n" +
+	"\x0erepeated_empty\x18\x17 \x03(\v2\x16.google.protobuf.EmptyR\rrepeatedEmpty\x12L\n" +
+	"\tempty_map\x18\x18 \x03(\v2/.cerbos.private.v1.WellKnownTypes.EmptyMapEntryR\bemptyMap\x128\n" +
+	"\ttimestamp\x18\x19 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12I\n" +
+	"\x12repeated_timestamp\x18\x1a \x03(\v2\x1a.google.protobuf.TimestampR\x11repeatedTimestamp\x12X\n" +
+	"\rtimestamp_map\x18\x1b \x03(\v23.cerbos.private.v1.WellKnownTypes.TimestampMapEntryR\ftimestampMap\x129\n" +
+	"\x06nested\x18\x1c \x01(\v2!.cerbos.private.v1.WellKnownTypesR\x06nested\x1a[\n" +
 	"\x11ListValueMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x120\n" +
 	"\x05value\x18\x02 \x01(\v2\x1a.google.protobuf.ListValueR\x05value:\x028\x01\x1a[\n" +
@@ -3622,9 +3731,23 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\x1aa\n" +
 	"\x15Uint64WrapperMapEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x122\n" +
-	"\x05value\x18\x02 \x01(\v2\x1c.google.protobuf.UInt64ValueR\x05value:\x028\x01\"O\n" +
+	"\x05value\x18\x02 \x01(\v2\x1c.google.protobuf.UInt64ValueR\x05value:\x028\x01\x1aS\n" +
+	"\rEmptyMapEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.EmptyR\x05value:\x028\x01\x1a[\n" +
+	"\x11TimestampMapEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x120\n" +
+	"\x05value\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05value:\x028\x01\"O\n" +
 	"\x11TestTracesWrapper\x12:\n" +
-	"\fengine_trace\x18\x01 \x03(\v2\x17.cerbos.engine.v1.TraceR\vengineTraceB@Z>github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1b\x06proto3"
+	"\fengine_trace\x18\x01 \x03(\v2\x17.cerbos.engine.v1.TraceR\vengineTrace\"\x82\x02\n" +
+	"\n" +
+	"Validation\x12=\n" +
+	"\aenum_in\x18\x01 \x01(\x0e2\x18.cerbos.effect.v1.EffectB\n" +
+	"\xbaH\a\x82\x01\x04\x18\x01\x18\x02R\x06enumIn\x12]\n" +
+	"\venum_in_map\x18\x02 \x03(\v2,.cerbos.private.v1.Validation.EnumInMapEntryB\x0f\xbaH\f\x9a\x01\t*\a\x82\x01\x04\x18\x01\x18\x02R\tenumInMap\x1aV\n" +
+	"\x0eEnumInMapEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12.\n" +
+	"\x05value\x18\x02 \x01(\x0e2\x18.cerbos.effect.v1.EffectR\x05value:\x028\x01B@Z>github.com/cerbos/cerbos/api/genpb/cerbos/private/v1;privatev1b\x06proto3"
 
 var (
 	file_cerbos_private_v1_test_proto_rawDescOnce sync.Once
@@ -3638,7 +3761,7 @@ func file_cerbos_private_v1_test_proto_rawDescGZIP() []byte {
 	return file_cerbos_private_v1_test_proto_rawDescData
 }
 
-var file_cerbos_private_v1_test_proto_msgTypes = make([]protoimpl.MessageInfo, 59)
+var file_cerbos_private_v1_test_proto_msgTypes = make([]protoimpl.MessageInfo, 63)
 var file_cerbos_private_v1_test_proto_goTypes = []any{
 	(*AuxDataTestCase)(nil),                       // 0: cerbos.private.v1.AuxDataTestCase
 	(*InspectTestCase)(nil),                       // 1: cerbos.private.v1.InspectTestCase
@@ -3657,224 +3780,242 @@ var file_cerbos_private_v1_test_proto_goTypes = []any{
 	(*ProtoYamlTestCase)(nil),                     // 14: cerbos.private.v1.ProtoYamlTestCase
 	(*WellKnownTypes)(nil),                        // 15: cerbos.private.v1.WellKnownTypes
 	(*TestTracesWrapper)(nil),                     // 16: cerbos.private.v1.TestTracesWrapper
-	(*AuxDataTestCase_Input)(nil),                 // 17: cerbos.private.v1.AuxDataTestCase.Input
-	(*InspectTestCase_CompileErrors)(nil),         // 18: cerbos.private.v1.InspectTestCase.CompileErrors
-	(*InspectTestCase_PoliciesExpectation)(nil),   // 19: cerbos.private.v1.InspectTestCase.PoliciesExpectation
-	(*InspectTestCase_PolicySetsExpectation)(nil), // 20: cerbos.private.v1.InspectTestCase.PolicySetsExpectation
-	(*InspectTestCase_RuleTablesExpectation)(nil), // 21: cerbos.private.v1.InspectTestCase.RuleTablesExpectation
-	nil,                             // 22: cerbos.private.v1.InspectTestCase.PoliciesExpectation.PoliciesEntry
-	nil,                             // 23: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.PolicySetsEntry
-	nil,                             // 24: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.RuleTablesEntry
-	(*BlobClonerTestCase_File)(nil), // 25: cerbos.private.v1.BlobClonerTestCase.File
-	(*BlobClonerTestCase_Step)(nil), // 26: cerbos.private.v1.BlobClonerTestCase.Step
-	(*BlobClonerTestCase_File_AddOrUpdate)(nil),       // 27: cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate
-	(*BlobClonerTestCase_File_Delete)(nil),            // 28: cerbos.private.v1.BlobClonerTestCase.File.Delete
-	(*BlobClonerTestCase_Step_Differences)(nil),       // 29: cerbos.private.v1.BlobClonerTestCase.Step.Differences
-	(*BlobClonerTestCase_Step_Expectation)(nil),       // 30: cerbos.private.v1.BlobClonerTestCase.Step.Expectation
-	(*BlobClonerTestCase_Step_Expectation_Files)(nil), // 31: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files
-	(*BlobClonerTestCase_Step_Expectation_Info)(nil),  // 32: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info
-	nil, // 33: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.AllEntry
-	(*ServerTestCase_AccessEvaluationCall)(nil),       // 34: cerbos.private.v1.ServerTestCase.AccessEvaluationCall
-	(*ServerTestCase_AccessEvaluationBatchCall)(nil),  // 35: cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall
-	(*ServerTestCase_PlanResourcesCall)(nil),          // 36: cerbos.private.v1.ServerTestCase.PlanResourcesCall
-	(*ServerTestCase_CheckResourceSetCall)(nil),       // 37: cerbos.private.v1.ServerTestCase.CheckResourceSetCall
-	(*ServerTestCase_CheckResourceBatchCall)(nil),     // 38: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
-	(*ServerTestCase_CheckResourcesCall)(nil),         // 39: cerbos.private.v1.ServerTestCase.CheckResourcesCall
-	(*ServerTestCase_PlaygroundValidateCall)(nil),     // 40: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
-	(*ServerTestCase_PlaygroundTestCall)(nil),         // 41: cerbos.private.v1.ServerTestCase.PlaygroundTestCall
-	(*ServerTestCase_PlaygroundEvaluateCall)(nil),     // 42: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
-	(*ServerTestCase_PlaygroundProxyCall)(nil),        // 43: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
-	(*ServerTestCase_AdminAddOrUpdatePolicyCall)(nil), // 44: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
-	(*ServerTestCase_AdminAddOrUpdateSchemaCall)(nil), // 45: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
-	(*ServerTestCase_Status)(nil),                     // 46: cerbos.private.v1.ServerTestCase.Status
-	(*IndexBuilderTestCase_CompilationUnit)(nil),      // 47: cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
-	nil,                               // 48: cerbos.private.v1.IndexBuilderTestCase.FilesEntry
-	(*CompileTestCase_Variables)(nil), // 49: cerbos.private.v1.CompileTestCase.Variables
-	(*CompileTestCase_Variables_DerivedRole)(nil), // 50: cerbos.private.v1.CompileTestCase.Variables.DerivedRole
-	(*QueryPlannerTestSuite_Test)(nil),            // 51: cerbos.private.v1.QueryPlannerTestSuite.Test
-	(*VerifyTestCase_Config)(nil),                 // 52: cerbos.private.v1.VerifyTestCase.Config
-	(*ProtoYamlTestCase_Want)(nil),                // 53: cerbos.private.v1.ProtoYamlTestCase.Want
-	nil,                                           // 54: cerbos.private.v1.WellKnownTypes.ListValueMapEntry
-	nil,                                           // 55: cerbos.private.v1.WellKnownTypes.NullValueMapEntry
-	nil,                                           // 56: cerbos.private.v1.WellKnownTypes.StructMapEntry
-	nil,                                           // 57: cerbos.private.v1.WellKnownTypes.ValueMapEntry
-	nil,                                           // 58: cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntry
-	(*v1.Policy)(nil),                             // 59: cerbos.policy.v1.Policy
-	(*v11.CheckInput)(nil),                        // 60: cerbos.engine.v1.CheckInput
-	(*v11.CheckOutput)(nil),                       // 61: cerbos.engine.v1.CheckOutput
-	(*v12.DecisionLogEntry)(nil),                  // 62: cerbos.audit.v1.DecisionLogEntry
-	(*v13.IndexBuildErrors)(nil),                  // 63: cerbos.runtime.v1.IndexBuildErrors
-	(*v13.CompileErrors_Err)(nil),                 // 64: cerbos.runtime.v1.CompileErrors.Err
-	(*v1.Match)(nil),                              // 65: cerbos.policy.v1.Match
-	(*v11.Request)(nil),                           // 66: cerbos.engine.v1.Request
-	(*v1.Schemas)(nil),                            // 67: cerbos.policy.v1.Schemas
-	(*v11.PlanResourcesInput)(nil),                // 68: cerbos.engine.v1.PlanResourcesInput
-	(*v14.ValidationError)(nil),                   // 69: cerbos.schema.v1.ValidationError
-	(*v11.Principal)(nil),                         // 70: cerbos.engine.v1.Principal
-	(*v1.TestTable)(nil),                          // 71: cerbos.policy.v1.TestTable
-	(*v1.Test)(nil),                               // 72: cerbos.policy.v1.Test
-	(*v11.PlanResourcesFilter)(nil),               // 73: cerbos.engine.v1.PlanResourcesFilter
-	(*v15.Error)(nil),                             // 74: cerbos.source.v1.Error
-	(*structpb.ListValue)(nil),                    // 75: google.protobuf.ListValue
-	(structpb.NullValue)(0),                       // 76: google.protobuf.NullValue
-	(*structpb.Struct)(nil),                       // 77: google.protobuf.Struct
-	(*structpb.Value)(nil),                        // 78: google.protobuf.Value
-	(*wrapperspb.UInt64Value)(nil),                // 79: google.protobuf.UInt64Value
-	(*v11.Trace)(nil),                             // 80: cerbos.engine.v1.Trace
-	(*v16.InspectPoliciesResponse_Result)(nil),    // 81: cerbos.response.v1.InspectPoliciesResponse.Result
-	(*v17.AccessEvaluationRequest)(nil),           // 82: authzen.authorization.v1.AccessEvaluationRequest
-	(*v17.AccessEvaluationResponse)(nil),          // 83: authzen.authorization.v1.AccessEvaluationResponse
-	(*v17.AccessEvaluationBatchRequest)(nil),      // 84: authzen.authorization.v1.AccessEvaluationBatchRequest
-	(*v17.AccessEvaluationBatchResponse)(nil),     // 85: authzen.authorization.v1.AccessEvaluationBatchResponse
-	(*v18.PlanResourcesRequest)(nil),              // 86: cerbos.request.v1.PlanResourcesRequest
-	(*v16.PlanResourcesResponse)(nil),             // 87: cerbos.response.v1.PlanResourcesResponse
-	(*v18.CheckResourceSetRequest)(nil),           // 88: cerbos.request.v1.CheckResourceSetRequest
-	(*v16.CheckResourceSetResponse)(nil),          // 89: cerbos.response.v1.CheckResourceSetResponse
-	(*v18.CheckResourceBatchRequest)(nil),         // 90: cerbos.request.v1.CheckResourceBatchRequest
-	(*v16.CheckResourceBatchResponse)(nil),        // 91: cerbos.response.v1.CheckResourceBatchResponse
-	(*v18.CheckResourcesRequest)(nil),             // 92: cerbos.request.v1.CheckResourcesRequest
-	(*v16.CheckResourcesResponse)(nil),            // 93: cerbos.response.v1.CheckResourcesResponse
-	(*v18.PlaygroundValidateRequest)(nil),         // 94: cerbos.request.v1.PlaygroundValidateRequest
-	(*v16.PlaygroundValidateResponse)(nil),        // 95: cerbos.response.v1.PlaygroundValidateResponse
-	(*v18.PlaygroundTestRequest)(nil),             // 96: cerbos.request.v1.PlaygroundTestRequest
-	(*v16.PlaygroundTestResponse)(nil),            // 97: cerbos.response.v1.PlaygroundTestResponse
-	(*v18.PlaygroundEvaluateRequest)(nil),         // 98: cerbos.request.v1.PlaygroundEvaluateRequest
-	(*v16.PlaygroundEvaluateResponse)(nil),        // 99: cerbos.response.v1.PlaygroundEvaluateResponse
-	(*v18.PlaygroundProxyRequest)(nil),            // 100: cerbos.request.v1.PlaygroundProxyRequest
-	(*v16.PlaygroundProxyResponse)(nil),           // 101: cerbos.response.v1.PlaygroundProxyResponse
-	(*v18.AddOrUpdatePolicyRequest)(nil),          // 102: cerbos.request.v1.AddOrUpdatePolicyRequest
-	(*v16.AddOrUpdatePolicyResponse)(nil),         // 103: cerbos.response.v1.AddOrUpdatePolicyResponse
-	(*v18.AddOrUpdateSchemaRequest)(nil),          // 104: cerbos.request.v1.AddOrUpdateSchemaRequest
-	(*v16.AddOrUpdateSchemaResponse)(nil),         // 105: cerbos.response.v1.AddOrUpdateSchemaResponse
-	(*v11.PlanResourcesInput_Resource)(nil),       // 106: cerbos.engine.v1.PlanResourcesInput.Resource
+	(*Validation)(nil),                            // 17: cerbos.private.v1.Validation
+	(*AuxDataTestCase_Input)(nil),                 // 18: cerbos.private.v1.AuxDataTestCase.Input
+	(*InspectTestCase_CompileErrors)(nil),         // 19: cerbos.private.v1.InspectTestCase.CompileErrors
+	(*InspectTestCase_PoliciesExpectation)(nil),   // 20: cerbos.private.v1.InspectTestCase.PoliciesExpectation
+	(*InspectTestCase_PolicySetsExpectation)(nil), // 21: cerbos.private.v1.InspectTestCase.PolicySetsExpectation
+	(*InspectTestCase_RuleTablesExpectation)(nil), // 22: cerbos.private.v1.InspectTestCase.RuleTablesExpectation
+	nil,                             // 23: cerbos.private.v1.InspectTestCase.PoliciesExpectation.PoliciesEntry
+	nil,                             // 24: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.PolicySetsEntry
+	nil,                             // 25: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.RuleTablesEntry
+	(*BlobClonerTestCase_File)(nil), // 26: cerbos.private.v1.BlobClonerTestCase.File
+	(*BlobClonerTestCase_Step)(nil), // 27: cerbos.private.v1.BlobClonerTestCase.Step
+	(*BlobClonerTestCase_File_AddOrUpdate)(nil),       // 28: cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate
+	(*BlobClonerTestCase_File_Delete)(nil),            // 29: cerbos.private.v1.BlobClonerTestCase.File.Delete
+	(*BlobClonerTestCase_Step_Differences)(nil),       // 30: cerbos.private.v1.BlobClonerTestCase.Step.Differences
+	(*BlobClonerTestCase_Step_Expectation)(nil),       // 31: cerbos.private.v1.BlobClonerTestCase.Step.Expectation
+	(*BlobClonerTestCase_Step_Expectation_Files)(nil), // 32: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files
+	(*BlobClonerTestCase_Step_Expectation_Info)(nil),  // 33: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info
+	nil, // 34: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.AllEntry
+	(*ServerTestCase_AccessEvaluationCall)(nil),       // 35: cerbos.private.v1.ServerTestCase.AccessEvaluationCall
+	(*ServerTestCase_AccessEvaluationBatchCall)(nil),  // 36: cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall
+	(*ServerTestCase_PlanResourcesCall)(nil),          // 37: cerbos.private.v1.ServerTestCase.PlanResourcesCall
+	(*ServerTestCase_CheckResourceSetCall)(nil),       // 38: cerbos.private.v1.ServerTestCase.CheckResourceSetCall
+	(*ServerTestCase_CheckResourceBatchCall)(nil),     // 39: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
+	(*ServerTestCase_CheckResourcesCall)(nil),         // 40: cerbos.private.v1.ServerTestCase.CheckResourcesCall
+	(*ServerTestCase_PlaygroundValidateCall)(nil),     // 41: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
+	(*ServerTestCase_PlaygroundTestCall)(nil),         // 42: cerbos.private.v1.ServerTestCase.PlaygroundTestCall
+	(*ServerTestCase_PlaygroundEvaluateCall)(nil),     // 43: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
+	(*ServerTestCase_PlaygroundProxyCall)(nil),        // 44: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
+	(*ServerTestCase_AdminAddOrUpdatePolicyCall)(nil), // 45: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
+	(*ServerTestCase_AdminAddOrUpdateSchemaCall)(nil), // 46: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
+	(*ServerTestCase_Status)(nil),                     // 47: cerbos.private.v1.ServerTestCase.Status
+	(*IndexBuilderTestCase_CompilationUnit)(nil),      // 48: cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
+	nil,                               // 49: cerbos.private.v1.IndexBuilderTestCase.FilesEntry
+	(*CompileTestCase_Variables)(nil), // 50: cerbos.private.v1.CompileTestCase.Variables
+	(*CompileTestCase_Variables_DerivedRole)(nil), // 51: cerbos.private.v1.CompileTestCase.Variables.DerivedRole
+	(*QueryPlannerTestSuite_Test)(nil),            // 52: cerbos.private.v1.QueryPlannerTestSuite.Test
+	(*VerifyTestCase_Config)(nil),                 // 53: cerbos.private.v1.VerifyTestCase.Config
+	(*ProtoYamlTestCase_Want)(nil),                // 54: cerbos.private.v1.ProtoYamlTestCase.Want
+	nil,                                           // 55: cerbos.private.v1.WellKnownTypes.ListValueMapEntry
+	nil,                                           // 56: cerbos.private.v1.WellKnownTypes.NullValueMapEntry
+	nil,                                           // 57: cerbos.private.v1.WellKnownTypes.StructMapEntry
+	nil,                                           // 58: cerbos.private.v1.WellKnownTypes.ValueMapEntry
+	nil,                                           // 59: cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntry
+	nil,                                           // 60: cerbos.private.v1.WellKnownTypes.EmptyMapEntry
+	nil,                                           // 61: cerbos.private.v1.WellKnownTypes.TimestampMapEntry
+	nil,                                           // 62: cerbos.private.v1.Validation.EnumInMapEntry
+	(*v1.Policy)(nil),                             // 63: cerbos.policy.v1.Policy
+	(*v11.CheckInput)(nil),                        // 64: cerbos.engine.v1.CheckInput
+	(*v11.CheckOutput)(nil),                       // 65: cerbos.engine.v1.CheckOutput
+	(*v12.DecisionLogEntry)(nil),                  // 66: cerbos.audit.v1.DecisionLogEntry
+	(*v13.IndexBuildErrors)(nil),                  // 67: cerbos.runtime.v1.IndexBuildErrors
+	(*v13.CompileErrors_Err)(nil),                 // 68: cerbos.runtime.v1.CompileErrors.Err
+	(*v1.Match)(nil),                              // 69: cerbos.policy.v1.Match
+	(*v11.Request)(nil),                           // 70: cerbos.engine.v1.Request
+	(*v1.Schemas)(nil),                            // 71: cerbos.policy.v1.Schemas
+	(*v11.PlanResourcesInput)(nil),                // 72: cerbos.engine.v1.PlanResourcesInput
+	(*v14.ValidationError)(nil),                   // 73: cerbos.schema.v1.ValidationError
+	(*v11.Principal)(nil),                         // 74: cerbos.engine.v1.Principal
+	(*v1.TestTable)(nil),                          // 75: cerbos.policy.v1.TestTable
+	(*v1.Test)(nil),                               // 76: cerbos.policy.v1.Test
+	(*v11.PlanResourcesFilter)(nil),               // 77: cerbos.engine.v1.PlanResourcesFilter
+	(*v15.Error)(nil),                             // 78: cerbos.source.v1.Error
+	(*structpb.ListValue)(nil),                    // 79: google.protobuf.ListValue
+	(structpb.NullValue)(0),                       // 80: google.protobuf.NullValue
+	(*structpb.Struct)(nil),                       // 81: google.protobuf.Struct
+	(*structpb.Value)(nil),                        // 82: google.protobuf.Value
+	(*wrapperspb.UInt64Value)(nil),                // 83: google.protobuf.UInt64Value
+	(*emptypb.Empty)(nil),                         // 84: google.protobuf.Empty
+	(*timestamppb.Timestamp)(nil),                 // 85: google.protobuf.Timestamp
+	(*v11.Trace)(nil),                             // 86: cerbos.engine.v1.Trace
+	(v16.Effect)(0),                               // 87: cerbos.effect.v1.Effect
+	(*v17.InspectPoliciesResponse_Result)(nil), // 88: cerbos.response.v1.InspectPoliciesResponse.Result
+	(*v18.AccessEvaluationRequest)(nil),        // 89: authzen.authorization.v1.AccessEvaluationRequest
+	(*v18.AccessEvaluationResponse)(nil),       // 90: authzen.authorization.v1.AccessEvaluationResponse
+	(*v18.AccessEvaluationBatchRequest)(nil),   // 91: authzen.authorization.v1.AccessEvaluationBatchRequest
+	(*v18.AccessEvaluationBatchResponse)(nil),  // 92: authzen.authorization.v1.AccessEvaluationBatchResponse
+	(*v19.PlanResourcesRequest)(nil),           // 93: cerbos.request.v1.PlanResourcesRequest
+	(*v17.PlanResourcesResponse)(nil),          // 94: cerbos.response.v1.PlanResourcesResponse
+	(*v19.CheckResourceSetRequest)(nil),        // 95: cerbos.request.v1.CheckResourceSetRequest
+	(*v17.CheckResourceSetResponse)(nil),       // 96: cerbos.response.v1.CheckResourceSetResponse
+	(*v19.CheckResourceBatchRequest)(nil),      // 97: cerbos.request.v1.CheckResourceBatchRequest
+	(*v17.CheckResourceBatchResponse)(nil),     // 98: cerbos.response.v1.CheckResourceBatchResponse
+	(*v19.CheckResourcesRequest)(nil),          // 99: cerbos.request.v1.CheckResourcesRequest
+	(*v17.CheckResourcesResponse)(nil),         // 100: cerbos.response.v1.CheckResourcesResponse
+	(*v19.PlaygroundValidateRequest)(nil),      // 101: cerbos.request.v1.PlaygroundValidateRequest
+	(*v17.PlaygroundValidateResponse)(nil),     // 102: cerbos.response.v1.PlaygroundValidateResponse
+	(*v19.PlaygroundTestRequest)(nil),          // 103: cerbos.request.v1.PlaygroundTestRequest
+	(*v17.PlaygroundTestResponse)(nil),         // 104: cerbos.response.v1.PlaygroundTestResponse
+	(*v19.PlaygroundEvaluateRequest)(nil),      // 105: cerbos.request.v1.PlaygroundEvaluateRequest
+	(*v17.PlaygroundEvaluateResponse)(nil),     // 106: cerbos.response.v1.PlaygroundEvaluateResponse
+	(*v19.PlaygroundProxyRequest)(nil),         // 107: cerbos.request.v1.PlaygroundProxyRequest
+	(*v17.PlaygroundProxyResponse)(nil),        // 108: cerbos.response.v1.PlaygroundProxyResponse
+	(*v19.AddOrUpdatePolicyRequest)(nil),       // 109: cerbos.request.v1.AddOrUpdatePolicyRequest
+	(*v17.AddOrUpdatePolicyResponse)(nil),      // 110: cerbos.response.v1.AddOrUpdatePolicyResponse
+	(*v19.AddOrUpdateSchemaRequest)(nil),       // 111: cerbos.request.v1.AddOrUpdateSchemaRequest
+	(*v17.AddOrUpdateSchemaResponse)(nil),      // 112: cerbos.response.v1.AddOrUpdateSchemaResponse
+	(*v11.PlanResourcesInput_Resource)(nil),    // 113: cerbos.engine.v1.PlanResourcesInput.Resource
 }
 var file_cerbos_private_v1_test_proto_depIdxs = []int32{
-	17,  // 0: cerbos.private.v1.AuxDataTestCase.input:type_name -> cerbos.private.v1.AuxDataTestCase.Input
-	59,  // 1: cerbos.private.v1.InspectTestCase.inputs:type_name -> cerbos.policy.v1.Policy
-	19,  // 2: cerbos.private.v1.InspectTestCase.policies_expectation:type_name -> cerbos.private.v1.InspectTestCase.PoliciesExpectation
-	20,  // 3: cerbos.private.v1.InspectTestCase.policy_sets_expectation:type_name -> cerbos.private.v1.InspectTestCase.PolicySetsExpectation
-	21,  // 4: cerbos.private.v1.InspectTestCase.rule_tables_expectation:type_name -> cerbos.private.v1.InspectTestCase.RuleTablesExpectation
-	25,  // 5: cerbos.private.v1.BlobClonerTestCase.inputs:type_name -> cerbos.private.v1.BlobClonerTestCase.File
-	26,  // 6: cerbos.private.v1.BlobClonerTestCase.steps:type_name -> cerbos.private.v1.BlobClonerTestCase.Step
-	60,  // 7: cerbos.private.v1.EngineTestCase.inputs:type_name -> cerbos.engine.v1.CheckInput
-	61,  // 8: cerbos.private.v1.EngineTestCase.want_outputs:type_name -> cerbos.engine.v1.CheckOutput
-	62,  // 9: cerbos.private.v1.EngineTestCase.want_decision_logs:type_name -> cerbos.audit.v1.DecisionLogEntry
-	46,  // 10: cerbos.private.v1.ServerTestCase.want_status:type_name -> cerbos.private.v1.ServerTestCase.Status
-	37,  // 11: cerbos.private.v1.ServerTestCase.check_resource_set:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceSetCall
-	38,  // 12: cerbos.private.v1.ServerTestCase.check_resource_batch:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
-	40,  // 13: cerbos.private.v1.ServerTestCase.playground_validate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
-	42,  // 14: cerbos.private.v1.ServerTestCase.playground_evaluate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
-	44,  // 15: cerbos.private.v1.ServerTestCase.admin_add_or_update_policy:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
-	43,  // 16: cerbos.private.v1.ServerTestCase.playground_proxy:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
-	36,  // 17: cerbos.private.v1.ServerTestCase.plan_resources:type_name -> cerbos.private.v1.ServerTestCase.PlanResourcesCall
-	45,  // 18: cerbos.private.v1.ServerTestCase.admin_add_or_update_schema:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
-	41,  // 19: cerbos.private.v1.ServerTestCase.playground_test:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundTestCall
-	39,  // 20: cerbos.private.v1.ServerTestCase.check_resources:type_name -> cerbos.private.v1.ServerTestCase.CheckResourcesCall
-	34,  // 21: cerbos.private.v1.ServerTestCase.access_evaluation:type_name -> cerbos.private.v1.ServerTestCase.AccessEvaluationCall
-	35,  // 22: cerbos.private.v1.ServerTestCase.access_evaluation_batch:type_name -> cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall
-	48,  // 23: cerbos.private.v1.IndexBuilderTestCase.files:type_name -> cerbos.private.v1.IndexBuilderTestCase.FilesEntry
-	63,  // 24: cerbos.private.v1.IndexBuilderTestCase.want_err_list:type_name -> cerbos.runtime.v1.IndexBuildErrors
-	47,  // 25: cerbos.private.v1.IndexBuilderTestCase.want_compilation_units:type_name -> cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
-	64,  // 26: cerbos.private.v1.CompileTestCase.want_errors:type_name -> cerbos.runtime.v1.CompileErrors.Err
-	49,  // 27: cerbos.private.v1.CompileTestCase.want_variables:type_name -> cerbos.private.v1.CompileTestCase.Variables
-	65,  // 28: cerbos.private.v1.CelTestCase.condition:type_name -> cerbos.policy.v1.Match
-	66,  // 29: cerbos.private.v1.CelTestCase.request:type_name -> cerbos.engine.v1.Request
-	67,  // 30: cerbos.private.v1.SchemaTestCase.schema_refs:type_name -> cerbos.policy.v1.Schemas
-	60,  // 31: cerbos.private.v1.SchemaTestCase.check_input:type_name -> cerbos.engine.v1.CheckInput
-	68,  // 32: cerbos.private.v1.SchemaTestCase.plan_resources_input:type_name -> cerbos.engine.v1.PlanResourcesInput
-	69,  // 33: cerbos.private.v1.SchemaTestCase.want_validation_errors:type_name -> cerbos.schema.v1.ValidationError
-	69,  // 34: cerbos.private.v1.ValidationErrContainer.errors:type_name -> cerbos.schema.v1.ValidationError
-	70,  // 35: cerbos.private.v1.QueryPlannerTestSuite.principal:type_name -> cerbos.engine.v1.Principal
-	51,  // 36: cerbos.private.v1.QueryPlannerTestSuite.tests:type_name -> cerbos.private.v1.QueryPlannerTestSuite.Test
-	71,  // 37: cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.table:type_name -> cerbos.policy.v1.TestTable
-	72,  // 38: cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.want_tests:type_name -> cerbos.policy.v1.Test
-	73,  // 39: cerbos.private.v1.QueryPlannerFilterTestCase.input:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	73,  // 40: cerbos.private.v1.QueryPlannerFilterTestCase.want_filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	52,  // 41: cerbos.private.v1.VerifyTestCase.config:type_name -> cerbos.private.v1.VerifyTestCase.Config
-	53,  // 42: cerbos.private.v1.ProtoYamlTestCase.want:type_name -> cerbos.private.v1.ProtoYamlTestCase.Want
-	74,  // 43: cerbos.private.v1.ProtoYamlTestCase.want_errors:type_name -> cerbos.source.v1.Error
-	75,  // 44: cerbos.private.v1.WellKnownTypes.list_value:type_name -> google.protobuf.ListValue
-	75,  // 45: cerbos.private.v1.WellKnownTypes.repeated_list_value:type_name -> google.protobuf.ListValue
-	54,  // 46: cerbos.private.v1.WellKnownTypes.list_value_map:type_name -> cerbos.private.v1.WellKnownTypes.ListValueMapEntry
-	76,  // 47: cerbos.private.v1.WellKnownTypes.null_value:type_name -> google.protobuf.NullValue
-	76,  // 48: cerbos.private.v1.WellKnownTypes.repeated_null_value:type_name -> google.protobuf.NullValue
-	55,  // 49: cerbos.private.v1.WellKnownTypes.null_value_map:type_name -> cerbos.private.v1.WellKnownTypes.NullValueMapEntry
-	77,  // 50: cerbos.private.v1.WellKnownTypes.struct:type_name -> google.protobuf.Struct
-	77,  // 51: cerbos.private.v1.WellKnownTypes.repeated_struct:type_name -> google.protobuf.Struct
-	56,  // 52: cerbos.private.v1.WellKnownTypes.struct_map:type_name -> cerbos.private.v1.WellKnownTypes.StructMapEntry
-	78,  // 53: cerbos.private.v1.WellKnownTypes.value_null:type_name -> google.protobuf.Value
-	78,  // 54: cerbos.private.v1.WellKnownTypes.value_number:type_name -> google.protobuf.Value
-	78,  // 55: cerbos.private.v1.WellKnownTypes.value_string:type_name -> google.protobuf.Value
-	78,  // 56: cerbos.private.v1.WellKnownTypes.value_bool:type_name -> google.protobuf.Value
-	78,  // 57: cerbos.private.v1.WellKnownTypes.value_struct:type_name -> google.protobuf.Value
-	78,  // 58: cerbos.private.v1.WellKnownTypes.value_list:type_name -> google.protobuf.Value
-	78,  // 59: cerbos.private.v1.WellKnownTypes.repeated_value:type_name -> google.protobuf.Value
-	57,  // 60: cerbos.private.v1.WellKnownTypes.value_map:type_name -> cerbos.private.v1.WellKnownTypes.ValueMapEntry
-	79,  // 61: cerbos.private.v1.WellKnownTypes.uint64_wrapper_number:type_name -> google.protobuf.UInt64Value
-	79,  // 62: cerbos.private.v1.WellKnownTypes.uint64_wrapper_string:type_name -> google.protobuf.UInt64Value
-	79,  // 63: cerbos.private.v1.WellKnownTypes.repeated_uint64_wrapper:type_name -> google.protobuf.UInt64Value
-	58,  // 64: cerbos.private.v1.WellKnownTypes.uint64_wrapper_map:type_name -> cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntry
-	15,  // 65: cerbos.private.v1.WellKnownTypes.nested:type_name -> cerbos.private.v1.WellKnownTypes
-	80,  // 66: cerbos.private.v1.TestTracesWrapper.engine_trace:type_name -> cerbos.engine.v1.Trace
-	64,  // 67: cerbos.private.v1.InspectTestCase.CompileErrors.compile_errors:type_name -> cerbos.runtime.v1.CompileErrors.Err
-	22,  // 68: cerbos.private.v1.InspectTestCase.PoliciesExpectation.policies:type_name -> cerbos.private.v1.InspectTestCase.PoliciesExpectation.PoliciesEntry
-	23,  // 69: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.policy_sets:type_name -> cerbos.private.v1.InspectTestCase.PolicySetsExpectation.PolicySetsEntry
-	18,  // 70: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.compile_errors:type_name -> cerbos.private.v1.InspectTestCase.CompileErrors
-	63,  // 71: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
-	24,  // 72: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.rule_tables:type_name -> cerbos.private.v1.InspectTestCase.RuleTablesExpectation.RuleTablesEntry
-	18,  // 73: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.compile_errors:type_name -> cerbos.private.v1.InspectTestCase.CompileErrors
-	63,  // 74: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
-	81,  // 75: cerbos.private.v1.InspectTestCase.PoliciesExpectation.PoliciesEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
-	81,  // 76: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.PolicySetsEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
-	81,  // 77: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.RuleTablesEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
-	27,  // 78: cerbos.private.v1.BlobClonerTestCase.File.add_or_update:type_name -> cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate
-	28,  // 79: cerbos.private.v1.BlobClonerTestCase.File.delete:type_name -> cerbos.private.v1.BlobClonerTestCase.File.Delete
-	30,  // 80: cerbos.private.v1.BlobClonerTestCase.Step.expectation:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation
-	29,  // 81: cerbos.private.v1.BlobClonerTestCase.Step.differences:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Differences
-	25,  // 82: cerbos.private.v1.BlobClonerTestCase.Step.Differences.files:type_name -> cerbos.private.v1.BlobClonerTestCase.File
-	33,  // 83: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.all:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.AllEntry
-	32,  // 84: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.added_or_updated:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info
-	32,  // 85: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.deleted:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info
-	31,  // 86: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.AllEntry.value:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files
-	82,  // 87: cerbos.private.v1.ServerTestCase.AccessEvaluationCall.input:type_name -> authzen.authorization.v1.AccessEvaluationRequest
-	83,  // 88: cerbos.private.v1.ServerTestCase.AccessEvaluationCall.want_response:type_name -> authzen.authorization.v1.AccessEvaluationResponse
-	84,  // 89: cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall.input:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest
-	85,  // 90: cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall.want_response:type_name -> authzen.authorization.v1.AccessEvaluationBatchResponse
-	86,  // 91: cerbos.private.v1.ServerTestCase.PlanResourcesCall.input:type_name -> cerbos.request.v1.PlanResourcesRequest
-	87,  // 92: cerbos.private.v1.ServerTestCase.PlanResourcesCall.want_response:type_name -> cerbos.response.v1.PlanResourcesResponse
-	88,  // 93: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.input:type_name -> cerbos.request.v1.CheckResourceSetRequest
-	89,  // 94: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.want_response:type_name -> cerbos.response.v1.CheckResourceSetResponse
-	90,  // 95: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.input:type_name -> cerbos.request.v1.CheckResourceBatchRequest
-	91,  // 96: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.want_response:type_name -> cerbos.response.v1.CheckResourceBatchResponse
-	92,  // 97: cerbos.private.v1.ServerTestCase.CheckResourcesCall.input:type_name -> cerbos.request.v1.CheckResourcesRequest
-	93,  // 98: cerbos.private.v1.ServerTestCase.CheckResourcesCall.want_response:type_name -> cerbos.response.v1.CheckResourcesResponse
-	94,  // 99: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.input:type_name -> cerbos.request.v1.PlaygroundValidateRequest
-	95,  // 100: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.want_response:type_name -> cerbos.response.v1.PlaygroundValidateResponse
-	96,  // 101: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.input:type_name -> cerbos.request.v1.PlaygroundTestRequest
-	97,  // 102: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.want_response:type_name -> cerbos.response.v1.PlaygroundTestResponse
-	98,  // 103: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.input:type_name -> cerbos.request.v1.PlaygroundEvaluateRequest
-	99,  // 104: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.want_response:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse
-	100, // 105: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.input:type_name -> cerbos.request.v1.PlaygroundProxyRequest
-	101, // 106: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.want_response:type_name -> cerbos.response.v1.PlaygroundProxyResponse
-	102, // 107: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.input:type_name -> cerbos.request.v1.AddOrUpdatePolicyRequest
-	103, // 108: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.want_response:type_name -> cerbos.response.v1.AddOrUpdatePolicyResponse
-	104, // 109: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
-	105, // 110: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
-	50,  // 111: cerbos.private.v1.CompileTestCase.Variables.derived_roles:type_name -> cerbos.private.v1.CompileTestCase.Variables.DerivedRole
-	73,  // 112: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	106, // 113: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
-	59,  // 114: cerbos.private.v1.ProtoYamlTestCase.Want.message:type_name -> cerbos.policy.v1.Policy
-	74,  // 115: cerbos.private.v1.ProtoYamlTestCase.Want.errors:type_name -> cerbos.source.v1.Error
-	75,  // 116: cerbos.private.v1.WellKnownTypes.ListValueMapEntry.value:type_name -> google.protobuf.ListValue
-	76,  // 117: cerbos.private.v1.WellKnownTypes.NullValueMapEntry.value:type_name -> google.protobuf.NullValue
-	77,  // 118: cerbos.private.v1.WellKnownTypes.StructMapEntry.value:type_name -> google.protobuf.Struct
-	78,  // 119: cerbos.private.v1.WellKnownTypes.ValueMapEntry.value:type_name -> google.protobuf.Value
-	79,  // 120: cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntry.value:type_name -> google.protobuf.UInt64Value
-	121, // [121:121] is the sub-list for method output_type
-	121, // [121:121] is the sub-list for method input_type
-	121, // [121:121] is the sub-list for extension type_name
-	121, // [121:121] is the sub-list for extension extendee
-	0,   // [0:121] is the sub-list for field type_name
+	18,  // 0: cerbos.private.v1.AuxDataTestCase.input:type_name -> cerbos.private.v1.AuxDataTestCase.Input
+	63,  // 1: cerbos.private.v1.InspectTestCase.inputs:type_name -> cerbos.policy.v1.Policy
+	20,  // 2: cerbos.private.v1.InspectTestCase.policies_expectation:type_name -> cerbos.private.v1.InspectTestCase.PoliciesExpectation
+	21,  // 3: cerbos.private.v1.InspectTestCase.policy_sets_expectation:type_name -> cerbos.private.v1.InspectTestCase.PolicySetsExpectation
+	22,  // 4: cerbos.private.v1.InspectTestCase.rule_tables_expectation:type_name -> cerbos.private.v1.InspectTestCase.RuleTablesExpectation
+	26,  // 5: cerbos.private.v1.BlobClonerTestCase.inputs:type_name -> cerbos.private.v1.BlobClonerTestCase.File
+	27,  // 6: cerbos.private.v1.BlobClonerTestCase.steps:type_name -> cerbos.private.v1.BlobClonerTestCase.Step
+	64,  // 7: cerbos.private.v1.EngineTestCase.inputs:type_name -> cerbos.engine.v1.CheckInput
+	65,  // 8: cerbos.private.v1.EngineTestCase.want_outputs:type_name -> cerbos.engine.v1.CheckOutput
+	66,  // 9: cerbos.private.v1.EngineTestCase.want_decision_logs:type_name -> cerbos.audit.v1.DecisionLogEntry
+	47,  // 10: cerbos.private.v1.ServerTestCase.want_status:type_name -> cerbos.private.v1.ServerTestCase.Status
+	38,  // 11: cerbos.private.v1.ServerTestCase.check_resource_set:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceSetCall
+	39,  // 12: cerbos.private.v1.ServerTestCase.check_resource_batch:type_name -> cerbos.private.v1.ServerTestCase.CheckResourceBatchCall
+	41,  // 13: cerbos.private.v1.ServerTestCase.playground_validate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundValidateCall
+	43,  // 14: cerbos.private.v1.ServerTestCase.playground_evaluate:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall
+	45,  // 15: cerbos.private.v1.ServerTestCase.admin_add_or_update_policy:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall
+	44,  // 16: cerbos.private.v1.ServerTestCase.playground_proxy:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundProxyCall
+	37,  // 17: cerbos.private.v1.ServerTestCase.plan_resources:type_name -> cerbos.private.v1.ServerTestCase.PlanResourcesCall
+	46,  // 18: cerbos.private.v1.ServerTestCase.admin_add_or_update_schema:type_name -> cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall
+	42,  // 19: cerbos.private.v1.ServerTestCase.playground_test:type_name -> cerbos.private.v1.ServerTestCase.PlaygroundTestCall
+	40,  // 20: cerbos.private.v1.ServerTestCase.check_resources:type_name -> cerbos.private.v1.ServerTestCase.CheckResourcesCall
+	35,  // 21: cerbos.private.v1.ServerTestCase.access_evaluation:type_name -> cerbos.private.v1.ServerTestCase.AccessEvaluationCall
+	36,  // 22: cerbos.private.v1.ServerTestCase.access_evaluation_batch:type_name -> cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall
+	49,  // 23: cerbos.private.v1.IndexBuilderTestCase.files:type_name -> cerbos.private.v1.IndexBuilderTestCase.FilesEntry
+	67,  // 24: cerbos.private.v1.IndexBuilderTestCase.want_err_list:type_name -> cerbos.runtime.v1.IndexBuildErrors
+	48,  // 25: cerbos.private.v1.IndexBuilderTestCase.want_compilation_units:type_name -> cerbos.private.v1.IndexBuilderTestCase.CompilationUnit
+	68,  // 26: cerbos.private.v1.CompileTestCase.want_errors:type_name -> cerbos.runtime.v1.CompileErrors.Err
+	50,  // 27: cerbos.private.v1.CompileTestCase.want_variables:type_name -> cerbos.private.v1.CompileTestCase.Variables
+	69,  // 28: cerbos.private.v1.CelTestCase.condition:type_name -> cerbos.policy.v1.Match
+	70,  // 29: cerbos.private.v1.CelTestCase.request:type_name -> cerbos.engine.v1.Request
+	71,  // 30: cerbos.private.v1.SchemaTestCase.schema_refs:type_name -> cerbos.policy.v1.Schemas
+	64,  // 31: cerbos.private.v1.SchemaTestCase.check_input:type_name -> cerbos.engine.v1.CheckInput
+	72,  // 32: cerbos.private.v1.SchemaTestCase.plan_resources_input:type_name -> cerbos.engine.v1.PlanResourcesInput
+	73,  // 33: cerbos.private.v1.SchemaTestCase.want_validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	73,  // 34: cerbos.private.v1.ValidationErrContainer.errors:type_name -> cerbos.schema.v1.ValidationError
+	74,  // 35: cerbos.private.v1.QueryPlannerTestSuite.principal:type_name -> cerbos.engine.v1.Principal
+	52,  // 36: cerbos.private.v1.QueryPlannerTestSuite.tests:type_name -> cerbos.private.v1.QueryPlannerTestSuite.Test
+	75,  // 37: cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.table:type_name -> cerbos.policy.v1.TestTable
+	76,  // 38: cerbos.private.v1.VerifyTestSuiteRunGetTestsTestCase.want_tests:type_name -> cerbos.policy.v1.Test
+	77,  // 39: cerbos.private.v1.QueryPlannerFilterTestCase.input:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	77,  // 40: cerbos.private.v1.QueryPlannerFilterTestCase.want_filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	53,  // 41: cerbos.private.v1.VerifyTestCase.config:type_name -> cerbos.private.v1.VerifyTestCase.Config
+	54,  // 42: cerbos.private.v1.ProtoYamlTestCase.want:type_name -> cerbos.private.v1.ProtoYamlTestCase.Want
+	78,  // 43: cerbos.private.v1.ProtoYamlTestCase.want_errors:type_name -> cerbos.source.v1.Error
+	79,  // 44: cerbos.private.v1.WellKnownTypes.list_value:type_name -> google.protobuf.ListValue
+	79,  // 45: cerbos.private.v1.WellKnownTypes.repeated_list_value:type_name -> google.protobuf.ListValue
+	55,  // 46: cerbos.private.v1.WellKnownTypes.list_value_map:type_name -> cerbos.private.v1.WellKnownTypes.ListValueMapEntry
+	80,  // 47: cerbos.private.v1.WellKnownTypes.null_value:type_name -> google.protobuf.NullValue
+	80,  // 48: cerbos.private.v1.WellKnownTypes.repeated_null_value:type_name -> google.protobuf.NullValue
+	56,  // 49: cerbos.private.v1.WellKnownTypes.null_value_map:type_name -> cerbos.private.v1.WellKnownTypes.NullValueMapEntry
+	81,  // 50: cerbos.private.v1.WellKnownTypes.struct:type_name -> google.protobuf.Struct
+	81,  // 51: cerbos.private.v1.WellKnownTypes.repeated_struct:type_name -> google.protobuf.Struct
+	57,  // 52: cerbos.private.v1.WellKnownTypes.struct_map:type_name -> cerbos.private.v1.WellKnownTypes.StructMapEntry
+	82,  // 53: cerbos.private.v1.WellKnownTypes.value_null:type_name -> google.protobuf.Value
+	82,  // 54: cerbos.private.v1.WellKnownTypes.value_number:type_name -> google.protobuf.Value
+	82,  // 55: cerbos.private.v1.WellKnownTypes.value_string:type_name -> google.protobuf.Value
+	82,  // 56: cerbos.private.v1.WellKnownTypes.value_bool:type_name -> google.protobuf.Value
+	82,  // 57: cerbos.private.v1.WellKnownTypes.value_struct:type_name -> google.protobuf.Value
+	82,  // 58: cerbos.private.v1.WellKnownTypes.value_list:type_name -> google.protobuf.Value
+	82,  // 59: cerbos.private.v1.WellKnownTypes.repeated_value:type_name -> google.protobuf.Value
+	58,  // 60: cerbos.private.v1.WellKnownTypes.value_map:type_name -> cerbos.private.v1.WellKnownTypes.ValueMapEntry
+	83,  // 61: cerbos.private.v1.WellKnownTypes.uint64_wrapper_number:type_name -> google.protobuf.UInt64Value
+	83,  // 62: cerbos.private.v1.WellKnownTypes.uint64_wrapper_string:type_name -> google.protobuf.UInt64Value
+	83,  // 63: cerbos.private.v1.WellKnownTypes.repeated_uint64_wrapper:type_name -> google.protobuf.UInt64Value
+	59,  // 64: cerbos.private.v1.WellKnownTypes.uint64_wrapper_map:type_name -> cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntry
+	84,  // 65: cerbos.private.v1.WellKnownTypes.empty:type_name -> google.protobuf.Empty
+	84,  // 66: cerbos.private.v1.WellKnownTypes.repeated_empty:type_name -> google.protobuf.Empty
+	60,  // 67: cerbos.private.v1.WellKnownTypes.empty_map:type_name -> cerbos.private.v1.WellKnownTypes.EmptyMapEntry
+	85,  // 68: cerbos.private.v1.WellKnownTypes.timestamp:type_name -> google.protobuf.Timestamp
+	85,  // 69: cerbos.private.v1.WellKnownTypes.repeated_timestamp:type_name -> google.protobuf.Timestamp
+	61,  // 70: cerbos.private.v1.WellKnownTypes.timestamp_map:type_name -> cerbos.private.v1.WellKnownTypes.TimestampMapEntry
+	15,  // 71: cerbos.private.v1.WellKnownTypes.nested:type_name -> cerbos.private.v1.WellKnownTypes
+	86,  // 72: cerbos.private.v1.TestTracesWrapper.engine_trace:type_name -> cerbos.engine.v1.Trace
+	87,  // 73: cerbos.private.v1.Validation.enum_in:type_name -> cerbos.effect.v1.Effect
+	62,  // 74: cerbos.private.v1.Validation.enum_in_map:type_name -> cerbos.private.v1.Validation.EnumInMapEntry
+	68,  // 75: cerbos.private.v1.InspectTestCase.CompileErrors.compile_errors:type_name -> cerbos.runtime.v1.CompileErrors.Err
+	23,  // 76: cerbos.private.v1.InspectTestCase.PoliciesExpectation.policies:type_name -> cerbos.private.v1.InspectTestCase.PoliciesExpectation.PoliciesEntry
+	24,  // 77: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.policy_sets:type_name -> cerbos.private.v1.InspectTestCase.PolicySetsExpectation.PolicySetsEntry
+	19,  // 78: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.compile_errors:type_name -> cerbos.private.v1.InspectTestCase.CompileErrors
+	67,  // 79: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
+	25,  // 80: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.rule_tables:type_name -> cerbos.private.v1.InspectTestCase.RuleTablesExpectation.RuleTablesEntry
+	19,  // 81: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.compile_errors:type_name -> cerbos.private.v1.InspectTestCase.CompileErrors
+	67,  // 82: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.index_build_errors:type_name -> cerbos.runtime.v1.IndexBuildErrors
+	88,  // 83: cerbos.private.v1.InspectTestCase.PoliciesExpectation.PoliciesEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
+	88,  // 84: cerbos.private.v1.InspectTestCase.PolicySetsExpectation.PolicySetsEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
+	88,  // 85: cerbos.private.v1.InspectTestCase.RuleTablesExpectation.RuleTablesEntry.value:type_name -> cerbos.response.v1.InspectPoliciesResponse.Result
+	28,  // 86: cerbos.private.v1.BlobClonerTestCase.File.add_or_update:type_name -> cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate
+	29,  // 87: cerbos.private.v1.BlobClonerTestCase.File.delete:type_name -> cerbos.private.v1.BlobClonerTestCase.File.Delete
+	31,  // 88: cerbos.private.v1.BlobClonerTestCase.Step.expectation:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation
+	30,  // 89: cerbos.private.v1.BlobClonerTestCase.Step.differences:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Differences
+	26,  // 90: cerbos.private.v1.BlobClonerTestCase.Step.Differences.files:type_name -> cerbos.private.v1.BlobClonerTestCase.File
+	34,  // 91: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.all:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.AllEntry
+	33,  // 92: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.added_or_updated:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info
+	33,  // 93: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.deleted:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Info
+	32,  // 94: cerbos.private.v1.BlobClonerTestCase.Step.Expectation.AllEntry.value:type_name -> cerbos.private.v1.BlobClonerTestCase.Step.Expectation.Files
+	89,  // 95: cerbos.private.v1.ServerTestCase.AccessEvaluationCall.input:type_name -> authzen.authorization.v1.AccessEvaluationRequest
+	90,  // 96: cerbos.private.v1.ServerTestCase.AccessEvaluationCall.want_response:type_name -> authzen.authorization.v1.AccessEvaluationResponse
+	91,  // 97: cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall.input:type_name -> authzen.authorization.v1.AccessEvaluationBatchRequest
+	92,  // 98: cerbos.private.v1.ServerTestCase.AccessEvaluationBatchCall.want_response:type_name -> authzen.authorization.v1.AccessEvaluationBatchResponse
+	93,  // 99: cerbos.private.v1.ServerTestCase.PlanResourcesCall.input:type_name -> cerbos.request.v1.PlanResourcesRequest
+	94,  // 100: cerbos.private.v1.ServerTestCase.PlanResourcesCall.want_response:type_name -> cerbos.response.v1.PlanResourcesResponse
+	95,  // 101: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.input:type_name -> cerbos.request.v1.CheckResourceSetRequest
+	96,  // 102: cerbos.private.v1.ServerTestCase.CheckResourceSetCall.want_response:type_name -> cerbos.response.v1.CheckResourceSetResponse
+	97,  // 103: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.input:type_name -> cerbos.request.v1.CheckResourceBatchRequest
+	98,  // 104: cerbos.private.v1.ServerTestCase.CheckResourceBatchCall.want_response:type_name -> cerbos.response.v1.CheckResourceBatchResponse
+	99,  // 105: cerbos.private.v1.ServerTestCase.CheckResourcesCall.input:type_name -> cerbos.request.v1.CheckResourcesRequest
+	100, // 106: cerbos.private.v1.ServerTestCase.CheckResourcesCall.want_response:type_name -> cerbos.response.v1.CheckResourcesResponse
+	101, // 107: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.input:type_name -> cerbos.request.v1.PlaygroundValidateRequest
+	102, // 108: cerbos.private.v1.ServerTestCase.PlaygroundValidateCall.want_response:type_name -> cerbos.response.v1.PlaygroundValidateResponse
+	103, // 109: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.input:type_name -> cerbos.request.v1.PlaygroundTestRequest
+	104, // 110: cerbos.private.v1.ServerTestCase.PlaygroundTestCall.want_response:type_name -> cerbos.response.v1.PlaygroundTestResponse
+	105, // 111: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.input:type_name -> cerbos.request.v1.PlaygroundEvaluateRequest
+	106, // 112: cerbos.private.v1.ServerTestCase.PlaygroundEvaluateCall.want_response:type_name -> cerbos.response.v1.PlaygroundEvaluateResponse
+	107, // 113: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.input:type_name -> cerbos.request.v1.PlaygroundProxyRequest
+	108, // 114: cerbos.private.v1.ServerTestCase.PlaygroundProxyCall.want_response:type_name -> cerbos.response.v1.PlaygroundProxyResponse
+	109, // 115: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.input:type_name -> cerbos.request.v1.AddOrUpdatePolicyRequest
+	110, // 116: cerbos.private.v1.ServerTestCase.AdminAddOrUpdatePolicyCall.want_response:type_name -> cerbos.response.v1.AddOrUpdatePolicyResponse
+	111, // 117: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
+	112, // 118: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
+	51,  // 119: cerbos.private.v1.CompileTestCase.Variables.derived_roles:type_name -> cerbos.private.v1.CompileTestCase.Variables.DerivedRole
+	77,  // 120: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
+	113, // 121: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	63,  // 122: cerbos.private.v1.ProtoYamlTestCase.Want.message:type_name -> cerbos.policy.v1.Policy
+	78,  // 123: cerbos.private.v1.ProtoYamlTestCase.Want.errors:type_name -> cerbos.source.v1.Error
+	79,  // 124: cerbos.private.v1.WellKnownTypes.ListValueMapEntry.value:type_name -> google.protobuf.ListValue
+	80,  // 125: cerbos.private.v1.WellKnownTypes.NullValueMapEntry.value:type_name -> google.protobuf.NullValue
+	81,  // 126: cerbos.private.v1.WellKnownTypes.StructMapEntry.value:type_name -> google.protobuf.Struct
+	82,  // 127: cerbos.private.v1.WellKnownTypes.ValueMapEntry.value:type_name -> google.protobuf.Value
+	83,  // 128: cerbos.private.v1.WellKnownTypes.Uint64WrapperMapEntry.value:type_name -> google.protobuf.UInt64Value
+	84,  // 129: cerbos.private.v1.WellKnownTypes.EmptyMapEntry.value:type_name -> google.protobuf.Empty
+	85,  // 130: cerbos.private.v1.WellKnownTypes.TimestampMapEntry.value:type_name -> google.protobuf.Timestamp
+	87,  // 131: cerbos.private.v1.Validation.EnumInMapEntry.value:type_name -> cerbos.effect.v1.Effect
+	132, // [132:132] is the sub-list for method output_type
+	132, // [132:132] is the sub-list for method input_type
+	132, // [132:132] is the sub-list for extension type_name
+	132, // [132:132] is the sub-list for extension extendee
+	0,   // [0:132] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_private_v1_test_proto_init() }
@@ -3900,19 +4041,19 @@ func file_cerbos_private_v1_test_proto_init() {
 		(*SchemaTestCase_CheckInput)(nil),
 		(*SchemaTestCase_PlanResourcesInput)(nil),
 	}
-	file_cerbos_private_v1_test_proto_msgTypes[20].OneofWrappers = []any{
+	file_cerbos_private_v1_test_proto_msgTypes[21].OneofWrappers = []any{
 		(*InspectTestCase_PolicySetsExpectation_CompileErrors)(nil),
 		(*InspectTestCase_PolicySetsExpectation_IndexBuildErrors)(nil),
 	}
-	file_cerbos_private_v1_test_proto_msgTypes[21].OneofWrappers = []any{
+	file_cerbos_private_v1_test_proto_msgTypes[22].OneofWrappers = []any{
 		(*InspectTestCase_RuleTablesExpectation_CompileErrors)(nil),
 		(*InspectTestCase_RuleTablesExpectation_IndexBuildErrors)(nil),
 	}
-	file_cerbos_private_v1_test_proto_msgTypes[25].OneofWrappers = []any{
+	file_cerbos_private_v1_test_proto_msgTypes[26].OneofWrappers = []any{
 		(*BlobClonerTestCase_File_AddOrUpdate_)(nil),
 		(*BlobClonerTestCase_File_Delete_)(nil),
 	}
-	file_cerbos_private_v1_test_proto_msgTypes[26].OneofWrappers = []any{
+	file_cerbos_private_v1_test_proto_msgTypes[27].OneofWrappers = []any{
 		(*BlobClonerTestCase_Step_Expectation_)(nil),
 		(*BlobClonerTestCase_Step_Differences_)(nil),
 	}
@@ -3922,7 +4063,7 @@ func file_cerbos_private_v1_test_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_private_v1_test_proto_rawDesc), len(file_cerbos_private_v1_test_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   59,
+			NumMessages:   63,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -69,7 +69,7 @@ func (th *templateHelper) ToPolicyJSON(p *policyv1.Policy) string {
 }
 
 func (th *templateHelper) ReadPolicy(relPath string) *policyv1.Policy {
-	p, err := policy.ReadPolicyFromFile(th.fsys, relPath)
+	p, _, err := policy.ReadPolicyFromFile(th.fsys, relPath)
 	if err != nil {
 		panic(fmt.Errorf("failed to read policy from %q: %w", relPath, err))
 	}

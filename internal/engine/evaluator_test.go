@@ -6,7 +6,6 @@
 package engine
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +29,7 @@ func TestSatisfiesCondition(t *testing.T) {
 
 	for _, tcase := range testCases {
 		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readCELTestCase(t, tcase.Input)
+			tc := test.Parse[privatev1.CelTestCase](t, tcase.Input)
 			cond, err := compile.Condition(&policyv1.Condition{Condition: &policyv1.Condition_Match{Match: tc.Condition}})
 			require.NoError(t, err)
 
@@ -47,13 +45,4 @@ func TestSatisfiesCondition(t *testing.T) {
 			require.Equal(t, tc.Want, retVal)
 		})
 	}
-}
-
-func readCELTestCase(t *testing.T, data []byte) *privatev1.CelTestCase {
-	t.Helper()
-
-	tc := &privatev1.CelTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
 }

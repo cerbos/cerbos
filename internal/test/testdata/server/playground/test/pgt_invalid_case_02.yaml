@@ -33,7 +33,7 @@ playgroundTest:
                   {
                     "file": "policy_04_test.yaml",
                     "name": "Unknown",
-                    "error": "failed to unmarshal file policy_04_test.yaml: error converting YAML to JSON: yaml: invalid leading UTF-8 octet",
+                    "error": "failed to load test suite:\n1:1 invalid document: contents are not valid YAML or JSON",
                     "summary": { "overallResult": "RESULT_ERRORED" },
                   },
                 ],

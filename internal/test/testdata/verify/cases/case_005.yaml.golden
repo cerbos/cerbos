@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "file is not valid: { /: [missing properties: 'tests'] }"
+      "error": "failed to load test suite:\ntests: value is required"
     }
   ],
   "summary": {

@@ -1,0 +1,3 @@
+type:enhancement
+Improve error messages when parsing test suites and fixtures
+The same YAML parser is now used to parse policies, test suites, and fixtures, so that errors are mapped to a specific line and column number in the file.

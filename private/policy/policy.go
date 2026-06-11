@@ -28,11 +28,12 @@ func Wrap(p *policyv1.Policy) *sourcev1.PolicyWrapper {
 }
 
 func ReadFromFile(fsys fs.FS, path string) (*policyv1.Policy, error) {
-	return policy.ReadPolicyFromFile(fsys, path)
+	p, _, err := policy.ReadPolicyFromFile(fsys, path)
+	return p, err
 }
 
 func Read(src io.Reader) (*policyv1.Policy, error) {
-	p, sc, err := policy.ReadPolicyWithSourceContextFromReader(src)
+	p, sc, err := policy.ReadPolicy(src)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read policy: %w", err)
 	}

@@ -4,7 +4,6 @@
 package index
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"io/fs"
@@ -193,7 +192,7 @@ func TestBuildIndex(t *testing.T) {
 
 	for _, tcase := range testCases {
 		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readTestCase(t, tcase.Input)
+			tc := test.Parse[privatev1.IndexBuilderTestCase](t, tcase.Input)
 			fs := toFS(t, tc)
 
 			idx, haveErr := Build(t.Context(), fs)
@@ -256,15 +255,6 @@ func TestBuildIndex(t *testing.T) {
 			}
 		})
 	}
-}
-
-func readTestCase(t *testing.T, data []byte) *privatev1.IndexBuilderTestCase {
-	t.Helper()
-
-	tc := &privatev1.IndexBuilderTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
 }
 
 func toFS(t *testing.T, tc *privatev1.IndexBuilderTestCase) fs.FS {

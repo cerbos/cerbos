@@ -342,7 +342,7 @@ func (s *Store) addOrUpdateEvent(etag, file, currDirName string, ts int64) (stor
 		return storage.NewSchemaEvent(storage.EventAddOrUpdateSchema, schemaFile), nil
 	}
 
-	p, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, currDirName)), file)
+	p, _, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, currDirName)), file)
 	if err != nil {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}
@@ -358,7 +358,7 @@ func (s *Store) deleteEvent(file string) (storage.Event, error) {
 		return storage.NewSchemaEvent(storage.EventDeleteSchema, schemaFile), nil
 	}
 
-	p, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, s.currDirName)), file)
+	p, _, err := policy.ReadPolicyFromFile(newBlobFS(filepath.Join(s.workDir, s.currDirName)), file)
 	if err != nil {
 		return storage.Event{}, fmt.Errorf("failed to read policy from file %s: %w", file, err)
 	}

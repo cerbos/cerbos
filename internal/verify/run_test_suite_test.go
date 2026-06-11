@@ -4,14 +4,12 @@
 package verify
 
 import (
-	"bytes"
 	"testing"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
@@ -49,7 +47,7 @@ func Test_testSuiteRun_getTests(t *testing.T) {
 
 	for _, tt := range test.LoadTestCases(t, "verify/test_suite_run_get_tests") {
 		t.Run(tt.Name, func(t *testing.T) {
-			tc := readTestCase(t, tt.Input)
+			tc := test.Parse[privatev1.VerifyTestSuiteRunGetTestsTestCase](t, tt.Input)
 
 			run := &testSuiteRun{
 				Suite:   &policyv1.TestSuite{Tests: []*policyv1.TestTable{tc.Table}},
@@ -69,13 +67,4 @@ func Test_testSuiteRun_getTests(t *testing.T) {
 			}
 		})
 	}
-}
-
-func readTestCase(t *testing.T, data []byte) *privatev1.VerifyTestSuiteRunGetTestsTestCase {
-	t.Helper()
-
-	tc := &privatev1.VerifyTestSuiteRunGetTestsTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
 }

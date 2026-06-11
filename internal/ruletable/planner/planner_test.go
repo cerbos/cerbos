@@ -4,7 +4,6 @@
 package planner
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 	"time"
@@ -25,7 +24,6 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -447,7 +445,7 @@ func TestNormaliseFilter(t *testing.T) {
 
 	for _, tcase := range tcases {
 		t.Run(tcase.Name, func(t *testing.T) {
-			tc := readQPFilterTestCase(t, tcase.Input)
+			tc := test.Parse[privatev1.QueryPlannerFilterTestCase](t, tcase.Input)
 			haveFilter := normaliseFilter(tc.Input)
 			require.Empty(t, cmp.Diff(tc.WantFilter, haveFilter, protocmp.Transform()))
 
@@ -455,13 +453,4 @@ func TestNormaliseFilter(t *testing.T) {
 			require.Equal(t, tc.WantString, haveStr)
 		})
 	}
-}
-
-func readQPFilterTestCase(tb testing.TB, data []byte) *privatev1.QueryPlannerFilterTestCase {
-	tb.Helper()
-
-	tc := &privatev1.QueryPlannerFilterTestCase{}
-	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
 }

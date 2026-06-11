@@ -38,7 +38,6 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 // trick compiler into not converting benchmarks into nops.
@@ -261,8 +260,7 @@ func cmpValidationError(a, b *schemav1.ValidationError) bool {
 func readTestCase(tb testing.TB, data []byte) *privatev1.EngineTestCase {
 	tb.Helper()
 
-	tc := &privatev1.EngineTestCase{}
-	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+	tc := test.Parse[privatev1.EngineTestCase](tb, data)
 
 	store := test.PathToDir(tb, "store")
 
@@ -419,15 +417,6 @@ func mkRuleTable(tb testing.TB, p param) (evaluator.Evaluator, context.CancelFun
 	return eval, cancelFunc
 }
 
-func readQPTestSuite(t *testing.T, data []byte) *privatev1.QueryPlannerTestSuite {
-	t.Helper()
-
-	tc := &privatev1.QueryPlannerTestSuite{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
-}
-
 func TestQueryPlan(t *testing.T) {
 	eng, cancelFunc := mkEngine(t, param{subDir: "query_planner/policies"})
 	defer cancelFunc()
@@ -460,7 +449,7 @@ func TestQueryPlan(t *testing.T) {
 			require.NoError(t, err)
 			for _, suite := range suites {
 				t.Run(suite.Name, func(t *testing.T) {
-					ts := readQPTestSuite(t, suite.Input)
+					ts := test.Parse[privatev1.QueryPlannerTestSuite](t, suite.Input)
 					for _, tt := range ts.Tests {
 						actionName := tt.Action
 						if tt.Actions != nil {

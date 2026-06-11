@@ -456,7 +456,7 @@ func (r *REPL) loadPolicy(ctx context.Context, path string) error {
 	}
 	defer f.Close()
 
-	p, _, err := policy.ReadPolicyWithSourceContextFromReader(f)
+	p, _, err := policy.ReadPolicy(f)
 	if err != nil {
 		r.printLoadError(err)
 		return fmt.Errorf("failed to read policy file %s", path)

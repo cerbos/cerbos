@@ -6,7 +6,9 @@ syntax = "proto3";
 package cerbos.private.v1;
 
 import "authzen/authorization/v1/evaluation.proto";
+import "buf/validate/validate.proto";
 import "cerbos/audit/v1/audit.proto";
+import "cerbos/effect/v1/effect.proto";
 import "cerbos/engine/v1/engine.proto";
 import "cerbos/policy/v1/policy.proto";
 import "cerbos/request/v1/request.proto";
@@ -15,7 +17,7 @@ import "cerbos/runtime/v1/runtime.proto";
 import "cerbos/schema/v1/schema.proto";
 import "cerbos/source/v1/source.proto";
 import "google/protobuf/any.proto";
-import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
@@ -125,62 +127,62 @@ message EngineTestCase {
 
 message ServerTestCase {
   message AccessEvaluationCall {
-    authzen.authorization.v1.AccessEvaluationRequest input = 1;
+    authzen.authorization.v1.AccessEvaluationRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     authzen.authorization.v1.AccessEvaluationResponse want_response = 2;
   }
 
   message AccessEvaluationBatchCall {
-    authzen.authorization.v1.AccessEvaluationBatchRequest input = 1;
+    authzen.authorization.v1.AccessEvaluationBatchRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     authzen.authorization.v1.AccessEvaluationBatchResponse want_response = 2;
   }
 
   message PlanResourcesCall {
-    cerbos.request.v1.PlanResourcesRequest input = 1;
+    cerbos.request.v1.PlanResourcesRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.PlanResourcesResponse want_response = 2;
   }
 
   message CheckResourceSetCall {
-    cerbos.request.v1.CheckResourceSetRequest input = 1;
+    cerbos.request.v1.CheckResourceSetRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.CheckResourceSetResponse want_response = 2;
   }
 
   message CheckResourceBatchCall {
-    cerbos.request.v1.CheckResourceBatchRequest input = 1;
+    cerbos.request.v1.CheckResourceBatchRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.CheckResourceBatchResponse want_response = 2;
   }
 
   message CheckResourcesCall {
-    cerbos.request.v1.CheckResourcesRequest input = 1;
+    cerbos.request.v1.CheckResourcesRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.CheckResourcesResponse want_response = 2;
   }
 
   message PlaygroundValidateCall {
-    cerbos.request.v1.PlaygroundValidateRequest input = 1;
+    cerbos.request.v1.PlaygroundValidateRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.PlaygroundValidateResponse want_response = 2;
   }
 
   message PlaygroundTestCall {
-    cerbos.request.v1.PlaygroundTestRequest input = 1;
+    cerbos.request.v1.PlaygroundTestRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.PlaygroundTestResponse want_response = 2;
   }
 
   message PlaygroundEvaluateCall {
-    cerbos.request.v1.PlaygroundEvaluateRequest input = 1;
+    cerbos.request.v1.PlaygroundEvaluateRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.PlaygroundEvaluateResponse want_response = 2;
   }
 
   message PlaygroundProxyCall {
-    cerbos.request.v1.PlaygroundProxyRequest input = 1;
+    cerbos.request.v1.PlaygroundProxyRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.PlaygroundProxyResponse want_response = 2;
   }
 
   message AdminAddOrUpdatePolicyCall {
-    cerbos.request.v1.AddOrUpdatePolicyRequest input = 1;
+    cerbos.request.v1.AddOrUpdatePolicyRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.AddOrUpdatePolicyResponse want_response = 2;
   }
 
   message AdminAddOrUpdateSchemaCall {
-    cerbos.request.v1.AddOrUpdateSchemaRequest input = 1;
+    cerbos.request.v1.AddOrUpdateSchemaRequest input = 1 [(buf.validate.field).ignore = IGNORE_ALWAYS];
     cerbos.response.v1.AddOrUpdateSchemaResponse want_response = 2;
   }
 
@@ -338,9 +340,32 @@ message WellKnownTypes {
   repeated google.protobuf.UInt64Value repeated_uint64_wrapper = 20;
   map<string, google.protobuf.UInt64Value> uint64_wrapper_map = 21;
 
-  WellKnownTypes nested = 22;
+  google.protobuf.Empty empty = 22;
+  repeated google.protobuf.Empty repeated_empty = 23;
+  map<string, google.protobuf.Empty> empty_map = 24;
+
+  google.protobuf.Timestamp timestamp = 25;
+  repeated google.protobuf.Timestamp repeated_timestamp = 26;
+  map<string, google.protobuf.Timestamp> timestamp_map = 27;
+
+  WellKnownTypes nested = 28;
 }
 
 message TestTracesWrapper {
   repeated cerbos.engine.v1.Trace engine_trace = 1;
+}
+
+message Validation {
+  cerbos.effect.v1.Effect enum_in = 1 [(buf.validate.field).enum = {
+    in: [
+      1,
+      2
+    ]
+  }];
+  map<string, cerbos.effect.v1.Effect> enum_in_map = 2 [(buf.validate.field).map.values.enum = {
+    in: [
+      1,
+      2
+    ]
+  }];
 }

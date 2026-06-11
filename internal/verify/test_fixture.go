@@ -9,13 +9,10 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	"google.golang.org/protobuf/proto"
-
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/internal/jsonschema"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cerbos/cerbos/internal/validator"
 )
 
 type Principals struct {
@@ -84,10 +81,10 @@ func loadResources(fsys fs.FS, path string) (*Resources, error) {
 		FilePath: fp,
 	}
 
-	pb := &policyv1.TestFixture_Resources{}
-	if err := loadFixtureElement(fsys, fp, pb, jsonschema.ValidateResourceFixtures); err != nil {
+	pb, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestFixture_Resources](fsys, fp))
+	if err != nil {
 		resources.LoadError = err
-		return resources, fmt.Errorf("failed to load resources: %w", err)
+		return resources, fmt.Errorf("failed to load resources:\n%w", err)
 	}
 
 	resources.Fixtures = pb.Resources
@@ -114,10 +111,10 @@ func loadPrincipals(fsys fs.FS, path string) (*Principals, error) {
 		FilePath: fp,
 	}
 
-	pb := &policyv1.TestFixture_Principals{}
-	if err := loadFixtureElement(fsys, fp, pb, jsonschema.ValidatePrincipalFixtures); err != nil {
+	pb, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestFixture_Principals](fsys, fp))
+	if err != nil {
 		principals.LoadError = err
-		return principals, fmt.Errorf("failed to load principals: %w", err)
+		return principals, fmt.Errorf("failed to load principals:\n%w", err)
 	}
 
 	principals.Fixtures = pb.Principals
@@ -145,10 +142,10 @@ func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 			FilePath: fp,
 		}
 
-		pb := &policyv1.TestFixture_AuxData{}
-		if err := loadFixtureElement(fsys, fp, pb, jsonschema.ValidateAuxDataFixtures); err != nil {
+		pb, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestFixture_AuxData](fsys, fp))
+		if err != nil {
 			auxData.LoadError = err
-			return auxData, fmt.Errorf("failed to load aux data: %w", err)
+			return auxData, fmt.Errorf("failed to load aux data:\n%w", err)
 		}
 
 		auxData.Fixtures = pb.AuxData
@@ -156,20 +153,6 @@ func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 	}
 
 	return nil, nil
-}
-
-func loadFixtureElement(fsys fs.FS, path string, pb proto.Message, validate func(fs.FS, string) error) error {
-	err := validate(fsys, path)
-	if err != nil {
-		return err
-	}
-
-	err = util.LoadFromJSONOrYAML(fsys, path, pb)
-	if err != nil {
-		return err
-	}
-
-	return validator.Validate(pb)
 }
 
 func (tf *TestFixture) lookupPrincipal(name string) (*enginev1.Principal, bool) {

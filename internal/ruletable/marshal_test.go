@@ -4,7 +4,6 @@
 package ruletable
 
 import (
-	"bytes"
 	"context"
 	"slices"
 	"testing"
@@ -22,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func buildFullRuleTable(tb testing.TB) *RuleTable {
@@ -74,8 +72,7 @@ func TestMarshaledIndexCheck(t *testing.T) {
 
 	for _, tcase := range testCases {
 		t.Run(tcase.Name, func(t *testing.T) {
-			tc := &privatev1.EngineTestCase{}
-			require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(tcase.Input), tc))
+			tc := test.Parse[privatev1.EngineTestCase](t, tcase.Input)
 
 			traceCollector := tracer.NewCollector()
 			haveOutputs, err := eval.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
