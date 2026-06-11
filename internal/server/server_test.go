@@ -325,7 +325,7 @@ func startServer(t *testing.T, conf *Conf, tpg testParamGen) {
 		KeySets: []auxdata.JWTKeySet{
 			{
 				ID:    "cerbos",
-				Local: &auxdata.LocalSource{File: filepath.Join(test.PathToDir(t, "auxdata"), "verify_key.jwk")},
+				Local: &auxdata.LocalSource{File: filepath.Join(test.PathToDir(t, "auxdata"), "keys", "verify_key.jwk")},
 			},
 		},
 	}})

@@ -1,0 +1,37 @@
+{
+  "$id": "https://api.cerbos.test/cerbos/private/v1/AuxDataTestCase.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "cerbos.private.v1.AuxDataTestCase.Input": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "pem": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "type": "string"
+    },
+    "input": {
+      "$ref": "#/definitions/cerbos.private.v1.AuxDataTestCase.Input"
+    },
+    "wantErr": {
+      "type": "string"
+    },
+    "wantLocalErr": {
+      "type": "string"
+    },
+    "wantRemoteErr": {
+      "type": "string"
+    }
+  }
+}
