@@ -25,6 +25,9 @@ import (
 const (
 	cooldownPeriod = 30 * time.Millisecond
 	timeOut        = 1000 * time.Millisecond
+	// 5x because the watcher picks up new directories at the earliest after ~2*cooldownPeriod
+	// (ticker interval + event cooldown); the rest is margin for slow CI.
+	watchSetupWait = cooldownPeriod * 5
 )
 
 func TestDirWatch(t *testing.T) {
@@ -156,6 +159,111 @@ func TestDirWatch(t *testing.T) {
 		wantEvent := storage.Event{Kind: storage.EventDeleteSchema, SchemaFile: "test.json"}
 		checkEvents(t, timeOut, wantEvent)
 	})
+
+	// Reproducer for the regression introduced by the switch to fsnotify in PR #3061 (0b1e7983):
+	// processEvent drops directory-creation events as FileTypeNotIndexed before triggerUpdate can
+	// start watching the new directory, so files created in it are silently ignored.
+	t.Run("add_file_in_new_subdir", func(t *testing.T) {
+		dir, haveEntries, checkEvents := startDirWatch(t)
+
+		subDir := filepath.Join(dir, "newdir")
+		require.NoError(t, os.Mkdir(subDir, 0o755))
+		// Events inside a not-yet-watched directory are lost forever, so wait for the watcher
+		// to pick up the new directory before creating anything inside it.
+		time.Sleep(watchSetupWait)
+
+		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
+		writePolicy(t, filepath.Join(subDir, "policy.yaml"), rp.Policy)
+
+		select {
+		case <-time.After(timeOut):
+			require.Fail(t, "timed out waiting for entry from policy in dynamically created subdirectory")
+		case have := <-haveEntries:
+			require.Equal(t, "newdir/policy.yaml", have.File)
+		}
+
+		wantEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID}
+		checkEvents(t, timeOut, wantEvent)
+	})
+
+	t.Run("add_file_in_nested_new_subdir", func(t *testing.T) {
+		dir, haveEntries, checkEvents := startDirWatch(t)
+
+		outer := filepath.Join(dir, "outer")
+		require.NoError(t, os.Mkdir(outer, 0o755))
+		// The inner directory's creation event is only visible once the outer directory is
+		// watched, so wait between the levels.
+		time.Sleep(watchSetupWait)
+
+		inner := filepath.Join(outer, "inner")
+		require.NoError(t, os.Mkdir(inner, 0o755))
+		time.Sleep(watchSetupWait)
+
+		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
+		writePolicy(t, filepath.Join(inner, "policy.yaml"), rp.Policy)
+
+		select {
+		case <-time.After(timeOut):
+			require.Fail(t, "timed out waiting for entry from policy in nested dynamically created subdirectory")
+		case have := <-haveEntries:
+			require.Equal(t, "outer/inner/policy.yaml", have.File)
+		}
+
+		wantEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: rp.ID}
+		checkEvents(t, timeOut, wantEvent)
+	})
+
+	// Guards the fix against over-eagerly watching hidden directories. The visible subdir acts as
+	// a positive control: without it, a timeout could also mean the watcher isn't working at all.
+	t.Run("new_hidden_subdir_ignored", func(t *testing.T) {
+		dir, haveEntries, _ := startDirWatch(t)
+
+		hidden := filepath.Join(dir, ".hidden")
+		require.NoError(t, os.Mkdir(hidden, 0o755))
+		visible := filepath.Join(dir, "visible")
+		require.NoError(t, os.Mkdir(visible, 0o755))
+		time.Sleep(watchSetupWait)
+
+		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
+		writePolicy(t, filepath.Join(hidden, "policy.yaml"), rp.Policy)
+		writePolicy(t, filepath.Join(visible, "policy.yaml"), rp.Policy)
+
+		select {
+		case <-time.After(timeOut):
+			require.Fail(t, "timed out waiting for entry from policy in visible subdirectory")
+		case have := <-haveEntries:
+			require.Equal(t, "visible/policy.yaml", have.File,
+				"only the visible subdirectory's policy should be indexed")
+		}
+
+		select {
+		case have := <-haveEntries:
+			require.Failf(t, "unexpected entry from hidden subdirectory", "got %q", have.File)
+		case <-time.After(watchSetupWait):
+		}
+	})
+}
+
+// The AddOrUpdate expectation is Maybe() so that tests expecting no calls can use the same helper.
+func startDirWatch(t *testing.T) (dir string, haveEntries chan index.Entry, checkEvents func(*testing.T, time.Duration, ...storage.Event)) {
+	t.Helper()
+
+	ctx, cancelFunc := context.WithCancel(t.Context())
+	t.Cleanup(cancelFunc)
+
+	subMgr := storage.NewSubscriptionManager(ctx)
+	mockIdx := &mocks.Index{}
+	dir = t.TempDir()
+
+	require.NoError(t, watchDir(ctx, dir, mockIdx, subMgr, cooldownPeriod))
+
+	haveEntries = make(chan index.Entry, 8)
+	mockIdx.On("AddOrUpdate", mock.Anything).Return(func(entry index.Entry) storage.Event {
+		haveEntries <- entry
+		return storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: entry.Policy.ID}
+	}, nil).Maybe()
+
+	return dir, haveEntries, storage.TestSubscription(subMgr)
 }
 
 func writePolicy(t *testing.T, fileName string, p *policyv1.Policy) {
