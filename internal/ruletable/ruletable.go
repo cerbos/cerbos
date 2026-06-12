@@ -7,9 +7,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -504,6 +507,19 @@ func compileFromSource(src string) (cel.Program, error) {
 }
 
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
+	start := time.Now()
+	defer func() {
+		logging.FromContext(ctx).Sugar().Infow("Rule table build phase completed", "build_seconds", time.Since(start).Seconds())
+	}()
+
+	if v := os.Getenv("CERBOS_BUILD_GC_PERCENT"); v != "" {
+		if pct, err := strconv.Atoi(v); err == nil && pct > 0 {
+			logging.FromContext(ctx).Sugar().Infow("Build-phase GC override active", "gc_percent", pct)
+			prev := debug.SetGCPercent(pct)
+			defer debug.SetGCPercent(prev)
+		}
+	}
+
 	protoRT := NewProtoRuletable()
 
 	if err := LoadPolicies(ctx, protoRT, policyLoader); err != nil {
