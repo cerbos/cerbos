@@ -52,6 +52,12 @@ func (pe PanicError) Error() string {
 
 var protoErrPrefix = regexp.MustCompile(`proto:(\x{00a0}|\x{0020})+\(line\s+\d+:\d+\):\s*`)
 
+// ProtoMessage allows allocation of [proto.Message] instances without reflection.
+type ProtoMessage[T any] interface {
+	*T
+	proto.Message
+}
+
 // Find a single document from the multi-document stream.
 // TODO(cell): Optimize!
 // For our use case, this could be optimized by storing the offset of each document and directly seeking to that offset.
@@ -61,25 +67,27 @@ var protoErrPrefix = regexp.MustCompile(`proto:(\x{00a0}|\x{0020})+\(line\s+\d+:
 //     However, this is a relatively niche case and we can handle that case lazily (seek first, read, and resolve anchors only if they exist in the doc)
 //
 // In the interest of time, I am leaving those optimizations for later.
-func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...UnmarshalOpt) (SourceCtx, error) {
+func Find[T any, M ProtoMessage[T]](r io.Reader, match func(M) bool, opts ...UnmarshalOpt) (M, SourceCtx, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
-		return SourceCtx{}, fmt.Errorf("failed to read contents: %w", err)
+		return nil, SourceCtx{}, fmt.Errorf("failed to read contents: %w", err)
 	}
 
 	f, err := parse(contents, false)
 	if err != nil {
-		return SourceCtx{}, err
+		return nil, SourceCtx{}, err
 	}
 
 	if len(f.Docs) == 0 {
-		return SourceCtx{}, ErrNotFound
+		return nil, SourceCtx{}, ErrNotFound
 	}
 
-	u := &unmarshaler[T]{unmarshalOpts: unmarshalOpts{}}
+	u := &unmarshaler[M]{unmarshalOpts: unmarshalOpts{}}
 	for _, o := range opts {
 		o(&u.unmarshalOpts)
 	}
+
+	out := M(new(T))
 
 	for _, doc := range f.Docs {
 		bodyNode, ok := doc.Body.(ast.MapNode)
@@ -100,22 +108,22 @@ func Find[T proto.Message](r io.Reader, match func(T) bool, out T, opts ...Unmar
 			continue
 		}
 
-		return uctx.toSourceCtx(), u.validate(uctx, out)
+		return out, uctx.toSourceCtx(), u.validate(uctx, out)
 	}
 
-	return SourceCtx{}, ErrNotFound
+	return nil, SourceCtx{}, ErrNotFound
 }
 
-func Unmarshal[T proto.Message](r io.Reader, factory func() T, opts ...UnmarshalOpt) ([]T, []SourceCtx, error) {
+func Unmarshal[T any, M ProtoMessage[T]](r io.Reader, opts ...UnmarshalOpt) ([]M, []SourceCtx, error) {
 	contents, err := io.ReadAll(r)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read contents: %w", err)
 	}
 
-	return UnmarshalBytes(contents, factory, opts...)
+	return UnmarshalBytes[T, M](contents, opts...)
 }
 
-func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...UnmarshalOpt) (_ []T, _ []SourceCtx, outErr error) {
+func UnmarshalBytes[T any, M ProtoMessage[T]](contents []byte, opts ...UnmarshalOpt) (_ []M, _ []SourceCtx, outErr error) {
 	contentLen := len(bytes.TrimSpace(contents))
 	if contentLen == 0 {
 		return nil, nil, nil
@@ -134,16 +142,16 @@ func UnmarshalBytes[T proto.Message](contents []byte, factory func() T, opts ...
 		})
 	}
 
-	u := &unmarshaler[T]{unmarshalOpts: unmarshalOpts{}}
+	u := &unmarshaler[M]{unmarshalOpts: unmarshalOpts{}}
 	for _, o := range opts {
 		o(&u.unmarshalOpts)
 	}
 
-	outMsg := make([]T, 0, len(f.Docs))
+	outMsg := make([]M, 0, len(f.Docs))
 	outSrc := make([]SourceCtx, 0, len(f.Docs))
 	invalidDocSeen := false
 	for _, doc := range f.Docs {
-		msg := factory()
+		msg := M(new(T))
 		uctx := newUnmarshalCtx(doc)
 
 		bodyNode, ok := doc.Body.(ast.MapNode)

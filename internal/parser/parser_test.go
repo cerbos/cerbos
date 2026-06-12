@@ -47,7 +47,7 @@ func TestUnmarshal(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			haveMsg, haveSrc, err := parser.Unmarshal(input, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator))
+			haveMsg, haveSrc, err := parser.Unmarshal[policyv1.Policy](input, parser.WithValidator(validator))
 
 			t.Cleanup(func() {
 				if t.Failed() {
@@ -282,7 +282,7 @@ func TestUnmarshalWKT(t *testing.T) {
 			input, err := os.ReadFile(inputFile)
 			require.NoError(t, err, "Failed to read %s", inputFile)
 
-			have, _, err := parser.UnmarshalBytes(input, func() *privatev1.WellKnownTypes { return &privatev1.WellKnownTypes{} })
+			have, _, err := parser.UnmarshalBytes[privatev1.WellKnownTypes](input)
 			if len(tc.wantErrs) > 0 {
 				requireErrors(t, tc.wantErrs, err)
 				return
@@ -306,8 +306,7 @@ func TestFind(t *testing.T) {
 
 		t.Run(testCase.Name, func(t *testing.T) {
 			want, match := findCandidate(t, rnd, tc.Want)
-			havePolicy := &policyv1.Policy{}
-			haveSrcCtx, err := parser.Find(input, match, havePolicy)
+			havePolicy, haveSrcCtx, err := parser.Find(input, match)
 			require.NoError(t, err)
 			require.NotNil(t, haveSrcCtx.SourceContext)
 			require.Empty(t, cmp.Diff(want, havePolicy, protocmp.Transform()))
@@ -369,7 +368,6 @@ func walkAST(node ast.Node) ast.Visitor {
 var Dummy uint64
 
 func BenchmarkUnmarshal(b *testing.B) {
-	factory := func() *policyv1.Policy { return &policyv1.Policy{} }
 	benchCases := []struct {
 		policy   *policyv1.Policy
 		numRules int
@@ -406,7 +404,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 				b.SetBytes(int64(buf.Len()))
 				b.StartTimer()
 
-				policies, srcContexts, err := parser.Unmarshal(buf, factory)
+				policies, srcContexts, err := parser.Unmarshal[policyv1.Policy](buf)
 				require.NoError(b, err)
 				require.Len(b, policies, 1)
 				require.Len(b, srcContexts, 1)
