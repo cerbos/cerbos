@@ -166,14 +166,13 @@ func TestDirWatch(t *testing.T) {
 	})
 
 	// Reproducer for the regression introduced by the switch to fsnotify in PR #3061 (0b1e7983):
-	// processEvent drops directory-creation events as FileTypeNotIndexed
-  // before triggerUpdate can start watching the new directory, so files created in it are silently ignored.
+	// newly created subdirectories were never watched, so policies inside them were silently ignored.
+	// The policy is written immediately after mkdir to also cover files that arrive before the watch attaches.
 	t.Run("add_file_in_new_subdir", func(t *testing.T) {
 		dw, haveEntries, checkEvents := startDirWatch(t)
 
 		subDir := filepath.Join(dw.dir, "newdir")
 		require.NoError(t, os.Mkdir(subDir, 0o755))
-		waitUntilWatched(t, dw, subDir)
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		writePolicy(t, filepath.Join(subDir, "policy.yaml"), rp.Policy)
@@ -192,14 +191,11 @@ func TestDirWatch(t *testing.T) {
 	t.Run("add_file_in_nested_new_subdir", func(t *testing.T) {
 		dw, haveEntries, checkEvents := startDirWatch(t)
 
-		// The inner directory's creation event is only visible once the outer directory is watched, so wait between the levels.
-		outer := filepath.Join(dw.dir, "outer")
-		require.NoError(t, os.Mkdir(outer, 0o755))
-		waitUntilWatched(t, dw, outer)
-
-		inner := filepath.Join(outer, "inner")
-		require.NoError(t, os.Mkdir(inner, 0o755))
-		waitUntilWatched(t, dw, inner)
+		// MkdirAll creates the inner directory before the outer one is watched,
+		// so only the outer directory's creation produces an event.
+		// Everything below it must be found by scanning.
+		inner := filepath.Join(dw.dir, "outer", "inner")
+		require.NoError(t, os.MkdirAll(inner, 0o755))
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		writePolicy(t, filepath.Join(inner, "policy.yaml"), rp.Policy)
@@ -216,8 +212,8 @@ func TestDirWatch(t *testing.T) {
 	})
 
 	// Guards the fix against over-eagerly watching hidden directories.
-  // The visible subdir acts as a positive control:
-  // without it, a timeout could also mean the watcher isn't working at all.
+	// The visible subdir acts as a positive control:
+	// without it, a timeout could also mean the watcher isn't working at all.
 	t.Run("new_hidden_subdir_ignored", func(t *testing.T) {
 		dw, haveEntries, _ := startDirWatch(t)
 
