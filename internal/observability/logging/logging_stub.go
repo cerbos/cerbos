@@ -24,6 +24,7 @@ func (*Logger) Debugf(string, ...any) {}
 func (*Logger) Warn(string, ...any)   {}
 func (*Logger) Warnw(string, ...any)  {}
 func (*Logger) Info(...any)           {}
+func (*Logger) Infow(string, ...any)  {}
 
 func String(string, string) any {
 	return nil
