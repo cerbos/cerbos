@@ -298,49 +298,34 @@ message ProtoYamlTestCase {
   repeated cerbos.source.v1.Error want_errors = 3;
 }
 
-// Taken from
-// https://github.com/bufbuild/protobuf-conformance/blob/main/proto/google/protobuf/test_messages_proto3.proto
 message WellKnownTypes {
-  message Nested {
-    string string_field = 1;
-    google.protobuf.Value value_field = 2;
-  }
+  google.protobuf.ListValue list_value = 1;
+  repeated google.protobuf.ListValue repeated_list_value = 2;
+  map<string, google.protobuf.ListValue> list_value_map = 3;
 
-  google.protobuf.BoolValue bool_wrapper = 1;
-  google.protobuf.Int32Value int32_wrapper = 2;
-  google.protobuf.Int64Value int64_wrapper = 3;
-  google.protobuf.UInt32Value uint32_wrapper = 4;
-  google.protobuf.UInt64Value uint64_wrapper = 5;
-  google.protobuf.FloatValue float_wrapper = 6;
-  google.protobuf.DoubleValue double_wrapper = 7;
-  google.protobuf.StringValue string_wrapper = 8;
-  google.protobuf.BytesValue bytes_wrapper = 9;
+  google.protobuf.NullValue null_value = 4;
+  repeated google.protobuf.NullValue repeated_null_value = 5;
+  map<string, google.protobuf.NullValue> null_value_map = 6;
 
-  repeated google.protobuf.BoolValue repeated_bool_wrapper = 10;
-  repeated google.protobuf.Int32Value repeated_int32_wrapper = 11;
-  repeated google.protobuf.Int64Value repeated_int64_wrapper = 12;
-  repeated google.protobuf.UInt32Value repeated_uint32_wrapper = 13;
-  repeated google.protobuf.UInt64Value repeated_uint64_wrapper = 14;
-  repeated google.protobuf.FloatValue repeated_float_wrapper = 15;
-  repeated google.protobuf.DoubleValue repeated_double_wrapper = 16;
-  repeated google.protobuf.StringValue repeated_string_wrapper = 17;
-  repeated google.protobuf.BytesValue repeated_bytes_wrapper = 18;
+  google.protobuf.Struct struct = 7;
+  repeated google.protobuf.Struct repeated_struct = 8;
+  map<string, google.protobuf.Struct> struct_map = 9;
 
-  google.protobuf.Duration duration = 19;
-  google.protobuf.Timestamp timestamp = 20;
-  google.protobuf.Struct struct = 21;
-  google.protobuf.Any any = 22;
-  google.protobuf.Value value = 23;
-  google.protobuf.NullValue null_value = 24;
+  google.protobuf.Value value_null = 10;
+  google.protobuf.Value value_number = 11;
+  google.protobuf.Value value_string = 12;
+  google.protobuf.Value value_bool = 13;
+  google.protobuf.Value value_struct = 14;
+  google.protobuf.Value value_list = 15;
+  repeated google.protobuf.Value repeated_value = 16;
+  map<string, google.protobuf.Value> value_map = 17;
 
-  repeated google.protobuf.Duration repeated_duration = 25;
-  repeated google.protobuf.Timestamp repeated_timestamp = 26;
-  repeated google.protobuf.Struct repeated_struct = 27;
-  repeated google.protobuf.Any repeated_any = 28;
-  repeated google.protobuf.Value repeated_value = 29;
-  repeated google.protobuf.ListValue repeated_list_value = 30;
+  google.protobuf.UInt64Value uint64_wrapper_number = 18;
+  google.protobuf.UInt64Value uint64_wrapper_string = 19;
+  repeated google.protobuf.UInt64Value repeated_uint64_wrapper = 20;
+  map<string, google.protobuf.UInt64Value> uint64_wrapper_map = 21;
 
-  Nested optional_nested_msg = 31;
+  WellKnownTypes nested = 22;
 }
 
 message TestTracesWrapper {
