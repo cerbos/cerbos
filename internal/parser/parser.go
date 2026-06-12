@@ -431,6 +431,10 @@ func (u *unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNo
 		return mn, nil
 	}
 
+	if mn, ok := n.(ast.MapNode); ok {
+		return mn, nil
+	}
+
 	return nil, uctx.perrorf(n, "not an alias")
 }
 
