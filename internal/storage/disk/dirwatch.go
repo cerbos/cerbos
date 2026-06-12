@@ -39,19 +39,19 @@ type notifier interface {
 	NotifySubscribers(events ...storage.Event)
 }
 
-func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cooldownPeriod time.Duration) error {
+func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cooldownPeriod time.Duration) (*dirWatch, error) {
 	resolved, err := filepath.EvalSymlinks(dir)
 	if err != nil {
-		return fmt.Errorf("failed to resolve directory %s: %w", dir, err)
+		return nil, fmt.Errorf("failed to resolve directory %s: %w", dir, err)
 	}
 
 	watcher, err := fsnotify.NewBufferedWatcher(defaultBufferSize)
 	if err != nil {
-		return fmt.Errorf("failed to create watcher: %w", err)
+		return nil, fmt.Errorf("failed to create watcher: %w", err)
 	}
 
 	if err := watcher.Add(resolved); err != nil {
-		return fmt.Errorf("failed to initiate monitoring on the directory %s: %w", resolved, err)
+		return nil, fmt.Errorf("failed to initiate monitoring on the directory %s: %w", resolved, err)
 	}
 
 	// We need to manually traverse the tree to add all directories because fsnotify package does not support recursive monitoring.
@@ -71,7 +71,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cool
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("failed to walk directory %s: %w", resolved, err)
+		return nil, fmt.Errorf("failed to walk directory %s: %w", resolved, err)
 	}
 
 	dw := &dirWatch{
@@ -86,7 +86,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cool
 
 	go dw.listen(ctx) //nolint:gosec
 
-	return nil
+	return dw, nil
 }
 
 type dirWatch struct {

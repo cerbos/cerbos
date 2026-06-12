@@ -92,7 +92,7 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	if conf.WatchForChanges && !util.IsArchiveFile(dir) {
-		if err := watchDir(ctx, dir, s.idx, s.subs, defaultCooldownPeriod); err != nil {
+		if _, err := watchDir(ctx, dir, s.idx, s.subs, defaultCooldownPeriod); err != nil {
 			return nil, err
 		}
 	}
