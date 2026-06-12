@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -503,7 +505,72 @@ func compileFromSource(src string) (cel.Program, error) {
 	)
 }
 
+// buildGCPercent paces the GC during the load+build phase: frequent collections
+// reduce garbage/survivor interleaving in build-era spans.
+const buildGCPercent = 10
+
+var buildGCPacer struct {
+	sync.Mutex
+	depth int
+	prev  int
+}
+
+const buildGCPercentEnvVar = "CERBOS_RULE_TABLE_GC_PERCENT"
+
+// targetGCPercent resolves the build GC percent from the environment once.
+// If the env var is unset or unparsable, it defaults to buildGCPercent (10).
+// Values from 1 to 100 pace the GC at that value. Anything else disables pacing.
+var targetGCPercent = sync.OnceValue(func() int {
+	s := os.Getenv(buildGCPercentEnvVar)
+	if s == "" {
+		return buildGCPercent
+	}
+
+	log := logging.NewLogger("ruletable")
+	p, err := strconv.Atoi(s)
+	if err != nil {
+		log.Warnw("Ignoring invalid build GC percent override", "var", buildGCPercentEnvVar, "value", s)
+		return buildGCPercent
+	}
+	if pacingOff(p) {
+		log.Infow("GC pacing for rule table builds disabled", "var", buildGCPercentEnvVar, "value", s)
+	}
+	return p
+})
+
+func pacingOff(target int) bool {
+	return target > 100 || target < 1
+}
+
+// paceBuildGC lowers the GC percent for the duration of a rule table build and
+// returns a function restoring the original value. It is safe for concurrent or
+// nested builds.
+func paceBuildGC() (restore func()) {
+	target := targetGCPercent()
+	if pacingOff(target) {
+		return func() {}
+	}
+
+	buildGCPacer.Lock()
+	if buildGCPacer.depth == 0 {
+		buildGCPacer.prev = debug.SetGCPercent(target)
+	}
+	buildGCPacer.depth++
+	buildGCPacer.Unlock()
+
+	return func() {
+		buildGCPacer.Lock()
+		buildGCPacer.depth--
+		if buildGCPacer.depth == 0 {
+			debug.SetGCPercent(buildGCPacer.prev)
+		}
+		buildGCPacer.Unlock()
+	}
+}
+
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
+	defer paceBuildGC()()
+
 	protoRT := NewProtoRuletable()
 
 	if err := LoadPolicies(ctx, protoRT, policyLoader); err != nil {
@@ -514,6 +581,8 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 }
 
 func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
+	defer paceBuildGC()()
+
 	rt := &RuleTable{
 		idx:           index.New(),
 		programCache:  NewProgramCache(),

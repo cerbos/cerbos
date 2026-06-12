@@ -1,0 +1,2 @@
+type:enhancement
+Reduce steady-state memory usage by pacing the garbage collector during rule table builds. Very large policy stores may take slightly longer to start.

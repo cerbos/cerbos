@@ -102,6 +102,7 @@ func (mgr *Manager) reload() error {
 		defer cancelFunc()
 
 		mgr.log.Info("Reloading rule table")
+		defer paceBuildGC()()
 		protoRT := NewProtoRuletable()
 
 		// If compilation fails, maintain the last valid rule table state.
