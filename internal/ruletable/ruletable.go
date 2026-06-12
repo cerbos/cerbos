@@ -507,9 +507,35 @@ func compileFromSource(src string) (cel.Program, error) {
 // reduce garbage/survivor interleaving in build-era spans.
 const buildGCPercent = 10
 
+var buildGCPacer struct {
+	sync.Mutex
+	depth int
+	prev  int
+}
+
+// paceBuildGC lowers the GC percent for the duration of a rule table build and
+// returns a function restoring the original value. It is safe for concurrent or
+// nested builds.
+func paceBuildGC() (restore func()) {
+	buildGCPacer.Lock()
+	if buildGCPacer.depth == 0 {
+		buildGCPacer.prev = debug.SetGCPercent(buildGCPercent)
+	}
+	buildGCPacer.depth++
+	buildGCPacer.Unlock()
+
+	return func() {
+		buildGCPacer.Lock()
+		buildGCPacer.depth--
+		if buildGCPacer.depth == 0 {
+			debug.SetGCPercent(buildGCPacer.prev)
+		}
+		buildGCPacer.Unlock()
+	}
+}
+
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
-	prev := debug.SetGCPercent(buildGCPercent)
-	defer debug.SetGCPercent(prev)
+	defer paceBuildGC()()
 
 	protoRT := NewProtoRuletable()
 
@@ -521,6 +547,8 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 }
 
 func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
+	defer paceBuildGC()()
+
 	rt := &RuleTable{
 		idx:           index.New(),
 		programCache:  NewProgramCache(),
