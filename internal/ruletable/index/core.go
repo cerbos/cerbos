@@ -124,7 +124,7 @@ func makeStringHandle(s string) unique.Handle[string] {
 	return unique.Make(s)
 }
 
-// TODO: replace with HandleStr
+// TODO: replace with HandleStr.
 func stringHandleValue(h unique.Handle[string]) string {
 	if h == EmptyHandle {
 		return ""
