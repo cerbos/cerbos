@@ -5,6 +5,7 @@ package index
 
 import (
 	"slices"
+	"unique"
 
 	"github.com/cespare/xxhash/v2"
 
@@ -79,6 +80,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 
 	if newBindings := len(rules) - len(m.bi.freeIDs); newBindings > 0 {
 		m.bi.bindings = slices.Grow(m.bi.bindings, newBindings)
+		m.bi.evalKeys = slices.Grow(m.bi.evalKeys, newBindings)
 	}
 
 	paramsCache := make(map[uint64]*RowParams)
@@ -145,41 +147,44 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		}
 		core.origins[rule.OriginFqn] = struct{}{}
 
-		action := ""
-		var allowActions map[string]struct{}
+		var action unique.Handle[string]
+		var allowActions map[unique.Handle[string]]struct{}
 		switch v := rule.ActionSet.(type) {
 		case *runtimev1.RuleTable_RuleRow_AllowActions_:
-			allowActions = make(map[string]struct{}, len(v.AllowActions.GetActions()))
+			allowActions = make(map[unique.Handle[string]]struct{}, len(v.AllowActions.GetActions()))
 			for a := range v.AllowActions.GetActions() {
-				allowActions[a] = struct{}{}
+				allowActions[mkStringHandle(a)] = struct{}{}
 			}
 		case *runtimev1.RuleTable_RuleRow_Action:
-			action = v.Action
+			action = mkStringHandle(v.Action)
 		}
 
-		b := &Binding{
-			Scope:             rule.Scope,
-			Version:           rule.Version,
-			Resource:          rule.Resource,
-			Role:              rule.Role,
+		b := &BindingHandle{
+			Scope:             mkStringHandle(rule.Scope),
+			Version:           mkStringHandle(rule.Version),
+			Resource:          mkStringHandle(rule.Resource),
+			Role:              mkStringHandle(rule.Role),
 			Action:            action,
-			Principal:         rule.Principal,
-			OriginFqn:         rule.OriginFqn,
-			OriginDerivedRole: rule.OriginDerivedRole,
-			Name:              rule.Name,
-			EvaluationKey:     rule.EvaluationKey,
+			Principal:         mkStringHandle(rule.Principal),
+			OriginFqn:         mkStringHandle(rule.OriginFqn),
+			OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
+			Name:              mkStringHandle(rule.Name),
 			AllowActions:      allowActions,
 			Core:              core,
 		}
 
-		m.bi.addBinding(b)
+		m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
 	}
 
 	return nil
 }
 
-func (m *Index) GetAllRows() []*Binding {
-	res := make([]*Binding, 0, m.bi.universe.GetCardinality())
+func (m *Index) EvalKey(id uint32) EvaluationKeyTuple {
+	return m.bi.evalKey(id)
+}
+
+func (m *Index) GetAllRows() []*BindingHandle {
+	res := make([]*BindingHandle, 0, m.bi.universe.GetCardinality())
 	for _, b := range m.bi.bindings {
 		if b != nil {
 			res = append(res, b)
@@ -191,7 +196,7 @@ func (m *Index) GetAllRows() []*Binding {
 // Query returns bindings matching the given dimensions. Nil or zero-values mean
 // "match all" for that dimension. Synthetic DENYs from role policy AllowActions
 // are prepended when querying for a specific action with KIND_RESOURCE.
-func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string, buf []*Binding) []*Binding {
+func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string, buf []*BindingHandle) []*BindingHandle {
 	bi := m.bi
 
 	if bi.universe.IsEmpty() {
@@ -333,8 +338,8 @@ func (m *Index) appendRolePolicyDenies(
 	arena *bitmapArena, bi *bitmapIndex,
 	resources, roles, targetActions []string,
 	versionBM, scopeBM, roleBM *Bitmap,
-	res []*Binding,
-) []*Binding {
+	res []*BindingHandle,
+) []*BindingHandle {
 	// candidateBM deliberately omits resource so we can spot roles whose
 	// policy exists but doesn't cover the requested resource.
 	candidateDims := make([]*Bitmap, 0, 4) //nolint:mnd
@@ -360,7 +365,7 @@ func (m *Index) appendRolePolicyDenies(
 	}
 
 	// Retrieve one sample binding per role for version/scope
-	rolePolicyRep := make(map[string]*Binding)
+	rolePolicyRep := make(map[string]*BindingHandle)
 	var roleOrder []string
 	policyIter := candidateBM.Iterator()
 	for policyIter.HasNext() {
@@ -368,9 +373,10 @@ func (m *Index) appendRolePolicyDenies(
 		if b == nil {
 			continue
 		}
-		if _, ok := rolePolicyRep[b.Role]; !ok {
-			roleOrder = append(roleOrder, b.Role)
-			rolePolicyRep[b.Role] = b
+		role := HandleStr(b.Role)
+		if _, ok := rolePolicyRep[role]; !ok {
+			roleOrder = append(roleOrder, role)
+			rolePolicyRep[role] = b
 		}
 	}
 
@@ -379,7 +385,7 @@ func (m *Index) appendRolePolicyDenies(
 		roles = roleOrder
 	}
 
-	var matched []*Binding
+	var matched []*BindingHandle
 	for _, resource := range resources {
 		resBM := bi.resource.Query(arena, resource)
 		resourceMatchedBM := emptyBitmap
@@ -387,14 +393,15 @@ func (m *Index) appendRolePolicyDenies(
 			resourceMatchedBM = arena.and2(candidateBM, resBM)
 		}
 
-		resourceMatchedByRole := make(map[string][]*Binding)
+		resourceMatchedByRole := make(map[string][]*BindingHandle)
 		matchedIter := resourceMatchedBM.Iterator()
 		for matchedIter.HasNext() {
 			b := bi.getBinding(matchedIter.Next())
 			if b == nil {
 				continue
 			}
-			resourceMatchedByRole[b.Role] = append(resourceMatchedByRole[b.Role], b)
+			role := HandleStr(b.Role)
+			resourceMatchedByRole[role] = append(resourceMatchedByRole[role], b)
 		}
 
 		resourceActions := targetActions
@@ -414,7 +421,7 @@ func (m *Index) appendRolePolicyDenies(
 			// role policy exists, but no resource bindings present
 			if len(roleBindings) == 0 {
 				for _, action := range resourceActions {
-					res = append(res, newNoMatchRolePolicyDeny(role, rep.Version, rep.Scope, resource, action))
+					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), resource, action))
 				}
 				continue
 			}
@@ -423,7 +430,8 @@ func (m *Index) appendRolePolicyDenies(
 				matched = matched[:0]
 				for _, rb := range roleBindings {
 					for a := range rb.AllowActions {
-						if a == action || util.MatchesGlob(a, action) {
+						av := HandleStr(a)
+						if av == action || util.MatchesGlob(av, action) {
 							matched = append(matched, rb)
 							break
 						}
@@ -433,7 +441,7 @@ func (m *Index) appendRolePolicyDenies(
 				// role policy exists with resource bindings, but action not specified
 				if len(matched) == 0 {
 					rep := roleBindings[0]
-					res = append(res, newNoMatchRolePolicyDeny(role, rep.Version, rep.Scope, rep.Resource, action))
+					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), HandleStr(rep.Resource), action))
 					continue
 				}
 
@@ -443,21 +451,21 @@ func (m *Index) appendRolePolicyDenies(
 						// otherwise dropped here, so emit any output via a no-effect
 						// binding.
 						if mb.Core.EmitOutput != nil {
-							res = append(res, &Binding{
+							res = append(res, &BindingHandle{
 								Core: &FunctionalCore{
 									EmitOutput:     mb.Core.EmitOutput,
 									PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 									FromRolePolicy: true,
 									Params:         mb.Core.Params,
 								},
-								Action:        action,
-								Name:          mb.Name,
-								OriginFqn:     mb.OriginFqn,
-								Resource:      mb.Resource,
-								Role:          mb.Role,
-								Scope:         mb.Scope,
-								Version:       mb.Version,
-								EvaluationKey: mb.EvaluationKey,
+								Action:    mkStringHandle(action),
+								Name:      mb.Name,
+								OriginFqn: mb.OriginFqn,
+								Resource:  mb.Resource,
+								Role:      mb.Role,
+								Scope:     mb.Scope,
+								Version:   mb.Version,
+								ID:        mb.ID,
 							})
 						}
 						continue
@@ -473,7 +481,7 @@ func (m *Index) appendRolePolicyDenies(
 							},
 						}
 					}
-					res = append(res, &Binding{
+					res = append(res, &BindingHandle{
 						Core: &FunctionalCore{
 							Effect: effectv1.Effect_EFFECT_DENY,
 							Condition: &runtimev1.Condition{
@@ -489,14 +497,14 @@ func (m *Index) appendRolePolicyDenies(
 							FromRolePolicy:   true,
 							Params:           mb.Core.Params,
 						},
-						Action:        action,
-						Name:          mb.Name,
-						OriginFqn:     mb.OriginFqn,
-						Resource:      mb.Resource,
-						Role:          mb.Role,
-						Scope:         mb.Scope,
-						Version:       mb.Version,
-						EvaluationKey: mb.EvaluationKey,
+						Action:    mkStringHandle(action),
+						Name:      mb.Name,
+						OriginFqn: mb.OriginFqn,
+						Resource:  mb.Resource,
+						Role:      mb.Role,
+						Scope:     mb.Scope,
+						Version:   mb.Version,
+						ID:        mb.ID,
 					})
 				}
 			}
@@ -541,11 +549,11 @@ func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionB
 		if b == nil || b.Core.PolicyKind == policyv1.Kind_KIND_PRINCIPAL {
 			continue
 		}
-		if b.Action != "" {
-			actionSet[b.Action] = struct{}{}
+		if b.Action != EmptyHandle {
+			actionSet[b.Action.Value()] = struct{}{}
 		}
 		for a := range b.AllowActions {
-			actionSet[a] = struct{}{}
+			actionSet[HandleStr(a)] = struct{}{}
 		}
 	}
 
@@ -556,20 +564,21 @@ func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionB
 	return actions
 }
 
-func newNoMatchRolePolicyDeny(role, version, scope, resource, action string) *Binding {
-	return &Binding{
+func newNoMatchRolePolicyDeny(role, version, scope, resource, action string) *BindingHandle {
+	return &BindingHandle{
 		Core: &FunctionalCore{
 			Effect:         effectv1.Effect_EFFECT_DENY,
 			PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 			FromRolePolicy: true,
 		},
-		Action:                     action,
-		OriginFqn:                  namer.RolePolicyFQN(role, version, scope),
-		Resource:                   resource,
-		Role:                       role,
-		Scope:                      scope,
-		Version:                    version,
+		Action:                     mkStringHandle(action),
+		OriginFqn:                  mkStringHandle(namer.RolePolicyFQN(role, version, scope)),
+		Resource:                   mkStringHandle(resource),
+		Role:                       mkStringHandle(role),
+		Scope:                      mkStringHandle(scope),
+		Version:                    mkStringHandle(version),
 		NoMatchForScopePermissions: true,
+		ID:                         noEvalKey, // No condition to cache.
 	}
 }
 
@@ -631,11 +640,11 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 		baseBM = arena.andInto(dims)
 	}
 
-	var res []*Binding
+	var res []*BindingHandle
 	if !baseBM.IsEmpty() {
 		resultBM := m.applyActionFilter(arena, baseBM, actions)
 		if !resultBM.IsEmpty() {
-			res = make([]*Binding, 0, resultBM.GetCardinality())
+			res = make([]*BindingHandle, 0, resultBM.GetCardinality())
 			iter := resultBM.Iterator()
 			for iter.HasNext() {
 				if b := bi.getBinding(iter.Next()); b != nil {
@@ -645,10 +654,17 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 		}
 	}
 
-	if !withRolePolicyDenies {
-		return res
+	if withRolePolicyDenies {
+		res = m.appendRolePolicyDenies(arena, bi, resources, roles, actions, versionBM, scopeBM, roleBM, res)
 	}
-	return m.appendRolePolicyDenies(arena, bi, resources, roles, actions, versionBM, scopeBM, roleBM, res)
+
+	// QueryMulti is the external boundary: materialise interned handles back into
+	// string-typed Bindings for outside consumers.
+	out := make([]*Binding, len(res))
+	for i, b := range res {
+		out[i] = b.toBinding(bi.evalKey(b.ID))
+	}
+	return out
 }
 
 func (m *Index) applyActionFilter(arena *bitmapArena, baseBM *Bitmap, actions []string) *Bitmap {

@@ -13,7 +13,7 @@ import (
 	"github.com/google/cel-go/common/ast"
 )
 
-func visitBinding(b *index.Binding, visitor ast.Visitor) error {
+func visitBinding(b *index.BindingHandle, visitor ast.Visitor) error {
 	if err := visitCompiledCondition(b.Core.Condition, visitor); err != nil {
 		return fmt.Errorf("failed to visit condition: %w", err)
 	}

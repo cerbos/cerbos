@@ -21,7 +21,7 @@ const numPolicyKinds = 4
 
 type statsCollector struct {
 	policies          map[uint64]*stats
-	uniqueRules       map[uint64]struct{}
+	uniqueRules       map[index.EvaluationKeyTuple]struct{}
 	uniqueResources   map[uint64]struct{}
 	uniqueActions     map[uint64]struct{}
 	schemaRefs        map[uint64]struct{}
@@ -44,7 +44,7 @@ type policyStats struct {
 func newStatsCollector() *statsCollector {
 	return &statsCollector{
 		policies:        make(map[uint64]*stats),
-		uniqueRules:     make(map[uint64]struct{}),
+		uniqueRules:     make(map[index.EvaluationKeyTuple]struct{}),
 		uniqueResources: make(map[uint64]struct{}),
 		uniqueActions:   make(map[uint64]struct{}),
 		schemaRefs:      make(map[uint64]struct{}),
@@ -96,8 +96,8 @@ func (s *statsCollector) collate() storage.RepoStats {
 	return is
 }
 
-func (s *statsCollector) addRow(row *index.Binding) {
-	fqn := row.OriginFqn
+func (s *statsCollector) addRow(row *index.BindingHandle, evalKey index.EvaluationKeyTuple) {
+	fqn := index.HandleStr(row.OriginFqn)
 	kind := policy.KindFromFQN(fqn)
 	mID := namer.GenModuleIDFromFQN(fqn).RawValue()
 
@@ -108,27 +108,27 @@ func (s *statsCollector) addRow(row *index.Binding) {
 	}
 
 	if kind == policy.ResourceKind {
-		s.uniqueResources[util.HashStr(row.Resource)] = struct{}{}
+		s.uniqueResources[util.HashStr(index.HandleStr(row.Resource))] = struct{}{}
 	}
 
-	if row.Action != "" && kind == policy.ResourceKind {
-		s.uniqueActions[util.HashStr(row.Action)] = struct{}{}
+	if row.Action != index.EmptyHandle && kind == policy.ResourceKind {
+		s.uniqueActions[util.HashStr(row.Action.Value())] = struct{}{}
 	}
 
 	if row.Core.EmitOutput != nil {
 		s.hasOutput = true
 	}
 
-	if row.Scope != "" {
+	if row.Scope != index.EmptyHandle {
 		s.hasScopedPolicies = true
 	}
 
-	if row.EvaluationKey == "" {
+	if evalKey.IsZero() {
 		return
 	}
 
-	if _, ok := s.uniqueRules[util.HashStr(row.EvaluationKey)]; !ok {
-		s.uniqueRules[util.HashStr(row.EvaluationKey)] = struct{}{}
+	if _, ok := s.uniqueRules[evalKey]; !ok {
+		s.uniqueRules[evalKey] = struct{}{}
 		s.policies[mID].ruleCount++
 	}
 

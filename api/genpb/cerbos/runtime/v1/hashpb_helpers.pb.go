@@ -177,6 +177,11 @@ func cerbos_runtime_v1_BitmapIndex_Binding_hashpb_sum(m *BitmapIndex_Binding, ha
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetEvaluationKey()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetEvaluationKey()), len(m.GetEvaluationKey())))
 	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.Binding.evaluation_key_tuple"]; !ok {
+		if m.GetEvaluationKeyTuple() != nil {
+			cerbos_runtime_v1_EvaluationKeyTuple_hashpb_sum(m.GetEvaluationKeyTuple(), hasher, ignore, b)
+		}
+	}
 }
 
 func cerbos_runtime_v1_BitmapIndex_Entry_hashpb_sum(m *BitmapIndex_Entry, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
@@ -500,6 +505,44 @@ func cerbos_runtime_v1_Errors_hashpb_sum(m *Errors, hasher hash.Hash, ignore map
 				}
 			}
 		}
+	}
+}
+
+func cerbos_runtime_v1_EvaluationKeyTuple_hashpb_sum(m *EvaluationKeyTuple, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.prefix"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetPrefix()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPrefix()), len(m.GetPrefix())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.resource"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetResource()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetResource()), len(m.GetResource())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.principal"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetPrincipal()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPrincipal()), len(m.GetPrincipal())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.role"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetRole()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetRole()), len(m.GetRole())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.derived_role"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDerivedRole()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDerivedRole()), len(m.GetDerivedRole())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetVersion()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetVersion()), len(m.GetVersion())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetScope()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetScope()), len(m.GetScope())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.rule_name"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetRuleName()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetRuleName()), len(m.GetRuleName())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.EvaluationKeyTuple.rule_id"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetRuleId())))
 	}
 }
 
@@ -1033,6 +1076,11 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.from_role_policy"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetFromRolePolicy())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.RuleRow.evaluation_key_tuple"]; !ok {
+		if m.GetEvaluationKeyTuple() != nil {
+			cerbos_runtime_v1_EvaluationKeyTuple_hashpb_sum(m.GetEvaluationKeyTuple(), hasher, ignore, b)
+		}
 	}
 }
 

@@ -8,6 +8,7 @@ package index
 import (
 	"fmt"
 	"slices"
+	"unique"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -40,7 +41,7 @@ func (m *Index) Marshal() ([]byte, error) {
 		if b == nil {
 			continue
 		}
-		pbBindings = append(pbBindings, marshalBinding(b, coreIndex))
+		pbBindings = append(pbBindings, marshalBinding(b, coreIndex, bi.evalKey(b.ID)))
 	}
 
 	version, err := marshalEntries(bi.version.m)
@@ -153,34 +154,34 @@ func marshalRowParams(rp *RowParams) (*runtimev1.RuleTable_RuleRow_Params, error
 	}, nil
 }
 
-func marshalBinding(b *Binding, coreIndex map[*FunctionalCore]uint32) *runtimev1.BitmapIndex_Binding {
+func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32, evalKey EvaluationKeyTuple) *runtimev1.BitmapIndex_Binding {
 	pb := &runtimev1.BitmapIndex_Binding{
-		Id:                b.ID,
-		CoreIndex:         coreIndex[b.Core],
-		Role:              b.Role,
-		Scope:             b.Scope,
-		Version:           b.Version,
-		Resource:          b.Resource,
-		Principal:         b.Principal,
-		OriginFqn:         b.OriginFqn,
-		OriginDerivedRole: b.OriginDerivedRole,
-		Name:              b.Name,
-		EvaluationKey:     b.EvaluationKey,
+		Id:                 b.ID,
+		CoreIndex:          coreIndex[b.Core],
+		Role:               HandleStr(b.Role),
+		Scope:              HandleStr(b.Scope),
+		Version:            HandleStr(b.Version),
+		Resource:           HandleStr(b.Resource),
+		Principal:          HandleStr(b.Principal),
+		OriginFqn:          HandleStr(b.OriginFqn),
+		OriginDerivedRole:  HandleStr(b.OriginDerivedRole),
+		Name:               HandleStr(b.Name),
+		EvaluationKeyTuple: evalKey.toProto(),
 	}
 
 	if b.AllowActions != nil {
 		actions := make([]string, 0, len(b.AllowActions))
 		for a := range b.AllowActions {
-			actions = append(actions, a)
+			actions = append(actions, HandleStr(a))
 		}
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_AllowActions{
 			AllowActions: &runtimev1.BitmapIndex_AllowActions{
 				Actions: actions,
 			},
 		}
-	} else if b.Action != "" {
+	} else if b.Action != EmptyHandle {
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_Action{
-			Action: b.Action,
+			Action: b.Action.Value(),
 		}
 	}
 
@@ -248,7 +249,7 @@ func Unmarshal(data []byte) (*Index, error) {
 	}
 
 	bi := newBitmapIndex()
-	bi.bindings = unmarshalBindings(msg.Bindings, cores)
+	bi.bindings, bi.evalKeys = unmarshalBindings(msg.Bindings, cores)
 
 	bi.version, err = unmarshalEntries(msg.Version)
 	if err != nil {
@@ -345,9 +346,9 @@ func unmarshalCores(pbCores []*runtimev1.BitmapIndex_FunctionalCore) ([]*Functio
 	return cores, nil
 }
 
-func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) []*Binding {
+func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) ([]*BindingHandle, []EvaluationKeyTuple) {
 	if len(pbBindings) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// find the max ID to size the bindings slice.
@@ -358,37 +359,38 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 		}
 	}
 
-	bindings := make([]*Binding, maxID+1)
+	bindings := make([]*BindingHandle, maxID+1)
+	evalKeys := make([]EvaluationKeyTuple, maxID+1)
 	for _, pb := range pbBindings {
-		b := &Binding{
+		b := &BindingHandle{
 			ID:                pb.Id,
 			Core:              cores[pb.CoreIndex],
-			Role:              pb.Role,
-			Scope:             pb.Scope,
-			Version:           pb.Version,
-			Resource:          pb.Resource,
-			Principal:         pb.Principal,
-			OriginFqn:         pb.OriginFqn,
-			OriginDerivedRole: pb.OriginDerivedRole,
-			Name:              pb.Name,
-			EvaluationKey:     pb.EvaluationKey,
+			Role:              mkStringHandle(pb.Role),
+			Scope:             mkStringHandle(pb.Scope),
+			Version:           mkStringHandle(pb.Version),
+			Resource:          mkStringHandle(pb.Resource),
+			Principal:         mkStringHandle(pb.Principal),
+			OriginFqn:         mkStringHandle(pb.OriginFqn),
+			OriginDerivedRole: mkStringHandle(pb.OriginDerivedRole),
+			Name:              mkStringHandle(pb.Name),
 		}
 
 		switch v := pb.ActionSet.(type) {
 		case *runtimev1.BitmapIndex_Binding_AllowActions:
-			aa := make(map[string]struct{}, len(v.AllowActions.Actions))
+			aa := make(map[unique.Handle[string]]struct{}, len(v.AllowActions.Actions))
 			for _, a := range v.AllowActions.Actions {
-				aa[a] = struct{}{}
+				aa[mkStringHandle(a)] = struct{}{}
 			}
 			b.AllowActions = aa
 		case *runtimev1.BitmapIndex_Binding_Action:
-			b.Action = v.Action
+			b.Action = mkStringHandle(v.Action)
 		}
 
 		bindings[pb.Id] = b
+		evalKeys[pb.Id] = makeEvaluationKeyTuple(pb.EvaluationKeyTuple, pb.EvaluationKey)
 	}
 
-	return bindings
+	return bindings, evalKeys
 }
 
 func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string], error) {

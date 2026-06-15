@@ -4,6 +4,8 @@
 package ruletable
 
 import (
+	"strings"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -68,7 +70,8 @@ func dedupMeta(s *index.StringDeduper, m *runtimev1.RuleTableMetadata) {
 	}
 }
 
-// dedupSourceAttributes dedupes only keys.
+// dedupSourceAttributes interns keys and relocates each attribute value into a
+// fresh, interned deep copy.
 func dedupSourceAttributes(s *index.StringDeduper, sa *policyv1.SourceAttributes) {
 	if sa == nil || len(sa.Attributes) == 0 {
 		return
@@ -76,9 +79,45 @@ func dedupSourceAttributes(s *index.StringDeduper, sa *policyv1.SourceAttributes
 	out := make(map[string]*structpb.Value, len(sa.Attributes))
 	for k, v := range sa.Attributes {
 		s.Intern(&k)
-		out[k] = v
+		out[k] = relocateValue(s, v)
 	}
 	sa.Attributes = out
+}
+
+// relocateValue returns a freshly-allocated deep copy of v with string leaves
+// cloned.
+func relocateValue(s *index.StringDeduper, v *structpb.Value) *structpb.Value {
+	if v == nil {
+		return nil
+	}
+	switch k := v.GetKind().(type) {
+	case *structpb.Value_StringValue:
+		// Clone (not intern): attribute values are mostly unique (file paths).
+		return structpb.NewStringValue(strings.Clone(k.StringValue))
+	case *structpb.Value_NumberValue:
+		return structpb.NewNumberValue(k.NumberValue)
+	case *structpb.Value_BoolValue:
+		return structpb.NewBoolValue(k.BoolValue)
+	case *structpb.Value_NullValue:
+		return structpb.NewNullValue()
+	case *structpb.Value_StructValue:
+		fields := k.StructValue.GetFields()
+		out := make(map[string]*structpb.Value, len(fields))
+		for fk, fv := range fields {
+			s.Intern(&fk)
+			out[fk] = relocateValue(s, fv)
+		}
+		return structpb.NewStructValue(&structpb.Struct{Fields: out})
+	case *structpb.Value_ListValue:
+		vals := k.ListValue.GetValues()
+		out := make([]*structpb.Value, len(vals))
+		for i, e := range vals {
+			out[i] = relocateValue(s, e)
+		}
+		return structpb.NewListValue(&structpb.ListValue{Values: out})
+	default:
+		return v
+	}
 }
 
 func dedupScopeParentRoles(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_RoleParentRoles) map[string]*runtimev1.RuleTable_RoleParentRoles {
@@ -122,7 +161,7 @@ func dedupDerivedRoleMap(s *index.StringDeduper, shared map[uint64]*runtimev1.Ru
 					shared[v.VarCacheKey] = v.RunnableDerivedRole
 				}
 			}
-			v.Constants = dedupAnyMap(s, v.Constants)
+			v.Constants = s.RelocateConstants(v.Constants)
 		}
 		out[k] = v
 	}
@@ -146,11 +185,7 @@ func dedupRunnableDerivedRole(s *index.StringDeduper, rdr *runtimev1.RunnableDer
 		out := make(map[string]*structpb.Value, len(rdr.Constants))
 		for k, v := range rdr.Constants {
 			s.Intern(&k)
-			if vs := v.GetStringValue(); vs != "" {
-				s.Intern(&vs)
-				v = structpb.NewStringValue(vs)
-			}
-			out[k] = v
+			out[k] = relocateValue(s, v)
 		}
 		rdr.Constants = out
 	}
@@ -168,18 +203,6 @@ func dedupRunnableDerivedRole(s *index.StringDeduper, rdr *runtimev1.RunnableDer
 	if rdr.Condition != nil {
 		rdr.Condition = proto.Clone(rdr.Condition).(*runtimev1.Condition) //nolint:forcetypeassert
 	}
-}
-
-func dedupAnyMap(s *index.StringDeduper, m map[string]any) map[string]any {
-	if len(m) == 0 {
-		return m
-	}
-	out := make(map[string]any, len(m))
-	for k, v := range m {
-		s.Intern(&k)
-		out[k] = v
-	}
-	return out
 }
 
 func dedupJSONSchemas(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_JSONSchema) map[string]*runtimev1.RuleTable_JSONSchema {

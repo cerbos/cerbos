@@ -18,7 +18,7 @@ import (
 // BindingSource provides access to index bindings for inspection.
 // It exists here to prevent a circular dependency between `inspect`, `ruletable` and `storage`.
 type BindingSource interface {
-	GetAllRows() []*index.Binding
+	GetAllRows() []*index.BindingHandle
 }
 
 func RuleTables(src BindingSource) *RuleTable {
@@ -53,7 +53,7 @@ func (rt *RuleTable) Inspect() error {
 	derivedRoleSets := make(map[string]util.StringSet)
 	variableSets := make(map[string]util.StringSet)
 	for _, b := range rows {
-		policyKey := namer.PolicyKeyFromFQN(b.OriginFqn)
+		policyKey := namer.PolicyKeyFromFQN(index.HandleStr(b.OriginFqn))
 
 		result, ok := results[policyKey]
 		if !ok {
@@ -79,7 +79,7 @@ func (rt *RuleTable) Inspect() error {
 }
 
 func (rt *RuleTable) inspectBinding(
-	b *index.Binding,
+	b *index.BindingHandle,
 	actionSet util.StringSet,
 	attrSet util.StringSet,
 	constantSet util.StringSet,
@@ -193,18 +193,19 @@ func getOrInitStringSet(m map[string]util.StringSet, key string) util.StringSet 
 	return s
 }
 
-func listActions(b *index.Binding) []string {
+func listActions(b *index.BindingHandle) []string {
+	hasAction := b.Action != index.EmptyHandle
 	n := len(b.AllowActions)
-	if b.Action != "" {
+	if hasAction {
 		n++
 	}
 
 	actions := make([]string, 0, n)
-	if b.Action != "" {
-		actions = append(actions, b.Action)
+	if hasAction {
+		actions = append(actions, b.Action.Value())
 	}
-	for action := range b.AllowActions {
-		actions = append(actions, action)
+	for a := range b.AllowActions {
+		actions = append(actions, a.Value())
 	}
 
 	if len(actions) > 1 {
@@ -216,7 +217,7 @@ func listActions(b *index.Binding) []string {
 
 // Results are cached per-Core because many bindings share the same Core pointer
 // (they differ only in routing dimensions) and structpb conversion is non-trivial.
-func (rt *RuleTable) listConstants(b *index.Binding) ([]*responsev1.InspectPoliciesResponse_Constant, error) {
+func (rt *RuleTable) listConstants(b *index.BindingHandle) ([]*responsev1.InspectPoliciesResponse_Constant, error) {
 	if cached, ok := rt.constantsCache[b.Core]; ok {
 		return cached, nil
 	}
@@ -271,20 +272,20 @@ func (rt *RuleTable) listConstants(b *index.Binding) ([]*responsev1.InspectPolic
 	return constants, nil
 }
 
-func getDerivedRole(b *index.Binding) *responsev1.InspectPoliciesResponse_DerivedRole {
-	if b.OriginDerivedRole == "" {
+func getDerivedRole(b *index.BindingHandle) *responsev1.InspectPoliciesResponse_DerivedRole {
+	if b.OriginDerivedRole == index.EmptyHandle {
 		return nil
 	}
 
 	return &responsev1.InspectPoliciesResponse_DerivedRole{
-		Name: b.OriginDerivedRole,
+		Name: b.OriginDerivedRole.Value(),
 		Kind: responsev1.InspectPoliciesResponse_DerivedRole_KIND_IMPORTED,
 	}
 }
 
 // Results are cached per-Core because many bindings share the same Core pointer
 // (they differ only in routing dimensions).
-func (rt *RuleTable) listVariables(b *index.Binding) []*responsev1.InspectPoliciesResponse_Variable {
+func (rt *RuleTable) listVariables(b *index.BindingHandle) []*responsev1.InspectPoliciesResponse_Variable {
 	if cached, ok := rt.variablesCache[b.Core]; ok {
 		return cached
 	}

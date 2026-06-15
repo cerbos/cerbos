@@ -23,8 +23,12 @@ type bitmapIndex struct {
 	universe           *Bitmap
 	allowActionsBitmap *Bitmap
 	freeIDs            []uint32
-	bindings           []*Binding
+	bindings           []*BindingHandle
+	evalKeys           []EvaluationKeyTuple
 }
+
+// noEvalKey is the sentinel binding ID meaning "no evaluation key".
+const noEvalKey = ^uint32(0)
 
 func newBitmapIndex() *bitmapIndex {
 	return &bitmapIndex{
@@ -56,7 +60,15 @@ func (idx *bitmapIndex) allocID() uint32 {
 
 func (idx *bitmapIndex) freeID(id uint32) {
 	idx.bindings[id] = nil
+	idx.evalKeys[id] = EvaluationKeyTuple{} // release the slot's interned handles
 	idx.freeIDs = append(idx.freeIDs, id)
+}
+
+func (idx *bitmapIndex) evalKey(id uint32) EvaluationKeyTuple {
+	if id == noEvalKey {
+		return EvaluationKeyTuple{}
+	}
+	return idx.evalKeys[id]
 }
 
 // compact drops the per-bitmap capacity slack left by exponential growth across
@@ -79,13 +91,15 @@ func (idx *bitmapIndex) compact() {
 	idx.allowActionsBitmap.shrinkToFit()
 }
 
-func (idx *bitmapIndex) addBinding(b *Binding) {
+func (idx *bitmapIndex) addBinding(b *BindingHandle, evalKey EvaluationKeyTuple) {
 	id := idx.allocID()
 	b.ID = id
 	if int(id) < len(idx.bindings) {
 		idx.bindings[id] = b
+		idx.evalKeys[id] = evalKey
 	} else {
 		idx.bindings = append(idx.bindings, b)
+		idx.evalKeys = append(idx.evalKeys, evalKey)
 	}
 
 	idx.universe.Add(id)
@@ -93,59 +107,59 @@ func (idx *bitmapIndex) addBinding(b *Binding) {
 	// Scope "" is a valid literal (root scope), always indexed. Other dimensions
 	// skip "" to avoid leaking empties from policies that don't participate in
 	// them (e.g. principal-policy noop rows have no role/resource).
-	idx.scope.Add(b.Scope, id)
-	if b.Version != "" {
-		idx.version.Add(b.Version, id)
+	idx.scope.Add(HandleStr(b.Scope), id)
+	if b.Version != EmptyHandle {
+		idx.version.Add(b.Version.Value(), id)
 	}
-	if b.Role != "" {
-		idx.role.Set(b.Role, id)
+	if b.Role != EmptyHandle {
+		idx.role.Set(b.Role.Value(), id)
 	}
-	if b.Resource != "" {
-		idx.resource.Set(b.Resource, id)
+	if b.Resource != EmptyHandle {
+		idx.resource.Set(b.Resource.Value(), id)
 	}
 
 	if b.AllowActions != nil {
 		idx.allowActionsBitmap.Add(id)
-	} else if b.Action != "" {
-		idx.action.Set(b.Action, id)
+	} else if b.Action != EmptyHandle {
+		idx.action.Set(b.Action.Value(), id)
 	}
 
 	idx.policyKind.Add(b.Core.PolicyKind, id)
 
-	if b.Principal != "" {
-		idx.principal.Add(b.Principal, id)
+	if b.Principal != EmptyHandle {
+		idx.principal.Add(b.Principal.Value(), id)
 	}
 
-	idx.fqnBindings.Add(b.OriginFqn, id)
+	idx.fqnBindings.Add(HandleStr(b.OriginFqn), id)
 }
 
 // removeBinding removes the binding from the slice and all dimension bitmaps,
 // and returns the ID to the free list.
 // It does NOT touch fqnBindings. That is managed by DeletePolicy, which needs
 // to inspect fqnBindings across origins before deciding whether to remove the binding.
-func (idx *bitmapIndex) removeBinding(b *Binding) {
+func (idx *bitmapIndex) removeBinding(b *BindingHandle) {
 	id := b.ID
 
 	idx.universe.Remove(id)
-	idx.version.Remove(b.Version, id)
-	idx.scope.Remove(b.Scope, id)
+	idx.version.Remove(HandleStr(b.Version), id)
+	idx.scope.Remove(HandleStr(b.Scope), id)
 
-	idx.role.Remove(b.Role, id)
-	idx.resource.Remove(b.Resource, id)
+	idx.role.Remove(HandleStr(b.Role), id)
+	idx.resource.Remove(HandleStr(b.Resource), id)
 
 	if b.AllowActions != nil {
 		idx.allowActionsBitmap.Remove(id)
-	} else if b.Action != "" {
-		idx.action.Remove(b.Action, id)
+	} else if b.Action != EmptyHandle {
+		idx.action.Remove(b.Action.Value(), id)
 	}
 
 	idx.policyKind.Remove(b.Core.PolicyKind, id)
-	idx.principal.Remove(b.Principal, id)
+	idx.principal.Remove(HandleStr(b.Principal), id)
 
 	idx.freeID(id)
 }
 
-func (idx *bitmapIndex) getBinding(id uint32) *Binding {
+func (idx *bitmapIndex) getBinding(id uint32) *BindingHandle {
 	return idx.bindings[id]
 }
 

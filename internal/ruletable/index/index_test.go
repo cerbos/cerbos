@@ -1110,7 +1110,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 		// editor has edit in its AllowActions with no condition, so no synthetic DENY
 		require.Len(t, res, 1)
 		require.True(t, res[0].NoMatchForScopePermissions)
-		require.Equal(t, "viewer", res[0].Role)
+		require.Equal(t, "viewer", index.HandleStr(res[0].Role))
 	})
 }
 

@@ -1,3 +1,4 @@
 bin/
 results/
 work/
+*.txt

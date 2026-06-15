@@ -26,6 +26,18 @@ message RunnablePolicySet {
   uint32 compiler_version = 6;
 }
 
+message EvaluationKeyTuple {
+  string prefix = 1;
+  string resource = 2;
+  string principal = 3;
+  string role = 4;
+  string derived_role = 5;
+  string version = 6;
+  string scope = 7;
+  string rule_name = 8;
+  uint32 rule_id = 9;
+}
+
 message RuleTable {
   message RuleRow {
     message AllowActions {
@@ -59,6 +71,7 @@ message RuleTable {
     string evaluation_key = 18;
     cerbos.policy.v1.Kind policy_kind = 19;
     bool from_role_policy = 20;
+    EvaluationKeyTuple evaluation_key_tuple = 21;
   }
 
   message RoleParentRoles {
@@ -386,6 +399,7 @@ message BitmapIndex {
     string origin_derived_role = 10;
     string name = 11;
     string evaluation_key = 12;
+    EvaluationKeyTuple evaluation_key_tuple = 14;
     oneof action_set {
       string action = 7;
       AllowActions allow_actions = 13;

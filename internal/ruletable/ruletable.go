@@ -178,7 +178,14 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 					Constants:        p.Constants,
 				},
 				EvaluationKey: evaluationKey,
-				PolicyKind:    policyv1.Kind_KIND_PRINCIPAL,
+				EvaluationKeyTuple: &runtimev1.EvaluationKeyTuple{
+					Prefix:    namer.PrincipalPoliciesPrefix,
+					Principal: principalID,
+					Version:   rpps.Meta.Version,
+					Scope:     p.Scope,
+					RuleName:  rule.Name,
+				},
+				PolicyKind: policyv1.Kind_KIND_PRINCIPAL,
 			}
 
 			if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
@@ -284,7 +291,14 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 						Constants:        p.Constants,
 					},
 					EvaluationKey: evaluationKey,
-					PolicyKind:    policyv1.Kind_KIND_RESOURCE,
+					EvaluationKeyTuple: &runtimev1.EvaluationKeyTuple{
+						Prefix:   namer.ResourcePoliciesPrefix,
+						Resource: sanitizedResource,
+						Version:  rrps.Meta.Version,
+						Scope:    p.Scope,
+						RuleName: rule.Name,
+					},
+					PolicyKind: policyv1.Kind_KIND_RESOURCE,
 				}
 
 				if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
@@ -333,7 +347,15 @@ func addResourcePolicy(rt *runtimev1.RuleTable, rrps *runtimev1.RunnableResource
 								Constants:        rdr.Constants,
 							},
 							EvaluationKey: evaluationKey,
-							PolicyKind:    policyv1.Kind_KIND_RESOURCE,
+							EvaluationKeyTuple: &runtimev1.EvaluationKeyTuple{
+								Prefix:      namer.DerivedRolesPrefix,
+								Resource:    sanitizedResource,
+								DerivedRole: dr,
+								Version:     rrps.Meta.Version,
+								Scope:       p.Scope,
+								RuleName:    rule.Name,
+							},
+							PolicyKind: policyv1.Kind_KIND_RESOURCE,
 						}
 
 						if p.ScopePermissions == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS &&
@@ -388,7 +410,17 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 					OrderedVariables: p.OrderedVariables,
 					Constants:        p.Constants,
 				},
-				EvaluationKey:  fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Meta.Version, p.Scope)), p.Role, idx),
+				EvaluationKey: fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Meta.Version, p.Scope)), p.Role, idx),
+				// idx restarts at 0 for each resource, and the resource itself is left
+				// out of the key on purpose so this stays identical to the legacy
+				// evaluation_key string.
+				EvaluationKeyTuple: &runtimev1.EvaluationKeyTuple{
+					Prefix:  namer.RolePoliciesPrefix,
+					Role:    p.Role,
+					Version: p.Meta.Version,
+					Scope:   p.Scope,
+					RuleId:  uint32(idx), //nolint:gosec
+				},
 				PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 				FromRolePolicy: true,
 			})
@@ -719,8 +751,12 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	return rt.idx.IndexParentRoles(rt.ScopeParentRoles)
 }
 
-func (rt *RuleTable) GetAllRows() []*index.Binding {
+func (rt *RuleTable) GetAllRows() []*index.BindingHandle {
 	return rt.idx.GetAllRows()
+}
+
+func (rt *RuleTable) EvalKey(id uint32) index.EvaluationKeyTuple {
+	return rt.idx.EvalKey(id)
 }
 
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {

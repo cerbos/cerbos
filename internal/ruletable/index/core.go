@@ -4,6 +4,8 @@
 package index
 
 import (
+	"unique"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -26,6 +28,20 @@ type FunctionalCore struct {
 	FromRolePolicy       bool
 }
 
+// EvaluationKeyTuple is the structured form of a rule's evaluation
+// key. Its components are interned.
+type EvaluationKeyTuple struct {
+	Prefix      unique.Handle[string]
+	Resource    unique.Handle[string]
+	Principal   unique.Handle[string]
+	Role        unique.Handle[string]
+	DerivedRole unique.Handle[string]
+	Version     unique.Handle[string]
+	Scope       unique.Handle[string]
+	RuleName    unique.Handle[string]
+	RuleID      uint32
+}
+
 // Binding ties a routing tuple to a FunctionalCore. Each Binding gets a unique
 // uint32 ID used as a position in the bitmap index.
 type Binding struct {
@@ -40,9 +56,110 @@ type Binding struct {
 	OriginFqn                  string
 	OriginDerivedRole          string
 	Name                       string
-	EvaluationKey              string
+	EvaluationKey              EvaluationKeyTuple
 	ID                         uint32
 	NoMatchForScopePermissions bool
+}
+
+type BindingHandle struct {
+	Core                       *FunctionalCore
+	AllowActions               map[unique.Handle[string]]struct{}
+	Role                       unique.Handle[string]
+	Scope                      unique.Handle[string]
+	Version                    unique.Handle[string]
+	Resource                   unique.Handle[string]
+	Action                     unique.Handle[string]
+	Principal                  unique.Handle[string]
+	OriginFqn                  unique.Handle[string]
+	OriginDerivedRole          unique.Handle[string]
+	Name                       unique.Handle[string]
+	ID                         uint32
+	NoMatchForScopePermissions bool
+}
+
+func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
+	if b == nil {
+		return nil
+	}
+	var allow map[string]struct{}
+	if b.AllowActions != nil {
+		allow = make(map[string]struct{}, len(b.AllowActions))
+		for a := range b.AllowActions {
+			allow[a.Value()] = struct{}{}
+		}
+	}
+	return &Binding{
+		Core:                       b.Core,
+		AllowActions:               allow,
+		Role:                       HandleStr(b.Role),
+		Scope:                      HandleStr(b.Scope),
+		Version:                    HandleStr(b.Version),
+		Resource:                   HandleStr(b.Resource),
+		Action:                     HandleStr(b.Action),
+		Principal:                  HandleStr(b.Principal),
+		OriginFqn:                  HandleStr(b.OriginFqn),
+		OriginDerivedRole:          HandleStr(b.OriginDerivedRole),
+		Name:                       HandleStr(b.Name),
+		EvaluationKey:              evalKey,
+		ID:                         b.ID,
+		NoMatchForScopePermissions: b.NoMatchForScopePermissions,
+	}
+}
+
+// IsZero reports whether the tuple is empty, which is equivalent to the old empty
+// evaluation-key string.
+func (t EvaluationKeyTuple) IsZero() bool {
+	return t == EvaluationKeyTuple{}
+}
+
+// EmptyHandle is the zero unique.Handle[string]. Is equivalent of "".
+var EmptyHandle unique.Handle[string]
+
+// mkStringHandle interns s, returning the zero handle for "".
+func mkStringHandle(s string) unique.Handle[string] {
+	if s == "" {
+		return EmptyHandle
+	}
+	return unique.Make(s)
+}
+
+// HandleStr returns the interned string for a handle, or "" for the zero handle.
+func HandleStr(h unique.Handle[string]) string {
+	if h == EmptyHandle {
+		return ""
+	}
+	return h.Value()
+}
+
+func makeEvaluationKeyTuple(pb *runtimev1.EvaluationKeyTuple, fallbackKey string) EvaluationKeyTuple {
+	if pb == nil {
+		return EvaluationKeyTuple{RuleName: mkStringHandle(fallbackKey)}
+	}
+	return EvaluationKeyTuple{
+		Prefix:      mkStringHandle(pb.Prefix),
+		Resource:    mkStringHandle(pb.Resource),
+		Principal:   mkStringHandle(pb.Principal),
+		Role:        mkStringHandle(pb.Role),
+		DerivedRole: mkStringHandle(pb.DerivedRole),
+		Version:     mkStringHandle(pb.Version),
+		Scope:       mkStringHandle(pb.Scope),
+		RuleName:    mkStringHandle(pb.RuleName),
+		RuleID:      pb.RuleId,
+	}
+}
+
+func (t EvaluationKeyTuple) toProto() *runtimev1.EvaluationKeyTuple {
+	return &runtimev1.EvaluationKeyTuple{
+		Prefix:      HandleStr(t.Prefix),
+		Resource:    HandleStr(t.Resource),
+		Principal:   HandleStr(t.Principal),
+		Role:        HandleStr(t.Role),
+		DerivedRole: HandleStr(t.DerivedRole),
+		Version:     HandleStr(t.Version),
+		Scope:       HandleStr(t.Scope),
+		RuleName:    HandleStr(t.RuleName),
+		RuleId:      t.RuleID,
+	}
 }
 
 // RowParams holds compiled parameters for a rule or derived role.

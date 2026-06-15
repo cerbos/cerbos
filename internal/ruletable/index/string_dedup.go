@@ -4,6 +4,7 @@
 package index
 
 import (
+	"strings"
 	"unique"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -73,30 +74,40 @@ func (s *StringDeduper) dedupOutput(o *runtimev1.Output) {
 	s.dedupExpr(o.When.ConditionNotMet)
 }
 
-func (s *StringDeduper) dedupSet(m map[string]struct{}) map[string]struct{} {
-	if m == nil {
-		return nil
-	}
-	out := make(map[string]struct{}, len(m))
-	for k := range m {
-		s.Intern(&k)
-		out[k] = struct{}{}
-	}
-	return out
-}
-
-// dedupConstants rebuilds a string-keyed map with interned keys, values
-// are left as-is.
-func (s *StringDeduper) dedupConstants(m map[string]any) map[string]any {
+// RelocateConstants rebuilds a constant map with interned keys and relocated,
+// deep-copied values.
+func (s *StringDeduper) RelocateConstants(m map[string]any) map[string]any {
 	if m == nil {
 		return nil
 	}
 	out := make(map[string]any, len(m))
 	for k, v := range m {
 		s.Intern(&k)
-		out[k] = v
+		out[k] = s.relocateAny(v)
 	}
 	return out
+}
+
+func (s *StringDeduper) relocateAny(v any) any {
+	switch x := v.(type) {
+	case string:
+		return strings.Clone(x)
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			s.Intern(&k)
+			out[k] = s.relocateAny(e)
+		}
+		return out
+	case []any:
+		out := make([]any, len(x))
+		for i, e := range x {
+			out[i] = s.relocateAny(e)
+		}
+		return out
+	default:
+		return v
+	}
 }
 
 func (s *StringDeduper) dedupCore(c *FunctionalCore) {
@@ -119,7 +130,7 @@ func (s *StringDeduper) dedupParams(p *RowParams) {
 	if p == nil {
 		return
 	}
-	p.Constants = s.dedupConstants(p.Constants)
+	p.Constants = s.RelocateConstants(p.Constants)
 	for _, v := range p.Variables {
 		s.Intern(&v.Name)
 		s.dedupExpr(v.Expr)
@@ -132,12 +143,6 @@ func (idx *bitmapIndex) dedupStringsWith(s *StringDeduper) {
 		if b == nil {
 			continue
 		}
-		s.Intern(&b.Scope)
-		s.Intern(&b.OriginFqn)
-		s.Intern(&b.OriginDerivedRole)
-		s.Intern(&b.Name)
-		s.Intern(&b.EvaluationKey)
-		b.AllowActions = s.dedupSet(b.AllowActions)
 		if b.Core != nil {
 			if _, done := visitedCores[b.Core]; !done {
 				visitedCores[b.Core] = struct{}{}

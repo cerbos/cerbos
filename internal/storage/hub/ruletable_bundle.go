@@ -198,7 +198,7 @@ func (rtb *RuleTableBundle) RepoStats(ctx context.Context) storage.RepoStats {
 
 	stats := newStatsCollector()
 	for _, row := range rows {
-		stats.addRow(row)
+		stats.addRow(row, rtb.ruleTable.EvalKey(row.ID))
 	}
 
 	for _, schemas := range rtb.ruleTable.GetSchemas() {
