@@ -207,11 +207,11 @@ func loadPolicies(t *testing.T, ac *cerbos.GRPCAdminClient) {
 
 	fsys := os.DirFS(test.PathToDir(t, "store"))
 
-	p, err := policy.ReadPolicyFromFile(fsys, filepath.Join("derived_roles", "common_roles.yaml"))
+	p, _, err := policy.ReadPolicyFromFile(fsys, filepath.Join("derived_roles", "common_roles.yaml"))
 	require.NoError(t, err)
-	p2, err := policy.ReadPolicyFromFile(fsys, filepath.Join("derived_roles", "derived_roles_01.yaml"))
+	p2, _, err := policy.ReadPolicyFromFile(fsys, filepath.Join("derived_roles", "derived_roles_01.yaml"))
 	require.NoError(t, err)
-	p3, err := policy.ReadPolicyFromFile(fsys, filepath.Join("resource_policies", "policy_08.yaml"))
+	p3, _, err := policy.ReadPolicyFromFile(fsys, filepath.Join("resource_policies", "policy_08.yaml"))
 	require.NoError(t, err)
 
 	t.Logf("Loading %s", namer.PolicyKey(p))

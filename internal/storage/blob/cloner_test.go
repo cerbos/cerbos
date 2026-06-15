@@ -4,7 +4,6 @@
 package blob
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -17,7 +16,6 @@ import (
 
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestCloneResult(t *testing.T) {
@@ -28,7 +26,7 @@ func TestCloneResult(t *testing.T) {
 	seaweedFS := StartSeaweedFS(t)
 	testCases := test.LoadTestCases(t, "blob_cloner")
 	for _, testMetadata := range testCases {
-		testCase := readTestCase(t, testMetadata.Input)
+		testCase := test.Parse[privatev1.BlobClonerTestCase](t, testMetadata.Input)
 		dir := t.TempDir()
 
 		bucketDir := filepath.Join(dir, "bucket")
@@ -105,13 +103,4 @@ func toInfos(have []info) []*privatev1.BlobClonerTestCase_Step_Expectation_Info 
 	}
 
 	return infos
-}
-
-func readTestCase(tb testing.TB, data []byte) *privatev1.BlobClonerTestCase {
-	tb.Helper()
-
-	tc := &privatev1.BlobClonerTestCase{}
-	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
 }

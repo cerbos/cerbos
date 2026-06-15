@@ -1,6 +1,8 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
+//go:build tests
+
 package server
 
 import (
@@ -86,8 +88,7 @@ func LoadTestCases(tb testing.TB, suiteSleeps map[string]time.Duration, dirs ...
 func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTestCase {
 	tb.Helper()
 
-	tc := &privatev1.ServerTestCase{}
-	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc), "Failed to parse:>>>\n%s\n", string(data))
+	tc := test.Parse[privatev1.ServerTestCase](tb, data)
 
 	if tc.Name == "" {
 		tc.Name = name

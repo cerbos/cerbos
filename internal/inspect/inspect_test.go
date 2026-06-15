@@ -4,7 +4,6 @@
 package inspect_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -247,8 +246,7 @@ func (pl *policyLoader) LoadPolicy(_ context.Context, policyKey ...string) ([]*p
 func readTestCase(tb testing.TB, data []byte) *privatev1.InspectTestCase {
 	tb.Helper()
 
-	tc := &privatev1.InspectTestCase{}
-	require.NoError(tb, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
+	tc := test.Parse[privatev1.InspectTestCase](tb, data)
 
 	if tc.PoliciesExpectation == nil {
 		tc.PoliciesExpectation = &privatev1.InspectTestCase_PoliciesExpectation{}

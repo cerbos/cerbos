@@ -32,7 +32,6 @@ import (
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 var updateGolden = flag.Bool("updateGolden", false, "Update the golden values for the tests")
@@ -104,9 +103,7 @@ func updateGoldenFiles(t *testing.T, schemaMgr schema.Manager, testCases []test.
 func readTestCase(t *testing.T, testCase test.Case) (*privatev1.CompileTestCase, *txtar.Archive) {
 	t.Helper()
 
-	tc := &privatev1.CompileTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(testCase.Input), tc))
-
+	tc := test.Parse[privatev1.CompileTestCase](t, testCase.Input)
 	archive := txtar.Parse(testCase.Want["input"])
 	return tc, archive
 }
@@ -117,7 +114,7 @@ func mkCompilationUnit(t *testing.T, mainDef string, archive *txtar.Archive) *po
 	cu := &policy.CompilationUnit{}
 
 	for _, f := range archive.Files {
-		p, sc, err := policy.ReadPolicyWithSourceContextFromReader(bytes.NewReader(f.Data))
+		p, sc, err := policy.ReadPolicy(bytes.NewReader(f.Data))
 		require.NoError(t, err, "Unexpected error from %s", f.Name)
 
 		modID := namer.GenModuleID(p)

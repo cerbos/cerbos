@@ -124,7 +124,7 @@ func build(ctx context.Context, fsys fs.FS, opts buildOptions) (Index, error) {
 			return nil
 		}
 
-		p, sc, err := policy.ReadPolicyWithSourceContext(fsys, filePath)
+		p, sc, err := policy.ReadPolicyFromFile(fsys, filePath)
 		if err != nil {
 			ib.addLoadFailure(filePath, err)
 			return nil

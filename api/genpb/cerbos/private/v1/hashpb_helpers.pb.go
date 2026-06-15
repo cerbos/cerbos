@@ -4015,6 +4015,88 @@ func cerbos_private_v1_WellKnownTypes_hashpb_sum(m *WellKnownTypes, hasher hash.
 			}
 		}
 	}
+	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.empty"]; !ok {
+		if m.GetEmpty() != nil {
+			google_protobuf_Empty_hashpb_sum(m.GetEmpty(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.repeated_empty"]; !ok {
+		if len(m.RepeatedEmpty) > 0 {
+			for _, v := range m.RepeatedEmpty {
+				if v != nil {
+					google_protobuf_Empty_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.empty_map"]; !ok {
+		if len(m.EmptyMap) > 0 {
+			if len(m.EmptyMap) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.EmptyMap {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.EmptyMap[k] != nil {
+						google_protobuf_Empty_hashpb_sum(m.EmptyMap[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.EmptyMap)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.EmptyMap[k] != nil {
+						google_protobuf_Empty_hashpb_sum(m.EmptyMap[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.timestamp"]; !ok {
+		if m.GetTimestamp() != nil {
+			google_protobuf_Timestamp_hashpb_sum(m.GetTimestamp(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.repeated_timestamp"]; !ok {
+		if len(m.RepeatedTimestamp) > 0 {
+			for _, v := range m.RepeatedTimestamp {
+				if v != nil {
+					google_protobuf_Timestamp_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.timestamp_map"]; !ok {
+		if len(m.TimestampMap) > 0 {
+			if len(m.TimestampMap) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.TimestampMap {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.TimestampMap[k] != nil {
+						google_protobuf_Timestamp_hashpb_sum(m.TimestampMap[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.TimestampMap)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.TimestampMap[k] != nil {
+						google_protobuf_Timestamp_hashpb_sum(m.TimestampMap[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
 	if _, ok := ignore["cerbos.private.v1.WellKnownTypes.nested"]; !ok {
 		if m.GetNested() != nil {
 			cerbos_private_v1_WellKnownTypes_hashpb_sum(m.GetNested(), hasher, ignore, b)

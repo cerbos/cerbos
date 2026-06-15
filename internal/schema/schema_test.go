@@ -4,7 +4,6 @@
 package schema_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -24,7 +23,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestLoad(t *testing.T) {
@@ -214,10 +212,7 @@ func TestCache(t *testing.T) {
 func readTestCase(t *testing.T, data []byte) *privatev1.SchemaTestCase {
 	t.Helper()
 
-	tc := &privatev1.SchemaTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(data), tc))
-
-	return tc
+	return test.Parse[privatev1.SchemaTestCase](t, data)
 }
 
 func mkStore(t *testing.T) *disk.Store {

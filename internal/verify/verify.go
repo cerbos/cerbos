@@ -16,8 +16,8 @@ import (
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	internaljsonschema "github.com/cerbos/cerbos/internal/jsonschema"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cerbos/cerbos/internal/validator"
 )
 
 const (
@@ -107,11 +107,7 @@ func VerifyStream(ctx context.Context, fsys fs.FS, eng Checker, conf Config) (in
 				}
 			}
 
-			suite := &policyv1.TestSuite{}
-			err := util.LoadFromJSONOrYAML(fsys, file, suite)
-			if err == nil {
-				err = validator.Validate(suite)
-			}
+			suite, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestSuite](fsys, file))
 			if err != nil {
 				return &policyv1.TestResults_Suite{
 					File: file,

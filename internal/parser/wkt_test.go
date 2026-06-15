@@ -22,7 +22,9 @@ import (
 	"golang.org/x/tools/go/packages"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -225,6 +227,24 @@ func TestUnmarshalWKT(t *testing.T) {
 		Uint64WrapperMap: map[string]*wrapperspb.UInt64Value{
 			"foo": wrapperspb.UInt64(1),
 			"bar": wrapperspb.UInt64(2),
+		},
+		Empty: &emptypb.Empty{},
+		RepeatedEmpty: []*emptypb.Empty{
+			{},
+			{},
+		},
+		EmptyMap: map[string]*emptypb.Empty{
+			"foo": {},
+			"bar": {},
+		},
+		Timestamp: &timestamppb.Timestamp{Seconds: 1781519461, Nanos: 121000000},
+		RepeatedTimestamp: []*timestamppb.Timestamp{
+			{Seconds: 1781519461},
+			{Seconds: 1781519461, Nanos: 121161000},
+		},
+		TimestampMap: map[string]*timestamppb.Timestamp{
+			"foo": {Seconds: 1781519461},
+			"bar": {Seconds: 1781519461, Nanos: 121161239},
 		},
 	}
 
