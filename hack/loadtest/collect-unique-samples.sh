@@ -21,8 +21,7 @@ OUT_DIR=${OUT_DIR:-"."}
 for i in $(seq 0 $((K - 1))); do
   n=$((START_IDX + i))
   echo "=== cold start, sample ${n} ==="
-  # The launcher hard-kills the prior instance and waits up to its (generous,
-  # slow-cold-build-tolerant) HEALTH_ATTEMPTS window for health.
+  # The launcher hard-kills the prior instance and waits for it get healthy.
   ./cerbos-go-run.sh
   ./scrape.sh "${OUT_DIR}/${PREFIX}-${n}.txt"
 done

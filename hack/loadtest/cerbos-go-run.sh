@@ -5,10 +5,9 @@
 
 set -euo pipefail
 
-# Run from the main module root. hack/loadtest has its own nested go.mod, so
-# `go run` must be invoked from here to build the local cerbos code.
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE}")" && pwd)  
 REPO_ROOT="$(git rev-parse --show-toplevel)"
+
 cd "$REPO_ROOT"
 
 STORE=${STORE:-"disk"}
