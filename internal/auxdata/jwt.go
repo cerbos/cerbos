@@ -257,10 +257,7 @@ func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, i
 func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	ks, err := rks.Lookup(ctx, rks.url)
 	if err != nil {
-		return nil, nil, JWTExtractionError{
-			Cause:       fmt.Errorf("failed to look up remote keyset: %w", err),
-			Description: "failed to look up remote keyset",
-		}
+		return nil, nil, JWTExtractionError{Cause: err, Description: "failed to look up remote keyset"}
 	}
 
 	if err := validateKeySet(ks, rks.insecure); err != nil {
@@ -281,10 +278,7 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 		f, err := os.Open(src.File)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, JWTExtractionError{
-					Cause:       fmt.Errorf("failed to open keyset file %s: %w", src.File, err),
-					Description: fmt.Sprintf("failed to open keyset file %s", src.File),
-				}
+				return nil, nil, JWTExtractionError{Cause: err, Description: fmt.Sprintf("failed to open keyset file %s", src.File)}
 			}
 		}
 		defer f.Close()
@@ -292,28 +286,19 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 		keyBytes, err = io.ReadAll(f)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, JWTExtractionError{
-					Cause:       fmt.Errorf("failed to read from keyset file %s: %w", src.File, err),
-					Description: fmt.Sprintf("failed to read from keyset file %s", src.File),
-				}
+				return nil, nil, JWTExtractionError{Cause: err, Description: fmt.Sprintf("failed to read from keyset file %s", src.File)}
 			}
 		}
 	case src.Data != "":
 		keyBytes, err = base64.StdEncoding.DecodeString(src.Data)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, JWTExtractionError{
-					Cause:       fmt.Errorf("failed to decode base64 encoded keyset data: %w", err),
-					Description: "failed to decode base64 encoded keyset data",
-				}
+				return nil, nil, JWTExtractionError{Cause: err, Description: "failed to decode base64 encoded keyset data"}
 			}
 		}
 	default:
 		return func(context.Context) (jwk.Set, []any, error) {
-			return nil, nil, JWTExtractionError{
-				Cause:       errors.New("one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified"),
-				Description: "one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified",
-			}
+			return nil, nil, JWTExtractionError{Cause: err, Description: "one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified"}
 		}
 	}
 
@@ -329,10 +314,7 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 		}
 
 		return func(context.Context) (jwk.Set, []any, error) {
-			return nil, nil, JWTExtractionError{
-				Cause:       fmt.Errorf("failed to parse key data: %w", err),
-				Description: "failed to parse key data",
-			}
+			return nil, nil, JWTExtractionError{Cause: err, Description: "failed to parse key data"}
 		}
 	}
 
