@@ -365,25 +365,25 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 		b := &BindingHandle{
 			ID:                pb.Id,
 			Core:              cores[pb.CoreIndex],
-			Role:              makeStringHandle(pb.Role),
-			Scope:             makeStringHandle(pb.Scope),
-			Version:           makeStringHandle(pb.Version),
-			Resource:          makeStringHandle(pb.Resource),
-			Principal:         makeStringHandle(pb.Principal),
-			OriginFqn:         makeStringHandle(pb.OriginFqn),
-			OriginDerivedRole: makeStringHandle(pb.OriginDerivedRole),
-			Name:              makeStringHandle(pb.Name),
+			Role:              mkStringHandle(pb.Role),
+			Scope:             mkStringHandle(pb.Scope),
+			Version:           mkStringHandle(pb.Version),
+			Resource:          mkStringHandle(pb.Resource),
+			Principal:         mkStringHandle(pb.Principal),
+			OriginFqn:         mkStringHandle(pb.OriginFqn),
+			OriginDerivedRole: mkStringHandle(pb.OriginDerivedRole),
+			Name:              mkStringHandle(pb.Name),
 		}
 
 		switch v := pb.ActionSet.(type) {
 		case *runtimev1.BitmapIndex_Binding_AllowActions:
 			aa := make(map[unique.Handle[string]]struct{}, len(v.AllowActions.Actions))
 			for _, a := range v.AllowActions.Actions {
-				aa[makeStringHandle(a)] = struct{}{}
+				aa[mkStringHandle(a)] = struct{}{}
 			}
 			b.AllowActions = aa
 		case *runtimev1.BitmapIndex_Binding_Action:
-			b.Action = makeStringHandle(v.Action)
+			b.Action = mkStringHandle(v.Action)
 		}
 
 		bindings[pb.Id] = b

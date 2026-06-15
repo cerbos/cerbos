@@ -153,22 +153,22 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		case *runtimev1.RuleTable_RuleRow_AllowActions_:
 			allowActions = make(map[unique.Handle[string]]struct{}, len(v.AllowActions.GetActions()))
 			for a := range v.AllowActions.GetActions() {
-				allowActions[makeStringHandle(a)] = struct{}{}
+				allowActions[mkStringHandle(a)] = struct{}{}
 			}
 		case *runtimev1.RuleTable_RuleRow_Action:
-			action = makeStringHandle(v.Action)
+			action = mkStringHandle(v.Action)
 		}
 
 		b := &BindingHandle{
-			Scope:             makeStringHandle(rule.Scope),
-			Version:           makeStringHandle(rule.Version),
-			Resource:          makeStringHandle(rule.Resource),
-			Role:              makeStringHandle(rule.Role),
+			Scope:             mkStringHandle(rule.Scope),
+			Version:           mkStringHandle(rule.Version),
+			Resource:          mkStringHandle(rule.Resource),
+			Role:              mkStringHandle(rule.Role),
 			Action:            action,
-			Principal:         makeStringHandle(rule.Principal),
-			OriginFqn:         makeStringHandle(rule.OriginFqn),
-			OriginDerivedRole: makeStringHandle(rule.OriginDerivedRole),
-			Name:              makeStringHandle(rule.Name),
+			Principal:         mkStringHandle(rule.Principal),
+			OriginFqn:         mkStringHandle(rule.OriginFqn),
+			OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
+			Name:              mkStringHandle(rule.Name),
 			AllowActions:      allowActions,
 			Core:              core,
 		}
@@ -458,7 +458,7 @@ func (m *Index) appendRolePolicyDenies(
 									FromRolePolicy: true,
 									Params:         mb.Core.Params,
 								},
-								Action:    makeStringHandle(action),
+								Action:    mkStringHandle(action),
 								Name:      mb.Name,
 								OriginFqn: mb.OriginFqn,
 								Resource:  mb.Resource,
@@ -497,7 +497,7 @@ func (m *Index) appendRolePolicyDenies(
 							FromRolePolicy:   true,
 							Params:           mb.Core.Params,
 						},
-						Action:    makeStringHandle(action),
+						Action:    mkStringHandle(action),
 						Name:      mb.Name,
 						OriginFqn: mb.OriginFqn,
 						Resource:  mb.Resource,
@@ -571,12 +571,12 @@ func newNoMatchRolePolicyDeny(role, version, scope, resource, action string) *Bi
 			PolicyKind:     policyv1.Kind_KIND_RESOURCE,
 			FromRolePolicy: true,
 		},
-		Action:                     makeStringHandle(action),
-		OriginFqn:                  makeStringHandle(namer.RolePolicyFQN(role, version, scope)),
-		Resource:                   makeStringHandle(resource),
-		Role:                       makeStringHandle(role),
-		Scope:                      makeStringHandle(scope),
-		Version:                    makeStringHandle(version),
+		Action:                     mkStringHandle(action),
+		OriginFqn:                  mkStringHandle(namer.RolePolicyFQN(role, version, scope)),
+		Resource:                   mkStringHandle(resource),
+		Role:                       mkStringHandle(role),
+		Scope:                      mkStringHandle(scope),
+		Version:                    mkStringHandle(version),
 		NoMatchForScopePermissions: true,
 		ID:                         noEvalKey, // No condition to cache.
 	}
