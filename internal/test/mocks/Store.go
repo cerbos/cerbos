@@ -124,7 +124,7 @@ type Store_InspectPolicies_Call struct {
 // InspectPolicies is a helper method to define mock.On call
 //   - context1 context.Context
 //   - listPolicyIDsParams storage.ListPolicyIDsParams
-func (_e *Store_Expecter) InspectPolicies(context1 interface{}, listPolicyIDsParams interface{}) *Store_InspectPolicies_Call {
+func (_e *Store_Expecter) InspectPolicies(context1 any, listPolicyIDsParams any) *Store_InspectPolicies_Call {
 	return &Store_InspectPolicies_Call{Call: _e.mock.On("InspectPolicies", context1, listPolicyIDsParams)}
 }
 
@@ -192,7 +192,7 @@ type Store_ListPolicyIDs_Call struct {
 // ListPolicyIDs is a helper method to define mock.On call
 //   - context1 context.Context
 //   - listPolicyIDsParams storage.ListPolicyIDsParams
-func (_e *Store_Expecter) ListPolicyIDs(context1 interface{}, listPolicyIDsParams interface{}) *Store_ListPolicyIDs_Call {
+func (_e *Store_Expecter) ListPolicyIDs(context1 any, listPolicyIDsParams any) *Store_ListPolicyIDs_Call {
 	return &Store_ListPolicyIDs_Call{Call: _e.mock.On("ListPolicyIDs", context1, listPolicyIDsParams)}
 }
 
@@ -259,7 +259,7 @@ type Store_ListSchemaIDs_Call struct {
 
 // ListSchemaIDs is a helper method to define mock.On call
 //   - context1 context.Context
-func (_e *Store_Expecter) ListSchemaIDs(context1 interface{}) *Store_ListSchemaIDs_Call {
+func (_e *Store_Expecter) ListSchemaIDs(context1 any) *Store_ListSchemaIDs_Call {
 	return &Store_ListSchemaIDs_Call{Call: _e.mock.On("ListSchemaIDs", context1)}
 }
 
@@ -322,7 +322,7 @@ type Store_LoadSchema_Call struct {
 // LoadSchema is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *Store_Expecter) LoadSchema(context1 interface{}, s interface{}) *Store_LoadSchema_Call {
+func (_e *Store_Expecter) LoadSchema(context1 any, s any) *Store_LoadSchema_Call {
 	return &Store_LoadSchema_Call{Call: _e.mock.On("LoadSchema", context1, s)}
 }
 
