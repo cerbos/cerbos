@@ -18,4 +18,4 @@ input:
       "use": "sig"
     }
 wantLocalErr: "invalid algorithm (alg)"
-wantRemoteErr: "context deadline exceeded"
+wantRemoteErr: "failed to look up remote keyset"

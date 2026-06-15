@@ -257,7 +257,10 @@ func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, i
 func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	ks, err := rks.Lookup(ctx, rks.url)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, JWTExtractionError{
+			Cause:       fmt.Errorf("failed to look up remote keyset: %w", err),
+			Description: "failed to look up remote keyset",
+		}
 	}
 
 	if err := validateKeySet(ks, rks.insecure); err != nil {
@@ -278,7 +281,10 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 		f, err := os.Open(src.File)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to open keyset file %s: %w", src.File, err)
+				return nil, nil, JWTExtractionError{
+					Cause:       fmt.Errorf("failed to open keyset file %s: %w", src.File, err),
+					Description: fmt.Sprintf("failed to open keyset file %s", src.File),
+				}
 			}
 		}
 		defer f.Close()
@@ -286,19 +292,28 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 		keyBytes, err = io.ReadAll(f)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to read from keyset file %s: %w", src.File, err)
+				return nil, nil, JWTExtractionError{
+					Cause:       fmt.Errorf("failed to read from keyset file %s: %w", src.File, err),
+					Description: fmt.Sprintf("failed to read from keyset file %s", src.File),
+				}
 			}
 		}
 	case src.Data != "":
 		keyBytes, err = base64.StdEncoding.DecodeString(src.Data)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to decode base64 encoded keyset data: %w", err)
+				return nil, nil, JWTExtractionError{
+					Cause:       fmt.Errorf("failed to decode base64 encoded keyset data: %w", err),
+					Description: "failed to decode base64 encoded keyset data",
+				}
 			}
 		}
 	default:
 		return func(context.Context) (jwk.Set, []any, error) {
-			return nil, nil, fmt.Errorf("one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified")
+			return nil, nil, JWTExtractionError{
+				Cause:       errors.New("one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified"),
+				Description: "one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified",
+			}
 		}
 	}
 
@@ -306,12 +321,18 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 	if err != nil {
 		if errors.Is(err, jwa.ErrInvalidKeyAlgorithm()) {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("invalid algorithm (alg)")
+				return nil, nil, JWTExtractionError{
+					Cause:       errors.New("invalid algorithm (alg)"),
+					Description: "invalid algorithm (alg)",
+				}
 			}
 		}
 
 		return func(context.Context) (jwk.Set, []any, error) {
-			return nil, nil, fmt.Errorf("failed to parse key data: %w", err)
+			return nil, nil, JWTExtractionError{
+				Cause:       fmt.Errorf("failed to parse key data: %w", err),
+				Description: "failed to parse key data",
+			}
 		}
 	}
 
@@ -344,7 +365,10 @@ func validateKeySet(keySet jwk.Set, insecure InsecureKeySetOpt) error {
 	for idx := range keySet.Len() {
 		key, ok := keySet.Key(idx)
 		if !ok {
-			return fmt.Errorf("failed to get key at idx %d", idx)
+			return JWTExtractionError{
+				Cause:       fmt.Errorf("failed to get key at idx %d", idx),
+				Description: fmt.Sprintf("failed to get key at idx %d", idx),
+			}
 		}
 
 		if err := validateKey(key, insecure.OptionalAlg, insecure.OptionalKid); err != nil {
@@ -358,21 +382,33 @@ func validateKeySet(keySet jwk.Set, insecure InsecureKeySetOpt) error {
 func validateKey(key jwk.Key, optionalAlg, optionalKid bool) error {
 	if alg, ok := key.Algorithm(); !optionalAlg {
 		if !ok {
-			return fmt.Errorf("missing algorithm (alg)")
+			return JWTExtractionError{
+				Cause:       errors.New("missing algorithm (alg)"),
+				Description: "missing algorithm (alg)",
+			}
 		}
 
 		if alg.String() == "" {
-			return fmt.Errorf("empty algorithm (alg)")
+			return JWTExtractionError{
+				Cause:       errors.New("empty algorithm (alg)"),
+				Description: "empty algorithm (alg)",
+			}
 		}
 	}
 
 	if kid, ok := key.KeyID(); !optionalKid {
 		if !ok {
-			return fmt.Errorf("missing key ID (kid)")
+			return JWTExtractionError{
+				Cause:       errors.New("missing key ID (kid)"),
+				Description: "missing key ID (kid)",
+			}
 		}
 
 		if kid == "" {
-			return fmt.Errorf("empty key ID (kid)")
+			return JWTExtractionError{
+				Cause:       errors.New("empty key ID (kid)"),
+				Description: "empty key ID (kid)",
+			}
 		}
 	}
 
