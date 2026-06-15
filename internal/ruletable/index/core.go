@@ -91,15 +91,15 @@ func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
 	return &Binding{
 		Core:                       b.Core,
 		AllowActions:               allow,
-		Role:                       stringHandleValue(b.Role),
-		Scope:                      stringHandleValue(b.Scope),
-		Version:                    stringHandleValue(b.Version),
-		Resource:                   stringHandleValue(b.Resource),
-		Action:                     stringHandleValue(b.Action),
-		Principal:                  stringHandleValue(b.Principal),
-		OriginFqn:                  stringHandleValue(b.OriginFqn),
-		OriginDerivedRole:          stringHandleValue(b.OriginDerivedRole),
-		Name:                       stringHandleValue(b.Name),
+		Role:                       HandleStr(b.Role),
+		Scope:                      HandleStr(b.Scope),
+		Version:                    HandleStr(b.Version),
+		Resource:                   HandleStr(b.Resource),
+		Action:                     HandleStr(b.Action),
+		Principal:                  HandleStr(b.Principal),
+		OriginFqn:                  HandleStr(b.OriginFqn),
+		OriginDerivedRole:          HandleStr(b.OriginDerivedRole),
+		Name:                       HandleStr(b.Name),
 		EvaluationKey:              evalKey,
 		ID:                         b.ID,
 		NoMatchForScopePermissions: b.NoMatchForScopePermissions,
@@ -123,17 +123,12 @@ func makeStringHandle(s string) unique.Handle[string] {
 	return unique.Make(s)
 }
 
-// TODO: replace with HandleStr.
-func stringHandleValue(h unique.Handle[string]) string {
+// HandleStr returns the interned string for a handle, or "" for the zero handle.
+func HandleStr(h unique.Handle[string]) string {
 	if h == EmptyHandle {
 		return ""
 	}
 	return h.Value()
-}
-
-// HandleStr returns the interned string for a handle, or "" for the zero handle.
-func HandleStr(h unique.Handle[string]) string {
-	return stringHandleValue(h)
 }
 
 func makeEvaluationKeyTuple(pb *runtimev1.EvaluationKeyTuple, fallbackKey string) EvaluationKeyTuple {
@@ -155,14 +150,14 @@ func makeEvaluationKeyTuple(pb *runtimev1.EvaluationKeyTuple, fallbackKey string
 
 func (t EvaluationKeyTuple) toProto() *runtimev1.EvaluationKeyTuple {
 	return &runtimev1.EvaluationKeyTuple{
-		Prefix:      stringHandleValue(t.Prefix),
-		Resource:    stringHandleValue(t.Resource),
-		Principal:   stringHandleValue(t.Principal),
-		Role:        stringHandleValue(t.Role),
-		DerivedRole: stringHandleValue(t.DerivedRole),
-		Version:     stringHandleValue(t.Version),
-		Scope:       stringHandleValue(t.Scope),
-		RuleName:    stringHandleValue(t.RuleName),
+		Prefix:      HandleStr(t.Prefix),
+		Resource:    HandleStr(t.Resource),
+		Principal:   HandleStr(t.Principal),
+		Role:        HandleStr(t.Role),
+		DerivedRole: HandleStr(t.DerivedRole),
+		Version:     HandleStr(t.Version),
+		Scope:       HandleStr(t.Scope),
+		RuleName:    HandleStr(t.RuleName),
 		RuleId:      t.RuleID,
 	}
 }

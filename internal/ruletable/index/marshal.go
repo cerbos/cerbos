@@ -158,21 +158,21 @@ func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32, eval
 	pb := &runtimev1.BitmapIndex_Binding{
 		Id:                 b.ID,
 		CoreIndex:          coreIndex[b.Core],
-		Role:               stringHandleValue(b.Role),
-		Scope:              stringHandleValue(b.Scope),
-		Version:            stringHandleValue(b.Version),
-		Resource:           stringHandleValue(b.Resource),
-		Principal:          stringHandleValue(b.Principal),
-		OriginFqn:          stringHandleValue(b.OriginFqn),
-		OriginDerivedRole:  stringHandleValue(b.OriginDerivedRole),
-		Name:               stringHandleValue(b.Name),
+		Role:               HandleStr(b.Role),
+		Scope:              HandleStr(b.Scope),
+		Version:            HandleStr(b.Version),
+		Resource:           HandleStr(b.Resource),
+		Principal:          HandleStr(b.Principal),
+		OriginFqn:          HandleStr(b.OriginFqn),
+		OriginDerivedRole:  HandleStr(b.OriginDerivedRole),
+		Name:               HandleStr(b.Name),
 		EvaluationKeyTuple: evalKey.toProto(),
 	}
 
 	if b.AllowActions != nil {
 		actions := make([]string, 0, len(b.AllowActions))
 		for a := range b.AllowActions {
-			actions = append(actions, stringHandleValue(a))
+			actions = append(actions, HandleStr(a))
 		}
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_AllowActions{
 			AllowActions: &runtimev1.BitmapIndex_AllowActions{

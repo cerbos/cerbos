@@ -107,7 +107,7 @@ func (idx *bitmapIndex) addBinding(b *BindingHandle, evalKey EvaluationKeyTuple)
 	// Scope "" is a valid literal (root scope), always indexed. Other dimensions
 	// skip "" to avoid leaking empties from policies that don't participate in
 	// them (e.g. principal-policy noop rows have no role/resource).
-	idx.scope.Add(stringHandleValue(b.Scope), id)
+	idx.scope.Add(HandleStr(b.Scope), id)
 	if b.Version != EmptyHandle {
 		idx.version.Add(b.Version.Value(), id)
 	}
@@ -130,7 +130,7 @@ func (idx *bitmapIndex) addBinding(b *BindingHandle, evalKey EvaluationKeyTuple)
 		idx.principal.Add(b.Principal.Value(), id)
 	}
 
-	idx.fqnBindings.Add(stringHandleValue(b.OriginFqn), id)
+	idx.fqnBindings.Add(HandleStr(b.OriginFqn), id)
 }
 
 // removeBinding removes the binding from the slice and all dimension bitmaps,
@@ -141,11 +141,11 @@ func (idx *bitmapIndex) removeBinding(b *BindingHandle) {
 	id := b.ID
 
 	idx.universe.Remove(id)
-	idx.version.Remove(stringHandleValue(b.Version), id)
-	idx.scope.Remove(stringHandleValue(b.Scope), id)
+	idx.version.Remove(HandleStr(b.Version), id)
+	idx.scope.Remove(HandleStr(b.Scope), id)
 
-	idx.role.Remove(stringHandleValue(b.Role), id)
-	idx.resource.Remove(stringHandleValue(b.Resource), id)
+	idx.role.Remove(HandleStr(b.Role), id)
+	idx.resource.Remove(HandleStr(b.Resource), id)
 
 	if b.AllowActions != nil {
 		idx.allowActionsBitmap.Remove(id)
@@ -154,7 +154,7 @@ func (idx *bitmapIndex) removeBinding(b *BindingHandle) {
 	}
 
 	idx.policyKind.Remove(b.Core.PolicyKind, id)
-	idx.principal.Remove(stringHandleValue(b.Principal), id)
+	idx.principal.Remove(HandleStr(b.Principal), id)
 
 	idx.freeID(id)
 }

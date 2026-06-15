@@ -373,7 +373,7 @@ func (m *Index) appendRolePolicyDenies(
 		if b == nil {
 			continue
 		}
-		role := stringHandleValue(b.Role)
+		role := HandleStr(b.Role)
 		if _, ok := rolePolicyRep[role]; !ok {
 			roleOrder = append(roleOrder, role)
 			rolePolicyRep[role] = b
@@ -400,7 +400,7 @@ func (m *Index) appendRolePolicyDenies(
 			if b == nil {
 				continue
 			}
-			role := stringHandleValue(b.Role)
+			role := HandleStr(b.Role)
 			resourceMatchedByRole[role] = append(resourceMatchedByRole[role], b)
 		}
 
@@ -421,7 +421,7 @@ func (m *Index) appendRolePolicyDenies(
 			// role policy exists, but no resource bindings present
 			if len(roleBindings) == 0 {
 				for _, action := range resourceActions {
-					res = append(res, newNoMatchRolePolicyDeny(role, stringHandleValue(rep.Version), stringHandleValue(rep.Scope), resource, action))
+					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), resource, action))
 				}
 				continue
 			}
@@ -430,7 +430,7 @@ func (m *Index) appendRolePolicyDenies(
 				matched = matched[:0]
 				for _, rb := range roleBindings {
 					for a := range rb.AllowActions {
-						av := stringHandleValue(a)
+						av := HandleStr(a)
 						if av == action || util.MatchesGlob(av, action) {
 							matched = append(matched, rb)
 							break
@@ -441,7 +441,7 @@ func (m *Index) appendRolePolicyDenies(
 				// role policy exists with resource bindings, but action not specified
 				if len(matched) == 0 {
 					rep := roleBindings[0]
-					res = append(res, newNoMatchRolePolicyDeny(role, stringHandleValue(rep.Version), stringHandleValue(rep.Scope), stringHandleValue(rep.Resource), action))
+					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), HandleStr(rep.Resource), action))
 					continue
 				}
 
@@ -553,7 +553,7 @@ func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionB
 			actionSet[b.Action.Value()] = struct{}{}
 		}
 		for a := range b.AllowActions {
-			actionSet[stringHandleValue(a)] = struct{}{}
+			actionSet[HandleStr(a)] = struct{}{}
 		}
 	}
 
