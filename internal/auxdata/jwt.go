@@ -69,9 +69,9 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 				if jwkCache == nil {
 					jwkCache = newJWKCache(ctx, log)
 				}
-				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, &ks.Insecure, opts)
+				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, ks.Insecure, opts)
 			case ks.Local != nil:
-				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, &ks.Insecure, opts)
+				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, ks.Insecure, opts)
 			}
 		}
 	}
@@ -150,20 +150,7 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
 	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
-		switch {
-		case errors.Is(err, jwt.InvalidAudienceError()):
-			return nil, fmt.Errorf("invalid audience ('aud')")
-		case errors.Is(err, jwt.InvalidIssuedAtError()):
-			return nil, fmt.Errorf("issued at time is in the future ('iat')")
-		case errors.Is(err, jwt.InvalidIssuerError()):
-			return nil, fmt.Errorf("invalid issuer ('iss')")
-		case errors.Is(err, jwt.TokenExpiredError()):
-			return nil, fmt.Errorf("token has expired ('exp')")
-		case errors.Is(err, jwt.TokenNotYetValidError()):
-			return nil, fmt.Errorf("token is not yet valid ('nbf')")
-		default:
-			return nil, fmt.Errorf("failed to parse: %w", err)
-		}
+		return nil, newJWTExtractionError(err, fmt.Errorf("failed to parse JWT: %w", err))
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
@@ -189,6 +176,54 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 	return jwtPBMap, nil
 }
 
+func newJWTExtractionError(err, defaultErr error) error {
+	switch {
+	case errors.Is(err, jwt.InvalidAudienceError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "invalid audience (aud)",
+		}
+	case errors.Is(err, jwt.InvalidIssuedAtError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "issued at time (iat) is in the future",
+		}
+	case errors.Is(err, jwt.InvalidIssuerError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "invalid issuer (iss)",
+		}
+	case errors.Is(err, jwt.TokenExpiredError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "token has expired (exp)",
+		}
+	case errors.Is(err, jwt.TokenNotYetValidError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "token is not valid yet ('nbf')",
+		}
+	default:
+		return defaultErr
+	}
+}
+
+type JWTExtractionError struct {
+	Cause       error
+	Description string
+}
+
+func (ee JWTExtractionError) Error() string {
+	if ee.Description != "" {
+		return ee.Description
+	}
+	return ee.Cause.Error()
+}
+
+func (ee JWTExtractionError) Unwrap() error {
+	return ee.Cause
+}
+
 type keySet interface {
 	keySet(context.Context) (jwk.Set, []any, error)
 }
@@ -196,12 +231,12 @@ type keySet interface {
 // remoteKeySet holds an auto-refreshing remote keyset.
 type remoteKeySet struct {
 	*jwk.Cache
-	insecure *InsecureKeySetOpt
 	url      string
 	options  []any
+	insecure InsecureKeySetOpt
 }
 
-func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, insecure *InsecureKeySetOpt, options []any) *remoteKeySet {
+func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, insecure InsecureKeySetOpt, options []any) *remoteKeySet {
 	if src.RefreshInterval > 0 {
 		_ = cache.Register(ctx, src.URL, jwk.WithConstantInterval(src.RefreshInterval))
 	} else {
@@ -232,7 +267,7 @@ func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 // localKeySet represents a keyset defined manually through the configuration.
 type localKeySet func(context.Context) (jwk.Set, []any, error)
 
-func newLocalKeySet(src *LocalSource, insecure *InsecureKeySetOpt, options []any) localKeySet {
+func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any) localKeySet {
 	var keyBytes []byte
 	var err error
 	switch {
@@ -298,14 +333,8 @@ func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	return lks(ctx)
 }
 
-func validateKeySet(keySet jwk.Set, insecure *InsecureKeySetOpt) error {
-	var optionalAlg, optionalKid bool
-	if insecure != nil {
-		optionalAlg = insecure.OptionalAlg
-		optionalKid = insecure.OptionalKid
-	}
-
-	if optionalAlg && optionalKid {
+func validateKeySet(keySet jwk.Set, insecure InsecureKeySetOpt) error {
+	if insecure.OptionalAlg && insecure.OptionalKid {
 		return nil
 	}
 
@@ -315,7 +344,7 @@ func validateKeySet(keySet jwk.Set, insecure *InsecureKeySetOpt) error {
 			return fmt.Errorf("failed to get key at idx %d", idx)
 		}
 
-		if err := validateKey(key, optionalAlg, optionalKid); err != nil {
+		if err := validateKey(key, insecure.OptionalAlg, insecure.OptionalKid); err != nil {
 			return fmt.Errorf("failed to validate key at idx %d: %w", idx, err)
 		}
 	}
