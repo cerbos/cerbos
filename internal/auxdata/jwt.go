@@ -150,7 +150,7 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
 	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
-		return nil, newJWTExtractionError(err, fmt.Errorf("failed to parse JWT: %w", err))
+		return nil, newJWTExtractionError(err)
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
@@ -176,7 +176,7 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 	return jwtPBMap, nil
 }
 
-func newJWTExtractionError(err, defaultErr error) error {
+func newJWTExtractionError(err error) error {
 	switch {
 	case errors.Is(err, jwt.InvalidAudienceError()):
 		return JWTExtractionError{
@@ -186,7 +186,7 @@ func newJWTExtractionError(err, defaultErr error) error {
 	case errors.Is(err, jwt.InvalidIssuedAtError()):
 		return JWTExtractionError{
 			Cause:       err,
-			Description: "issued at time (iat) is in the future",
+			Description: "issued at time is in the future (iat)",
 		}
 	case errors.Is(err, jwt.InvalidIssuerError()):
 		return JWTExtractionError{
@@ -204,7 +204,10 @@ func newJWTExtractionError(err, defaultErr error) error {
 			Description: "token is not valid yet (nbf)",
 		}
 	default:
-		return defaultErr
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "failed to parse JWT",
+		}
 	}
 }
 
@@ -303,7 +306,7 @@ func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any)
 	if err != nil {
 		if errors.Is(err, jwa.ErrInvalidKeyAlgorithm()) {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("invalid algorithm ('alg')")
+				return nil, nil, fmt.Errorf("invalid algorithm (alg)")
 			}
 		}
 
@@ -355,21 +358,21 @@ func validateKeySet(keySet jwk.Set, insecure InsecureKeySetOpt) error {
 func validateKey(key jwk.Key, optionalAlg, optionalKid bool) error {
 	if alg, ok := key.Algorithm(); !optionalAlg {
 		if !ok {
-			return fmt.Errorf("missing algorithm ('alg')")
+			return fmt.Errorf("missing algorithm (alg)")
 		}
 
 		if alg.String() == "" {
-			return fmt.Errorf("empty algorithm ('alg')")
+			return fmt.Errorf("empty algorithm (alg)")
 		}
 	}
 
 	if kid, ok := key.KeyID(); !optionalKid {
 		if !ok {
-			return fmt.Errorf("missing key ID ('kid')")
+			return fmt.Errorf("missing key ID (kid)")
 		}
 
 		if kid == "" {
-			return fmt.Errorf("empty key ID ('kid')")
+			return fmt.Errorf("empty key ID (kid)")
 		}
 	}
 
