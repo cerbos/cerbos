@@ -411,6 +411,9 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 					Constants:        p.Constants,
 				},
 				EvaluationKey: fmt.Sprintf("%s#%s_rule-%03d", namer.PolicyKeyFromFQN(namer.RolePolicyFQN(p.Role, p.Meta.Version, p.Scope)), p.Role, idx),
+				// idx restarts at 0 for each resource, and the resource itself is left
+				// out of the key on purpose so this stays identical to the legacy
+				// evaluation_key string.
 				EvaluationKeyTuple: &runtimev1.EvaluationKeyTuple{
 					Prefix:  namer.RolePoliciesPrefix,
 					Role:    p.Role,
