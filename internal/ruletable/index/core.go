@@ -106,7 +106,7 @@ func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
 	}
 }
 
-// IsZero reports whether the tuple is empty, which equivalent to the old empty
+// IsZero reports whether the tuple is empty, which is equivalent to the old empty
 // evaluation-key string.
 func (t EvaluationKeyTuple) IsZero() bool {
 	return t == EvaluationKeyTuple{}
