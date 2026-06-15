@@ -1,0 +1,14 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: a
+  version: b
+  rules:
+    - &c
+      actions:
+        - d
+      effect: EFFECT_ALLOW
+      roles:
+        - e
+    - <<: *c
+      actions:
+        - f

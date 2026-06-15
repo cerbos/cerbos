@@ -1,0 +1,25 @@
+{
+    "description": "Merging maps (#3233)",
+    "want": [
+        {
+            "message": {
+                "apiVersion": "api.cerbos.dev/v1",
+                "resourcePolicy": {
+                    "resource": "a",
+                    "version": "b",
+                    "constants": {
+                        "local": {
+                            "d": "e",
+                            "f": "g"
+                        }
+                    },
+                    "variables": {
+                        "local": {
+                            "h": "i"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

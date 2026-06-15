@@ -1,0 +1,12 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: a
+  version: b
+  constants: &c
+    local:
+      d: e
+      f: g
+  variables:
+    <<: *c
+    local:
+      h: i
