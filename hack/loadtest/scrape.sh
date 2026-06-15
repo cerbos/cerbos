@@ -59,10 +59,6 @@ for m in "${PDP_METRICS[@]}"; do
   esac
 done
 
-# Derived fragmentation: in-use span memory per byte of live heap object.
-# 1.00 = perfect packing; higher means more span slack. Most meaningful sampled
-# after a GC, since heap_alloc otherwise includes unswept garbage. Not written to
-# the snapshot file — it is derivable from the two raw values already there.
 if [[ -n "${heapInuse:-}" && -n "${heapAlloc:-}" && "$heapAlloc" -gt 0 ]]; then
   ratio=$(awk -v a="$heapInuse" -v b="$heapAlloc" 'BEGIN { printf "%.3f", a / b }')
   slack=$((heapInuse - heapAlloc))
