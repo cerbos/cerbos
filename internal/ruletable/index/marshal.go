@@ -41,7 +41,7 @@ func (m *Index) Marshal() ([]byte, error) {
 		if b == nil {
 			continue
 		}
-		pbBindings = append(pbBindings, marshalBinding(b, coreIndex))
+		pbBindings = append(pbBindings, marshalBinding(b, coreIndex, bi.evalKey(b.ID)))
 	}
 
 	version, err := marshalEntries(bi.version.m)
@@ -154,7 +154,7 @@ func marshalRowParams(rp *RowParams) (*runtimev1.RuleTable_RuleRow_Params, error
 	}, nil
 }
 
-func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32) *runtimev1.BitmapIndex_Binding {
+func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32, evalKey EvaluationKeyTuple) *runtimev1.BitmapIndex_Binding {
 	pb := &runtimev1.BitmapIndex_Binding{
 		Id:                 b.ID,
 		CoreIndex:          coreIndex[b.Core],
@@ -166,7 +166,7 @@ func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32) *run
 		OriginFqn:          stringHandleValue(b.OriginFqn),
 		OriginDerivedRole:  stringHandleValue(b.OriginDerivedRole),
 		Name:               stringHandleValue(b.Name),
-		EvaluationKeyTuple: b.EvaluationKey.toProto(),
+		EvaluationKeyTuple: evalKey.toProto(),
 	}
 
 	if b.AllowActions != nil {
@@ -249,7 +249,7 @@ func Unmarshal(data []byte) (*Index, error) {
 	}
 
 	bi := newBitmapIndex()
-	bi.bindings = unmarshalBindings(msg.Bindings, cores)
+	bi.bindings, bi.evalKeys = unmarshalBindings(msg.Bindings, cores)
 
 	bi.version, err = unmarshalEntries(msg.Version)
 	if err != nil {
@@ -346,9 +346,9 @@ func unmarshalCores(pbCores []*runtimev1.BitmapIndex_FunctionalCore) ([]*Functio
 	return cores, nil
 }
 
-func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) []*BindingHandle {
+func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) ([]*BindingHandle, []EvaluationKeyTuple) {
 	if len(pbBindings) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// find the max ID to size the bindings slice.
@@ -360,6 +360,7 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 	}
 
 	bindings := make([]*BindingHandle, maxID+1)
+	evalKeys := make([]EvaluationKeyTuple, maxID+1)
 	for _, pb := range pbBindings {
 		b := &BindingHandle{
 			ID:                pb.Id,
@@ -372,7 +373,6 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 			OriginFqn:         makeStringHandle(pb.OriginFqn),
 			OriginDerivedRole: makeStringHandle(pb.OriginDerivedRole),
 			Name:              makeStringHandle(pb.Name),
-			EvaluationKey:     makeEvaluationKeyTuple(pb.EvaluationKeyTuple, pb.EvaluationKey),
 		}
 
 		switch v := pb.ActionSet.(type) {
@@ -387,9 +387,10 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 		}
 
 		bindings[pb.Id] = b
+		evalKeys[pb.Id] = makeEvaluationKeyTuple(pb.EvaluationKeyTuple, pb.EvaluationKey)
 	}
 
-	return bindings
+	return bindings, evalKeys
 }
 
 func unmarshalEntries(entries []*runtimev1.BitmapIndex_Entry) (dimension[string], error) {

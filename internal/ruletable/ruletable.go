@@ -752,6 +752,10 @@ func (rt *RuleTable) GetAllRows() []*index.BindingHandle {
 	return rt.idx.GetAllRows()
 }
 
+func (rt *RuleTable) EvalKey(id uint32) index.EvaluationKeyTuple {
+	return rt.idx.EvalKey(id)
+}
+
 func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDerivedRole {
 	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }

@@ -73,12 +73,11 @@ type BindingHandle struct {
 	OriginFqn                  unique.Handle[string]
 	OriginDerivedRole          unique.Handle[string]
 	Name                       unique.Handle[string]
-	EvaluationKey              EvaluationKeyTuple
 	ID                         uint32
 	NoMatchForScopePermissions bool
 }
 
-func (b *BindingHandle) ToBinding() *Binding {
+func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
 	if b == nil {
 		return nil
 	}
@@ -101,7 +100,7 @@ func (b *BindingHandle) ToBinding() *Binding {
 		OriginFqn:                  stringHandleValue(b.OriginFqn),
 		OriginDerivedRole:          stringHandleValue(b.OriginDerivedRole),
 		Name:                       stringHandleValue(b.Name),
-		EvaluationKey:              b.EvaluationKey,
+		EvaluationKey:              evalKey,
 		ID:                         b.ID,
 		NoMatchForScopePermissions: b.NoMatchForScopePermissions,
 	}

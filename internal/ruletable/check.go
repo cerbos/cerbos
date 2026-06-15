@@ -285,6 +285,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						bName := index.HandleStr(b.Name)
 						bOriginFqn := index.HandleStr(b.OriginFqn)
 						bScope := index.HandleStr(b.Scope)
+						bEvalKey := rt.idx.EvalKey(b.ID)
 						rulectx := sctx.StartRule(bName)
 
 						if m := rt.GetMeta(bOriginFqn); m != nil && m.GetSourceAttributes() != nil {
@@ -309,7 +310,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						}
 
 						var satisfiesCondition bool
-						if c, ok := conditionCache[b.EvaluationKey]; ok { //nolint:nestif
+						if c, ok := conditionCache[bEvalKey]; ok { //nolint:nestif
 							satisfiesCondition = c
 						} else {
 							// We evaluate the derived role condition (if any) first, as this leads to a more sane engine trace output.
@@ -344,7 +345,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								// terminate early if the derived role condition isn't satisfied, which is consistent with the pre-rule table implementation
 								if !drSatisfied {
 									rulectx.Skipped(err, "No matching derived roles")
-									conditionCache[b.EvaluationKey] = false
+									conditionCache[bEvalKey] = false
 									continue
 								}
 							}
@@ -355,7 +356,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								continue
 							}
 
-							conditionCache[b.EvaluationKey] = isSatisfied
+							conditionCache[bEvalKey] = isSatisfied
 							satisfiesCondition = isSatisfied
 						}
 

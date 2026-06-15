@@ -80,6 +80,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 
 	if newBindings := len(rules) - len(m.bi.freeIDs); newBindings > 0 {
 		m.bi.bindings = slices.Grow(m.bi.bindings, newBindings)
+		m.bi.evalKeys = slices.Grow(m.bi.evalKeys, newBindings)
 	}
 
 	paramsCache := make(map[uint64]*RowParams)
@@ -168,15 +169,18 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			OriginFqn:         makeStringHandle(rule.OriginFqn),
 			OriginDerivedRole: makeStringHandle(rule.OriginDerivedRole),
 			Name:              makeStringHandle(rule.Name),
-			EvaluationKey:     makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey),
 			AllowActions:      allowActions,
 			Core:              core,
 		}
 
-		m.bi.addBinding(b)
+		m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
 	}
 
 	return nil
+}
+
+func (m *Index) EvalKey(id uint32) EvaluationKeyTuple {
+	return m.bi.evalKey(id)
 }
 
 func (m *Index) GetAllRows() []*BindingHandle {
@@ -454,14 +458,14 @@ func (m *Index) appendRolePolicyDenies(
 									FromRolePolicy: true,
 									Params:         mb.Core.Params,
 								},
-								Action:        makeStringHandle(action),
-								Name:          mb.Name,
-								OriginFqn:     mb.OriginFqn,
-								Resource:      mb.Resource,
-								Role:          mb.Role,
-								Scope:         mb.Scope,
-								Version:       mb.Version,
-								EvaluationKey: mb.EvaluationKey,
+								Action:    makeStringHandle(action),
+								Name:      mb.Name,
+								OriginFqn: mb.OriginFqn,
+								Resource:  mb.Resource,
+								Role:      mb.Role,
+								Scope:     mb.Scope,
+								Version:   mb.Version,
+								ID:        mb.ID,
 							})
 						}
 						continue
@@ -493,14 +497,14 @@ func (m *Index) appendRolePolicyDenies(
 							FromRolePolicy:   true,
 							Params:           mb.Core.Params,
 						},
-						Action:        makeStringHandle(action),
-						Name:          mb.Name,
-						OriginFqn:     mb.OriginFqn,
-						Resource:      mb.Resource,
-						Role:          mb.Role,
-						Scope:         mb.Scope,
-						Version:       mb.Version,
-						EvaluationKey: mb.EvaluationKey,
+						Action:    makeStringHandle(action),
+						Name:      mb.Name,
+						OriginFqn: mb.OriginFqn,
+						Resource:  mb.Resource,
+						Role:      mb.Role,
+						Scope:     mb.Scope,
+						Version:   mb.Version,
+						ID:        mb.ID,
 					})
 				}
 			}
@@ -574,6 +578,7 @@ func newNoMatchRolePolicyDeny(role, version, scope, resource, action string) *Bi
 		Scope:                      makeStringHandle(scope),
 		Version:                    makeStringHandle(version),
 		NoMatchForScopePermissions: true,
+		ID:                         noEvalKey, // No condition to cache.
 	}
 }
 
@@ -657,7 +662,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 	// string-typed Bindings for outside consumers.
 	out := make([]*Binding, len(res))
 	for i, b := range res {
-		out[i] = b.ToBinding()
+		out[i] = b.toBinding(bi.evalKey(b.ID))
 	}
 	return out
 }

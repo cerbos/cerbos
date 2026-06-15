@@ -24,7 +24,11 @@ type bitmapIndex struct {
 	allowActionsBitmap *Bitmap
 	freeIDs            []uint32
 	bindings           []*BindingHandle
+	evalKeys           []EvaluationKeyTuple
 }
+
+// noEvalKey is the sentinel binding ID meaning "no evaluation key".
+const noEvalKey = ^uint32(0)
 
 func newBitmapIndex() *bitmapIndex {
 	return &bitmapIndex{
@@ -56,7 +60,15 @@ func (idx *bitmapIndex) allocID() uint32 {
 
 func (idx *bitmapIndex) freeID(id uint32) {
 	idx.bindings[id] = nil
+	idx.evalKeys[id] = EvaluationKeyTuple{} // release the slot's interned handles
 	idx.freeIDs = append(idx.freeIDs, id)
+}
+
+func (idx *bitmapIndex) evalKey(id uint32) EvaluationKeyTuple {
+	if id == noEvalKey {
+		return EvaluationKeyTuple{}
+	}
+	return idx.evalKeys[id]
 }
 
 // compact drops the per-bitmap capacity slack left by exponential growth across
@@ -79,13 +91,15 @@ func (idx *bitmapIndex) compact() {
 	idx.allowActionsBitmap.shrinkToFit()
 }
 
-func (idx *bitmapIndex) addBinding(b *BindingHandle) {
+func (idx *bitmapIndex) addBinding(b *BindingHandle, evalKey EvaluationKeyTuple) {
 	id := idx.allocID()
 	b.ID = id
 	if int(id) < len(idx.bindings) {
 		idx.bindings[id] = b
+		idx.evalKeys[id] = evalKey
 	} else {
 		idx.bindings = append(idx.bindings, b)
+		idx.evalKeys = append(idx.evalKeys, evalKey)
 	}
 
 	idx.universe.Add(id)
