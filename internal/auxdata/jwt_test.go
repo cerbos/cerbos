@@ -61,7 +61,7 @@ func TestKeySet(t *testing.T) {
 					lks := newLocalKeySet(&LocalSource{
 						Data: base64.StdEncoding.EncodeToString([]byte(tc.GetInput().GetKey())),
 						PEM:  tc.GetInput().GetPem(),
-					}, nil, nil)
+					}, InsecureKeySetOpt{}, nil)
 
 					ks, opts, err := lks.keySet(t.Context())
 					switch {
@@ -85,7 +85,7 @@ func TestKeySet(t *testing.T) {
 					lks := newLocalKeySet(&LocalSource{
 						File: path,
 						PEM:  tc.GetInput().GetPem(),
-					}, nil, nil)
+					}, InsecureKeySetOpt{}, nil)
 
 					ks, opts, err := lks.keySet(t.Context())
 					switch {
@@ -116,7 +116,7 @@ func TestKeySet(t *testing.T) {
 
 					rks := newRemoteKeySet(ctx, cache, &RemoteSource{
 						URL: fmt.Sprintf("%s/%s", ts.URL, fileName),
-					}, nil, nil)
+					}, InsecureKeySetOpt{}, nil)
 
 					ks, opts, err := rks.keySet(ctx)
 					switch {
