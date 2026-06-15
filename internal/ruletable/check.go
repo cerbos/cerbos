@@ -220,7 +220,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 
 				parentRoles := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
-				var bindings []*index.Binding
+				var bindings []*index.BindingHandle
 			scopesLoop:
 				for _, scope := range scopes {
 					sctx := actx.StartScope(scope)
@@ -282,9 +282,12 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					}
 					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, parentRoles, pt, pid, bindings[:0])
 					for _, b := range bindings {
-						rulectx := sctx.StartRule(b.Name)
+						bName := index.HandleStr(b.Name)
+						bOriginFqn := index.HandleStr(b.OriginFqn)
+						bScope := index.HandleStr(b.Scope)
+						rulectx := sctx.StartRule(bName)
 
-						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+						if m := rt.GetMeta(bOriginFqn); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(result.auditTrail.EffectivePolicies, m.GetSourceAttributes())
 						}
 
@@ -311,7 +314,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 						} else {
 							// We evaluate the derived role condition (if any) first, as this leads to a more sane engine trace output.
 							if b.Core.DerivedRoleCondition != nil {
-								drctx := rulectx.StartDerivedRole(b.OriginDerivedRole)
+								drctx := rulectx.StartDerivedRole(index.HandleStr(b.OriginDerivedRole))
 								var derivedRoleConstants map[string]any
 								var derivedRoleVariables map[string]any
 								if b.Core.DerivedRoleParams != nil {
@@ -363,7 +366,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							}
 
 							if outputExpr != nil {
-								result.outputs = append(result.outputs, evalCtx.evaluateOutput(ctx, rulectx, b.Name, namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name), action, outputExpr, constants, variables))
+								result.outputs = append(result.outputs, evalCtx.evaluateOutput(ctx, rulectx, bName, namer.RuleFQN(rt.GetMeta(bOriginFqn), bScope, bName), action, outputExpr, constants, variables))
 							}
 
 							if b.Core.Effect == effectv1.Effect_EFFECT_ALLOW {
@@ -375,7 +378,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								if b.Core.FromRolePolicy {
 									// Implicit DENY generated as a result of no matching role policy action
 									// needs to be attributed to said role policy
-									roleEffectInfo.Policy = namer.PolicyKeyFromFQN(b.OriginFqn)
+									roleEffectInfo.Policy = namer.PolicyKeyFromFQN(bOriginFqn)
 								}
 								break scopesLoop
 							} else if b.NoMatchForScopePermissions {
@@ -384,7 +387,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							}
 						} else {
 							if b.Core.EmitOutput != nil && b.Core.EmitOutput.When != nil && b.Core.EmitOutput.When.ConditionNotMet != nil {
-								result.outputs = append(result.outputs, evalCtx.evaluateOutput(ctx, rulectx, b.Name, namer.RuleFQN(rt.GetMeta(b.OriginFqn), b.Scope, b.Name), action, b.Core.EmitOutput.When.ConditionNotMet, constants, variables))
+								result.outputs = append(result.outputs, evalCtx.evaluateOutput(ctx, rulectx, bName, namer.RuleFQN(rt.GetMeta(bOriginFqn), bScope, bName), action, b.Core.EmitOutput.When.ConditionNotMet, constants, variables))
 							}
 							rulectx.Skipped(nil, conditionNotSatisfied)
 						}

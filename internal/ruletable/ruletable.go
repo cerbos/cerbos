@@ -748,7 +748,7 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 	return rt.idx.IndexParentRoles(rt.ScopeParentRoles)
 }
 
-func (rt *RuleTable) GetAllRows() []*index.Binding {
+func (rt *RuleTable) GetAllRows() []*index.BindingHandle {
 	return rt.idx.GetAllRows()
 }
 

@@ -130,7 +130,7 @@ func (rt *RuleTable) planWithAuditTrail(
 
 				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
 
-				var bindings []*index.Binding
+				var bindings []*index.BindingHandle
 				for _, scope := range scopes {
 					// Once a child OVERRIDE_PARENT scope has matched an unconditional ALLOW, no
 					// parent-scope rule can change the outcome, so we skip
@@ -192,7 +192,7 @@ func (rt *RuleTable) planWithAuditTrail(
 					}
 					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
 					for _, b := range bindings {
-						if m := rt.GetMeta(b.OriginFqn); m != nil && m.GetSourceAttributes() != nil {
+						if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
 						}
 

@@ -8,6 +8,7 @@ package index
 import (
 	"fmt"
 	"slices"
+	"unique"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -153,34 +154,34 @@ func marshalRowParams(rp *RowParams) (*runtimev1.RuleTable_RuleRow_Params, error
 	}, nil
 }
 
-func marshalBinding(b *Binding, coreIndex map[*FunctionalCore]uint32) *runtimev1.BitmapIndex_Binding {
+func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32) *runtimev1.BitmapIndex_Binding {
 	pb := &runtimev1.BitmapIndex_Binding{
 		Id:                 b.ID,
 		CoreIndex:          coreIndex[b.Core],
-		Role:               b.Role,
-		Scope:              b.Scope,
-		Version:            b.Version,
-		Resource:           b.Resource,
-		Principal:          b.Principal,
-		OriginFqn:          b.OriginFqn,
-		OriginDerivedRole:  b.OriginDerivedRole,
-		Name:               b.Name,
+		Role:               stringHandleValue(b.Role),
+		Scope:              stringHandleValue(b.Scope),
+		Version:            stringHandleValue(b.Version),
+		Resource:           stringHandleValue(b.Resource),
+		Principal:          stringHandleValue(b.Principal),
+		OriginFqn:          stringHandleValue(b.OriginFqn),
+		OriginDerivedRole:  stringHandleValue(b.OriginDerivedRole),
+		Name:               stringHandleValue(b.Name),
 		EvaluationKeyTuple: b.EvaluationKey.toProto(),
 	}
 
 	if b.AllowActions != nil {
 		actions := make([]string, 0, len(b.AllowActions))
 		for a := range b.AllowActions {
-			actions = append(actions, a)
+			actions = append(actions, stringHandleValue(a))
 		}
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_AllowActions{
 			AllowActions: &runtimev1.BitmapIndex_AllowActions{
 				Actions: actions,
 			},
 		}
-	} else if b.Action != "" {
+	} else if b.Action != EmptyHandle {
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_Action{
-			Action: b.Action,
+			Action: b.Action.Value(),
 		}
 	}
 
@@ -345,7 +346,7 @@ func unmarshalCores(pbCores []*runtimev1.BitmapIndex_FunctionalCore) ([]*Functio
 	return cores, nil
 }
 
-func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) []*Binding {
+func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*FunctionalCore) []*BindingHandle {
 	if len(pbBindings) == 0 {
 		return nil
 	}
@@ -358,31 +359,31 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 		}
 	}
 
-	bindings := make([]*Binding, maxID+1)
+	bindings := make([]*BindingHandle, maxID+1)
 	for _, pb := range pbBindings {
-		b := &Binding{
+		b := &BindingHandle{
 			ID:                pb.Id,
 			Core:              cores[pb.CoreIndex],
-			Role:              pb.Role,
-			Scope:             pb.Scope,
-			Version:           pb.Version,
-			Resource:          pb.Resource,
-			Principal:         pb.Principal,
-			OriginFqn:         pb.OriginFqn,
-			OriginDerivedRole: pb.OriginDerivedRole,
-			Name:              pb.Name,
+			Role:              makeStringHandle(pb.Role),
+			Scope:             makeStringHandle(pb.Scope),
+			Version:           makeStringHandle(pb.Version),
+			Resource:          makeStringHandle(pb.Resource),
+			Principal:         makeStringHandle(pb.Principal),
+			OriginFqn:         makeStringHandle(pb.OriginFqn),
+			OriginDerivedRole: makeStringHandle(pb.OriginDerivedRole),
+			Name:              makeStringHandle(pb.Name),
 			EvaluationKey:     makeEvaluationKeyTuple(pb.EvaluationKeyTuple, pb.EvaluationKey),
 		}
 
 		switch v := pb.ActionSet.(type) {
 		case *runtimev1.BitmapIndex_Binding_AllowActions:
-			aa := make(map[string]struct{}, len(v.AllowActions.Actions))
+			aa := make(map[unique.Handle[string]]struct{}, len(v.AllowActions.Actions))
 			for _, a := range v.AllowActions.Actions {
-				aa[a] = struct{}{}
+				aa[makeStringHandle(a)] = struct{}{}
 			}
 			b.AllowActions = aa
 		case *runtimev1.BitmapIndex_Binding_Action:
-			b.Action = v.Action
+			b.Action = makeStringHandle(v.Action)
 		}
 
 		bindings[pb.Id] = b

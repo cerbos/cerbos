@@ -82,7 +82,7 @@ func buildScatteredResourceIndex(tb testing.TB) *index.Index {
 
 func BenchmarkQueryByResourceHit(b *testing.B) {
 	impl := buildScatteredResourceIndex(b)
-	var buf []*index.Binding
+	var buf []*index.BindingHandle
 	b.ReportAllocs()
 	for b.Loop() {
 		buf = impl.Query("default", "res_01000", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
@@ -94,7 +94,7 @@ func BenchmarkQueryByResourceHit(b *testing.B) {
 
 func BenchmarkQueryByResourceMiss(b *testing.B) {
 	impl := buildScatteredResourceIndex(b)
-	var buf []*index.Binding
+	var buf []*index.BindingHandle
 	b.ReportAllocs()
 	for b.Loop() {
 		buf = impl.Query("default", "res_99999", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
@@ -112,7 +112,7 @@ func BenchmarkQueryByResourceParallel(b *testing.B) {
 	impl.Query("default", "res_01000", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", nil) // warm
 	b.ReportAllocs()
 	b.RunParallel(func(pb *testing.PB) {
-		var buf []*index.Binding
+		var buf []*index.BindingHandle
 		for pb.Next() {
 			buf = impl.Query("default", "res_01000", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
 		}

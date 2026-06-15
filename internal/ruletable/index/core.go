@@ -61,25 +61,80 @@ type Binding struct {
 	NoMatchForScopePermissions bool
 }
 
+type BindingHandle struct {
+	Core                       *FunctionalCore
+	AllowActions               map[unique.Handle[string]]struct{}
+	Role                       unique.Handle[string]
+	Scope                      unique.Handle[string]
+	Version                    unique.Handle[string]
+	Resource                   unique.Handle[string]
+	Action                     unique.Handle[string]
+	Principal                  unique.Handle[string]
+	OriginFqn                  unique.Handle[string]
+	OriginDerivedRole          unique.Handle[string]
+	Name                       unique.Handle[string]
+	EvaluationKey              EvaluationKeyTuple
+	ID                         uint32
+	NoMatchForScopePermissions bool
+}
+
+func (b *BindingHandle) ToBinding() *Binding {
+	if b == nil {
+		return nil
+	}
+	var allow map[string]struct{}
+	if b.AllowActions != nil {
+		allow = make(map[string]struct{}, len(b.AllowActions))
+		for a := range b.AllowActions {
+			allow[a.Value()] = struct{}{}
+		}
+	}
+	return &Binding{
+		Core:                       b.Core,
+		AllowActions:               allow,
+		Role:                       stringHandleValue(b.Role),
+		Scope:                      stringHandleValue(b.Scope),
+		Version:                    stringHandleValue(b.Version),
+		Resource:                   stringHandleValue(b.Resource),
+		Action:                     stringHandleValue(b.Action),
+		Principal:                  stringHandleValue(b.Principal),
+		OriginFqn:                  stringHandleValue(b.OriginFqn),
+		OriginDerivedRole:          stringHandleValue(b.OriginDerivedRole),
+		Name:                       stringHandleValue(b.Name),
+		EvaluationKey:              b.EvaluationKey,
+		ID:                         b.ID,
+		NoMatchForScopePermissions: b.NoMatchForScopePermissions,
+	}
+}
+
 // IsZero reports whether the tuple is empty, which equivalent to the old empty
 // evaluation-key string.
 func (t EvaluationKeyTuple) IsZero() bool {
 	return t == EvaluationKeyTuple{}
 }
 
+// EmptyHandle is the zero unique.Handle[string]. Is equivalent of "".
+var EmptyHandle unique.Handle[string]
+
+// makeStringHandle interns s, returning the zero handle for "".
 func makeStringHandle(s string) unique.Handle[string] {
 	if s == "" {
-		return unique.Handle[string]{}
+		return EmptyHandle
 	}
 	return unique.Make(s)
 }
 
+// TODO: replace with HandleStr
 func stringHandleValue(h unique.Handle[string]) string {
-	var zero unique.Handle[string]
-	if h == zero {
+	if h == EmptyHandle {
 		return ""
 	}
 	return h.Value()
+}
+
+// HandleStr returns the interned string for a handle, or "" for the zero handle.
+func HandleStr(h unique.Handle[string]) string {
+	return stringHandleValue(h)
 }
 
 func makeEvaluationKeyTuple(pb *runtimev1.EvaluationKeyTuple, fallbackKey string) EvaluationKeyTuple {

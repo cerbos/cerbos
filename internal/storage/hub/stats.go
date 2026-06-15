@@ -96,8 +96,8 @@ func (s *statsCollector) collate() storage.RepoStats {
 	return is
 }
 
-func (s *statsCollector) addRow(row *index.Binding) {
-	fqn := row.OriginFqn
+func (s *statsCollector) addRow(row *index.BindingHandle) {
+	fqn := index.HandleStr(row.OriginFqn)
 	kind := policy.KindFromFQN(fqn)
 	mID := namer.GenModuleIDFromFQN(fqn).RawValue()
 
@@ -108,18 +108,18 @@ func (s *statsCollector) addRow(row *index.Binding) {
 	}
 
 	if kind == policy.ResourceKind {
-		s.uniqueResources[util.HashStr(row.Resource)] = struct{}{}
+		s.uniqueResources[util.HashStr(index.HandleStr(row.Resource))] = struct{}{}
 	}
 
-	if row.Action != "" && kind == policy.ResourceKind {
-		s.uniqueActions[util.HashStr(row.Action)] = struct{}{}
+	if row.Action != index.EmptyHandle && kind == policy.ResourceKind {
+		s.uniqueActions[util.HashStr(row.Action.Value())] = struct{}{}
 	}
 
 	if row.Core.EmitOutput != nil {
 		s.hasOutput = true
 	}
 
-	if row.Scope != "" {
+	if row.Scope != index.EmptyHandle {
 		s.hasScopedPolicies = true
 	}
 

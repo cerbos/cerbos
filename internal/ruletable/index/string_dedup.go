@@ -73,18 +73,6 @@ func (s *StringDeduper) dedupOutput(o *runtimev1.Output) {
 	s.dedupExpr(o.When.ConditionNotMet)
 }
 
-func (s *StringDeduper) dedupSet(m map[string]struct{}) map[string]struct{} {
-	if m == nil {
-		return nil
-	}
-	out := make(map[string]struct{}, len(m))
-	for k := range m {
-		s.Intern(&k)
-		out[k] = struct{}{}
-	}
-	return out
-}
-
 // dedupConstants rebuilds a string-keyed map with interned keys, values
 // are left as-is.
 func (s *StringDeduper) dedupConstants(m map[string]any) map[string]any {
@@ -132,12 +120,6 @@ func (idx *bitmapIndex) dedupStringsWith(s *StringDeduper) {
 		if b == nil {
 			continue
 		}
-		s.Intern(&b.Scope)
-		s.Intern(&b.OriginFqn)
-		s.Intern(&b.OriginDerivedRole)
-		s.Intern(&b.Name)
-
-		b.AllowActions = s.dedupSet(b.AllowActions)
 		if b.Core != nil {
 			if _, done := visitedCores[b.Core]; !done {
 				visitedCores[b.Core] = struct{}{}
