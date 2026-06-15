@@ -115,8 +115,8 @@ func (t EvaluationKeyTuple) IsZero() bool {
 // EmptyHandle is the zero unique.Handle[string]. Is equivalent of "".
 var EmptyHandle unique.Handle[string]
 
-// makeStringHandle interns s, returning the zero handle for "".
-func makeStringHandle(s string) unique.Handle[string] {
+// mkStringHandle interns s, returning the zero handle for "".
+func mkStringHandle(s string) unique.Handle[string] {
 	if s == "" {
 		return EmptyHandle
 	}
@@ -133,17 +133,17 @@ func HandleStr(h unique.Handle[string]) string {
 
 func makeEvaluationKeyTuple(pb *runtimev1.EvaluationKeyTuple, fallbackKey string) EvaluationKeyTuple {
 	if pb == nil {
-		return EvaluationKeyTuple{RuleName: makeStringHandle(fallbackKey)}
+		return EvaluationKeyTuple{RuleName: mkStringHandle(fallbackKey)}
 	}
 	return EvaluationKeyTuple{
-		Prefix:      makeStringHandle(pb.Prefix),
-		Resource:    makeStringHandle(pb.Resource),
-		Principal:   makeStringHandle(pb.Principal),
-		Role:        makeStringHandle(pb.Role),
-		DerivedRole: makeStringHandle(pb.DerivedRole),
-		Version:     makeStringHandle(pb.Version),
-		Scope:       makeStringHandle(pb.Scope),
-		RuleName:    makeStringHandle(pb.RuleName),
+		Prefix:      mkStringHandle(pb.Prefix),
+		Resource:    mkStringHandle(pb.Resource),
+		Principal:   mkStringHandle(pb.Principal),
+		Role:        mkStringHandle(pb.Role),
+		DerivedRole: mkStringHandle(pb.DerivedRole),
+		Version:     mkStringHandle(pb.Version),
+		Scope:       mkStringHandle(pb.Scope),
+		RuleName:    mkStringHandle(pb.RuleName),
 		RuleID:      pb.RuleId,
 	}
 }
