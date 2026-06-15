@@ -1,0 +1,9 @@
+apiVersion: api.cerbos.dev/v1
+exportConstants:
+  name: a
+  definitions:
+    b: &b
+      c: d
+    e:
+      <<: *b
+      f: g

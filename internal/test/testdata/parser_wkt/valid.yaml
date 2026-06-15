@@ -1,42 +1,315 @@
 ---
-boolWrapper: true
-int32Wrapper: 42
-int64Wrapper: 42
-uint32Wrapper: 42
-uint64Wrapper: 42
-floatWrapper: 32.5
-doubleWrapper: 32.5
-stringWrapper: "foo"
-bytesWrapper: "Zm9v"
-repeatedBoolWrapper: [true, false]
-repeatedInt32Wrapper: [42, 43]
-repeatedInt64Wrapper: [43, 44]
-repeatedUint32Wrapper: [44, 45]
-repeatedUint64Wrapper: [45, 46]
-repeatedFloatWrapper: [3.14, 3.5]
-repeatedDoubleWrapper: [6.14, 6.5]
-repeatedStringWrapper: ["foo", "bar"]
-repeatedBytesWrapper: ["Zm9v", "Zm9v"]
-duration: "10s"
-timestamp: "2022-08-02T15:00:00Z"
-struct:
-  foo: "bar"
-  wibble: "wobble"
-value: "bar"
-nullValue: null
-repeatedDuration: ["5s", "10s"]
-repeatedTimestamp: ["2022-08-02T15:00:00Z", "2022-08-02T15:00:00Z"]
-repeatedStruct:
-  - foo: bar
-    wibble: wobble
-  - foo: bar
-    wibble: wobble
-repeatedValue:
-  - 12
-  - "foo"
+listValue:
+  -
+  - ~
+  - null
+  - 1
+  - two
+  - true
+  - false
+  - three: four
+    five: 6
+  -
+    - seven
+    - 8
+    - nine: 10
+
 repeatedListValue:
-  - ["x", "y"]
-  - [1, 2]
-optionalNestedMsg:
-  stringField: baz
-  valueField: 12
+  -
+    - null
+    - 1
+    - two
+  -
+    - true
+    - false
+  -
+    - three: four
+      five: 6
+    -
+      - seven
+      - 8
+      - nine: 10
+
+listValueMap:
+  foo:
+    - null
+    - 1
+    - two
+  bar:
+    - true
+    - false
+  baz:
+    - three: four
+      five: 6
+    -
+      - seven
+      - 8
+      - nine: 10
+
+nullValue: null
+
+repeatedNullValue:
+  -
+  - ~
+  - null
+
+nullValueMap:
+  foo:
+  bar: ~
+  baz: null
+
+struct:
+  one: null
+  two: 3
+  four: five
+  six: true
+  seven: false
+  eight:
+    nine: 10
+    eleven: twelve
+  thirteen:
+    - 14
+    - fifteen
+
+repeatedStruct:
+  - one: null
+    two: 3
+    four: five
+  - six: true
+    seven: false
+  - eight:
+      nine: 10
+      eleven: twelve
+  - thirteen:
+      - 14
+      - fifteen
+
+structMap:
+  foo:
+    one: null
+    two: 3
+    four: five
+  bar:
+    six: true
+    seven: false
+  baz:
+    eight:
+      nine: 10
+      eleven: twelve
+  qux:
+    thirteen:
+      - 14
+      - fifteen
+
+valueNull: null
+
+valueNumber: 1
+
+valueString: two
+
+valueBool: true
+
+valueStruct:
+  three: 4
+  five: six
+
+valueList:
+  - 7
+  - eight
+
+repeatedValue:
+  - null
+  - 1
+  - two
+  - true
+  - false
+  - three: four
+    five: 6
+  -
+    - seven
+    - 8
+    - nine: 10
+
+valueMap:
+  foo: null
+  bar: 1
+  baz: two
+  qux: true
+  quux: false
+  quuux:
+    three: four
+    five: 6
+  quuuux:
+    - seven
+    - 8
+    - nine: 10
+
+uint64WrapperNumber: 1
+
+uint64WrapperString: "2"
+
+repeatedUint64Wrapper:
+  - 1
+  - "2"
+
+uint64WrapperMap:
+  foo: 1
+  bar: "2"
+
+nested:
+  listValue:
+    -
+    - ~
+    - null
+    - 1
+    - two
+    - true
+    - false
+    - three: four
+      five: 6
+    -
+      - seven
+      - 8
+      - nine: 10
+
+  repeatedListValue:
+    -
+      - null
+      - 1
+      - two
+    -
+      - true
+      - false
+    -
+      - three: four
+        five: 6
+      -
+        - seven
+        - 8
+        - nine: 10
+
+  listValueMap:
+    foo:
+      - null
+      - 1
+      - two
+    bar:
+      - true
+      - false
+    baz:
+      - three: four
+        five: 6
+      -
+        - seven
+        - 8
+        - nine: 10
+
+  nullValue: null
+
+  repeatedNullValue:
+    -
+    - ~
+    - null
+
+  nullValueMap:
+    foo:
+    bar: ~
+    baz: null
+
+  struct:
+    one: null
+    two: 3
+    four: five
+    six: true
+    seven: false
+    eight:
+      nine: 10
+      eleven: twelve
+    thirteen:
+      - 14
+      - fifteen
+
+  repeatedStruct:
+    - one: null
+      two: 3
+      four: five
+    - six: true
+      seven: false
+    - eight:
+        nine: 10
+        eleven: twelve
+    - thirteen:
+        - 14
+        - fifteen
+
+  structMap:
+    foo:
+      one: null
+      two: 3
+      four: five
+    bar:
+      six: true
+      seven: false
+    baz:
+      eight:
+        nine: 10
+        eleven: twelve
+    qux:
+      thirteen:
+        - 14
+        - fifteen
+
+  valueNull: null
+
+  valueNumber: 1
+
+  valueString: two
+
+  valueBool: true
+
+  valueStruct:
+    three: 4
+    five: six
+
+  valueList:
+    - 7
+    - eight
+
+  repeatedValue:
+    - null
+    - 1
+    - two
+    - true
+    - false
+    - three: four
+      five: 6
+    -
+      - seven
+      - 8
+      - nine: 10
+
+  valueMap:
+    foo: null
+    bar: 1
+    baz: two
+    qux: true
+    quux: false
+    quuux:
+      three: four
+      five: 6
+    quuuux:
+      - seven
+      - 8
+      - nine: 10
+
+  uint64WrapperNumber: 1
+
+  uint64WrapperString: "2"
+
+  repeatedUint64Wrapper:
+    - 1
+    - "2"
+
+  uint64WrapperMap:
+    foo: 1
+    bar: "2"

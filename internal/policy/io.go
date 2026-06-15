@@ -50,7 +50,7 @@ func ReadPolicyWithSourceContext(fsys fs.FS, path string) (*policyv1.Policy, par
 }
 
 func ReadPolicyWithSourceContextFromReader(src io.Reader) (*policyv1.Policy, parser.SourceCtx, error) {
-	policies, contexts, err := parser.Unmarshal(src, func() *policyv1.Policy { return &policyv1.Policy{} }, parser.WithValidator(validator.Validator))
+	policies, contexts, err := parser.Unmarshal[policyv1.Policy](src, parser.WithValidator(validator.Validator))
 	switch len(policies) {
 	case 0:
 		return nil, parser.SourceCtx{}, err
@@ -64,9 +64,7 @@ func ReadPolicyWithSourceContextFromReader(src io.Reader) (*policyv1.Policy, par
 
 // FindPolicy finds a policy by ID from the given reader.
 func FindPolicy(src io.Reader, modID namer.ModuleID) (*policyv1.Policy, parser.SourceCtx, error) {
-	p := &policyv1.Policy{}
-	sc, err := parser.Find(src, func(h *policyv1.Policy) bool { return namer.GenModuleID(h) == modID }, p)
-	return p, sc, err
+	return parser.Find(src, func(h *policyv1.Policy) bool { return namer.GenModuleID(h) == modID })
 }
 
 // WritePolicy writes a policy as YAML to the destination.
