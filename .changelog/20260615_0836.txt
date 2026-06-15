@@ -1,0 +1,3 @@
+type:fix
+Fix YAML parser bugs
+Previously, the YAML parser could link:https://github.com/cerbos/cerbos/issues/3222[erroneously report policy files as invalid] if they used flow syntax for lists and mappings, or if they used aliases in certain contexts.
