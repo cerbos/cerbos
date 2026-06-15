@@ -85,7 +85,7 @@ func dedupSourceAttributes(s *index.StringDeduper, sa *policyv1.SourceAttributes
 }
 
 // relocateValue returns a freshly-allocated deep copy of v with string leaves
-// interned.
+// cloned.
 func relocateValue(s *index.StringDeduper, v *structpb.Value) *structpb.Value {
 	if v == nil {
 		return nil
@@ -161,7 +161,7 @@ func dedupDerivedRoleMap(s *index.StringDeduper, shared map[uint64]*runtimev1.Ru
 					shared[v.VarCacheKey] = v.RunnableDerivedRole
 				}
 			}
-			v.Constants = dedupAnyMap(s, v.Constants)
+			v.Constants = s.RelocateConstants(v.Constants)
 		}
 		out[k] = v
 	}
@@ -185,11 +185,7 @@ func dedupRunnableDerivedRole(s *index.StringDeduper, rdr *runtimev1.RunnableDer
 		out := make(map[string]*structpb.Value, len(rdr.Constants))
 		for k, v := range rdr.Constants {
 			s.Intern(&k)
-			if vs := v.GetStringValue(); vs != "" {
-				s.Intern(&vs)
-				v = structpb.NewStringValue(vs)
-			}
-			out[k] = v
+			out[k] = relocateValue(s, v)
 		}
 		rdr.Constants = out
 	}
@@ -207,18 +203,6 @@ func dedupRunnableDerivedRole(s *index.StringDeduper, rdr *runtimev1.RunnableDer
 	if rdr.Condition != nil {
 		rdr.Condition = proto.Clone(rdr.Condition).(*runtimev1.Condition) //nolint:forcetypeassert
 	}
-}
-
-func dedupAnyMap(s *index.StringDeduper, m map[string]any) map[string]any {
-	if len(m) == 0 {
-		return m
-	}
-	out := make(map[string]any, len(m))
-	for k, v := range m {
-		s.Intern(&k)
-		out[k] = v
-	}
-	return out
 }
 
 func dedupJSONSchemas(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_JSONSchema) map[string]*runtimev1.RuleTable_JSONSchema {
