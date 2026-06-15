@@ -252,7 +252,7 @@ func TestUnmarshalWKT(t *testing.T) {
 			wantErrs: []*sourcev1.Error{
 				{
 					Kind:     sourcev1.Error_KIND_PARSE_ERROR,
-					Message:  `failed to parse value: proto: syntax error (line 1:1): unexpected token "wat"`,
+					Message:  `expected map got String`,
 					Position: &sourcev1.Position{Line: 2, Column: 9, Path: "$.struct"},
 				},
 			},
@@ -263,7 +263,7 @@ func TestUnmarshalWKT(t *testing.T) {
 			wantErrs: []*sourcev1.Error{
 				{
 					Kind:     sourcev1.Error_KIND_PARSE_ERROR,
-					Message:  `failed to parse value: proto: syntax error (line 1:1): unexpected token "wat"`,
+					Message:  `expected map got String`,
 					Position: &sourcev1.Position{Line: 2, Column: 13, Path: "$.struct"},
 				},
 			},

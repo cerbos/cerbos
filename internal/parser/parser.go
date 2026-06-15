@@ -9,8 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"unsafe"
@@ -24,10 +24,11 @@ import (
 	"github.com/goccy/go-yaml/printer"
 	"github.com/goccy/go-yaml/token"
 	"github.com/stoewer/go-strcase"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	sourcev1 "github.com/cerbos/cerbos/api/genpb/cerbos/source/v1"
 	"github.com/cerbos/cerbos/internal/util"
@@ -49,8 +50,6 @@ type PanicError struct {
 func (pe PanicError) Error() string {
 	return fmt.Sprintf("panic: %v", pe.Cause)
 }
-
-var protoErrPrefix = regexp.MustCompile(`proto:(\x{00a0}|\x{0020})+\(line\s+\d+:\d+\):\s*`)
 
 // ProtoMessage allows allocation of [proto.Message] instances without reflection.
 type ProtoMessage[T any] interface {
@@ -320,102 +319,114 @@ type unmarshaler[T proto.Message] struct {
 	unmarshalOpts
 }
 
-func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, v ast.MapNode, out protoreflect.Message) error {
-	fields := out.Descriptor().Fields()
-	seen := make(map[protowire.Number]string, fields.Len())
-	seenOneOfs := make(map[int]string)
-	items := v.MapRange()
+func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, n ast.MapNode, out protoreflect.Message) error {
+	return u.resolveMerges(uctx, n, func(items iter.Seq[*ast.MappingValueNode]) error {
+		fields := out.Descriptor().Fields()
+		seen := make(map[protowire.Number]string, fields.Len())
+		seenOneOfs := make(map[int]string)
 
-	// Find all the merge keys first and populate the message because they need to overwritten by new values
+		for item := range items {
+			var k string
+			if kn, ok := item.Key.(*ast.StringNode); ok {
+				k = kn.Value
+			} else {
+				return uctx.perrorf(item.Key, "unexpected key type %s", item.Key.Type())
+			}
+
+			field := fields.ByJSONName(k)
+			if field == nil {
+				field = fields.ByTextName(k)
+			}
+
+			if field == nil {
+				if u.ignoreUnknownFields {
+					continue
+				}
+				return uctx.perrorf(item.Key, "unknown field %q", k)
+			}
+
+			if prev, ok := seen[field.Number()]; ok {
+				return uctx.perrorf(item.Key, "duplicate field definition: previous definition at %s", prev)
+			}
+			seen[field.Number()] = pos(item.Key)
+
+			switch {
+			case field.IsList():
+				list := out.Mutable(field).List()
+				if err := u.unmarshalList(uctx.forField(field, item.Key), item.Value, field, list); err != nil {
+					return err
+				}
+			case field.IsMap():
+				mmap := out.Mutable(field).Map()
+
+				nn, err := u.resolveNode(uctx, item.Value)
+				if err != nil {
+					return err
+				}
+
+				mn, ok := nn.(ast.MapNode)
+				if !ok {
+					return uctx.perrorf(item.Value, "expected map got %s", nn.Type())
+				}
+
+				if err := u.unmarshalMap(uctx.forField(field, item.Key), mn, field, mmap); err != nil {
+					return err
+				}
+			default:
+				if oof := field.ContainingOneof(); oof != nil {
+					idx := oof.Index()
+					if prev, ok := seenOneOfs[idx]; ok {
+						return uctx.perrorf(item.Key, "invalid value: oneof field is already set at %s", prev)
+					}
+
+					seenOneOfs[idx] = pos(item.Key)
+				}
+
+				if err := u.unmarshalSingular(uctx.forField(field, item.Key), item.Value, field, out); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func (u *unmarshaler[T]) resolveMerges(uctx *unmarshalCtx, n ast.MapNode, f func(iter.Seq[*ast.MappingValueNode]) error) error {
+	// Find all the merge keys first because they need to overwritten by new values.
 	// Basically, ensuring that "bar" is set to "baz" in the following case regardless of what value "bar" has
 	// in the "anchor" map.
 	// x:
 	//  bar: baz
 	//  <<: *anchor
+
+	items := n.MapRange()
 	for items.Next() {
 		if items.Key().Type() == ast.MergeKeyType {
-			mn, err := u.resolveMerge(uctx, items.Value())
+			m, err := u.resolveMerge(uctx, items.Value())
 			if err != nil {
 				return err
 			}
 
-			if err := u.unmarshalMapping(uctx, mn, out); err != nil {
+			if err := u.resolveMerges(uctx, m, f); err != nil {
 				return err
 			}
 		}
 	}
 
-	items = v.MapRange()
-	for items.Next() {
-		kn := items.Key()
-
-		var keyValue string
-		switch kt := kn.(type) {
-		case *ast.StringNode:
-			keyValue = kt.Value
-		case *ast.MergeKeyNode:
-			// already handled above
-			continue
-		default:
-			return uctx.perrorf(kn, "unexpected key type %s", kn.Type())
-		}
-
-		field := fields.ByJSONName(keyValue)
-		if field == nil {
-			field = fields.ByTextName(keyValue)
-		}
-
-		if field == nil {
-			if u.ignoreUnknownFields {
+	return f(func(yield func(*ast.MappingValueNode) bool) {
+		items = n.MapRange()
+		for items.Next() {
+			item := items.KeyValue()
+			if item.Key.Type() == ast.MergeKeyType {
 				continue
 			}
-			return uctx.perrorf(kn, "unknown field %q", keyValue)
-		}
 
-		if prev, ok := seen[field.Number()]; ok {
-			return uctx.perrorf(kn, "duplicate field definition: previous definition at %s", prev)
-		}
-		seen[field.Number()] = pos(kn)
-
-		switch {
-		case field.IsList():
-			list := out.Mutable(field).List()
-			if err := u.unmarshalList(uctx.forField(field, kn), items.Value(), field, list); err != nil {
-				return err
-			}
-		case field.IsMap():
-			mmap := out.Mutable(field).Map()
-
-			nn, err := u.resolveNode(uctx, items.Value())
-			if err != nil {
-				return err
-			}
-
-			mn, ok := nn.(ast.MapNode)
-			if !ok {
-				return uctx.perrorf(items.Value(), "expected map got %s", nn.Type())
-			}
-
-			if err := u.unmarshalMap(uctx.forField(field, kn), mn, field, mmap, true); err != nil {
-				return err
-			}
-		default:
-			if oof := field.ContainingOneof(); oof != nil {
-				idx := oof.Index()
-				if prev, ok := seenOneOfs[idx]; ok {
-					return uctx.perrorf(kn, "invalid value: oneof field is already set at %s", prev)
-				}
-
-				seenOneOfs[idx] = pos(kn)
-			}
-
-			if err := u.unmarshalSingular(uctx.forField(field, kn), items.Value(), field, out); err != nil {
-				return err
+			if !yield(item) {
+				return
 			}
 		}
-	}
-
-	return nil
+	})
 }
 
 func (u *unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNode, error) {
@@ -587,7 +598,7 @@ func (u *unmarshaler[T]) unmarshalList(uctx *unmarshalCtx, n ast.Node, fd protor
 	return nil
 }
 
-func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd protoreflect.FieldDescriptor, mmap protoreflect.Map, overwriteKeys bool) error {
+func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd protoreflect.FieldDescriptor, mmap protoreflect.Map) error {
 	var valueFn func(*unmarshalCtx, ast.Node) (protoreflect.Value, error)
 	switch fd.MapValue().Kind() {
 	case protoreflect.MessageKind, protoreflect.GroupKind:
@@ -605,40 +616,23 @@ func (u *unmarshaler[T]) unmarshalMap(uctx *unmarshalCtx, n ast.MapNode, fd prot
 		}
 	}
 
-	items := n.MapRange()
-	for items.Next() {
-		key := items.Key()
-		if key.Type() == ast.MergeKeyType {
-			kn, err := u.resolveMerge(uctx, items.Value())
+	return u.resolveMerges(uctx, n, func(items iter.Seq[*ast.MappingValueNode]) error {
+		for item := range items {
+			keyVal, err := u.unmarshalMapKey(uctx, item.Key, fd.MapKey())
 			if err != nil {
 				return err
 			}
 
-			if err := u.unmarshalMap(uctx, kn, fd, mmap, false); err != nil {
+			val, err := valueFn(uctx.forMapItem(keyVal.String(), item.Key, item.Value), item.Value)
+			if err != nil {
 				return err
 			}
 
-			continue
+			mmap.Set(keyVal, val)
 		}
 
-		keyVal, err := u.unmarshalMapKey(uctx, key, fd.MapKey())
-		if err != nil {
-			return err
-		}
-
-		if !overwriteKeys && mmap.Has(keyVal) {
-			continue
-		}
-
-		val, err := valueFn(uctx.forMapItem(keyVal.String(), key, items.Value()), items.Value())
-		if err != nil {
-			return err
-		}
-
-		mmap.Set(keyVal, val)
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func (u *unmarshaler[T]) unmarshalSingular(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor, out protoreflect.Message) error {
@@ -905,7 +899,7 @@ func (u *unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out pr
 	}
 
 	if out.Descriptor().FullName().Parent() == "google.protobuf" {
-		return u.unmarshalWKT(uctx, n, out)
+		return u.unmarshalWKT(uctx, nn, out)
 	}
 
 	mn, ok := nn.(ast.MapNode)
@@ -917,22 +911,146 @@ func (u *unmarshaler[T]) unmarshalMessage(uctx *unmarshalCtx, n ast.Node, out pr
 }
 
 func (u *unmarshaler[T]) unmarshalWKT(uctx *unmarshalCtx, n ast.Node, out protoreflect.Message) error {
-	// Google's well-known type handling is hidden inside an internal package and can't be used directly.
-	// The code is complicated and copying it here is probably not a good idea.
-	// Cerbos policies don't use any WKTs. Only the test suite definitions and fixtures use them so
-	// resorting to this slightly inefficient hack is OK for now.
-	nodeStr := n.String()
-	jsonBytes, err := yaml.YAMLToJSON(unsafe.Slice(unsafe.StringData(nodeStr), len(nodeStr)))
-	if err != nil {
-		return uctx.perrorf(n, "failed to convert well-known type: %v", err)
+	switch out.Descriptor().FullName() {
+	case "google.protobuf.ListValue":
+		return u.unmarshalListValue(uctx, n, out.Interface().(*structpb.ListValue)) //nolint:forcetypeassert
+
+	case "google.protobuf.Struct":
+		return u.unmarshalStruct(uctx, n, out.Interface().(*structpb.Struct)) //nolint:forcetypeassert
+
+	case "google.protobuf.Value":
+		return u.unmarshalValue(uctx, n, out.Interface().(*structpb.Value)) //nolint:forcetypeassert
+
+	case "google.protobuf.UInt64Value":
+		return u.unmarshalUInt64Value(uctx, n, out.Interface().(*wrapperspb.UInt64Value)) //nolint:forcetypeassert
+
+	default:
+		return fmt.Errorf("unexpected well-known type %s", out.Descriptor().FullName())
+	}
+}
+
+func (u *unmarshaler[T]) unmarshalListValue(uctx *unmarshalCtx, n ast.Node, out *structpb.ListValue) error {
+	refOut := out.ProtoReflect()
+	field := refOut.Descriptor().Fields().ByName("values")
+	list := refOut.Mutable(field).List()
+	return u.unmarshalList(uctx, n, field, list)
+}
+
+func (u *unmarshaler[T]) unmarshalStruct(uctx *unmarshalCtx, n ast.Node, out *structpb.Struct) error {
+	m, ok := n.(ast.MapNode)
+	if !ok {
+		return uctx.perrorf(n, "expected map got %s", n.Type())
 	}
 
-	if err := protojson.Unmarshal(jsonBytes, out.Interface()); err != nil {
-		errStr := protoErrPrefix.ReplaceAllString(err.Error(), "")
-		return uctx.perrorf(n, "failed to parse value: %s", errStr)
+	if out.Fields == nil {
+		out.Fields = make(map[string]*structpb.Value)
 	}
 
-	return nil
+	return u.resolveMerges(uctx, m, func(items iter.Seq[*ast.MappingValueNode]) error {
+		for item := range items {
+			var k string
+			if kn, ok := item.Key.(*ast.StringNode); ok {
+				k = kn.Value
+			} else {
+				return uctx.perrorf(item.Key, "unexpected key type %s", item.Key.Type())
+			}
+
+			vn, err := u.resolveNode(uctx, item.Value)
+			if err != nil {
+				return err
+			}
+
+			v := &structpb.Value{}
+			if err := u.unmarshalValue(uctx.forMapItem(k, item.Key, item.Value), vn, v); err != nil {
+				return err
+			}
+
+			out.Fields[k] = v
+		}
+
+		return nil
+	})
+}
+
+func (u *unmarshaler[T]) unmarshalValue(uctx *unmarshalCtx, n ast.Node, out *structpb.Value) error {
+	switch t := n.(type) {
+	case *ast.NullNode:
+		out.Kind = &structpb.Value_NullValue{NullValue: structpb.NullValue_NULL_VALUE}
+		return nil
+
+	case *ast.FloatNode:
+		out.Kind = &structpb.Value_NumberValue{NumberValue: t.Value}
+		return nil
+
+	case *ast.IntegerNode:
+		switch tv := t.Value.(type) {
+		case int64:
+			out.Kind = &structpb.Value_NumberValue{NumberValue: float64(tv)}
+			return nil
+
+		case uint64:
+			out.Kind = &structpb.Value_NumberValue{NumberValue: float64(tv)}
+			return nil
+
+		default:
+			return uctx.perrorf(n, "invalid float value %q", t.Value)
+		}
+
+	case *ast.StringNode:
+		out.Kind = &structpb.Value_StringValue{StringValue: t.Value}
+		return nil
+
+	case *ast.BoolNode:
+		out.Kind = &structpb.Value_BoolValue{BoolValue: t.Value}
+		return nil
+
+	case ast.MapNode:
+		s := &structpb.Struct{}
+		out.Kind = &structpb.Value_StructValue{StructValue: s}
+		return u.unmarshalStruct(uctx, n, s)
+
+	case *ast.SequenceNode:
+		l := &structpb.ListValue{}
+		out.Kind = &structpb.Value_ListValue{ListValue: l}
+		return u.unmarshalListValue(uctx, n, l)
+
+	default:
+		return uctx.perrorf(n, "unexpected %s", n.Type())
+	}
+}
+
+func (u *unmarshaler[T]) unmarshalUInt64Value(uctx *unmarshalCtx, n ast.Node, out *wrapperspb.UInt64Value) error {
+	switch t := n.(type) {
+	case *ast.IntegerNode:
+		switch v := t.Value.(type) {
+		case int64:
+			if v < 0 {
+				return uctx.perrorf(n, "unexpected negative value %q", v)
+			}
+
+			out.Value = uint64(v)
+			return nil
+
+		case uint64:
+			out.Value = v
+			return nil
+
+		default:
+			return uctx.perrorf(n, "unexpected integer value %q", t.Value)
+		}
+
+	case *ast.StringNode:
+		v, err := strconv.ParseUint(t.Value, 10, 64)
+		if err != nil {
+			return uctx.perrorf(n, "invalid integer value %q: %v", t.Value, err)
+		}
+
+		out.Value = v
+		return nil
+
+	default:
+		return uctx.perrorf(n, "unexpected %s", n.Type())
+	}
 }
 
 func (u *unmarshaler[T]) unmarshalMapKey(uctx *unmarshalCtx, n ast.Node, fd protoreflect.FieldDescriptor) (protoreflect.MapKey, error) {
