@@ -42,7 +42,7 @@ jobs:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@f73c5fd3cd8b66cad9d757a8686cc30d0f209f84 # main
+        uses: cerbos/actions/install-tools@40e604de065cdc6dc95d0351d692f25eaee79bbe # main
         with:
           tools: |-
             goreleaser
@@ -95,7 +95,7 @@ jobs:
           use-installer: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@f73c5fd3cd8b66cad9d757a8686cc30d0f209f84 # main
+        uses: cerbos/actions/install-tools@40e604de065cdc6dc95d0351d692f25eaee79bbe # main
         with:
           tools: just
 
