@@ -2787,6 +2787,40 @@ func cerbos_policy_v1_Variables_hashpb_sum(m *v13.Variables, hasher hash.Hash, i
 	}
 }
 
+func cerbos_private_v1_AuxDataTestCase_Input_hashpb_sum(m *AuxDataTestCase_Input, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.Input.key"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetKey()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetKey()), len(m.GetKey())))
+	}
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.Input.pem"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetPem())))
+	}
+}
+
+func cerbos_private_v1_AuxDataTestCase_hashpb_sum(m *AuxDataTestCase, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.description"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDescription()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDescription()), len(m.GetDescription())))
+	}
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.input"]; !ok {
+		if m.GetInput() != nil {
+			cerbos_private_v1_AuxDataTestCase_Input_hashpb_sum(m.GetInput(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.want_err"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetWantErr()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetWantErr()), len(m.GetWantErr())))
+	}
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.want_local_err"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetWantLocalErr()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetWantLocalErr()), len(m.GetWantLocalErr())))
+	}
+	if _, ok := ignore["cerbos.private.v1.AuxDataTestCase.want_remote_err"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetWantRemoteErr()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetWantRemoteErr()), len(m.GetWantRemoteErr())))
+	}
+}
+
 func cerbos_private_v1_BlobClonerTestCase_File_AddOrUpdate_hashpb_sum(m *BlobClonerTestCase_File_AddOrUpdate, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.private.v1.BlobClonerTestCase.File.AddOrUpdate.name"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetName()))))

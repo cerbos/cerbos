@@ -76,7 +76,7 @@ type ClientV1_BootstrapBundle_Call struct {
 // BootstrapBundle is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *ClientV1_Expecter) BootstrapBundle(context1 interface{}, s interface{}) *ClientV1_BootstrapBundle_Call {
+func (_e *ClientV1_Expecter) BootstrapBundle(context1 any, s any) *ClientV1_BootstrapBundle_Call {
 	return &ClientV1_BootstrapBundle_Call{Call: _e.mock.On("BootstrapBundle", context1, s)}
 }
 
@@ -142,7 +142,7 @@ type ClientV1_GetBundle_Call struct {
 // GetBundle is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *ClientV1_Expecter) GetBundle(context1 interface{}, s interface{}) *ClientV1_GetBundle_Call {
+func (_e *ClientV1_Expecter) GetBundle(context1 any, s any) *ClientV1_GetBundle_Call {
 	return &ClientV1_GetBundle_Call{Call: _e.mock.On("GetBundle", context1, s)}
 }
 
@@ -207,7 +207,7 @@ type ClientV1_GetCachedBundle_Call struct {
 
 // GetCachedBundle is a helper method to define mock.On call
 //   - s string
-func (_e *ClientV1_Expecter) GetCachedBundle(s interface{}) *ClientV1_GetCachedBundle_Call {
+func (_e *ClientV1_Expecter) GetCachedBundle(s any) *ClientV1_GetCachedBundle_Call {
 	return &ClientV1_GetCachedBundle_Call{Call: _e.mock.On("GetCachedBundle", s)}
 }
 
@@ -316,7 +316,7 @@ type ClientV1_WatchBundle_Call struct {
 // WatchBundle is a helper method to define mock.On call
 //   - context1 context.Context
 //   - s string
-func (_e *ClientV1_Expecter) WatchBundle(context1 interface{}, s interface{}) *ClientV1_WatchBundle_Call {
+func (_e *ClientV1_Expecter) WatchBundle(context1 any, s any) *ClientV1_WatchBundle_Call {
 	return &ClientV1_WatchBundle_Call{Call: _e.mock.On("WatchBundle", context1, s)}
 }
 

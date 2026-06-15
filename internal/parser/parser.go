@@ -1025,7 +1025,7 @@ func (u *unmarshaler[T]) unmarshalUInt64Value(uctx *unmarshalCtx, n ast.Node, ou
 		switch v := t.Value.(type) {
 		case int64:
 			if v < 0 {
-				return uctx.perrorf(n, "unexpected negative value %q", v)
+				return uctx.perrorf(n, "unexpected negative value '%d'", v)
 			}
 
 			out.Value = uint64(v)
