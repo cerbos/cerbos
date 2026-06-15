@@ -84,43 +84,6 @@
                     "rules": [
                         {
                             "actions": [
-                                "*"
-                            ],
-                            "effect": "EFFECT_ALLOW",
-                            "roles": [
-                                "admin"
-                            ],
-                            "name": "wildcard"
-                        },
-                        {
-                            "actions": [
-                                "create"
-                            ],
-                            "derivedRoles": [
-                                "employee_that_owns_the_record"
-                            ],
-                            "effect": "EFFECT_ALLOW"
-                        },
-                        {
-                            "actions": [
-                                "view"
-                            ],
-                            "derivedRoles": [
-                                "employee_that_owns_the_record"
-                            ],
-                            "effect": "EFFECT_ALLOW"
-                        },
-                        {
-                            "actions": [
-                                "view:*"
-                            ],
-                            "derivedRoles": [
-                                "employee_that_owns_the_record"
-                            ],
-                            "effect": "EFFECT_ALLOW"
-                        },
-                        {
-                            "actions": [
                                 "bar:*"
                             ],
                             "effect": "EFFECT_ALLOW",

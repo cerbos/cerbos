@@ -350,12 +350,15 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, n ast.MapNode, out
 			}
 			seen[field.Number()] = pos(item.Key)
 
+			out.Clear(field)
+
 			switch {
 			case field.IsList():
 				list := out.Mutable(field).List()
 				if err := u.unmarshalList(uctx.forField(field, item.Key), item.Value, field, list); err != nil {
 					return err
 				}
+
 			case field.IsMap():
 				mmap := out.Mutable(field).Map()
 
@@ -372,6 +375,7 @@ func (u *unmarshaler[T]) unmarshalMapping(uctx *unmarshalCtx, n ast.MapNode, out
 				if err := u.unmarshalMap(uctx.forField(field, item.Key), mn, field, mmap); err != nil {
 					return err
 				}
+
 			default:
 				if oof := field.ContainingOneof(); oof != nil {
 					idx := oof.Index()

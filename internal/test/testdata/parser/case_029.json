@@ -1,5 +1,5 @@
 {
-    "description": "Failure to resolve aliases in WKTs (#3222)",
+    "description": "Merging lists (#3233)",
     "want": [
         {
             "message": {
@@ -8,11 +8,12 @@
                     "name": "a",
                     "definitions": {
                         "b": {
-                            "c": "d"
+                            "c": ["d"],
+                            "e": "f"
                         },
-                        "e": {
-                            "c": "d",
-                            "f": "g"
+                        "g": {
+                            "c": ["h"],
+                            "e": "f"
                         }
                     }
                 }
