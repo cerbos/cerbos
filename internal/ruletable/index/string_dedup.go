@@ -136,7 +136,7 @@ func (idx *bitmapIndex) dedupStringsWith(s *StringDeduper) {
 		s.Intern(&b.OriginFqn)
 		s.Intern(&b.OriginDerivedRole)
 		s.Intern(&b.Name)
-		s.Intern(&b.EvaluationKey)
+
 		b.AllowActions = s.dedupSet(b.AllowActions)
 		if b.Core != nil {
 			if _, done := visitedCores[b.Core]; !done {

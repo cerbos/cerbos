@@ -155,17 +155,17 @@ func marshalRowParams(rp *RowParams) (*runtimev1.RuleTable_RuleRow_Params, error
 
 func marshalBinding(b *Binding, coreIndex map[*FunctionalCore]uint32) *runtimev1.BitmapIndex_Binding {
 	pb := &runtimev1.BitmapIndex_Binding{
-		Id:                b.ID,
-		CoreIndex:         coreIndex[b.Core],
-		Role:              b.Role,
-		Scope:             b.Scope,
-		Version:           b.Version,
-		Resource:          b.Resource,
-		Principal:         b.Principal,
-		OriginFqn:         b.OriginFqn,
-		OriginDerivedRole: b.OriginDerivedRole,
-		Name:              b.Name,
-		EvaluationKey:     b.EvaluationKey,
+		Id:                 b.ID,
+		CoreIndex:          coreIndex[b.Core],
+		Role:               b.Role,
+		Scope:              b.Scope,
+		Version:            b.Version,
+		Resource:           b.Resource,
+		Principal:          b.Principal,
+		OriginFqn:          b.OriginFqn,
+		OriginDerivedRole:  b.OriginDerivedRole,
+		Name:               b.Name,
+		EvaluationKeyTuple: b.EvaluationKey.toProto(),
 	}
 
 	if b.AllowActions != nil {
@@ -371,7 +371,7 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 			OriginFqn:         pb.OriginFqn,
 			OriginDerivedRole: pb.OriginDerivedRole,
 			Name:              pb.Name,
-			EvaluationKey:     pb.EvaluationKey,
+			EvaluationKey:     makeEvaluationKeyTuple(pb.EvaluationKeyTuple, pb.EvaluationKey),
 		}
 
 		switch v := pb.ActionSet.(type) {

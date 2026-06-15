@@ -167,7 +167,7 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			OriginFqn:         rule.OriginFqn,
 			OriginDerivedRole: rule.OriginDerivedRole,
 			Name:              rule.Name,
-			EvaluationKey:     rule.EvaluationKey,
+			EvaluationKey:     makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey),
 			AllowActions:      allowActions,
 			Core:              core,
 		}

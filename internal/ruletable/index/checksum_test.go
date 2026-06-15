@@ -23,10 +23,11 @@ var routingRuleRowFields = map[protoreflect.Name]struct{}{
 }
 
 var metadataOnlyFields = map[protoreflect.Name]struct{}{
-	"origin_fqn":          {},
-	"origin_derived_role": {},
-	"evaluation_key":      {},
-	"name":                {},
+	"origin_fqn":           {},
+	"origin_derived_role":  {},
+	"evaluation_key":       {},
+	"evaluation_key_tuple": {},
+	"name":                 {},
 }
 
 func TestAllRuleRowFieldsClassified(t *testing.T) {

@@ -176,7 +176,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	varCache := make(map[uint64]map[string]any)
 	// We can cache evaluated conditions for combinations of parameters and conditions.
 	// We use a compound key comprising the parameter origin and the rule FQN.
-	conditionCache := make(map[string]bool)
+	conditionCache := make(map[index.EvaluationKeyTuple]bool)
 
 	processedScopedDerivedRoles := make(map[string]struct{})
 	policyTypes := []policyv1.Kind{policyv1.Kind_KIND_PRINCIPAL, policyv1.Kind_KIND_RESOURCE}

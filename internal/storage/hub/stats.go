@@ -21,7 +21,7 @@ const numPolicyKinds = 4
 
 type statsCollector struct {
 	policies          map[uint64]*stats
-	uniqueRules       map[uint64]struct{}
+	uniqueRules       map[index.EvaluationKeyTuple]struct{}
 	uniqueResources   map[uint64]struct{}
 	uniqueActions     map[uint64]struct{}
 	schemaRefs        map[uint64]struct{}
@@ -44,7 +44,7 @@ type policyStats struct {
 func newStatsCollector() *statsCollector {
 	return &statsCollector{
 		policies:        make(map[uint64]*stats),
-		uniqueRules:     make(map[uint64]struct{}),
+		uniqueRules:     make(map[index.EvaluationKeyTuple]struct{}),
 		uniqueResources: make(map[uint64]struct{}),
 		uniqueActions:   make(map[uint64]struct{}),
 		schemaRefs:      make(map[uint64]struct{}),
@@ -123,12 +123,12 @@ func (s *statsCollector) addRow(row *index.Binding) {
 		s.hasScopedPolicies = true
 	}
 
-	if row.EvaluationKey == "" {
+	if row.EvaluationKey.IsZero() {
 		return
 	}
 
-	if _, ok := s.uniqueRules[util.HashStr(row.EvaluationKey)]; !ok {
-		s.uniqueRules[util.HashStr(row.EvaluationKey)] = struct{}{}
+	if _, ok := s.uniqueRules[row.EvaluationKey]; !ok {
+		s.uniqueRules[row.EvaluationKey] = struct{}{}
 		s.policies[mID].ruleCount++
 	}
 
