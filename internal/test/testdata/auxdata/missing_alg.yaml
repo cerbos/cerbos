@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../.jsonschema/AuxDataTestCase.schema.json
 ---
-description: missing algorithm ('alg')
+description: missing algorithm (alg)
 input:
   key: |-
     {
@@ -16,4 +16,4 @@ input:
       "qi": "eSHOKDssFVdOtVOOf72-xI-zOjbwKcHktR3Pw5wg-rbfG2savesRc3qNyJDPZCuR5gaB-4ZA6yKicbV_WLtD1neuye92pNq6g68-0bU4VhmYG-bZ-qTIzWY0dY2xvEGjFw-r9s6Gdl_IY7i5OJCp7BCHJRrupyovs2-mX_zXYE8",
       "use": "sig"
     }
-wantErr: "failed to validate key at idx 0: missing algorithm ('alg')"
+wantErr: "failed to validate key at idx 0: missing algorithm (alg)"
