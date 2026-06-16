@@ -235,8 +235,7 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 
 	file, err := parser.Parse(t, parser.ParseComments)
 	if err != nil { //nolint:nestif
-		syntaxErr := new(yaml.SyntaxError)
-		if errors.As(err, &syntaxErr) {
+		if syntaxErr, ok := errors.AsType[*yaml.SyntaxError](err); ok {
 			srcErr := &sourcev1.Error{
 				Kind:    sourcev1.Error_KIND_PARSE_ERROR,
 				Message: syntaxErr.Message,
@@ -1168,8 +1167,8 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 		return nil
 	}
 
-	verrs := new(protovalidate.ValidationError)
-	if !errors.As(err, &verrs) {
+	verrs, ok := errors.AsType[*protovalidate.ValidationError](err)
+	if !ok {
 		return err
 	}
 

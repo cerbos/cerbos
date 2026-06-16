@@ -4,7 +4,6 @@
 package index
 
 import (
-	"errors"
 	"io"
 	"io/fs"
 	"path/filepath"
@@ -199,7 +198,7 @@ func TestBuildIndex(t *testing.T) {
 			switch {
 			case tc.WantErrList != nil:
 				errList := new(BuildError)
-				require.True(t, errors.As(haveErr, &errList))
+				require.ErrorAs(t, haveErr, &errList)
 				require.Empty(t,
 					cmp.Diff(tc.WantErrList, errList.IndexBuildErrors,
 						protocmp.Transform(),

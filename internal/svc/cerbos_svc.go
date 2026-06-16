@@ -55,8 +55,7 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 
 	auxData, err := cs.auxData.Extract(ctx, request.AuxData)
 	if err != nil {
-		var extractErr auxdata.JWTExtractionError
-		if errors.As(err, &extractErr) {
+		if extractErr, ok := errors.AsType[auxdata.JWTExtractionError](err); ok {
 			log.Error(fmt.Sprintf("Failed to extract auxData: %s", extractErr.Description), zap.Error(extractErr.Cause))
 		} else {
 			log.Error("Failed to extract auxData", zap.Error(err))
@@ -134,8 +133,7 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		var extractErr auxdata.JWTExtractionError
-		if errors.As(err, &extractErr) {
+		if extractErr, ok := errors.AsType[auxdata.JWTExtractionError](err); ok {
 			log.Error(fmt.Sprintf("Failed to extract auxData: %s", extractErr.Description), zap.Error(extractErr.Cause))
 		} else {
 			log.Error("Failed to extract auxData", zap.Error(err))
@@ -195,8 +193,7 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		var extractErr auxdata.JWTExtractionError
-		if errors.As(err, &extractErr) {
+		if extractErr, ok := errors.AsType[auxdata.JWTExtractionError](err); ok {
 			log.Error(fmt.Sprintf("Failed to extract auxData: %s", extractErr.Description), zap.Error(extractErr.Cause))
 		} else {
 			log.Error("Failed to extract auxData", zap.Error(err))
@@ -261,8 +258,7 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		var extractErr auxdata.JWTExtractionError
-		if errors.As(err, &extractErr) {
+		if extractErr, ok := errors.AsType[auxdata.JWTExtractionError](err); ok {
 			log.Error(fmt.Sprintf("Failed to extract auxData: %s", extractErr.Description), zap.Error(extractErr.Cause))
 		} else {
 			log.Error("Failed to extract auxData", zap.Error(err))

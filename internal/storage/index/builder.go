@@ -208,14 +208,12 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 		return
 	}
 
-	var uErr parser.UnmarshalError
-	if errors.As(err, &uErr) {
+	if uErr, ok := errors.AsType[parser.UnmarshalError](err); ok {
 		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.GetMessage(), ErrorDetails: uErr.Err})
 		return
 	}
 
-	var vErr policy.ValidationError
-	if errors.As(err, &vErr) {
+	if vErr, ok := errors.AsType[policy.ValidationError](err); ok {
 		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: vErr.Err.GetMessage(), ErrorDetails: vErr.Err})
 		return
 	}
