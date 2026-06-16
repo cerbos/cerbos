@@ -68,7 +68,8 @@ func TestInspect(t *testing.T) {
 				expectedErrors := testCase.RuleTablesExpectation.Errors
 
 				idx, err := index.Build(ctx, os.DirFS(dir))
-				if haveIdxBuildErr, ok := errors.AsType[*index.BuildError](err); ok {
+				var haveIdxBuildErr *index.BuildError
+				if errors.As(err, &haveIdxBuildErr) {
 					var wantIdxBuildErrs *runtimev1.IndexBuildErrors
 					expectedIdxBuildErrs, ok := expectedErrors.(*privatev1.InspectTestCase_RuleTablesExpectation_IndexBuildErrors)
 					if ok {
@@ -93,7 +94,8 @@ func TestInspect(t *testing.T) {
 
 				protoRT := ruletable.NewProtoRuletable()
 				err = ruletable.LoadPolicies(t.Context(), protoRT, compiler)
-				if haveCompileErrSet, ok := errors.AsType[*compile.ErrorSet](err); ok {
+				var haveCompileErrSet *compile.ErrorSet
+				if errors.As(err, &haveCompileErrSet) {
 					var wantCompileErrs []*runtimev1.CompileErrors_Err
 					expectedCompileErrs, ok := expectedErrors.(*privatev1.InspectTestCase_RuleTablesExpectation_CompileErrors)
 					if ok {
@@ -131,7 +133,8 @@ func TestInspect(t *testing.T) {
 				expectedErrors := testCase.PolicySetsExpectation.Errors
 
 				idx, err := index.Build(ctx, os.DirFS(dir))
-				if haveIdxBuildErr, ok := errors.AsType[*index.BuildError](err); ok {
+				var haveIdxBuildErr *index.BuildError
+				if errors.As(err, &haveIdxBuildErr) {
 					var wantIdxBuildErrs *runtimev1.IndexBuildErrors
 					expectedIdxBuildErrs, ok := expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_IndexBuildErrors)
 					if ok {
@@ -153,7 +156,8 @@ func TestInspect(t *testing.T) {
 				ins := inspect.PolicySets()
 				for unit := range idx.GetAllCompilationUnits(ctx) {
 					rps, err := compile.Compile(unit, mgr)
-					if haveCompileErrSet, ok := errors.AsType[*compile.ErrorSet](err); ok {
+					var haveCompileErrSet *compile.ErrorSet
+					if errors.As(err, &haveCompileErrSet) {
 						var wantCompileErrs []*runtimev1.CompileErrors_Err
 						expectedCompileErrs, ok := expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_CompileErrors)
 						if ok {

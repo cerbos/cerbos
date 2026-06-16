@@ -284,7 +284,8 @@ func (l *Log) syncLoop(ctx context.Context) error {
 func (l *Log) schedule() time.Duration {
 	l.logger.Log(zapcore.Level(-3), "Scheduling stream")
 	if err := l.streamLogs(); err != nil {
-		if ingestErr, ok := errors.AsType[ErrIngestBackoff](err); ok {
+		var ingestErr ErrIngestBackoff
+		if errors.As(err, &ingestErr) {
 			l.logger.Warn("svc-ingest issued backoff", zap.Error(err))
 			if ingestErr.Backoff < l.minFlushInterval {
 				return l.minFlushInterval

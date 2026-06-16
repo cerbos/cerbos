@@ -150,7 +150,8 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		if extractErr, ok := errors.AsType[auxdata.JWTExtractionError](err); ok {
+		var extractErr auxdata.JWTExtractionError
+		if errors.As(err, &extractErr) {
 			log.Error(fmt.Sprintf("Failed to extract auxData: %s", extractErr.Description), zap.Error(extractErr.Cause))
 		} else {
 			log.Error("Failed to extract auxData", zap.Error(err))
