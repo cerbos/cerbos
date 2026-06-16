@@ -201,7 +201,7 @@ func newJWTExtractionError(err error) error {
 	case errors.Is(err, jwt.TokenNotYetValidError()):
 		return JWTExtractionError{
 			Cause:       err,
-			Description: "token is not valid yet (nbf)",
+			Description: "token is not valid yet ('nbf')",
 		}
 	default:
 		return JWTExtractionError{
