@@ -207,9 +207,20 @@ func (d dimension[T]) Keys() []T {
 	return keys
 }
 
-// Query returns OR(d[k] for k in keys).
+// intersectingKeys returns the keys whose binding IDs intersect filter.
+func (d dimension[T]) intersectingKeys(filter *Bitmap) []T { //nolint:unused
+	keys := make([]T, 0, len(d.m))
+	for k, bm := range d.m {
+		if intersectionNonEmpty(bm, filter) {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// QueryMultiple returns OR(d[k] for k in keys).
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func (d dimension[T]) Query(arena *bitmapArena, keys []T) *Bitmap {
+func (d dimension[T]) QueryMultiple(arena *bitmapArena, keys []T) *Bitmap {
 	parts := make([]*Bitmap, 0, len(keys))
 	for _, k := range keys {
 		if bm, ok := d.m[k]; ok {

@@ -821,17 +821,33 @@ func (m *Index) GetResources() []string {
 	return m.bi.resource.GetAllKeys()
 }
 
-// Roles returns role keys matching the filters. An empty filter means
-// match-all on that dimension. Glob keys (e.g. "manager:*") appear verbatim.
-// Principal-policy rows are excluded.
-func (m *Index) Roles(versions, scopes []string) []string {
-	return m.bi.nonPrincipalDimensionKeys(m.bi.role, versions, scopes)
+// Versions returns version keys matching the filters. An empty filter means
+// match-all on that dimension. Principal-policy rows are excluded.
+func (m *Index) Versions(scopes, resources []string) []string {
+	return m.bi.resourceDimensionKeys(m.bi.version, nil, scopes, resources)
 }
 
-// Resources returns resource keys matching the filters.
-// Matches `Roles` semantics above.
+// Scopes returns scope keys matching the filters. Matches `Versions` semantics.
+func (m *Index) Scopes(versions, resources []string) []string {
+	return m.bi.resourceDimensionKeys(m.bi.scope, versions, nil, resources)
+}
+
+// Roles returns role keys matching the filters; glob keys (e.g. "manager:*")
+// appear verbatim. Otherwise matches `Versions` semantics.
+func (m *Index) Roles(versions, scopes, resources []string) []string {
+	return m.bi.resourceDimensionKeys(m.bi.role, versions, scopes, resources)
+}
+
+// Actions returns action keys matching the filters; glob keys (e.g. "view:*")
+// appear verbatim. Otherwise matches `Versions` semantics.
+func (m *Index) Actions(versions, scopes, resources []string) []string {
+	return m.bi.resourceDimensionKeys(m.bi.action, versions, scopes, resources)
+}
+
+// Resources returns resource keys matching the filters; glob keys appear
+// verbatim. Otherwise matches `Versions` semantics.
 func (m *Index) Resources(versions, scopes []string) []string {
-	return m.bi.nonPrincipalDimensionKeys(m.bi.resource, versions, scopes)
+	return m.bi.resourceDimensionKeys(m.bi.resource, versions, scopes, nil)
 }
 
 // ActionsForResource returns distinct actions on resource, filtered by
@@ -857,10 +873,15 @@ func (m *Index) ActionsForResource(resource string, versions, scopes []string) [
 	return collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
 }
 
-// nonPrincipalDimensionKeys returns keys of gd matching the filters,
-// excluding principal-policy bindings. Returns nil if no KIND_RESOURCE
-// bindings are indexed.
-func (bi *bitmapIndex) nonPrincipalDimensionKeys(gd *globDimension, versions, scopes []string) []string {
+// keyDimension enumerates the keys whose bindings intersect a filter bitmap.
+type keyDimension interface {
+	intersectingKeys(filter *Bitmap) []string
+}
+
+// resourceDimensionKeys returns keys of d backed by at least one KIND_RESOURCE binding
+// matching the version/scope/resource filters. Returns nil if no KIND_RESOURCE
+// bindings are indexed or a non-empty filter matches nothing.
+func (bi *bitmapIndex) resourceDimensionKeys(d keyDimension, versions, scopes, resources []string) []string {
 	resourceKindBM, ok := bi.policyKind.Get(policyv1.Kind_KIND_RESOURCE)
 	if !ok {
 		return nil
@@ -874,13 +895,24 @@ func (bi *bitmapIndex) nonPrincipalDimensionKeys(gd *globDimension, versions, sc
 		return nil
 	}
 
-	filters := make([]*Bitmap, 0, 3) //nolint:mnd
+	var resourceBM *Bitmap
+	if len(resources) > 0 {
+		resourceBM = bi.resource.QueryMultiple(arena, resources)
+		if resourceBM.IsEmpty() {
+			return nil
+		}
+	}
+
+	filters := make([]*Bitmap, 0, 4) //nolint:mnd
 	filters = append(filters, resourceKindBM)
 	if versionBM != nil {
 		filters = append(filters, versionBM)
 	}
 	if scopeBM != nil {
 		filters = append(filters, scopeBM)
+	}
+	if resourceBM != nil {
+		filters = append(filters, resourceBM)
 	}
 
 	filterBM := filters[0]
@@ -891,20 +923,20 @@ func (bi *bitmapIndex) nonPrincipalDimensionKeys(gd *globDimension, versions, sc
 		}
 	}
 
-	return gd.intersectingKeys(filterBM)
+	return d.intersectingKeys(filterBM)
 }
 
 // versionScopeFilters builds the filter bitmaps. ok=false means a non-empty
 // input matched nothing. A nil bitmap means "no filter" for that dimension.
 func (bi *bitmapIndex) versionScopeFilters(arena *bitmapArena, versions, scopes []string) (versionBM, scopeBM *Bitmap, ok bool) {
 	if len(versions) > 0 {
-		versionBM = bi.version.Query(arena, versions)
+		versionBM = bi.version.QueryMultiple(arena, versions)
 		if versionBM.IsEmpty() {
 			return nil, nil, false
 		}
 	}
 	if len(scopes) > 0 {
-		scopeBM = bi.scope.Query(arena, scopes)
+		scopeBM = bi.scope.QueryMultiple(arena, scopes)
 		if scopeBM.IsEmpty() {
 			return nil, nil, false
 		}
@@ -925,7 +957,7 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 	arena := newBitmapArena()
 	defer arena.release()
 
-	scopeBM := m.bi.scope.Query(arena, scopes)
+	scopeBM := m.bi.scope.QueryMultiple(arena, scopes)
 	if scopeBM.IsEmpty() {
 		return false
 	}
@@ -956,7 +988,7 @@ func (m *Index) ScopedPrincipalExists(version string, scopes []string) bool {
 	arena := newBitmapArena()
 	defer arena.release()
 
-	scopeBM := m.bi.scope.Query(arena, scopes)
+	scopeBM := m.bi.scope.QueryMultiple(arena, scopes)
 	if scopeBM.IsEmpty() {
 		return false
 	}
