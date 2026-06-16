@@ -75,7 +75,7 @@ type ClientProvider_V1_Call struct {
 
 // V1 is a helper method to define mock.On call
 //   - clientConf bundle.ClientConf
-func (_e *ClientProvider_Expecter) V1(clientConf interface{}) *ClientProvider_V1_Call {
+func (_e *ClientProvider_Expecter) V1(clientConf any) *ClientProvider_V1_Call {
 	return &ClientProvider_V1_Call{Call: _e.mock.On("V1", clientConf)}
 }
 
@@ -137,7 +137,7 @@ type ClientProvider_V2_Call struct {
 
 // V2 is a helper method to define mock.On call
 //   - clientConf bundle.ClientConf
-func (_e *ClientProvider_Expecter) V2(clientConf interface{}) *ClientProvider_V2_Call {
+func (_e *ClientProvider_Expecter) V2(clientConf any) *ClientProvider_V2_Call {
 	return &ClientProvider_V2_Call{Call: _e.mock.On("V2", clientConf)}
 }
 

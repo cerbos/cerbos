@@ -8,9 +8,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/lestrrat-go/jwx/v3/jwt"
@@ -66,9 +69,9 @@ func newJWTHelper(ctx context.Context, conf *JWTConf) *jwtHelper {
 				if jwkCache == nil {
 					jwkCache = newJWKCache(ctx, log)
 				}
-				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, opts)
+				jh.keySets[ks.ID] = newRemoteKeySet(ctx, jwkCache, ks.Remote, ks.Insecure, opts)
 			case ks.Local != nil:
-				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, opts)
+				jh.keySets[ks.ID] = newLocalKeySet(ks.Local, ks.Insecure, opts)
 			}
 		}
 	}
@@ -147,7 +150,7 @@ func (j *jwtHelper) parseOptions(ctx context.Context, auxJWT *requestv1.AuxData_
 func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT, parseOpts []jwt.ParseOption) (map[string]*structpb.Value, error) {
 	token, err := jwt.ParseString(auxJWT.Token, parseOpts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JWT: %w", err)
+		return nil, newJWTExtractionError(err)
 	}
 
 	jwtPBMap := make(map[string]*structpb.Value)
@@ -173,6 +176,57 @@ func (j *jwtHelper) doExtract(ctx context.Context, auxJWT *requestv1.AuxData_JWT
 	return jwtPBMap, nil
 }
 
+func newJWTExtractionError(err error) error {
+	switch {
+	case errors.Is(err, jwt.InvalidAudienceError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "invalid audience (aud)",
+		}
+	case errors.Is(err, jwt.InvalidIssuedAtError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "issued at time is in the future (iat)",
+		}
+	case errors.Is(err, jwt.InvalidIssuerError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "invalid issuer (iss)",
+		}
+	case errors.Is(err, jwt.TokenExpiredError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "token has expired (exp)",
+		}
+	case errors.Is(err, jwt.TokenNotYetValidError()):
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "token is not valid yet (nbf)",
+		}
+	default:
+		return JWTExtractionError{
+			Cause:       err,
+			Description: "failed to parse JWT",
+		}
+	}
+}
+
+type JWTExtractionError struct {
+	Cause       error
+	Description string
+}
+
+func (ee JWTExtractionError) Error() string {
+	if ee.Description != "" {
+		return ee.Description
+	}
+	return ee.Cause.Error()
+}
+
+func (ee JWTExtractionError) Unwrap() error {
+	return ee.Cause
+}
+
 type keySet interface {
 	keySet(context.Context) (jwk.Set, []any, error)
 }
@@ -180,55 +234,101 @@ type keySet interface {
 // remoteKeySet holds an auto-refreshing remote keyset.
 type remoteKeySet struct {
 	*jwk.Cache
-	url     string
-	options []any
+	url      string
+	options  []any
+	insecure InsecureKeySetOpt
 }
 
-func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, options []any) *remoteKeySet {
+func newRemoteKeySet(ctx context.Context, cache *jwk.Cache, src *RemoteSource, insecure InsecureKeySetOpt, options []any) *remoteKeySet {
 	if src.RefreshInterval > 0 {
 		_ = cache.Register(ctx, src.URL, jwk.WithConstantInterval(src.RefreshInterval))
 	} else {
 		_ = cache.Register(ctx, src.URL)
 	}
 
-	return &remoteKeySet{Cache: cache, url: src.URL, options: options}
+	return &remoteKeySet{
+		Cache:    cache,
+		insecure: insecure,
+		url:      src.URL,
+		options:  options,
+	}
 }
 
 func (rks *remoteKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	ks, err := rks.Lookup(ctx, rks.url)
+	if err != nil {
+		return nil, nil, JWTExtractionError{Cause: err, Description: "failed to look up remote keyset"}
+	}
+
+	if err := validateKeySet(ks, rks.insecure); err != nil {
+		return nil, nil, err
+	}
+
 	return ks, rks.options, err
 }
 
 // localKeySet represents a keyset defined manually through the configuration.
 type localKeySet func(context.Context) (jwk.Set, []any, error)
 
-func newLocalKeySet(src *LocalSource, options []any) localKeySet {
-	if src.Data != "" {
-		kbytes, err := base64.StdEncoding.DecodeString(src.Data)
+func newLocalKeySet(src *LocalSource, insecure InsecureKeySetOpt, options []any) localKeySet {
+	var keyBytes []byte
+	var err error
+	switch {
+	case src.File != "":
+		f, err := os.Open(src.File)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to apply base64 decoder to key data: %w", err)
+				return nil, nil, JWTExtractionError{Cause: err, Description: fmt.Sprintf("failed to open keyset file %s", src.File)}
 			}
 		}
+		defer f.Close()
 
-		ks, err := jwk.Parse(kbytes, jwk.WithPEM(src.PEM))
+		keyBytes, err = io.ReadAll(f)
 		if err != nil {
 			return func(context.Context) (jwk.Set, []any, error) {
-				return nil, nil, fmt.Errorf("failed to parse key data: %w", err)
+				return nil, nil, JWTExtractionError{Cause: err, Description: fmt.Sprintf("failed to read from keyset file %s", src.File)}
 			}
 		}
-
-		return func(context.Context) (jwk.Set, []any, error) { return ks, options, nil }
-	}
-
-	ks, err := jwk.ReadFile(src.File, jwk.WithPEM(src.PEM))
-	if err != nil {
+	case src.Data != "":
+		keyBytes, err = base64.StdEncoding.DecodeString(src.Data)
+		if err != nil {
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, JWTExtractionError{Cause: err, Description: "failed to decode base64 encoded keyset data"}
+			}
+		}
+	default:
 		return func(context.Context) (jwk.Set, []any, error) {
-			return nil, nil, fmt.Errorf("failed to read keyset from '%s': %w", src.File, err)
+			return nil, nil, JWTExtractionError{Cause: err, Description: "one of auxData.jwt.keySets[].local.data or auxData.jwt.keySets[].local.file must be specified"}
 		}
 	}
 
-	return func(context.Context) (jwk.Set, []any, error) { return ks, options, nil }
+	ks, err := jwk.Parse(keyBytes, jwk.WithPEM(src.PEM))
+	if err != nil {
+		if errors.Is(err, jwa.ErrInvalidKeyAlgorithm()) {
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, JWTExtractionError{
+					Cause:       errors.New("invalid algorithm (alg)"),
+					Description: "invalid algorithm (alg)",
+				}
+			}
+		}
+
+		return func(context.Context) (jwk.Set, []any, error) {
+			return nil, nil, JWTExtractionError{Cause: err, Description: "failed to parse key data"}
+		}
+	}
+
+	if !src.PEM {
+		if err := validateKeySet(ks, insecure); err != nil {
+			return func(context.Context) (jwk.Set, []any, error) {
+				return nil, nil, err
+			}
+		}
+	}
+
+	return func(context.Context) (jwk.Set, []any, error) {
+		return ks, options, nil
+	}
 }
 
 func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
@@ -237,4 +337,62 @@ func (lks localKeySet) keySet(ctx context.Context) (jwk.Set, []any, error) {
 	}
 
 	return lks(ctx)
+}
+
+func validateKeySet(keySet jwk.Set, insecure InsecureKeySetOpt) error {
+	if insecure.OptionalAlg && insecure.OptionalKid {
+		return nil
+	}
+
+	for idx := range keySet.Len() {
+		key, ok := keySet.Key(idx)
+		if !ok {
+			return JWTExtractionError{
+				Cause:       fmt.Errorf("failed to get key at idx %d", idx),
+				Description: fmt.Sprintf("failed to get key at idx %d", idx),
+			}
+		}
+
+		if err := validateKey(key, insecure.OptionalAlg, insecure.OptionalKid); err != nil {
+			return fmt.Errorf("failed to validate key at idx %d: %w", idx, err)
+		}
+	}
+
+	return nil
+}
+
+func validateKey(key jwk.Key, optionalAlg, optionalKid bool) error {
+	if alg, ok := key.Algorithm(); !optionalAlg {
+		if !ok {
+			return JWTExtractionError{
+				Cause:       errors.New("missing algorithm (alg)"),
+				Description: "missing algorithm (alg)",
+			}
+		}
+
+		if alg.String() == "" {
+			return JWTExtractionError{
+				Cause:       errors.New("empty algorithm (alg)"),
+				Description: "empty algorithm (alg)",
+			}
+		}
+	}
+
+	if kid, ok := key.KeyID(); !optionalKid {
+		if !ok {
+			return JWTExtractionError{
+				Cause:       errors.New("missing key ID (kid)"),
+				Description: "missing key ID (kid)",
+			}
+		}
+
+		if kid == "" {
+			return JWTExtractionError{
+				Cause:       errors.New("empty key ID (kid)"),
+				Description: "empty key ID (kid)",
+			}
+		}
+	}
+
+	return nil
 }

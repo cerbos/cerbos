@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../.jsonschema/AuxDataTestCase.schema.json
+---
+description: multiple keys (kty=EC) (alg=ES384)
+input:
+  key: |-
+    {
+      "keys": [
+        {
+          "alg": "ES384",
+          "crv": "P-384",
+          "d": "avblvz5fUAuE9IQ6tRWcjzb5SYqTEJ_zTrSaI4ldtCXCOu81M5NFLJ9WuL8jds4n",
+          "kid": "cerbos-test",
+          "kty": "EC",
+          "use": "sig",
+          "x": "Qw1PvxGZ4d2FpLwNMU-59q6_6TGyBQrzdx6qv1QWogoRRLJML95kdXTEz3KhI1jG",
+          "y": "PLe9wt1fnwe1pF_n6sHkhjbfi2-I1Ln08CH0UQGZEu7qU5uUi90rQB2WFtcImwEv"
+        }
+      ]
+    }

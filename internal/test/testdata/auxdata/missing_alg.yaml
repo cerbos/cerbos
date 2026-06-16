@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../.jsonschema/AuxDataTestCase.schema.json
+---
+description: missing algorithm (alg)
+input:
+  key: |-
+    {
+      "d": "HpeAfeiFTpA4qRH6xrP9qY0xt1Py6REDO_BOVuqgVO9Af9ExbXnwBNlkRX-yMHPn4E7UPEssHZR3uHFVDWffd1sHFrDTlQVK_gVE6BsnboxO6Ttzd1xBZZo74eOIqksu_fSKz0lhnBmofjpJJJivtfOsYGhWlokWPMzVIq7lukroSK7iiB8PDlpleXG60GyGFkS16ReaOx98MN9wIx3RjB_KKBZ0wx7MO_9VA5sWEMR49KOKvTkZSQWUTV4ncRdAWzbrOZ7flhUMAhhkwYATpHUwHabg0cke6y5yZHg26hKrHPZ1-hsFF5CnkmNVidR3SvPwzgsENIm0Lld-rHckNQ",
+      "dp": "f79DwohomS1fHIJr9cQPwm2y__vE0oF1BuRbsy3LBQva8mHmljDj_KUDQjUQ1FXTWR4PlVPT4xjED0px4iDg1-5dxBN1msCy0_IvtgBRRtBWv30IzG4iryPCKHGeVf6vErhF65XQXx04nGxdlm3fdaysYBkeKBuV0LD4MFubWCk",
+      "dq": "HSP7-rz7Y2xTckCR0no7kEC8Vn7Upq4p7bv0-jS7A8Hs8s0t9XjmHmplVdE71Mdkv08tjK4h3Ie4hF5BEnlCKxMfnwn3uHytFX6n9P4QpnyyF26WcaDfhQhMjXeR9fVddVuHcLpJ08-DuOBv1nibot5yygJc0msJeznpsaeN9k0",
+      "e": "AQAB",
+      "kid": "cerbos-test",
+      "kty": "RSA",
+      "n": "uqHPxtSrUe4h5N9J810-8ASnQWUheG0OTyFhoJTgI9TONSigA7PTUAVdYKTmcfvimSDW7lDFhpjbQ1WloNGiclO6N6RzDOa6XNOK1X_mTbSQNjMJtNsFZOz1gWwAYI7SzwFRJqVVhwrYWuiMMUcO5bxmhWWT5seNRuK_FfwHs6sreZ81FJCo3-p8LdSk_jawK1hmd8i8qPMFRtnZiIiPwNVSq96otEyggtaFWqehvSoJYutCy-yzm_eNhZFaHd9xSLPgFuKxkXPj89E1GVxiX7qyX6-Z7_PL2coToBQMkBtwmmKKJiPxf64hmiKS8YfhX39jg5RwdVDcADsWGJRoFw",
+      "p": "4oHfoFa8UOHKZ9FnqAMHwrNr_Q4JqCNnE1xlufJUUsWrPalSC-Gmv3hcI3ap-XrvVCIi5yi_UTgb3ukxm7PVkBj5IeeMhE2cNtVf9F1NcN0sQZL8elWEOg6b65ScP6S46DYjZ6c1PWrPtZDWVqefgN3ebY1ubFznvzgmBO4PPFU",
+      "q": "0u7ItwWLoeS2DKrlHKwU4WpF_JVhQGBgsmklU8xZIs35PA8tQhL9Na4b8QfLPVWaSYMprEwwB4JgXO7LCJrZ1qRoyn4SDVtfO_3kZNQbf6uk9XHGNmGjFhsTVVY40aq07C3T5gk7uBtbVrHs2vj9qqtHb2DzEnzb0NING3Y7_rs",
+      "qi": "eSHOKDssFVdOtVOOf72-xI-zOjbwKcHktR3Pw5wg-rbfG2savesRc3qNyJDPZCuR5gaB-4ZA6yKicbV_WLtD1neuye92pNq6g68-0bU4VhmYG-bZ-qTIzWY0dY2xvEGjFw-r9s6Gdl_IY7i5OJCp7BCHJRrupyovs2-mX_zXYE8",
+      "use": "sig"
+    }
+wantErr: "failed to validate key at idx 0: missing algorithm (alg)"
