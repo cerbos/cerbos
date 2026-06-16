@@ -15,7 +15,6 @@ import (
 	"strings"
 	"testing"
 
-	"buf.build/go/protovalidate"
 	"github.com/goccy/go-yaml/ast"
 	yamlparser "github.com/goccy/go-yaml/parser"
 	"github.com/google/go-cmp/cmp"
@@ -36,13 +35,11 @@ import (
 
 func TestUnmarshal(t *testing.T) {
 	testCases := test.LoadTestCases(t, "parser")
-	validator, err := protovalidate.New(protovalidate.WithMessages(&policyv1.Policy{}))
-	require.NoError(t, err)
 
 	for _, testCase := range testCases {
 		t.Run(testCase.Name, func(t *testing.T) {
 			tc, input := loadTestCase(t, testCase)
-			haveMsg, haveSrc, err := parser.Unmarshal[policyv1.Policy](input, parser.WithValidator(validator))
+			haveMsg, haveSrc, err := parser.Unmarshal[policyv1.Policy](input)
 
 			t.Cleanup(func() {
 				if t.Failed() {
@@ -252,7 +249,7 @@ func BenchmarkUnmarshal(b *testing.B) {
 				b.SetBytes(int64(buf.Len()))
 				b.StartTimer()
 
-				policies, srcContexts, err := parser.Unmarshal[policyv1.Policy](buf)
+				policies, srcContexts, err := parser.Unmarshal[policyv1.Policy](buf, parser.WithoutValidate())
 				require.NoError(b, err)
 				require.Len(b, policies, 1)
 				require.Len(b, srcContexts, 1)

@@ -269,5 +269,6 @@ func readPolicy(path string) (*policyv1.Policy, error) {
 
 	defer f.Close()
 
-	return policy.ReadPolicy(f)
+	p, _, err := policy.ReadPolicy(f)
+	return p, err
 }

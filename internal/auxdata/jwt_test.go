@@ -4,7 +4,6 @@
 package auxdata
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -27,7 +26,6 @@ import (
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	requestv1 "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 func TestKeySet(t *testing.T) {
@@ -38,7 +36,7 @@ func TestKeySet(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			t.Parallel()
 
-			tc := readTestCase(t, testCase)
+			tc := test.Parse[privatev1.AuxDataTestCase](t, testCase.Input)
 			keysDir := t.TempDir()
 
 			if tc.GetWantErr() != "" && (tc.GetWantLocalErr() != "" || tc.GetWantRemoteErr() != "") {
@@ -136,15 +134,6 @@ func TestKeySet(t *testing.T) {
 			}
 		})
 	}
-}
-
-func readTestCase(t *testing.T, testCase test.Case) *privatev1.AuxDataTestCase {
-	t.Helper()
-
-	tc := &privatev1.AuxDataTestCase{}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(testCase.Input), tc))
-
-	return tc
 }
 
 func TestExtract_MultipleKeySets(t *testing.T) {

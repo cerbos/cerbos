@@ -6,7 +6,7 @@
       "summary": {
         "overallResult": "RESULT_ERRORED"
       },
-      "error": "file is not valid: { /: [expected object, but got string] }"
+      "error": "failed to load test suite:\n1:1 invalid document: contents are not valid YAML or JSON"
     }
   ],
   "summary": {

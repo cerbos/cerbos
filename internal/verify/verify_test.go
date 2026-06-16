@@ -4,7 +4,6 @@
 package verify
 
 import (
-	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -97,12 +96,10 @@ func updateGoldenFiles(t *testing.T, eng *engine.Engine, testCases []test.Case) 
 func readVerifyTestCase(t *testing.T, tcase test.Case) *TestCase {
 	t.Helper()
 
-	outTC := &TestCase{VerifyTestCase: &privatev1.VerifyTestCase{}}
-	require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(tcase.Input), outTC.VerifyTestCase), "Failed to read verify test case")
+	outTC := &TestCase{VerifyTestCase: test.Parse[privatev1.VerifyTestCase](t, tcase.Input)}
 
 	if golden, ok := tcase.Want["golden"]; ok {
-		outTC.want = &policyv1.TestResults{}
-		require.NoError(t, util.ReadJSONOrYAML(bytes.NewReader(golden), outTC.want), "Failed to read golden result")
+		outTC.want = test.Parse[policyv1.TestResults](t, golden)
 	}
 
 	if input, ok := tcase.Want["input"]; ok {

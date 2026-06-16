@@ -287,3 +287,5 @@ require (
 )
 
 exclude google.golang.org/grpc/stats/opentelemetry v0.0.0-20240907200651-3ffb98b2c93a
+
+replace buf.build/go/protovalidate => github.com/cerbos/protovalidate-go v0.0.0-20260615200145-16b6d024eb17

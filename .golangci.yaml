@@ -59,6 +59,7 @@ linters:
 
     gomoddirectives:
       replace-allow-list:
+        - buf.build/go/protovalidate
         - github.com/goccy/go-yaml
 
     gosec:

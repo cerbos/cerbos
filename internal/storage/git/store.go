@@ -595,7 +595,7 @@ func (s *Store) readPolicyFromBlob(hash, headHash plumbing.Hash) (*policyv1.Poli
 
 	defer reader.Close()
 
-	p, err := policy.ReadPolicy(reader)
+	p, _, err := policy.ReadPolicy(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read policy from blob %s: %w", hash, err)
 	}

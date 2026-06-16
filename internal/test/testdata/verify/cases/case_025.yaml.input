@@ -3,7 +3,7 @@
 principals:
   john:
     id: john
-    policyVersion: 20210210
+    policyVursion: 20210210
     roles:
       - employee
     attr:
