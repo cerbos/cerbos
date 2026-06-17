@@ -1,0 +1,29 @@
+{
+  "name": "cerbos-policy-author",
+  "version": "0.1.0",
+  "description": "Author, review, and test Cerbos authorization policies.",
+  "author": {
+    "name": "Cerbos contributors"
+  },
+  "skills": "./skills/",
+  "repository": "https://github.com/cerbos/cerbos",
+  "keywords": [
+    "agent-plugin",
+    "evals",
+    "cerbos"
+  ],
+  "interface": {
+    "displayName": "Cerbos Policy Author",
+    "shortDescription": "Author, review, and test Cerbos authorization policies.",
+    "longDescription": "Help agents produce Cerbos policies with explicit principal/resource/action fixtures, allow-deny examples, and regression evals.",
+    "developerName": "Cerbos contributors",
+    "category": "Developer Tools",
+    "capabilities": [
+      "policy authoring",
+      "fixture design",
+      "allow/deny review",
+      "regression testing"
+    ],
+    "defaultPrompt": "Use the Cerbos plugin to plan the workflow, identify verification checks, and produce plugin eval metadata."
+  }
+}
