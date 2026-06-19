@@ -366,7 +366,7 @@ func generateToken(t *testing.T, expiry time.Time) string {
 	require.NoError(t, token.Set("customArray", []string{"A", "B", "C"}))
 	require.NoError(t, token.Set("customMap", map[string]any{"A": "AA", "B": "BB", "C": "CC"}))
 
-	keyData, err := os.ReadFile(filepath.Join(test.PathToDir(t, "auxdata"), "signing_key.jwk"))
+	keyData, err := os.ReadFile(filepath.Join(test.PathToDir(t, "auxdata"), "keys", "signing_key.jwk"))
 	require.NoError(t, err)
 
 	keySet, err := jwk.ParseKey(keyData)
