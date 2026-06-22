@@ -112,7 +112,7 @@ func countExpectedPolicies(tb testing.TB, root string) int {
 		}
 
 		if d.IsDir() {
-			if name == schema.Directory {
+			if name == schema.Directory || name == util.TestDataDirectory {
 				return filepath.SkipDir
 			}
 			return nil
