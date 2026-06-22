@@ -16,8 +16,8 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification/internal/traces"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/verification/internal/traces"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"

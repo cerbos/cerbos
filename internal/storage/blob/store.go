@@ -61,39 +61,7 @@ func init() {
 			return nil, fmt.Errorf("failed to read blob configuration: %w", err)
 		}
 
-		bucket, url, err := newBucket(ctx, conf)
-		if err != nil {
-			return nil, err
-		}
-
-		source := &auditv1.PolicySource{
-			Source: &auditv1.PolicySource_Blob_{
-				Blob: &auditv1.PolicySource_Blob{
-					BucketUrl: url,
-					Prefix:    conf.Prefix,
-				},
-			},
-		}
-
-		cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
-		workDir := conf.WorkDir
-
-		if err := createOrValidateDir(workDir); err != nil {
-			return nil, fmt.Errorf("failed to create work directory: %w", err)
-		}
-
-		cloner, err := NewCloner(bucket, cacheDir)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create cloner: %w", err)
-		}
-
-		workFS := newBlobFS(workDir)
-		return NewStore(ctx, conf, workFS, cloner, symlinkerFunc(func(destination, source string) error {
-			src := filepath.Join(workDir, source)
-			dst := filepath.Join(cacheDir, destination)
-
-			return os.Symlink(dst, src)
-		}), source)
+		return NewStore(ctx, conf)
 	})
 }
 
@@ -201,7 +169,43 @@ func (s *Store) Unsubscribe(sub storage.Subscriber) {
 	s.subs.Unsubscribe(sub)
 }
 
-func NewStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, symlink symlinker, source *auditv1.PolicySource) (*Store, error) {
+func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
+	bucket, url, err := newBucket(ctx, conf)
+	if err != nil {
+		return nil, err
+	}
+
+	source := &auditv1.PolicySource{
+		Source: &auditv1.PolicySource_Blob_{
+			Blob: &auditv1.PolicySource_Blob{
+				BucketUrl: url,
+				Prefix:    conf.Prefix,
+			},
+		},
+	}
+
+	cacheDir := cacheDir(conf.Bucket, conf.WorkDir)
+	workDir := conf.WorkDir
+
+	if err := createOrValidateDir(workDir); err != nil {
+		return nil, fmt.Errorf("failed to create work directory: %w", err)
+	}
+
+	cloner, err := NewCloner(bucket, cacheDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cloner: %w", err)
+	}
+
+	workFS := newBlobFS(workDir)
+	return newStore(ctx, conf, workFS, cloner, symlinkerFunc(func(destination, source string) error {
+		src := filepath.Join(workDir, source)
+		dst := filepath.Join(cacheDir, destination)
+
+		return os.Symlink(dst, src)
+	}), source)
+}
+
+func newStore(ctx context.Context, conf *Conf, workFS FS, cloner bucketCloner, symlink symlinker, source *auditv1.PolicySource) (*Store, error) {
 	s := &Store{
 		log: zap.S().Named(DriverName).With(
 			"bucket", conf.Bucket,

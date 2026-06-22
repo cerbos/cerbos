@@ -6,16 +6,16 @@ package lint
 import (
 	"strings"
 
-	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/internal/errors"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/flagset"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
-func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
-	switch output {
+func Display(p *printer.Printer, errs *index.BuildError, format flagset.Format, colorLevel outputcolor.Level) error {
+	switch format.Output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:

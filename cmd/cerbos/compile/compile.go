@@ -17,14 +17,13 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
-	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
-	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
+	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/internal/compilation"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/internal/errors"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/lint"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
@@ -58,25 +57,23 @@ cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,ed
 
 //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
 type Cmd struct { //betteralign:ignore
-	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
-	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
-	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
-	RunRegexp     string                            `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
-	TestFilter    flagset.TestFilter                `help:"Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times." name:"test-filter"`
-	SkipTests     bool                              `help:"Skip tests"`
-	SkipBatching  bool                              `help:"Skip batching tests"`
-	Output        flagset.OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
-	TestOutput    *flagset.VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
-	Color         *outputcolor.Level                `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
-	NoColor       bool                              `help:"Disable colored output" xor:"color"`
-	Verbose       bool                              `help:"Verbose output on test failure"`
+	Dir           string             `help:"Policy directory" arg:"" required:"" type:"path"`
+	IgnoreSchemas bool               `help:"Ignore schemas during compilation"`
+	Tests         string             `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
+	RunRegexp     string             `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
+	TestFilter    flagset.TestFilter `help:"Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times." name:"test-filter"`
+	SkipTests     bool               `help:"Skip tests"`
+	SkipBatching  bool               `help:"Skip batching tests"`
+	flagset.Format
+	flagset.Color
+	Verbose bool `help:"Verbose output on test failure"`
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	colorLevel := c.Color.Resolve(c.NoColor)
+	colorLevel := c.Level.Resolve(c.Disable)
 
 	color.NoColor = !colorLevel.Enabled()
 
@@ -97,7 +94,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	if err != nil {
 		idxErr := new(index.BuildError)
 		if errors.As(err, &idxErr) {
-			return lint.Display(p, idxErr, c.Output, colorLevel)
+			return lint.Display(p, idxErr, c.Format, colorLevel)
 		}
 
 		return fmt.Errorf("failed to load policy repository at %q: %w", c.Dir, err)
@@ -115,7 +112,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
 		compErr := new(compile.ErrorSet)
 		if errors.As(err, &compErr) {
-			return internalcompile.Display(p, *compErr, c.Output, colorLevel)
+			return internalcompile.Display(p, *compErr, c.Format, colorLevel)
 		}
 
 		return fmt.Errorf("failed to compile policies: %w", err)

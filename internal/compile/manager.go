@@ -27,7 +27,7 @@ type Manager struct {
 	log   *zap.SugaredLogger
 }
 
-func NewManager(ctx context.Context, store storage.SourceStore) (*Manager, error) {
+func NewManager(_ context.Context, store storage.SourceStore) (*Manager, error) {
 	if err := config.GetSection(&Conf{}); err != nil {
 		return nil, err
 	}

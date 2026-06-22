@@ -9,8 +9,9 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/cerbos/cerbos/cmd/cerbos/compile"
-	compileerr "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
+	"github.com/cerbos/cerbos/cmd/cerbos/compilestore"
 	"github.com/cerbos/cerbos/cmd/cerbos/healthcheck"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/internal/errors"
 	"github.com/cerbos/cerbos/cmd/cerbos/repl"
 	"github.com/cerbos/cerbos/cmd/cerbos/run"
 	"github.com/cerbos/cerbos/cmd/cerbos/server"
@@ -26,12 +27,13 @@ const (
 func main() {
 	//nolint:govet
 	var cli struct { //betteralign:ignore
-		Compile     compile.Cmd      `cmd:"" help:"Compile and test policies"`
-		Server      server.Cmd       `cmd:"" help:"Start Cerbos server (PDP)"`
-		Healthcheck healthcheck.Cmd  `cmd:"" help:"Healthcheck utility" aliases:"hc"`
-		Run         run.Cmd          `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
-		Repl        repl.Cmd         `cmd:"" help:"Start a REPL to try out conditions"`
-		Version     kong.VersionFlag `help:"Show cerbos version"`
+		Compile      compile.Cmd      `cmd:"" help:"Compile and test policies"`
+		CompileStore compilestore.Cmd `cmd:"" help:"Compile store"`
+		Server       server.Cmd       `cmd:"" help:"Start Cerbos server (PDP)"`
+		Healthcheck  healthcheck.Cmd  `cmd:"" help:"Healthcheck utility" aliases:"hc"`
+		Run          run.Cmd          `cmd:"" help:"Run a command in the context of a Cerbos PDP"`
+		Repl         repl.Cmd         `cmd:"" help:"Start a REPL to try out conditions"`
+		Version      kong.VersionFlag `help:"Show cerbos version"`
 	}
 
 	ctx := kong.Parse(&cli,
@@ -44,10 +46,10 @@ func main() {
 
 	if err := ctx.Run(); err != nil {
 		switch {
-		case errors.Is(err, compileerr.ErrFailed):
+		case errors.Is(err, compileerrors.ErrFailed):
 			ctx.Errorf("%v", err)
 			ctx.Exit(CompileFailureExitCode)
-		case errors.Is(err, compileerr.ErrTestsFailed):
+		case errors.Is(err, compileerrors.ErrTestsFailed):
 			ctx.Errorf("%v", err)
 			ctx.Exit(TestFailureExitCode)
 		default:
