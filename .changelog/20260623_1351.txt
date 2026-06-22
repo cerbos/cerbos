@@ -1,0 +1,3 @@
+type:feature
+Support compilation of policies in a database store via cerbos compile command
+Pass Cerbos configuration via `--config` flag instead of a directory to compile policies from a store (database storage drivers only). Add `--fix` flag to automatically disable any invalid policies, even when the Cerbos PDP cannot start.

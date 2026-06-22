@@ -10,11 +10,13 @@ import (
 	"io/fs"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
 	"go.uber.org/zap"
+	"helm.sh/helm/v3/pkg/strvals"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
@@ -23,11 +25,17 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/lint"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
+	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
+	"github.com/cerbos/cerbos/internal/storage"
+	"github.com/cerbos/cerbos/internal/storage/db"
+	"github.com/cerbos/cerbos/internal/storage/db/mysql"
+	"github.com/cerbos/cerbos/internal/storage/db/postgres"
+	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/index"
 	"github.com/cerbos/cerbos/internal/util"
@@ -46,6 +54,14 @@ cerbos compile /path/to/policy/repo
 
 cerbos compile --skip-tests /path/to/policy/repo
 
+# Compile store specified in the Cerbos configuration
+
+cerbos compile --config=/path/to/config.yaml
+
+# Compile and disable invalid policies of the store specified in the Cerbos configuration
+
+cerbos compile --fix --config=/path/to/config.yaml
+
 # Compile and run tests matching a filter (globs for suite, test, principal, resource, action)
 
 cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource=my_album;action=view' /path/to/policy/repo
@@ -56,9 +72,14 @@ cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,ed
 `
 )
 
+type disableFn func(ctx context.Context, policyKey ...string) (disabledPolicies uint32, err error)
+
 //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
 type Cmd struct { //betteralign:ignore
-	Dir           string                            `help:"Policy directory" arg:"" required:"" type:"path"`
+	Dir           string                            `help:"Policy directory" arg:"" optional:"" type:"path"`
+	Config        string                            `help:"Path to config file" optional:"" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
+	Set           []string                          `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
+	Fix           bool                              `help:"Disable invalid policies in the store when a config is provided" placeholder:"false"`
 	IgnoreSchemas bool                              `help:"Ignore schemas during compilation"`
 	Tests         string                            `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
 	RunRegexp     string                            `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
@@ -70,6 +91,7 @@ type Cmd struct { //betteralign:ignore
 	Color         *outputcolor.Level                `help:"Output color level (auto,never,always,256,16m). Defaults to auto." xor:"color"`
 	NoColor       bool                              `help:"Disable colored output" xor:"color"`
 	Verbose       bool                              `help:"Verbose output on test failure"`
+	driver        string
 }
 
 func (c *Cmd) Run(k *kong.Kong) error {
@@ -77,9 +99,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	defer stopFunc()
 
 	colorLevel := c.Color.Resolve(c.NoColor)
-
 	color.NoColor = !colorLevel.Enabled()
-
 	if colorLevel.Enabled() {
 		pterm.EnableColor()
 	} else {
@@ -87,7 +107,130 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	}
 
 	p := printer.New(k.Stdout, k.Stderr)
+	if c.Config != "" {
+		return c.withConfig(ctx, p, colorLevel)
+	}
 
+	return c.withDir(ctx, p, colorLevel)
+}
+
+func (c *Cmd) withConfig(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level) error {
+	cm, disable, err := c.compileManager(ctx)
+	if err != nil {
+		return err
+	}
+
+	var compErr *compile.ErrorSet
+	if _, err = cm.GetAll(ctx); err != nil && !errors.As(err, &compErr) {
+		return fmt.Errorf("failed to compile policies: %w", err)
+	} else if err == nil {
+		return nil
+	}
+
+	if !c.Fix {
+		return internalcompile.Display(p, *compErr, c.Output, colorLevel)
+	}
+
+	policyKeys := make(util.StringSet)
+	for _, err := range compErr.Errors().GetErrors() {
+		policyKeys[strings.TrimSuffix(strings.TrimPrefix(err.GetFile(), "<"), ">")] = struct{}{}
+	}
+
+	if len(policyKeys) == 0 {
+		return nil
+	}
+
+	return c.disableInvalidPolicies(ctx, p, disable, policyKeys)
+}
+
+func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, error) {
+	var ss storage.SourceStore
+	var fn disableFn
+	switch c.driver {
+	case mysql.DriverName:
+		conf := new(mysql.Conf)
+		err := config.GetSection(conf)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		store, err := mysql.NewStore(ctx, conf)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create to mysql store: %w", err)
+		}
+
+		ss = store
+		fn = store.Disable
+	case postgres.DriverName:
+		conf := new(postgres.Conf)
+		err := config.GetSection(conf)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		store, err := postgres.NewStore(ctx, conf)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create to postgres store: %w", err)
+		}
+
+		ss = store
+		fn = store.Disable
+	case sqlite3.DriverName:
+		conf := new(sqlite3.Conf)
+		err := config.GetSection(conf)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		store, err := sqlite3.NewStore(ctx, conf)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create to sqlite3 store: %w", err)
+		}
+
+		ss = store
+		fn = store.Disable
+	}
+
+	cm, err := compile.NewManager(ctx, ss)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create compile manager: %w", err)
+	}
+
+	return cm, fn, nil
+}
+
+func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, disable disableFn, policyKeys util.StringSet) error {
+	var integrityErr *db.IntegrityErr
+	if disabledPolicies, err := disable(ctx, policyKeys.ToSlice()...); err != nil && !errors.As(err, &integrityErr) {
+		return fmt.Errorf("failed to disable policies: %w", err)
+	} else if integrityErr == nil {
+		p.Printf("Successfully disabled %d policies breaking the store\n", disabledPolicies)
+	}
+
+	for _, ierr := range integrityErr.Errors {
+		if ierr.GetBreaksScopeChain() != nil {
+			for _, descendant := range ierr.GetBreaksScopeChain().GetDescendants() {
+				policyKeys[descendant] = struct{}{}
+			}
+		}
+
+		if ierr.GetRequiredByOtherPolicies() != nil {
+			for _, dependents := range ierr.GetRequiredByOtherPolicies().GetDependents() {
+				policyKeys[dependents] = struct{}{}
+			}
+		}
+	}
+
+	disabledPolicies, err := disable(ctx, policyKeys.ToSlice()...)
+	if err != nil || disabledPolicies == 0 {
+		return fmt.Errorf("failed to disable policies: %w", err)
+	}
+
+	p.Printf("Successfully disabled %d policies breaking the store\n", disabledPolicies)
+	return nil
+}
+
+func (c *Cmd) withDir(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level) error {
 	fsys, err := util.OpenDirectoryFS(c.Dir)
 	if err != nil {
 		return fmt.Errorf("failed to open policy repository at %q: %w", c.Dir, err)
@@ -203,4 +346,45 @@ func (c *Cmd) testsDir() (fs.FS, string, error) {
 
 func (c *Cmd) Help() string {
 	return help
+}
+
+func (c *Cmd) Validate() error {
+	if (c.Config == "" && c.Dir == "") || (c.Config != "" && c.Dir != "") {
+		return fmt.Errorf("must provide either a directory as an argument or a configuration file with --config flag")
+	}
+
+	if c.Config != "" {
+		if err := c.loadConfig(); err != nil {
+			return err
+		}
+
+		conf, err := storage.GetConf()
+		if err != nil {
+			return err
+		}
+
+		switch conf.Driver {
+		case mysql.DriverName, postgres.DriverName, sqlite3.DriverName:
+			c.driver = conf.Driver
+		default:
+			return fmt.Errorf("unsupported driver %q, only mysql, postgres and sqlite3 drivers are supported", conf.Driver)
+		}
+	}
+
+	return nil
+}
+
+func (c *Cmd) loadConfig() error {
+	confOverrides := map[string]any{}
+	for _, override := range c.Set {
+		if err := strvals.ParseInto(override, confOverrides); err != nil {
+			return fmt.Errorf("failed to parse config override [%s]: %w", override, err)
+		}
+	}
+
+	if err := config.Load(c.Config, confOverrides); err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	return nil
 }
