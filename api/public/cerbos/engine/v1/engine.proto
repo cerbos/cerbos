@@ -84,9 +84,7 @@ message PlanResourcesAst {
 
 message PlanResourcesFilter {
   message Expression {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "CEL expression"}
-    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "CEL expression"}};
 
     string operator = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Operator"}];
 
@@ -139,9 +137,7 @@ message CheckInput {
   repeated string actions = 4 [
     (buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (google.api.field_behavior) = REQUIRED
   ];
@@ -211,9 +207,7 @@ message Resource {
     }
   ];
   map<string, google.protobuf.Value> attr = 4 [
-    (buf.validate.field).map.keys = {
-      string: {min_len: 1}
-    },
+    (buf.validate.field).map.keys = {string: {min_len: 1}},
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Kay-value pairs of contextual data about this resource that should be used during policy evaluation."
       example: "{\"owner\": \"bugs_bunny\"}"
@@ -231,9 +225,7 @@ message Resource {
 }
 
 message Principal {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "A person or application attempting to perform the actions on the set of resources."}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "A person or application attempting to perform the actions on the set of resources."}};
   string id = 1 [
     (buf.validate.field).required = true,
     (buf.validate.field).string = {min_len: 1},
@@ -256,9 +248,7 @@ message Principal {
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
@@ -270,9 +260,7 @@ message Principal {
     }
   ];
   map<string, google.protobuf.Value> attr = 4 [
-    (buf.validate.field).map.keys = {
-      string: {min_len: 1}
-    },
+    (buf.validate.field).map.keys = {string: {min_len: 1}},
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this principal that should be used during policy evaluation."
       example: "{\"beta_tester\": true}"
@@ -290,9 +278,7 @@ message Principal {
 }
 
 message AuxData {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Structured auxiliary data"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Structured auxiliary data"}};
 
   map<string, google.protobuf.Value> jwt = 1;
 }

@@ -21,9 +21,7 @@ option go_package = "github.com/cerbos/cerbos/api/genpb/cerbos/request/v1;reques
 option java_package = "dev.cerbos.api.v1.request";
 
 message PlanResourcesRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "PDP Resources Query Plan Request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "PDP Resources Query Plan Request"}};
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Optional application-specific ID useful for correlating logs for analysis."
@@ -41,9 +39,7 @@ message PlanResourcesRequest {
   repeated string actions = 7 [
     (buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
       min_items: 0
       max_items: 20
     },
@@ -78,9 +74,7 @@ message PlanResourcesRequest {
 
 // Deprecated. See CheckResourcesRequest.
 message CheckResourceSetRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "PDP Request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "PDP Request"}};
 
   string request_id = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Optional application-specific ID useful for correlating logs for analysis."
@@ -90,9 +84,7 @@ message CheckResourceSetRequest {
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
@@ -116,9 +108,7 @@ message CheckResourceSetRequest {
 }
 
 message ResourceSet {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Set of resources to check"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Set of resources to check"}};
 
   string kind = 1 [
     (buf.validate.field).required = true,
@@ -159,27 +149,21 @@ message ResourceSet {
 }
 
 message AttributesMap {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Unique identifier for the resource instance."}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Unique identifier for the resource instance."}};
 
   map<string, google.protobuf.Value> attr = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Key-value pairs of contextual data about this instance that should be used during policy evaluation."}];
 }
 
 // Deprecated. See CheckResourcesRequest.
 message CheckResourceBatchRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "PDP Request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "PDP Request"}};
 
   message BatchEntry {
     repeated string actions = 1 [
       (buf.validate.field).repeated = {
         unique: true
         min_items: 1
-        items: {
-          string: {min_len: 1}
-        }
+        items: {string: {min_len: 1}}
       },
       (buf.validate.field).required = true,
       (google.api.field_behavior) = REQUIRED,
@@ -220,18 +204,14 @@ message CheckResourceBatchRequest {
 
 // Structure of the request for the check resources API call.
 message CheckResourcesRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Check resources request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Check resources request"}};
 
   message ResourceEntry {
     repeated string actions = 1 [
       (buf.validate.field).repeated = {
         unique: true
         min_items: 1
-        items: {
-          string: {min_len: 1}
-        }
+        items: {string: {min_len: 1}}
       },
       (buf.validate.field).required = true,
       (google.api.field_behavior) = REQUIRED,
@@ -279,9 +259,7 @@ message AuxData {
   };
 
   message JWT {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "JWT from the original request"}
-    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "JWT from the original request"}};
 
     string token = 1 [
       (buf.validate.field).required = true,
@@ -313,9 +291,7 @@ message File {
 }
 
 message PlaygroundValidateRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Playground validate request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Playground validate request"}};
 
   string playground_id = 1;
 
@@ -335,9 +311,7 @@ message PlaygroundValidateRequest {
 }
 
 message PlaygroundTestRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Playground test request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Playground test request"}};
 
   string playground_id = 1;
 
@@ -357,9 +331,7 @@ message PlaygroundTestRequest {
 }
 
 message PlaygroundEvaluateRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Playground evaluate request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Playground evaluate request"}};
 
   string playground_id = 1;
 
@@ -392,9 +364,7 @@ message PlaygroundEvaluateRequest {
       unique: true
       min_items: 1
       max_items: 50
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (google.api.field_behavior) = REQUIRED,
@@ -410,9 +380,7 @@ message PlaygroundEvaluateRequest {
 }
 
 message PlaygroundProxyRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Playground proxy request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Playground proxy request"}};
 
   string playground_id = 1;
 
@@ -440,9 +408,7 @@ message PlaygroundProxyRequest {
 }
 
 message AddOrUpdatePolicyRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Add/update policy request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Add/update policy request"}};
 
   repeated cerbos.policy.v1.Policy policies = 1 [
     (buf.validate.field).repeated = {
@@ -467,9 +433,7 @@ message ListAuditLogEntriesRequest {
   }
 
   message TimeRange {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {description: "Entries between a time range."}
-    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Entries between a time range."}};
 
     google.protobuf.Timestamp start = 1 [
       (buf.validate.field).required = true,
@@ -531,15 +495,11 @@ message ListAuditLogEntriesRequest {
 }
 
 message ServerInfoRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Server info request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Server info request"}};
 }
 
 message ListPoliciesRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "List policies request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "List policies request"}};
   bool include_disabled = 1 [
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
@@ -560,9 +520,7 @@ message ListPoliciesRequest {
     (google.api.field_behavior) = OPTIONAL,
     (buf.validate.field).repeated = {
       max_items: 25
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
@@ -572,17 +530,13 @@ message ListPoliciesRequest {
 }
 
 message GetPolicyRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Get policy request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Get policy request"}};
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -593,18 +547,14 @@ message GetPolicyRequest {
 }
 
 message DeletePolicyRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Delete policy request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Delete policy request"}};
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
       max_items: 20
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -615,18 +565,14 @@ message DeletePolicyRequest {
 }
 
 message DisablePolicyRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Disable policy request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Disable policy request"}};
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
       max_items: 20
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -637,17 +583,13 @@ message DisablePolicyRequest {
 }
 
 message EnablePolicyRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Enable policy request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Enable policy request"}};
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
@@ -658,9 +600,7 @@ message EnablePolicyRequest {
 }
 
 message InspectPoliciesRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Inspect policies request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Inspect policies request"}};
   bool include_disabled = 1 [
     (google.api.field_behavior) = OPTIONAL,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Include disabled policies"}
@@ -681,9 +621,7 @@ message InspectPoliciesRequest {
     (google.api.field_behavior) = OPTIONAL,
     (buf.validate.field).repeated = {
       max_items: 25
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "For blob, disk, git stores use file name (<filename>.yaml). For mysql, postgres, sqlite3 use id (<kind>.<name>.<version>) of the policy"
@@ -693,9 +631,7 @@ message InspectPoliciesRequest {
 }
 
 message AddOrUpdateSchemaRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Add/update schema request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Add/update schema request"}};
 
   repeated cerbos.schema.v1.Schema schemas = 1 [
     (google.api.field_behavior) = REQUIRED,
@@ -713,15 +649,11 @@ message AddOrUpdateSchemaRequest {
 }
 
 message ListSchemasRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "List schema ids request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "List schema ids request"}};
 }
 
 message GetSchemaRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Get schema(s) request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Get schema(s) request"}};
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
@@ -743,9 +675,7 @@ message GetSchemaRequest {
 }
 
 message DeleteSchemaRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Delete schema(s) request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Delete schema(s) request"}};
   repeated string id = 1 [
     (google.api.field_behavior) = REQUIRED,
     (buf.validate.field).repeated = {
@@ -767,9 +697,7 @@ message DeleteSchemaRequest {
 }
 
 message ReloadStoreRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Reload store request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Reload store request"}};
 
   bool wait = 1 [
     (google.api.field_behavior) = OPTIONAL,
@@ -778,9 +706,7 @@ message ReloadStoreRequest {
 }
 
 message PurgeStoreRevisionsRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Purge store revisions request"}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Purge store revisions request"}};
 
   uint32 keep_last = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "Keep last N revisions for each policy. If not specified or set to zero, all revisions will be deleted."}];
 }
