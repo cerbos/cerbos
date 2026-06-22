@@ -148,13 +148,9 @@ message PolicySource {
 }
 
 message RequestContext {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-    json_schema: {description: "Optional metadata to attach to the request. This information will be captured in the audit logs if audit logging is enabled."}
-  };
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Optional metadata to attach to the request. This information will be captured in the audit logs if audit logging is enabled."}};
   map<string, google.protobuf.Value> annotations = 1 [
-    (buf.validate.field).map.keys = {
-      string: {min_len: 1}
-    },
+    (buf.validate.field).map.keys = {string: {min_len: 1}},
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of annotations."
       min_properties: 1

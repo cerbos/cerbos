@@ -77,9 +77,7 @@ message ResourcePolicy {
   ];
   repeated string import_derived_roles = 3 [(buf.validate.field).repeated = {
     unique: true
-    items: {
-      string: {pattern: "^[\\w\\-\\.]+$"}
-    }
+    items: {string: {pattern: "^[\\w\\-\\.]+$"}}
   }];
   repeated ResourceRule rules = 4;
   string scope = 5 [(buf.validate.field).string.pattern = "^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$"];
@@ -94,23 +92,17 @@ message ResourceRule {
     (buf.validate.field).repeated = {
       min_items: 1
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true
   ];
   repeated string derived_roles = 2 [(buf.validate.field).repeated = {
     unique: true
-    items: {
-      string: {pattern: "^[\\w\\-\\.]+$"}
-    }
+    items: {string: {pattern: "^[\\w\\-\\.]+$"}}
   }];
   repeated string roles = 3 [(buf.validate.field).repeated = {
     unique: true
-    items: {
-      string: {min_len: 1}
-    }
+    items: {string: {min_len: 1}}
   }];
   Condition condition = 4;
   cerbos.effect.v1.Effect effect = 5 [
@@ -134,9 +126,7 @@ message RolePolicy {
   string version = 6 [(buf.validate.field).string = {pattern: "^[\\w]*$"}];
   repeated string parent_roles = 5 [(buf.validate.field).repeated = {
     unique: true
-    items: {
-      string: {min_len: 1}
-    }
+    items: {string: {min_len: 1}}
   }];
   string scope = 2 [(buf.validate.field).string.pattern = "^(^$|\\.|[0-9a-zA-Z][\\w\\-]*(\\.\\w[\\w\\-]*)*)$"];
   repeated RoleRule rules = 3;
@@ -163,9 +153,7 @@ message RoleRule {
     (buf.validate.field).repeated = {
       min_items: 1
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true
   ];
@@ -245,9 +233,7 @@ message RoleDef {
     (buf.validate.field).repeated = {
       unique: true
       min_items: 1
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     },
     (buf.validate.field).required = true
   ];
@@ -268,9 +254,7 @@ message ExportConstants {
 message Constants {
   repeated string import = 1 [(buf.validate.field).repeated = {
     unique: true
-    items: {
-      string: {pattern: "^[\\w\\-\\.]+$"}
-    }
+    items: {string: {pattern: "^[\\w\\-\\.]+$"}}
   }];
   map<string, google.protobuf.Value> local = 2;
 }
@@ -289,9 +273,7 @@ message ExportVariables {
 message Variables {
   repeated string import = 1 [(buf.validate.field).repeated = {
     unique: true
-    items: {
-      string: {pattern: "^[\\w\\-\\.]+$"}
-    }
+    items: {string: {pattern: "^[\\w\\-\\.]+$"}}
   }];
   map<string, string> local = 2;
 }
@@ -337,9 +319,7 @@ message Schemas {
       (buf.validate.field).repeated = {
         unique: true
         min_items: 1
-        items: {
-          string: {min_len: 1}
-        }
+        items: {string: {min_len: 1}}
       },
       (buf.validate.field).required = true
     ];
@@ -382,9 +362,7 @@ message TestFixtureGroup {
       (buf.validate.field).repeated = {
         min_items: 1
         unique: true
-        items: {
-          string: {min_len: 1}
-        }
+        items: {string: {min_len: 1}}
       },
       (buf.validate.field).required = true
     ];
@@ -395,9 +373,7 @@ message TestFixtureGroup {
       (buf.validate.field).repeated = {
         min_items: 1
         unique: true
-        items: {
-          string: {min_len: 1}
-        }
+        items: {string: {min_len: 1}}
       },
       (buf.validate.field).required = true
     ];
@@ -437,38 +413,28 @@ message TestTable {
   message Input {
     repeated string principals = 1 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
     repeated string resources = 2 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
     repeated string actions = 3 [
       (buf.validate.field).repeated = {
         min_items: 1
         unique: true
-        items: {
-          string: {min_len: 1}
-        }
+        items: {string: {min_len: 1}}
       },
       (buf.validate.field).required = true
     ];
     string aux_data = 4;
     repeated string principal_groups = 5 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
     repeated string resource_groups = 6 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
 
     option (buf.validate.message).cel = {
@@ -501,9 +467,7 @@ message TestTable {
     map<string, cerbos.effect.v1.Effect> actions = 3 [
       (buf.validate.field).map = {
         min_pairs: 1
-        keys: {
-          string: {min_len: 1}
-        }
+        keys: {string: {min_len: 1}}
         values: {
           enum: {
             in: [
@@ -518,27 +482,19 @@ message TestTable {
     repeated OutputExpectations outputs = 4;
     repeated string principals = 5 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
     repeated string resources = 6 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
     repeated string principal_groups = 7 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
     repeated string resource_groups = 8 [(buf.validate.field).repeated = {
       unique: true
-      items: {
-        string: {min_len: 1}
-      }
+      items: {string: {min_len: 1}}
     }];
 
     option (buf.validate.message).cel = {
@@ -609,9 +565,7 @@ message Test {
   map<string, cerbos.effect.v1.Effect> expected = 6 [
     (buf.validate.field).map = {
       min_pairs: 1
-      keys: {
-        string: {min_len: 1}
-      }
+      keys: {string: {min_len: 1}}
       values: {
         enum: {
           in: [
