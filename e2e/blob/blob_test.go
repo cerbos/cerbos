@@ -133,6 +133,7 @@ func countExpectedPolicies(tb testing.TB, root string) int {
 			return nil
 		}
 
+		tb.Logf(">>> Checking %s", path)
 		if p.Disabled {
 			return nil
 		}
