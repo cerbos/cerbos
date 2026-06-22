@@ -128,12 +128,11 @@ func countExpectedPolicies(tb testing.TB, root string) int {
 		}
 
 		p, _, err := policy.ReadPolicy(bytes.NewReader(b))
-		if err != nil {
+		if err != nil || p == nil {
 			// ignore invalid policies
 			return nil
 		}
 
-		tb.Logf(">>> Checking %s", path)
 		if p.Disabled {
 			return nil
 		}
