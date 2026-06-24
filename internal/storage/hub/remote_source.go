@@ -17,14 +17,15 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
+	"github.com/spf13/afero"
+	"go.uber.org/zap"
+
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
 	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	hubapi "github.com/cerbos/cloud-api/hub"
-	"github.com/spf13/afero"
-	"go.uber.org/zap"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
@@ -513,8 +514,13 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 			s.mu.Unlock()
 			incEventMetric("error")
 
-			if errors.Is(err, base.ErrAuthenticationFailed) {
+			switch {
+			case errors.Is(err, base.ErrAuthenticationFailed):
 				s.log.Error("Failed to authenticate to Cerbos Hub", zap.Error(err))
+				s.removeBundle(false)
+				return nil, backoff.Permanent(err)
+			case errors.Is(err, bundleapi.ErrPermissionDenied):
+				s.log.Error("Permission denied: make sure the credentials used are the correct ones for the Cerbos Hub Deployment this PDP is configured to use", zap.Error(err))
 				s.removeBundle(false)
 				return nil, backoff.Permanent(err)
 			}
@@ -527,7 +533,8 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 	}
 
 	s.log.Debug("Calling watch RPC")
-	watchHandle, err := backoff.Retry(ctx, op,
+	watchHandle, err := backoff.Retry(
+		ctx, op,
 		backoff.WithMaxElapsedTime(0), // retry indefinitely
 		backoff.WithNotify(notify),
 	)
@@ -554,14 +561,24 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 			switch evt.Kind {
 			case bundleapi.ServerEventError:
 				incEventMetric("error")
-				if errors.Is(evt.Error, bundleapi.ErrBundleNotFound) {
-					s.log.Error("Bundle label does not exist", zap.Error(evt.Error))
+				switch {
+				case errors.Is(evt.Error, bundleapi.ErrBundleNotFound):
+					s.log.Error("Bundle does not exist", zap.Error(evt.Error))
 					s.removeBundle(true)
 					if err := watchHandle.ActiveBundleChanged(bundleapi.BundleIDOrphaned); err != nil {
 						s.log.Warn("Failed to notify server about orphaned bundle", zap.Error(err))
 					}
 
 					return 0, bundleapi.ErrBundleNotFound
+
+				case errors.Is(evt.Error, bundleapi.ErrPermissionDenied):
+					s.log.Error("Permission denied", zap.Error(evt.Error))
+					s.removeBundle(true)
+					if err := watchHandle.ActiveBundleChanged(bundleapi.BundleIDOrphaned); err != nil {
+						s.log.Warn("Failed to notify server about orphaned bundle", zap.Error(err))
+					}
+
+					return 0, bundleapi.ErrPermissionDenied
 				}
 
 				s.log.Warn("Restarting watch", zap.Error(evt.Error))
