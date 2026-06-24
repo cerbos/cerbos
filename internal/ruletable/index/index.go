@@ -1001,11 +1001,6 @@ func (m *Index) ScopedPrincipalExists(version string, scopes []string) bool {
 	return intersectionNonEmpty(versionBM, scopeBM, kindBM)
 }
 
-func (m *Index) Reset() {
-	m.bi = newBitmapIndex()
-	m.parentRoles = nil
-}
-
 // getOrGenerateParams returns cached RowParams for the given proto content hash,
 // compiling CEL programs on miss. Rows with identical params share the same pointer and Key.
 func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable_RuleRow_Params) (*RowParams, error) {

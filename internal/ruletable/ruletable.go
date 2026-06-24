@@ -623,7 +623,7 @@ func newRuleTableFromStreamingLoader(ctx context.Context, spl policyloader.Strea
 		programCache:  NewProgramCache(),
 		planExprCache: planner.NewExprCache(),
 	}
-	rt.resetBuildState()
+	rt.initBuildState()
 
 	if err := spl.GetAllStreaming(ctx, rt.ingestPolicy); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
@@ -657,7 +657,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 		return err
 	}
 
-	rt.resetBuildState()
+	rt.initBuildState()
 
 	if err := rt.indexRules(rt.Rules); err != nil {
 		return err
@@ -668,15 +668,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	return nil
 }
 
-func (rt *RuleTable) resetBuildState() {
-	clear(rt.policyDerivedRoles)
-	clear(rt.principalScopeMap)
-	clear(rt.resourceScopeMap)
-	clear(rt.scopeScopePermissions)
-	rt.programCache.Clear()
-	rt.planExprCache.Clear()
-
-	rt.idx.Reset()
+func (rt *RuleTable) initBuildState() {
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
 	rt.principalScopeMap = make(map[string]struct{})
 	rt.resourceScopeMap = make(map[string]struct{})
