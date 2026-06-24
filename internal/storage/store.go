@@ -155,6 +155,12 @@ type SourceStore interface {
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
 }
 
+// StreamingSourceStore is an optional interface for source stores that can yield their
+// compilation units one at a time instead of materialising them all into a slice.
+type StreamingSourceStore interface {
+	GetAllStreaming(ctx context.Context, fn func(*policy.CompilationUnit) error) error
+}
+
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.
 type BinaryStore interface {
 	Store
