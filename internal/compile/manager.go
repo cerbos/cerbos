@@ -120,7 +120,7 @@ func (c *Manager) GetAllStreaming(ctx context.Context, yield func(*runtimev1.Run
 			return err
 		}
 
-		// Drop it as soon as it compiled.
+		// Drop it as soon as it is compiled.
 		cus[i] = nil
 	}
 

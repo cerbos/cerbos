@@ -399,8 +399,6 @@ func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.Com
 // StreamAll lazily loads each compilation unit from the index and passes it to fn, holding
 // only one unit resident at a time.
 func StreamAll(ctx context.Context, idx Index, fn func(*policy.CompilationUnit) error) error {
-	// Cancel on early return so the producer goroutine started by
-	// GetAllCompilationUnitsWithCount unblocks instead of leaking.
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
