@@ -38,19 +38,19 @@ type notifier interface {
 	NotifySubscribers(events ...storage.Event)
 }
 
-func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cooldownPeriod time.Duration) (*dirWatch, error) {
+func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cooldownPeriod time.Duration) error {
 	resolved, err := filepath.EvalSymlinks(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve directory %s: %w", dir, err)
+		return fmt.Errorf("failed to resolve directory %s: %w", dir, err)
 	}
 
 	watcher, err := fsnotify.NewBufferedWatcher(defaultBufferSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create watcher: %w", err)
+		return fmt.Errorf("failed to create watcher: %w", err)
 	}
 
 	if err := watcher.Add(resolved); err != nil {
-		return nil, fmt.Errorf("failed to initiate monitoring on the directory %s: %w", resolved, err)
+		return fmt.Errorf("failed to initiate monitoring on the directory %s: %w", resolved, err)
 	}
 
 	// We need to manually traverse the tree to add all directories because fsnotify package does not support recursive monitoring.
@@ -60,7 +60,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cool
 			return err
 		}
 
-		if !d.IsDir() || util.PathIsHidden(path) {
+		if !d.IsDir() || util.PathIsHidden(path) || d.Name() == util.TestDataDirectory {
 			return nil
 		}
 
@@ -70,7 +70,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cool
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("failed to walk directory %s: %w", resolved, err)
+		return fmt.Errorf("failed to walk directory %s: %w", resolved, err)
 	}
 
 	dw := &dirWatch{
@@ -85,7 +85,7 @@ func watchDir(ctx context.Context, dir string, idx index.Index, n notifier, cool
 
 	go dw.listen(ctx) //nolint:gosec
 
-	return dw, nil
+	return nil
 }
 
 type dirWatch struct {
@@ -148,20 +148,15 @@ func (dw *dirWatch) listen(ctx context.Context) {
 }
 
 func (dw *dirWatch) processEvent(event fsnotify.Event) {
-	if event.Op.Has(fsnotify.Create) && dw.watchNewSubDir(event.Name) {
+	if event.Op.Has(fsnotify.Create) && dw.processSubdir(event.Name) {
 		return
 	}
 
 	dw.log.Debugw("Processing an event", "operation", event.Op.String(), "name", event.Name)
-
-	dw.batchEvent(event.Name)
+	dw.addToEventBatch(event.Name)
 }
 
-// watchNewSubDir starts watching path and reports whether it was a newly created subdirectory.
-// The watch is added on the creation event, because events in an unwatched directory are lost forever.
-// Its existing contents are walked for the same reason:
-// files and subdirectories created before the watch was added produce no events of their own.
-func (dw *dirWatch) watchNewSubDir(path string) bool {
+func (dw *dirWatch) processSubdir(path string) bool {
 	if util.PathIsHidden(path) {
 		return false
 	}
@@ -176,16 +171,19 @@ func (dw *dirWatch) watchNewSubDir(path string) bool {
 			return err
 		}
 
-		if !d.IsDir() {
-			dw.batchEvent(path)
-			return nil
-		}
-
-		if util.PathIsHidden(path) {
+		dir := d.IsDir()
+		hidden := util.PathIsHidden(path)
+		switch {
+		case hidden && dir:
 			return fs.SkipDir
+		case hidden && !dir:
+			return nil
+		case !hidden && !dir:
+			dw.addToEventBatch(path)
+			return nil
+		default:
+			return dw.watcher.Add(path)
 		}
-
-		return dw.watcher.Add(path)
 	}); err != nil {
 		dw.log.Errorw("Failed to initiate monitoring on the newly created subdirectory", "directory", path, "error", err)
 	}
@@ -193,10 +191,10 @@ func (dw *dirWatch) watchNewSubDir(path string) bool {
 	return true
 }
 
-func (dw *dirWatch) batchEvent(fullPath string) {
-	path, err := filepath.Rel(dw.dir, fullPath)
+func (dw *dirWatch) addToEventBatch(path string) {
+	path, err := filepath.Rel(dw.dir, path)
 	if err != nil {
-		dw.log.Warnw("Failed to determine relative path of file", "file", fullPath, "error", err)
+		dw.log.Warnw("Failed to determine relative path of file", "file", path, "error", err)
 		return
 	}
 	path = filepath.ToSlash(path)
