@@ -188,7 +188,7 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	return mgr.RuleTable.ingestPolicy(rps)
+	return mgr.ingestPolicy(rps)
 }
 
 func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) error {
