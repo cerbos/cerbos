@@ -603,6 +603,10 @@ func paceBuildGC() (restore func()) {
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
 	defer paceBuildGC()()
 
+	if spl, ok := policyLoader.(policyloader.StreamingPolicyLoader); ok {
+		return newRuleTableFromStreamingLoader(ctx, spl)
+	}
+
 	protoRT := NewProtoRuletable()
 
 	if err := LoadPolicies(ctx, protoRT, policyLoader); err != nil {
@@ -610,6 +614,24 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 	}
 
 	return NewRuleTable(protoRT)
+}
+
+func newRuleTableFromStreamingLoader(ctx context.Context, spl policyloader.StreamingPolicyLoader) (*RuleTable, error) {
+	rt := &RuleTable{
+		RuleTable:     NewProtoRuletable(),
+		idx:           index.New(),
+		programCache:  NewProgramCache(),
+		planExprCache: planner.NewExprCache(),
+	}
+	rt.initBuildState()
+
+	if err := spl.GetAllStreaming(ctx, rt.ingestPolicy); err != nil {
+		return nil, fmt.Errorf("failed to load policies: %w", err)
+	}
+
+	rt.finalizeBuild()
+
+	return rt, nil
 }
 
 func NewRuleTable(protoRT *runtimev1.RuleTable) (*RuleTable, error) {
@@ -635,24 +657,26 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 		return err
 	}
 
-	// clear maps prior to creating new ones to reduce memory pressure in reload scenarios
-	clear(rt.policyDerivedRoles)
-	clear(rt.principalScopeMap)
-	clear(rt.resourceScopeMap)
-	clear(rt.scopeScopePermissions)
-	rt.programCache.Clear()
-	rt.planExprCache.Clear()
-
-	rt.idx.Reset()
-	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
-	rt.principalScopeMap = make(map[string]struct{})
-	rt.resourceScopeMap = make(map[string]struct{})
-	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
+	rt.initBuildState()
 
 	if err := rt.indexRules(rt.Rules); err != nil {
 		return err
 	}
 
+	rt.finalizeBuild()
+
+	return nil
+}
+
+func (rt *RuleTable) initBuildState() {
+	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
+	rt.principalScopeMap = make(map[string]struct{})
+	rt.resourceScopeMap = make(map[string]struct{})
+	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
+}
+
+// finalizeBuild releases transient build state once all rows have been indexed.
+func (rt *RuleTable) finalizeBuild() {
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
 	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
@@ -667,8 +691,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 	rt.releaseCheckedExprs()
 	rt.dedupStrings()
 	debug.FreeOSMemory()
-
-	return nil
 }
 
 // releaseCheckedExprs sets to nil every retained *Expr.Checked.
@@ -711,6 +733,26 @@ func (rt *RuleTable) releaseCheckedExprs() {
 			}
 		}
 	}
+}
+
+// ingestPolicy adds a single compiled policy set to the rule table, indexes its rows,
+// and releases the CheckedExprs of those rows.
+func (rt *RuleTable) ingestPolicy(rps *runtimev1.RunnablePolicySet) error {
+	if rps == nil {
+		return nil
+	}
+
+	rows := AddPolicy(rt.RuleTable, rps)
+	if err := rt.indexRules(rows); err != nil {
+		return fmt.Errorf("failed to index and purge rules: %w", err)
+	}
+
+	nilChecked := func(e *runtimev1.Expr) { e.Checked = nil }
+	for _, row := range rows {
+		conditions.WalkExprs(row, nilChecked)
+	}
+
+	return nil
 }
 
 func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {

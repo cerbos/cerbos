@@ -90,6 +90,43 @@ func (c *Manager) GetAll(ctx context.Context) ([]*runtimev1.RunnablePolicySet, e
 	return rpsSet, nil
 }
 
+// GetAllStreaming compiles compilation units one at a time and yields each compiled
+// policy set.
+func (c *Manager) GetAllStreaming(ctx context.Context, yield func(*runtimev1.RunnablePolicySet) error) error {
+	compileAndYield := func(cu *policy.CompilationUnit) error {
+		rps, err := c.compile(cu)
+		if err != nil {
+			return PolicyCompilationErr{underlying: err}
+		}
+
+		if rps == nil {
+			return nil
+		}
+
+		return yield(rps)
+	}
+
+	if ss, ok := c.store.(storage.StreamingSourceStore); ok {
+		return ss.GetAllStreaming(ctx, compileAndYield)
+	}
+
+	cus, err := c.store.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get compilation units: %w", err)
+	}
+
+	for i, cu := range cus {
+		if err := compileAndYield(cu); err != nil {
+			return err
+		}
+
+		// Drop it as soon as it is compiled.
+		cus[i] = nil
+	}
+
+	return nil
+}
+
 func (c *Manager) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error) {
 	res := []*runtimev1.RunnablePolicySet{}
 
