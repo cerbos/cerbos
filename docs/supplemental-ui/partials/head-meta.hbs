@@ -1,6 +1,10 @@
 <link rel="stylesheet" href="{{uiRootPath}}/css/site-extra.css">
 <link rel="stylesheet" href="{{uiRootPath}}/css/tabs-block.css">
 
+{{#if page.url}}
+<link rel="alternate" type="text/markdown" href="{{site.url}}{{mdUrl page.url}}">
+{{/if}}
+
 <link rel="apple-touch-icon" sizes="180x180" href="{{uiRootPath}}/favicon/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="{{uiRootPath}}/favicon/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="{{uiRootPath}}/favicon/favicon-16x16.png">
