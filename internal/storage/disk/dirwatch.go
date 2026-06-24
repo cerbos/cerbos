@@ -12,7 +12,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"sync"
 	"time"
 
@@ -149,9 +148,55 @@ func (dw *dirWatch) listen(ctx context.Context) {
 }
 
 func (dw *dirWatch) processEvent(event fsnotify.Event) {
-	path, err := filepath.Rel(dw.dir, event.Name)
+	if event.Op.Has(fsnotify.Create) && dw.watchNewSubDir(event.Name) {
+		return
+	}
+
+	dw.log.Debugw("Processing an event", "operation", event.Op.String(), "name", event.Name)
+
+	dw.batchEvent(event.Name)
+}
+
+// watchNewSubDir starts watching path and reports whether it was a newly created subdirectory.
+// The watch is added on the creation event, because events in an unwatched directory are lost forever.
+// Its existing contents are walked for the same reason:
+// files and subdirectories created before the watch was added produce no events of their own.
+func (dw *dirWatch) watchNewSubDir(path string) bool {
+	if util.PathIsHidden(path) {
+		return false
+	}
+
+	st, err := os.Stat(path)
+	if err != nil || !st.IsDir() {
+		return false
+	}
+
+	if err := filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !d.IsDir() {
+			dw.batchEvent(path)
+			return nil
+		}
+
+		if util.PathIsHidden(path) {
+			return fs.SkipDir
+		}
+
+		return dw.watcher.Add(path)
+	}); err != nil {
+		dw.log.Errorw("Failed to initiate monitoring on the newly created subdirectory", "directory", path, "error", err)
+	}
+
+	return true
+}
+
+func (dw *dirWatch) batchEvent(fullPath string) {
+	path, err := filepath.Rel(dw.dir, fullPath)
 	if err != nil {
-		dw.log.Warnw("Failed to determine relative path of file", "file", path, "error", err)
+		dw.log.Warnw("Failed to determine relative path of file", "file", fullPath, "error", err)
 		return
 	}
 	path = filepath.ToSlash(path)
@@ -160,8 +205,6 @@ func (dw *dirWatch) processEvent(event fsnotify.Event) {
 		dw.log.Debugw("Encountered a non-indexable file type, skipping...", "file", path)
 		return
 	}
-
-	dw.log.Debugw("Processing an event", "operation", event.Op.String(), "name", event.Name)
 
 	dw.mu.Lock()
 	dw.eventBatch[path] = struct{}{}
@@ -189,20 +232,7 @@ func (dw *dirWatch) triggerUpdate() {
 	// The deleted files need to be processed first because we could have a duplicate definition when a file is renamed otherwise.
 	for path := range eventBatch {
 		fullPath := filepath.Join(dw.dir, path)
-		st, err := os.Stat(fullPath)
-		if err == nil {
-			// We need to manually add newly created directories.
-			// See https://github.com/fsnotify/fsnotify/issues/18 for more details.
-			if st.IsDir() && !util.PathIsHidden(fullPath) && !slices.Contains(dw.watcher.WatchList(), fullPath) {
-				if err := dw.watcher.Add(fullPath); err != nil {
-					dw.log.Errorw("Failed to initiate monitoring on the newly created subdirectory", "file", fullPath, zap.Error(err))
-				}
-
-				dw.log.Debugw("Initiated monitoring on the newly created subdirectory", "file", fullPath)
-			}
-
-			continue
-		} else if !errors.Is(err, os.ErrNotExist) {
+		if _, err := os.Stat(fullPath); err == nil || !errors.Is(err, os.ErrNotExist) {
 			continue
 		}
 
