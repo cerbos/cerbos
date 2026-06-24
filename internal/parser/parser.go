@@ -1177,8 +1177,8 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 
 	slices.SortFunc(verrs.Violations, func(a, b *protovalidate.Violation) int {
 		if a.FieldDescriptor != nil && b.FieldDescriptor != nil {
-			if fullName := cmp.Compare(a.FieldDescriptor.FullName(), b.FieldDescriptor.FullName()); fullName != 0 {
-				return fullName
+			if nameComparison := cmp.Compare(a.FieldDescriptor.FullName(), b.FieldDescriptor.FullName()); nameComparison != 0 {
+				return nameComparison
 			}
 		}
 
