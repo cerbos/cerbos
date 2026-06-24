@@ -5,6 +5,7 @@ package parser
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"io/fs"
 	"iter"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1172,6 +1174,20 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 	if !errors.As(err, &verrs) {
 		return err
 	}
+
+	slices.SortFunc(verrs.Violations, func(a, b *protovalidate.Violation) int {
+		if a.FieldDescriptor != nil && b.FieldDescriptor != nil {
+			if nameComparison := cmp.Compare(a.FieldDescriptor.FullName(), b.FieldDescriptor.FullName()); nameComparison != 0 {
+				return nameComparison
+			}
+		}
+
+		if a.FieldValue.IsValid() && b.FieldValue.IsValid() {
+			return cmp.Compare(a.FieldValue.String(), b.FieldValue.String())
+		}
+
+		return 0
+	})
 
 	for _, v := range verrs.Violations {
 		path := fieldPathString(v.Proto.GetField().GetElements())
