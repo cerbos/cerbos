@@ -191,10 +191,10 @@ func (dw *dirWatch) processSubdir(path string) bool {
 	return true
 }
 
-func (dw *dirWatch) addToEventBatch(path string) {
-	path, err := filepath.Rel(dw.dir, path)
+func (dw *dirWatch) addToEventBatch(fullPath string) {
+	path, err := filepath.Rel(dw.dir, fullPath)
 	if err != nil {
-		dw.log.Warnw("Failed to determine relative path of file", "file", path, "error", err)
+		dw.log.Warnw("Failed to determine relative path of file", "file", fullPath, "error", err)
 		return
 	}
 	path = filepath.ToSlash(path)
