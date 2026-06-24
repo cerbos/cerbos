@@ -17,3 +17,9 @@ type PolicyLoader interface {
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 	Source() *auditv1.PolicySource
 }
+
+// StreamingPolicyLoader is an optional interface for loaders that can yield compiled
+// policy sets one at a time.
+type StreamingPolicyLoader interface {
+	GetAllStreaming(ctx context.Context, yield func(*runtimev1.RunnablePolicySet) error) error
+}
