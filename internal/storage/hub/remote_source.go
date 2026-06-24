@@ -228,15 +228,10 @@ func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, erro
 
 func (s *RemoteSource) Init(ctx context.Context) error {
 	s.subs = storage.NewSubscriptionManager(ctx)
-	bundleType := bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE
-	if s.bundleVersion == bundleapi.Version1 {
-		bundleType = bundlev2.BundleType_BUNDLE_TYPE_LEGACY
-	}
 
 	clientConf := bundleapi.ClientConf{
-		CacheDir:   s.conf.Remote.CacheDir,
-		TempDir:    s.conf.Remote.TempDir,
-		BundleType: bundleType,
+		CacheDir: s.conf.Remote.CacheDir,
+		TempDir:  s.conf.Remote.TempDir,
 	}
 
 	switch s.bundleVersion {
