@@ -402,14 +402,22 @@ func StreamAll(ctx context.Context, idx Index, fn func(*policy.CompilationUnit) 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	_, ch := idx.GetAllCompilationUnitsWithCount(ctx)
+	n, ch := idx.GetAllCompilationUnitsWithCount(ctx)
+	var count int
 	for cu := range ch {
 		if err := fn(cu); err != nil {
 			return err
 		}
+		count++
 	}
 
-	return ctx.Err()
+	if count < n {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (idx *index) GetAllCompilationUnitsWithCount(ctx context.Context) (int, <-chan *policy.CompilationUnit) {
