@@ -1175,23 +1175,34 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 		return err
 	}
 
-	slices.SortFunc(verrs.Violations, func(a, b *protovalidate.Violation) int {
-		if a.FieldDescriptor != nil && b.FieldDescriptor != nil {
-			if nameComparison := cmp.Compare(a.FieldDescriptor.FullName(), b.FieldDescriptor.FullName()); nameComparison != 0 {
-				return nameComparison
+	errs := make([]UnmarshalError, len(verrs.Violations))
+	for idx, v := range verrs.Violations {
+		path := fieldPathString(v.Proto.GetField().GetElements())
+		errs[idx] = uctx.verrorf(path, v.Proto.GetMessage())
+	}
+
+	slices.SortFunc(errs, func(a, b UnmarshalError) int {
+		posA := a.Err.GetPosition()
+		posB := b.Err.GetPosition()
+		if posA != nil && posB != nil {
+			if lineCmp := cmp.Compare(posA.GetLine(), posB.GetLine()); lineCmp != 0 {
+				return lineCmp
+			}
+
+			if colCmp := cmp.Compare(posA.GetColumn(), posB.GetColumn()); colCmp != 0 {
+				return colCmp
+			}
+
+			if pathCmp := cmp.Compare(posA.GetPath(), posB.GetPath()); pathCmp != 0 {
+				return pathCmp
 			}
 		}
 
-		if a.FieldValue.IsValid() && b.FieldValue.IsValid() {
-			return cmp.Compare(a.FieldValue.String(), b.FieldValue.String())
-		}
-
-		return 0
+		return cmp.Compare(a.Err.GetKind(), b.Err.GetKind())
 	})
 
-	for _, v := range verrs.Violations {
-		path := fieldPathString(v.Proto.GetField().GetElements())
-		outErr = errors.Join(outErr, uctx.verrorf(path, v.Proto.GetMessage()))
+	for _, err := range errs {
+		outErr = errors.Join(outErr, err)
 	}
 
 	return outErr
@@ -1367,7 +1378,7 @@ func (uc *unmarshalCtx) perrorf(n ast.Node, msg string, args ...any) error {
 	return NewUnmarshalError(err)
 }
 
-func (uc *unmarshalCtx) verrorf(path, msg string) error {
+func (uc *unmarshalCtx) verrorf(path, msg string) UnmarshalError {
 	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: fmt.Sprintf("%s: %s", strcase.LowerCamelCase(path), msg)}
 	if uc.srcCtx != nil {
 		if pos, ok := uc.srcCtx.FieldPositions[path]; ok {
