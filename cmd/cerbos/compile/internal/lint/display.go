@@ -14,8 +14,8 @@ import (
 	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
-func Display(p *printer.Printer, errs *index.BuildError, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
-	switch output {
+func Display(p *printer.Printer, errs *index.BuildError, format flagset.Format, colorLevel outputcolor.Level) error {
+	switch format.Output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:

@@ -13,8 +13,8 @@ import (
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-func Display(p *printer.Printer, errs compile.ErrorSet, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
-	switch output {
+func Display(p *printer.Printer, errs compile.ErrorSet, format flagset.Format, colorLevel outputcolor.Level) error {
+	switch format.Output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:

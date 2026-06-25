@@ -47,7 +47,7 @@ This command exits with different exit codes depending on the kind of failure.
 
 [source]
 ----
-Usage: cerbos compile [<dir>] [flags]
+Usage: cerbos compile <dir> [flags]
 
 Compile and test policies
 
@@ -61,14 +61,6 @@ cerbos compile /path/to/policy/repo
 
 cerbos compile --skip-tests /path/to/policy/repo
 
-# Compile store specified in the Cerbos configuration
-
-cerbos compile --config=/path/to/config.yaml
-
-# Compile and disable invalid policies of the store specified in the Cerbos configuration
-
-cerbos compile --fix --config=/path/to/config.yaml
-
 # Compile and run tests matching a filter (globs for suite, test, principal, resource, action)
 
 cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource=my_album;action=view' /path/to/policy/repo
@@ -78,25 +70,22 @@ cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource
 cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,edit' /path/to/policy/repo
 
 Arguments:
-  [<dir>]    Policy directory
+  <dir>    Policy directory
 
 Flags:
-  -h, --help                                    Show context-sensitive help.
-      --version                                 Show cerbos version
+  -h, --help                       Show context-sensitive help.
+      --version                    Show cerbos version
 
-      --config=.cerbos.yaml                     Path to config file ($CERBOS_CONFIG)
-      --set=server.adminAPI.enabled=true,...    Config overrides
-      --fix                                     Disable invalid policies in the store when a config is provided
-      --ignore-schemas                          Ignore schemas during compilation
-      --tests=STRING                            [Deprecated] Path to the directory containing tests. Defaults to policy directory.
-      --test-filter=TEST-FILTER                 Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
-      --skip-tests                              Skip tests
-      --skip-batching                           Skip batching tests
-  -o, --output="tree"                           Output format (tree,list,json)
-      --test-output=TEST-OUTPUT                 Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)
-      --color=COLOR                             Output color level (auto,never,always,256,16m). Defaults to auto.
-      --no-color                                Disable colored output
-      --verbose                                 Verbose output on test failure
+      --ignore-schemas             Ignore schemas during compilation
+      --tests=STRING               [Deprecated] Path to the directory containing tests. Defaults to policy directory.
+      --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
+      --skip-tests                 Skip tests
+      --skip-batching              Skip batching tests
+  -o, --output="tree"              Output format (tree,list,json)
+      --test-output=TEST-OUTPUT    Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)
+      --color=COLOR                Output color level (auto,never,always,256,16m). Defaults to auto.
+      --no-color                   Disable colored output
+      --verbose                    Verbose output on test failure
 ----
 
 [#healthcheck]
