@@ -69,6 +69,18 @@ cerbos compile --test-filter='suite=MySuite;test=album*;principal=alice;resource
 
 cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,edit' /path/to/policy/repo
 
+# Compile policies in database stores
+
+cerbos compile database /path/to/cerbos/config.yaml
+
+cerbos compile db /path/to/cerbos/config.yaml
+
+# Compile policies in database stores and disable invalid policies
+
+cerbos compile database --disable-invalid /path/to/cerbos/config.yaml
+
+cerbos compile db --disable-invalid /path/to/cerbos/config.yaml
+
 Arguments:
   <dir>    Policy directory
 
@@ -86,6 +98,13 @@ Flags:
       --color=COLOR                Output color level (auto,never,always,256,16m). Defaults to auto.
       --no-color                   Disable colored output
       --verbose                    Verbose output on test failure
+
+Commands:
+  compile database (db) <path> [flags]
+    Compile policies in database stores
+
+  compile <path> [flags]
+    Path to policy directory
 ----
 
 [#healthcheck]

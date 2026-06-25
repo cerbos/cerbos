@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
+	"github.com/cerbos/cerbos/cmd/cerbos/compile/database"
 	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/compile/internal/compilation"
 	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
@@ -57,7 +58,10 @@ cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,ed
 
 //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
 type Cmd struct { //betteralign:ignore
-	Dir           string             `help:"Policy directory" arg:"" required:"" type:"path"`
+	Database database.Cmd `cmd:"" help:"Compile policies in database stores" name:"database" aliases:"db"`
+	Dir      struct {
+		Dir string `help:"Path to policy directory" arg:"" required:"" type:"path"`
+	} `arg:""`
 	IgnoreSchemas bool               `help:"Ignore schemas during compilation"`
 	Tests         string             `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
 	RunRegexp     string             `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
@@ -73,7 +77,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	ctx, stopFunc := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stopFunc()
 
-	colorLevel := c.Color.Level.Resolve(c.Color.Disable)
+	colorLevel := c.Level.Resolve(c.Disable)
 
 	color.NoColor = !colorLevel.Enabled()
 
@@ -85,9 +89,9 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	p := printer.New(k.Stdout, k.Stderr)
 
-	fsys, err := util.OpenDirectoryFS(c.Dir)
+	fsys, err := util.OpenDirectoryFS(c.Dir.Dir)
 	if err != nil {
-		return fmt.Errorf("failed to open policy repository at %q: %w", c.Dir, err)
+		return fmt.Errorf("failed to open policy repository at %q: %w", c.Dir.Dir, err)
 	}
 
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
@@ -97,7 +101,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return lint.Display(p, idxErr, c.Format, colorLevel)
 		}
 
-		return fmt.Errorf("failed to load policy repository at %q: %w", c.Dir, err)
+		return fmt.Errorf("failed to load policy repository at %q: %w", c.Dir.Dir, err)
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
@@ -120,7 +124,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	if c.TestOutput == nil {
 		var value flagset.VerificationOutputFormat
-		switch c.Format.Output {
+		switch c.Output {
 		case flagset.OutputFormatTree:
 			value = flagset.VerificationOutputFormatTree
 		case flagset.OutputFormatList:
@@ -186,7 +190,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 }
 
 func (c *Cmd) testsDir() (fs.FS, string, error) {
-	dir := c.Dir
+	dir := c.Dir.Dir
 	if c.Tests != "" {
 		dir = c.Tests
 	}
