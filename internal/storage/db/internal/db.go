@@ -13,9 +13,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -38,6 +40,7 @@ import (
 )
 
 const (
+	batchSize   = 32
 	driverName  = "db"
 	tableLogKey = "table"
 )
@@ -49,6 +52,7 @@ type DBStorage interface {
 	storage.Instrumented
 	storage.Reloadable
 	storage.Verifiable
+	storage.IterableSourceStore
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
 	GetAll(ctx context.Context) ([]*policy.CompilationUnit, error)
@@ -384,6 +388,35 @@ func (s *dbStorage) GetAll(ctx context.Context) ([]*policy.CompilationUnit, erro
 	}
 
 	return res, nil
+}
+
+func (s *dbStorage) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return func(yield func(*policy.CompilationUnit, error) bool) {
+		policyKeys, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+
+		for batch := range slices.Chunk(policyKeys, batchSize) {
+			modIDs := make([]namer.ModuleID, len(batch))
+			for i, k := range batch {
+				modIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(k))
+			}
+
+			cus, err := s.GetCompilationUnits(ctx, modIDs...)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			for _, cu := range cus {
+				if !yield(cu, nil) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (s *dbStorage) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {

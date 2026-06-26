@@ -129,6 +129,17 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			t.Run("update_partial", addPolicies([]policy.Wrapper{rp, dr}, wantPartialEvents))
 		})
 
+		t.Run("iter", func(t *testing.T) {
+			count := 0
+			for cu, err := range store.Iter(t.Context()) {
+				require.NoError(t, err)
+				require.NotNil(t, cu)
+				count++
+			}
+
+			require.Equal(t, len(policyList), count)
+		})
+
 		t.Run("add_id_collision", func(t *testing.T) {
 			require.ErrorIs(t, store.AddOrUpdate(ctx, rpDupe2), storage.ErrPolicyIDCollision, "rpDupe2 not detected")
 			require.ErrorIs(t, store.AddOrUpdate(ctx, ppDupe2), storage.ErrPolicyIDCollision, "ppDupe2 not detected")
@@ -489,7 +500,8 @@ func TestSuite(store DBStorage) func(*testing.T) {
 					require.NoError(t, store.AddOrUpdate(t.Context(), e, d, r1, r2), "setup failed for transient test case")
 
 					t.Run("case_1", func(t *testing.T) {
-						_, err = store.Delete(ctx,
+						_, err = store.Delete(
+							ctx,
 							namer.PolicyKeyFromFQN(e.FQN),
 							namer.PolicyKeyFromFQN(d.FQN),
 							namer.PolicyKeyFromFQN(r1.FQN),
@@ -512,7 +524,8 @@ func TestSuite(store DBStorage) func(*testing.T) {
 					})
 
 					t.Run("case_2", func(t *testing.T) {
-						_, err = store.Delete(ctx,
+						_, err = store.Delete(
+							ctx,
 							namer.PolicyKeyFromFQN(e.FQN),
 							namer.PolicyKeyFromFQN(r1.FQN),
 							namer.PolicyKeyFromFQN(r2.FQN),
@@ -531,14 +544,16 @@ func TestSuite(store DBStorage) func(*testing.T) {
 					})
 
 					t.Run("case_3", func(t *testing.T) {
-						_, err = store.Delete(ctx,
+						_, err = store.Delete(
+							ctx,
 							namer.PolicyKeyFromFQN(d.FQN),
 							namer.PolicyKeyFromFQN(r1.FQN),
 							namer.PolicyKeyFromFQN(r2.FQN),
 						)
 						require.NoError(t, err)
 
-						_, err = store.Delete(ctx,
+						_, err = store.Delete(
+							ctx,
 							namer.PolicyKeyFromFQN(e.FQN),
 						)
 						require.NoError(t, err)

@@ -603,8 +603,8 @@ func paceBuildGC() (restore func()) {
 func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.PolicyLoader) (*RuleTable, error) {
 	defer paceBuildGC()()
 
-	if spl, ok := policyLoader.(policyloader.StreamingPolicyLoader); ok {
-		return newRuleTableFromStreamingLoader(ctx, spl)
+	if spl, ok := policyLoader.(policyloader.IterablePolicyLoader); ok {
+		return newRuleTableFromIterableLoader(ctx, spl)
 	}
 
 	protoRT := NewProtoRuletable()
@@ -616,7 +616,7 @@ func NewRuleTableFromLoader(ctx context.Context, policyLoader policyloader.Polic
 	return NewRuleTable(protoRT)
 }
 
-func newRuleTableFromStreamingLoader(ctx context.Context, spl policyloader.StreamingPolicyLoader) (*RuleTable, error) {
+func newRuleTableFromIterableLoader(ctx context.Context, spl policyloader.IterablePolicyLoader) (*RuleTable, error) {
 	rt := &RuleTable{
 		RuleTable:     NewProtoRuletable(),
 		idx:           index.New(),
@@ -625,8 +625,14 @@ func newRuleTableFromStreamingLoader(ctx context.Context, spl policyloader.Strea
 	}
 	rt.initBuildState()
 
-	if err := spl.GetAllStreaming(ctx, rt.ingestPolicy); err != nil {
-		return nil, fmt.Errorf("failed to load policies: %w", err)
+	for rps, err := range spl.Iter(ctx) {
+		if err != nil {
+			return nil, fmt.Errorf("failed to load policies due to compilation failure: %w", err)
+		}
+
+		if err := rt.ingestPolicy(rps); err != nil {
+			return nil, fmt.Errorf("failed to load policies: %w", err)
+		}
 	}
 
 	rt.finalizeBuild()

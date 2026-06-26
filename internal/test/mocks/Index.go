@@ -10,6 +10,7 @@ package mocks
 import (
 	"context"
 	"io"
+	"iter"
 
 	"github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/namer"
@@ -816,6 +817,59 @@ func (_c *Index_InspectPolicies_Call) Return(stringToInspectPoliciesResponse_Res
 }
 
 func (_c *Index_InspectPolicies_Call) RunAndReturn(run func(context1 context.Context, strings ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)) *Index_InspectPolicies_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Iter provides a mock function for the type Index
+func (_mock *Index) Iter(context1 context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	ret := _mock.Called(context1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Iter")
+	}
+
+	var r0 iter.Seq2[*policy.CompilationUnit, error]
+	if returnFunc, ok := ret.Get(0).(func(context.Context) iter.Seq2[*policy.CompilationUnit, error]); ok {
+		r0 = returnFunc(context1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(iter.Seq2[*policy.CompilationUnit, error])
+		}
+	}
+	return r0
+}
+
+// Index_Iter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Iter'
+type Index_Iter_Call struct {
+	*mock.Call
+}
+
+// Iter is a helper method to define mock.On call
+//   - context1 context.Context
+func (_e *Index_Expecter) Iter(context1 any) *Index_Iter_Call {
+	return &Index_Iter_Call{Call: _e.mock.On("Iter", context1)}
+}
+
+func (_c *Index_Iter_Call) Run(run func(context1 context.Context)) *Index_Iter_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *Index_Iter_Call) Return(seq2 iter.Seq2[*policy.CompilationUnit, error]) *Index_Iter_Call {
+	_c.Call.Return(seq2)
+	return _c
+}
+
+func (_c *Index_Iter_Call) RunAndReturn(run func(context1 context.Context) iter.Seq2[*policy.CompilationUnit, error]) *Index_Iter_Call {
 	_c.Call.Return(run)
 	return _c
 }

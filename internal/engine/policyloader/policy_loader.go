@@ -5,6 +5,7 @@ package policyloader
 
 import (
 	"context"
+	"iter"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -18,8 +19,8 @@ type PolicyLoader interface {
 	Source() *auditv1.PolicySource
 }
 
-// StreamingPolicyLoader is an optional interface for loaders that can yield compiled
+// IterablePolicyLoader is an optional interface for loaders that can yield compiled
 // policy sets one at a time.
-type StreamingPolicyLoader interface {
-	GetAllStreaming(ctx context.Context, yield func(*runtimev1.RunnablePolicySet) error) error
+type IterablePolicyLoader interface {
+	Iter(ctx context.Context) iter.Seq2[*runtimev1.RunnablePolicySet, error]
 }
