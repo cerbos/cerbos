@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"iter"
 	"path/filepath"
 	"time"
 
@@ -125,8 +126,8 @@ func (s *Store) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
 	return s.idx.GetAll(ctx)
 }
 
-func (s *Store) GetAllStreaming(ctx context.Context, fn func(*policy.CompilationUnit) error) error {
-	return index.StreamAll(ctx, s.idx, fn)
+func (s *Store) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return s.idx.Iter(ctx)
 }
 
 func (s *Store) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {

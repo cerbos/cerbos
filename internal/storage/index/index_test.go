@@ -238,3 +238,17 @@ func TestIndexGetDependents(t *testing.T) {
 		namer.ResourcePolicyModuleID("import_derived_roles_that_import_variables", "default", ""),
 	}, dependents[modID])
 }
+
+func TestIndexIter(t *testing.T) {
+	idx, err := index.Build(t.Context(), os.DirFS(test.PathToDir(t, "store")))
+	require.NoError(t, err)
+
+	count := 0
+	for cu, err := range idx.Iter(t.Context()) {
+		require.NoError(t, err)
+		require.NotNil(t, cu)
+		count++
+	}
+
+	require.Greater(t, count, 5)
+}

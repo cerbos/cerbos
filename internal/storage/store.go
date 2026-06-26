@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"sync"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -155,10 +156,10 @@ type SourceStore interface {
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
 }
 
-// StreamingSourceStore is an optional interface for source stores that can yield their
+// IterableSourceStore is an optional interface for source stores that can yield their
 // compilation units one at a time instead of materialising them all into a slice.
-type StreamingSourceStore interface {
-	GetAllStreaming(ctx context.Context, fn func(*policy.CompilationUnit) error) error
+type IterableSourceStore interface {
+	Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error]
 }
 
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"iter"
 	"sort"
 	"sync"
 
@@ -58,6 +59,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	GetAllCompilationUnitsWithCount(context.Context) (int, <-chan *policy.CompilationUnit)
+	Iter(context.Context) iter.Seq2[*policy.CompilationUnit, error]
 	Clear() error
 	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(context.Context, ...string) ([]string, error)
@@ -396,30 +398,6 @@ func (idx *index) GetAllCompilationUnits(ctx context.Context) <-chan *policy.Com
 	return ch
 }
 
-// StreamAll lazily loads each compilation unit from the index and passes it to fn, holding
-// only one unit resident at a time.
-func StreamAll(ctx context.Context, idx Index, fn func(*policy.CompilationUnit) error) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	n, ch := idx.GetAllCompilationUnitsWithCount(ctx)
-	var count int
-	for cu := range ch {
-		if err := fn(cu); err != nil {
-			return err
-		}
-		count++
-	}
-
-	if count < n {
-		if err := ctx.Err(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (idx *index) GetAllCompilationUnitsWithCount(ctx context.Context) (int, <-chan *policy.CompilationUnit) {
 	idx.mu.RLock()
 	toCompile := make([]namer.ModuleID, 0, len(idx.executables))
@@ -458,6 +436,20 @@ func (idx *index) GetAllCompilationUnitsWithCount(ctx context.Context) (int, <-c
 	}()
 
 	return len(toCompile), outChan
+}
+
+func (idx *index) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return func(yield func(*policy.CompilationUnit, error) bool) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		ch := idx.GetAllCompilationUnits(ctx)
+		for unit := range ch {
+			if !yield(unit, nil) {
+				return
+			}
+		}
+	}
 }
 
 func (idx *index) Clear() error {
