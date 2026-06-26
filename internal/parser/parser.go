@@ -1184,7 +1184,8 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 	slices.SortFunc(errs, func(a, b UnmarshalError) int {
 		posA := a.Err.GetPosition()
 		posB := b.Err.GetPosition()
-		if posA != nil && posB != nil {
+		switch {
+		case posA != nil && posB != nil:
 			if lineCmp := cmp.Compare(posA.GetLine(), posB.GetLine()); lineCmp != 0 {
 				return lineCmp
 			}
@@ -1196,6 +1197,10 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 			if pathCmp := cmp.Compare(posA.GetPath(), posB.GetPath()); pathCmp != 0 {
 				return pathCmp
 			}
+		case posA != nil:
+			return -1
+		case posB != nil:
+			return 1
 		}
 
 		return cmp.Compare(a.Err.GetKind(), b.Err.GetKind())
