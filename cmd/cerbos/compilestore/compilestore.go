@@ -12,25 +12,20 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/fatih/color"
 	"github.com/pterm/pterm"
 	"helm.sh/helm/v3/pkg/strvals"
 
-	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/cmd/cerbos/internal/compilation"
 	"github.com/cerbos/cerbos/cmd/cerbos/internal/flagset"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/lint"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
-	"github.com/cerbos/cerbos/internal/storage/db/mysql"
-	"github.com/cerbos/cerbos/internal/storage/db/postgres"
-	"github.com/cerbos/cerbos/internal/storage/db/sqlite3"
-	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/git"
-	"github.com/cerbos/cerbos/internal/util"
+	"github.com/cerbos/cerbos/internal/storage/index"
 )
 
 const (
@@ -49,7 +44,7 @@ cerbos compile-store --disable-invalid /path/to/cerbos/config.yaml
 
 //nolint:govet
 type Cmd struct { //betteralign:ignore
-	Config         string   `help:"Path to config file" arg:"" required:"" type:"path" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
+	Config         string   `help:"Path to config file" arg:"" required:"" type:"existingfile" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
 	Set            []string `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	DisableInvalid bool     `help:"Disable invalid policies if database store" placeholder:"false"`
 	flagset.Format
@@ -75,36 +70,41 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	p := printer.New(k.Stdout, k.Stderr)
 	cm, disable, err := c.compileManager(ctx)
 	if err != nil {
+		idxErr := new(index.BuildError)
+		if errors.As(err, &idxErr) {
+			return lint.Display(p, idxErr, c.Format, colorLevel)
+		}
+
 		return err
 	}
 
-	if c.DisableInvalid && disable == nil {
-		return errors.New("only database stores support --disable-invalid flag")
-	}
-
 	var compErr *compile.ErrorSet
-	if err := cm.GetAllStreaming(ctx, func(_ *runtimev1.RunnablePolicySet) error {
-		return nil
-	}); err != nil && !errors.As(err, &compErr) {
+	if err := cm.CompileAll(ctx); err != nil && !errors.As(err, &compErr) {
 		return fmt.Errorf("failed to compile policies: %w", err)
 	} else if err == nil {
 		return nil
 	}
 
-	if !c.DisableInvalid || disable == nil {
+	if !c.DisableInvalid {
 		return internalcompile.Display(p, *compErr, c.Format, colorLevel)
 	}
 
-	policyKeys := make(util.StringSet)
+	policyKeys := make(map[string][]errWithDesc)
 	for _, err := range compErr.Errors().GetErrors() {
-		policyKeys[strings.TrimSuffix(strings.TrimPrefix(err.GetFile(), "<"), ">")] = struct{}{}
+		key := strings.TrimSuffix(strings.TrimPrefix(err.GetFile(), "<"), ">")
+		policyKeys[key] = append(policyKeys[key], errWithDesc{Err: err.GetError(), Description: err.GetDescription()})
 	}
 
 	if len(policyKeys) == 0 {
 		return nil
 	}
 
-	return c.disableInvalidPolicies(ctx, p, disable, policyKeys)
+	return c.disableInvalidPolicies(ctx, p, colorLevel, disable, policyKeys)
+}
+
+type errWithDesc struct {
+	Err         string `json:"error"`
+	Description string `json:"description,omitempty"`
 }
 
 func (c *Cmd) loadConfig() error {
@@ -125,85 +125,21 @@ func (c *Cmd) loadConfig() error {
 type disableFn func(ctx context.Context, policyKey ...string) (disabledPolicies uint32, err error)
 
 func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, error) {
-	conf, err := storage.GetConf()
+	store, err := storage.New(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to create store: %w", err)
 	}
 
-	var ss storage.SourceStore
 	var fn disableFn
-	switch conf.Driver {
-	case blob.DriverName:
-		conf := new(blob.Conf)
-		if err := config.GetSection(conf); err != nil {
-			return nil, nil, fmt.Errorf("failed to read blob configuration: %w", err)
-		}
+	ss, ok := store.(storage.SourceStore)
+	if !ok {
+		return nil, nil, fmt.Errorf("the configured store is not a source store")
+	}
 
-		store, err := blob.NewStore(ctx, conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create to blob store: %w", err)
-		}
-		ss = store
-	case disk.DriverName:
-		conf := new(disk.Conf)
-		if err := config.GetSection(conf); err != nil {
-			return nil, nil, fmt.Errorf("failed to read disk configuration: %w", err)
-		}
-
-		store, err := disk.NewStore(ctx, conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create to disk store: %w", err)
-		}
-		ss = store
-	case git.DriverName:
-		conf := new(git.Conf)
-		if err := config.GetSection(conf); err != nil {
-			return nil, nil, fmt.Errorf("failed to read git configuration: %w", err)
-		}
-
-		store, err := git.NewStore(ctx, conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create to git store: %w", err)
-		}
-		ss = store
-	case mysql.DriverName:
-		conf := new(mysql.Conf)
-		if err := config.GetSection(conf); err != nil {
-			return nil, nil, fmt.Errorf("failed to read mysql configuration: %w", err)
-		}
-
-		store, err := mysql.NewStore(ctx, conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create to mysql store: %w", err)
-		}
-		ss = store
-		fn = store.Disable
-	case postgres.DriverName:
-		conf := new(postgres.Conf)
-		if err := config.GetSection(conf); err != nil {
-			return nil, nil, fmt.Errorf("failed to read postgres configuration: %w", err)
-		}
-
-		store, err := postgres.NewStore(ctx, conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create to postgres store: %w", err)
-		}
-		ss = store
-		fn = store.Disable
-	case sqlite3.DriverName:
-		conf := new(sqlite3.Conf)
-		if err := config.GetSection(conf); err != nil {
-			return nil, nil, fmt.Errorf("failed to read sqlite3 configuration: %w", err)
-		}
-
-		store, err := sqlite3.NewStore(ctx, conf)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create to sqlite3 store: %w", err)
-		}
-		ss = store
-		fn = store.Disable
-	default:
-		return nil, nil, fmt.Errorf("unsupported driver: %s", conf.Driver)
+	if ms, ok := store.(storage.MutableStore); ok {
+		fn = ms.Disable
+	} else if c.DisableInvalid {
+		return nil, nil, errors.New("--disable-invalid flag is only supported by mutable stores")
 	}
 
 	cm, err := compile.NewManager(ctx, ss)
@@ -214,37 +150,49 @@ func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, 
 	return cm, fn, nil
 }
 
-func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, disable disableFn, policyKeys util.StringSet) error {
+func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level, disable disableFn, policyKeys map[string][]errWithDesc) error {
 	var integrityErr *db.IntegrityErr
-	pk := policyKeys.ToSlice()
-	if disabledPolicies, err := disable(ctx, pk...); err != nil && !errors.As(err, &integrityErr) {
+	if _, err := disable(ctx, c.toSlice(policyKeys)...); err != nil && !errors.As(err, &integrityErr) {
 		return fmt.Errorf("failed to disable policies: %w", err)
 	} else if integrityErr == nil {
-		p.Printf("Successfully disabled %d policies breaking the store: %s\n", disabledPolicies, strings.Join(pk, ", "))
+		return display(p, c.Format, colorLevel, policyKeys)
 	}
 
 	for _, ierr := range integrityErr.Errors {
 		if ierr.GetBreaksScopeChain() != nil {
 			for _, descendant := range ierr.GetBreaksScopeChain().GetDescendants() {
-				policyKeys[descendant] = struct{}{}
+				policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{Err: "breaks scope chain"})
 			}
 		}
 
 		if ierr.GetRequiredByOtherPolicies() != nil {
 			for _, dependents := range ierr.GetRequiredByOtherPolicies().GetDependents() {
-				policyKeys[dependents] = struct{}{}
+				policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{Err: "required by other policies"})
 			}
 		}
 	}
 
-	pk = policyKeys.ToSlice()
-	disabledPolicies, err := disable(ctx, pk...)
+	disabledPolicies, err := disable(ctx, c.toSlice(policyKeys)...)
 	if err != nil || disabledPolicies == 0 {
 		return fmt.Errorf("failed to disable policies: %w", err)
 	}
 
-	p.Printf("Successfully disabled %d policies breaking the store: %s\n", disabledPolicies, strings.Join(pk, ", "))
-	return nil
+	return display(p, c.Format, colorLevel, policyKeys)
+}
+
+func (c *Cmd) toSlice(m map[string][]errWithDesc) []string {
+	if len(m) == 0 {
+		return nil
+	}
+
+	s := make([]string, len(m))
+	idx := 0
+	for key := range m {
+		s[idx] = key
+		idx++
+	}
+
+	return s
 }
 
 func (c *Cmd) Help() string {

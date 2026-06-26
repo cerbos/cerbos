@@ -41,7 +41,7 @@ func TestNewStore(t *testing.T) {
 		conf := &Conf{WorkDir: workDir}
 		conf.SetDefaults()
 		must := require.New(t)
-		_, err := newStore(
+		_, err := NewStore(
 			ctx,
 			conf,
 			newBlobFS(workDir),
@@ -75,7 +75,7 @@ func TestNewStore(t *testing.T) {
 		cloner, err := NewCloner(bucket, cacheDir)
 		must.NoError(err)
 
-		_, err = newStore(
+		_, err = NewStore(
 			ctx,
 			conf,
 			newBlobFS(workDir),
@@ -110,7 +110,7 @@ func TestStore_updateIndex(t *testing.T) {
 	policyFile := filepath.Join("resource_policies", "policy_02.yaml")
 	schemaFile := filepath.Join(schema.Directory, "principal.json")
 	noOfClonerCalls := 0
-	store, err := newStore(
+	store, err := NewStore(
 		ctx,
 		conf,
 		newBlobFS(workDir),
@@ -233,7 +233,7 @@ func mkStore(t *testing.T) (*Store, *blob.Bucket) {
 	cloner, err := NewCloner(bucket, cacheDir)
 	require.NoError(t, err)
 
-	store, err := newStore(t.Context(), conf, newBlobFS(conf.WorkDir), cloner, mkSymlinker(cacheDir, conf.WorkDir), nil)
+	store, err := NewStore(t.Context(), conf, newBlobFS(conf.WorkDir), cloner, mkSymlinker(cacheDir, conf.WorkDir), nil)
 	require.NoError(t, err)
 
 	return store, bucket

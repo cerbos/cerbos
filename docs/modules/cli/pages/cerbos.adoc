@@ -78,7 +78,6 @@ Flags:
       --version                    Show cerbos version
 
       --ignore-schemas             Ignore schemas during compilation
-      --tests=STRING               [Deprecated] Path to the directory containing tests. Defaults to policy directory.
       --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
       --skip-tests                 Skip tests
       --skip-batching              Skip batching tests

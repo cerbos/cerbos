@@ -18,14 +18,3 @@ func (ss StringSet) Contains(value string) bool {
 	_, exists := ss[value]
 	return exists
 }
-
-func (ss StringSet) ToSlice() []string {
-	s := make([]string, len(ss))
-	idx := 0
-	for key := range ss {
-		s[idx] = key
-		idx++
-	}
-
-	return s
-}
