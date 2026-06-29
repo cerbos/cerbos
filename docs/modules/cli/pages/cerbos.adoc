@@ -132,7 +132,6 @@ Flags:
       --set=server.adminAPI.enabled=true,...    Config overrides
       --disable-invalid                         Disable invalid policies if database store
       --assume-yes                              Answer yes to all confirmation questions
-      --test-output=TEST-OUTPUT                 Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)
   -o, --output="tree"                           Output format (tree,list,json)
       --color=COLOR                             Output color level (auto,never,always,256,16m). Defaults to auto.
       --no-color                                Disable colored output

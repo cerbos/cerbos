@@ -8,8 +8,7 @@ import (
 )
 
 type Format struct {
-	TestOutput *VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
-	Output     OutputFormat              `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
+	Output OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
 }
 
 type OutputFormat string

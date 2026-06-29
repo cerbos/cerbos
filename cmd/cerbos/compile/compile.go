@@ -65,6 +65,7 @@ type Cmd struct { //betteralign:ignore
 	SkipTests     bool               `help:"Skip tests"`
 	SkipBatching  bool               `help:"Skip batching tests"`
 	flagset.Format
+	TestOutput *flagset.VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
 	flagset.Color
 	Verbose bool `help:"Verbose output on test failure"`
 }
