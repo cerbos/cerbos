@@ -7,8 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -152,47 +154,38 @@ func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, 
 
 func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level, disable disableFn, policyKeys map[string][]errWithDesc) error {
 	var integrityErr *db.IntegrityErr
-	if _, err := disable(ctx, c.toSlice(policyKeys)...); err != nil && !errors.As(err, &integrityErr) {
+	if _, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...); err != nil && !errors.As(err, &integrityErr) {
 		return fmt.Errorf("failed to disable policies: %w", err)
 	} else if integrityErr == nil {
 		return display(p, c.Format, colorLevel, policyKeys)
 	}
 
-	for _, ierr := range integrityErr.Errors {
+	for invalidPolicyKey, ierr := range integrityErr.Errors {
 		if ierr.GetBreaksScopeChain() != nil {
 			for _, descendant := range ierr.GetBreaksScopeChain().GetDescendants() {
-				policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{Err: "breaks scope chain", Description: "Disabling an invalid policy was breaking the scope chain unless both were disabled"})
+				policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{
+					Err:         "descendant of invalid scope policy",
+					Description: fmt.Sprintf("Policy %s is invalid and all of its descendants should be disabled to avoid breaking the scope chain", invalidPolicyKey),
+				})
 			}
 		}
 
 		if ierr.GetRequiredByOtherPolicies() != nil {
 			for _, dependents := range ierr.GetRequiredByOtherPolicies().GetDependents() {
-				policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{Err: "required by other policies", Description: "Disabling an invalid policy was breaking this dependent policy unless both were disabled"})
+				policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{
+					Err:         "dependant of invalid policy",
+					Description: fmt.Sprintf("This policy depends on %s which is invalid", invalidPolicyKey),
+				})
 			}
 		}
 	}
 
-	disabledPolicies, err := disable(ctx, c.toSlice(policyKeys)...)
+	disabledPolicies, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...)
 	if err != nil || disabledPolicies == 0 {
 		return fmt.Errorf("failed to disable policies: %w", err)
 	}
 
 	return display(p, c.Format, colorLevel, policyKeys)
-}
-
-func (c *Cmd) toSlice(m map[string][]errWithDesc) []string {
-	if len(m) == 0 {
-		return nil
-	}
-
-	s := make([]string, len(m))
-	idx := 0
-	for key := range m {
-		s[idx] = key
-		idx++
-	}
-
-	return s
 }
 
 func (c *Cmd) Help() string {
