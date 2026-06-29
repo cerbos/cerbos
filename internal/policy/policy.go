@@ -371,14 +371,14 @@ func GetHash(p *policyv1.Policy) uint64 {
 // GetSourceFile gets the source file name from metadata if it exists.
 func GetSourceFile(p *policyv1.Policy) string {
 	if p == nil {
-		return "<>"
+		return "no file"
 	}
 
 	if p.Metadata != nil && p.Metadata.SourceFile != "" {
 		return p.Metadata.SourceFile
 	}
 
-	return fmt.Sprintf("<%s>", namer.PolicyKey(p))
+	return namer.PolicyKey(p)
 }
 
 // Wrapper is a convenience layer over the policy definition.
