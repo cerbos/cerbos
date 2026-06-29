@@ -35,12 +35,7 @@ func displayList(p *printer.Printer, policyKeys map[string][]errWithDesc) error 
 	p.Println(colored.Header("Disabled invalid policies"))
 	for policyKey, errs := range policyKeys {
 		for _, err := range errs {
-			if err.Description != "" {
-				p.Printf("%s %s <%s>\n", colored.PolicyKey(policyKey), colored.ErrorMsg(err.Description), err.Err)
-				continue
-			}
-
-			p.Printf("%s <%s>\n", colored.PolicyKey(policyKey), err.Err)
+			p.Printf("%s %s <%s>\n", colored.PolicyKey(policyKey), colored.ErrorMsg(err.Description), err.Err)
 		}
 	}
 

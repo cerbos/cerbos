@@ -104,7 +104,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 type errWithDesc struct {
 	Err         string `json:"error"`
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 }
 
 func (c *Cmd) loadConfig() error {
@@ -161,13 +161,13 @@ func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, co
 	for _, ierr := range integrityErr.Errors {
 		if ierr.GetBreaksScopeChain() != nil {
 			for _, descendant := range ierr.GetBreaksScopeChain().GetDescendants() {
-				policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{Err: "breaks scope chain"})
+				policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{Err: "breaks scope chain", Description: "Disabling an invalid policy was breaking the scope chain unless both were disabled"})
 			}
 		}
 
 		if ierr.GetRequiredByOtherPolicies() != nil {
 			for _, dependents := range ierr.GetRequiredByOtherPolicies().GetDependents() {
-				policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{Err: "required by other policies"})
+				policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{Err: "required by other policies", Description: "Disabling an invalid policy was breaking this dependent policy unless both were disabled"})
 			}
 		}
 	}
