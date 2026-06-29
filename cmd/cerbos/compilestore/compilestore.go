@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
+	"github.com/cerbos/cerbos/internal/printer/colored"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/cerbos/cerbos/internal/storage/index"
@@ -49,6 +50,7 @@ type Cmd struct { //betteralign:ignore
 	Config         string   `help:"Path to config file" arg:"" required:"" type:"existingfile" placeholder:".cerbos.yaml" env:"CERBOS_CONFIG"`
 	Set            []string `help:"Config overrides" placeholder:"server.adminAPI.enabled=true"`
 	DisableInvalid bool     `help:"Disable invalid policies if database store" placeholder:"false"`
+	AssumeYes      bool     `help:"Answer yes to all confirmation questions" placeholder:"false"`
 	flagset.Format
 	flagset.Color
 }
@@ -153,6 +155,30 @@ func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, 
 }
 
 func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level, disable disableFn, policyKeys map[string][]errWithDesc) error {
+	var confirmed bool
+	if !c.AssumeYes {
+		confirmed = confirm(
+			ctx, p,
+			fmt.Sprintf(
+				"%s\n%s",
+				colored.Header(fmt.Sprintf("Continuing with this command going to disable the following %d policies, and more if those policies are required by other policies or the scope chain is broken:", len(policyKeys))),
+				strings.Join(slices.Collect(func(yield func(string) bool) {
+					for k := range policyKeys {
+						if !yield(colored.PolicyKey(k)) {
+							return
+						}
+					}
+				}), "\n"),
+			),
+		)
+	} else {
+		confirmed = true
+	}
+
+	if !confirmed {
+		return nil
+	}
+
 	var integrityErr *db.IntegrityErr
 	if _, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...); err != nil && !errors.As(err, &integrityErr) {
 		return fmt.Errorf("failed to disable policies: %w", err)
@@ -190,4 +216,35 @@ func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, co
 
 func (c *Cmd) Help() string {
 	return help
+}
+
+func confirm(ctx context.Context, p *printer.Printer, msg string) bool {
+	p.Printf("%s", msg)
+	p.Printf("\n\nDo you want to continue [y/yes]?: ")
+
+	ch := make(chan string, 1)
+
+	go func() {
+		var input string
+		if _, err := fmt.Fscan(os.Stdin, &input); err != nil {
+			panic(fmt.Errorf("failed to read confirmation input: %w", err))
+		}
+
+		ch <- input
+		close(ch)
+	}()
+
+	var input string
+	select {
+	case input = <-ch:
+		input = strings.ToLower(input)
+	case <-ctx.Done():
+		return false
+	}
+
+	if input == "y" || input == "yes" {
+		return true
+	}
+
+	return false
 }
