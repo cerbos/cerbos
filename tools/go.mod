@@ -7,15 +7,15 @@ require (
 	github.com/cerbos/actions v0.0.0-20260623134343-d5b49896c2cc
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
-	github.com/dadav/helm-schema v0.0.0-20260612175628-fff8d76bdcd4
-	github.com/dkorunic/betteralign v0.12.0
+	github.com/dadav/helm-schema v0.0.0-20260622064823-4603b5bf16d1
+	github.com/dkorunic/betteralign v0.13.0
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/vektra/mockery/v3 v3.7.1
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools v0.46.0
-	golang.org/x/vuln v1.3.0
+	golang.org/x/vuln v1.4.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.2
 	google.golang.org/protobuf v1.36.11
 	gotest.tools/gotestsum v1.13.0
@@ -105,7 +105,7 @@ require (
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260610154732-fb80ec83bdd9 // indirect
+	golang.org/x/telemetry v0.0.0-20260611141451-d61e87d5f4a3 // indirect
 	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
