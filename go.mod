@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos
 
-go 1.26.0
+go 1.25.11
 
 toolchain go1.26.4
 
@@ -118,7 +118,7 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.21.2
+	helm.sh/helm/v3 v3.21.0
 	modernc.org/sqlite v1.53.0
 )
 
