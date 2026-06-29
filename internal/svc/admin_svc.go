@@ -85,8 +85,7 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 			return nil, status.Error(codes.FailedPrecondition, "Policy ID conflict")
 		}
 
-		invalidPolicyErr := new(storage.InvalidPolicyError)
-		if errors.As(err, invalidPolicyErr) {
+		if invalidPolicyErr, ok := errors.AsType[storage.InvalidPolicyError](err); ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
 		}
 		return nil, status.Error(codes.Internal, "Failed to add/update policies")
@@ -107,8 +106,7 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 
 	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
-		var ise storage.InvalidSchemaError
-		if ok := errors.As(err, &ise); ok {
+		if ise, ok := errors.AsType[storage.InvalidSchemaError](err); ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid schema in request: %s", ise.Message)
 		}
 
@@ -245,8 +243,7 @@ func (cas *CerbosAdminService) DeletePolicy(ctx context.Context, req *requestv1.
 	deletedPolicies, err := ms.Delete(ctx, req.Id...)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to delete policies", zap.Error(err))
-		var integrityErr *db.IntegrityErr
-		if errors.As(err, &integrityErr) {
+		if integrityErr, ok := errors.AsType[*db.IntegrityErr](err); ok {
 			st := status.New(codes.InvalidArgument, "Failed to delete policies")
 			var setDetailsErr error
 			if st, setDetailsErr = st.WithDetails(&responsev1.DeletePolicyErrorDetails{
@@ -284,8 +281,7 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 	disabledPolicies, err := ms.Disable(ctx, req.Id...)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to disable policies", zap.Error(err))
-		var integrityErr *db.IntegrityErr
-		if errors.As(err, &integrityErr) {
+		if integrityErr, ok := errors.AsType[*db.IntegrityErr](err); ok {
 			st := status.New(codes.InvalidArgument, "Failed to disable policies")
 			var setDetailsErr error
 			if st, setDetailsErr = st.WithDetails(&responsev1.DisablePolicyErrorDetails{

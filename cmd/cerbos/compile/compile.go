@@ -95,8 +95,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
-		idxErr := new(index.BuildError)
-		if errors.As(err, &idxErr) {
+		if idxErr, ok := errors.AsType[*index.BuildError](err); ok {
 			return lint.Display(p, idxErr, c.Output, colorLevel)
 		}
 
@@ -113,8 +112,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	schemaMgr := internalschema.NewFromConf(ctx, store, internalschema.NewConf(enforcement))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
-		compErr := new(compile.ErrorSet)
-		if errors.As(err, &compErr) {
+		if compErr, ok := errors.AsType[*compile.ErrorSet](err); ok {
 			return internalcompile.Display(p, *compErr, c.Output, colorLevel)
 		}
 

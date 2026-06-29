@@ -100,8 +100,7 @@ func unwrapErrors(t *testing.T, err error) (allErrs []*sourcev1.Error) {
 		return allErrs
 	}
 
-	var unmarshalErr parser.UnmarshalError
-	if errors.As(err, &unmarshalErr) {
+	if unmarshalErr, ok := errors.AsType[parser.UnmarshalError](err); ok {
 		allErrs = append(allErrs, unmarshalErr.Err)
 	} else {
 		t.Fatalf("unexpected error: %v", err)

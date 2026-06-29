@@ -237,8 +237,7 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 
 	file, err := parser.Parse(t, parser.ParseComments)
 	if err != nil { //nolint:nestif
-		syntaxErr := new(yaml.SyntaxError)
-		if errors.As(err, &syntaxErr) {
+		if syntaxErr, ok := errors.AsType[*yaml.SyntaxError](err); ok {
 			srcErr := &sourcev1.Error{
 				Kind:    sourcev1.Error_KIND_PARSE_ERROR,
 				Message: syntaxErr.Message,
@@ -1085,7 +1084,7 @@ func (u *unmarshaler[T]) unmarshalUInt64Value(uctx *unmarshalCtx, n ast.Node, ou
 		switch v := t.Value.(type) {
 		case int64:
 			if v < 0 {
-				return uctx.perrorf(n, "unexpected negative value %q", v)
+				return uctx.perrorf(n, "unexpected negative value '%d'", v)
 			}
 
 			out.Value = uint64(v)
@@ -1170,8 +1169,8 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 		return nil
 	}
 
-	verrs := new(protovalidate.ValidationError)
-	if !errors.As(err, &verrs) {
+	verrs, ok := errors.AsType[*protovalidate.ValidationError](err)
+	if !ok {
 		return err
 	}
 

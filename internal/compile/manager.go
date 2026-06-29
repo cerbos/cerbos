@@ -210,5 +210,6 @@ func (pce PolicyCompilationErr) Unwrap() error {
 }
 
 func (pce PolicyCompilationErr) Is(target error) bool {
-	return errors.As(target, &PolicyCompilationErr{})
+	_, ok := errors.AsType[PolicyCompilationErr](target)
+	return ok
 }
