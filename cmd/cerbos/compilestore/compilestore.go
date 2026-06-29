@@ -38,10 +38,12 @@ Examples:
 # Compile store
 
 cerbos compile-store /path/to/cerbos/config.yaml
+cerbos compile-store --output=json /path/to/cerbos/config.yaml
 
 # Compile database store and disable invalid policies 
 
 cerbos compile-store --disable-invalid /path/to/cerbos/config.yaml
+cerbos compile-store --disable-invalid --output=json /path/to/cerbos/config.yaml
 `
 )
 
