@@ -158,82 +158,79 @@ func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, 
 
 func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level, disable disableFn, policyKeys map[string][]errWithDesc) error {
 	var confirmed bool
-	if !c.AssumeYes {
-		confirmed = confirm(
-			ctx, p,
-			fmt.Sprintf(
-				"%s\n%s",
-				colored.Header(fmt.Sprintf("Continuing with this command going to disable the following %d policies, and more if those policies are required by other policies or the scope chain is broken:", len(policyKeys))),
-				strings.Join(slices.Collect(func(yield func(string) bool) {
-					for k := range policyKeys {
-						if !yield(colored.PolicyKey(k)) {
-							return
-						}
-					}
-				}), "\n"),
-			),
-		)
-	} else {
+	if c.AssumeYes {
 		confirmed = true
+	} else {
+		confirmed = confirm(ctx, p, policyKeys, "The following policies will be disabled")
 	}
 
 	if !confirmed {
 		return nil
 	}
 
-	var integrityErr *db.IntegrityErr
-	if _, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...); err != nil && !errors.As(err, &integrityErr) {
-		return fmt.Errorf("failed to disable policies: %w", err)
-	} else if integrityErr == nil {
-		return display(p, c.Format, colorLevel, policyKeys)
-	}
+	for {
+		var integrityErr *db.IntegrityErr
+		if _, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...); err != nil && !errors.As(err, &integrityErr) {
+			return fmt.Errorf("failed to disable policies: %w", err)
+		} else if integrityErr == nil {
+			return display(p, c.Format, colorLevel, policyKeys)
+		}
 
-	for invalidPolicyKey, ierr := range integrityErr.Errors {
-		if ierr.GetBreaksScopeChain() != nil {
-			for _, descendant := range ierr.GetBreaksScopeChain().GetDescendants() {
-				policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{
-					Err:         "descendant of invalid scope policy",
-					Description: fmt.Sprintf("Policy %s is invalid and all of its descendants should be disabled to avoid breaking the scope chain", invalidPolicyKey),
-				})
+		for invalidPolicyKey, ierr := range integrityErr.Errors {
+			if ierr.GetBreaksScopeChain() != nil {
+				for _, descendant := range ierr.GetBreaksScopeChain().GetDescendants() {
+					policyKeys[descendant] = append(policyKeys[descendant], errWithDesc{
+						Err:         "descendant of invalid scope policy",
+						Description: fmt.Sprintf("Policy %s is invalid and all of its descendants should be disabled to avoid breaking the scope chain", invalidPolicyKey),
+					})
+				}
+			}
+
+			if ierr.GetRequiredByOtherPolicies() != nil {
+				for _, dependents := range ierr.GetRequiredByOtherPolicies().GetDependents() {
+					policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{
+						Err:         "dependant of invalid policy",
+						Description: fmt.Sprintf("This policy depends on %s which is invalid", invalidPolicyKey),
+					})
+				}
 			}
 		}
 
-		if ierr.GetRequiredByOtherPolicies() != nil {
-			for _, dependents := range ierr.GetRequiredByOtherPolicies().GetDependents() {
-				policyKeys[dependents] = append(policyKeys[dependents], errWithDesc{
-					Err:         "dependant of invalid policy",
-					Description: fmt.Sprintf("This policy depends on %s which is invalid", invalidPolicyKey),
-				})
-			}
+		if c.AssumeYes {
+			confirmed = true
+		} else {
+			confirmed = confirm(ctx, p, policyKeys, "The following additional policies will be disabled")
+		}
+
+		if !confirmed {
+			return nil
 		}
 	}
-
-	disabledPolicies, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...)
-	if err != nil || disabledPolicies == 0 {
-		return fmt.Errorf("failed to disable policies: %w", err)
-	}
-
-	return display(p, c.Format, colorLevel, policyKeys)
 }
 
 func (c *Cmd) Help() string {
 	return help
 }
 
-func confirm(ctx context.Context, p *printer.Printer, msg string) bool {
-	p.Printf("%s", msg)
-	p.Printf("\n\nDo you want to continue [y/yes]?: ")
+func confirm(ctx context.Context, p *printer.Printer, policyKeys map[string][]errWithDesc, title string) bool {
+	p.Println(colored.Header(title))
+	for policyKey, policyErr := range policyKeys {
+		p.Println(colored.PolicyKey(policyKey))
+		for _, perr := range policyErr {
+			p.Printf(" - %s: %s\n", perr.Err, colored.ErrorMsg(perr.Description))
+		}
+	}
+	p.Printf("\nDo you want to continue [y/n]?: ")
 
 	ch := make(chan string, 1)
-
 	go func() {
+		defer close(ch)
+
 		var input string
 		if _, err := fmt.Fscan(os.Stdin, &input); err != nil {
-			panic(fmt.Errorf("failed to read confirmation input: %w", err))
+			input = "no"
 		}
-
 		ch <- input
-		close(ch)
 	}()
 
 	var input string
