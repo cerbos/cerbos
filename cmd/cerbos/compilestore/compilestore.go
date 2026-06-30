@@ -213,11 +213,14 @@ func (c *Cmd) Help() string {
 }
 
 func confirm(ctx context.Context, p *printer.Printer, policyKeys map[string][]errWithDesc, title string) bool {
+	policies := slices.Collect(maps.Keys(policyKeys))
+	slices.Sort(policies)
+
 	p.Println(colored.Header(title))
-	for policyKey, policyErr := range policyKeys {
+	for _, policyKey := range policies {
 		p.Println(colored.PolicyKey(policyKey))
-		for _, perr := range policyErr {
-			p.Printf(" - %s: %s\n", perr.Err, colored.ErrorMsg(perr.Description))
+		for _, err := range policyKeys[policyKey] {
+			p.Printf(" - %s: %s\n", err.Err, colored.ErrorMsg(err.Description))
 		}
 	}
 	p.Printf("\nDo you want to continue [y/n]?: ")
