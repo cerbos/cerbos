@@ -97,7 +97,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	policyKeys := make(map[string][]errWithDesc)
 	for _, err := range compErr.Errors().GetErrors() {
-		key := strings.TrimSuffix(strings.TrimPrefix(err.GetFile(), "<"), ">")
+		key := err.GetFile()
 		policyKeys[key] = append(policyKeys[key], errWithDesc{Err: err.GetError(), Description: err.GetDescription()})
 	}
 
@@ -169,11 +169,14 @@ func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, co
 	}
 
 	for {
-		var integrityErr *db.IntegrityErr
-		if _, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...); err != nil && !errors.As(err, &integrityErr) {
-			return fmt.Errorf("failed to disable policies: %w", err)
-		} else if integrityErr == nil {
+		_, err := disable(ctx, slices.Collect(maps.Keys(policyKeys))...)
+		if err == nil {
 			return display(p, c.Format, colorLevel, policyKeys)
+		}
+
+		var integrityErr *db.IntegrityErr
+		if !errors.As(err, &integrityErr) {
+			return fmt.Errorf("failed to disable policies: %w", err)
 		}
 
 		for invalidPolicyKey, ierr := range integrityErr.Errors {
