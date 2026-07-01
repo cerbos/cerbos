@@ -55,7 +55,7 @@ if [[ "$BINARY_ONLY" == false ]]; then
 
   if [[ "$POLICIES_ONLY" == true ]]; then
     restart_cerbos
-    log "Policies redeployed — Cerbos is healthy"
+    log "Policies redeployed: Cerbos is healthy"
     log "Next step: ./run.sh"
     exit 0
   fi
@@ -170,7 +170,7 @@ fi
 
 restart_cerbos
 
-log "Deployment complete — Cerbos is healthy"
+log "Deployment complete: Cerbos is healthy"
 log "PDP:     ${PDP_IP}:3593 (gRPC), ${PDP_IP}:3592 (HTTP/metrics)"
 log ""
 log "Next step: ./run.sh"

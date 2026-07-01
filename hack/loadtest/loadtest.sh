@@ -77,7 +77,7 @@ printCounterDiff() {
       BEGIN { d=totA-totB; printf "  GC CPU:    %s%% (%.3f of %.3f cpu-s)\n",
               (d>0 ? sprintf("%.2f", 100*(gcA-gcB)/d) : "n/a"), gcA-gcB, d }'
   else
-    printf "  GC CPU:    (unavailable — go_cpu_classes_* not exposed; deploy the metrics.go extension)\n"
+    printf "  GC CPU:    (unavailable: go_cpu_classes_* not exposed; deploy the metrics.go extension)\n"
   fi
   [[ -n "$cntA" && -n "$cntB" ]]   && awk -v a="$cntA" -v b="$cntB" 'BEGIN{printf "  GC cycles: %d\n", a-b}'
   [[ -n "$sumA" && -n "$sumB" ]]   && awk -v a="$sumA" -v b="$sumB" 'BEGIN{printf "  GC pause:  %.1f ms total\n", 1000*(a-b)}'
@@ -207,7 +207,7 @@ executeTest() {
 
   # --- Throughput test (runs first; its achieved RPS is the ceiling for RPS=auto) ---
   if [[ $ITERATIONS -gt $ghzLimit ]]; then
-    printf "WARNING: %s iterations exceeds 1M — ghz will cap JSON details output, limiting per-request analysis\n" "$ITERATIONS"
+    printf "WARNING: %s iterations exceeds 1M: ghz will cap JSON details output, limiting per-request analysis\n" "$ITERATIONS"
   fi
   printf "Running throughput test: %s iterations\n" "$ITERATIONS"
 
@@ -239,14 +239,14 @@ executeTest() {
     local achieved
     achieved=$(jq -r '.rps // empty' "${resultPrefix}_throughput.json" 2>/dev/null || true)
     if [[ -z "$achieved" ]]; then
-      printf "ERROR: RPS=auto but could not read achieved throughput from %s — skipping sustained-rate test\n" "${resultPrefix}_throughput.json"
+      printf "ERROR: RPS=auto but could not read achieved throughput from %s: skipping sustained-rate test\n" "${resultPrefix}_throughput.json"
       return 0
     fi
     RPS=$(awk -v a="$achieved" -v p="$RPS_AUTO_PCT" -v r="$RPS_ROUND" \
       'BEGIN{ if (r < 1) r = 1; x = a*p/100; printf "%.0f", int(x/r + 0.5)*r }')
     printf "RPS=auto: sustained target = %s RPS (%s%% of measured throughput %.0f, rounded to %s)\n" "$RPS" "$RPS_AUTO_PCT" "$achieved" "$RPS_ROUND"
     if [[ "$RPS" -lt "$RPS_MIN" ]]; then
-      printf "REJECTED: auto RPS %s < RPS_MIN %s — throughput collapsed (%.0f), degenerate config; skipping sustained-rate test\n" \
+      printf "REJECTED: auto RPS %s < RPS_MIN %s: throughput collapsed (%.0f), degenerate config; skipping sustained-rate test\n" \
         "$RPS" "$RPS_MIN" "$achieved" | tee "${resultPrefix}_rejected"
       return 0
     fi
@@ -259,7 +259,7 @@ executeTest() {
   # --- Sustained-rate test ---
   local estimatedCount=$((RPS * DURATION_SECS))
   if [[ $estimatedCount -gt $ghzLimit ]]; then
-    printf "WARNING: estimated %s requests exceeds 1M — ghz will cap JSON details output, limiting per-request analysis\n" "$estimatedCount"
+    printf "WARNING: estimated %s requests exceeds 1M: ghz will cap JSON details output, limiting per-request analysis\n" "$estimatedCount"
   fi
   printf "Running sustained-rate test: %s RPS for %ss\n" "$RPS" "$DURATION_SECS"
 

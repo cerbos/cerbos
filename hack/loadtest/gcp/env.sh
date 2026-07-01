@@ -86,7 +86,7 @@ require_running_vms() {
       --zone="$GCP_ZONE" --project="$GCP_PROJECT" \
       --format='get(status)' 2>/dev/null) || { err "VM $vm not found"; exit 1; }
     if [[ "$status" != "RUNNING" ]]; then
-      log "VM $vm is $status — starting it..."
+      log "VM $vm is $status, starting it..."
       gcloud compute instances start "$vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT"
     fi
   done
@@ -146,7 +146,7 @@ ENDSSH
 
 check_policies() {
   if [[ ! -d "${WORK_DIR}/policies" ]]; then
-    err "Missing ${WORK_DIR}/policies — generate test data first:"
+    err "Missing ${WORK_DIR}/policies. Generate test data first:"
     err "  cd hack/loadtest"
     err "  NUM_POLICIES=1000 ./loadtest.sh -g"
     exit 1
