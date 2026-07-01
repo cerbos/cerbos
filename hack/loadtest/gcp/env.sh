@@ -14,6 +14,7 @@ if [[ -n "${TERRAFORM_DIR:-}" ]]; then
   GCP_ZONE=$(_tf_output zone)
   PDP_VM=$(_tf_output pdp_vm_name)
   CLIENT_VM=$(_tf_output client_vm_name)
+  STAGING_BUCKET=$(_tf_output staging_bucket 2>/dev/null || true)
   unset -f _tf_output
 fi
 
@@ -40,6 +41,8 @@ STORE=${STORE:-"disk"}
 AUDIT_ENABLED=${AUDIT_ENABLED:-"false"}
 SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT:-"none"}
 
+STAGING_BUCKET=${STAGING_BUCKET:-}
+
 # Paths
 REMOTE_BASE=${REMOTE_BASE:-"/opt/cerbos-loadtest"}
 WORK_DIR=${WORK_DIR:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/work"}
@@ -48,11 +51,23 @@ WORK_DIR=${WORK_DIR:-"$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/work"}
 GSSH() {
   local vm="$1"
   shift
-  gcloud compute ssh "$vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT" --tunnel-through-iap -- "$@"
+  gcloud compute ssh "$vm" --zone="$GCP_ZONE" --project="$GCP_PROJECT" --tunnel-through-iap --ssh-flag=-T -- "$@"
 }
 
 GSCP() {
   gcloud compute scp --zone="$GCP_ZONE" --project="$GCP_PROJECT" --tunnel-through-iap "$@"
+}
+
+# Upload a local file to a path on a VM by staging through GCS.
+# Args: $1=local_file  $2=vm  $3=remote_dest_path (a file path, not a directory).
+upload_to_vm() {
+  local src="$1" vm="$2" dest="$3"
+  : "${STAGING_BUCKET:?staging bucket required for uploads}"
+  local obj="${STAGING_BUCKET%/}/deploy/$(basename "$src")"
+  log "Staging $(basename "$src") -> ${obj} -> ${vm}:${dest}"
+  gcloud storage cp "$src" "$obj"
+  GSSH "$vm" "gcloud storage cp '$obj' '$dest'"
+  gcloud storage rm "$obj" 2>/dev/null || true
 }
 
 log() {
@@ -77,21 +92,39 @@ require_running_vms() {
   done
 }
 
+# Restart Cerbos on the PDP VM. Honours env: GOMAXPROCS, GOGC, GOMEMLIMIT, and
+# CGROUP_LIMIT.
 restart_cerbos() {
-  log "Restarting Cerbos on PDP VM..."
+  log "Restarting Cerbos on PDP VM (GOGC=${GOGC:-default} GOMEMLIMIT=${GOMEMLIMIT:-off} cgroup=${CGROUP_LIMIT:-none})..."
   GSSH "$PDP_VM" <<ENDSSH
 set -euo pipefail
+sudo systemctl stop cerbos-loadtest 2>/dev/null || true
+sudo systemctl reset-failed cerbos-loadtest 2>/dev/null || true
 pkill -f "${REMOTE_BASE}/bin/cerbos" 2>/dev/null || true
 sleep 1
 echo "Starting Cerbos..."
-STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
-  ${GOMAXPROCS:+GOMAXPROCS=${GOMAXPROCS}} \
-  nohup ${REMOTE_BASE}/bin/cerbos server \
- --debug-listen-addr=:6666 \
- --config=${REMOTE_BASE}/conf/cerbos.yaml \
-  --log-level=warn \
-  > ${REMOTE_BASE}/cerbos.log 2>&1 &
-echo "Cerbos PID: \$!"
+if [ -n "${CGROUP_LIMIT:-}" ]; then
+  sudo systemd-run --collect --unit=cerbos-loadtest \
+    -p MemoryMax=${CGROUP_LIMIT:-} -p MemorySwapMax=0 \
+    --setenv=STORE=${STORE} --setenv=AUDIT_ENABLED=${AUDIT_ENABLED} --setenv=SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
+    ${GOMAXPROCS:+--setenv=GOMAXPROCS=${GOMAXPROCS}} \
+    ${GOGC:+--setenv=GOGC=${GOGC}} \
+    ${GOMEMLIMIT:+--setenv=GOMEMLIMIT=${GOMEMLIMIT}} \
+    ${REMOTE_BASE}/bin/cerbos server \
+      --debug-listen-addr=:6666 --config=${REMOTE_BASE}/conf/cerbos.yaml --log-level=warn
+  echo "Started under systemd cgroup (MemoryMax=${CGROUP_LIMIT:-})"
+else
+  STORE=${STORE} AUDIT_ENABLED=${AUDIT_ENABLED} SCHEMA_ENFORCEMENT=${SCHEMA_ENFORCEMENT} \
+    ${GOMAXPROCS:+GOMAXPROCS=${GOMAXPROCS}} \
+    ${GOGC:+GOGC=${GOGC}} \
+    ${GOMEMLIMIT:+GOMEMLIMIT=${GOMEMLIMIT}} \
+    nohup ${REMOTE_BASE}/bin/cerbos server \
+   --debug-listen-addr=:6666 \
+   --config=${REMOTE_BASE}/conf/cerbos.yaml \
+    --log-level=warn \
+    > ${REMOTE_BASE}/cerbos.log 2>&1 &
+  echo "Cerbos PID: \$!"
+fi
 
 echo "Waiting for Cerbos to become healthy..."
 healthy=false
@@ -101,11 +134,11 @@ for i in \$(seq 1 30); do
     healthy=true
     break
   fi
-  sleep 2
+  sleep 5
 done
 if [ "\$healthy" != "true" ]; then
   echo "ERROR: Cerbos health check failed after 30 attempts" >&2
-  tail -20 ${REMOTE_BASE}/cerbos.log >&2
+  journalctl -u cerbos-loadtest -n 20 --no-pager 2>/dev/null || tail -20 ${REMOTE_BASE}/cerbos.log 2>/dev/null >&2
   exit 1
 fi
 ENDSSH

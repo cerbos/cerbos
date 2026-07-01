@@ -42,14 +42,14 @@ if [[ "$BINARY_ONLY" == false ]]; then
   # --- Deploy policies to PDP VM ---
   log "Uploading policies to PDP VM..."
   tar czf /tmp/cerbos-loadtest-policies.tar.gz -C "${WORK_DIR}" policies
-  GSCP /tmp/cerbos-loadtest-policies.tar.gz "${PDP_VM}:/tmp/"
+  upload_to_vm /tmp/cerbos-loadtest-policies.tar.gz "$PDP_VM" /tmp/cerbos-loadtest-policies.tar.gz
   GSSH "$PDP_VM" "rm -rf ${REMOTE_BASE}/policies && tar xzf /tmp/cerbos-loadtest-policies.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-policies.tar.gz"
   rm -f /tmp/cerbos-loadtest-policies.tar.gz
 
   # --- Deploy requests to Client VM ---
   log "Uploading requests to Client VM..."
   tar czf /tmp/cerbos-loadtest-requests.tar.gz -C "${WORK_DIR}" requests
-  GSCP /tmp/cerbos-loadtest-requests.tar.gz "${CLIENT_VM}:/tmp/"
+  upload_to_vm /tmp/cerbos-loadtest-requests.tar.gz "$CLIENT_VM" /tmp/cerbos-loadtest-requests.tar.gz
   GSSH "$CLIENT_VM" "rm -rf ${REMOTE_BASE}/requests && tar xzf /tmp/cerbos-loadtest-requests.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-requests.tar.gz"
   rm -f /tmp/cerbos-loadtest-requests.tar.gz
 
@@ -66,7 +66,7 @@ if [[ "$BINARY_ONLY" == false ]]; then
   # --- Deploy printsummary to Client VM (skip if already present) ---
   if ! GSSH "$CLIENT_VM" "test -x ${REMOTE_BASE}/printsummary" 2>/dev/null; then
     log "Uploading printsummary to Client VM..."
-    GSCP "${WORK_DIR}/printsummary" "${CLIENT_VM}:${REMOTE_BASE}/printsummary"
+    upload_to_vm "${WORK_DIR}/printsummary" "$CLIENT_VM" "${REMOTE_BASE}/printsummary"
     GSSH "$CLIENT_VM" "chmod +x ${REMOTE_BASE}/printsummary"
   fi
 
@@ -101,7 +101,7 @@ PROMEOF
     cp "$PROTOSET" "${CLIENT_STAGING}/cerbos.protoset"
   fi
   tar czf /tmp/cerbos-loadtest-configs.tar.gz -C "${CLIENT_STAGING}" .
-  GSCP /tmp/cerbos-loadtest-configs.tar.gz "${CLIENT_VM}:/tmp/"
+  upload_to_vm /tmp/cerbos-loadtest-configs.tar.gz "$CLIENT_VM" /tmp/cerbos-loadtest-configs.tar.gz
   GSSH "$CLIENT_VM" "tar xzf /tmp/cerbos-loadtest-configs.tar.gz -C ${REMOTE_BASE} && rm /tmp/cerbos-loadtest-configs.tar.gz"
   rm -f /tmp/cerbos-loadtest-configs.tar.gz
 
@@ -118,7 +118,7 @@ if [[ -n "${CERBOS_BINARY_PATH:-}" ]]; then
   fi
   log "Uploading custom Cerbos binary from ${CERBOS_BINARY_PATH}..."
   gzip -c "$CERBOS_BINARY_PATH" > /tmp/cerbos-custom.gz
-  GSCP /tmp/cerbos-custom.gz "${PDP_VM}:/tmp/cerbos-custom.gz"
+  upload_to_vm /tmp/cerbos-custom.gz "$PDP_VM" /tmp/cerbos-custom.gz
   GSSH "$PDP_VM" "gunzip -c /tmp/cerbos-custom.gz > ${REMOTE_BASE}/bin/cerbos && chmod +x ${REMOTE_BASE}/bin/cerbos && echo 'custom' > ${REMOTE_BASE}/bin/.cerbos-version && rm /tmp/cerbos-custom.gz"
   rm -f /tmp/cerbos-custom.gz
 else
@@ -138,7 +138,7 @@ else
   fi
 
   log "Uploading Cerbos binary to PDP VM..."
-  GSCP "$CERBOS_TARBALL" "${PDP_VM}:/tmp/cerbos.tar.gz"
+  upload_to_vm "$CERBOS_TARBALL" "$PDP_VM" /tmp/cerbos.tar.gz
 
   GSSH "$PDP_VM" <<ENDSSH
 set -euo pipefail
