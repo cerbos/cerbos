@@ -276,7 +276,7 @@ ENDSSH
   GSCP "${CLIENT_VM}:/tmp/client-results.tar.gz" "/tmp/client-results.tar.gz" 2>/dev/null || true
   [[ -f /tmp/client-results.tar.gz ]] && { tar xzf /tmp/client-results.tar.gz -C "$result_dir"; rm -f /tmp/client-results.tar.gz; }
 
-  [[ "$(cat "${result_dir}/status" 2>/dev/null)" == oom ]] && log "Cerbos died during load — likely cgroup OOM"
+  [[ "$(cat "${result_dir}/status" 2>/dev/null)" == oom ]] && log "Cerbos died during load: likely cgroup OOM"
 
   printf "\nCPU utilization (%% of all cores):\n"
   cpu_summary "PDP" "${result_dir}/pdp_cpu_usage.log"
@@ -293,7 +293,7 @@ check_print_summary() {
 }
 
 humanise() {
-  # Tolerate floats / scientific notation (Prometheus scrape values) — numfmt only takes
+  # Tolerate floats / scientific notation (Prometheus scrape values); numfmt only takes
   # integers, so normalise first; awk parses any numeric form (empty/non-numeric -> 0).
   local val
   val=$(awk -v v="${1:-0}" 'BEGIN{printf "%d", v}')
