@@ -203,11 +203,13 @@ func NewHandler() (http.Handler, error) {
 
 	// Replace the default Go collector with the one exporting /cpu/classes/*.
 	prometheus.Unregister(collectors.NewGoCollector())
-	if err := prometheus.Register(collectors.NewGoCollector(
+	cpuClassesCollector := collectors.NewGoCollector(
 		collectors.WithGoCollectorRuntimeMetrics(
 			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile(`^/cpu/classes/.*`)},
 		),
-	)); err != nil {
+	)
+	prometheus.Unregister(cpuClassesCollector)
+	if err := prometheus.Register(cpuClassesCollector); err != nil {
 		return nil, fmt.Errorf("failed to register Go collector with CPU metrics: %w", err)
 	}
 
