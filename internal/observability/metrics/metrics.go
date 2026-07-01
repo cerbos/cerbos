@@ -9,9 +9,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
@@ -196,6 +199,18 @@ var (
 func NewHandler() (http.Handler, error) {
 	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
 		return nil, fmt.Errorf("failed to start runtime metrics collector: %w", err)
+	}
+
+	// Replace the default Go collector with the one exporting /cpu/classes/*.
+	prometheus.Unregister(collectors.NewGoCollector())
+	cpuClassesCollector := collectors.NewGoCollector(
+		collectors.WithGoCollectorRuntimeMetrics(
+			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile(`^/cpu/classes/.*`)},
+		),
+	)
+	prometheus.Unregister(cpuClassesCollector)
+	if err := prometheus.Register(cpuClassesCollector); err != nil {
+		return nil, fmt.Errorf("failed to register Go collector with CPU metrics: %w", err)
 	}
 
 	return promhttp.Handler(), nil

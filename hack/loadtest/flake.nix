@@ -16,6 +16,7 @@
             pkgs.ghz
             pkgs.grpcurl
             pkgs.jq
+            pkgs.gops
           ];
         };
       });
