@@ -5,16 +5,16 @@ package compilation
 
 import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/compile/errors"
-	"github.com/cerbos/cerbos/cmd/cerbos/compile/internal/flagset"
+	compileerrors "github.com/cerbos/cerbos/cmd/cerbos/internal/errors"
+	"github.com/cerbos/cerbos/cmd/cerbos/internal/flagset"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/outputcolor"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/printer/colored"
 )
 
-func Display(p *printer.Printer, errs compile.ErrorSet, output flagset.OutputFormat, colorLevel outputcolor.Level) error {
-	switch output {
+func Display(p *printer.Printer, errs compile.ErrorSet, format flagset.Format, colorLevel outputcolor.Level) error {
+	switch format.Output {
 	case flagset.OutputFormatJSON:
 		return displayJSON(p, errs, colorLevel)
 	case flagset.OutputFormatList, flagset.OutputFormatTree:

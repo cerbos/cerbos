@@ -11,6 +11,7 @@ See xref:ROOT:installation/binary.adoc[] or xref:ROOT:installation/container.ado
 This binary provides the following sub commands:
 
 `compile`:: Validate, compile and run tests on a policy repo
+`compile-store`:: Validate and compile policies on any Cerbos store
 `healthcheck`:: Perform a healthcheck on a Cerbos PDP
 `repl`:: An interactive REPL (read-evaluate-print-loop) for CEL conditions
 `run`:: Start a PDP and run a command within its context
@@ -47,7 +48,7 @@ This command exits with different exit codes depending on the kind of failure.
 
 [source]
 ----
-Usage: cerbos compile <dir>
+Usage: cerbos compile <dir> [flags]
 
 Compile and test policies
 
@@ -77,15 +78,63 @@ Flags:
       --version                    Show cerbos version
 
       --ignore-schemas             Ignore schemas during compilation
-      --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action).
-                                   Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
+      --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
       --skip-tests                 Skip tests
       --skip-batching              Skip batching tests
-  -o, --output="tree"              Output format (tree,list,json)
       --test-output=TEST-OUTPUT    Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)
+  -o, --output="tree"              Output format (tree,list,json)
       --color=COLOR                Output color level (auto,never,always,256,16m). Defaults to auto.
       --no-color                   Disable colored output
       --verbose                    Verbose output on test failure
+----
+
+[#compile-store]
+== `compile-store` Command
+
+Runs the Cerbos compiler to validate policy definitions on any Cerbos store. See xref:policies:compile.adoc[Policy compilation] and xref:configuration:storage.adoc[Storage] for more information.
+
+This command exits with different exit codes depending on the kind of failure.
+
+[cols="1m,3"]
+|===
+| 0 | No compile or test failures
+| 1 | Unknown failure
+| 2 | Invalid arguments to command
+| 3 | Compilation failed
+| 4 | Tests failed
+|===
+
+[source]
+----
+Usage: cerbos compile-store <config> [flags]
+
+Compile store
+
+Examples:
+
+# Compile store
+
+cerbos compile-store /path/to/cerbos/config.yaml
+cerbos compile-store --output=json /path/to/cerbos/config.yaml
+
+# Compile database store and disable invalid policies
+
+cerbos compile-store --disable-invalid /path/to/cerbos/config.yaml
+cerbos compile-store --disable-invalid --output=json /path/to/cerbos/config.yaml
+
+Arguments:
+  <config>    Path to config file ($CERBOS_CONFIG)
+
+Flags:
+  -h, --help                                    Show context-sensitive help.
+      --version                                 Show cerbos version
+
+      --set=server.adminAPI.enabled=true,...    Config overrides
+      --disable-invalid                         Disable invalid policies if database store
+      --assume-yes                              Answer yes to all confirmation questions
+  -o, --output="tree"                           Output format (tree,list,json)
+      --color=COLOR                             Output color level (auto,never,always,256,16m). Defaults to auto.
+      --no-color                                Disable colored output
 ----
 
 [#healthcheck]

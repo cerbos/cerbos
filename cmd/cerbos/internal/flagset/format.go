@@ -3,7 +3,13 @@
 
 package flagset
 
-import "fmt"
+import (
+	"fmt"
+)
+
+type Format struct {
+	Output OutputFormat `help:"Output format (${enum})" default:"tree" enum:"tree,list,json" short:"o"`
+}
 
 type OutputFormat string
 

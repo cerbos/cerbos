@@ -42,7 +42,7 @@ func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read postgres configuration: %w", err)
 		}
 
 		return NewStore(ctx, conf)
