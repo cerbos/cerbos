@@ -7,7 +7,7 @@
 
 ## Summary
 
-- Throughput degrades gradually from 800 to 40K policies: max RPS falls from 8.6K to 7.7K to 5.7K.
+- Throughput degrades gradually from 800 to 40K policies: max RPS falls from 8.6K (800 policies) to 7.7K (8K policies) to 5.7K (40K policies).
 - Under sustained load at ~85% of capacity, p99 grows from 11.6 ms at 800 policies to 40.8 ms at 40K.
 - RSS peak is 133 MiB at 800 policies, 224 MiB at 8K, and 748 MiB at 40K, growing sub-linearly with policy count.
 - GC CPU stays around 8-9% across the range, with no sustained stalls or throughput gaps.
