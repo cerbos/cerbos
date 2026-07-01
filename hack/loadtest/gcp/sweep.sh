@@ -3,7 +3,7 @@
 # Copyright 2021-2026 Zenauth Ltd.
 # SPDX-License-Identifier: Apache-2.0
 
-# Memory provisioning sweep.
+# Memory provisioning parameter sweep.
 # Runs at ONE policy count:
 #   Step 0  measure the anchor floor R (Sys-HeapReleased) inline, no load
 #   Edge 1  vary GOGC, no limit                      -> sizing curve

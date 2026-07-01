@@ -80,7 +80,7 @@ terraform destroy
 | `setup.sh` | Install Nix + Docker on client VM, create directory structure on both VMs |
 | `deploy.sh` | Upload policies/requests/configs, download Cerbos binary, start all services. Use `-p` to redeploy policies only |
 | `run.sh` | Run warmup + sustained-rate + throughput tests, download results (single config) |
-| `sweep.sh` | Memory provisioning sweep: Step-0 floor, then a GOGC edge, a GOMEMLIMIT edge, and validation. Each arm restarts Cerbos and captures peak RSS (`VmHWM`), per-phase GC counters, and ghz throughput and p99. |
+| `sweep.sh` | Memory provisioning parameter sweep: Step-0 floor, then a GOGC edge, a GOMEMLIMIT edge, and validation. Each arm restarts Cerbos and captures peak RSS (`VmHWM`), per-phase GC counters, and ghz throughput and p99. |
 
 ### Memory provisioning sweep
 
