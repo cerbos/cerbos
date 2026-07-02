@@ -23,6 +23,7 @@ func TestNewHandlerExposesRuntimeMetrics(t *testing.T) {
 	for _, want := range []string{
 		"go_cpu_classes_gc_total_cpu_seconds_total",
 		"go_cpu_classes_total_cpu_seconds_total",
+		"go_gc_gomemlimit_bytes",
 		"go_memstats_heap_released_bytes",
 		"go_memstats_sys_bytes",
 		"go_gc_duration_seconds",

@@ -201,16 +201,18 @@ func NewHandler() (http.Handler, error) {
 		return nil, fmt.Errorf("failed to start runtime metrics collector: %w", err)
 	}
 
-	// Replace the default Go collector with the one exporting /cpu/classes/*.
+	// Replace the default Go collector with one that also exports /cpu/classes/* (GC CPU cost)
+	// and /gc/gomemlimit:bytes (the effective GOMEMLIMIT, including the auto-configured value).
 	prometheus.Unregister(collectors.NewGoCollector())
-	cpuClassesCollector := collectors.NewGoCollector(
+	goCollector := collectors.NewGoCollector(
 		collectors.WithGoCollectorRuntimeMetrics(
 			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile(`^/cpu/classes/.*`)},
+			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile(`^/gc/gomemlimit:bytes$`)},
 		),
 	)
-	prometheus.Unregister(cpuClassesCollector)
-	if err := prometheus.Register(cpuClassesCollector); err != nil {
-		return nil, fmt.Errorf("failed to register Go collector with CPU metrics: %w", err)
+	prometheus.Unregister(goCollector)
+	if err := prometheus.Register(goCollector); err != nil {
+		return nil, fmt.Errorf("failed to register Go collector with CPU and memory-limit metrics: %w", err)
 	}
 
 	return promhttp.Handler(), nil
