@@ -51,3 +51,63 @@
   }
 }
 
+/* Toolbar action buttons: "Copy as Markdown" and "Edit this Page" share one look */
+.toolbar .copy-page-md-wrapper {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding-right: 0.7rem;
+}
+
+.toolbar .edit-this-page {
+  display: flex;
+  align-items: center;
+  padding-right: 0.5rem;
+}
+
+.copy-page-md,
+.toolbar .edit-this-page a {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  padding: 0.2em 0.6em;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.4;
+  color: #5d5d5d;
+  background-color: #fff;
+  border: 1px solid #dbdbdb;
+  border-radius: 0.25em;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.copy-page-md:hover:not(:disabled),
+.copy-page-md.is-copied,
+.toolbar .edit-this-page a:hover {
+  background-color: #ffb901;
+  border-color: #ffb901;
+  color: #000;
+}
+
+.copy-page-md.is-error {
+  background-color: #fff;
+  border-color: #cc0f35;
+  color: #cc0f35;
+}
+
+.copy-page-md:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.doc-action-icon {
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+}
+
