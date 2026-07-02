@@ -73,8 +73,10 @@ mkdir -p "$LOCAL_RESULTS"
 run_arm() {
   local label="$1" gogc="$2" memlimit="$3" cgroup="${4:-}"
   local armdir="${LOCAL_RESULTS}/${label}"
-  local memlimit_h
-  if [[ -n "$memlimit" ]]; then
+  local memlimit_h="unset" # empty => the PDP decides (auto-configure under a cgroup, else off)
+  if [[ "$memlimit" == "off" ]]; then
+    memlimit_h="off"
+  elif [[ -n "$memlimit" ]]; then
     memlimit_h=$(humanise "$memlimit")
   fi
   if [[ -n "$cgroup" ]]; then
@@ -82,7 +84,7 @@ run_arm() {
   fi
 
   mkdir -p "$armdir"
-  log "=== arm ${label}: GOGC=${gogc:-default} GOMEMLIMIT=${memlimit_h:-off} cgroup=${cgroup:-none} ==="
+  log "=== arm ${label}: GOGC=${gogc:-default} GOMEMLIMIT=${memlimit_h} cgroup=${cgroup:-none} ==="
   { echo "label=${label}"; echo "gogc=${gogc}"; echo "memlimit=${memlimit}"; echo "cgroup=${cgroup}"; } > "${armdir}/arm.meta"
 
   if ! GOGC="$gogc" GOMEMLIMIT="$memlimit" CGROUP_LIMIT="$cgroup" restart_cerbos; then
@@ -151,11 +153,11 @@ else
   log "skipping auto-GOMEMLIMIT validation: no GOGC=100 Edge-1 loaded peak (include 100 in GOGC_ARMS)"
 fi
 
-# --- Hard-OOM demo: cgroup just above the build high-water, NO GOMEMLIMIT, GOGC=100.
+# --- Hard-OOM demo: cgroup just above the build high-water, GOMEMLIMIT explicitly off, GOGC=100.
 #     Demonstrates why the soft GOMEMLIMIT backstop is needed. ---
 
 _oom_box=$(awk -v h="${BUILD_HWM:-0}" 'BEGIN{printf "%d", h*1.05}')
-run_arm "oom_demo_nolimit" "100" "" "$_oom_box"
+run_arm "oom_demo_nolimit" "100" "off" "$_oom_box"
 
 # --- Emit the result tables from the per-arm JSON (jq on ghz output) ---
 emit_tables() {
