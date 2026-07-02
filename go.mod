@@ -7,6 +7,7 @@ toolchain go1.26.4
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1
 	buf.build/go/protovalidate v1.2.0
+	github.com/KimMachineGun/automemlimit v0.7.5
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/adrg/xdg v0.5.3
 	github.com/alecthomas/chroma/v2 v2.27.0
@@ -233,6 +234,7 @@ require (
 	github.com/olekukonko/ll v0.1.6 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pierrec/lz4/v4 v4.1.26 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
