@@ -61,7 +61,7 @@ DURATION_SECS=${DURATION_SECS:-120}
 ITERATIONS=${ITERATIONS:-1000000}
 
 # classic stays unsuffixed (sweep-N) for back-compat; other sets get sweep-N-<set>.
-LOCAL_RESULTS="${SCRIPT_DIR}/../results/gcp/sweep-${NUM_POLICIES}$([[ "$POLICY_SET" != classic ]] && printf -- '-%s' "$POLICY_SET")"
+LOCAL_RESULTS="${SCRIPT_DIR}/../results/gcp/sweep-${NUM_POLICIES}$([[ "$POLICY_SET" != "classic" ]] && printf -- '-%s' "$POLICY_SET" || printf -- '')"
 rm -rf "$LOCAL_RESULTS"
 mkdir -p "$LOCAL_RESULTS"
 
