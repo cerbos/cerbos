@@ -107,6 +107,8 @@ func Start(ctx context.Context) error {
 		return err
 	}
 
+	configureMemoryLimit()
+
 	s := NewServer(conf)
 
 	telemetry.Start(ctx, core.Store)

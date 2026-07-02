@@ -11,7 +11,7 @@
 - Under sustained load at ~85% of capacity, p99 grows from 11.6 ms at 800 policies to 40.8 ms at 40K.
 - RSS peak is 133 MiB at 800 policies, 224 MiB at 8K, and 748 MiB at 40K, growing sub-linearly with policy count.
 - GC CPU stays around 8-9% across the range, with no sustained stalls or throughput gaps.
-- To provision for max RPS, run `GOGC=100` and set a cgroup MemoryMax of 192 MiB at 800 policies, 360 MiB at 8K, or 1.3 GiB at 40K, with a `GOMEMLIMIT` backstop below the cap.
+- To provision for max RPS, run `GOGC=100` and set a cgroup MemoryMax of 192 MiB at 800 policies, 360 MiB at 8K, or 1.3 GiB at 40K, with `GOMEMLIMIT` at 110 MiB, 250 MiB, or 1.0 GiB respectively.
 - The multitenant policy set measures within ~6% of classic at the same policy count (memory, provisioning, and the backstop curve match; throughput is a few percent lower), so these numbers apply to either.
 
 ## Performance (default config, `GOGC=100`)
@@ -67,7 +67,7 @@ Fewer connections is slightly faster: one connection gives the lowest latency an
 2. Under sustained load at about 85% of capacity, p99 rises gradually from 11.6 ms at 800 policies to 40.8 ms at 40K.
 3. RSS peak ranges from 133 MiB at 800 policies to 748 MiB at 40K and grows sub-linearly with policy count.
 4. GC CPU stays around 8-9% across the range, with no sustained stalls or throughput gaps.
-5. For max RPS, run `GOGC=100` and provision a cgroup MemoryMax of 192 MiB at 800 policies, 360 MiB at 8K, or 1.3 GiB at 40K, with a `GOMEMLIMIT` backstop sized just below the cap. Treat these as starting points and tune them on your own policy set and hardware.
+5. For max RPS, run `GOGC=100` and provision a cgroup MemoryMax of 192 MiB at 800 policies, 360 MiB at 8K, or 1.3 GiB at 40K, with `GOMEMLIMIT` set to 110 MiB, 250 MiB, or 1.0 GiB respectively (about 1.5x the loaded runtime heap, well below the cap). Treat these as starting points and tune them on your own policy set and hardware.
 
 ## Source Data
 
