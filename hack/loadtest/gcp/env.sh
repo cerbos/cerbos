@@ -187,6 +187,7 @@ PDP_FLOOR_METRICS=(
   go_memstats_heap_inuse_bytes
   go_memstats_sys_bytes
   go_memstats_heap_released_bytes
+  go_gc_gomemlimit_bytes
 )
 
 # Print an mpstat CPU-utilization summary (avg/max %used from the "all" rows).
