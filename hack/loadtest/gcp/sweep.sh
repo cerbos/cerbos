@@ -136,19 +136,19 @@ for mult in "${MEMLIMIT_MULTS[@]}"; do
   run_arm "edge2_m${mult}" "off" "$gml" "$box"
 done
 
-# --- Validation: the recommended max-RPS config (GOGC=100 + lean GOMEMLIMIT backstop).
-#     GOMEMLIMIT = VALID_H * (loaded RSS peak - O), with the loaded peak taken from the GOGC=100
-#     Edge-1 arm and the precise O from Step 0; cgroup = GOMEMLIMIT + O + safety. Confirms the
-#     recommended provisioning reproduces the uncapped Edge-1 GOGC=100 numbers, i.e. the lean cap
-#     does NOT bind. ---
+# --- Validation: the recommended max-RPS config, exercising the PDP's auto-GOMEMLIMIT feature.
+#     Provision the recommended cgroup box (sized for GOMEMLIMIT = VALID_H * (loaded RSS peak - O),
+#     the loaded peak from the GOGC=100 Edge-1 arm and O from Step 0), then leave GOMEMLIMIT unset
+#     so the PDP derives it in-process from the cgroup cap. Confirms the auto-configured limit
+#     reproduces the uncapped Edge-1 GOGC=100 numbers, i.e. the cap does NOT bind. ---
 
 _valid_peak=$(cat "${LOCAL_RESULTS}/edge1_gogc100/vmhwm_bytes.txt" 2>/dev/null || echo 0)
 if [[ "${_valid_peak:-0}" -gt 0 ]]; then
   _valid_gml=$(awk -v p="$_valid_peak" -v o="${OFFSET:-0}" -v h="$VALID_H" 'BEGIN{g=(p-o)*h; printf "%d", (g>0?g:0)}')
   _valid_box=$(cgroup_for "$_valid_gml")
-  run_arm "valid_recommended" "100" "$_valid_gml" "$_valid_box"
+  run_arm "valid_auto" "100" "" "$_valid_box"
 else
-  log "skipping recommended-config validation: no GOGC=100 Edge-1 loaded peak (include 100 in GOGC_ARMS)"
+  log "skipping auto-GOMEMLIMIT validation: no GOGC=100 Edge-1 loaded peak (include 100 in GOGC_ARMS)"
 fi
 
 # --- Hard-OOM demo: cgroup just above the build high-water, NO GOMEMLIMIT, GOGC=100.
@@ -164,7 +164,7 @@ emit_tables() {
     printf '# Provisioning sweep - %s policies%s\n\n' "$NUM_POLICIES" "$([[ "$POLICY_SET" != classic ]] && printf -- ' (%s)' "$POLICY_SET")"
     printf 'Floor (cold, no load): R (Sys-HeapReleased) = %s; settled RSS = %s; off-runtime offset O = %s; build high-water = %s.\n' \
       "$(humanise "$R")" "$(humanise "${_rss:-0}")" "$(humanise "${OFFSET}")" "$(humanise "${BUILD_HWM}")"
-    printf 'Edge 2: soft GOMEMLIMIT = mult x R. Validation: GOMEMLIMIT = %s x (loaded RSS peak - O), the recommended max-RPS backstop. Both pair a hard cgroup MemoryMax = GOMEMLIMIT + O + safety (safety = %s x GOMEMLIMIT; RSS-correct; soft bites before the kernel OOM-kills).\n' "${VALID_H}" "${SAFETY_FRAC}"
+    printf 'Edge 2: soft GOMEMLIMIT = mult x R. Validation: provision the recommended cgroup box (= %s x (loaded RSS peak - O) + O + safety) and let the PDP auto-configure GOMEMLIMIT from the cap; the reported GOMEMLIMIT is the value the PDP chose. safety = %s x GOMEMLIMIT.\n' "${VALID_H}" "${SAFETY_FRAC}"
     printf 'stalls/gaps: 1s windows on the sustained run flagged as stall (>10%% of reqs above p95) / gap (<75%% of mean throughput) by analyse_latency.sh; clustering tracks GC pressure.\n\n'
 
     printf '## Edge 1 - sizing (no limit)\n\n'
@@ -183,7 +183,11 @@ emit_tables() {
 
     printf '\n## Validation\n\n'
     printf '| Arm | cgroup | RSS peak | GC CPU%% | Max RPS | Sust RPS | p99@sust (ms) | stalls/gaps | outcome |\n|---|--:|--:|--:|--:|--:|--:|--:|---|\n'
-    [[ -n "${_valid_box:-}" ]] && _row "valid_recommended" "GOGC=100, GOMEMLIMIT=$(humanise "$_valid_gml") (${VALID_H}(peak RSS-O))" "$_valid_box"
+    if [[ -n "${_valid_box:-}" ]]; then
+      local auto_gml
+      auto_gml=$(awk '/^go_gc_gomemlimit_bytes/{printf "%d", $2; exit}' "${LOCAL_RESULTS}/valid_auto/post_metrics.txt" 2>/dev/null)
+      _row "valid_auto" "GOGC=100, GOMEMLIMIT=$(humanise "${auto_gml:-0}") (auto)" "$_valid_box"
+    fi
     _row "oom_demo_nolimit" "GOGC=100, no GOMEMLIMIT" "$_oom_box"
   } > "$out"
   log "Summary table: ${out}"
