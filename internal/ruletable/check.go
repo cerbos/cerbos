@@ -88,6 +88,7 @@ func (rt *RuleTable) checkWithAuditTrail(ctx context.Context, tctx tracer.Contex
 	output.EffectiveDerivedRoles = effectiveDerivedRoles
 	output.ValidationErrors = result.validationErrors
 	output.Outputs = result.outputs
+	output.CelErrors = result.celErrors.All()
 
 	return output, result.auditTrail, nil
 }
@@ -152,6 +153,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 
 	request := checkInputToRequest(input)
 	evalCtx := NewEvalContext(evalParams, request, rt.programCache)
+	result.celErrors = evalCtx.celErrors
 
 	actionsToResolve := result.unresolvedActions()
 	if len(actionsToResolve) == 0 {
@@ -300,7 +302,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								variables = c
 							} else {
 								var err error
-								variables, err = evalCtx.evaluatePrograms(pctx.StartVariables(), constants, b.Core.Params.CelPrograms)
+								variables, err = evalCtx.evaluatePrograms(ctx, pctx.StartVariables(), constants, b.Core.Params.CelPrograms)
 								if err != nil {
 									pctx.Skipped(err, "Error evaluating variables")
 									return nil, err
@@ -324,7 +326,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										derivedRoleVariables = c
 									} else {
 										var err error
-										derivedRoleVariables, err = evalCtx.evaluatePrograms(drctx.StartVariables(), derivedRoleConstants, b.Core.DerivedRoleParams.CelPrograms)
+										derivedRoleVariables, err = evalCtx.evaluatePrograms(ctx, drctx.StartVariables(), derivedRoleConstants, b.Core.DerivedRoleParams.CelPrograms)
 										if err != nil {
 											drctx.Skipped(err, "Error evaluating derived role variables")
 											return nil, err
@@ -451,8 +453,10 @@ type policyEvalResult struct {
 	effectiveDerivedRoles map[string]struct{}
 	toResolve             map[string]struct{}
 	auditTrail            *auditv1.AuditTrail
+	celErrors             *evaluator.CELErrors
 	validationErrors      []*schemav1.ValidationError
 	outputs               []*enginev1.OutputEntry
+	actions               []string
 }
 
 func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *policyEvalResult {
@@ -462,6 +466,7 @@ func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *policyEval
 		toResolve:             make(map[string]struct{}, len(actions)),
 		outputs:               []*enginev1.OutputEntry{},
 		auditTrail:            auditTrail,
+		actions:               actions,
 	}
 
 	for _, a := range actions {
@@ -471,16 +476,17 @@ func newEvalResult(actions []string, auditTrail *auditv1.AuditTrail) *policyEval
 	return per
 }
 
+// unresolvedActions preserves the request's action order to keep evaluation deterministic.
 func (er *policyEvalResult) unresolvedActions() []string {
 	if len(er.toResolve) == 0 {
 		return nil
 	}
 
-	res := make([]string, len(er.toResolve))
-	i := 0
-	for ua := range er.toResolve {
-		res[i] = ua
-		i++
+	res := make([]string, 0, len(er.toResolve))
+	for _, a := range er.actions {
+		if _, ok := er.toResolve[a]; ok {
+			res = append(res, a)
+		}
 	}
 
 	return res
@@ -535,6 +541,7 @@ type EvalContext struct {
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
 	programCache          *ProgramCache
+	celErrors             *evaluator.CELErrors
 	evaluator.EvalParams
 }
 
@@ -543,6 +550,7 @@ func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request, programC
 		EvalParams:   ep,
 		request:      request,
 		programCache: programCache,
+		celErrors:    evaluator.NewCELErrors(ep.CELErrorLogLevel),
 	}
 }
 
@@ -552,6 +560,7 @@ func (ec *EvalContext) withEffectiveDerivedRoles(effectiveDerivedRoles internal.
 		request:               ec.request,
 		effectiveDerivedRoles: effectiveDerivedRoles,
 		programCache:          ec.programCache,
+		celErrors:             ec.celErrors,
 	}
 }
 
@@ -602,7 +611,7 @@ func (ec *EvalContext) buildEvalVars(constants, variables map[string]any) map[st
 	}
 }
 
-func (ec *EvalContext) evaluatePrograms(tctx tracer.Context, constants map[string]any, celPrograms []*index.CelProgram) (map[string]any, error) {
+func (ec *EvalContext) evaluatePrograms(ctx context.Context, tctx tracer.Context, constants map[string]any, celPrograms []*index.CelProgram) (map[string]any, error) {
 	var errs error
 
 	evalVars := make(map[string]any, len(celPrograms))
@@ -610,9 +619,10 @@ func (ec *EvalContext) evaluatePrograms(tctx tracer.Context, constants map[strin
 		vctx := tctx.StartVariable(prg.Name, prg.Expr)
 		result, _, err := prg.Prog.Eval(ec.buildEvalVars(constants, evalVars))
 		if err != nil {
-			// Ignore errors for expressions that evaluate to an error value (e.g., missing keys).
-			// This matches the behavior of evaluateCELExprToRaw which returns nil for such cases.
+			// CEL runtime errors (e.g. missing keys) leave the variable unset.
+			// This matches the behavior of evaluateCELExprToRaw, which returns nil for such cases.
 			if celtypes.IsError(result) {
+				ec.celErrors.Add(ctx, prg.Expr, err)
 				vctx.ComputedResult(nil)
 				continue
 			}
@@ -777,6 +787,7 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *runtimev1
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
 		if celtypes.IsError(result) {
+			ec.celErrors.Add(ctx, expr.Original, err)
 			return nil, nil
 		}
 		return nil, err

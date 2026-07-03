@@ -82,6 +82,17 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles": ["any_employee", "direct_manager"],
+      "celErrors":
+        [
+          {
+            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+            "message": "no such key: ip_address",
+          },
+          {
+            "expression": "request.principal.attr.reader == true",
+            "message": "no such key: reader",
+          },
+        ],
     },
     {
       "requestId": "test2",
@@ -95,6 +106,17 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles": ["any_employee", "direct_manager"],
+      "celErrors":
+        [
+          {
+            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+            "message": "no such key: ip_address",
+          },
+          {
+            "expression": "request.principal.attr.reader == true",
+            "message": "no such key: reader",
+          },
+        ],
     },
   ]
 wantDecisionLogs:
@@ -185,6 +207,17 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles": ["direct_manager", "any_employee"],
+                "celErrors":
+                  [
+                    {
+                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                      "message": "no such key: ip_address",
+                    },
+                    {
+                      "expression": "request.principal.attr.reader == true",
+                      "message": "no such key: reader",
+                    },
+                  ],
               },
               {
                 "requestId": "test2",
@@ -198,6 +231,17 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles": ["direct_manager", "any_employee"],
+                "celErrors":
+                  [
+                    {
+                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                      "message": "no such key: ip_address",
+                    },
+                    {
+                      "expression": "request.principal.attr.reader == true",
+                      "message": "no such key: reader",
+                    },
+                  ],
               },
             ],
         },

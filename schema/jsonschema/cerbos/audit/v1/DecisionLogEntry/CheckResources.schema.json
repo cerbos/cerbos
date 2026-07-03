@@ -23,6 +23,18 @@
         }
       }
     },
+    "cerbos.engine.v1.CELError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.engine.v1.CheckInput": {
       "type": "object",
       "required": [
@@ -61,6 +73,12 @@
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/cerbos.engine.v1.CheckOutput.ActionEffect"
+          }
+        },
+        "celErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.CELError"
           }
         },
         "effectiveDerivedRoles": {

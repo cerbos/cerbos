@@ -107,6 +107,13 @@ wantOutputs:
         },
       "effectiveDerivedRoles":
         ["any_employee", "employee_that_owns_the_record"],
+      "celErrors":
+        [
+          {
+            "expression": "P.attr.in_party_committee == true",
+            "message": "no such key: in_party_committee",
+          },
+        ],
     },
   ]
 wantDecisionLogs:
@@ -207,6 +214,13 @@ wantDecisionLogs:
                   },
                 "effectiveDerivedRoles":
                   ["any_employee", "employee_that_owns_the_record"],
+                "celErrors":
+                  [
+                    {
+                      "expression": "P.attr.in_party_committee == true",
+                      "message": "no such key: in_party_committee",
+                    },
+                  ],
               },
             ],
         },

@@ -25,6 +25,16 @@ const (
 
 var errEmptyDefaultVersion = errors.New("engine.defaultVersion must not be an empty string")
 
+type CELErrorLogLevel string
+
+const (
+	CELErrorLogLevelNone  CELErrorLogLevel = "none"
+	CELErrorLogLevelDebug CELErrorLogLevel = "debug"
+	CELErrorLogLevelInfo  CELErrorLogLevel = "info"
+	CELErrorLogLevelWarn  CELErrorLogLevel = "warn"
+	CELErrorLogLevelError CELErrorLogLevel = "error"
+)
+
 // Conf is optional configuration for engine.
 type Conf struct {
 	// Globals are environment-specific variables to be made available to policy conditions.
@@ -33,6 +43,8 @@ type Conf struct {
 	DefaultPolicyVersion string `yaml:"defaultPolicyVersion" conf:",example=\"default\""`
 	// DefaultScope defines what scope to assume if the request does not specify one.
 	DefaultScope string `yaml:"defaultScope" conf:",example=\"\""`
+	// CELErrorLogLevel is the level at which CEL runtime errors raised during policy evaluation are logged. Valid values are none, debug, info, warn (default) and error.
+	CELErrorLogLevel CELErrorLogLevel `yaml:"celErrorLogLevel" conf:",example=warn"`
 	// LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
 	LenientScopeSearch bool `yaml:"lenientScopeSearch" conf:",example=false"`
 	// PolicyLoaderTimeout is the timeout for loading policies from the policy store.
@@ -47,6 +59,7 @@ func (c *Conf) Key() string {
 func (c *Conf) SetDefaults() {
 	c.DefaultPolicyVersion = namer.DefaultVersion
 	c.DefaultScope = namer.DefaultScope
+	c.CELErrorLogLevel = CELErrorLogLevelWarn
 	c.PolicyLoaderTimeout = defaultPolicyLoaderTimeout
 	c.NumWorkers = uint(runtime.NumCPU() + extraWorkersOverCPUs)
 }
@@ -60,6 +73,12 @@ func (c *Conf) Validate() (outErr error) {
 		if err := conditions.ValidateIdentifier(identifier); err != nil {
 			multierr.AppendInto(&outErr, fmt.Errorf("engine.globals: %w", err))
 		}
+	}
+
+	switch c.CELErrorLogLevel {
+	case CELErrorLogLevelNone, CELErrorLogLevelDebug, CELErrorLogLevelInfo, CELErrorLogLevelWarn, CELErrorLogLevelError:
+	default:
+		multierr.AppendInto(&outErr, fmt.Errorf("engine.celErrorLogLevel: invalid value %q", c.CELErrorLogLevel))
 	}
 
 	return outErr

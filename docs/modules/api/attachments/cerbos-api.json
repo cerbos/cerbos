@@ -1900,6 +1900,17 @@
         }
       }
     },
+    "v1CELError": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "v1CheckInput": {
       "type": "object",
       "properties": {
@@ -1961,6 +1972,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1OutputEntry"
+          }
+        },
+        "celErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1CELError"
           }
         }
       }
@@ -2900,6 +2918,13 @@
           "type": "object",
           "additionalProperties": {
             "type": "string"
+          }
+        },
+        "celErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1CELError"
           }
         }
       }

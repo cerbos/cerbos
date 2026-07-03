@@ -11,6 +11,18 @@
         "EFFECT_NO_MATCH"
       ]
     },
+    "cerbos.engine.v1.CELError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.engine.v1.CheckOutput.ActionEffect": {
       "type": "object",
       "additionalProperties": false,
@@ -79,6 +91,12 @@
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/cerbos.engine.v1.CheckOutput.ActionEffect"
+      }
+    },
+    "celErrors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/cerbos.engine.v1.CELError"
       }
     },
     "effectiveDerivedRoles": {

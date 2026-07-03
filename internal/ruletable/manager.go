@@ -14,7 +14,6 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
@@ -55,11 +54,11 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams e
 	return mgr.checkWithAuditTrail(ctx, tctx, mgr.schemaMgr, evalParams, input)
 }
 
-func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalScope, principalVersion, resourceScope, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (mgr *Manager) Plan(ctx context.Context, evalParams evaluator.EvalParams, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.planWithAuditTrail(ctx, mgr.schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, nowFunc, globals, lenientScopeSearch)
+	return mgr.planWithAuditTrail(ctx, mgr.schemaMgr, input, evalParams)
 }
 
 func (mgr *Manager) SubscriberID() string {

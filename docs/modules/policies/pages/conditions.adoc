@@ -184,6 +184,12 @@ expr: ("GB" in R.attr.geographies)
 ----
 ****
 
+[WARNING]
+====
+A CEL *runtime error* while evaluating a condition (for example comparing incompatible types such as `R.attr.amount > 1000` when `amount` is a string, or referencing a missing attribute) causes the condition to be treated as not satisfied. For `ALLOW` rules this fails closed: the rule simply does not match. For `DENY` rules it currently fails *open*: the deny is skipped, so a matching `ALLOW` can still grant the request.
+
+From Cerbos v0.55 a `DENY` rule whose condition raises a runtime error will fail closed (the deny is applied). Cerbos v0.54 logs every runtime error raised during evaluation and includes the errors in audit log entries so you can find and fix affected policies before upgrading. The xref:configuration:engine.adoc#cel_error_log_level[`engine.celErrorLogLevel`] setting controls the level of the log messages.
+====
 
 == Policy variables
 

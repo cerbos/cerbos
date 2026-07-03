@@ -27,6 +27,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	plannerutils "github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/util"
@@ -306,6 +307,7 @@ func InvertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 type EvalContext struct {
 	TimeFn    func() time.Time
 	ExprCache *ExprCache
+	CELErrors *evaluator.CELErrors
 }
 
 func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
@@ -400,7 +402,7 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 		if err != nil {
 			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
 		}
-		residual, err := evalCtx.evaluateConditionExpression(ctx, ex, request, globals, constants, variables, derivedRolesList)
+		residual, err := evalCtx.evaluateConditionExpression(ctx, ex, t.Expr.Original, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -411,7 +413,7 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 	return res, nil
 }
 
-func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, expr celast.Expr, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, expr celast.Expr, original string, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
@@ -442,8 +444,9 @@ func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, exp
 
 	val, residual, err := p.evalPartially(ctx, e)
 	if err != nil {
-		// ignore expressions that are invalid
+		// CEL runtime errors (e.g. missing keys) collapse the expression to false.
 		if types.IsError(val) {
+			evalCtx.CELErrors.Add(ctx, original, err)
 			return conditions.FalseExpr, nil
 		}
 

@@ -13,6 +13,7 @@ func newCheckOptions(tracerSink tracer.Sink, conf *Conf, opts ...CheckOpt) *Chec
 		Globals:              conf.Globals,
 		DefaultPolicyVersion: conf.DefaultPolicyVersion,
 		DefaultScope:         conf.DefaultScope,
+		CELErrorLogLevel:     conf.CELErrorLogLevel,
 		LenientScopeSearch:   conf.LenientScopeSearch,
 	}}
 	for _, opt := range opts {

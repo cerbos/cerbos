@@ -23,6 +23,7 @@ func (*Logger) Debugw(string, ...any) {}
 func (*Logger) Debugf(string, ...any) {}
 func (*Logger) Warn(string, ...any)   {}
 func (*Logger) Warnw(string, ...any)  {}
+func (*Logger) Error(string, ...any)  {}
 func (*Logger) Info(...any)           {}
 func (*Logger) Infow(string, ...any)  {}
 

@@ -68,6 +68,21 @@ wantOutputs:
             "action": "create",
           },
         ],
+      "celErrors":
+        [
+          {
+            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+            "message": "no such key: ip_address",
+          },
+          {
+            "expression": "P.attr.city == constants.home_city",
+            "message": "no such key: city",
+          },
+          {
+            "expression": "V.principal_in_home_city",
+            "message": "undefined field 'principal_in_home_city'",
+          },
+        ],
     },
   ]
 wantDecisionLogs:
@@ -138,6 +153,21 @@ wantDecisionLogs:
                       "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
                       "val": "john_not_in_london",
                       "action": "create",
+                    },
+                  ],
+                "celErrors":
+                  [
+                    {
+                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                      "message": "no such key: ip_address",
+                    },
+                    {
+                      "expression": "P.attr.city == constants.home_city",
+                      "message": "no such key: city",
+                    },
+                    {
+                      "expression": "V.principal_in_home_city",
+                      "message": "undefined field 'principal_in_home_city'",
                     },
                   ],
               },

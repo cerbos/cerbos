@@ -17,7 +17,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -30,27 +29,21 @@ import (
 func (rt *RuleTable) Plan(ctx context.Context, conf *evaluator.Conf, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	checkOpts := evaluator.NewCheckOptions(ctx, conf, opts...)
 
-	principalScope := evaluator.Scope(input.Principal.Scope, checkOpts.EvalParams)
-	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
-
-	resourceScope := evaluator.Scope(input.Resource.Scope, checkOpts.EvalParams)
-	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
-
-	return rt.planWithAuditTrail(ctx, schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals(), checkOpts.LenientScopeSearch())
+	return rt.planWithAuditTrail(ctx, schemaMgr, input, checkOpts.EvalParams)
 }
 
-func (rt *RuleTable) planWithAuditTrail(
-	ctx context.Context,
-	schemaMgr schema.Manager,
-	input *enginev1.PlanResourcesInput,
-	principalScope, principalVersion, resourceScope, resourceVersion string,
-	nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool,
-) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, evalParams evaluator.EvalParams) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	defer span.End()
 
-	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
-	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
+	principalScope := evaluator.Scope(input.Principal.Scope, evalParams)
+	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, evalParams)
+
+	resourceScope := evaluator.Scope(input.Resource.Scope, evalParams)
+	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, evalParams)
+
+	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
 
 	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
@@ -66,7 +59,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: nowFunc, ExprCache: rt.planExprCache}
+	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel)}
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
@@ -160,7 +153,7 @@ func (rt *RuleTable) planWithAuditTrail(
 										return nil, auditTrail, err
 									}
 
-									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, globals, dr.Constants, variables, derivedRolesList)
+									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, evalParams.Globals, dr.Constants, variables, derivedRolesList)
 									if err != nil {
 										return nil, auditTrail, err
 									}
@@ -207,7 +200,7 @@ func (rt *RuleTable) planWithAuditTrail(
 							}
 						}
 
-						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, globals, constants, variables, derivedRolesList)
+						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, evalParams.Globals, constants, variables, derivedRolesList)
 						if err != nil {
 							return nil, auditTrail, err
 						}
@@ -222,7 +215,7 @@ func (rt *RuleTable) planWithAuditTrail(
 								}
 							}
 
-							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
+							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, evalParams.Globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
 							if err != nil {
 								return nil, auditTrail, err
 							}
@@ -380,6 +373,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	if !policyMatch {
 		output.FilterDebug = noPolicyMatch
 	}
+	output.CelErrors = evalCtx.CELErrors.All()
 
 	return output, auditTrail, nil
 }

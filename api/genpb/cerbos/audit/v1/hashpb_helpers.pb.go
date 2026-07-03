@@ -529,6 +529,17 @@ func cerbos_engine_v1_AuxData_hashpb_sum(m *v1.AuxData, hasher hash.Hash, ignore
 	}
 }
 
+func cerbos_engine_v1_CELError_hashpb_sum(m *v1.CELError, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.engine.v1.CELError.expression"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetExpression()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetExpression()), len(m.GetExpression())))
+	}
+	if _, ok := ignore["cerbos.engine.v1.CELError.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetMessage()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetMessage()), len(m.GetMessage())))
+	}
+}
+
 func cerbos_engine_v1_CheckInput_hashpb_sum(m *v1.CheckInput, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.engine.v1.CheckInput.request_id"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetRequestId()))))
@@ -631,6 +642,15 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *v1.CheckOutput, hasher hash.Hash
 			for _, v := range m.Outputs {
 				if v != nil {
 					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.cel_errors"]; !ok {
+		if len(m.CelErrors) > 0 {
+			for _, v := range m.CelErrors {
+				if v != nil {
+					cerbos_engine_v1_CELError_hashpb_sum(v, hasher, ignore, b)
 				}
 			}
 		}
@@ -851,6 +871,15 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *v1.PlanResourcesOutput, 
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.MatchedScopes[k]))))
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.MatchedScopes[k]), len(m.MatchedScopes[k])))
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.cel_errors"]; !ok {
+		if len(m.CelErrors) > 0 {
+			for _, v := range m.CelErrors {
+				if v != nil {
+					cerbos_engine_v1_CELError_hashpb_sum(v, hasher, ignore, b)
 				}
 			}
 		}

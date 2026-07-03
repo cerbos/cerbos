@@ -5,6 +5,17 @@ include::ROOT:partial$attributes.adoc[]
 include::ROOT:partial$version-check.adoc[]
 
 
+[#cel_error_log_level]
+== CEL error log level
+
+When a policy condition or variable raises a CEL runtime error (for example, comparing incompatible types or referencing a missing attribute), the expression is treated as not satisfied. Cerbos logs each such error and includes it in the audit log entry for the request. The `celErrorLogLevel` setting controls the level these messages are logged at: valid values are `none`, `debug`, `info`, `warn` (the default) and `error`. Set it to `none` to disable the log messages entirely. The errors are included in audit log entries regardless of this setting.
+
+[source,yaml,linenums]
+----
+engine:
+  celErrorLogLevel: warn
+----
+
 [#default_policy_version]
 == Default policy version
 

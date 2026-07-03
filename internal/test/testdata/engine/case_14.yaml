@@ -31,6 +31,21 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
+      "celErrors":
+        [
+          {
+            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+            "message": "no such key: ip_address",
+          },
+          {
+            "expression": "R.attr.owner == P.id",
+            "message": "no such key: owner",
+          },
+          {
+            "expression": "request.resource.attr.public == true",
+            "message": "no such key: public",
+          },
+        ],
     },
   ]
 wantDecisionLogs:
@@ -73,6 +88,21 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles": ["reader", "any_employee"],
+                "celErrors":
+                  [
+                    {
+                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                      "message": "no such key: ip_address",
+                    },
+                    {
+                      "expression": "R.attr.owner == P.id",
+                      "message": "no such key: owner",
+                    },
+                    {
+                      "expression": "request.resource.attr.public == true",
+                      "message": "no such key: public",
+                    },
+                  ],
               },
             ],
         },

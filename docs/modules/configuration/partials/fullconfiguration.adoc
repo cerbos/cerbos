@@ -82,6 +82,7 @@ auxData:
           refreshInterval: 1h # RefreshInterval is the refresh interval for the keyset.
           url: https://domain.tld/.well-known/keys.jwks # Required. URL is the JWKS URL to fetch the keyset from.
 engine:
+  celErrorLogLevel: warn # CELErrorLogLevel is the level at which CEL runtime errors raised during policy evaluation are logged. Valid values are none, debug, info, warn (default) and error.
   defaultPolicyVersion: "default" # DefaultPolicyVersion defines what version to assume if the request does not specify one.
   defaultScope: "" # DefaultScope defines what scope to assume if the request does not specify one.
   globals: {"environment": "staging"} # Globals are environment-specific variables to be made available to policy conditions.

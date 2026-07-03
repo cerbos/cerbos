@@ -14,6 +14,18 @@
         }
       }
     },
+    "cerbos.engine.v1.CELError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.engine.v1.PlanResourcesFilter": {
       "type": "object",
       "additionalProperties": false,
@@ -133,6 +145,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "celErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.CELError"
           }
         },
         "filter": {

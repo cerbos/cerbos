@@ -93,6 +93,7 @@ type EvalParams struct {
 	NowFunc              conditions.NowFunc
 	DefaultPolicyVersion string
 	DefaultScope         string
+	CELErrorLogLevel     CELErrorLogLevel
 	LenientScopeSearch   bool
 }
 
