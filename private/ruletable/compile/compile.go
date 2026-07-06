@@ -30,7 +30,7 @@ func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) 
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPolicies(ctx, rt, mgr); err != nil {
+	if err := ruletable.LoadPoliciesIter(rt, mgr.Iter(ctx)); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
