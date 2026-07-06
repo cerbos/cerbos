@@ -54,7 +54,7 @@ jobs:
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Install goreleaser
-        uses: cerbos/actions/install-tools@d5b49896c2cc22445a5167142912282a987ff9ae # main
+        uses: cerbos/actions/install-tools@d2c46d81505b3c938d9eaa51af6d5ef4020cd4bf # main
         with:
           tools: goreleaser
 
