@@ -28,11 +28,11 @@ import (
 func TestCompile(t *testing.T) {
 	fsys := os.DirFS(test.PathToDir(t, "store"))
 
-	rt, err := ruletablecompile.Compile(context.Background(), fsys)
+	ctx := t.Context()
+
+	rt, err := ruletablecompile.Compile(ctx, fsys)
 	require.NoError(t, err)
 	require.NotEmpty(t, rt.GetRules())
-
-	ctx := t.Context()
 
 	idx, err := compile.BuildIndex(ctx, fsys)
 	require.NoError(t, err)
