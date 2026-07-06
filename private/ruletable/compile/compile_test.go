@@ -32,7 +32,7 @@ func TestCompile(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, rt.GetRules())
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	idx, err := compile.BuildIndex(ctx, fsys)
 	require.NoError(t, err)
