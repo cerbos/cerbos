@@ -28,15 +28,21 @@ wantOutputs:
               "policy": "resource.missing_attr.vdefault",
             },
         },
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": "P.attr.is_engineer",
-            "message": "no such key: is_engineer",
+            "celError":
+              {
+                "expression": "P.attr.is_engineer",
+                "message": "no such key: is_engineer",
+              },
           },
           {
-            "expression": 'V.eng && P.attr.org == "org-1"',
-            "message": "undefined field 'eng'",
+            "celError":
+              {
+                "expression": 'V.eng && P.attr.org == "org-1"',
+                "message": "undefined field 'eng'",
+              },
           },
         ],
     },
@@ -75,15 +81,21 @@ wantDecisionLogs:
                         "policy": "resource.missing_attr.vdefault",
                       },
                   },
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": "P.attr.is_engineer",
-                      "message": "no such key: is_engineer",
+                      "celError":
+                        {
+                          "expression": "P.attr.is_engineer",
+                          "message": "no such key: is_engineer",
+                        },
                     },
                     {
-                      "expression": 'V.eng && P.attr.org == "org-1"',
-                      "message": "undefined field 'eng'",
+                      "celError":
+                        {
+                          "expression": 'V.eng && P.attr.org == "org-1"',
+                          "message": "undefined field 'eng'",
+                        },
                     },
                   ],
               },

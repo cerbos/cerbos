@@ -279,18 +279,6 @@
         }
       }
     },
-    "cerbos.engine.v1.CELError": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "expression": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "cerbos.engine.v1.CheckInput": {
       "type": "object",
       "required": [
@@ -331,16 +319,16 @@
             "$ref": "#/definitions/cerbos.engine.v1.CheckOutput.ActionEffect"
           }
         },
-        "celErrors": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.CELError"
-          }
-        },
         "effectiveDerivedRoles": {
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "evaluationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.EvaluationError"
           }
         },
         "outputs": {
@@ -374,6 +362,27 @@
           "type": "string"
         },
         "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "celError": {
+          "$ref": "#/definitions/cerbos.engine.v1.EvaluationError.CELError"
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError.CELError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
           "type": "string"
         }
       }
@@ -517,10 +526,10 @@
             "type": "string"
           }
         },
-        "celErrors": {
+        "evaluationErrors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.CELError"
+            "$ref": "#/definitions/cerbos.engine.v1.EvaluationError"
           }
         },
         "filter": {

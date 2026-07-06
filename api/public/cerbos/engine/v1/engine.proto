@@ -122,7 +122,7 @@ message PlanResourcesOutput {
   repeated cerbos.schema.v1.ValidationError validation_errors = 8;
   repeated string actions = 9;
   map<string, string> matched_scopes = 10;
-  repeated CELError cel_errors = 11;
+  repeated EvaluationError evaluation_errors = 11;
 }
 
 message CheckInput {
@@ -158,12 +158,17 @@ message CheckOutput {
   repeated string effective_derived_roles = 4;
   repeated cerbos.schema.v1.ValidationError validation_errors = 5;
   repeated OutputEntry outputs = 6;
-  repeated CELError cel_errors = 7;
+  repeated EvaluationError evaluation_errors = 7;
 }
 
-message CELError {
-  string expression = 1;
-  string message = 2;
+message EvaluationError {
+  message CELError {
+    string expression = 1;
+    string message = 2;
+  }
+  oneof error {
+    CELError cel_error = 1;
+  }
 }
 
 message OutputEntry {

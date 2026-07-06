@@ -105,23 +105,35 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles": ["any_employee"],
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
           {
-            "expression": "request.principal.attr.reader == true",
-            "message": "no such key: reader",
+            "celError":
+              {
+                "expression": "request.principal.attr.reader == true",
+                "message": "no such key: reader",
+              },
           },
           {
-            "expression": "request.resource.attr.dev_record == true",
-            "message": "no such key: dev_record",
+            "celError":
+              {
+                "expression": "request.resource.attr.dev_record == true",
+                "message": "no such key: dev_record",
+              },
           },
           {
-            "expression": "variables.is_dev_record",
-            "message": "undefined field 'is_dev_record'",
+            "celError":
+              {
+                "expression": "variables.is_dev_record",
+                "message": "undefined field 'is_dev_record'",
+              },
           },
         ],
     },
@@ -237,23 +249,35 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles": ["any_employee"],
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                     {
-                      "expression": "request.principal.attr.reader == true",
-                      "message": "no such key: reader",
+                      "celError":
+                        {
+                          "expression": "request.principal.attr.reader == true",
+                          "message": "no such key: reader",
+                        },
                     },
                     {
-                      "expression": "request.resource.attr.dev_record == true",
-                      "message": "no such key: dev_record",
+                      "celError":
+                        {
+                          "expression": "request.resource.attr.dev_record == true",
+                          "message": "no such key: dev_record",
+                        },
                     },
                     {
-                      "expression": "variables.is_dev_record",
-                      "message": "undefined field 'is_dev_record'",
+                      "celError":
+                        {
+                          "expression": "variables.is_dev_record",
+                          "message": "undefined field 'is_dev_record'",
+                        },
                     },
                   ],
               },

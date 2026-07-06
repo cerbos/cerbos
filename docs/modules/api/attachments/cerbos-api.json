@@ -1259,6 +1259,17 @@
       ],
       "default": "DRIVER_UNSPECIFIED"
     },
+    "EvaluationErrorCELError": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "ExpressionOperand": {
       "type": "object",
       "properties": {
@@ -1900,17 +1911,6 @@
         }
       }
     },
-    "v1CELError": {
-      "type": "object",
-      "properties": {
-        "expression": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        }
-      }
-    },
     "v1CheckInput": {
       "type": "object",
       "properties": {
@@ -1974,11 +1974,11 @@
             "$ref": "#/definitions/v1OutputEntry"
           }
         },
-        "celErrors": {
+        "evaluationErrors": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1CELError"
+            "$ref": "#/definitions/v1EvaluationError"
           }
         }
       }
@@ -2556,6 +2556,14 @@
       },
       "description": "Enable policy response"
     },
+    "v1EvaluationError": {
+      "type": "object",
+      "properties": {
+        "celError": {
+          "$ref": "#/definitions/EvaluationErrorCELError"
+        }
+      }
+    },
     "v1ExportConstants": {
       "type": "object",
       "properties": {
@@ -2920,11 +2928,11 @@
             "type": "string"
           }
         },
-        "celErrors": {
+        "evaluationErrors": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1CELError"
+            "$ref": "#/definitions/v1EvaluationError"
           }
         }
       }

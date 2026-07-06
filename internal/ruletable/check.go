@@ -88,7 +88,7 @@ func (rt *RuleTable) checkWithAuditTrail(ctx context.Context, tctx tracer.Contex
 	output.EffectiveDerivedRoles = effectiveDerivedRoles
 	output.ValidationErrors = result.validationErrors
 	output.Outputs = result.outputs
-	output.CelErrors = result.celErrors.All()
+	output.EvaluationErrors = result.celErrors.All()
 
 	return output, result.auditTrail, nil
 }

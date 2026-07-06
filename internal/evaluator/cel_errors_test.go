@@ -46,8 +46,8 @@ func TestCELErrorsAdd(t *testing.T) {
 
 			entries := c.All()
 			require.Len(t, entries, 1)
-			require.Equal(t, "R.attr.x > 1", entries[0].Expression)
-			require.Equal(t, "no such key: x", entries[0].Message)
+			require.Equal(t, "R.attr.x > 1", entries[0].GetCelError().GetExpression())
+			require.Equal(t, "no such key: x", entries[0].GetCelError().GetMessage())
 
 			errLogs := logs.FilterMessage(celErrorMsg).All()
 			require.Len(t, errLogs, 1)

@@ -35,11 +35,14 @@ wantOutputs:
               "scope": "acme.hr.uk"
             }
         },
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
         ],
     },
@@ -85,11 +88,14 @@ wantDecisionLogs:
                       "scope": "acme.hr.uk"
                     }
                   },
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                   ],
               },

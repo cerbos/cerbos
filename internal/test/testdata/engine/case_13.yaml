@@ -85,11 +85,14 @@ wantOutputs:
               "scope": "acme",
             },
         },
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": "request.resource.attr.dev_record == true",
-            "message": "no such key: dev_record",
+            "celError":
+              {
+                "expression": "request.resource.attr.dev_record == true",
+                "message": "no such key: dev_record",
+              },
           },
         ],
     },
@@ -204,11 +207,14 @@ wantDecisionLogs:
                         "scope": "acme.hr",
                       },
                   },
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": "request.resource.attr.dev_record == true",
-                      "message": "no such key: dev_record",
+                      "celError":
+                        {
+                          "expression": "request.resource.attr.dev_record == true",
+                          "message": "no such key: dev_record",
+                        },
                     },
                   ],
               },

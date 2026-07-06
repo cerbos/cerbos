@@ -40,19 +40,28 @@ wantOutputs:
               "policy": "role.20210210_admin.v20210210",
             },
         },
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
           {
-            "expression": "request.principal.attr.reader == true",
-            "message": "no such key: reader",
+            "celError":
+              {
+                "expression": "request.principal.attr.reader == true",
+                "message": "no such key: reader",
+              },
           },
           {
-            "expression": "request.resource.attr.public == true",
-            "message": "no such key: public",
+            "celError":
+              {
+                "expression": "request.resource.attr.public == true",
+                "message": "no such key: public",
+              },
           },
         ],
     },
@@ -100,19 +109,28 @@ wantDecisionLogs:
                         "policy": "role.20210210_admin.v20210210",
                       },
                   },
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                     {
-                      "expression": "request.principal.attr.reader == true",
-                      "message": "no such key: reader",
+                      "celError":
+                        {
+                          "expression": "request.principal.attr.reader == true",
+                          "message": "no such key: reader",
+                        },
                     },
                     {
-                      "expression": "request.resource.attr.public == true",
-                      "message": "no such key: public",
+                      "celError":
+                        {
+                          "expression": "request.resource.attr.public == true",
+                          "message": "no such key: public",
+                        },
                     },
                   ],
               },

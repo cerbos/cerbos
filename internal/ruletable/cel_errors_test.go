@@ -167,20 +167,20 @@ func (h *celErrorsHarness) paramsWithLevel(level evaluator.CELErrorLogLevel) eva
 	return params
 }
 
-func (h *celErrorsHarness) check(t *testing.T, params evaluator.EvalParams, kind, action string, amount *structpb.Value) (effectv1.Effect, []*enginev1.CELError, *observer.ObservedLogs) {
+func (h *celErrorsHarness) check(t *testing.T, params evaluator.EvalParams, kind, action string, amount *structpb.Value) (effectv1.Effect, []*enginev1.EvaluationError, *observer.ObservedLogs) {
 	t.Helper()
 	core, logs := observer.New(zapcore.DebugLevel)
 	out, _, err := h.mgr.Check(logging.ToContext(h.ctx, zap.New(core)), tracer.Start(nil), params, checkInput(kind, action, amount))
 	require.NoError(t, err)
 	require.Contains(t, out.Actions, action)
-	return out.Actions[action].GetEffect(), out.CelErrors, logs
+	return out.Actions[action].GetEffect(), out.EvaluationErrors, logs
 }
 
-func (h *celErrorsHarness) plan(t *testing.T, params evaluator.EvalParams, kind, action string, amount *structpb.Value) (enginev1.PlanResourcesFilter_Kind, []*enginev1.CELError) {
+func (h *celErrorsHarness) plan(t *testing.T, params evaluator.EvalParams, kind, action string, amount *structpb.Value) (enginev1.PlanResourcesFilter_Kind, []*enginev1.EvaluationError) {
 	t.Helper()
 	out, _, err := h.mgr.Plan(h.ctx, params, planInput(kind, action, amount))
 	require.NoError(t, err)
-	return out.GetFilter().GetKind(), out.CelErrors
+	return out.GetFilter().GetKind(), out.EvaluationErrors
 }
 
 func checkInput(kind, action string, amount *structpb.Value) *enginev1.CheckInput {
@@ -209,12 +209,12 @@ func planInput(kind, action string, amount *structpb.Value) *enginev1.PlanResour
 	}
 }
 
-func assertCELErrors(t *testing.T, entries []*enginev1.CELError, wantExprs ...string) {
+func assertCELErrors(t *testing.T, entries []*enginev1.EvaluationError, wantExprs ...string) {
 	t.Helper()
 	var exprs []string //nolint:prealloc
 	for _, entry := range entries {
-		exprs = append(exprs, entry.Expression)
-		require.NotEmpty(t, entry.Message)
+		exprs = append(exprs, entry.GetCelError().GetExpression())
+		require.NotEmpty(t, entry.GetCelError().GetMessage())
 	}
 	require.Equal(t, wantExprs, exprs)
 }

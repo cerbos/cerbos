@@ -14,7 +14,16 @@
         }
       }
     },
-    "cerbos.engine.v1.CELError": {
+    "cerbos.engine.v1.EvaluationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "celError": {
+          "$ref": "#/definitions/cerbos.engine.v1.EvaluationError.CELError"
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError.CELError": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -147,10 +156,10 @@
             "type": "string"
           }
         },
-        "celErrors": {
+        "evaluationErrors": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/cerbos.engine.v1.CELError"
+            "$ref": "#/definitions/cerbos.engine.v1.EvaluationError"
           }
         },
         "filter": {

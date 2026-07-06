@@ -64,15 +64,21 @@ wantOutputs:
             },
         },
       "effectiveDerivedRoles": ["any_employee"],
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
           {
-            "expression": "R.attr.owner == P.id",
-            "message": "no such key: owner",
+            "celError":
+              {
+                "expression": "R.attr.owner == P.id",
+                "message": "no such key: owner",
+              },
           },
         ],
     },
@@ -141,15 +147,21 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles": ["any_employee"],
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                     {
-                      "expression": "R.attr.owner == P.id",
-                      "message": "no such key: owner",
+                      "celError":
+                        {
+                          "expression": "R.attr.owner == P.id",
+                          "message": "no such key: owner",
+                        },
                     },
                   ],
               },

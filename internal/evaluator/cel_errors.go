@@ -16,7 +16,7 @@ import (
 
 const (
 	celErrorMsg  = "Error evaluating CEL expression"
-	celErrorHint = `CEL evaluation errors detected; set engine.celErrorLogLevel to "none" to silence these messages. From Cerbos v0.55, a DENY rule whose condition raises a runtime error will be applied instead of skipped`
+	celErrorHint = `CEL evaluation errors detected; set engine.celErrorLogLevel to "none" to silence these messages. From Cerbos v0.55, a DENY rule whose condition raises a runtime error will be considered as satisfying the DENY condition`
 )
 
 var celErrorHintOnce sync.Once
@@ -26,13 +26,46 @@ type celError struct {
 	message    string
 }
 
+type logFunc func(ctx context.Context, expression string, err error)
+
 type CELErrors struct {
 	errors map[celError]struct{}
-	level  CELErrorLogLevel
+	log    logFunc
 }
 
 func NewCELErrors(level CELErrorLogLevel) *CELErrors {
-	return &CELErrors{level: level}
+	return &CELErrors{log: getLogFunc(level)}
+}
+
+func getLogFunc(level CELErrorLogLevel) logFunc {
+	switch level {
+	case CELErrorLogLevelNone:
+		return func(context.Context, string, error) {}
+	case CELErrorLogLevelDebug:
+		return func(ctx context.Context, expression string, err error) {
+			logger := logging.FromContext(ctx)
+			celErrorHintOnce.Do(func() { logger.Debug(celErrorHint) })
+			logger.Debug(celErrorMsg, logging.String("expression", expression), logging.Error(err))
+		}
+	case CELErrorLogLevelInfo:
+		return func(ctx context.Context, expression string, err error) {
+			logger := logging.FromContext(ctx)
+			celErrorHintOnce.Do(func() { logger.Info(celErrorHint) })
+			logger.Info(celErrorMsg, logging.String("expression", expression), logging.Error(err))
+		}
+	case CELErrorLogLevelError:
+		return func(ctx context.Context, expression string, err error) {
+			logger := logging.FromContext(ctx)
+			celErrorHintOnce.Do(func() { logger.Error(celErrorHint) })
+			logger.Error(celErrorMsg, logging.String("expression", expression), logging.Error(err))
+		}
+	default:
+		return func(ctx context.Context, expression string, err error) {
+			logger := logging.FromContext(ctx)
+			celErrorHintOnce.Do(func() { logger.Warn(celErrorHint) })
+			logger.Warn(celErrorMsg, logging.String("expression", expression), logging.Error(err))
+		}
+	}
 }
 
 func (c *CELErrors) Add(ctx context.Context, expression string, err error) {
@@ -46,58 +79,27 @@ func (c *CELErrors) Add(ctx context.Context, expression string, err error) {
 	}
 	c.errors[e] = struct{}{}
 
-	if c.level == CELErrorLogLevelNone {
-		return
-	}
-
-	celErrorHintOnce.Do(func() {
-		c.logHint(ctx)
-	})
-	c.logError(ctx, expression, err)
+	c.log(ctx, expression, err)
 }
 
-func (c *CELErrors) All() []*enginev1.CELError {
+func (c *CELErrors) All() []*enginev1.EvaluationError {
 	if c == nil || len(c.errors) == 0 {
 		return nil
 	}
 
-	res := make([]*enginev1.CELError, 0, len(c.errors))
+	res := make([]*enginev1.EvaluationError, 0, len(c.errors))
 	for e := range c.errors {
-		res = append(res, &enginev1.CELError{Expression: e.expression, Message: e.message})
+		res = append(res, &enginev1.EvaluationError{
+			Error: &enginev1.EvaluationError_CelError{
+				CelError: &enginev1.EvaluationError_CELError{Expression: e.expression, Message: e.message},
+			},
+		})
 	}
 
-	slices.SortFunc(res, func(a, b *enginev1.CELError) int {
-		return cmp.Or(strings.Compare(a.Expression, b.Expression), strings.Compare(a.Message, b.Message))
+	slices.SortFunc(res, func(a, b *enginev1.EvaluationError) int {
+		x, y := a.GetCelError(), b.GetCelError()
+		return cmp.Or(strings.Compare(x.GetExpression(), y.GetExpression()), strings.Compare(x.GetMessage(), y.GetMessage()))
 	})
 
 	return res
-}
-
-func (c *CELErrors) logHint(ctx context.Context) {
-	logger := logging.FromContext(ctx)
-	switch c.level {
-	case CELErrorLogLevelDebug:
-		logger.Debug(celErrorHint)
-	case CELErrorLogLevelInfo:
-		logger.Info(celErrorHint)
-	case CELErrorLogLevelError:
-		logger.Error(celErrorHint)
-	default:
-		logger.Warn(celErrorHint)
-	}
-}
-
-func (c *CELErrors) logError(ctx context.Context, expression string, err error) {
-	logger := logging.FromContext(ctx)
-	expr, cause := logging.String("expression", expression), logging.Error(err)
-	switch c.level {
-	case CELErrorLogLevelDebug:
-		logger.Debug(celErrorMsg, expr, cause)
-	case CELErrorLogLevelInfo:
-		logger.Info(celErrorMsg, expr, cause)
-	case CELErrorLogLevelError:
-		logger.Error(celErrorMsg, expr, cause)
-	default:
-		logger.Warn(celErrorMsg, expr, cause)
-	}
 }

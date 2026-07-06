@@ -68,19 +68,28 @@ wantOutputs:
             "action": "create",
           },
         ],
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
           {
-            "expression": "P.attr.city == constants.home_city",
-            "message": "no such key: city",
+            "celError":
+              {
+                "expression": "P.attr.city == constants.home_city",
+                "message": "no such key: city",
+              },
           },
           {
-            "expression": "V.principal_in_home_city",
-            "message": "undefined field 'principal_in_home_city'",
+            "celError":
+              {
+                "expression": "V.principal_in_home_city",
+                "message": "undefined field 'principal_in_home_city'",
+              },
           },
         ],
     },
@@ -155,19 +164,28 @@ wantDecisionLogs:
                       "action": "create",
                     },
                   ],
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                     {
-                      "expression": "P.attr.city == constants.home_city",
-                      "message": "no such key: city",
+                      "celError":
+                        {
+                          "expression": "P.attr.city == constants.home_city",
+                          "message": "no such key: city",
+                        },
                     },
                     {
-                      "expression": "V.principal_in_home_city",
-                      "message": "undefined field 'principal_in_home_city'",
+                      "celError":
+                        {
+                          "expression": "V.principal_in_home_city",
+                          "message": "undefined field 'principal_in_home_city'",
+                        },
                     },
                   ],
               },

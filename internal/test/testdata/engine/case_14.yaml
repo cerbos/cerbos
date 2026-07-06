@@ -31,19 +31,28 @@ wantOutputs:
               "policy": "resource.leave_request.v20210210",
             },
         },
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
           {
-            "expression": "R.attr.owner == P.id",
-            "message": "no such key: owner",
+            "celError":
+              {
+                "expression": "R.attr.owner == P.id",
+                "message": "no such key: owner",
+              },
           },
           {
-            "expression": "request.resource.attr.public == true",
-            "message": "no such key: public",
+            "celError":
+              {
+                "expression": "request.resource.attr.public == true",
+                "message": "no such key: public",
+              },
           },
         ],
     },
@@ -88,19 +97,28 @@ wantDecisionLogs:
                       },
                   },
                 "effectiveDerivedRoles": ["reader", "any_employee"],
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                     {
-                      "expression": "R.attr.owner == P.id",
-                      "message": "no such key: owner",
+                      "celError":
+                        {
+                          "expression": "R.attr.owner == P.id",
+                          "message": "no such key: owner",
+                        },
                     },
                     {
-                      "expression": "request.resource.attr.public == true",
-                      "message": "no such key: public",
+                      "celError":
+                        {
+                          "expression": "request.resource.attr.public == true",
+                          "message": "no such key: public",
+                        },
                     },
                   ],
               },

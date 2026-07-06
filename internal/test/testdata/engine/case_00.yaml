@@ -50,15 +50,21 @@ wantOutputs:
         },
       "effectiveDerivedRoles":
         ["employee_that_owns_the_record", "any_employee"],
-      "celErrors":
+      "evaluationErrors":
         [
           {
-            "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-            "message": "no such key: ip_address",
+            "celError":
+              {
+                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                "message": "no such key: ip_address",
+              },
           },
           {
-            "expression": "request.principal.attr.reader == true",
-            "message": "no such key: reader",
+            "celError":
+              {
+                "expression": "request.principal.attr.reader == true",
+                "message": "no such key: reader",
+              },
           },
         ],
     },
@@ -123,15 +129,21 @@ wantDecisionLogs:
                   },
                 "effectiveDerivedRoles":
                   ["employee_that_owns_the_record", "any_employee"],
-                "celErrors":
+                "evaluationErrors":
                   [
                     {
-                      "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                      "message": "no such key: ip_address",
+                      "celError":
+                        {
+                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
+                          "message": "no such key: ip_address",
+                        },
                     },
                     {
-                      "expression": "request.principal.attr.reader == true",
-                      "message": "no such key: reader",
+                      "celError":
+                        {
+                          "expression": "request.principal.attr.reader == true",
+                          "message": "no such key: reader",
+                        },
                     },
                   ],
               },

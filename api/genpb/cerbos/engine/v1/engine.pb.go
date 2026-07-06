@@ -475,7 +475,7 @@ type PlanResourcesOutput struct {
 	ValidationErrors []*v1.ValidationError `protobuf:"bytes,8,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
 	Actions          []string              `protobuf:"bytes,9,rep,name=actions,proto3" json:"actions,omitempty"`
 	MatchedScopes    map[string]string     `protobuf:"bytes,10,rep,name=matched_scopes,json=matchedScopes,proto3" json:"matched_scopes,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	CelErrors        []*CELError           `protobuf:"bytes,11,rep,name=cel_errors,json=celErrors,proto3" json:"cel_errors,omitempty"`
+	EvaluationErrors []*EvaluationError    `protobuf:"bytes,11,rep,name=evaluation_errors,json=evaluationErrors,proto3" json:"evaluation_errors,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -581,9 +581,9 @@ func (x *PlanResourcesOutput) GetMatchedScopes() map[string]string {
 	return nil
 }
 
-func (x *PlanResourcesOutput) GetCelErrors() []*CELError {
+func (x *PlanResourcesOutput) GetEvaluationErrors() []*EvaluationError {
 	if x != nil {
-		return x.CelErrors
+		return x.EvaluationErrors
 	}
 	return nil
 }
@@ -672,7 +672,7 @@ type CheckOutput struct {
 	EffectiveDerivedRoles []string                             `protobuf:"bytes,4,rep,name=effective_derived_roles,json=effectiveDerivedRoles,proto3" json:"effective_derived_roles,omitempty"`
 	ValidationErrors      []*v1.ValidationError                `protobuf:"bytes,5,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
 	Outputs               []*OutputEntry                       `protobuf:"bytes,6,rep,name=outputs,proto3" json:"outputs,omitempty"`
-	CelErrors             []*CELError                          `protobuf:"bytes,7,rep,name=cel_errors,json=celErrors,proto3" json:"cel_errors,omitempty"`
+	EvaluationErrors      []*EvaluationError                   `protobuf:"bytes,7,rep,name=evaluation_errors,json=evaluationErrors,proto3" json:"evaluation_errors,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -749,35 +749,37 @@ func (x *CheckOutput) GetOutputs() []*OutputEntry {
 	return nil
 }
 
-func (x *CheckOutput) GetCelErrors() []*CELError {
+func (x *CheckOutput) GetEvaluationErrors() []*EvaluationError {
 	if x != nil {
-		return x.CelErrors
+		return x.EvaluationErrors
 	}
 	return nil
 }
 
-type CELError struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Expression    string                 `protobuf:"bytes,1,opt,name=expression,proto3" json:"expression,omitempty"`
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+type EvaluationError struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Error:
+	//
+	//	*EvaluationError_CelError
+	Error         isEvaluationError_Error `protobuf_oneof:"error"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *CELError) Reset() {
-	*x = CELError{}
+func (x *EvaluationError) Reset() {
+	*x = EvaluationError{}
 	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *CELError) String() string {
+func (x *EvaluationError) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*CELError) ProtoMessage() {}
+func (*EvaluationError) ProtoMessage() {}
 
-func (x *CELError) ProtoReflect() protoreflect.Message {
+func (x *EvaluationError) ProtoReflect() protoreflect.Message {
 	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -789,24 +791,36 @@ func (x *CELError) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use CELError.ProtoReflect.Descriptor instead.
-func (*CELError) Descriptor() ([]byte, []int) {
+// Deprecated: Use EvaluationError.ProtoReflect.Descriptor instead.
+func (*EvaluationError) Descriptor() ([]byte, []int) {
 	return file_cerbos_engine_v1_engine_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *CELError) GetExpression() string {
+func (x *EvaluationError) GetError() isEvaluationError_Error {
 	if x != nil {
-		return x.Expression
+		return x.Error
 	}
-	return ""
+	return nil
 }
 
-func (x *CELError) GetMessage() string {
+func (x *EvaluationError) GetCelError() *EvaluationError_CELError {
 	if x != nil {
-		return x.Message
+		if x, ok := x.Error.(*EvaluationError_CelError); ok {
+			return x.CelError
+		}
 	}
-	return ""
+	return nil
 }
+
+type isEvaluationError_Error interface {
+	isEvaluationError_Error()
+}
+
+type EvaluationError_CelError struct {
+	CelError *EvaluationError_CELError `protobuf:"bytes,1,opt,name=cel_error,json=celError,proto3,oneof"`
+}
+
+func (*EvaluationError_CelError) isEvaluationError_Error() {}
 
 type OutputEntry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1749,6 +1763,58 @@ func (x *CheckOutput_ActionEffect) GetScope() string {
 	return ""
 }
 
+type EvaluationError_CELError struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Expression    string                 `protobuf:"bytes,1,opt,name=expression,proto3" json:"expression,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EvaluationError_CELError) Reset() {
+	*x = EvaluationError_CELError{}
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EvaluationError_CELError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EvaluationError_CELError) ProtoMessage() {}
+
+func (x *EvaluationError_CELError) ProtoReflect() protoreflect.Message {
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EvaluationError_CELError.ProtoReflect.Descriptor instead.
+func (*EvaluationError_CELError) Descriptor() ([]byte, []int) {
+	return file_cerbos_engine_v1_engine_proto_rawDescGZIP(), []int{6, 0}
+}
+
+func (x *EvaluationError_CELError) GetExpression() string {
+	if x != nil {
+		return x.Expression
+	}
+	return ""
+}
+
+func (x *EvaluationError_CELError) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 type Trace_Component struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Kind  Trace_Component_Kind   `protobuf:"varint,1,opt,name=kind,proto3,enum=cerbos.engine.v1.Trace_Component_Kind" json:"kind,omitempty"`
@@ -1773,7 +1839,7 @@ type Trace_Component struct {
 
 func (x *Trace_Component) Reset() {
 	*x = Trace_Component{}
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[28]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1785,7 +1851,7 @@ func (x *Trace_Component) String() string {
 func (*Trace_Component) ProtoMessage() {}
 
 func (x *Trace_Component) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[28]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2012,7 +2078,7 @@ type Trace_Event struct {
 
 func (x *Trace_Event) Reset() {
 	*x = Trace_Event{}
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[29]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2024,7 +2090,7 @@ func (x *Trace_Event) String() string {
 func (*Trace_Event) ProtoMessage() {}
 
 func (x *Trace_Event) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[29]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2085,7 +2151,7 @@ type Trace_Component_Variable struct {
 
 func (x *Trace_Component_Variable) Reset() {
 	*x = Trace_Component_Variable{}
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[30]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2097,7 +2163,7 @@ func (x *Trace_Component_Variable) String() string {
 func (*Trace_Component_Variable) ProtoMessage() {}
 
 func (x *Trace_Component_Variable) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[30]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2140,7 +2206,7 @@ type Request_Principal struct {
 
 func (x *Request_Principal) Reset() {
 	*x = Request_Principal{}
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[31]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2152,7 +2218,7 @@ func (x *Request_Principal) String() string {
 func (*Request_Principal) ProtoMessage() {}
 
 func (x *Request_Principal) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[31]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2216,7 +2282,7 @@ type Request_Resource struct {
 
 func (x *Request_Resource) Reset() {
 	*x = Request_Resource{}
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[32]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2228,7 +2294,7 @@ func (x *Request_Resource) String() string {
 func (*Request_Resource) ProtoMessage() {}
 
 func (x *Request_Resource) ProtoReflect() protoreflect.Message {
-	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[32]
+	mi := &file_cerbos_engine_v1_engine_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2338,7 +2404,7 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\x10KIND_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13KIND_ALWAYS_ALLOWED\x10\x01\x12\x16\n" +
 	"\x12KIND_ALWAYS_DENIED\x10\x02\x12\x14\n" +
-	"\x10KIND_CONDITIONAL\x10\x03\"\xcb\x04\n" +
+	"\x10KIND_CONDITIONAL\x10\x03\"\xe0\x04\n" +
 	"\x13PlanResourcesOutput\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1a\n" +
@@ -2351,9 +2417,8 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\x11validation_errors\x18\b \x03(\v2!.cerbos.schema.v1.ValidationErrorR\x10validationErrors\x12\x18\n" +
 	"\aactions\x18\t \x03(\tR\aactions\x12_\n" +
 	"\x0ematched_scopes\x18\n" +
-	" \x03(\v28.cerbos.engine.v1.PlanResourcesOutput.MatchedScopesEntryR\rmatchedScopes\x129\n" +
-	"\n" +
-	"cel_errors\x18\v \x03(\v2\x1a.cerbos.engine.v1.CELErrorR\tcelErrors\x1a@\n" +
+	" \x03(\v28.cerbos.engine.v1.PlanResourcesOutput.MatchedScopesEntryR\rmatchedScopes\x12N\n" +
+	"\x11evaluation_errors\x18\v \x03(\v2!.cerbos.engine.v1.EvaluationErrorR\x10evaluationErrors\x1a@\n" +
 	"\x12MatchedScopesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x97\x02\n" +
@@ -2364,7 +2429,7 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\bresource\x18\x02 \x01(\v2\x1a.cerbos.engine.v1.ResourceB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\bresource\x12D\n" +
 	"\tprincipal\x18\x03 \x01(\v2\x1b.cerbos.engine.v1.PrincipalB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\tprincipal\x12+\n" +
 	"\aactions\x18\x04 \x03(\tB\x11\xe0A\x02\xbaH\v\x92\x01\b\x18\x01\"\x04r\x02\x10\x01R\aactions\x124\n" +
-	"\baux_data\x18\x05 \x01(\v2\x19.cerbos.engine.v1.AuxDataR\aauxData\"\xe7\x04\n" +
+	"\baux_data\x18\x05 \x01(\v2\x19.cerbos.engine.v1.AuxDataR\aauxData\"\xfc\x04\n" +
 	"\vCheckOutput\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x01 \x01(\tR\trequestId\x12\x1f\n" +
@@ -2373,21 +2438,23 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\aactions\x18\x03 \x03(\v2*.cerbos.engine.v1.CheckOutput.ActionsEntryR\aactions\x126\n" +
 	"\x17effective_derived_roles\x18\x04 \x03(\tR\x15effectiveDerivedRoles\x12N\n" +
 	"\x11validation_errors\x18\x05 \x03(\v2!.cerbos.schema.v1.ValidationErrorR\x10validationErrors\x127\n" +
-	"\aoutputs\x18\x06 \x03(\v2\x1d.cerbos.engine.v1.OutputEntryR\aoutputs\x129\n" +
-	"\n" +
-	"cel_errors\x18\a \x03(\v2\x1a.cerbos.engine.v1.CELErrorR\tcelErrors\x1an\n" +
+	"\aoutputs\x18\x06 \x03(\v2\x1d.cerbos.engine.v1.OutputEntryR\aoutputs\x12N\n" +
+	"\x11evaluation_errors\x18\a \x03(\v2!.cerbos.engine.v1.EvaluationErrorR\x10evaluationErrors\x1an\n" +
 	"\fActionEffect\x120\n" +
 	"\x06effect\x18\x01 \x01(\x0e2\x18.cerbos.effect.v1.EffectR\x06effect\x12\x16\n" +
 	"\x06policy\x18\x02 \x01(\tR\x06policy\x12\x14\n" +
 	"\x05scope\x18\x03 \x01(\tR\x05scope\x1af\n" +
 	"\fActionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
-	"\x05value\x18\x02 \x01(\v2*.cerbos.engine.v1.CheckOutput.ActionEffectR\x05value:\x028\x01\"D\n" +
+	"\x05value\x18\x02 \x01(\v2*.cerbos.engine.v1.CheckOutput.ActionEffectR\x05value:\x028\x01\"\xab\x01\n" +
+	"\x0fEvaluationError\x12I\n" +
+	"\tcel_error\x18\x01 \x01(\v2*.cerbos.engine.v1.EvaluationError.CELErrorH\x00R\bcelError\x1aD\n" +
 	"\bCELError\x12\x1e\n" +
 	"\n" +
 	"expression\x18\x01 \x01(\tR\n" +
 	"expression\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\xf8\x03\n" +
+	"\amessage\x18\x02 \x01(\tR\amessageB\a\n" +
+	"\x05error\"\xf8\x03\n" +
 	"\vOutputEntry\x12e\n" +
 	"\x03src\x18\x01 \x01(\tBS\x92AP2)Rule that matched to produce this output.J#\"resource.expense.v1/acme#rule-001\"R\x03src\x12u\n" +
 	"\x03val\x18\x02 \x01(\v2\x16.google.protobuf.ValueBK\x92AH27Dynamic output, determined by user defined rule output.J\r\"some_string\"R\x03val\x12c\n" +
@@ -2521,7 +2588,7 @@ func file_cerbos_engine_v1_engine_proto_rawDescGZIP() []byte {
 }
 
 var file_cerbos_engine_v1_engine_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_cerbos_engine_v1_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
+var file_cerbos_engine_v1_engine_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_cerbos_engine_v1_engine_proto_goTypes = []any{
 	(PlanResourcesAst_LogicalOperation_Operator)(0), // 0: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
 	(PlanResourcesFilter_Kind)(0),                   // 1: cerbos.engine.v1.PlanResourcesFilter.Kind
@@ -2533,7 +2600,7 @@ var file_cerbos_engine_v1_engine_proto_goTypes = []any{
 	(*PlanResourcesOutput)(nil),                     // 7: cerbos.engine.v1.PlanResourcesOutput
 	(*CheckInput)(nil),                              // 8: cerbos.engine.v1.CheckInput
 	(*CheckOutput)(nil),                             // 9: cerbos.engine.v1.CheckOutput
-	(*CELError)(nil),                                // 10: cerbos.engine.v1.CELError
+	(*EvaluationError)(nil),                         // 10: cerbos.engine.v1.EvaluationError
 	(*OutputEntry)(nil),                             // 11: cerbos.engine.v1.OutputEntry
 	(*Resource)(nil),                                // 12: cerbos.engine.v1.Resource
 	(*Principal)(nil),                               // 13: cerbos.engine.v1.Principal
@@ -2552,20 +2619,21 @@ var file_cerbos_engine_v1_engine_proto_goTypes = []any{
 	nil,                              // 26: cerbos.engine.v1.PlanResourcesOutput.MatchedScopesEntry
 	(*CheckOutput_ActionEffect)(nil), // 27: cerbos.engine.v1.CheckOutput.ActionEffect
 	nil,                              // 28: cerbos.engine.v1.CheckOutput.ActionsEntry
-	nil,                              // 29: cerbos.engine.v1.Resource.AttrEntry
-	nil,                              // 30: cerbos.engine.v1.Principal.AttrEntry
-	nil,                              // 31: cerbos.engine.v1.AuxData.JwtEntry
-	(*Trace_Component)(nil),          // 32: cerbos.engine.v1.Trace.Component
-	(*Trace_Event)(nil),              // 33: cerbos.engine.v1.Trace.Event
-	(*Trace_Component_Variable)(nil), // 34: cerbos.engine.v1.Trace.Component.Variable
-	(*Request_Principal)(nil),        // 35: cerbos.engine.v1.Request.Principal
-	(*Request_Resource)(nil),         // 36: cerbos.engine.v1.Request.Resource
-	nil,                              // 37: cerbos.engine.v1.Request.Principal.AttrEntry
-	nil,                              // 38: cerbos.engine.v1.Request.Resource.AttrEntry
-	(*v1.ValidationError)(nil),       // 39: cerbos.schema.v1.ValidationError
-	(*structpb.Value)(nil),           // 40: google.protobuf.Value
-	(*v1alpha1.CheckedExpr)(nil),     // 41: google.api.expr.v1alpha1.CheckedExpr
-	(v11.Effect)(0),                  // 42: cerbos.effect.v1.Effect
+	(*EvaluationError_CELError)(nil), // 29: cerbos.engine.v1.EvaluationError.CELError
+	nil,                              // 30: cerbos.engine.v1.Resource.AttrEntry
+	nil,                              // 31: cerbos.engine.v1.Principal.AttrEntry
+	nil,                              // 32: cerbos.engine.v1.AuxData.JwtEntry
+	(*Trace_Component)(nil),          // 33: cerbos.engine.v1.Trace.Component
+	(*Trace_Event)(nil),              // 34: cerbos.engine.v1.Trace.Event
+	(*Trace_Component_Variable)(nil), // 35: cerbos.engine.v1.Trace.Component.Variable
+	(*Request_Principal)(nil),        // 36: cerbos.engine.v1.Request.Principal
+	(*Request_Resource)(nil),         // 37: cerbos.engine.v1.Request.Resource
+	nil,                              // 38: cerbos.engine.v1.Request.Principal.AttrEntry
+	nil,                              // 39: cerbos.engine.v1.Request.Resource.AttrEntry
+	(*v1.ValidationError)(nil),       // 40: cerbos.schema.v1.ValidationError
+	(*structpb.Value)(nil),           // 41: google.protobuf.Value
+	(*v1alpha1.CheckedExpr)(nil),     // 42: google.api.expr.v1alpha1.CheckedExpr
+	(v11.Effect)(0),                  // 43: cerbos.effect.v1.Effect
 }
 var file_cerbos_engine_v1_engine_proto_depIdxs = []int32{
 	13, // 0: cerbos.engine.v1.PlanResourcesInput.principal:type_name -> cerbos.engine.v1.Principal
@@ -2575,62 +2643,66 @@ var file_cerbos_engine_v1_engine_proto_depIdxs = []int32{
 	1,  // 4: cerbos.engine.v1.PlanResourcesFilter.kind:type_name -> cerbos.engine.v1.PlanResourcesFilter.Kind
 	25, // 5: cerbos.engine.v1.PlanResourcesFilter.condition:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
 	6,  // 6: cerbos.engine.v1.PlanResourcesOutput.filter:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	39, // 7: cerbos.engine.v1.PlanResourcesOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	40, // 7: cerbos.engine.v1.PlanResourcesOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
 	26, // 8: cerbos.engine.v1.PlanResourcesOutput.matched_scopes:type_name -> cerbos.engine.v1.PlanResourcesOutput.MatchedScopesEntry
-	10, // 9: cerbos.engine.v1.PlanResourcesOutput.cel_errors:type_name -> cerbos.engine.v1.CELError
+	10, // 9: cerbos.engine.v1.PlanResourcesOutput.evaluation_errors:type_name -> cerbos.engine.v1.EvaluationError
 	12, // 10: cerbos.engine.v1.CheckInput.resource:type_name -> cerbos.engine.v1.Resource
 	13, // 11: cerbos.engine.v1.CheckInput.principal:type_name -> cerbos.engine.v1.Principal
 	14, // 12: cerbos.engine.v1.CheckInput.aux_data:type_name -> cerbos.engine.v1.AuxData
 	28, // 13: cerbos.engine.v1.CheckOutput.actions:type_name -> cerbos.engine.v1.CheckOutput.ActionsEntry
-	39, // 14: cerbos.engine.v1.CheckOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
+	40, // 14: cerbos.engine.v1.CheckOutput.validation_errors:type_name -> cerbos.schema.v1.ValidationError
 	11, // 15: cerbos.engine.v1.CheckOutput.outputs:type_name -> cerbos.engine.v1.OutputEntry
-	10, // 16: cerbos.engine.v1.CheckOutput.cel_errors:type_name -> cerbos.engine.v1.CELError
-	40, // 17: cerbos.engine.v1.OutputEntry.val:type_name -> google.protobuf.Value
-	29, // 18: cerbos.engine.v1.Resource.attr:type_name -> cerbos.engine.v1.Resource.AttrEntry
-	30, // 19: cerbos.engine.v1.Principal.attr:type_name -> cerbos.engine.v1.Principal.AttrEntry
-	31, // 20: cerbos.engine.v1.AuxData.jwt:type_name -> cerbos.engine.v1.AuxData.JwtEntry
-	32, // 21: cerbos.engine.v1.Trace.components:type_name -> cerbos.engine.v1.Trace.Component
-	33, // 22: cerbos.engine.v1.Trace.event:type_name -> cerbos.engine.v1.Trace.Event
-	33, // 23: cerbos.engine.v1.TraceEntry.event:type_name -> cerbos.engine.v1.Trace.Event
-	32, // 24: cerbos.engine.v1.TraceBatch.definitions:type_name -> cerbos.engine.v1.Trace.Component
-	16, // 25: cerbos.engine.v1.TraceBatch.entries:type_name -> cerbos.engine.v1.TraceEntry
-	35, // 26: cerbos.engine.v1.Request.principal:type_name -> cerbos.engine.v1.Request.Principal
-	36, // 27: cerbos.engine.v1.Request.resource:type_name -> cerbos.engine.v1.Request.Resource
-	14, // 28: cerbos.engine.v1.Request.aux_data:type_name -> cerbos.engine.v1.AuxData
-	21, // 29: cerbos.engine.v1.PlanResourcesInput.Resource.attr:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
-	40, // 30: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	23, // 31: cerbos.engine.v1.PlanResourcesAst.Node.logical_operation:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation
-	41, // 32: cerbos.engine.v1.PlanResourcesAst.Node.expression:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	0,  // 33: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.operator:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
-	22, // 34: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.nodes:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
-	25, // 35: cerbos.engine.v1.PlanResourcesFilter.Expression.operands:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
-	40, // 36: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.value:type_name -> google.protobuf.Value
-	24, // 37: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.expression:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression
-	42, // 38: cerbos.engine.v1.CheckOutput.ActionEffect.effect:type_name -> cerbos.effect.v1.Effect
-	27, // 39: cerbos.engine.v1.CheckOutput.ActionsEntry.value:type_name -> cerbos.engine.v1.CheckOutput.ActionEffect
-	40, // 40: cerbos.engine.v1.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	40, // 41: cerbos.engine.v1.Principal.AttrEntry.value:type_name -> google.protobuf.Value
-	40, // 42: cerbos.engine.v1.AuxData.JwtEntry.value:type_name -> google.protobuf.Value
-	2,  // 43: cerbos.engine.v1.Trace.Component.kind:type_name -> cerbos.engine.v1.Trace.Component.Kind
-	34, // 44: cerbos.engine.v1.Trace.Component.variable:type_name -> cerbos.engine.v1.Trace.Component.Variable
-	3,  // 45: cerbos.engine.v1.Trace.Event.status:type_name -> cerbos.engine.v1.Trace.Event.Status
-	42, // 46: cerbos.engine.v1.Trace.Event.effect:type_name -> cerbos.effect.v1.Effect
-	40, // 47: cerbos.engine.v1.Trace.Event.result:type_name -> google.protobuf.Value
-	37, // 48: cerbos.engine.v1.Request.Principal.attr:type_name -> cerbos.engine.v1.Request.Principal.AttrEntry
-	38, // 49: cerbos.engine.v1.Request.Resource.attr:type_name -> cerbos.engine.v1.Request.Resource.AttrEntry
-	40, // 50: cerbos.engine.v1.Request.Principal.AttrEntry.value:type_name -> google.protobuf.Value
-	40, // 51: cerbos.engine.v1.Request.Resource.AttrEntry.value:type_name -> google.protobuf.Value
-	52, // [52:52] is the sub-list for method output_type
-	52, // [52:52] is the sub-list for method input_type
-	52, // [52:52] is the sub-list for extension type_name
-	52, // [52:52] is the sub-list for extension extendee
-	0,  // [0:52] is the sub-list for field type_name
+	10, // 16: cerbos.engine.v1.CheckOutput.evaluation_errors:type_name -> cerbos.engine.v1.EvaluationError
+	29, // 17: cerbos.engine.v1.EvaluationError.cel_error:type_name -> cerbos.engine.v1.EvaluationError.CELError
+	41, // 18: cerbos.engine.v1.OutputEntry.val:type_name -> google.protobuf.Value
+	30, // 19: cerbos.engine.v1.Resource.attr:type_name -> cerbos.engine.v1.Resource.AttrEntry
+	31, // 20: cerbos.engine.v1.Principal.attr:type_name -> cerbos.engine.v1.Principal.AttrEntry
+	32, // 21: cerbos.engine.v1.AuxData.jwt:type_name -> cerbos.engine.v1.AuxData.JwtEntry
+	33, // 22: cerbos.engine.v1.Trace.components:type_name -> cerbos.engine.v1.Trace.Component
+	34, // 23: cerbos.engine.v1.Trace.event:type_name -> cerbos.engine.v1.Trace.Event
+	34, // 24: cerbos.engine.v1.TraceEntry.event:type_name -> cerbos.engine.v1.Trace.Event
+	33, // 25: cerbos.engine.v1.TraceBatch.definitions:type_name -> cerbos.engine.v1.Trace.Component
+	16, // 26: cerbos.engine.v1.TraceBatch.entries:type_name -> cerbos.engine.v1.TraceEntry
+	36, // 27: cerbos.engine.v1.Request.principal:type_name -> cerbos.engine.v1.Request.Principal
+	37, // 28: cerbos.engine.v1.Request.resource:type_name -> cerbos.engine.v1.Request.Resource
+	14, // 29: cerbos.engine.v1.Request.aux_data:type_name -> cerbos.engine.v1.AuxData
+	21, // 30: cerbos.engine.v1.PlanResourcesInput.Resource.attr:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry
+	41, // 31: cerbos.engine.v1.PlanResourcesInput.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	23, // 32: cerbos.engine.v1.PlanResourcesAst.Node.logical_operation:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation
+	42, // 33: cerbos.engine.v1.PlanResourcesAst.Node.expression:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	0,  // 34: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.operator:type_name -> cerbos.engine.v1.PlanResourcesAst.LogicalOperation.Operator
+	22, // 35: cerbos.engine.v1.PlanResourcesAst.LogicalOperation.nodes:type_name -> cerbos.engine.v1.PlanResourcesAst.Node
+	25, // 36: cerbos.engine.v1.PlanResourcesFilter.Expression.operands:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression.Operand
+	41, // 37: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.value:type_name -> google.protobuf.Value
+	24, // 38: cerbos.engine.v1.PlanResourcesFilter.Expression.Operand.expression:type_name -> cerbos.engine.v1.PlanResourcesFilter.Expression
+	43, // 39: cerbos.engine.v1.CheckOutput.ActionEffect.effect:type_name -> cerbos.effect.v1.Effect
+	27, // 40: cerbos.engine.v1.CheckOutput.ActionsEntry.value:type_name -> cerbos.engine.v1.CheckOutput.ActionEffect
+	41, // 41: cerbos.engine.v1.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	41, // 42: cerbos.engine.v1.Principal.AttrEntry.value:type_name -> google.protobuf.Value
+	41, // 43: cerbos.engine.v1.AuxData.JwtEntry.value:type_name -> google.protobuf.Value
+	2,  // 44: cerbos.engine.v1.Trace.Component.kind:type_name -> cerbos.engine.v1.Trace.Component.Kind
+	35, // 45: cerbos.engine.v1.Trace.Component.variable:type_name -> cerbos.engine.v1.Trace.Component.Variable
+	3,  // 46: cerbos.engine.v1.Trace.Event.status:type_name -> cerbos.engine.v1.Trace.Event.Status
+	43, // 47: cerbos.engine.v1.Trace.Event.effect:type_name -> cerbos.effect.v1.Effect
+	41, // 48: cerbos.engine.v1.Trace.Event.result:type_name -> google.protobuf.Value
+	38, // 49: cerbos.engine.v1.Request.Principal.attr:type_name -> cerbos.engine.v1.Request.Principal.AttrEntry
+	39, // 50: cerbos.engine.v1.Request.Resource.attr:type_name -> cerbos.engine.v1.Request.Resource.AttrEntry
+	41, // 51: cerbos.engine.v1.Request.Principal.AttrEntry.value:type_name -> google.protobuf.Value
+	41, // 52: cerbos.engine.v1.Request.Resource.AttrEntry.value:type_name -> google.protobuf.Value
+	53, // [53:53] is the sub-list for method output_type
+	53, // [53:53] is the sub-list for method input_type
+	53, // [53:53] is the sub-list for extension type_name
+	53, // [53:53] is the sub-list for extension extendee
+	0,  // [0:53] is the sub-list for field type_name
 }
 
 func init() { file_cerbos_engine_v1_engine_proto_init() }
 func file_cerbos_engine_v1_engine_proto_init() {
 	if File_cerbos_engine_v1_engine_proto != nil {
 		return
+	}
+	file_cerbos_engine_v1_engine_proto_msgTypes[6].OneofWrappers = []any{
+		(*EvaluationError_CelError)(nil),
 	}
 	file_cerbos_engine_v1_engine_proto_msgTypes[18].OneofWrappers = []any{
 		(*PlanResourcesAst_Node_LogicalOperation)(nil),
@@ -2641,7 +2713,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 		(*PlanResourcesFilter_Expression_Operand_Expression)(nil),
 		(*PlanResourcesFilter_Expression_Operand_Variable)(nil),
 	}
-	file_cerbos_engine_v1_engine_proto_msgTypes[28].OneofWrappers = []any{
+	file_cerbos_engine_v1_engine_proto_msgTypes[29].OneofWrappers = []any{
 		(*Trace_Component_Action)(nil),
 		(*Trace_Component_DerivedRole)(nil),
 		(*Trace_Component_Expr)(nil),
@@ -2661,7 +2733,7 @@ func file_cerbos_engine_v1_engine_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cerbos_engine_v1_engine_proto_rawDesc), len(file_cerbos_engine_v1_engine_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   35,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

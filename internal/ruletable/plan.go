@@ -373,7 +373,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 	if !policyMatch {
 		output.FilterDebug = noPolicyMatch
 	}
-	output.CelErrors = evalCtx.CELErrors.All()
+	output.EvaluationErrors = evalCtx.CELErrors.All()
 
 	return output, auditTrail, nil
 }
