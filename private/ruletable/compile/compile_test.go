@@ -5,7 +5,6 @@ package compile_test
 
 import (
 	"cmp"
-	"context"
 	"os"
 	"slices"
 	"testing"
