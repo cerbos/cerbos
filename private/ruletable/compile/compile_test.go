@@ -15,7 +15,6 @@ import (
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	internalcompile "github.com/cerbos/cerbos/internal/compile"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/test"
@@ -43,8 +42,6 @@ func TestCompile(t *testing.T) {
 	require.NoError(t, ruletable.LoadPolicies(ctx, want, mgr))
 	require.NoError(t, ruletable.LoadSchemas(ctx, want, idx))
 
-	// The streaming path releases CheckedExprs
-	conditions.WalkExprs(want, func(e *runtimev1.Expr) { e.Checked = nil })
 	sortRules(want)
 	sortRules(rt)
 
