@@ -82,9 +82,8 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 }
 
 // LoadPoliciesIter is the streaming equivalent of LoadPolicies: it consumes compiled
-// policy sets one at a time and releases the CheckedExprs of each ingested policy.
+// policy sets one at a time.
 func LoadPoliciesIter(rt *runtimev1.RuleTable, policySets iter.Seq2[*runtimev1.RunnablePolicySet, error]) error {
-	nilChecked := func(e *runtimev1.Expr) { e.Checked = nil }
 	for rps, err := range policySets {
 		if err != nil {
 			return fmt.Errorf("failed to get compiled policy set: %w", err)
@@ -95,16 +94,7 @@ func LoadPoliciesIter(rt *runtimev1.RuleTable, policySets iter.Seq2[*runtimev1.R
 		}
 
 		rows := AddPolicy(rt, rps)
-		for _, row := range rows {
-			conditions.WalkExprs(row, nilChecked)
-		}
 		rt.Rules = append(rt.Rules, rows...)
-	}
-
-	for _, pdr := range rt.GetPolicyDerivedRoles() {
-		for _, dr := range pdr.GetDerivedRoles() {
-			conditions.WalkExprs(dr, nilChecked)
-		}
 	}
 
 	return nil
