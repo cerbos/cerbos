@@ -54,9 +54,11 @@ type CelProgram struct {
 type Option func(*Index)
 
 type Index struct {
-	bi          *bitmapIndex
-	parentRoles map[string]map[string][]string
-	handles     UniqueHandles // handles to canonical strings
+	bi            *bitmapIndex
+	parentRoles   map[string]map[string][]string
+	handles       UniqueHandles // handles to canonical strings
+	paramsCache   map[uint64]*RowParams
+	drParamsCache map[uint64]*RowParams
 }
 
 func New(opts ...Option) *Index {
@@ -83,98 +85,109 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		m.bi.evalKeys = slices.Grow(m.bi.evalKeys, newBindings)
 	}
 
-	paramsCache := make(map[uint64]*RowParams)
-	drParamsCache := make(map[uint64]*RowParams)
-
 	for _, rule := range rules {
-		var params, drParams *RowParams
-
-		switch rule.PolicyKind { //nolint:exhaustive
-		case policyv1.Kind_KIND_RESOURCE:
-			p, err := getOrGenerateParams(paramsCache, rule.Params)
-			if err != nil {
-				return err
-			}
-			params = p
-			if rule.OriginDerivedRole != "" {
-				drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
-				if err != nil {
-					return err
-				}
-				drParams = drp
-			}
-		case policyv1.Kind_KIND_PRINCIPAL:
-			p, err := getOrGenerateParams(paramsCache, rule.Params)
-			if err != nil {
-				return err
-			}
-			params = p
+		if err := m.IndexRule(rule); err != nil {
+			return err
 		}
-
-		// hashpb does not include field tags, so Condition=X/DerivedRoleCondition=nil
-		// hashes identically to Condition=nil/DerivedRoleCondition=X when X is the
-		// same Condition content. Feed a discriminator byte into the hasher to break
-		// the collision.
-		// TODO(saml): addressing upstream in protoc-gen-go-hashpb, remove this when that lands.
-		hasher := xxhash.New()
-		rule.HashPB(hasher, nonFunctionalChecksumFields)
-		var condDisc byte
-		if rule.Condition != nil {
-			condDisc |= 1
-		}
-		if rule.DerivedRoleCondition != nil {
-			condDisc |= 2
-		}
-		_, _ = hasher.Write([]byte{condDisc})
-		funcSum := hasher.Sum64()
-
-		core, ok := m.bi.coresBySum[funcSum]
-		if !ok {
-			core = &FunctionalCore{
-				Effect:               rule.Effect,
-				Condition:            rule.Condition,
-				DerivedRoleCondition: rule.DerivedRoleCondition,
-				EmitOutput:           rule.EmitOutput,
-				ScopePermissions:     rule.ScopePermissions,
-				FromRolePolicy:       rule.FromRolePolicy,
-				PolicyKind:           rule.PolicyKind,
-				Params:               params,
-				DerivedRoleParams:    drParams,
-				origins:              make(map[string]struct{}),
-				sum:                  funcSum,
-			}
-			m.bi.coresBySum[funcSum] = core
-		}
-		core.origins[rule.OriginFqn] = struct{}{}
-
-		var action unique.Handle[string]
-		var allowActions map[unique.Handle[string]]struct{}
-		switch v := rule.ActionSet.(type) {
-		case *runtimev1.RuleTable_RuleRow_AllowActions_:
-			allowActions = make(map[unique.Handle[string]]struct{}, len(v.AllowActions.GetActions()))
-			for a := range v.AllowActions.GetActions() {
-				allowActions[mkStringHandle(a)] = struct{}{}
-			}
-		case *runtimev1.RuleTable_RuleRow_Action:
-			action = mkStringHandle(v.Action)
-		}
-
-		b := &BindingHandle{
-			Scope:             mkStringHandle(rule.Scope),
-			Version:           mkStringHandle(rule.Version),
-			Resource:          mkStringHandle(rule.Resource),
-			Role:              mkStringHandle(rule.Role),
-			Action:            action,
-			Principal:         mkStringHandle(rule.Principal),
-			OriginFqn:         mkStringHandle(rule.OriginFqn),
-			OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
-			Name:              mkStringHandle(rule.Name),
-			AllowActions:      allowActions,
-			Core:              core,
-		}
-
-		m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
 	}
+
+	return nil
+}
+
+// IndexRule indexes a single rule row.
+func (m *Index) IndexRule(rule *runtimev1.RuleTable_RuleRow) error {
+	if m.paramsCache == nil {
+		m.paramsCache = make(map[uint64]*RowParams)
+		m.drParamsCache = make(map[uint64]*RowParams)
+	}
+
+	var params, drParams *RowParams
+
+	switch rule.PolicyKind { //nolint:exhaustive
+	case policyv1.Kind_KIND_RESOURCE:
+		p, err := getOrGenerateParams(m.paramsCache, rule.Params)
+		if err != nil {
+			return err
+		}
+		params = p
+		if rule.OriginDerivedRole != "" {
+			drp, err := getOrGenerateParams(m.drParamsCache, rule.DerivedRoleParams)
+			if err != nil {
+				return err
+			}
+			drParams = drp
+		}
+	case policyv1.Kind_KIND_PRINCIPAL:
+		p, err := getOrGenerateParams(m.paramsCache, rule.Params)
+		if err != nil {
+			return err
+		}
+		params = p
+	}
+
+	// hashpb does not include field tags, so Condition=X/DerivedRoleCondition=nil
+	// hashes identically to Condition=nil/DerivedRoleCondition=X when X is the
+	// same Condition content. Feed a discriminator byte into the hasher to break
+	// the collision.
+	// TODO(saml): addressing upstream in protoc-gen-go-hashpb, remove this when that lands.
+	hasher := xxhash.New()
+	rule.HashPB(hasher, nonFunctionalChecksumFields)
+	var condDisc byte
+	if rule.Condition != nil {
+		condDisc |= 1
+	}
+	if rule.DerivedRoleCondition != nil {
+		condDisc |= 2
+	}
+	_, _ = hasher.Write([]byte{condDisc})
+	funcSum := hasher.Sum64()
+
+	core, ok := m.bi.coresBySum[funcSum]
+	if !ok {
+		core = &FunctionalCore{
+			Effect:               rule.Effect,
+			Condition:            rule.Condition,
+			DerivedRoleCondition: rule.DerivedRoleCondition,
+			EmitOutput:           rule.EmitOutput,
+			ScopePermissions:     rule.ScopePermissions,
+			FromRolePolicy:       rule.FromRolePolicy,
+			PolicyKind:           rule.PolicyKind,
+			Params:               params,
+			DerivedRoleParams:    drParams,
+			origins:              make(map[string]struct{}),
+			sum:                  funcSum,
+		}
+		m.bi.coresBySum[funcSum] = core
+	}
+	core.origins[rule.OriginFqn] = struct{}{}
+
+	var action unique.Handle[string]
+	var allowActions map[unique.Handle[string]]struct{}
+	switch v := rule.ActionSet.(type) {
+	case *runtimev1.RuleTable_RuleRow_AllowActions_:
+		allowActions = make(map[unique.Handle[string]]struct{}, len(v.AllowActions.GetActions()))
+		for a := range v.AllowActions.GetActions() {
+			allowActions[mkStringHandle(a)] = struct{}{}
+		}
+	case *runtimev1.RuleTable_RuleRow_Action:
+		action = mkStringHandle(v.Action)
+	}
+
+	b := &BindingHandle{
+		Scope:             mkStringHandle(rule.Scope),
+		Version:           mkStringHandle(rule.Version),
+		Resource:          mkStringHandle(rule.Resource),
+		Role:              mkStringHandle(rule.Role),
+		Action:            action,
+		Principal:         mkStringHandle(rule.Principal),
+		OriginFqn:         mkStringHandle(rule.OriginFqn),
+		OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
+		Name:              mkStringHandle(rule.Name),
+		AllowActions:      allowActions,
+		Core:              core,
+	}
+
+	m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
 
 	return nil
 }
