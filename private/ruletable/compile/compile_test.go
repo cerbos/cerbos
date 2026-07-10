@@ -92,7 +92,7 @@ func TestCompileStream(t *testing.T) {
 	require.Empty(t, gocmp.Diff(want, have, protocmp.Transform()))
 }
 
-// TestStreamedWireCompatibility proves that a rule table serialized incrementally.
+// TestStreamedWireCompatibility proves that a rule table can be serialized incrementally.
 func TestStreamedWireCompatibility(t *testing.T) {
 	const rulesFieldNumber = 1 // runtimev1.RuleTable.rules
 
