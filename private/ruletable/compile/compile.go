@@ -16,6 +16,23 @@ import (
 )
 
 func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) (*runtimev1.RuleTable, error) {
+	var rows []*runtimev1.RuleTable_RuleRow
+	rt, err := CompileStream(ctx, fsys, func(row *runtimev1.RuleTable_RuleRow) error {
+		rows = append(rows, row)
+		return nil
+	}, attrs...)
+	if err != nil {
+		return nil, err
+	}
+
+	rt.Rules = rows
+	return rt, nil
+}
+
+// CompileStream compiles the policies in fsys into rule table rows, passing each row to
+// onRow as it is produced instead of accumulating them. The returned rule table has all other field (schemas,
+// metadata, derived roles, scope maps) initialised.
+func CompileStream(ctx context.Context, fsys fs.FS, onRow func(*runtimev1.RuleTable_RuleRow) error, attrs ...compile.SourceAttribute) (*runtimev1.RuleTable, error) {
 	idx, err := compile.BuildIndex(ctx, fsys, attrs...)
 	if err != nil {
 		return nil, err
@@ -30,7 +47,7 @@ func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) 
 
 	rt := ruletable.NewProtoRuletable()
 
-	if err := ruletable.LoadPoliciesIter(rt, mgr.Iter(ctx)); err != nil {
+	if err := ruletable.LoadPoliciesIterFunc(rt, mgr.Iter(ctx), onRow); err != nil {
 		return nil, fmt.Errorf("failed to load policies: %w", err)
 	}
 
@@ -39,4 +56,12 @@ func Compile(ctx context.Context, fsys fs.FS, attrs ...compile.SourceAttribute) 
 	}
 
 	return rt, nil
+}
+
+// AppendRuleRowRecord replicates protobuf marshalling of a single
+// runtimev1.RuleTable_RuleRow as it is done by the (*RuleTable).MarshalToVT
+// method. It can be used to marshall rows separately from the rest of the
+// RuleTable.
+func AppendRuleRowRecord(buf []byte, row *runtimev1.RuleTable_RuleRow) ([]byte, error) {
+	return ruletable.AppendRuleRowRecord(buf, row)
 }

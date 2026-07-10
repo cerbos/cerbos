@@ -55,6 +55,43 @@ func sortRules(rt *runtimev1.RuleTable) {
 		return cmp.Compare(util.HashPB(a, nil), util.HashPB(b, nil))
 	})
 }
+
+func TestCompileStream(t *testing.T) {
+	fsys := os.DirFS(test.PathToDir(t, "store"))
+	ctx := t.Context()
+
+	want, err := ruletablecompile.Compile(ctx, fsys)
+	require.NoError(t, err)
+	require.NotEmpty(t, want.GetRules())
+
+	var streamed, buf []byte
+	rowCount := 0
+	remainder, err := ruletablecompile.CompileStream(ctx, fsys, func(row *runtimev1.RuleTable_RuleRow) error {
+		var err error
+		buf, err = ruletablecompile.AppendRuleRowRecord(buf[:0], row)
+		if err != nil {
+			return err
+		}
+		streamed = append(streamed, buf...)
+		rowCount++
+		return nil
+	})
+	require.NoError(t, err)
+	require.Empty(t, remainder.GetRules(), "remainder must not accumulate rows")
+	require.Equal(t, len(want.GetRules()), rowCount)
+
+	remainderBytes, err := remainder.MarshalVT()
+	require.NoError(t, err)
+	streamed = append(streamed, remainderBytes...)
+
+	have := &runtimev1.RuleTable{}
+	require.NoError(t, have.UnmarshalVT(streamed))
+
+	sortRules(want)
+	sortRules(have)
+	require.Empty(t, gocmp.Diff(want, have, protocmp.Transform()))
+}
+
 // TestStreamedWireCompatibility proves that a rule table serialized incrementally.
 func TestStreamedWireCompatibility(t *testing.T) {
 	const rulesFieldNumber = 1 // runtimev1.RuleTable.rules
