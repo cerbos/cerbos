@@ -64,7 +64,7 @@ func TestCompileStream(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, want.GetRules())
 
-	var streamed, buf []byte
+	var streamed, buf []byte //nolint:prealloc
 	rowCount := 0
 	remainder, err := ruletablecompile.CompileStream(ctx, fsys, func(row *runtimev1.RuleTable_RuleRow) error {
 		var err error

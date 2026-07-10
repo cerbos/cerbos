@@ -11,7 +11,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 )
 
-var ruleTableRulesField = protowire.Number((&runtimev1.RuleTable{}).ProtoReflect().Descriptor().Fields().ByName("rules").Number())
+var ruleTableRulesField = new(runtimev1.RuleTable).ProtoReflect().Descriptor().Fields().ByName("rules").Number()
 
 // AppendRuleRowRecord replicates protobuf marshalling of a single
 // runtimev1.RuleTable_RuleRow as it is done by the (*RuleTable).MarshalToVT
