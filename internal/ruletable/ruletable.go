@@ -84,6 +84,15 @@ func LoadPolicies(ctx context.Context, rt *runtimev1.RuleTable, pl policyloader.
 // LoadPoliciesIter is the streaming equivalent of LoadPolicies: it consumes compiled
 // policy sets one at a time.
 func LoadPoliciesIter(rt *runtimev1.RuleTable, policySets iter.Seq2[*runtimev1.RunnablePolicySet, error]) error {
+	return LoadPoliciesIterFunc(rt, policySets, func(row *runtimev1.RuleTable_RuleRow) error {
+		rt.Rules = append(rt.Rules, row)
+		return nil
+	})
+}
+
+// LoadPoliciesIterFunc is like LoadPoliciesIter, but each rule row is passed to onRow
+// instead of being appended to rt.Rules.
+func LoadPoliciesIterFunc(rt *runtimev1.RuleTable, policySets iter.Seq2[*runtimev1.RunnablePolicySet, error], onRow func(*runtimev1.RuleTable_RuleRow) error) error {
 	for rps, err := range policySets {
 		if err != nil {
 			return fmt.Errorf("failed to get compiled policy set: %w", err)
@@ -93,8 +102,11 @@ func LoadPoliciesIter(rt *runtimev1.RuleTable, policySets iter.Seq2[*runtimev1.R
 			continue
 		}
 
-		rows := AddPolicy(rt, rps)
-		rt.Rules = append(rt.Rules, rows...)
+		for _, row := range AddPolicy(rt, rps) {
+			if err := onRow(row); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
