@@ -168,4 +168,21 @@ type RowParams struct {
 	CelPrograms []*CelProgram
 	Variables   []*runtimev1.Variable
 	Key         uint64
+	refcount    int
+}
+
+func (p *RowParams) addRef() {
+	if p != nil {
+		p.refcount++
+	}
+}
+
+func (p *RowParams) removeRef(m map[uint64]*RowParams) {
+	if p == nil {
+		return
+	}
+	p.refcount--
+	if p.refcount <= 0 {
+		delete(m, p.Key)
+	}
 }

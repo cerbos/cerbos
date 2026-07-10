@@ -158,6 +158,8 @@ func (m *Index) IndexRule(rule *runtimev1.RuleTable_RuleRow) error {
 			sum:                  funcSum,
 		}
 		m.bi.coresBySum[funcSum] = core
+		params.addRef()
+		drParams.addRef()
 	}
 	core.origins[rule.OriginFqn] = struct{}{}
 
@@ -806,6 +808,8 @@ func (m *Index) DeletePolicy(fqn string) error {
 
 		if len(b.Core.origins) == 0 {
 			delete(m.bi.coresBySum, b.Core.sum)
+			b.Core.Params.removeRef(m.paramsCache)
+			b.Core.DerivedRoleParams.removeRef(m.drParamsCache)
 		}
 	}
 
