@@ -807,9 +807,11 @@ func (m *Index) DeletePolicy(fqn string) error {
 		m.bi.removeBinding(b)
 
 		if len(b.Core.origins) == 0 {
-			delete(m.bi.coresBySum, b.Core.sum)
-			b.Core.Params.removeRef(m.paramsCache)
-			b.Core.DerivedRoleParams.removeRef(m.drParamsCache)
+			if _, ok := m.bi.coresBySum[b.Core.sum]; ok {
+				delete(m.bi.coresBySum, b.Core.sum)
+				b.Core.Params.removeRef(m.paramsCache)
+				b.Core.DerivedRoleParams.removeRef(m.drParamsCache)
+			}
 		}
 	}
 
