@@ -181,17 +181,13 @@ In the AWS console or the CLI, create the task using the following JSON definiti
           "value": "YOUR_CLIENT_SECRET" <2>
         },
         {
-          "name": "CERBOS_HUB_WORKSPACE_SECRET",
-          "value": "YOUR_WORKSPACE_SECRET" <3>
-        },
-        {
-          "name": "CERBOS_HUB_BUNDLE",
-          "value": "YOUR_LABEL" <4>
+          "name": "CERBOS_HUB_DEPLOYMENT_ID",
+          "value": "YOUR_DEPLOYMENT_ID" <3>
         }
       ],
       "command": [
         "server",
-        "--set=audit.enabled=true", <5>
+        "--set=audit.enabled=true", <4>
         "--set=audit.backend=hub",
         "--set=audit.hub.storagePath=/tmp"
       ],
@@ -213,8 +209,8 @@ In the AWS console or the CLI, create the task using the following JSON definiti
       "systemControls": []
     }
   ],
-  "taskRoleArn": "TASK_ROLE_ARN", <6>
-  "executionRoleArn": "TASK_EXECUTION_ROLE_ARN", <7>
+  "taskRoleArn": "TASK_ROLE_ARN", <5>
+  "executionRoleArn": "TASK_EXECUTION_ROLE_ARN", <6>
   "networkMode": "awsvpc",
   "requiresCompatibilities": [
     "FARGATE"
@@ -229,11 +225,10 @@ In the AWS console or the CLI, create the task using the following JSON definiti
 ----
 <1> Client ID from the Cerbos Hub credential
 <2> Client secret from the Cerbos Hub credential
-<3> Cerbos Hub workspace secret
-<4> The label to watch for bundle updates. See xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment labels documentation] for details.
-<5> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
-<6> The ARN for the custom ECS Task Role defined in Step 1.
-<7> The ARN for the ECS Task Execution. The default is `arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole`
+<3> Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[Deployment ID]
+<4> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
+<5> The ARN for the custom ECS Task Role defined in Step 1.
+<6> The ARN for the ECS Task Execution. The default is `arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole`
 
 ==== Step 4: Launch a service
 

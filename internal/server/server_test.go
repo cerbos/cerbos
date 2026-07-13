@@ -4,7 +4,6 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/tls"
@@ -27,7 +26,6 @@ import (
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
-	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -38,7 +36,6 @@ import (
 	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/cerbos/cloud-api/bundle"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 )
 
@@ -81,7 +78,7 @@ func TestServer(t *testing.T) {
 	})
 
 	t.Run("store=bundle_local", func(t *testing.T) {
-		tpg := func(version bundle.Version, bundleType bundlev2.BundleType) func(t *testing.T) testParam {
+		tpg := func(bundleType bundlev2.BundleType) func(t *testing.T) testParam {
 			return func(t *testing.T) testParam {
 				t.Helper()
 				ctx, cancelFunc := context.WithCancel(t.Context())
@@ -94,28 +91,18 @@ func TestServer(t *testing.T) {
 					bundleName = "bundle.crrts"
 				}
 
-				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_%s", version, dirSuffix)))
+				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v2_%s", dirSuffix)))
+
+				keyBytes, err := os.ReadFile(filepath.Join(dir, "encryption_key.txt"))
+				require.NoError(t, err, "Failed to read encryption key")
 
 				conf := &hubstore.Conf{
 					CacheSize: 1024,
 					Local: &hubstore.LocalSourceConf{
-						BundlePath: filepath.Join(dir, bundleName),
-						TempDir:    t.TempDir(),
+						BundlePath:    filepath.Join(dir, bundleName),
+						TempDir:       t.TempDir(),
+						EncryptionKey: string(keyBytes),
 					},
-				}
-
-				switch version {
-				case bundle.Version1:
-					keyBytes, err := os.ReadFile(filepath.Join(dir, "secret_key.txt"))
-					require.NoError(t, err, "Failed to read secret key")
-
-					conf.Credentials = &hub.CredentialsConf{WorkspaceSecret: string(bytes.TrimSpace(keyBytes))}
-				case bundle.Version2:
-					keyBytes, err := os.ReadFile(filepath.Join(dir, "encryption_key.txt"))
-					require.NoError(t, err, "Failed to read encryption key")
-
-					conf.Local.EncryptionKey = string(keyBytes)
-				default:
 				}
 
 				store, err := hubstore.NewStore(ctx, conf)
@@ -131,9 +118,8 @@ func TestServer(t *testing.T) {
 		}
 
 		t.Run("api", func(t *testing.T) {
-			t.Run("bundlev1", apiTests(tpg(bundle.Version1, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
-			t.Run("bundlev2", apiTests(tpg(bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
-			t.Run("bundlev2_ruletable", apiTests(tpg(bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)))
+			t.Run("bundlev2", apiTests(tpg(bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
+			t.Run("bundlev2_ruletable", apiTests(tpg(bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)))
 		})
 	})
 }

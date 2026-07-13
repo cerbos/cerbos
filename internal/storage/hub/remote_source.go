@@ -10,9 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -22,8 +19,6 @@ import (
 
 	"github.com/cerbos/cloud-api/base"
 	bundleapi "github.com/cerbos/cloud-api/bundle"
-	bundleapiv2 "github.com/cerbos/cloud-api/bundle/v2"
-	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	hubapi "github.com/cerbos/cloud-api/hub"
 
@@ -48,10 +43,6 @@ var (
 	_ storage.BinaryStore  = (*RemoteSource)(nil)
 	_ storage.Reloadable   = (*RemoteSource)(nil)
 	_ storage.Instrumented = (*RemoteSource)(nil)
-
-	playgroundLabelPattern = regexp.MustCompile(`^playground/[A-Z0-9]{12}$`)
-
-	ErrOfflineModeNotAvailable = errors.New("offline mode is not available when bundle version is set to 2")
 )
 
 type Bundle interface {
@@ -73,48 +64,12 @@ type cloudAPIClient interface {
 	BootstrapBundle(context.Context) (string, bundlev2.BundleType, []byte, error)
 	GetBundle(context.Context) (string, bundlev2.BundleType, []byte, error)
 	GetCachedBundle() (string, error)
-	OpenCredentials() *credentials.Credentials
 	WatchBundle(context.Context) (bundleapi.WatchHandle, error)
 }
 
-type cloudAPIv1 struct {
-	client      ClientV1
-	bundleLabel string
-	playground  bool
-}
-
-func (apiv1 *cloudAPIv1) BootstrapBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
-	if apiv1.playground {
-		return "", bundlev2.BundleType_BUNDLE_TYPE_UNSPECIFIED, nil, bundleapi.ErrBootstrappingNotSupported
-	}
-
-	path, err := apiv1.client.BootstrapBundle(ctx, apiv1.bundleLabel)
-	return path, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, err
-}
-
-func (apiv1 *cloudAPIv1) GetBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
-	path, err := apiv1.client.GetBundle(ctx, apiv1.bundleLabel)
-	return path, bundlev2.BundleType_BUNDLE_TYPE_LEGACY, nil, err
-}
-
-func (apiv1 *cloudAPIv1) GetCachedBundle() (string, error) {
-	return apiv1.client.GetCachedBundle(apiv1.bundleLabel)
-}
-
-func (apiv1 *cloudAPIv1) OpenCredentials() *credentials.Credentials {
-	if apiv1.playground {
-		return nil
-	}
-	return apiv1.client.HubCredentials()
-}
-
-func (apiv1 *cloudAPIv1) WatchBundle(ctx context.Context) (bundleapi.WatchHandle, error) {
-	return apiv1.client.WatchBundle(ctx, apiv1.bundleLabel)
-}
-
 type cloudAPIv2 struct {
-	client ClientV2
-	source bundleapiv2.Source
+	client Client
+	source bundleapi.Source
 }
 
 func (apiv2 *cloudAPIv2) BootstrapBundle(ctx context.Context) (string, bundlev2.BundleType, []byte, error) {
@@ -129,26 +84,21 @@ func (apiv2 *cloudAPIv2) GetCachedBundle() (string, error) {
 	return apiv2.client.GetCachedBundle(apiv2.source)
 }
 
-func (apiv2 *cloudAPIv2) OpenCredentials() *credentials.Credentials {
-	return nil
-}
-
 func (apiv2 *cloudAPIv2) WatchBundle(ctx context.Context) (bundleapi.WatchHandle, error) {
 	return apiv2.client.WatchBundle(ctx, apiv2.source)
 }
 
 // RemoteSource implements a bundle store that loads bundles from a remote source.
 type RemoteSource struct {
-	hub           ClientProvider
-	scratchFS     afero.Fs
-	client        cloudAPIClient
-	log           *zap.Logger
-	conf          *Conf
-	bundle        Bundle
-	subs          *storage.SubscriptionManager
-	bundleVersion bundleapi.Version
-	mu            sync.RWMutex
-	healthy       bool
+	hub       ClientProvider
+	scratchFS afero.Fs
+	client    cloudAPIClient
+	log       *zap.Logger
+	conf      *Conf
+	bundle    Bundle
+	subs      *storage.SubscriptionManager
+	mu        sync.RWMutex
+	healthy   bool
 }
 
 func (s *RemoteSource) Subscribe(sub storage.Subscriber) {
@@ -169,60 +119,31 @@ func NewRemoteSource(conf *Conf) (*RemoteSource, error) {
 }
 
 type ClientProvider interface {
-	V1(bundleapi.ClientConf) (ClientV1, error)
-	V2(bundleapi.ClientConf) (ClientV2, error)
+	Client(bundleapi.ClientConf) (Client, error)
 }
 
 type hubClientProvider struct {
 	*hubapi.Hub
 }
 
-func (h hubClientProvider) V1(conf bundleapi.ClientConf) (ClientV1, error) {
+func (h hubClientProvider) Client(conf bundleapi.ClientConf) (Client, error) {
 	return h.BundleClient(conf)
 }
 
-func (h hubClientProvider) V2(conf bundleapi.ClientConf) (ClientV2, error) {
-	return h.BundleClientV2(conf)
-}
-
-type ClientV1 interface {
-	HubCredentials() *credentials.Credentials
-	BootstrapBundle(context.Context, string) (string, error)
-	GetBundle(context.Context, string) (string, error)
-	GetCachedBundle(string) (string, error)
-	WatchBundle(context.Context, string) (bundleapi.WatchHandle, error)
-}
-
-type ClientV2 interface {
-	BootstrapBundle(context.Context, bundleapiv2.Source) (string, bundlev2.BundleType, []byte, error)
-	GetBundle(context.Context, bundleapiv2.Source) (string, bundlev2.BundleType, []byte, error)
-	GetCachedBundle(bundleapiv2.Source) (string, error)
-	WatchBundle(context.Context, bundleapiv2.Source) (bundleapi.WatchHandle, error)
+type Client interface {
+	BootstrapBundle(context.Context, bundleapi.Source) (string, bundlev2.BundleType, []byte, error)
+	GetBundle(context.Context, bundleapi.Source) (string, bundlev2.BundleType, []byte, error)
+	GetCachedBundle(bundleapi.Source) (string, error)
+	WatchBundle(context.Context, bundleapi.Source) (bundleapi.WatchHandle, error)
 }
 
 func NewRemoteSourceWithHub(conf *Conf, hub ClientProvider) (*RemoteSource, error) {
-	var bundleVersion bundleapi.Version
-	switch {
-	case strings.TrimSpace(conf.Remote.BundleLabel) != "":
-		bundleVersion = bundleapi.Version1
-
-	case strings.TrimSpace(conf.Remote.DeploymentID) != "":
-		bundleVersion = bundleapi.Version2
-
-	case strings.TrimSpace(conf.Remote.PlaygroundID) != "":
-		bundleVersion = bundleapi.Version2
-
-	default:
-		return nil, errors.New("bundleLabel, deploymentID or playgroundID must be specified")
-	}
-
 	return &RemoteSource{
-		bundleVersion: bundleVersion,
-		conf:          conf,
-		hub:           hub,
-		healthy:       false,
-		log:           zap.L().Named(DriverName),
-		scratchFS:     afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
+		conf:      conf,
+		hub:       hub,
+		healthy:   false,
+		log:       zap.L().Named(DriverName),
+		scratchFS: afero.NewBasePathFs(afero.NewOsFs(), conf.Remote.TempDir),
 	}, nil
 }
 
@@ -234,58 +155,23 @@ func (s *RemoteSource) Init(ctx context.Context) error {
 		TempDir:  s.conf.Remote.TempDir,
 	}
 
-	switch s.bundleVersion {
-	case bundleapi.Version1:
-		clientv1, err := s.hub.V1(clientConf)
-		if err != nil {
-			return fmt.Errorf("failed to create API client v1: %w", err)
-		}
+	client, err := s.hub.Client(clientConf)
+	if err != nil {
+		return fmt.Errorf("failed to create API client: %w", err)
+	}
 
-		s.client = &cloudAPIv1{
-			client:      clientv1,
-			bundleLabel: s.conf.Remote.BundleLabel,
-			playground:  playgroundLabelPattern.MatchString(s.conf.Remote.BundleLabel),
-		}
-		s.log = s.log.With(zap.String("label", s.conf.Remote.BundleLabel))
-
-	case bundleapi.Version2:
-		clientv2, err := s.hub.V2(clientConf)
-		if err != nil {
-			return fmt.Errorf("failed to create API client v2: %w", err)
-		}
-
-		var source bundleapiv2.Source
-		switch {
-		case s.conf.Remote.DeploymentID != "":
-			source = bundleapiv2.DeploymentID(s.conf.Remote.DeploymentID)
-		case s.conf.Remote.PlaygroundID != "":
-			source = bundleapiv2.PlaygroundID(s.conf.Remote.PlaygroundID)
-		default:
-			return errors.New("no bundle source configured")
-		}
-
-		s.client = &cloudAPIv2{client: clientv2, source: source}
-		s.log = s.log.With(zap.Stringer("source", source))
-
+	var source bundleapi.Source
+	switch {
+	case s.conf.Remote.DeploymentID != "":
+		source = bundleapi.DeploymentID(s.conf.Remote.DeploymentID)
+	case s.conf.Remote.PlaygroundID != "":
+		source = bundleapi.PlaygroundID(s.conf.Remote.PlaygroundID)
 	default:
-		return fmt.Errorf("unsupported bundle version: %d", s.bundleVersion)
+		return errors.New("no bundle source configured")
 	}
 
-	// Ideally we want to be able to automatically switch between online and offline modes.
-	// That logic is complicated to implement and test in the little time we have. There are open questions
-	// about expected behaviour as well. For example, is it preferable to use a stale copy from cache or fail fast?
-	// So, this initial version just provides an escape hatch to manually deal with downtime by putting the PDP
-	// into offline mode.
-	// TODO(cell): Implement automatic online/offline mode
-	// TODO(oguzhan): Get rid of offline mode when we no longer support bundle.Version1.
-	if shouldWorkOffline() {
-		if s.bundleVersion == bundleapi.Version2 {
-			return ErrOfflineModeNotAvailable
-		}
-
-		s.log.Warn("Working in offline mode because the CERBOS_HUB_OFFLINE environment variable is set")
-		return s.fetchBundleOffline()
-	}
+	s.client = &cloudAPIv2{client: client, source: source}
+	s.log = s.log.With(zap.Stringer("source", source))
 
 	// fail fast if the service is down
 	if err := s.fetchBundle(ctx); err != nil {
@@ -322,16 +208,6 @@ func (b *noBundleBackoff) Reset() {
 	b.count = 0
 }
 
-func shouldWorkOffline() bool {
-	v := hub.GetEnv(hub.OfflineKey)
-	offline, err := strconv.ParseBool(v)
-	if err != nil {
-		return false
-	}
-
-	return offline
-}
-
 func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	var bdlPath string
 	var bdlType bundlev2.BundleType
@@ -365,18 +241,6 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	return s.swapBundle(bdlPath, encryptionKey, bdlType)
 }
 
-func (s *RemoteSource) fetchBundleOffline() error {
-	// TODO(oguzhan): Get rid of offline mode when we no longer support bundle.Version1.
-	s.log.Info("Looking for cached bundle")
-	bdlPath, err := s.client.GetCachedBundle()
-	if err != nil {
-		s.log.Error("Failed to find cached bundle", zap.Error(err))
-		return fmt.Errorf("failed to find cached bundle: %w", err)
-	}
-
-	return s.swapBundle(bdlPath, nil, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
-}
-
 func (s *RemoteSource) removeBundle(healthy bool) {
 	var oldBundle Bundle
 	s.mu.Lock()
@@ -395,7 +259,6 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 	opts := OpenOpts{
 		Source:        "remote",
 		BundlePath:    bundlePath,
-		Credentials:   s.client.OpenCredentials(),
 		EncryptionKey: encryptionKey,
 		ScratchFS:     s.scratchFS,
 		CacheSize:     s.conf.CacheSize,
@@ -410,19 +273,10 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 			return fmt.Errorf("failed to open rule table bundle: %w", err)
 		}
 	} else {
-		switch s.bundleVersion {
-		case bundleapi.Version1:
-			if newBundle, err = OpenLegacy(opts); err != nil {
-				s.log.Error("Failed to open bundle", zap.Error(err))
-				return fmt.Errorf("failed to open bundle: %w", err)
-			}
-		case bundleapi.Version2:
-			if newBundle, err = OpenLegacyV2(opts); err != nil {
-				s.log.Error("Failed to open bundle v2", zap.Error(err))
-				return fmt.Errorf("failed to open bundle v2: %w", err)
-			}
-		default:
-			return fmt.Errorf("unsupported bundle version: %d", s.bundleVersion)
+		newBundle, err = OpenLegacyBundle(opts)
+		if err != nil {
+			s.log.Error("Failed to open legacy bundle", zap.Error(err))
+			return fmt.Errorf("failed to open legacy bundle: %w", err)
 		}
 	}
 
@@ -725,26 +579,18 @@ func (s *RemoteSource) RepoStats(ctx context.Context) storage.RepoStats {
 
 func (s *RemoteSource) Source() *auditv1.PolicySource {
 	hubPolicySource := &auditv1.PolicySource_Hub{}
-	switch s.bundleVersion {
-	case bundleapi.Version1:
-		hubPolicySource.Source = &auditv1.PolicySource_Hub_Label{
-			Label: s.conf.Remote.BundleLabel,
+	switch {
+	case s.conf.Remote.DeploymentID != "":
+		hubPolicySource.Source = &auditv1.PolicySource_Hub_RemoteBundle_{
+			RemoteBundle: &auditv1.PolicySource_Hub_RemoteBundle{
+				DeploymentId: s.conf.Remote.DeploymentID,
+				BundleId:     s.activeBundleID(),
+			},
 		}
-	case bundleapi.Version2:
-		switch {
-		case s.conf.Remote.DeploymentID != "":
-			hubPolicySource.Source = &auditv1.PolicySource_Hub_RemoteBundle_{
-				RemoteBundle: &auditv1.PolicySource_Hub_RemoteBundle{
-					DeploymentId: s.conf.Remote.DeploymentID,
-					BundleId:     s.activeBundleID(),
-				},
-			}
-		case s.conf.Remote.PlaygroundID != "":
-			hubPolicySource.Source = &auditv1.PolicySource_Hub_PlaygroundId{
-				PlaygroundId: s.conf.Remote.PlaygroundID,
-			}
+	case s.conf.Remote.PlaygroundID != "":
+		hubPolicySource.Source = &auditv1.PolicySource_Hub_PlaygroundId{
+			PlaygroundId: s.conf.Remote.PlaygroundID,
 		}
-	default:
 	}
 
 	return &auditv1.PolicySource{

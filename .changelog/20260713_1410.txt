@@ -1,0 +1,3 @@
+type:breaking
+Remove support for legacy Cerbos Hub workspaces
+Loading policy bundles from legacy Cerbos Hub workspaces is no longer supported and the corresponding configuration settings have been removed, along with the `cerbosctl hub epdp` command.

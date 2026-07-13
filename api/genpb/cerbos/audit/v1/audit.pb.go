@@ -623,6 +623,7 @@ func (x *PolicySource) GetHub() *PolicySource_Hub {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cerbos/audit/v1/audit.proto.
 func (x *PolicySource) GetEmbeddedPdp() *PolicySource_EmbeddedPDP {
 	if x != nil {
 		if x, ok := x.Source.(*PolicySource_EmbeddedPdp); ok {
@@ -657,6 +658,7 @@ type PolicySource_Hub_ struct {
 }
 
 type PolicySource_EmbeddedPdp struct {
+	// Deprecated: Marked as deprecated in cerbos/audit/v1/audit.proto.
 	EmbeddedPdp *PolicySource_EmbeddedPDP `protobuf:"bytes,6,opt,name=embedded_pdp,json=embeddedPdp,proto3,oneof"`
 }
 
@@ -1156,6 +1158,7 @@ func (x *PolicySource_Hub) GetSource() isPolicySource_Hub_Source {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cerbos/audit/v1/audit.proto.
 func (x *PolicySource_Hub) GetLabel() string {
 	if x != nil {
 		if x, ok := x.Source.(*PolicySource_Hub_Label); ok {
@@ -1216,6 +1219,7 @@ type isPolicySource_Hub_Source interface {
 }
 
 type PolicySource_Hub_Label struct {
+	// Deprecated: Marked as deprecated in cerbos/audit/v1/audit.proto.
 	Label string `protobuf:"bytes,1,opt,name=label,proto3,oneof"`
 }
 
@@ -1478,14 +1482,14 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x12effective_policies\x18\x01 \x03(\v22.cerbos.audit.v1.AuditTrail.EffectivePoliciesEntryR\x11effectivePolicies\x1ah\n" +
 	"\x16EffectivePoliciesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
-	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\x93\f\n" +
+	"\x05value\x18\x02 \x01(\v2\".cerbos.policy.v1.SourceAttributesR\x05value:\x028\x01\"\x9b\f\n" +
 	"\fPolicySource\x128\n" +
 	"\x04blob\x18\x01 \x01(\v2\".cerbos.audit.v1.PolicySource.BlobH\x00R\x04blob\x12D\n" +
 	"\bdatabase\x18\x02 \x01(\v2&.cerbos.audit.v1.PolicySource.DatabaseH\x00R\bdatabase\x128\n" +
 	"\x04disk\x18\x03 \x01(\v2\".cerbos.audit.v1.PolicySource.DiskH\x00R\x04disk\x125\n" +
 	"\x03git\x18\x04 \x01(\v2!.cerbos.audit.v1.PolicySource.GitH\x00R\x03git\x125\n" +
-	"\x03hub\x18\x05 \x01(\v2!.cerbos.audit.v1.PolicySource.HubH\x00R\x03hub\x12N\n" +
-	"\fembedded_pdp\x18\x06 \x01(\v2).cerbos.audit.v1.PolicySource.EmbeddedPDPH\x00R\vembeddedPdp\x1a=\n" +
+	"\x03hub\x18\x05 \x01(\v2!.cerbos.audit.v1.PolicySource.HubH\x00R\x03hub\x12R\n" +
+	"\fembedded_pdp\x18\x06 \x01(\v2).cerbos.audit.v1.PolicySource.EmbeddedPDPB\x02\x18\x01H\x00R\vembeddedPdp\x1a=\n" +
 	"\x04Blob\x12\x1d\n" +
 	"\n" +
 	"bucket_url\x18\x01 \x01(\tR\tbucketUrl\x12\x16\n" +
@@ -1508,9 +1512,9 @@ const file_cerbos_audit_v1_audit_proto_rawDesc = "" +
 	"\x0erepository_url\x18\x01 \x01(\tR\rrepositoryUrl\x12\x16\n" +
 	"\x06branch\x18\x02 \x01(\tR\x06branch\x12\"\n" +
 	"\fsubdirectory\x18\x03 \x01(\tR\fsubdirectory\x12\x12\n" +
-	"\x04hash\x18\x04 \x01(\tR\x04hash\x1a\xf3\x04\n" +
-	"\x03Hub\x12\x16\n" +
-	"\x05label\x18\x01 \x01(\tH\x00R\x05label\x12)\n" +
+	"\x04hash\x18\x04 \x01(\tR\x04hash\x1a\xf7\x04\n" +
+	"\x03Hub\x12\x1a\n" +
+	"\x05label\x18\x01 \x01(\tB\x02\x18\x01H\x00R\x05label\x12)\n" +
 	"\rdeployment_id\x18\x02 \x01(\tB\x02\x18\x01H\x00R\fdeploymentId\x12%\n" +
 	"\rplayground_id\x18\x03 \x01(\tH\x00R\fplaygroundId\x12R\n" +
 	"\flocal_bundle\x18\x04 \x01(\v2-.cerbos.audit.v1.PolicySource.Hub.LocalBundleH\x00R\vlocalBundle\x12[\n" +

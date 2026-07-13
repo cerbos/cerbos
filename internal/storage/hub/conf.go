@@ -16,7 +16,6 @@ import (
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 const (
@@ -33,8 +32,6 @@ type Conf struct {
 	Remote *RemoteSourceConf `yaml:"remote"`
 	// Local holds configuration for local bundle source.
 	Local *LocalSourceConf `yaml:"local"`
-	// Credentials holds Cerbos Hub credentials.
-	Credentials *hub.CredentialsConf `yaml:"credentials" conf:",ignore"`
 	// CacheSize defines the number of policies to cache in memory.
 	CacheSize uint `yaml:"cacheSize" conf:",example=1024"`
 }
@@ -43,22 +40,18 @@ type Conf struct {
 type LocalSourceConf struct {
 	// BundlePath is the full path to the local bundle file.
 	BundlePath string `yaml:"bundlePath" conf:"required,example=/path/to/bundle.crbp"`
-	// EncryptionKey is encryption key to decode the bundle. It must be string encoded.
-	EncryptionKey string `yaml:"encryptionKey" conf:",ignore"`
+	// EncryptionKey is encryption key to decode the bundle. It must be hex encoded.
+	EncryptionKey string `yaml:"encryptionKey" conf:",example=9b941a7f43fcade02d1e07bdaca008aedd0310e8804bc465bc44814a2010ecd3"`
 	// TempDir is the directory to use for temporary files.
 	TempDir string `yaml:"tempDir" conf:",example=${TEMP}"`
 }
 
 // RemoteSourceConf holds configuration for remote bundle store.
 type RemoteSourceConf struct {
-	// Connection defines settings for the remote server connection.
-	Connection *hub.ConnectionConf `yaml:"connection" conf:",ignore"`
-	// BundleLabel to fetch from the server.
-	BundleLabel string `yaml:"bundleLabel" conf:"required,example=latest"`
-	// DeploymentID to fetch from the server.
-	DeploymentID string `yaml:"deploymentID" conf:",ignore"`
-	// PlaygroundID to fetch from the server.
-	PlaygroundID string `yaml:"playgroundID" conf:",ignore"`
+	// DeploymentID to fetch from the server. Mutually exclusive with PlaygroundID
+	DeploymentID string `yaml:"deploymentID" conf:",example=TVWD7S5W4V5O"`
+	// PlaygroundID to fetch from the server. Mutually exclusive with DeploymentID.
+	PlaygroundID string `yaml:"playgroundID" conf:",example=HDUDDWLR6ZVM"`
 	// CacheDir is the directory to use for caching downloaded bundles.
 	CacheDir string `yaml:"cacheDir" conf:",example=${XDG_CACHE_DIR}"`
 	// TempDir is the directory to use for temporary files.
@@ -83,37 +76,18 @@ func (conf *Conf) Validate() (outErr error) {
 	}
 
 	if conf.CacheSize == 0 {
-		outErr = multierr.Append(outErr, errors.New("cacheSize must be greater than zero"))
+		multierr.AppendInto(&outErr, errors.New("cacheSize must be greater than zero"))
 	}
 
 	if err := conf.Local.validate(); err != nil {
-		outErr = multierr.Append(outErr, err)
+		multierr.AppendInto(&outErr, err)
 	}
 
 	if err := conf.Remote.validate(); err != nil {
-		outErr = multierr.Append(outErr, err)
-	}
-
-	if err := conf.validateCredentials(); err != nil {
-		outErr = multierr.Append(outErr, err)
+		multierr.AppendInto(&outErr, err)
 	}
 
 	return outErr
-}
-
-func (conf *Conf) validateCredentials() error {
-	if conf.Credentials != nil {
-		util.DeprecationReplacedWarning("storage.bundle.credentials section", "hub.credentials")
-		return errors.New("storage.bundle.credentials section is no longer supported")
-	}
-
-	hubConf, err := hub.GetConf()
-	if err != nil {
-		return fmt.Errorf("failed to read Cerbos Hub configuration: %w", err)
-	}
-
-	conf.Credentials = &hubConf.Credentials
-	return conf.Credentials.Validate()
 }
 
 func (lc *LocalSourceConf) validate() error {
@@ -149,35 +123,24 @@ func (lc *LocalSourceConf) setDefaultsForUnsetFields() error {
 	return nil
 }
 
-func (rc *RemoteSourceConf) validate() error {
+func (rc *RemoteSourceConf) validate() (outErr error) {
 	if rc == nil {
 		return nil
 	}
 
-	return rc.setDefaultsForUnsetFields()
-}
+	if rc.CacheDir == "" {
+		cacheDir, err := os.UserCacheDir()
+		if err != nil {
+			return fmt.Errorf("failed to determine cache directory: %w", err)
+		}
 
-func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
-	if rc.BundleLabel == "" {
-		rc.BundleLabel = hub.GetEnv(hub.BundleLabelKey)
-	}
+		dir := filepath.Join(cacheDir, "cerbos-hub")
+		const permissions = 0o764
+		if err := os.MkdirAll(dir, permissions); err != nil {
+			return fmt.Errorf("failed to create cache dir %q: %w", dir, err)
+		}
 
-	if rc.DeploymentID == "" {
-		rc.DeploymentID = hub.GetEnv(hub.DeploymentIDKey)
-	}
-
-	if rc.PlaygroundID == "" {
-		rc.PlaygroundID = hub.GetEnv(hub.PlaygroundIDKey)
-	}
-
-	if rc.BundleLabel == "" && rc.DeploymentID == "" && rc.PlaygroundID == "" {
-		return errors.New("bundleLabel, deploymentID or playgroundID must be specified")
-	}
-
-	if (rc.BundleLabel != "" && (rc.DeploymentID != "" || rc.PlaygroundID != "")) ||
-		(rc.DeploymentID != "" && (rc.BundleLabel != "" || rc.PlaygroundID != "")) ||
-		(rc.PlaygroundID != "" && (rc.BundleLabel != "" || rc.DeploymentID != "")) {
-		return errors.New("only one of the bundleLabel, deploymentID or playgroundID must be specified")
+		rc.CacheDir = dir
 	}
 
 	if rc.TempDir == "" {
@@ -188,33 +151,20 @@ func (rc *RemoteSourceConf) setDefaultsForUnsetFields() error {
 		rc.TempDir = dir
 	}
 
-	if rc.CacheDir == "" {
-		cacheDir, err := os.UserCacheDir()
-		if err != nil {
-			return fmt.Errorf("failed to determine cache directory: %w", err)
-		}
-
-		dir := filepath.Join(cacheDir, "cerbos-hub")
-		//nolint:mnd
-		if err := os.MkdirAll(dir, 0o764); err != nil {
-			return fmt.Errorf("failed to create cache dir %q: %w", dir, err)
-		}
-
-		rc.CacheDir = dir
+	if rc.DeploymentID == "" {
+		rc.DeploymentID = hub.GetEnv(hub.DeploymentIDKey)
 	}
 
-	if rc.Connection != nil {
-		util.DeprecationReplacedWarning("storage.bundle.remote.connection section", "hub.connection")
-		return errors.New("storage.bundle.remote.connection configuration is no longer supported")
+	if rc.PlaygroundID == "" {
+		rc.PlaygroundID = hub.GetEnv(hub.PlaygroundIDKey)
 	}
 
-	hubConf, err := hub.GetConf()
-	if err != nil {
-		return fmt.Errorf("failed to read Cerbos Hub configuration: %w", err)
+	if (rc.DeploymentID == "") == (rc.PlaygroundID == "") {
+		multierr.AppendInto(&outErr, errors.New("exactly one of storage.hub.remote.deploymentID or storage.hub.remote.playgroundID must be specified"))
 	}
 
-	rc.Connection = &hubConf.Connection
-	return rc.Connection.Validate()
+	_, err := hub.GetConf()
+	return multierr.Append(outErr, err)
 }
 
 func GetConf() (*Conf, error) {

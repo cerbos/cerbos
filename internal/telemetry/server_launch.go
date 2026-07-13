@@ -14,12 +14,13 @@ import (
 	telemetryv1 "github.com/cerbos/cerbos/api/genpb/cerbos/telemetry/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/storage/disk"
 	"github.com/cerbos/cerbos/internal/storage/git"
-	"github.com/cerbos/cerbos/internal/storage/hub"
+	hubstore "github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -119,15 +120,15 @@ func extractFeatures(store storage.Store) *telemetryv1.ServerLaunch_Features {
 
 				feats.Storage.Store = &telemetryv1.ServerLaunch_Features_Storage_Blob_{Blob: b}
 			}
-		case hub.DriverName:
-			if bundleConf, err := hub.GetConf(); err == nil {
-				pdpID := util.PDPIdentifier(bundleConf.Credentials.PDPID)
+		case hubstore.DriverName:
+			if hubConf, err := hub.GetConf(); err == nil {
+				pdpID := util.PDPIdentifier(hubConf.Credentials.PDPID)
 				b := &telemetryv1.ServerLaunch_Features_Storage_Bundle{
 					PdpId:    pdpID.GetInstance(),
-					ClientId: bundleConf.Credentials.ClientID,
+					ClientId: hubConf.Credentials.ClientID,
 				}
 
-				if src, ok := store.(hub.Source); ok {
+				if src, ok := store.(hubstore.Source); ok {
 					b.BundleSource = src.SourceKind()
 				}
 

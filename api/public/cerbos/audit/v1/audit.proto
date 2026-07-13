@@ -128,7 +128,7 @@ message PolicySource {
     }
 
     oneof source {
-      string label = 1;
+      string label = 1 [deprecated = true];
       string deployment_id = 2 [deprecated = true];
       string playground_id = 3;
       LocalBundle local_bundle = 4;
@@ -143,7 +143,7 @@ message PolicySource {
     Disk disk = 3;
     Git git = 4;
     Hub hub = 5;
-    EmbeddedPDP embedded_pdp = 6;
+    EmbeddedPDP embedded_pdp = 6 [deprecated = true];
   }
 }
 

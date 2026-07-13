@@ -4,7 +4,6 @@
 package hub_test
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -16,8 +15,6 @@ import (
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/hub"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cloud-api/bundle"
-	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -32,77 +29,21 @@ const (
 )
 
 func TestLocalSource(t *testing.T) {
-	tctx := mkTestCtx(t, bundle.Version1, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
-	lsv1 := mkLocalSource(t, tctx)
-	t.Run("v1", func(t *testing.T) {
-		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
-		require.NoError(t, err)
+	t.Run("legacy", func(t *testing.T) {
+		tctx := mkTestCtx(t, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
+		ls := mkLocalSource(t, tctx)
 
-		manifest := &bundlev1.Manifest{}
-		require.NoError(t, protojson.Unmarshal(mb, manifest))
-
-		t.Run("original", runLocalSourceTests(lsv1, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, lsv1.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(lsv1, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-
-		t.Run("repoStats", runRepoStatsTest(lsv1, storage.RepoStats{
-			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind:  11,
-				policy.ResourceKind:   30,
-				policy.RolePolicyKind: 8,
-			},
-			ConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  10,
-				policy.ResourceKind:   62,
-				policy.RolePolicyKind: 2,
-			},
-			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  43,
-				policy.ResourceKind:   152,
-				policy.RolePolicyKind: 11,
-			},
-			MaxConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  3,
-				policy.ResourceKind:   7,
-				policy.RolePolicyKind: 1,
-			},
-			MaxRuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  11,
-				policy.ResourceKind:   17,
-				policy.RolePolicyKind: 2,
-			},
-			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  0.9090909090909091,
-				policy.ResourceKind:   2.066666666666667,
-				policy.RolePolicyKind: 0.25,
-			},
-			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  3.909090909090909,
-				policy.ResourceKind:   5.066666666666666,
-				policy.RolePolicyKind: 1.375,
-			},
-			DistinctActionCount:   44,
-			DistinctResourceCount: 18,
-			SchemaCount:           3,
-			HasOutput:             true,
-			HasScopedPolicies:     true,
-		}))
-	})
-
-	tctx = mkTestCtx(t, bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
-	lsv2 := mkLocalSource(t, tctx)
-	t.Run("v2", func(t *testing.T) {
 		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
 		require.NoError(t, err)
 
 		manifest := &bundlev2.Manifest{}
 		require.NoError(t, protojson.Unmarshal(mb, manifest))
 
-		t.Run("original", runLocalSourceTests(lsv2, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, lsv2.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(lsv2, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+		t.Run("original", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+		require.NoError(t, ls.Reload(t.Context()), "Failed to reload local source")
+		t.Run("reloaded", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 
-		t.Run("repoStats", runRepoStatsTest(lsv2, storage.RepoStats{
+		t.Run("repoStats", runRepoStatsTest(ls, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
 				policy.PrincipalKind:  11,
 				policy.ResourceKind:   30,
@@ -146,20 +87,21 @@ func TestLocalSource(t *testing.T) {
 		}))
 	})
 
-	tctx = mkTestCtx(t, bundle.Version2, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)
-	lsrt := mkLocalSource(t, tctx)
 	t.Run("ruleTable", func(t *testing.T) {
+		tctx := mkTestCtx(t, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)
+		ls := mkLocalSource(t, tctx)
+
 		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
 		require.NoError(t, err)
 
 		manifest := &bundlev2.Manifest{}
 		require.NoError(t, protojson.Unmarshal(mb, manifest))
 
-		t.Run("original", runLocalSourceTests(lsrt, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, lsv2.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(lsrt, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+		t.Run("original", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+		require.NoError(t, ls.Reload(t.Context()), "Failed to reload local source")
+		t.Run("reloaded", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
 
-		t.Run("repoStats", runRepoStatsTest(lsrt, storage.RepoStats{
+		t.Run("repoStats", runRepoStatsTest(ls, storage.RepoStats{
 			PolicyCount: map[policy.Kind]int{
 				policy.PrincipalKind:  11,
 				policy.ResourceKind:   30,
@@ -307,11 +249,10 @@ type testCtx struct {
 	rootDir    string
 	scratchDir string
 	bundlePath string
-	version    bundle.Version
 	bundleType bundlev2.BundleType
 }
 
-func mkTestCtx(t *testing.T, version bundle.Version, bundleType bundlev2.BundleType) testCtx {
+func mkTestCtx(t *testing.T, bundleType bundlev2.BundleType) testCtx {
 	t.Helper()
 
 	tempDir := t.TempDir()
@@ -323,7 +264,7 @@ func mkTestCtx(t *testing.T, version bundle.Version, bundleType bundlev2.BundleT
 		suffix = "ruletable"
 	}
 
-	rootDir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_%s", version, suffix)))
+	rootDir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v2_%s", suffix)))
 	bundlePath := filepath.Join(rootDir, legacyBundleName)
 	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
 		bundlePath = filepath.Join(rootDir, ruleTableBundleName)
@@ -332,7 +273,6 @@ func mkTestCtx(t *testing.T, version bundle.Version, bundleType bundlev2.BundleT
 		rootDir:    rootDir,
 		bundlePath: bundlePath,
 		scratchDir: scratchDir,
-		version:    version,
 		bundleType: bundleType,
 	}
 }
@@ -342,16 +282,8 @@ func mkLocalSource(t *testing.T, tctx testCtx) *hub.LocalSource {
 
 	params := hub.LocalParams{
 		BundlePath:    tctx.bundlePath,
-		BundleVersion: tctx.version,
 		TempDir:       tctx.scratchDir,
-	}
-
-	switch tctx.version {
-	case bundle.Version1:
-		params.SecretKey = loadSecretKey(t, tctx)
-	case bundle.Version2:
-		params.EncryptionKey = loadEncryptionKey(t, tctx)
-	default:
+		EncryptionKey: loadEncryptionKey(t, tctx),
 	}
 
 	ls, err := hub.NewLocalSource(t.Context(), params)
@@ -361,15 +293,6 @@ func mkLocalSource(t *testing.T, tctx testCtx) *hub.LocalSource {
 	})
 
 	return ls
-}
-
-func loadSecretKey(t *testing.T, tCtx testCtx) string {
-	t.Helper()
-
-	keyBytes, err := os.ReadFile(filepath.Join(tCtx.rootDir, "secret_key.txt"))
-	require.NoError(t, err, "Failed to read secret key")
-
-	return string(bytes.TrimSpace(keyBytes))
 }
 
 func loadEncryptionKey(t *testing.T, tCtx testCtx) []byte {

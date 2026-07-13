@@ -40,24 +40,24 @@ func (_m *ClientProvider) EXPECT() *ClientProvider_Expecter {
 	return &ClientProvider_Expecter{mock: &_m.Mock}
 }
 
-// V1 provides a mock function for the type ClientProvider
-func (_mock *ClientProvider) V1(clientConf bundle.ClientConf) (hub.ClientV1, error) {
+// Client provides a mock function for the type ClientProvider
+func (_mock *ClientProvider) Client(clientConf bundle.ClientConf) (hub.Client, error) {
 	ret := _mock.Called(clientConf)
 
 	if len(ret) == 0 {
-		panic("no return value specified for V1")
+		panic("no return value specified for Client")
 	}
 
-	var r0 hub.ClientV1
+	var r0 hub.Client
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bundle.ClientConf) (hub.ClientV1, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(bundle.ClientConf) (hub.Client, error)); ok {
 		return returnFunc(clientConf)
 	}
-	if returnFunc, ok := ret.Get(0).(func(bundle.ClientConf) hub.ClientV1); ok {
+	if returnFunc, ok := ret.Get(0).(func(bundle.ClientConf) hub.Client); ok {
 		r0 = returnFunc(clientConf)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(hub.ClientV1)
+			r0 = ret.Get(0).(hub.Client)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(bundle.ClientConf) error); ok {
@@ -68,18 +68,18 @@ func (_mock *ClientProvider) V1(clientConf bundle.ClientConf) (hub.ClientV1, err
 	return r0, r1
 }
 
-// ClientProvider_V1_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'V1'
-type ClientProvider_V1_Call struct {
+// ClientProvider_Client_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Client'
+type ClientProvider_Client_Call struct {
 	*mock.Call
 }
 
-// V1 is a helper method to define mock.On call
+// Client is a helper method to define mock.On call
 //   - clientConf bundle.ClientConf
-func (_e *ClientProvider_Expecter) V1(clientConf any) *ClientProvider_V1_Call {
-	return &ClientProvider_V1_Call{Call: _e.mock.On("V1", clientConf)}
+func (_e *ClientProvider_Expecter) Client(clientConf any) *ClientProvider_Client_Call {
+	return &ClientProvider_Client_Call{Call: _e.mock.On("Client", clientConf)}
 }
 
-func (_c *ClientProvider_V1_Call) Run(run func(clientConf bundle.ClientConf)) *ClientProvider_V1_Call {
+func (_c *ClientProvider_Client_Call) Run(run func(clientConf bundle.ClientConf)) *ClientProvider_Client_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 bundle.ClientConf
 		if args[0] != nil {
@@ -92,74 +92,12 @@ func (_c *ClientProvider_V1_Call) Run(run func(clientConf bundle.ClientConf)) *C
 	return _c
 }
 
-func (_c *ClientProvider_V1_Call) Return(clientV1 hub.ClientV1, err error) *ClientProvider_V1_Call {
-	_c.Call.Return(clientV1, err)
+func (_c *ClientProvider_Client_Call) Return(client hub.Client, err error) *ClientProvider_Client_Call {
+	_c.Call.Return(client, err)
 	return _c
 }
 
-func (_c *ClientProvider_V1_Call) RunAndReturn(run func(clientConf bundle.ClientConf) (hub.ClientV1, error)) *ClientProvider_V1_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// V2 provides a mock function for the type ClientProvider
-func (_mock *ClientProvider) V2(clientConf bundle.ClientConf) (hub.ClientV2, error) {
-	ret := _mock.Called(clientConf)
-
-	if len(ret) == 0 {
-		panic("no return value specified for V2")
-	}
-
-	var r0 hub.ClientV2
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bundle.ClientConf) (hub.ClientV2, error)); ok {
-		return returnFunc(clientConf)
-	}
-	if returnFunc, ok := ret.Get(0).(func(bundle.ClientConf) hub.ClientV2); ok {
-		r0 = returnFunc(clientConf)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(hub.ClientV2)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(bundle.ClientConf) error); ok {
-		r1 = returnFunc(clientConf)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// ClientProvider_V2_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'V2'
-type ClientProvider_V2_Call struct {
-	*mock.Call
-}
-
-// V2 is a helper method to define mock.On call
-//   - clientConf bundle.ClientConf
-func (_e *ClientProvider_Expecter) V2(clientConf any) *ClientProvider_V2_Call {
-	return &ClientProvider_V2_Call{Call: _e.mock.On("V2", clientConf)}
-}
-
-func (_c *ClientProvider_V2_Call) Run(run func(clientConf bundle.ClientConf)) *ClientProvider_V2_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 bundle.ClientConf
-		if args[0] != nil {
-			arg0 = args[0].(bundle.ClientConf)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *ClientProvider_V2_Call) Return(clientV2 hub.ClientV2, err error) *ClientProvider_V2_Call {
-	_c.Call.Return(clientV2, err)
-	return _c
-}
-
-func (_c *ClientProvider_V2_Call) RunAndReturn(run func(clientConf bundle.ClientConf) (hub.ClientV2, error)) *ClientProvider_V2_Call {
+func (_c *ClientProvider_Client_Call) RunAndReturn(run func(clientConf bundle.ClientConf) (hub.Client, error)) *ClientProvider_Client_Call {
 	_c.Call.Return(run)
 	return _c
 }

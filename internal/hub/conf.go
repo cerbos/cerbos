@@ -4,10 +4,12 @@
 package hub
 
 import (
+	"errors"
 	"os"
 	"time"
 
 	"github.com/cerbos/cloud-api/credentials"
+	"go.uber.org/multierr"
 
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/util"
@@ -16,27 +18,19 @@ import (
 type EnvVarKey int
 
 const (
-	BundleLabelKey EnvVarKey = iota
-	ClientIDKey
+	ClientIDKey EnvVarKey = iota
 	ClientSecretKey
-	OfflineKey
 	PDPIDKey
-	WorkspaceSecretKey
-	BundleVersionKey
 	DeploymentIDKey
 	PlaygroundIDKey
 )
 
 var envVars = map[EnvVarKey][]string{
-	BundleLabelKey:     {"CERBOS_HUB_BUNDLE", "CERBOS_CLOUD_BUNDLE"},
-	ClientIDKey:        {"CERBOS_HUB_CLIENT_ID", "CERBOS_CLOUD_CLIENT_ID"},
-	ClientSecretKey:    {"CERBOS_HUB_CLIENT_SECRET", "CERBOS_CLOUD_CLIENT_SECRET"},
-	OfflineKey:         {"CERBOS_HUB_OFFLINE", "CERBOS_CLOUD_OFFLINE"},
-	PDPIDKey:           {"CERBOS_HUB_PDP_ID", "CERBOS_PDP_ID"},
-	WorkspaceSecretKey: {"CERBOS_HUB_WORKSPACE_SECRET", "CERBOS_CLOUD_SECRET_KEY"},
-	BundleVersionKey:   {"CERBOS_HUB_BUNDLE_VERSION"},
-	DeploymentIDKey:    {"CERBOS_HUB_DEPLOYMENT_ID"},
-	PlaygroundIDKey:    {"CERBOS_HUB_PLAYGROUND_ID"},
+	ClientIDKey:     {"CERBOS_HUB_CLIENT_ID"},
+	ClientSecretKey: {"CERBOS_HUB_CLIENT_SECRET"},
+	PDPIDKey:        {"CERBOS_HUB_PDP_ID"},
+	DeploymentIDKey: {"CERBOS_HUB_DEPLOYMENT_ID"},
+	PlaygroundIDKey: {"CERBOS_HUB_PLAYGROUND_ID"},
 }
 
 func GetEnv(key EnvVarKey) string {
@@ -82,14 +76,13 @@ func (conf *Conf) Key() string {
 
 func (conf *Conf) SetDefaults() {
 	conf.Credentials = CredentialsConf{
-		ClientID:        GetEnv(ClientIDKey),
-		ClientSecret:    GetEnv(ClientSecretKey),
-		PDPID:           GetEnv(PDPIDKey),
-		WorkspaceSecret: GetEnv(WorkspaceSecretKey),
+		ClientID:     GetEnv(ClientIDKey),
+		ClientSecret: GetEnv(ClientSecretKey),
+		PDPID:        GetEnv(PDPIDKey),
 	}
 }
 
-func (conf *Conf) Validate() (outErr error) {
+func (conf *Conf) Validate() error {
 	_ = conf.Connection.Validate()
 	return conf.Credentials.Validate()
 }
@@ -102,52 +95,22 @@ type CredentialsConf struct {
 	ClientID string `yaml:"clientID" conf:",example=92B0K05B6HOF"`
 	// ClientSecret of the Cerbos Hub credential. Defaults to the value of the CERBOS_HUB_CLIENT_SECRET environment variable.
 	ClientSecret string `yaml:"clientSecret" conf:",example=${CERBOS_HUB_CLIENT_SECRET}"` //nolint:gosec
-	// WorkspaceSecret used to decrypt the bundles. Defaults to the value of the CERBOS_HUB_WORKSPACE_SECRET environment variable.
-	WorkspaceSecret string `yaml:"workspaceSecret" conf:",example=${CERBOS_HUB_WORKSPACE_SECRET}"`
-	// Deprecated: Use PDPID
-	InstanceID string `yaml:"instanceID" conf:",ignore"`
-	// Deprecated: Use WorkspaceSecret
-	SecretKey string `yaml:"secretKey" conf:",ignore"`
 }
 
 func (cc *CredentialsConf) Validate() (outErr error) {
-	// SecretKey was renamed to WorkspaceSecret in Cerbos 0.31.0
-	if cc.WorkspaceSecret == "" && cc.SecretKey != "" {
-		util.DeprecationReplacedWarning("credentials.secretKey", "credentials.workspaceSecret")
-		cc.WorkspaceSecret = cc.SecretKey
-	}
-
-	// InstanceID was renamed to PDPID in Cerbos 0.31.0
-	if cc.PDPID == "" && cc.InstanceID != "" {
-		util.DeprecationReplacedWarning("credentials.instanceID", "credentials.pdpID")
-		cc.PDPID = cc.InstanceID
-	}
-
-	// We don't do any validation here because some fields are optional depending on the use case.
-
-	return nil
-}
-
-func (cc *CredentialsConf) LoadFromEnv() {
 	if cc.ClientID == "" {
-		cc.ClientID = GetEnv(ClientIDKey)
+		multierr.AppendInto(&outErr, errors.New("hub.credentials.clientID is required"))
 	}
 
 	if cc.ClientSecret == "" {
-		cc.ClientSecret = GetEnv(ClientSecretKey)
+		multierr.AppendInto(&outErr, errors.New("hub.credentials.clientSecret is required"))
 	}
 
-	if cc.PDPID == "" {
-		cc.PDPID = GetEnv(PDPIDKey)
-	}
-
-	if cc.WorkspaceSecret == "" {
-		cc.WorkspaceSecret = GetEnv(WorkspaceSecretKey)
-	}
+	return outErr
 }
 
 func (cc CredentialsConf) ToCredentials() (*credentials.Credentials, error) {
-	return credentials.New(cc.ClientID, cc.ClientSecret, cc.WorkspaceSecret)
+	return credentials.New(cc.ClientID, cc.ClientSecret)
 }
 
 // ConnectionConf holds configuration for the remote connection.
