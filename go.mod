@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos
 
-go 1.25.11
+go 1.26.4
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1
@@ -13,19 +13,19 @@ require (
 	github.com/alecthomas/participle/v2 v2.1.4
 	github.com/aws/aws-lambda-go v1.54.0
 	github.com/aws/aws-sdk-go-v2 v1.42.1
-	github.com/aws/aws-sdk-go-v2/config v1.32.25
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.26
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.37.5
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.104.2
+	github.com/aws/aws-sdk-go-v2/config v1.32.28
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.27
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.38.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.105.0
 	github.com/aws/smithy-go v1.27.3
 	github.com/bluele/gcache v0.0.2
 	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/cerbos/cerbos-sdk-go v0.4.0
-	github.com/cerbos/cerbos/api/genpb v0.53.1-0.20260707124231-bed9c7d723b6
+	github.com/cerbos/cerbos/api/genpb v0.53.1-0.20260713071127-2d0fddea91b2
 	github.com/cerbos/cloud-api v0.1.77
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
-	github.com/dgraph-io/badger/v4 v4.9.2
+	github.com/dgraph-io/badger/v4 v4.9.3
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/fatih/color v1.19.0
@@ -41,7 +41,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/goccy/go-yaml v1.19.2
 	github.com/golang-migrate/migrate/v4 v4.19.1
-	github.com/google/cel-go v0.29.0
+	github.com/google/cel-go v0.29.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/gops v0.3.29
 	github.com/google/uuid v1.6.0
@@ -66,7 +66,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/ory/dockertest/v4 v4.0.0
 	github.com/peterh/liner v1.2.2
-	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
+	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
 	github.com/prometheus/client_golang v1.23.2
 	github.com/pterm/pterm v0.12.83
 	github.com/rdforte/gomaxecs v1.1.2
@@ -109,15 +109,15 @@ require (
 	go.uber.org/zap v1.28.0
 	gocloud.dev v0.46.0
 	golang.org/x/crypto v0.53.0
-	golang.org/x/sync v0.21.0
+	golang.org/x/sync v0.22.0
 	golang.org/x/tools v0.47.0
 	gonum.org/v1/gonum v0.17.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260622175928-b703f567277d
+	google.golang.org/genproto/googleapis/api v0.0.0-20260706201446-f0a921348800
 	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	helm.sh/helm/v3 v3.21.0
+	helm.sh/helm/v3 v3.21.2
 	modernc.org/sqlite v1.53.0
 )
 
@@ -157,10 +157,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.30 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.31 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.2.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.31.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.36.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.43.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.32.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.37.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.44.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -278,7 +278,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.272.0 // indirect
 	google.golang.org/genproto v0.0.0-20260316180232-0b37fe3546d5 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260618152121-87f3d3e198d3 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.73.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
