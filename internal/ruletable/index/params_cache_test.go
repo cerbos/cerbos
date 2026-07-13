@@ -6,11 +6,12 @@ package index
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/namer"
-	"github.com/stretchr/testify/require"
 )
 
 func mkParamsRow(fqn string, fn ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.RuleTable_RuleRow {
@@ -42,12 +43,16 @@ func TestParamsCacheEviction(t *testing.T) {
 	t.Run("entry evicted when the last core referencing it is deleted", func(t *testing.T) {
 		impl := New()
 
-		// same params content, different conditions: two cores sharing one cache entry.
 		require.NoError(t, impl.IndexRule(mkParamsRow(fqnA)))
+		require.NoError(t, impl.IndexRule(mkParamsRow(fqnA, func(r *runtimev1.RuleTable_RuleRow) {
+			r.Role = "editor"
+		})))
+		// same params content, different conditions: two cores sharing one cache entry.
 		require.NoError(t, impl.IndexRule(mkParamsRow(fqnB, func(r *runtimev1.RuleTable_RuleRow) {
 			r.Condition = &runtimev1.Condition{Op: &runtimev1.Condition_Expr{Expr: &runtimev1.Expr{Original: "true"}}}
 		})))
 
+		require.Len(t, impl.bi.bindings, 3)
 		require.Len(t, impl.paramsCache, 1)
 		require.Len(t, impl.bi.coresBySum, 2)
 
