@@ -1,4 +1,7 @@
 ---
+telemetry:
+  disabled: true
+
 server:
   httpListenAddr: ":3592"
   grpcListenAddr: ":3593"
