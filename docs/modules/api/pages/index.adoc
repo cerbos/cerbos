@@ -98,12 +98,22 @@ This is the main API entrypoint for checking permissions for a set of resources.
     }
   ],
   "auxData": { <14>
-    "jwt": {
-        "token": "xxx.yyy.zzz", <15>
-        "keySetId": "ks1" <16>
+    "jwt": { <15>
+        "token": "xxx.yyy.zzz", <16>
+        "keySetId": "ks1" <17>
+    },
+    "jwts": { <18>
+        "app_token": { <19>
+            "token": "xxx.yyy.zzz", <20>
+            "keySetId": "ks1" <21>
+        },
+        "gateway_token": {
+            "token": "aaa.bbb.ccc",
+            "keySetId": "ks2"
+        }
     }
   },
-  "includeMeta": true <17>
+  "includeMeta": true <22>
 }
 ----
 <1> Request ID is an optional, application-provided identifier useful for correlating logs.
@@ -120,9 +130,14 @@ This is the main API entrypoint for checking permissions for a set of resources.
 <12> Free-form context data about this resource. Policy rule conditions are evaluated based on these values.
 <13> List of actions being performed on the resource. Up to 50 actions per resource may be provided by default. This xref:configuration:server.adoc#request-limits[limit can be configured].
 <14> Optional section for providing auxiliary data.
-<15> JWT to use as an auxiliary data source.
-<16> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
-<17> Optional flag to receive metadata about request evaluation.
+<15> Single JWT to use as an auxiliary data source. Mutually exclusive with `jwts`.
+<16> Encoded token string.
+<17> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<18> Multiple JWTs to use as auxiliary data. Since Cerbos PDP 0.55.0 only. Mutually exclusive with `jwt`.
+<19> Named JWT.
+<20> Encoded token string.
+<21> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<22> Optional flag to receive metadata about request evaluation.
 
 
 
@@ -234,9 +249,19 @@ Produces a query plan that can be used to obtain a list of resources that a prin
   },
   "includeMeta": true, <13>
   "auxData": { <14>
-    "jwt": {
-      "token": "xxx.yyy.zzz", <15>
-      "keySetId": "ks-1" <16>
+    "jwt": { <15>
+      "token": "xxx.yyy.zzz", <16>
+      "keySetId": "ks-1" <17>
+    },
+    "jwts": { <18>
+        "app_token": { <19>
+            "token": "xxx.yyy.zzz", <20>
+            "keySetId": "ks1" <21>
+        },
+        "gateway_token": {
+            "token": "aaa.bbb.ccc",
+            "keySetId": "ks2"
+        }
     }
   }
 }
@@ -255,8 +280,13 @@ Produces a query plan that can be used to obtain a list of resources that a prin
 <12> Free-form context data about this principal. Policy rule conditions are evaluated based on these values.
 <13> An optional flag to signal that the response should include metadata about evaluation. Useful for debugging.
 <14> Optional section for providing auxiliary data.
-<15> JWT to use as an auxiliary data source.
-<16> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<15> Single JWT to use as an auxiliary data source. Mutually exclusive with `jwts`.
+<16> Encoded token string.
+<17> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
+<18> Multiple named JWTs. Since Cerbos 0.55.0 only. Mutually exclusive with `jwt`.
+<19> Named JWT.
+<20> Encoded token string.
+<21> ID of the keyset to use to verify the JWT. Optional if only a single xref:configuration:auxdata.adoc[keyset is configured].
 
 
 .Response

@@ -2,6 +2,18 @@
   "$id": "https://api.cerbos.dev/cerbos/engine/v1/AuxData.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.engine.v1.AuxData.JWT": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
     "google.protobuf.Value": {
       "title": "Value",
       "description": "A dynamically-typed value."
@@ -14,6 +26,12 @@
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/google.protobuf.Value"
+      }
+    },
+    "jwts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/cerbos.engine.v1.AuxData.JWT"
       }
     }
   }

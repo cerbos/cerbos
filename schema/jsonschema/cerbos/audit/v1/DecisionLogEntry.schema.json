@@ -276,6 +276,24 @@
           "additionalProperties": {
             "$ref": "#/definitions/google.protobuf.Value"
           }
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.engine.v1.AuxData.JWT"
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.AuxData.JWT": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },

@@ -306,7 +306,12 @@ message AuxData {
     json_schema: {description: "Structured auxiliary data"}
   };
 
+  message JWT {
+    map<string, google.protobuf.Value> claims = 1;
+  }
+
   map<string, google.protobuf.Value> jwt = 1;
+  map<string, JWT> jwts = 2;
 }
 
 message Trace {
