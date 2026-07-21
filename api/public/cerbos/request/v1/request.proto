@@ -280,7 +280,7 @@ message AuxData {
   option (buf.validate.message).cel = {
     id: "AuxData.only_one_jwt_field"
     message: "Only one of the jwt or jwts fields must be set"
-    expression: "has(this.jwt) != has(this.jwts)"
+    expression: "!(has(this.jwt) && has(this.jwts))"
   };
 
   message JWT {

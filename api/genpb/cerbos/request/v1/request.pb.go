@@ -2017,7 +2017,7 @@ const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\aactions\x12A\n" +
 	"\bresource\x18\x02 \x01(\v2\x1a.cerbos.engine.v1.ResourceB\t\xe0A\x02\xbaH\x03\xc8\x01\x01R\bresource:\x1e\x92A\x1b\n" +
 	"\x192\x17Check resources requestB\x12\n" +
-	"\x10_request_context\"\xdb\x05\n" +
+	"\x10_request_context\"\xde\x05\n" +
 	"\aAuxData\x120\n" +
 	"\x03jwt\x18\x01 \x01(\v2\x1e.cerbos.request.v1.AuxData.JWTR\x03jwt\x12\x9d\x01\n" +
 	"\x04jwts\x18\x02 \x03(\v2$.cerbos.request.v1.AuxData.JwtsEntryBc\x92AT20Named list of JWTs associated with this request.J {\"app\": {\"token\": \"JWT string\"}}\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\x04jwts\x1a\xe9\x01\n" +
@@ -2028,9 +2028,9 @@ const file_cerbos_request_v1_request_proto_rawDesc = "" +
 	"\x1f2\x1dJWT from the original request\x1aW\n" +
 	"\tJwtsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x124\n" +
-	"\x05value\x18\x02 \x01(\v2\x1e.cerbos.request.v1.AuxData.JWTR\x05value:\x028\x01:\xb8\x01\x92AC\n" +
-	"=2;Structured auxiliary data useful for evaluating the request2\x02{}\xbaHo\x1am\n" +
-	"\x1aAuxData.only_one_jwt_field\x12.Only one of the jwt or jwts fields must be set\x1a\x1fhas(this.jwt) != has(this.jwts)\"a\n" +
+	"\x05value\x18\x02 \x01(\v2\x1e.cerbos.request.v1.AuxData.JWTR\x05value:\x028\x01:\xbb\x01\x92AC\n" +
+	"=2;Structured auxiliary data useful for evaluating the request2\x02{}\xbaHr\x1ap\n" +
+	"\x1aAuxData.only_one_jwt_field\x12.Only one of the jwt or jwts fields must be set\x1a\"!(has(this.jwt) && has(this.jwts))\"a\n" +
 	"\x04File\x12*\n" +
 	"\tfile_name\x18\x01 \x01(\tB\r\xe0A\x02\xbaH\a\xc8\x01\x01r\x02\x10\x01R\bfileName\x12-\n" +
 	"\bcontents\x18\x02 \x01(\fB\x11\xe0A\x02\xbaH\v\xc8\x01\x01z\x06\x10\x01\x18\x80\x80@R\bcontents\"\xbe\x01\n" +

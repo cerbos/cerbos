@@ -5,7 +5,6 @@ package hub_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,121 +28,61 @@ const (
 )
 
 func TestLocalSource(t *testing.T) {
-	t.Run("legacy", func(t *testing.T) {
-		tctx := mkTestCtx(t, bundlev2.BundleType_BUNDLE_TYPE_LEGACY)
-		ls := mkLocalSource(t, tctx)
+	tctx := mkTestCtx(t)
+	ls := mkLocalSource(t, tctx)
 
-		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
-		require.NoError(t, err)
+	mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
+	require.NoError(t, err)
 
-		manifest := &bundlev2.Manifest{}
-		require.NoError(t, protojson.Unmarshal(mb, manifest))
+	manifest := &bundlev2.Manifest{}
+	require.NoError(t, protojson.Unmarshal(mb, manifest))
 
-		t.Run("original", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, ls.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
+	t.Run("original", runLocalSourceTests(ls, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE, manifest.PolicyIndex, manifest.Schemas))
+	require.NoError(t, ls.Reload(t.Context()), "Failed to reload local source")
+	t.Run("reloaded", runLocalSourceTests(ls, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE, manifest.PolicyIndex, manifest.Schemas))
 
-		t.Run("repoStats", runRepoStatsTest(ls, storage.RepoStats{
-			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind:  11,
-				policy.ResourceKind:   30,
-				policy.RolePolicyKind: 8,
-			},
-			ConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  10,
-				policy.ResourceKind:   62,
-				policy.RolePolicyKind: 2,
-			},
-			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  43,
-				policy.ResourceKind:   152,
-				policy.RolePolicyKind: 11,
-			},
-			MaxConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  3,
-				policy.ResourceKind:   7,
-				policy.RolePolicyKind: 1,
-			},
-			MaxRuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  11,
-				policy.ResourceKind:   17,
-				policy.RolePolicyKind: 2,
-			},
-			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  0.9090909090909091,
-				policy.ResourceKind:   2.066666666666667,
-				policy.RolePolicyKind: 0.25,
-			},
-			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  3.909090909090909,
-				policy.ResourceKind:   5.066666666666666,
-				policy.RolePolicyKind: 1.375,
-			},
-			DistinctActionCount:   44,
-			DistinctResourceCount: 18,
-			SchemaCount:           3,
-			HasOutput:             true,
-			HasScopedPolicies:     true,
-		}))
-	})
-
-	t.Run("ruleTable", func(t *testing.T) {
-		tctx := mkTestCtx(t, bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)
-		ls := mkLocalSource(t, tctx)
-
-		mb, err := os.ReadFile(filepath.Join(tctx.rootDir, "manifest.json"))
-		require.NoError(t, err)
-
-		manifest := &bundlev2.Manifest{}
-		require.NoError(t, protojson.Unmarshal(mb, manifest))
-
-		t.Run("original", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-		require.NoError(t, ls.Reload(t.Context()), "Failed to reload local source")
-		t.Run("reloaded", runLocalSourceTests(ls, tctx.bundleType, manifest.PolicyIndex, manifest.Schemas))
-
-		t.Run("repoStats", runRepoStatsTest(ls, storage.RepoStats{
-			PolicyCount: map[policy.Kind]int{
-				policy.PrincipalKind:  11,
-				policy.ResourceKind:   30,
-				policy.RolePolicyKind: 8,
-			},
-			ConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  4,
-				policy.ResourceKind:   35,
-				policy.RolePolicyKind: 2,
-			},
-			RuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  20,
-				policy.ResourceKind:   78,
-				policy.RolePolicyKind: 9,
-			},
-			MaxConditionCount: map[policy.Kind]int{
-				policy.PrincipalKind:  2,
-				policy.ResourceKind:   5,
-				policy.RolePolicyKind: 1,
-			},
-			MaxRuleCount: map[policy.Kind]int{
-				policy.PrincipalKind:  6,
-				policy.ResourceKind:   11,
-				policy.RolePolicyKind: 2,
-			},
-			AvgConditionCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  0.36363636363636365,
-				policy.ResourceKind:   1.1666666666666667,
-				policy.RolePolicyKind: 0.25,
-			},
-			AvgRuleCount: map[policy.Kind]float64{
-				policy.PrincipalKind:  1.8181818181818181,
-				policy.ResourceKind:   2.6,
-				policy.RolePolicyKind: 1.125,
-			},
-			DistinctActionCount:   45,
-			DistinctResourceCount: 18,
-			SchemaCount:           3,
-			HasOutput:             true,
-			HasScopedPolicies:     true,
-		}))
-	})
+	t.Run("repoStats", runRepoStatsTest(ls, storage.RepoStats{
+		PolicyCount: map[policy.Kind]int{
+			policy.PrincipalKind:  11,
+			policy.ResourceKind:   30,
+			policy.RolePolicyKind: 8,
+		},
+		ConditionCount: map[policy.Kind]int{
+			policy.PrincipalKind:  4,
+			policy.ResourceKind:   36,
+			policy.RolePolicyKind: 2,
+		},
+		RuleCount: map[policy.Kind]int{
+			policy.PrincipalKind:  20,
+			policy.ResourceKind:   79,
+			policy.RolePolicyKind: 9,
+		},
+		MaxConditionCount: map[policy.Kind]int{
+			policy.PrincipalKind:  2,
+			policy.ResourceKind:   6,
+			policy.RolePolicyKind: 1,
+		},
+		MaxRuleCount: map[policy.Kind]int{
+			policy.PrincipalKind:  6,
+			policy.ResourceKind:   12,
+			policy.RolePolicyKind: 2,
+		},
+		AvgConditionCount: map[policy.Kind]float64{
+			policy.PrincipalKind:  0.36363636363636365,
+			policy.ResourceKind:   1.2,
+			policy.RolePolicyKind: 0.25,
+		},
+		AvgRuleCount: map[policy.Kind]float64{
+			policy.PrincipalKind:  1.8181818181818181,
+			policy.ResourceKind:   2.633333,
+			policy.RolePolicyKind: 1.125,
+		},
+		DistinctActionCount:   46,
+		DistinctResourceCount: 18,
+		SchemaCount:           3,
+		HasOutput:             true,
+		HasScopedPolicies:     true,
+	}))
 }
 
 func runLocalSourceTests(have *hub.LocalSource, bundleType bundlev2.BundleType, policyIndex map[string]string, schemas []string) func(*testing.T) {
@@ -234,7 +173,8 @@ func runRepoStatsTest(ls *hub.LocalSource, wantStats storage.RepoStats) func(*te
 
 		haveStats := ls.RepoStats(t.Context())
 
-		require.Empty(t,
+		require.Empty(
+			t,
 			cmp.Diff(
 				wantStats,
 				haveStats,
@@ -249,31 +189,21 @@ type testCtx struct {
 	rootDir    string
 	scratchDir string
 	bundlePath string
-	bundleType bundlev2.BundleType
 }
 
-func mkTestCtx(t *testing.T, bundleType bundlev2.BundleType) testCtx {
+func mkTestCtx(t *testing.T) testCtx {
 	t.Helper()
 
 	tempDir := t.TempDir()
 	scratchDir := filepath.Join(tempDir, "scratch")
 	require.NoError(t, os.MkdirAll(scratchDir, 0o774))
 
-	suffix := "legacy"
-	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		suffix = "ruletable"
-	}
-
-	rootDir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v2_%s", suffix)))
-	bundlePath := filepath.Join(rootDir, legacyBundleName)
-	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-		bundlePath = filepath.Join(rootDir, ruleTableBundleName)
-	}
+	rootDir := test.PathToDir(t, filepath.Join("bundle", "v2_ruletable"))
+	bundlePath := filepath.Join(rootDir, ruleTableBundleName)
 	return testCtx{
 		rootDir:    rootDir,
 		bundlePath: bundlePath,
 		scratchDir: scratchDir,
-		bundleType: bundleType,
 	}
 }
 

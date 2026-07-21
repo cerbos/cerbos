@@ -251,7 +251,7 @@ Produces a query plan that can be used to obtain a list of resources that a prin
   "auxData": { <14>
     "jwt": { <15>
       "token": "xxx.yyy.zzz", <16>
-      "keySetId": "ks-1" <17>
+      "keySetId": "ks1" <17>
     },
     "jwts": { <18>
         "app_token": { <19>

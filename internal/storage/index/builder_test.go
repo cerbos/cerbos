@@ -138,7 +138,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	t.Run("check_stats", func(t *testing.T) {
 		stats := idx.RepoStats(t.Context())
 		require.GreaterOrEqual(t, 3, stats.SchemaCount)
-		require.Equal(t, stats.DistinctActionCount, 45)
+		require.Equal(t, stats.DistinctActionCount, 46)
 		require.Equal(t, stats.DistinctResourceCount, 18)
 		require.True(t, stats.HasOutput)
 		require.True(t, stats.HasScopedPolicies)
@@ -200,8 +200,10 @@ func TestBuildIndex(t *testing.T) {
 			case tc.WantErrList != nil:
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
-				require.Empty(t,
-					cmp.Diff(tc.WantErrList, errList.IndexBuildErrors,
+				require.Empty(
+					t,
+					cmp.Diff(
+						tc.WantErrList, errList.IndexBuildErrors,
 						protocmp.Transform(),
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
 							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),
