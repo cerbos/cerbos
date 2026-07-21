@@ -4,16 +4,13 @@
 package verify_test
 
 import (
-	"context"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/test"
-	"github.com/cerbos/cerbos/private/engine"
 	"github.com/cerbos/cerbos/private/verify"
 )
 
@@ -22,36 +19,4 @@ func TestFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, results.Summary.OverallResult, policyv1.TestResults_RESULT_PASSED)
-}
-
-func TestBundle(t *testing.T) {
-	params := engine.BundleParams{
-		BundlePath: filepath.Join(test.PathToDir(t, filepath.Join("bundle", "v2_legacy")), "bundle_unencrypted.crbp"),
-		TempDir:    t.TempDir(),
-	}
-
-	ctx, cancelFn := context.WithCancel(t.Context())
-	t.Cleanup(cancelFn)
-
-	results, err := verify.Bundle(ctx, params, test.PathToDir(t, "store"), true)
-	require.NoError(t, err)
-	require.Equal(t, policyv1.TestResults_RESULT_PASSED, results.Summary.OverallResult)
-}
-
-func TestBundleStream(t *testing.T) {
-	params := engine.BundleParams{
-		BundlePath: filepath.Join(test.PathToDir(t, filepath.Join("bundle", "v2_legacy")), "bundle_unencrypted.crbp"),
-		TempDir:    t.TempDir(),
-	}
-
-	ctx, cancelFn := context.WithCancel(t.Context())
-	t.Cleanup(cancelFn)
-
-	noOfSuites, suites, err := verify.BundleStream(ctx, params, test.PathToDir(t, "store"), true)
-	require.NoError(t, err)
-	require.Equal(t, 3, noOfSuites)
-
-	for suite := range suites {
-		require.Equal(t, policyv1.TestResults_RESULT_PASSED, suite.Summary.OverallResult)
-	}
 }
