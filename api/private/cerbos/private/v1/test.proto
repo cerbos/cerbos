@@ -16,7 +16,6 @@ import "cerbos/response/v1/response.proto";
 import "cerbos/runtime/v1/runtime.proto";
 import "cerbos/schema/v1/schema.proto";
 import "cerbos/source/v1/source.proto";
-import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";

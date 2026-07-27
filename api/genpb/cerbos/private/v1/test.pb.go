@@ -3458,7 +3458,7 @@ var File_cerbos_private_v1_test_proto protoreflect.FileDescriptor
 
 const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\n" +
-	"\x1ccerbos/private/v1/test.proto\x12\x11cerbos.private.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1fcerbos/request/v1/request.proto\x1a!cerbos/response/v1/response.proto\x1a\x1fcerbos/runtime/v1/runtime.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1dcerbos/source/v1/source.proto\x1a\x19google/protobuf/any.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\x89\x02\n" +
+	"\x1ccerbos/private/v1/test.proto\x12\x11cerbos.private.v1\x1a)authzen/authorization/v1/evaluation.proto\x1a\x1bbuf/validate/validate.proto\x1a\x1bcerbos/audit/v1/audit.proto\x1a\x1dcerbos/effect/v1/effect.proto\x1a\x1dcerbos/engine/v1/engine.proto\x1a\x1dcerbos/policy/v1/policy.proto\x1a\x1fcerbos/request/v1/request.proto\x1a!cerbos/response/v1/response.proto\x1a\x1fcerbos/runtime/v1/runtime.proto\x1a\x1dcerbos/schema/v1/schema.proto\x1a\x1dcerbos/source/v1/source.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1egoogle/protobuf/wrappers.proto\"\x89\x02\n" +
 	"\x0fAuxDataTestCase\x12 \n" +
 	"\vdescription\x18\x01 \x01(\tR\vdescription\x12>\n" +
 	"\x05input\x18\x02 \x01(\v2(.cerbos.private.v1.AuxDataTestCase.InputR\x05input\x12\x19\n" +
