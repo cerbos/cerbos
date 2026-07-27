@@ -150,6 +150,8 @@ github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/cenkalti/backoff/v5 v5.0.3 h1:ZN+IMa753KfX5hd8vVaMixjnqRZ3y8CuJKRKj1xcsSM=
 github.com/cenkalti/backoff/v5 v5.0.3/go.mod h1:rkhZdG3JZukswDf7f0cwqPNk4K0sa+F97BxZthm/crw=
+github.com/cenkalti/backoff/v7 v7.0.0 h1:ZP+QAaaOnVUHo+ufFpZ835hbT3x2fy+h2lecVEosZ6A=
+github.com/cenkalti/backoff/v7 v7.0.0/go.mod h1:qcKBGwsu4hpxHtQ8tWYsQ+ifzx2+sS+Xx/3jfe30lI8=
 github.com/cerbos/cerbos-sdk-go v0.4.1 h1:iWEdvmm1Kh82DlaLiI5bGioEmu/5XEMk+ginT/o+JEw=
 github.com/cerbos/cerbos-sdk-go v0.4.1/go.mod h1:M9Q9zNg0AYgc1w2liBuFeRhL/sNfUnwSZP27vq3/2tc=
 github.com/cerbos/cerbos/api/genpb v0.53.1-0.20260720092036-44dd5dead3af h1:b7Ut9Rd5f5iVOclEpqlR72qs6zW7Idkx0E7es5XrHqY=
