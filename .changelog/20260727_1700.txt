@@ -1,0 +1,23 @@
+type:enhancement
+New CEL functions for working with strings and IP addresses
+Introduces the following new functions that can be used in policy expressions.
+
+- `<cidr>.containsCIDR()`
+- `<cidr>.containsIP()`
+- `<cidr>.isMask()`
+- `<cidr>.masked()`
+- `<cidr>.prefixLength()`
+- `<ip>.family()`
+- `<ip>.isLoopback()`
+- `cidr()`
+- `ip()`
+- `isCIDR()`
+- `isIP()`
+- `json.encode()`
+- `regex.extractAll()`
+- `regex.replace()`
+- `sets.contains()`
+- `sets.equivalent()`
+- `sets.intersects()`
+
+

@@ -331,7 +331,7 @@ NOTE: The hierarchy functions are Cerbos-specific extensions to CEL.
 
 == IP addresses
 
-NOTE: The IP address functions are Cerbos-specific extensions to CEL.
+NOTE: The `inIPAddrRange` is a Cerbos-specific extension function to CEL.
 
 .Test data
 [source,json,linenums]
@@ -351,11 +351,20 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Function | Description | Example
+| containsCIDR | Returns whether the CIDR contains the given CIDR. Since v0.55.0 only. | cidr("192.168.0.0/8").containsCIDR(cidr("192.168.1.0/24")) == true
+| containsIP | Returns whether the CIDR contains the given IP. Since v0.55.0 only. Use `inIPAddrRange` for older versions. | cidr("2001:db8::/48").containsIP(P.attr.ipv6Address) == true
+| family | Returns the IP family. Since v0.55.0 only. | ip(P.attr.ipv4Address) == 4
 | inIPAddrRange | Check whether the IP address is in the range defined by the CIDR | P.attr.ipv4Address.inIPAddrRange("192.168.0.0/24") && P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
+| isCIDR | Returns true if the string is an IPv4 or IPv6 CIDR. Since v0.55.0 only. | isCIDR("::1/128") == true
+| isIP | Returns true if the string is an IPv4 or IPv6 address. Since v0.55.0 only. | isIP(P.attr.ipv4Address) == true
+| isLoopback | Returns true if the IP address is a loopback address. Since v0.55.0 only. | ip(P.attr.ipv4Address).isLoopback() == false
+| isMask | Returns whether the CIDR is a mask. Since v0.55.0 only. | cidr("192.168.0.0/8").isMask() == true
+| masked | Returns the masked CIDR for the value. Since v0.55.0 only. | cidr("192.168.1.5/24").masked() == cidr("192.168.1.0/24")
+| prefixLength | Returns the prefix length of the CIDR. Since v0.55.0 only. | cidr("192.168.1.0/24").prefixLength() == 24
 |===
 
 
-== Lists and maps
+== Lists, maps, and sets
 
 .Test data
 [source,json,linenums]
@@ -399,6 +408,9 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | lists.range    | Returns a list of integers from 0 to n-1 | lists.range(5) == [0, 1, 2, 3, 4]
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
 | reverse  | Returns the elements of a list in reverse order | [5, 3, 1, 2].reverse() == [2, 1, 3, 5]
+| sets.contains | Checks whether the first list contains all the elements of the second list. Since v0.55.0 only. | sets.contains(P.attr.teams, ["design"]) == true
+| sets.equivalent | Checks whether for every item in the first list, there exists an equal item in the second list. Since v0.55.0 only. | sets.equivalent(P.attr.teams, ["commercial", "product", "communications", "design"])  == true
+| sets.intersects | Checks whether the lists have at least one item in common. Since v0.55.0 only. Use `hasIntersection` for older versions. |  sets.intersects(["design", "engineering"], P.attr.teams) == true
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 | slice    | Returns a new sub-list using the indexes provided | [1,2,3,4].slice(1, 3) == [2, 3]
 | sort     | Sorts a list with comparable elements | [3, 2, 1].sort() == [1, 2, 3]
@@ -514,9 +526,13 @@ NOTE: The SPIFFE functions are Cerbos-specific extensions to CEL.
 | endsWith | Check whether a string has the given suffix | R.attr.department.endsWith("ing")
 | format   | Format a string with the given arguments | "department_%s_%d".format(["marketing", 1])
 | indexOf  | Index of the first occurrence of the given character | R.attr.department.indexOf('a') == 1
+| json.encode | Encode as JSON. Since v0.55.0 only. | json.encode(R.attr) == '{"id":"125","department":"marketing"}'
 | lastIndexOf | Index of the last occurrence of the given character | R.attr.department.lastIndexOf('g') == 8
 | lowerAscii  | Convert ASCII characters to lowercase | "MARKETING".lowerAscii() == R.attr.department
 | matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | R.attr.department.matches("^[mM].*g$")
+| regex.extractAll | Extract all occurrences of a https://github.com/google/re2/wiki/Syntax[RE2] regular expression match. Since v0.55.0 only. | regex.extractAll("a bb a cc", "a") == ["a", "a"]
+| regex.replace | Replace all occurrences of a https://github.com/google/re2/wiki/Syntax[RE2] regular expression match. Since v0.55.0 only. | regex.replace("banana", "a", "i") == "binini"
+| regex.replace | Replace occurrences of a https://github.com/google/re2/wiki/Syntax[RE2] regular expression match with a limit. Since v0.55.0 only. | regex.replace("banana", "a", "i", 1) == "binana" && regex.replace("banana", "b(a).*", r"\1") == "a"
 | replace  | Replace all occurrences of a substring | R.attr.department.replace("market", "engineer") == "engineering"
 | replace  | Replace with limits. Limit 0 replaces nothing, -1 replaces all. | "engineering".replace("e", "a", 1) == "angineering" && "engineering".replace("e", "a", -1) == "anginaaring"
 | size     | Get the length of the string | size(R.attr.department) == 9
