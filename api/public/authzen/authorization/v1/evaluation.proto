@@ -16,7 +16,9 @@ option java_package = "dev.cerbos.authzen.api.v1.authorization";
 
 // Subject represents the principal requesting access
 message Subject {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Subject requesting access"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Subject requesting access"}
+  };
 
   string type = 1 [
     (buf.validate.field).string = {min_len: 1},
@@ -39,7 +41,9 @@ message Subject {
   ];
 
   map<string, google.protobuf.Value> properties = 3 [
-    (buf.validate.field).map.keys = {string: {min_len: 1}},
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this subject that should be used during policy evaluation."
       example: "{\"department\": \"engineering\"}"
@@ -49,7 +53,9 @@ message Subject {
 
 // Resource represents the target of the access request
 message Resource {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Resource being accessed"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Resource being accessed"}
+  };
 
   string type = 1 [
     (buf.validate.field).string = {min_len: 1},
@@ -72,7 +78,9 @@ message Resource {
   ];
 
   map<string, google.protobuf.Value> properties = 3 [
-    (buf.validate.field).map.keys = {string: {min_len: 1}},
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this resource that should be used during policy evaluation."
       example: "{\"owner\": \"bugs_bunny\"}"
@@ -82,7 +90,9 @@ message Resource {
 
 // Action represents the operation being performed
 message Action {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Action being performed"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Action being performed"}
+  };
 
   string name = 1 [
     (buf.validate.field).string = {min_len: 1},
@@ -95,7 +105,9 @@ message Action {
   ];
 
   map<string, google.protobuf.Value> properties = 2 [
-    (buf.validate.field).map.keys = {string: {min_len: 1}},
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of contextual data about this action that should be used during policy evaluation."
       example: "{\"method\": \"GET\"}"
@@ -105,7 +117,9 @@ message Action {
 
 // AuthZEN evaluation request message
 message AccessEvaluationRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "AuthZEN access evaluation request"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluation request"}
+  };
 
   Subject subject = 1 [
     (buf.validate.field).required = true,
@@ -123,7 +137,9 @@ message AccessEvaluationRequest {
   ];
 
   map<string, google.protobuf.Value> context = 4 [
-    (buf.validate.field).map.keys = {string: {min_len: 1}},
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
       example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
@@ -133,7 +149,9 @@ message AccessEvaluationRequest {
 
 // AuthZEN evaluation response message
 message AccessEvaluationResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "AuthZEN access evaluation response"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluation response"}
+  };
 
   optional bool decision = 1 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     description: "Whether to allow or deny the operation."
@@ -148,14 +166,18 @@ message AccessEvaluationResponse {
 
 // AuthZEN evaluations request message
 message AccessEvaluationBatchRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "AuthZEN access evaluations request"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluations request"}
+  };
 
   Subject subject = 1;
   Resource resource = 2;
   Action action = 3;
 
   map<string, google.protobuf.Value> context = 4 [
-    (buf.validate.field).map.keys = {string: {min_len: 1}},
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
       example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
@@ -163,14 +185,18 @@ message AccessEvaluationBatchRequest {
   ];
 
   message Evaluation {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "An evaluation"}};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+      json_schema: {description: "An evaluation"}
+    };
 
     Subject subject = 1;
     Resource resource = 2;
     Action action = 3;
 
     map<string, google.protobuf.Value> context = 4 [
-      (buf.validate.field).map.keys = {string: {min_len: 1}},
+      (buf.validate.field).map.keys = {
+        string: {min_len: 1}
+      },
       (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
         description: "Key-value pairs of environmental/contextual data that should be used during policy evaluation."
         example: "{\"time\": \"2023-01-01T00:00:00Z\"}"
@@ -202,16 +228,22 @@ message AccessEvaluationBatchRequest {
 
 // AuthZEN evaluations response message
 message AccessEvaluationBatchResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "AuthZEN access evaluations response"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN access evaluations response"}
+  };
   repeated AccessEvaluationResponse evaluations = 1;
 }
 
 message MetadataRequest {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "AuthZEN Policy Decision Point Metadata request"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Policy Decision Point Metadata request"}
+  };
 }
 
 message MetadataResponse {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "AuthZEN Policy Decision Point Metadata"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "AuthZEN Policy Decision Point Metadata"}
+  };
   string policy_decision_point = 1 [json_name = "policy_decision_point"];
   string access_evaluation_endpoint = 2 [json_name = "access_evaluation_endpoint"];
   string access_evaluations_endpoint = 3 [json_name = "access_evaluations_endpoint"];
@@ -219,7 +251,9 @@ message MetadataResponse {
 
 // AccessEvaluationsOptions captures optional execution controls for batch requests.
 message AccessEvaluationsOptions {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Optional execution controls for AuthZEN batch requests"}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Optional execution controls for AuthZEN batch requests"}
+  };
   // Controls how the PDP should execute the evaluations array.
   string evaluations_semantic = 1 [
     (buf.validate.field).string = {
