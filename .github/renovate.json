@@ -109,6 +109,7 @@
         {
             "description": "Requires Go 1.26",
             "matchPackageNames": [
+                "github.com/planetscale/vtprotobuf",
                 "helm.sh/helm/v3"
             ],
             "enabled": false
