@@ -655,7 +655,11 @@ func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpre
 			i++
 		}
 		le := args[i]
-		env1, err := env.Extend(cel.VariableDecls(decls.NewVariable(ce.IterVar(), types.DynType)))
+		varDecls := []*decls.VariableDecl{decls.NewVariable(ce.IterVar(), types.DynType)}
+		if ce.IterVar2() != "" {
+			varDecls = append(varDecls, decls.NewVariable(ce.IterVar2(), types.DynType))
+		}
+		env1, err := env.Extend(cel.VariableDecls(varDecls...))
 		if err != nil {
 			return nil, err
 		}
@@ -663,6 +667,9 @@ func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpre
 		ast := celast.NewAST(le, nil)
 
 		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar()))
+		if ce.IterVar2() != "" {
+			unknowns = append(unknowns, cel.AttributePattern(ce.IterVar2()))
+		}
 		var pvars1 interpreter.PartialActivation
 		pvars1, err = cel.PartialVars(pvars, unknowns...)
 		if err != nil {
