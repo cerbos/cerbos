@@ -351,16 +351,21 @@ NOTE: The `inIPAddrRange` is a Cerbos-specific extension function to CEL.
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Function | Description | Example
-| containsCIDR | Returns whether the CIDR contains the given CIDR. Since v0.55.0 only. | cidr("192.168.0.0/8").containsCIDR(cidr("192.168.1.0/24")) == true
-| containsIP | Returns whether the CIDR contains the given IP. Since v0.55.0 only. Use `inIPAddrRange` for older versions. | cidr("2001:db8::/48").containsIP(P.attr.ipv6Address) == true
-| family | Returns the IP family. Since v0.55.0 only. | ip(P.attr.ipv4Address) == 4
+| cidr(<cidr>).containsCIDR | Returns whether the CIDR contains the given CIDR. Since v0.55.0 only. | cidr("192.168.0.0/8").containsCIDR(cidr("192.168.1.0/24")) == true
+| cidr(<cidr>).containsIP | Returns whether the CIDR contains the given IP. Since v0.55.0 only. Use `inIPAddrRange` for older versions. | cidr("2001:db8::/48").containsIP(P.attr.ipv6Address) == true
+| cidr(<cidr>).isMask | Returns whether the CIDR is a mask. Since v0.55.0 only. | cidr("192.168.0.0/8").isMask() == true
+| cidr(<cidr>).masked | Returns the masked CIDR for the value. Since v0.55.0 only. | cidr("192.168.1.5/24").masked() == cidr("192.168.1.0/24")
+| cidr(<cidr>).prefixLength | Returns the prefix length of the CIDR. Since v0.55.0 only. | cidr("192.168.1.0/24").prefixLength() == 24
 | inIPAddrRange | Check whether the IP address is in the range defined by the CIDR | P.attr.ipv4Address.inIPAddrRange("192.168.0.0/24") && P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
+| ip(<ip>).family | Returns the IP family. Since v0.55.0 only. | ip(P.attr.ipv4Address) == 4
+| ip(<ip>).isGlobalUnicast | Returns true if the IP address is a global unicast address. Since v0.55.0 only. | ip(P.attr.ipv6Address).isGlobalUnicast() == true
+| ip(<ip>).isLinkLocalMulticast | Returns true if the IP address is a link local multicast address. Since v0.55.0 only. | ip(P.attr.ipv6Address).isLinkLocalMulticast() == false
+| ip(<ip>).isLinkLocalUnicast | Returns true if the IP address is a link local unicast address. Since v0.55.0 only. | ip(P.attr.ipv6Address).isLinkLocalUnicast() == false
+| ip(<ip>).isLoopback | Returns true if the IP address is a loopback address. Since v0.55.0 only. | ip(P.attr.ipv4Address).isLoopback() == false
+| ip(<ip>).isUnspecified | Returns true if the IP address is unspecified (either `0.0.0.0` or `::`). Since v0.55.0 only. | ip(P.attr.ipv6Address).isUnspecified() == false
+| ip.isCanonical | Check whether the IPv6 string conforms to https://www.rfc-editor.org/rfc/rfc5952.html[RFC 5952]. Since v0.55.0 only. | ip.isCanonical(P.attr.ipv6Address) == false
 | isCIDR | Returns true if the string is an IPv4 or IPv6 CIDR. Since v0.55.0 only. | isCIDR("::1/128") == true
 | isIP | Returns true if the string is an IPv4 or IPv6 address. Since v0.55.0 only. | isIP(P.attr.ipv4Address) == true
-| isLoopback | Returns true if the IP address is a loopback address. Since v0.55.0 only. | ip(P.attr.ipv4Address).isLoopback() == false
-| isMask | Returns whether the CIDR is a mask. Since v0.55.0 only. | cidr("192.168.0.0/8").isMask() == true
-| masked | Returns the masked CIDR for the value. Since v0.55.0 only. | cidr("192.168.1.5/24").masked() == cidr("192.168.1.0/24")
-| prefixLength | Returns the prefix length of the CIDR. Since v0.55.0 only. | cidr("192.168.1.0/24").prefixLength() == 24
 |===
 
 

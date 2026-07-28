@@ -8,7 +8,11 @@ Introduces the following new functions that can be used in policy expressions.
 - `<cidr>.masked()`
 - `<cidr>.prefixLength()`
 - `<ip>.family()`
+- `<ip>.isGlobalUnicast()`
+- `<ip>.isLinkLocalMulticast()`
+- `<ip>.isLinkLocalUnicast()`
 - `<ip>.isLoopback()`
+- `<ip>.isUnspecified()`
 - `cidr()`
 - `ip()`
 - `isCIDR()`

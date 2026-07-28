@@ -14,6 +14,16 @@ condition:
       - expr: |-
           ip(P.attr.ipv4Address).isLoopback() == false
       - expr: |-
+          ip(P.attr.ipv6Address).isGlobalUnicast() == true
+      - expr: |-
+          ip(P.attr.ipv6Address).isLinkLocalMulticast() == false
+      - expr: |-
+          ip(P.attr.ipv6Address).isLinkLocalUnicast() == false
+      - expr: |-
+          ip(P.attr.ipv4Address).isUnspecified() == false
+      - expr: |-
+          ip.isCanonical(P.attr.ipv6Address) == false
+      - expr: |-
           isCIDR("192.168.0.0/24")
       - expr: |-
           isCIDR("::1/128")
