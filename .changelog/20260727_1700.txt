@@ -1,6 +1,7 @@
-type:enhancement
-New CEL functions for working with strings and IP addresses
-Introduces the following new functions that can be used in policy expressions.
+type:breaking
+Upgrade the CEL library to v0.30.0 and enable new functions for working with strings and IP addresses. Note that this version of the CEL library is stricter about unknown field access and some of the query plans produced by the PDP might be different from what the previous version used to produce.
+
+The following new functions are available for use in policy expressions.
 
 - `<cidr>.containsCIDR()`
 - `<cidr>.containsIP()`
