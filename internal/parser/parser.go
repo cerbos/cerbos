@@ -1039,6 +1039,10 @@ func (u *unmarshaler[T]) unmarshalValue(uctx *unmarshalCtx, n ast.Node, out *str
 		out.Kind = &structpb.Value_StringValue{StringValue: t.Value}
 		return nil
 
+	case *ast.LiteralNode:
+		out.Kind = &structpb.Value_StringValue{StringValue: t.Value.Value}
+		return nil
+
 	case *ast.BoolNode:
 		out.Kind = &structpb.Value_BoolValue{BoolValue: t.Value}
 		return nil

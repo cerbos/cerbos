@@ -40,8 +40,10 @@ resources:
       department: marketing
       geography: GB
       id: XX125
-      owner: john
-      team: design
+      owner: >
+        john
+      team: |-
+        design
   pending_leave_request:
     kind: leave_request
     policyVersion: '20210210'
