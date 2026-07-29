@@ -6,6 +6,7 @@ package conditions
 import (
 	"context"
 	"fmt"
+	"math"
 	"net"
 	"reflect"
 	"time"
@@ -418,7 +419,7 @@ func exceptList(lhs, rhs ref.Val) ref.Val {
 		va := ai.Next()
 		var found bool
 		if m != nil {
-			_, found = m[va]
+			_, found = m[mapKey(va)]
 		} else {
 			found = find(b.Iterator(), va)
 		}
@@ -452,7 +453,7 @@ func isSubset(lhs, rhs ref.Val) ref.Val {
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
 		if m != nil {
-			if _, ok := m[va]; !ok {
+			if _, ok := m[mapKey(va)]; !ok {
 				return types.False
 			}
 		} else {
@@ -492,10 +493,20 @@ func convertToMap(b traits.Lister) map[ref.Val]struct{} {
 				m = nil
 				break
 			}
-			m[item] = struct{}{}
+			m[mapKey(item)] = struct{}{}
 		}
 	}
 	return m
+}
+
+func mapKey(value ref.Val) ref.Val {
+	if doubleValue, ok := value.(types.Double); ok {
+		if i, fractional := math.Modf(float64(doubleValue)); fractional == 0 {
+			return types.Int(int64(i))
+		}
+	}
+
+	return value
 }
 
 func hasIntersection(lhs, rhs ref.Val) ref.Val {
@@ -527,7 +538,7 @@ func hasIntersection(lhs, rhs ref.Val) ref.Val {
 
 		var found bool
 		if m != nil {
-			_, found = m[va]
+			_, found = m[mapKey(va)]
 		} else {
 			found = find(b.Iterator(), va)
 		}
@@ -567,7 +578,7 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 	for ai := a.Iterator(); ai.HasNext() == types.True; {
 		va := ai.Next()
 		if m != nil {
-			if _, ok := m[va]; ok {
+			if _, ok := m[mapKey(va)]; ok {
 				items = append(items, va)
 			}
 		} else {
