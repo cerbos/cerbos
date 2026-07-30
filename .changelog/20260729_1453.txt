@@ -1,3 +1,3 @@
 type:fix
 Fix inconsistent behaviour of CEL functions 'except', 'hasIntersection', 'intersect' and 'isSubset'
-The custom CEL functions were behaving differently based on the size of the set.
+When the numerical types differed between the two lists (floats against integers), the comparison results were inconsistent depending on the size of the lists.
