@@ -6,7 +6,6 @@ package conditions
 import (
 	"context"
 	"fmt"
-	"math"
 	"net"
 	"reflect"
 	"time"
@@ -383,16 +382,6 @@ func (t *timeDecorator) decorate(in interpreter.Interpretable) (interpreter.Inte
 	}
 }
 
-// hashable checks whether the type is hashable, i.e. can be used in a Go map.
-func hashable(t ref.Type) bool {
-	return t == types.StringType ||
-		t == types.IntType ||
-		t == types.DoubleType ||
-		t == types.DurationType ||
-		t == types.TimestampType ||
-		t == types.UintType
-}
-
 // exceptList implements difference lhs-rhs returning
 // items in lhs (list) that are not members of rhs (list).
 func exceptList(lhs, rhs ref.Val) ref.Val {
@@ -412,65 +401,16 @@ func exceptList(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
-	m := convertToMap(b)
-
 	var items []ref.Val
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-		var found bool
-		if m != nil {
-			_, found = m[mapKey(va)]
-		} else {
-			found = find(b.Iterator(), va)
-		}
-		if !found {
+	it := a.Iterator()
+	for it.HasNext() == types.True {
+		va := it.Next()
+		if b.Contains(va) == types.False {
 			items = append(items, va)
 		}
 	}
+
 	return types.NewRefValList(types.DefaultTypeAdapter, items)
-}
-
-func find(i traits.Iterator, item ref.Val) bool {
-	for i.HasNext() == types.True {
-		current := i.Next()
-		if item.Equal(current) == types.True {
-			return true
-		}
-	}
-	return false
-}
-
-const minListLengthToConvert = 3
-
-func convertToMap(b traits.Lister) map[ref.Val]struct{} {
-	var m map[ref.Val]struct{}
-	if item := b.Get(types.IntZero); !types.IsError(item) && hashable(item.Type()) {
-		size, ok := b.Size().(types.Int)
-		if !ok || size <= minListLengthToConvert {
-			return nil
-		}
-		m = make(map[ref.Val]struct{}, size)
-
-		for i := b.Iterator(); i.HasNext() == types.True; {
-			item := i.Next()
-			if !hashable(item.Type()) {
-				m = nil
-				break
-			}
-			m[mapKey(item)] = struct{}{}
-		}
-	}
-	return m
-}
-
-func mapKey(value ref.Val) ref.Val {
-	if doubleValue, ok := value.(types.Double); ok {
-		if i, fractional := math.Modf(float64(doubleValue)); fractional == 0 {
-			return types.Int(int64(i))
-		}
-	}
-
-	return value
 }
 
 func intersect(lhs, rhs ref.Val) ref.Val {
@@ -495,20 +435,16 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 	if aSize.Compare(b.Size()) == types.IntOne {
 		a, b = b, a // b is the longest list
 	}
-	m := convertToMap(b)
+
 	var items []ref.Val
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-		if m != nil {
-			if _, ok := m[mapKey(va)]; ok {
-				items = append(items, va)
-			}
-		} else {
-			if find(b.Iterator(), va) {
-				items = append(items, va)
-			}
+	it := a.Iterator()
+	for it.HasNext() == types.True {
+		va := it.Next()
+		if b.Contains(va) == types.True {
+			items = append(items, va)
 		}
 	}
+
 	return types.NewRefValList(types.DefaultTypeAdapter, items)
 }
 
