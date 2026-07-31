@@ -21,6 +21,7 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
@@ -84,6 +85,9 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 		log.Error("Resources query plan request failed", zap.Error(err))
 		if errors.Is(err, compile.PolicyCompilationErr{}) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+		}
+		if errors.Is(err, evaluator.StrictEvaluationError{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to a policy evaluation error")
 		}
 		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
 	}
@@ -172,6 +176,9 @@ func (cs *CerbosService) CheckResourceSet(ctx context.Context, req *requestv1.Ch
 		if errors.Is(err, compile.PolicyCompilationErr{}) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
 		}
+		if errors.Is(err, evaluator.StrictEvaluationError{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to a policy evaluation error")
+		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
@@ -226,6 +233,9 @@ func (cs *CerbosService) CheckResourceBatch(ctx context.Context, req *requestv1.
 		log.Error("Policy check failed", zap.Error(err))
 		if errors.Is(err, compile.PolicyCompilationErr{}) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		}
+		if errors.Is(err, evaluator.StrictEvaluationError{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to a policy evaluation error")
 		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
@@ -292,6 +302,9 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 		log.Error("Policy check failed", zap.Error(err))
 		if errors.Is(err, compile.PolicyCompilationErr{}) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		}
+		if errors.Is(err, evaluator.StrictEvaluationError{}) {
+			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to a policy evaluation error")
 		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
