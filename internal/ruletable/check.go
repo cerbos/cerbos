@@ -256,6 +256,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 									// we don't use `conditionCache` as we don't do any evaluations scoped solely to derived role conditions
 									ok, err := evalCtx.SatisfiesCondition(ctx, drctx.StartCondition(), dr.Condition, dr.Constants, variables)
 									if err != nil {
+										if evalCtx.StrictEvaluation {
+											return nil, err
+										}
 										continue
 									}
 
@@ -340,6 +343,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								// TODO(saml) we could probably pre-compile the condition also
 								drSatisfied, err := evalCtx.SatisfiesCondition(ctx, tracing.StartTracer(nil), b.Core.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
 								if err != nil {
+									if evalCtx.StrictEvaluation {
+										return nil, err
+									}
 									rulectx.Skipped(err, "Error evaluating derived role condition")
 									continue
 								}
@@ -354,6 +360,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 
 							isSatisfied, err := evalCtx.SatisfiesCondition(ctx, rulectx.StartCondition(), b.Core.Condition, constants, variables)
 							if err != nil {
+								if evalCtx.StrictEvaluation {
+									return nil, err
+								}
 								rulectx.Skipped(err, "Error evaluating condition")
 								continue
 							}
@@ -584,7 +593,11 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr, constants, evalVars)
 		if err != nil {
 			vctx.Skipped(err, "Failed to evaluate expression")
-			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
+			err = fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err)
+			if ec.StrictEvaluation {
+				return nil, err
+			}
+			errs = multierr.Append(errs, err)
 			continue
 		}
 
@@ -622,12 +635,20 @@ func (ec *EvalContext) evaluatePrograms(ctx context.Context, tctx tracer.Context
 			// CEL runtime errors (e.g. missing keys) leave the variable unset.
 			// This matches the behavior of evaluateCELExprToRaw, which returns nil for such cases.
 			if celtypes.IsError(result) {
+				if ec.StrictEvaluation {
+					vctx.Skipped(err, "Failed to evaluate expression")
+					return nil, evaluator.StrictEvaluationError{Expression: prg.Expr, Err: err}
+				}
 				ec.celErrors.Add(ctx, prg.Expr, err)
 				vctx.ComputedResult(nil)
 				continue
 			}
 			vctx.Skipped(err, "Failed to evaluate expression")
-			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s`: %w", prg.Name, err))
+			err = fmt.Errorf("error evaluating `%s`: %w", prg.Name, err)
+			if ec.StrictEvaluation {
+				return nil, err
+			}
+			errs = multierr.Append(errs, err)
 			continue
 		}
 
@@ -787,6 +808,9 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *runtimev1
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
 		if celtypes.IsError(result) {
+			if ec.StrictEvaluation {
+				return nil, evaluator.StrictEvaluationError{Expression: expr.Original, Err: err}
+			}
 			ec.celErrors.Add(ctx, expr.Original, err)
 			return nil, nil
 		}
