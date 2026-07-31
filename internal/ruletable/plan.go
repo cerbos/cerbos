@@ -59,7 +59,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel)}
+	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))

@@ -305,9 +305,10 @@ func InvertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 }
 
 type EvalContext struct {
-	TimeFn    func() time.Time
-	ExprCache *ExprCache
-	CELErrors *evaluator.CELErrors
+	TimeFn           func() time.Time
+	ExprCache        *ExprCache
+	CELErrors        *evaluator.CELErrors
+	StrictEvaluation bool
 }
 
 func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
@@ -445,7 +446,10 @@ func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, exp
 	val, residual, err := p.evalPartially(ctx, e)
 	if err != nil {
 		// CEL runtime errors (e.g. missing keys) collapse the expression to false.
-		if types.IsError(val) {
+		if celtypes.IsError(val) {
+			if evalCtx.StrictEvaluation {
+				return nil, evaluator.StrictEvaluationError{Expression: original, Err: err}
+			}
 			evalCtx.CELErrors.Add(ctx, original, err)
 			return conditions.FalseExpr, nil
 		}
