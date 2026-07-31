@@ -11,28 +11,42 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/ext"
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	cerbosFuncIntersect = "intersect"
+	extFuncIntersects   = "sets.intersects"
+)
+
+func BenchmarkExtIntersects50(b *testing.B) {
+	benchmarkIntersect(b, extFuncIntersects, 50)
+}
+
 func BenchmarkIntersect50(b *testing.B) {
-	benchmarkIntersect(b, 50)
+	benchmarkIntersect(b, cerbosFuncIntersect, 50)
 }
 
 func BenchmarkIntersect25(b *testing.B) {
-	benchmarkIntersect(b, 25)
+	benchmarkIntersect(b, cerbosFuncIntersect, 25)
 }
 
 func BenchmarkIntersect15(b *testing.B) {
-	benchmarkIntersect(b, 15)
+	benchmarkIntersect(b, cerbosFuncIntersect, 15)
+}
+
+func BenchmarkExtIntersects5(b *testing.B) {
+	benchmarkIntersect(b, extFuncIntersects, 5)
 }
 
 func BenchmarkIntersect5(b *testing.B) {
-	benchmarkIntersect(b, 5)
+	benchmarkIntersect(b, cerbosFuncIntersect, 5)
 }
 
-func benchmarkIntersect(b *testing.B, size int) {
+func benchmarkIntersect(b *testing.B, function string, size int) {
 	b.Helper()
-	expr := generateExpr(size)
+	expr := generateExpr(function, size)
 	prg := prepareProgram(b, expr)
 
 	for b.Loop() {
@@ -41,7 +55,7 @@ func benchmarkIntersect(b *testing.B, size int) {
 	}
 }
 
-func generateExpr(size int) string {
+func generateExpr(function string, size int) string {
 	lhs := make([]string, size)
 	for i := range size {
 		lhs[i] = fmt.Sprintf("'%05d'", i)
@@ -51,13 +65,16 @@ func generateExpr(size int) string {
 
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	rnd.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
-	return fmt.Sprintf("intersect([%s], [%s])", strings.Join(lhs, ","), strings.Join(rhs, ","))
+	return fmt.Sprintf("%s([%s], [%s])", function, strings.Join(lhs, ","), strings.Join(rhs, ","))
 }
 
 func prepareProgram(tb testing.TB, expr string) cel.Program {
 	tb.Helper()
 	is := require.New(tb)
-	env, err := cel.NewEnv(CerbosCELLib())
+	env, err := cel.NewEnv(
+		CerbosCELLib(),
+		ext.Sets(),
+	)
 	is.NoError(err)
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())
