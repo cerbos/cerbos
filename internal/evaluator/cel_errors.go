@@ -6,6 +6,8 @@ package evaluator
 import (
 	"cmp"
 	"context"
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
@@ -13,6 +15,24 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
+
+// StrictEvaluationError is returned when strict evaluation mode is enabled and a CEL runtime error is raised during evaluation.
+type StrictEvaluationError struct {
+	Err        error
+	Expression string
+}
+
+func (e StrictEvaluationError) Error() string {
+	return fmt.Sprintf("error evaluating expression %q: %v", e.Expression, e.Err)
+}
+
+func (e StrictEvaluationError) Unwrap() error {
+	return e.Err
+}
+
+func (e StrictEvaluationError) Is(target error) bool {
+	return errors.As(target, &StrictEvaluationError{})
+}
 
 const (
 	celErrorMsg  = "Error evaluating CEL expression"
