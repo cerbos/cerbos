@@ -95,6 +95,7 @@ type EvalParams struct {
 	DefaultScope         string
 	CELErrorLogLevel     CELErrorLogLevel
 	LenientScopeSearch   bool
+	StrictEvaluation     bool
 }
 
 func PolicyVersion(version string, params EvalParams) string {
