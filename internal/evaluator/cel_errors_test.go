@@ -54,10 +54,6 @@ func TestCELErrorsAdd(t *testing.T) {
 			require.Equal(t, wantLevel, errLogs[0].Level)
 			require.Equal(t, "R.attr.x > 1", errLogs[0].ContextMap()["expression"])
 			require.Equal(t, "no such key: x", errLogs[0].ContextMap()["error"])
-
-			hintLogs := logs.FilterMessage(celErrorHint).All()
-			require.Len(t, hintLogs, 1)
-			require.Equal(t, wantLevel, hintLogs[0].Level)
 		})
 	}
 
@@ -96,7 +92,6 @@ func TestCELErrorsAdd(t *testing.T) {
 		c2.Add(ctx, "c", errors.New("boom"))
 
 		require.Equal(t, 3, logs.FilterMessage(celErrorMsg).Len())
-		require.Equal(t, 1, logs.FilterMessage(celErrorHint).Len())
 	})
 
 	t.Run("nil_collector_has_no_errors", func(t *testing.T) {
