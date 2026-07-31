@@ -35,8 +35,7 @@ func (e StrictEvaluationError) Is(target error) bool {
 }
 
 const (
-	celErrorMsg  = "Error evaluating CEL expression"
-	celErrorHint = `CEL evaluation errors detected; set engine.celErrorLogLevel to "none" to silence these messages. From Cerbos v0.55, a DENY rule whose condition raises a runtime error will be considered as satisfying the DENY condition`
+	celErrorMsg = "Error evaluating CEL expression"
 )
 
 var celErrorHintOnce sync.Once
@@ -64,25 +63,21 @@ func getLogFunc(level CELErrorLogLevel) logFunc {
 	case CELErrorLogLevelDebug:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Debug(celErrorHint) })
 			logger.Debug(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	case CELErrorLogLevelInfo:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Info(celErrorHint) })
 			logger.Info(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	case CELErrorLogLevelError:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Error(celErrorHint) })
 			logger.Error(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	default:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Warn(celErrorHint) })
 			logger.Warn(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	}
