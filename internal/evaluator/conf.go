@@ -47,6 +47,8 @@ type Conf struct {
 	CELErrorLogLevel CELErrorLogLevel `yaml:"celErrorLogLevel" conf:",example=warn"`
 	// LenientScopeSearch configures the engine to ignore missing scopes and search upwards through the scope tree until it finds a usable policy.
 	LenientScopeSearch bool `yaml:"lenientScopeSearch" conf:",example=false"`
+	// StrictEvaluation is the engine mode when a first error during policy evaluation terminates a request.
+	StrictEvaluation bool `yaml:"strictEvaluation" conf:",example=false"`
 	// PolicyLoaderTimeout is the timeout for loading policies from the policy store.
 	PolicyLoaderTimeout time.Duration `yaml:"policyLoaderTimeout" conf:",example=2s"`
 	NumWorkers          uint          `yaml:"numWorkers" conf:",ignore"`
