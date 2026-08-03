@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/cerbos/actions v0.0.0-20260727081437-7df6503218a7
+	github.com/cerbos/actions v0.0.0-20260803114038-cb30b08338f9
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260707162253-ebf810e189e0
