@@ -12,7 +12,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
-	github.com/vektra/mockery/v3 v3.7.1
+	github.com/vektra/mockery/v3 v3.7.2
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools v0.48.0
 	golang.org/x/vuln v1.6.0
