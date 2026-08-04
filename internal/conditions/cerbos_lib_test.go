@@ -181,7 +181,16 @@ func TestCerbosLib(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			is.NoError(issues.Err())
 
-			have, _, err := conditions.ContextEval(t.Context(), env, ast.NativeRep(), cel.NoVars(), conditions.Now())
+			smo, err := ext.NewSetMembershipOptimizer()
+			is.NoError(err)
+
+			staticOptimizer, err := cel.NewStaticOptimizer(smo)
+			is.NoError(err)
+
+			optimizedAST, issues := staticOptimizer.Optimize(conditions.StdEnv, ast)
+			is.NoError(issues.Err())
+
+			have, _, err := conditions.ContextEval(t.Context(), env, optimizedAST.NativeRep(), cel.NoVars(), conditions.Now())
 			if tc.wantErr {
 				is.Error(err)
 			} else {

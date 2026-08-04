@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/ext"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -563,8 +564,24 @@ func compileFromSource(src string) (cel.Program, error) {
 	if iss != nil && iss.Err() != nil {
 		return nil, iss.Err()
 	}
+
+	smo, err := ext.NewSetMembershipOptimizer()
+	if err != nil {
+		return nil, fmt.Errorf("failed build set membership optimizer: %w", err)
+	}
+
+	staticOptimizer, err := cel.NewStaticOptimizer(smo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build static optimizer: %w", err)
+	}
+
+	optimizedAST, issues := staticOptimizer.Optimize(conditions.StdEnv, ast)
+	if issues.Err() != nil {
+		return nil, fmt.Errorf("failed to optimize expression: %w", err)
+	}
+
 	return conditions.StdEnv.Program(
-		ast,
+		optimizedAST,
 		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 	)
 }

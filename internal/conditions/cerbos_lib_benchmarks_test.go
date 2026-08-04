@@ -16,35 +16,48 @@ import (
 )
 
 const (
-	cerbosFuncIntersect = "intersect"
-	extFuncIntersects   = "sets.intersects"
+	cerbosFuncIntersect = "hasIntersection"
+	extFuncIntersect    = "sets.intersects"
 )
 
-func BenchmarkExtIntersects50(b *testing.B) {
-	benchmarkIntersect(b, extFuncIntersects, 50)
-}
-
-func BenchmarkIntersect50(b *testing.B) {
-	benchmarkIntersect(b, cerbosFuncIntersect, 50)
-}
-
-func BenchmarkIntersect25(b *testing.B) {
-	benchmarkIntersect(b, cerbosFuncIntersect, 25)
-}
-
-func BenchmarkIntersect15(b *testing.B) {
-	benchmarkIntersect(b, cerbosFuncIntersect, 15)
-}
-
-func BenchmarkExtIntersects5(b *testing.B) {
-	benchmarkIntersect(b, extFuncIntersects, 5)
+func BenchmarkExtIntersect5(b *testing.B) {
+	benchmarkFunc(b, extFuncIntersect, 5)
 }
 
 func BenchmarkIntersect5(b *testing.B) {
-	benchmarkIntersect(b, cerbosFuncIntersect, 5)
+	benchmarkFunc(b, cerbosFuncIntersect, 5)
 }
 
-func benchmarkIntersect(b *testing.B, function string, size int) {
+func BenchmarkExtIntersect50(b *testing.B) {
+	benchmarkFunc(b, extFuncIntersect, 50)
+}
+
+func BenchmarkIntersect50(b *testing.B) {
+	benchmarkFunc(b, cerbosFuncIntersect, 50)
+}
+
+const (
+	cerbosFuncIsSubset = "isSubset"
+	extFuncIsSubset    = "sets.contains"
+)
+
+func BenchmarkExtIsSubset5(b *testing.B) {
+	benchmarkFunc(b, extFuncIsSubset, 5)
+}
+
+func BenchmarkIsSubset5(b *testing.B) {
+	benchmarkFunc(b, cerbosFuncIsSubset, 5)
+}
+
+func BenchmarkExtIsSubset50(b *testing.B) {
+	benchmarkFunc(b, extFuncIsSubset, 50)
+}
+
+func BenchmarkIsSubset50(b *testing.B) {
+	benchmarkFunc(b, cerbosFuncIsSubset, 50)
+}
+
+func benchmarkFunc(b *testing.B, function string, size int) {
 	b.Helper()
 	expr := generateExpr(function, size)
 	prg := prepareProgram(b, expr)
@@ -79,7 +92,16 @@ func prepareProgram(tb testing.TB, expr string) cel.Program {
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())
 
-	prg, err := env.Program(ast, cel.CustomDecorator(newTimeDecorator(time.Now)))
+	smo, err := ext.NewSetMembershipOptimizer()
+	is.NoError(err)
+
+	staticOptimizer, err := cel.NewStaticOptimizer(smo)
+	is.NoError(err)
+
+	optimizedAST, issues := staticOptimizer.Optimize(env, ast)
+	is.NoError(issues.Err())
+
+	prg, err := env.Program(optimizedAST, cel.CustomDecorator(newTimeDecorator(time.Now)))
 	is.NoError(err)
 	return prg
 }
