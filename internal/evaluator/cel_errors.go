@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
 
-// StrictEvaluationError is returned when strict evaluation mode is enabled and a CEL runtime error is raised during evaluation.
+// StrictEvaluationError is raised when strict evaluation mode is enabled and a CEL runtime error occurs during evaluation.
+// It never escapes the engine: the check and plan evaluators convert it into a DENY for the affected action.
 type StrictEvaluationError struct {
 	Err        error
 	Expression string
@@ -37,8 +37,6 @@ func (e StrictEvaluationError) Is(target error) bool {
 const (
 	celErrorMsg = "Error evaluating CEL expression"
 )
-
-var celErrorHintOnce sync.Once
 
 type celError struct {
 	expression string

@@ -6,7 +6,6 @@ package evaluator
 import (
 	"context"
 	"errors"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -23,10 +22,6 @@ func newLogCtx(t *testing.T) (context.Context, *observer.ObservedLogs) {
 	return logging.ToContext(t.Context(), zap.New(core)), logs
 }
 
-func resetCELErrorHint() {
-	celErrorHintOnce = sync.Once{}
-}
-
 func TestCELErrorsAdd(t *testing.T) {
 	levels := map[CELErrorLogLevel]zapcore.Level{
 		CELErrorLogLevelDebug: zapcore.DebugLevel,
@@ -38,7 +33,6 @@ func TestCELErrorsAdd(t *testing.T) {
 
 	for level, wantLevel := range levels {
 		t.Run(string(level), func(t *testing.T) {
-			resetCELErrorHint()
 			ctx, logs := newLogCtx(t)
 
 			c := NewCELErrors(level)
@@ -58,7 +52,6 @@ func TestCELErrorsAdd(t *testing.T) {
 	}
 
 	t.Run("none_collects_without_logging", func(t *testing.T) {
-		resetCELErrorHint()
 		ctx, logs := newLogCtx(t)
 
 		c := NewCELErrors(CELErrorLogLevelNone)
@@ -69,7 +62,6 @@ func TestCELErrorsAdd(t *testing.T) {
 	})
 
 	t.Run("deduplicates_identical_errors", func(t *testing.T) {
-		resetCELErrorHint()
 		ctx, logs := newLogCtx(t)
 
 		c := NewCELErrors(CELErrorLogLevelWarn)
@@ -81,8 +73,7 @@ func TestCELErrorsAdd(t *testing.T) {
 		require.Equal(t, 2, logs.FilterMessage(celErrorMsg).Len())
 	})
 
-	t.Run("hint_logged_once_across_collectors", func(t *testing.T) {
-		resetCELErrorHint()
+	t.Run("separate_collectors_log_independently", func(t *testing.T) {
 		ctx, logs := newLogCtx(t)
 
 		c1 := NewCELErrors(CELErrorLogLevelWarn)
