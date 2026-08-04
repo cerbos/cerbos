@@ -10,8 +10,6 @@ include::ROOT:partial$version-check.adoc[]
 
 When a policy condition or variable raises a CEL runtime error (for example, comparing incompatible types or referencing a missing attribute), the expression is treated as not satisfied. Cerbos logs each such error and includes it in the audit log entry for the request. The `celErrorLogLevel` setting controls the level these messages are logged at: valid values are `none`, `debug`, `info`, `warn` (the default) and `error`. Set it to `none` to disable the log messages entirely. The errors are included in audit log entries regardless of this setting.
 
-NOTE: This setting has no effect when <<strict_evaluation>> is enabled because evaluation stops at the first error, which is always logged at `error` level.
-
 [source,yaml,linenums]
 ----
 engine:
@@ -99,7 +97,15 @@ engine:
 
 By default, when an error is raised during the evaluation of a policy condition (for example, comparing incompatible types or referencing a missing attribute), the affected expression is treated as not satisfied and the evaluation carries on. The error is logged (see <<cel_error_log_level>>) and included in the audit log entry for the request. Because a rule whose condition raises an error never matches, an `EFFECT_DENY` rule could be silently skipped.
 
-Setting `strictEvaluation` to `true` makes such errors fatal, so on an error the whole request is terminated. The response returns a generic `FAILED_PRECONDITION` error. The strict evaluation mode applies to both the check and the query planner APIs.
+Setting `strictEvaluation` to `true` makes such errors deny the affected action. This applies to both the check and the query planner APIs. The errors are logged (see <<cel_error_log_level>>) and included in the audit log entry as usual.
+
+The deny is scoped as this:
+
+* An error in a rule condition denies the actions the rule applies to.
+* An error in a variable denies only the actions whose conditions reference that variable.
+* An error in the condition of an imported derived role cannot be attributed to individual actions, so it denies every action evaluated against the policy scope that imports the derived role.
+
+xref:policies:compile.adoc#testing[Policy tests] can be run in this mode as well by passing the `--strict-evaluation` flag to the `cerbos compile` command.
 
 [source,yaml,linenums]
 ----
