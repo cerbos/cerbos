@@ -166,6 +166,9 @@
         },
         "now": {
           "$ref": "#/definitions/google.protobuf.Timestamp"
+        },
+        "strictEvaluation": {
+          "type": "boolean"
         }
       }
     },
