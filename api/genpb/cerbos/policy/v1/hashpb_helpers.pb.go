@@ -1092,6 +1092,9 @@ func cerbos_policy_v1_TestOptions_hashpb_sum(m *TestOptions, hasher hash.Hash, i
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDefaultScope()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDefaultScope()), len(m.GetDefaultScope())))
 	}
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.strict_evaluation"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetStrictEvaluation())))
+	}
 }
 
 func cerbos_policy_v1_TestResults_Action_hashpb_sum(m *TestResults_Action, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {

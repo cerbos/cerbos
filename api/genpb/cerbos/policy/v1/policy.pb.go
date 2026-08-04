@@ -1783,6 +1783,7 @@ type TestOptions struct {
 	Globals              map[string]*structpb.Value `protobuf:"bytes,3,rep,name=globals,proto3" json:"globals,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	DefaultPolicyVersion string                     `protobuf:"bytes,4,opt,name=default_policy_version,json=defaultPolicyVersion,proto3" json:"default_policy_version,omitempty"`
 	DefaultScope         string                     `protobuf:"bytes,5,opt,name=default_scope,json=defaultScope,proto3" json:"default_scope,omitempty"`
+	StrictEvaluation     bool                       `protobuf:"varint,6,opt,name=strict_evaluation,json=strictEvaluation,proto3" json:"strict_evaluation,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -1850,6 +1851,13 @@ func (x *TestOptions) GetDefaultScope() string {
 		return x.DefaultScope
 	}
 	return ""
+}
+
+func (x *TestOptions) GetStrictEvaluation() bool {
+	if x != nil {
+		return x.StrictEvaluation
+	}
+	return false
 }
 
 type TestSuite struct {
@@ -4232,13 +4240,14 @@ const file_cerbos_policy_v1_policy_proto_rawDesc = "" +
 	"principals\x1a>\n" +
 	"\tResources\x121\n" +
 	"\tresources\x18\x01 \x03(\tB\x13\xbaH\x10\xc8\x01\x01\x92\x01\n" +
-	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\tresources\"\xe2\x02\n" +
+	"\b\x01\x18\x01\"\x04r\x02\x10\x01R\tresources\"\x8f\x03\n" +
 	"\vTestOptions\x12,\n" +
 	"\x03now\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x03now\x120\n" +
 	"\x14lenient_scope_search\x18\x02 \x01(\bR\x12lenientScopeSearch\x12D\n" +
 	"\aglobals\x18\x03 \x03(\v2*.cerbos.policy.v1.TestOptions.GlobalsEntryR\aglobals\x124\n" +
 	"\x16default_policy_version\x18\x04 \x01(\tR\x14defaultPolicyVersion\x12#\n" +
-	"\rdefault_scope\x18\x05 \x01(\tR\fdefaultScope\x1aR\n" +
+	"\rdefault_scope\x18\x05 \x01(\tR\fdefaultScope\x12+\n" +
+	"\x11strict_evaluation\x18\x06 \x01(\bR\x10strictEvaluation\x1aR\n" +
 	"\fGlobalsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\"\x9d\t\n" +

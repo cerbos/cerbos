@@ -2338,6 +2338,16 @@ func (m *TestOptions) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.StrictEvaluation {
+		i--
+		if m.StrictEvaluation {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if len(m.DefaultScope) > 0 {
 		i -= len(m.DefaultScope)
 		copy(dAtA[i:], m.DefaultScope)
@@ -5270,6 +5280,9 @@ func (m *TestOptions) SizeVT() (n int) {
 	l = len(m.DefaultScope)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.StrictEvaluation {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -12543,6 +12556,26 @@ func (m *TestOptions) UnmarshalVT(dAtA []byte) error {
 			}
 			m.DefaultScope = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StrictEvaluation", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.StrictEvaluation = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
