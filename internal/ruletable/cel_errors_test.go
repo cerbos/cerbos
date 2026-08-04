@@ -112,6 +112,7 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 				Variables: &policyv1.Variables{Local: map[string]string{"v1": amountExpr}},
 				Rules: []*policyv1.ResourceRule{
 					{Actions: []string{"export"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond("V.v1")},
+					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
 				},
 			},
 		},
@@ -217,6 +218,10 @@ func (h *celErrorsHarness) plan(t *testing.T, params evaluator.EvalParams, kind,
 }
 
 func checkInput(kind, action string, amount *structpb.Value) *enginev1.CheckInput {
+	return checkInputActions(kind, amount, action)
+}
+
+func checkInputActions(kind string, amount *structpb.Value, actions ...string) *enginev1.CheckInput {
 	attr := map[string]*structpb.Value{}
 	if amount != nil {
 		attr["amount"] = amount
@@ -225,7 +230,7 @@ func checkInput(kind, action string, amount *structpb.Value) *enginev1.CheckInpu
 		RequestId: "1",
 		Resource:  &enginev1.Resource{Kind: kind, Id: "1", Attr: attr},
 		Principal: &enginev1.Principal{Id: "sam", Roles: []string{"user"}},
-		Actions:   []string{action},
+		Actions:   actions,
 	}
 }
 
