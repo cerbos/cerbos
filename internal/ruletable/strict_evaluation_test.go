@@ -19,7 +19,12 @@ func TestStrictEvaluationCheck(t *testing.T) {
 	params := h.evalParams
 	params.StrictEvaluation = true
 
-	t.Run("clean_request_succeeds", func(t *testing.T) {
+	t.Run("clean_request_allows", func(t *testing.T) {
+		effect, entries, _ := h.check(t, params, "account", "read", structpb.NewNumberValue(500))
+		require.Equal(t, effectv1.Effect_EFFECT_ALLOW, effect)
+		assertCELErrors(t, entries)
+	})
+	t.Run("clean_request_denies", func(t *testing.T) {
 		effect, entries, _ := h.check(t, params, "account", "read", structpb.NewNumberValue(5000))
 		require.Equal(t, effectv1.Effect_EFFECT_DENY, effect)
 		assertCELErrors(t, entries)
