@@ -25,7 +25,6 @@ import (
 	"github.com/cerbos/cerbos/internal/auxdata"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
-	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
 	"github.com/cerbos/cerbos/internal/util"
@@ -77,9 +76,6 @@ func (aas *AuthzenAuthorizationService) AccessEvaluation(ctx context.Context, r 
 		log.Error("Policy check failed", zap.Error(err))
 		if errors.Is(err, compile.PolicyCompilationErr{}) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
-		}
-		if errors.Is(err, evaluator.StrictEvaluationError{}) {
-			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to a policy evaluation error")
 		}
 		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
@@ -256,9 +252,6 @@ func (aas *AuthzenAuthorizationService) AccessEvaluationBatch(ctx context.Contex
 			log.Error("Policy check failed", zap.Error(err))
 			if errors.Is(err, compile.PolicyCompilationErr{}) {
 				return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
-			}
-			if errors.Is(err, evaluator.StrictEvaluationError{}) {
-				return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to a policy evaluation error")
 			}
 			return nil, status.Errorf(codes.Internal, "Policy check failed")
 		}
