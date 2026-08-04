@@ -97,7 +97,7 @@ engine:
 
 By default, when an error is raised during the evaluation of a policy condition (for example, comparing incompatible types or referencing a missing attribute), the affected expression is treated as not satisfied and the evaluation carries on. The error is logged (see <<cel_error_log_level>>) and included in the audit log entry for the request. Because a rule whose condition raises an error never matches, an `EFFECT_DENY` rule could be silently skipped.
 
-Setting `strictEvaluation` to `true` makes such errors deny the affected action. This applies to both the check and the query planner APIs. The errors are logged (see <<cel_error_log_level>>) and included in the audit log entry as usual.
+Setting `strictEvaluation` to `true` makes such errors deny the affected action. This applies to both the check and the query planner APIs.
 
 The deny is scoped as this:
 
