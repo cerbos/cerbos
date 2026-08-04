@@ -305,6 +305,11 @@ message AuxData {
   option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
     json_schema: {description: "Structured auxiliary data"}
   };
+  option (buf.validate.message).cel = {
+    id: "AuxData.only_one_jwt_field"
+    message: "Only one of the jwt or jwts fields must be set"
+    expression: "!(has(this.jwt) && has(this.jwts))"
+  };
 
   message JWT {
     map<string, google.protobuf.Value> claims = 1;

@@ -36,6 +36,7 @@ import (
 	"github.com/cerbos/cerbos/internal/svc"
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
+	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 )
 
 // NOTE(saml) this is the max allowable path length on macOS, which appears to be the shortest of common platforms (at 104).
@@ -77,13 +78,20 @@ func TestServer(t *testing.T) {
 	})
 
 	t.Run("store=bundle_local", func(t *testing.T) {
-		t.Run("api", func(t *testing.T) {
-			t.Run("bundlev2_ruletable", apiTests(func(t *testing.T) testParam {
+		tpg := func(bundleType bundlev2.BundleType) func(t *testing.T) testParam {
+			return func(t *testing.T) testParam {
 				t.Helper()
 				ctx, cancelFunc := context.WithCancel(t.Context())
 				t.Cleanup(cancelFunc)
 
-				dir := test.PathToDir(t, filepath.Join("bundle", "v2_ruletable"))
+				dirSuffix := "legacy"
+				bundleName := "bundle.crbp"
+				if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+					dirSuffix = "ruletable"
+					bundleName = "bundle.crrts"
+				}
+
+				dir := test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v2_%s", dirSuffix)))
 
 				keyBytes, err := os.ReadFile(filepath.Join(dir, "encryption_key.txt"))
 				require.NoError(t, err, "Failed to read encryption key")
@@ -91,7 +99,7 @@ func TestServer(t *testing.T) {
 				conf := &hubstore.Conf{
 					CacheSize: 1024,
 					Local: &hubstore.LocalSourceConf{
-						BundlePath:    filepath.Join(dir, "bundle.crrts"),
+						BundlePath:    filepath.Join(dir, bundleName),
 						TempDir:       t.TempDir(),
 						EncryptionKey: string(keyBytes),
 					},
@@ -106,7 +114,12 @@ func TestServer(t *testing.T) {
 					policyLoader: store,
 					schemaMgr:    schemaMgr,
 				}
-			}))
+			}
+		}
+
+		t.Run("api", func(t *testing.T) {
+			t.Run("bundlev2", apiTests(tpg(bundlev2.BundleType_BUNDLE_TYPE_LEGACY)))
+			t.Run("bundlev2_ruletable", apiTests(tpg(bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE)))
 		})
 	})
 }

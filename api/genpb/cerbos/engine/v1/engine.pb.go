@@ -2531,7 +2531,7 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:Y\x92AV\n" +
-	"T2RA person or application attempting to perform the actions on the set of resources.\"\xe0\x03\n" +
+	"T2RA person or application attempting to perform the actions on the set of resources.\"\xd6\x04\n" +
 	"\aAuxData\x124\n" +
 	"\x03jwt\x18\x01 \x03(\v2\".cerbos.engine.v1.AuxData.JwtEntryR\x03jwt\x127\n" +
 	"\x04jwts\x18\x02 \x03(\v2#.cerbos.engine.v1.AuxData.JwtsEntryR\x04jwts\x1a\x9b\x01\n" +
@@ -2545,8 +2545,9 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\x1aV\n" +
 	"\tJwtsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x123\n" +
-	"\x05value\x18\x02 \x01(\v2\x1d.cerbos.engine.v1.AuxData.JWTR\x05value:\x028\x01: \x92A\x1d\n" +
-	"\x1b2\x19Structured auxiliary data\"\x82\n" +
+	"\x05value\x18\x02 \x01(\v2\x1d.cerbos.engine.v1.AuxData.JWTR\x05value:\x028\x01:\x95\x01\x92A\x1d\n" +
+	"\x1b2\x19Structured auxiliary data\xbaHr\x1ap\n" +
+	"\x1aAuxData.only_one_jwt_field\x12.Only one of the jwt or jwts fields must be set\x1a\"!(has(this.jwt) && has(this.jwts))\"\x82\n" +
 	"\n" +
 	"\x05Trace\x12A\n" +
 	"\n" +
