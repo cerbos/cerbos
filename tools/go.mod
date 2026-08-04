@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/cerbos/actions v0.0.0-20260727081437-7df6503218a7
+	github.com/cerbos/actions v0.0.0-20260803114038-cb30b08338f9
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260707162253-ebf810e189e0
@@ -12,7 +12,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
-	github.com/vektra/mockery/v3 v3.7.1
+	github.com/vektra/mockery/v3 v3.7.2
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools v0.48.0
 	golang.org/x/vuln v1.6.0
