@@ -9,7 +9,7 @@ Role policies define the set of actions a role is permitted to perform on each r
 
 Role policies are ABAC policies in which you specify a number of resources, each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be specified for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
 
-Role policies are not standalone. They apply as an additive constraint on top of xref:resource_policies.adoc[resource policies], so an action is only allowed if it is permitted by both the role policy and a matching resource policy. A role policy cannot grant access that the resource policy does not already allow, which means a resource policy is always required.
+Role policies are not standalone. They apply as an additive constraint on top of xref:resource_policies.adoc[resource policies], so an action is only allowed if it is permitted by both the role policy and a matching resource policy. A role policy cannot grant access that the resource policy does not already allow, which means role-policy evaluation always requires a resource policy.
 
 Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, the **allowable actions** act as an exhaustive list of actions allowed on each resource. Any resource and action pair not defined in this list is immediately denied for that role.
 
@@ -29,12 +29,12 @@ rolePolicy:
     - admin
   constants:
     import: <5>
-      - apatr_common_constants
+      - example_common_constants
     local: <6>
       corporate_network_ip_range: 10.20.0.0/16
   variables:
     import: <7>
-      - apatr_common_variables
+      - example_common_variables
     local: <8>
       is_corporate_network: |-
         P.attr.ip_address.inIPAddrRange(constants.corporate_network_ip_range)
@@ -61,9 +61,9 @@ rolePolicy:
     - resource: "*" <15>
       allowActions: ["create"]
 ----
-<1> The role to which this policy applies.
-<2> Version of this policy. Policies are uniquely identified by the role name and version pair. You can have multiple policy versions for the same role (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<3> Optional principal xref:scoped_policies.adoc[scope] for this policy.
+<1> The role-policy identifier. This value cannot contain `!`, `*`, `?`, `[`, `]`, `{`, or `}`. This restriction applies to the `rolePolicy.role` identifier, not to static IdP role names used in `parentRoles` or resource-policy rules.
+<2> Version of this policy. You can have multiple policy versions for the same role (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
+<3> Optional principal xref:scoped_policies.adoc[scope] for this policy. The role-policy identifier, version, and exact scope form the unique identity of a role policy.
 <4> The list of parent roles that the custom role inherits.
 <5> xref:variables.adoc#export-constants[Constant definitions] to import (optional).
 <6> xref:variables.adoc#local-constants[Local constant definitions] (optional).

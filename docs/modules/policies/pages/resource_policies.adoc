@@ -9,6 +9,10 @@ A resource policy contains all rules governing access to a single resource kind.
 
 Resource policies define rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record.
 
+A resource policy is uniquely identified by its resource kind, version, and exact scope. Multiple versions and scoped variants can exist for the same resource kind. When a request includes a scope, Cerbos can evaluate a chain of scoped policy variants. See xref:scoped_policies.adoc[Scoped policies].
+
+Every resource-policy rule must specify at least one non-empty `roles` or `derivedRoles` list. A rule can specify both. `roles` contains static roles supplied in the request, while `derivedRoles` contains names imported through `importDerivedRoles`.
+
 Multiple rules can be defined for the same action on a resource for different roles and/or with different conditions. If more than one rule matches a given input, the protocol for conflict resolution is as follows:
 
 * For a single role and an action, if some rules evaluated to `EFFECT_ALLOW` and some others evaluated to `EFFECT_DENY`, the overall effect is `EFFECT_DENY`.
@@ -26,15 +30,15 @@ resourcePolicy:
   scope: "acme.corp" <3>
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS <4>
   importDerivedRoles:
-    - apatr_common_roles <5>
+    - example_common_roles <5>
   constants:
     import: <6>
-      - apatr_common_constants
+      - example_common_constants
     local: <7>
       corporate_network_ip_range: 10.20.0.0/16
   variables:
     import: <8>
-      - apatr_common_variables
+      - example_common_variables
     local: <9>
       is_corporate_network: |-
         request.principal.attr.ip_address.inIPAddrRange(constants.corporate_network_ip_range)
@@ -73,8 +77,8 @@ resourcePolicy:
       ref: cerbos:///album/object.json <17>
 ----
 <1> Kind of resource to which this policy applies.
-<2> Version of this policy. Policies are uniquely identified by the resource name and version pair. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<3> Optional xref:scoped_policies.adoc[scope] for this policy.
+<2> Version of this policy. You can have multiple policy versions for the same resource (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
+<3> Optional xref:scoped_policies.adoc[scope] for this policy. The resource kind, version, and exact scope form the unique identity of a resource policy.
 <4> Optional xref:scope_permissions.adoc[scope permission] for this policy, defaults to `SCOPE_PERMISSIONS_OVERRIDE_PARENT`.
 <5> Import a set of xref:derived_roles.adoc[derived roles] (optional).
 <6> xref:variables.adoc#export-constants[Constant definitions] to import (optional).
@@ -84,12 +88,27 @@ resourcePolicy:
 <10> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <11> This rule applies to a derived role.
 <12> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
-<13> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on
+<13> Optional xref:outputs.adoc[output] for the action rule. You can define optional expressions to be evaluated as output depending on
 whether the rule is activated or not activated because of a condition failure.
 <14> Optional name for the rule.
 <15> Optional section for defining schemas that apply to this resource kind.
 <16> Optional schema for validating the principal attributes.
 <17> Optional schema for validating the resource attributes.
+
+== Interaction with other policy types
+
+Derived roles are reusable, context-dependent designations. They only affect evaluation when a resource policy imports their definitions and references them from a rule.
+
+xref:role_policies.adoc[Role policies] are constraints on resource-policy decisions. For a given role, an action must be allowed by the matching resource policy and by any applicable role policy. A role policy cannot grant an action that the resource policy does not allow. If a principal has multiple roles, Cerbos evaluates each role independently, and an allow from another role can still grant the action.
+
+xref:principal_policies.adoc[Principal policies] are evaluated before resource policies. The decision produced after evaluating the applicable principal-policy scope chain is final for that action. Actions without a principal-policy decision continue to resource-policy evaluation.
+
+[CAUTION]
+====
+A rule with both `actions: ["*"]` and `roles: ["*"]` applies to every requested action and every principal with at least one role. If role policies provide the intended restrictions, every role that can reach this rule must have an applicable role policy. A role without an applicable role policy is governed by the resource policy alone.
+====
+
+For user-interface permission checks, call xref:api:index.adoc#check-resources[CheckResources] with the actual resource and its attributes. See xref:recipes:ui.adoc[Integrating permission checks into your user interface].
 
 [TIP]
 ====

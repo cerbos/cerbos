@@ -16,17 +16,17 @@ NOTE: Derived roles are dynamically determined at runtime by matching the princi
 ---
 apiVersion: "api.cerbos.dev/v1"
 description: |-
-  Common dynamic roles used within the Apatr app
+  Common dynamic roles used by the example application
 derivedRoles:
-  name: apatr_common_roles <1>
+  name: example_common_roles <1>
   constants:
     import: <2>
-      - apatr_common_constants
+      - example_common_constants
     local: <3>
       corporate_network_ip_range: 10.20.0.0/16
   variables:
     import: <4>
-      - apatr_common_variables
+      - example_common_variables
     local: <5>
       flagged_resource: request.resource.attr.flagged
   definitions:
@@ -56,6 +56,29 @@ derivedRoles:
 <6> Descriptive name for this derived role.
 <7> The static roles (from the identity provider) to which this derived role applies to. The special value ``*`` can be used to match any role.
 <8> An (optional) set of expressions that should evaluate to true for this role to activate.
+
+== Choosing between derived roles, conditions, and scopes
+
+[cols="1,2,2",options="header"]
+|===
+| Mechanism
+| Use when
+| Evaluation behaviour
+
+| Inline xref:conditions.adoc[condition]
+| An expression is used by one policy rule.
+| The expression is evaluated only for that rule.
+
+| Derived role
+| The same context-dependent designation is referenced by multiple rules in one or more resource policies.
+| Cerbos matches a principal's static roles against `parentRoles`, evaluates the derived-role condition, and makes the derived role available to rules in importing resource policies that reference it.
+
+| xref:scoped_policies.adoc[Scope]
+| Different policy variants apply at different points in a hierarchy, such as tenants, regions, or departments.
+| Cerbos selects and traverses policies using the scope in the request. Scopes do not add or modify principal roles.
+|===
+
+Defining a derived role does not grant access. A resource policy must import the derived-role definition and reference the derived role from a rule.
 
 
 

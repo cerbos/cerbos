@@ -38,9 +38,9 @@ To reuse variables between policies, they can be exported from a separate file.
 ----
 ---
 apiVersion: api.cerbos.dev/v1
-description: Common variables used within the Apatr app
+description: Common variables used by the example application
 exportVariables:
-  name: apatr_common_variables <1>
+  name: example_common_variables <1>
   definitions: <2>
     flagged_resource: request.resource.attr.flagged
     label: '"latest"' # assigning a string literal
@@ -59,7 +59,7 @@ apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   variables:
     import: <1>
-      - apatr_common_variables
+      - example_common_variables
   # ...
 ----
 <1> List of names of variable sets to import.
@@ -121,9 +121,9 @@ To reuse constants between policies, they can be exported from a separate file.
 ----
 ---
 apiVersion: api.cerbos.dev/v1
-description: Common constants used within the Apatr app
+description: Common constants used by the example application
 exportConstants:
-  name: apatr_common_constants <1>
+  name: example_common_constants <1>
   definitions: <2>
     label: latest
     teams:
@@ -145,7 +145,7 @@ apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   constants:
     import: <1>
-      - apatr_common_constants
+      - example_common_constants
   # ...
 ----
 <1> List of names of constant sets to import.
