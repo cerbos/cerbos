@@ -447,10 +447,10 @@ func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, exp
 	if err != nil {
 		// CEL runtime errors (e.g. missing keys) collapse the expression to false.
 		if celtypes.IsError(val) {
+			evalCtx.CELErrors.Add(ctx, original, err)
 			if evalCtx.StrictEvaluation {
 				return nil, evaluator.StrictEvaluationError{Expression: original, Err: err}
 			}
-			evalCtx.CELErrors.Add(ctx, original, err)
 			return conditions.FalseExpr, nil
 		}
 
