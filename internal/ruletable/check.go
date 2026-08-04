@@ -612,8 +612,6 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr, constants, evalVars)
 		if err != nil {
 			if errors.Is(err, evaluator.StrictEvaluationError{}) {
-				// Leave the variable unset so that the error resurfaces as a CEL error
-				// at each condition referencing the variable, denying only the affected actions.
 				vctx.ComputedResult(nil)
 				continue
 			}
