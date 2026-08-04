@@ -180,7 +180,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	// We use a compound key comprising the parameter origin and the rule FQN.
 	conditionCache := make(map[index.EvaluationKeyTuple]bool)
 
-	processedScopedDerivedRoles := make(map[string]struct{})
+	// Maps processed scopes to the evaluation error raised while computing their effective
+	// derived roles. In strict mode a recorded error denies every action that reaches the scope.
+	processedScopedDerivedRoles := make(map[string]error)
 	policyTypes := []policyv1.Kind{policyv1.Kind_KIND_PRINCIPAL, policyv1.Kind_KIND_RESOURCE}
 	for _, action := range actionsToResolve {
 		actx := pctx.StartAction(action)
@@ -188,6 +190,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		var actionEffectInfo EffectInfo
 		var mainPolicyKey string
 		var scopes []string
+	policiesLoop:
 		for _, pt := range policyTypes {
 			if pt == policyv1.Kind_KIND_PRINCIPAL {
 				mainPolicyKey = principalPolicyKey
@@ -231,7 +234,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					// If we reach this point, we can assert that the given {origin policy + scope} combination has been evaluated
 					// and therefore we build the effectiveDerivedRoles from those referenced in the policy.
 					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
-						if _, ok := processedScopedDerivedRoles[scope]; !ok { //nolint:nestif
+						drErr, processed := processedScopedDerivedRoles[scope]
+						if !processed { //nolint:nestif
 							effectiveDerivedRoles := make(internal.StringSet)
 							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
 								for name, dr := range drs {
@@ -257,7 +261,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 									ok, err := evalCtx.SatisfiesCondition(ctx, drctx.StartCondition(), dr.Condition, dr.Constants, variables)
 									if err != nil {
 										if evalCtx.StrictEvaluation {
-											return nil, err
+											drErr = err
+											break
 										}
 										continue
 									}
@@ -266,12 +271,24 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 										effectiveDerivedRoles[name] = struct{}{}
 										result.effectiveDerivedRoles[name] = struct{}{}
 									}
-								}
-							}
+								} // range drs
+							} // if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil
 
 							evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
 
-							processedScopedDerivedRoles[scope] = struct{}{}
+							processedScopedDerivedRoles[scope] = drErr
+						}
+
+						// The effective derived roles are computed per scope,
+						// so deny every action reaching this scope.
+						if drErr != nil {
+							sctx.Skipped(drErr, "Error evaluating derived roles")
+							actionEffectInfo = EffectInfo{
+								Effect: effectv1.Effect_EFFECT_DENY,
+								Policy: namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)),
+								Scope:  scope,
+							}
+							break policiesLoop
 						}
 					}
 
@@ -343,10 +360,11 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 								// TODO(saml) we could probably pre-compile the condition also
 								drSatisfied, err := evalCtx.SatisfiesCondition(ctx, tracing.StartTracer(nil), b.Core.DerivedRoleCondition, derivedRoleConstants, derivedRoleVariables)
 								if err != nil {
-									if evalCtx.StrictEvaluation {
-										return nil, err
-									}
 									rulectx.Skipped(err, "Error evaluating derived role condition")
+									if evalCtx.StrictEvaluation {
+										actionEffectInfo = EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: namer.PolicyKeyFromFQN(bOriginFqn), Scope: scope}
+										break policiesLoop
+									}
 									continue
 								}
 
@@ -360,10 +378,11 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 
 							isSatisfied, err := evalCtx.SatisfiesCondition(ctx, rulectx.StartCondition(), b.Core.Condition, constants, variables)
 							if err != nil {
-								if evalCtx.StrictEvaluation {
-									return nil, err
-								}
 								rulectx.Skipped(err, "Error evaluating condition")
+								if evalCtx.StrictEvaluation {
+									actionEffectInfo = EffectInfo{Effect: effectv1.Effect_EFFECT_DENY, Policy: namer.PolicyKeyFromFQN(bOriginFqn), Scope: scope}
+									break policiesLoop
+								}
 								continue
 							}
 
@@ -403,7 +422,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							}
 							rulectx.Skipped(nil, conditionNotSatisfied)
 						}
-					}
+					} // range bindings
 
 					if hasAllow {
 						switch rt.GetScopeScopePermissions(scope) { //nolint:exhaustive
@@ -415,7 +434,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 							break scopesLoop
 						}
 					}
-				}
+				} // range scopes
 
 				// Match the first result
 				if actionEffectInfo.Effect == effectv1.Effect_EFFECT_NO_MATCH {
@@ -432,13 +451,13 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					// Override `noMatchScopePermissions` DENYs with explicit ones for clarity
 					actionEffectInfo = roleEffectInfo
 				}
-			}
+			} // range input.Principal.Roles
 
 			// Skip to next action if this action already has a definitive result from principal policies
 			if actionEffectInfo.Effect == effectv1.Effect_EFFECT_ALLOW || actionEffectInfo.Effect == effectv1.Effect_EFFECT_DENY {
 				break
 			}
-		}
+		} // range policyTypes
 
 		if actionEffectInfo.Effect == effectv1.Effect_EFFECT_NO_MATCH {
 			actionEffectInfo.Effect = effectv1.Effect_EFFECT_DENY
@@ -592,12 +611,14 @@ func (ec *EvalContext) evaluateVariables(ctx context.Context, tctx tracer.Contex
 		vctx := tctx.StartVariable(variable.Name, variable.Expr.Original)
 		val, err := ec.evaluateCELExprToRaw(ctx, variable.Expr, constants, evalVars)
 		if err != nil {
-			vctx.Skipped(err, "Failed to evaluate expression")
-			err = fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err)
-			if ec.StrictEvaluation {
-				return nil, err
+			if errors.Is(err, evaluator.StrictEvaluationError{}) {
+				// Leave the variable unset so that the error resurfaces as a CEL error
+				// at each condition referencing the variable, denying only the affected actions.
+				vctx.ComputedResult(nil)
+				continue
 			}
-			errs = multierr.Append(errs, err)
+			vctx.Skipped(err, "Failed to evaluate expression")
+			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s := %s`: %w", variable.Name, variable.Expr.Original, err))
 			continue
 		}
 
@@ -632,23 +653,15 @@ func (ec *EvalContext) evaluatePrograms(ctx context.Context, tctx tracer.Context
 		vctx := tctx.StartVariable(prg.Name, prg.Expr)
 		result, _, err := prg.Prog.Eval(ec.buildEvalVars(constants, evalVars))
 		if err != nil {
-			// CEL runtime errors (e.g. missing keys) leave the variable unset.
-			// This matches the behavior of evaluateCELExprToRaw, which returns nil for such cases.
+			// CEL runtime errors leave the variable unset, so the error
+			// resurfaces as a CEL error at each condition referencing the variable.
 			if celtypes.IsError(result) {
-				if ec.StrictEvaluation {
-					vctx.Skipped(err, "Failed to evaluate expression")
-					return nil, evaluator.StrictEvaluationError{Expression: prg.Expr, Err: err}
-				}
 				ec.celErrors.Add(ctx, prg.Expr, err)
 				vctx.ComputedResult(nil)
 				continue
 			}
 			vctx.Skipped(err, "Failed to evaluate expression")
-			err = fmt.Errorf("error evaluating `%s`: %w", prg.Name, err)
-			if ec.StrictEvaluation {
-				return nil, err
-			}
-			errs = multierr.Append(errs, err)
+			errs = multierr.Append(errs, fmt.Errorf("error evaluating `%s`: %w", prg.Name, err))
 			continue
 		}
 
@@ -808,10 +821,10 @@ func (ec *EvalContext) evaluateCELExprToRaw(ctx context.Context, expr *runtimev1
 	result, err := ec.evaluateCELExpr(ctx, expr, constants, variables)
 	if err != nil {
 		if celtypes.IsError(result) {
+			ec.celErrors.Add(ctx, expr.Original, err)
 			if ec.StrictEvaluation {
 				return nil, evaluator.StrictEvaluationError{Expression: expr.Original, Err: err}
 			}
-			ec.celErrors.Add(ctx, expr.Original, err)
 			return nil, nil
 		}
 		return nil, err
