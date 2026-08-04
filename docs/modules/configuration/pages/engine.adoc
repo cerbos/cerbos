@@ -110,5 +110,5 @@ xref:policies:compile.adoc#testing[Policy tests] can be run in this mode as well
 [source,yaml,linenums]
 ----
 engine:
-  strictEvaluation: true
+  strictEvaluation: false
 ----
