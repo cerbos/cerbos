@@ -316,7 +316,9 @@ message AuxData {
   }
 
   map<string, google.protobuf.Value> jwt = 1;
-  map<string, JWT> jwts = 2;
+  map<string, JWT> jwts = 2 [(buf.validate.field).map.keys = {
+    string: {min_len: 1}
+  }];
 }
 
 message Trace {
