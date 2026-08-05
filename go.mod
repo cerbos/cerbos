@@ -22,7 +22,7 @@ require (
 	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/cerbos/cerbos-sdk-go v0.4.2
 	github.com/cerbos/cerbos/api/genpb v0.54.0
-	github.com/cerbos/cloud-api v0.2.4
+	github.com/cerbos/cloud-api v0.2.5
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.9.5
@@ -187,7 +187,7 @@ require (
 	github.com/go-git/gcfg/v2 v2.0.2 // indirect
 	github.com/go-git/go-billy/v6 v6.0.0-alpha.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
-	github.com/go-logr/logr v1.4.3 // indirect
+	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
