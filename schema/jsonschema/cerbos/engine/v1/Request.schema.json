@@ -16,6 +16,10 @@
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/cerbos.engine.v1.AuxData.JWT"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }

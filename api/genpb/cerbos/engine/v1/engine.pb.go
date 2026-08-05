@@ -2531,10 +2531,10 @@ const file_cerbos_engine_v1_engine_proto_rawDesc = "" +
 	"\tAttrEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
 	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01:Y\x92AV\n" +
-	"T2RA person or application attempting to perform the actions on the set of resources.\"\xd6\x04\n" +
+	"T2RA person or application attempting to perform the actions on the set of resources.\"\xe4\x04\n" +
 	"\aAuxData\x124\n" +
-	"\x03jwt\x18\x01 \x03(\v2\".cerbos.engine.v1.AuxData.JwtEntryR\x03jwt\x127\n" +
-	"\x04jwts\x18\x02 \x03(\v2#.cerbos.engine.v1.AuxData.JwtsEntryR\x04jwts\x1a\x9b\x01\n" +
+	"\x03jwt\x18\x01 \x03(\v2\".cerbos.engine.v1.AuxData.JwtEntryR\x03jwt\x12E\n" +
+	"\x04jwts\x18\x02 \x03(\v2#.cerbos.engine.v1.AuxData.JwtsEntryB\f\xbaH\t\x9a\x01\x06\"\x04r\x02\x10\x01R\x04jwts\x1a\x9b\x01\n" +
 	"\x03JWT\x12A\n" +
 	"\x06claims\x18\x01 \x03(\v2).cerbos.engine.v1.AuxData.JWT.ClaimsEntryR\x06claims\x1aQ\n" +
 	"\vClaimsEntry\x12\x10\n" +
