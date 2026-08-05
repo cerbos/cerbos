@@ -11,28 +11,55 @@ import (
 	"time"
 
 	"github.com/google/cel-go/cel"
+	"github.com/google/cel-go/ext"
 	"github.com/stretchr/testify/require"
 )
 
-func BenchmarkIntersect50(b *testing.B) {
-	benchmarkIntersect(b, 50)
-}
+const (
+	cerbosFuncIntersect = "hasIntersection"
+	extFuncIntersect    = "sets.intersects"
+)
 
-func BenchmarkIntersect25(b *testing.B) {
-	benchmarkIntersect(b, 25)
-}
-
-func BenchmarkIntersect15(b *testing.B) {
-	benchmarkIntersect(b, 15)
+func BenchmarkExtIntersect5(b *testing.B) {
+	benchmarkFunc(b, extFuncIntersect, 5)
 }
 
 func BenchmarkIntersect5(b *testing.B) {
-	benchmarkIntersect(b, 5)
+	benchmarkFunc(b, cerbosFuncIntersect, 5)
 }
 
-func benchmarkIntersect(b *testing.B, size int) {
+func BenchmarkExtIntersect50(b *testing.B) {
+	benchmarkFunc(b, extFuncIntersect, 50)
+}
+
+func BenchmarkIntersect50(b *testing.B) {
+	benchmarkFunc(b, cerbosFuncIntersect, 50)
+}
+
+const (
+	cerbosFuncIsSubset = "isSubset"
+	extFuncIsSubset    = "sets.contains"
+)
+
+func BenchmarkExtIsSubset5(b *testing.B) {
+	benchmarkFunc(b, extFuncIsSubset, 5)
+}
+
+func BenchmarkIsSubset5(b *testing.B) {
+	benchmarkFunc(b, cerbosFuncIsSubset, 5)
+}
+
+func BenchmarkExtIsSubset50(b *testing.B) {
+	benchmarkFunc(b, extFuncIsSubset, 50)
+}
+
+func BenchmarkIsSubset50(b *testing.B) {
+	benchmarkFunc(b, cerbosFuncIsSubset, 50)
+}
+
+func benchmarkFunc(b *testing.B, function string, size int) {
 	b.Helper()
-	expr := generateExpr(size)
+	expr := generateExpr(function, size)
 	prg := prepareProgram(b, expr)
 
 	for b.Loop() {
@@ -41,7 +68,7 @@ func benchmarkIntersect(b *testing.B, size int) {
 	}
 }
 
-func generateExpr(size int) string {
+func generateExpr(function string, size int) string {
 	lhs := make([]string, size)
 	for i := range size {
 		lhs[i] = fmt.Sprintf("'%05d'", i)
@@ -51,18 +78,21 @@ func generateExpr(size int) string {
 
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	rnd.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
-	return fmt.Sprintf("intersect([%s], [%s])", strings.Join(lhs, ","), strings.Join(rhs, ","))
+	return fmt.Sprintf("%s([%s], [%s])", function, strings.Join(lhs, ","), strings.Join(rhs, ","))
 }
 
 func prepareProgram(tb testing.TB, expr string) cel.Program {
 	tb.Helper()
 	is := require.New(tb)
-	env, err := cel.NewEnv(CerbosCELLib())
+	env, err := cel.NewEnv(
+		CerbosCELLib(),
+		ext.Sets(),
+	)
 	is.NoError(err)
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())
 
-	prg, err := env.Program(ast, cel.CustomDecorator(newTimeDecorator(time.Now)))
+	prg, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize), cel.CustomDecorator(newTimeDecorator(time.Now)))
 	is.NoError(err)
 	return prg
 }

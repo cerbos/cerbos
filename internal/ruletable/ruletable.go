@@ -563,8 +563,10 @@ func compileFromSource(src string) (cel.Program, error) {
 	if iss != nil && iss.Err() != nil {
 		return nil, iss.Err()
 	}
+
 	return conditions.StdEnv.Program(
 		ast,
+		cel.EvalOptions(cel.OptOptimize),
 		cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 	)
 }

@@ -8,6 +8,9 @@ import (
 	"unique"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/google/cel-go/cel"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -15,9 +18,6 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/cel"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // functionalRuleRowFields lists proto field names that affect evaluation outcome.
@@ -1052,6 +1052,7 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 
 		p, err := conditions.StdEnv.Program(
 			ast,
+			cel.EvalOptions(cel.OptOptimize),
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {
