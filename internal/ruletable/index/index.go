@@ -4,13 +4,11 @@
 package index
 
 import (
-	"fmt"
 	"slices"
 	"unique"
 
 	"github.com/cespare/xxhash/v2"
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/ext"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -1052,23 +1050,9 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 			return nil, iss.Err()
 		}
 
-		smo, err := ext.NewSetMembershipOptimizer()
-		if err != nil {
-			return nil, fmt.Errorf("failed build set membership optimizer: %w", err)
-		}
-
-		staticOptimizer, err := cel.NewStaticOptimizer(smo)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build static optimizer: %w", err)
-		}
-
-		optimizedAST, issues := staticOptimizer.Optimize(conditions.StdEnv, ast)
-		if issues.Err() != nil {
-			return nil, fmt.Errorf("failed to optimize expression: %w", err)
-		}
-
 		p, err := conditions.StdEnv.Program(
-			optimizedAST,
+			ast,
+			cel.EvalOptions(cel.OptOptimize),
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {

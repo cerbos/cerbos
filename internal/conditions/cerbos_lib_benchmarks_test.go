@@ -92,16 +92,7 @@ func prepareProgram(tb testing.TB, expr string) cel.Program {
 	ast, issues := env.Compile(expr)
 	is.NoError(issues.Err())
 
-	smo, err := ext.NewSetMembershipOptimizer()
-	is.NoError(err)
-
-	staticOptimizer, err := cel.NewStaticOptimizer(smo)
-	is.NoError(err)
-
-	optimizedAST, issues := staticOptimizer.Optimize(env, ast)
-	is.NoError(issues.Err())
-
-	prg, err := env.Program(optimizedAST, cel.CustomDecorator(newTimeDecorator(time.Now)))
+	prg, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize), cel.CustomDecorator(newTimeDecorator(time.Now)))
 	is.NoError(err)
 	return prg
 }
