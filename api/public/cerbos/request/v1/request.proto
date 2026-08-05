@@ -277,6 +277,11 @@ message AuxData {
     json_schema: {description: "Structured auxiliary data useful for evaluating the request"}
     example: "{}"
   };
+  option (buf.validate.message).cel = {
+    id: "AuxData.only_one_jwt_field"
+    message: "Only one of the jwt or jwts fields must be set"
+    expression: "!(has(this.jwt) && has(this.jwts))"
+  };
 
   message JWT {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
@@ -293,6 +298,15 @@ message AuxData {
   }
 
   JWT jwt = 1;
+  map<string, JWT> jwts = 2 [
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "Named list of JWTs associated with this request."
+      example: "{\"app\": {\"token\": \"JWT string\"}}"
+    }
+  ];
 }
 
 message File {

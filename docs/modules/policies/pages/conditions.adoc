@@ -66,6 +66,15 @@ request:
   auxData: <9>
     jwt: <10>
       iss: acme.corp
+    jwts: <11>
+      token_a:
+        claims:
+          iss: acme.corp
+          sub: foo
+      token_b:
+        claims:
+          iss: acme.corp
+          sub: bar
 ----
 <1> The principal whose permissions are being checked.
 <2> ID of the principal.
@@ -76,7 +85,9 @@ request:
 <7> ID of the resource instance.
 <8> Free-form context data about the resource instance.
 <9> xref:configuration:auxdata.adoc[Auxiliary data sources].
-<10> JWT claims.
+<10> JWT claims. Mutually exclusive with `jwts`.
+<11> Named JWT claims. Since Cerbos 0.55.0 only. Mutually exclusive with `jwt`.
+
 
 .The `runtime` object
 [source,yaml,linenums]
@@ -208,6 +219,15 @@ If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], 
 ----
 "cerbie" in request.auxData.jwt.aud && request.auxData.jwt.iss == "cerbos"
 ----
+
+.Accessing named JWT claims (Cerbos 0.55.0 and above)
+[source,yaml,linenums]
+----
+"cerbie" in request.auxData.jwts.token_a.claims.aud && request.auxData.jwts.token_b.claims.iss == "cerbos"
+----
+
+NOTE: When multiple JWTs are referenced (since Cerbos 0.55.0 only), the syntax is `request.auxData.jwts.TOKEN_NAME.claims.CLAIM_NAME` or `request.auxData.jwts["TOKEN_NAME"].claims["CLAIM_NAME]`. Note the `claims` mandatory field between the token name and the claim name.
+
 
 
 == Operators
