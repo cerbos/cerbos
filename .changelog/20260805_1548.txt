@@ -1,0 +1,3 @@
+type:enhancement
+Constant folding for policy expressions
+Adds a new optimization step where policy conditions are simplified by evaluating them with known values at compile time. In some cases, this can dramatically reduce the time taken to evaluate policy rules. This change also includes extra validation to catch invalid time and regex definitions at compile time.

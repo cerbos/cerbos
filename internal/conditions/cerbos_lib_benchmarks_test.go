@@ -1,7 +1,7 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-package conditions
+package conditions_test
 
 import (
 	"fmt"
@@ -13,58 +13,60 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/ext"
 	"github.com/stretchr/testify/require"
+
+	"github.com/cerbos/cerbos/internal/conditions"
 )
 
-const (
-	cerbosFuncIntersect = "hasIntersection"
-	extFuncIntersect    = "sets.intersects"
-)
+func BenchmarkSetOps(b *testing.B) {
+	functionsList := []string{
+		"hasIntersection",
+		"sets.intersects",
+		"isSubset",
+		"sets.contains",
+	}
 
-func BenchmarkExtIntersect5(b *testing.B) {
-	benchmarkFunc(b, extFuncIntersect, 5)
-}
+	for _, functionName := range functionsList {
+		for _, count := range []int{1, 5, 50, 100} {
+			expr := generateExpr(functionName, count)
+			b.Run(fmt.Sprintf("%s_%d", functionName, count), func(b *testing.B) {
+				env, err := cel.NewEnv(
+					cel.ExtendedValidations(),
+					conditions.CerbosCELLib(),
+					ext.Sets(),
+				)
+				require.NoError(b, err)
+				ast, issues := env.Compile(expr)
+				require.NoError(b, issues.Err())
 
-func BenchmarkIntersect5(b *testing.B) {
-	benchmarkFunc(b, cerbosFuncIntersect, 5)
-}
+				prg, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize), cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()))
+				require.NoError(b, err)
 
-func BenchmarkExtIntersect50(b *testing.B) {
-	benchmarkFunc(b, extFuncIntersect, 50)
-}
+				b.ResetTimer()
+				b.ReportAllocs()
+				for b.Loop() {
+					result, _, err := prg.Eval(cel.NoVars())
+					require.NoError(b, err)
+					resultBool := result.Value().(bool)
+					require.Equal(b, true, resultBool)
+				}
+			})
 
-func BenchmarkIntersect50(b *testing.B) {
-	benchmarkFunc(b, cerbosFuncIntersect, 50)
-}
+			b.Run(fmt.Sprintf("%s_%d_folded", functionName, count), func(b *testing.B) {
+				ast, issues := conditions.Compile(expr)
+				require.NoError(b, issues.Err())
 
-const (
-	cerbosFuncIsSubset = "isSubset"
-	extFuncIsSubset    = "sets.contains"
-)
+				prg, err := conditions.StdEnv.Program(ast, cel.EvalOptions(cel.OptOptimize), cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()))
+				require.NoError(b, err)
 
-func BenchmarkExtIsSubset5(b *testing.B) {
-	benchmarkFunc(b, extFuncIsSubset, 5)
-}
-
-func BenchmarkIsSubset5(b *testing.B) {
-	benchmarkFunc(b, cerbosFuncIsSubset, 5)
-}
-
-func BenchmarkExtIsSubset50(b *testing.B) {
-	benchmarkFunc(b, extFuncIsSubset, 50)
-}
-
-func BenchmarkIsSubset50(b *testing.B) {
-	benchmarkFunc(b, cerbosFuncIsSubset, 50)
-}
-
-func benchmarkFunc(b *testing.B, function string, size int) {
-	b.Helper()
-	expr := generateExpr(function, size)
-	prg := prepareProgram(b, expr)
-
-	for b.Loop() {
-		_, _, err := prg.Eval(cel.NoVars())
-		require.NoError(b, err)
+				b.ResetTimer()
+				b.ReportAllocs()
+				for b.Loop() {
+					result, _, err := prg.Eval(cel.NoVars())
+					require.NoError(b, err)
+					require.Equal(b, true, result.Value())
+				}
+			})
+		}
 	}
 }
 
@@ -79,20 +81,4 @@ func generateExpr(function string, size int) string {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano())) //nolint:gosec
 	rnd.Shuffle(len(rhs), func(i, j int) { rhs[i], rhs[j] = rhs[j], rhs[i] })
 	return fmt.Sprintf("%s([%s], [%s])", function, strings.Join(lhs, ","), strings.Join(rhs, ","))
-}
-
-func prepareProgram(tb testing.TB, expr string) cel.Program {
-	tb.Helper()
-	is := require.New(tb)
-	env, err := cel.NewEnv(
-		CerbosCELLib(),
-		ext.Sets(),
-	)
-	is.NoError(err)
-	ast, issues := env.Compile(expr)
-	is.NoError(issues.Err())
-
-	prg, err := env.Program(ast, cel.EvalOptions(cel.OptOptimize), cel.CustomDecorator(newTimeDecorator(time.Now)))
-	is.NoError(err)
-	return prg
 }

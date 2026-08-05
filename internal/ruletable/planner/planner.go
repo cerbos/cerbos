@@ -759,7 +759,7 @@ func (c *ExprCache) getOrCompile(e *runtimev1.Expr) (*exprpb.Expr, error) {
 }
 
 func compileToExpr(src string) (*exprpb.Expr, error) {
-	ast, iss := conditions.StdEnv.Compile(src)
+	ast, iss := conditions.Compile(src)
 	if iss != nil && iss.Err() != nil {
 		return nil, fmt.Errorf("failed to compile %q: %w", src, iss.Err())
 	}
