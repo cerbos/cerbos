@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: doc
+  importDerivedRoles:
+    - doc_roles
+  rules:
+    - actions: ["view"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+
+    - actions: ["view"]
+      roles: ["user"]
+      effect: EFFECT_DENY
+      condition:
+        match:
+          expr: request.resource.attr.amount > 1000
+
+    - actions: ["edit"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+
+    - actions: ["edit"]
+      derivedRoles: ["doc_owner"]
+      effect: EFFECT_DENY
+
+    - actions: ["list"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+
+    - actions: ["export"]
+      roles: ["user"]
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: '"doc_owner" in runtime.effectiveDerivedRoles'
