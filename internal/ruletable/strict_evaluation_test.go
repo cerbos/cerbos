@@ -67,6 +67,23 @@ func TestStrictEvaluationCheck(t *testing.T) {
 		assertCELErrors(t, entries, amountExpr)
 	})
 
+	t.Run("erroring_derived_role_denies_referencing_actions_only", func(t *testing.T) {
+		// `view` references the erroring derived role via derivedRoles, `export` accesses
+		// runtime.effectiveDerivedRoles in its condition, `list` references neither
+		out, _, err := h.mgr.Check(h.ctx, tracer.Start(nil), params, checkInputActions("record", wronglyTypedAmountValue, "view", "list", "export"))
+		require.NoError(t, err)
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, out.Actions["view"].GetEffect())
+		require.Equal(t, effectv1.Effect_EFFECT_DENY, out.Actions["export"].GetEffect())
+		require.Equal(t, effectv1.Effect_EFFECT_ALLOW, out.Actions["list"].GetEffect())
+		assertCELErrors(t, out.EvaluationErrors, edrExpr, amountExpr)
+	})
+
+	t.Run("clean_derived_role_runtime_access_allows", func(t *testing.T) {
+		effect, entries, _ := h.check(t, params, "record", "export", structpb.NewNumberValue(5000))
+		require.Equal(t, effectv1.Effect_EFFECT_ALLOW, effect)
+		assertCELErrors(t, entries)
+	})
+
 	t.Run("erroring_derived_role_variable_denies_action", func(t *testing.T) {
 		effect, entries, _ := h.check(t, params, "wallet", "view", wronglyTypedAmountValue)
 		require.Equal(t, effectv1.Effect_EFFECT_DENY, effect)

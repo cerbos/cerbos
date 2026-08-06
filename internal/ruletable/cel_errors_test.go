@@ -34,7 +34,10 @@ import (
 
 const celErrorMsg = "Error evaluating CEL expression"
 
-const amountExpr = "request.resource.attr.amount > 1000"
+const (
+	amountExpr = "request.resource.attr.amount > 1000"
+	edrExpr    = `"owner" in runtime.effectiveDerivedRoles`
+)
 
 // celErrorsHarness loads policies whose conditions raise CEL runtime errors when `amount` is not a number.
 type celErrorsHarness struct {
@@ -129,6 +132,8 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 				Rules: []*policyv1.ResourceRule{
 					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
 					{Actions: []string{"view"}, DerivedRoles: []string{"owner"}, Effect: effectv1.Effect_EFFECT_DENY},
+					{Actions: []string{"list"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
+					{Actions: []string{"export"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond(edrExpr)},
 				},
 			},
 		},

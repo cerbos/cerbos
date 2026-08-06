@@ -10,6 +10,7 @@ import (
 	"maps"
 	"reflect"
 	"sort"
+	"strings"
 
 	"github.com/cerbos/cerbos/internal/conditions/types"
 	celtypes "github.com/google/cel-go/common/types"
@@ -180,9 +181,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	// We use a compound key comprising the parameter origin and the rule FQN.
 	conditionCache := make(map[index.EvaluationKeyTuple]bool)
 
-	// Maps processed scopes to the evaluation error raised while computing their effective
-	// derived roles. In strict mode a recorded error denies every action that reaches the scope.
-	processedScopedDerivedRoles := make(map[string]error)
+	// Caches the effective derived roles computed for each processed scope. In strict mode records
+	// the derived roles names which conditions failed to evaluated.
+	processedScopedDerivedRoles := make(map[string]*scopedDerivedRoles)
 	policyTypes := []policyv1.Kind{policyv1.Kind_KIND_PRINCIPAL, policyv1.Kind_KIND_RESOURCE}
 	for _, action := range actionsToResolve {
 		actx := pctx.StartAction(action)
@@ -234,9 +235,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					// If we reach this point, we can assert that the given {origin policy + scope} combination has been evaluated
 					// and therefore we build the effectiveDerivedRoles from those referenced in the policy.
 					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
-						drErr, processed := processedScopedDerivedRoles[scope]
+						sdr, processed := processedScopedDerivedRoles[scope]
 						if !processed { //nolint:nestif
-							effectiveDerivedRoles := make(internal.StringSet)
+							sdr = &scopedDerivedRoles{roles: make(internal.StringSet)}
 							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
 								for name, dr := range drs {
 									drctx := tctx.StartPolicy(dr.OriginFqn).StartDerivedRole(name)
@@ -261,35 +262,23 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 									ok, err := evalCtx.SatisfiesCondition(ctx, drctx.StartCondition(), dr.Condition, dr.Constants, variables)
 									if err != nil {
 										if evalCtx.StrictEvaluation {
-											drErr = err
-											break
+											sdr.errDerivedRoles = append(sdr.errDerivedRoles, name)
 										}
 										continue
 									}
 
 									if ok {
-										effectiveDerivedRoles[name] = struct{}{}
+										sdr.roles[name] = struct{}{}
 										result.effectiveDerivedRoles[name] = struct{}{}
 									}
 								} // range drs
 							} // if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil
 
-							evalCtx = evalCtx.withEffectiveDerivedRoles(effectiveDerivedRoles)
-
-							processedScopedDerivedRoles[scope] = drErr
+							sort.Strings(sdr.errDerivedRoles) // keep the reported names deterministic; usually empty
+							processedScopedDerivedRoles[scope] = sdr
 						}
 
-						// The effective derived roles are computed per scope,
-						// so deny every action reaching this scope.
-						if drErr != nil {
-							sctx.Skipped(drErr, "Error evaluating derived roles")
-							actionEffectInfo = EffectInfo{
-								Effect: effectv1.Effect_EFFECT_DENY,
-								Policy: namer.PolicyKeyFromFQN(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)),
-								Scope:  scope,
-							}
-							break policiesLoop
-						}
+						evalCtx = evalCtx.withEffectiveDerivedRoles(sdr.roles, sdr.errDerivedRoles)
 					}
 
 					if roleEffectInfo.Effect != effectv1.Effect_EFFECT_NO_MATCH {
@@ -564,10 +553,18 @@ func checkInputToRequest(input *enginev1.CheckInput) *enginev1.Request {
 	}
 }
 
+// scopedDerivedRoles holds the effective derived roles computed for a scope and, in strict
+// evaluation mode, the names of the derived roles whose conditions raised errors.
+type scopedDerivedRoles struct {
+	roles           internal.StringSet
+	errDerivedRoles []string
+}
+
 type EvalContext struct {
 	request               *enginev1.Request
 	runtime               *enginev1.Runtime
 	effectiveDerivedRoles internal.StringSet
+	errDerivedRoles       []string
 	programCache          *ProgramCache
 	celErrors             *evaluator.CELErrors
 	evaluator.EvalParams
@@ -582,17 +579,25 @@ func NewEvalContext(ep evaluator.EvalParams, request *enginev1.Request, programC
 	}
 }
 
-func (ec *EvalContext) withEffectiveDerivedRoles(effectiveDerivedRoles internal.StringSet) *EvalContext {
+func (ec *EvalContext) withEffectiveDerivedRoles(effectiveDerivedRoles internal.StringSet, errDerivedRoles []string) *EvalContext {
 	return &EvalContext{
 		EvalParams:            ec.EvalParams,
 		request:               ec.request,
 		effectiveDerivedRoles: effectiveDerivedRoles,
+		errDerivedRoles:       errDerivedRoles,
 		programCache:          ec.programCache,
 		celErrors:             ec.celErrors,
 	}
 }
 
 func (ec *EvalContext) lazyRuntime() any { // We have to return `any` rather than `*enginev1.Runtime` here to be able to use this function as a lazy binding in the CEL evaluator.
+	if len(ec.errDerivedRoles) > 0 {
+		// The effective derived roles could not be fully computed, so any access to the runtime
+		// object raises the error. In strict mode this denies only the actions whose conditions
+		// reference runtime.effectiveDerivedRoles.
+		return celtypes.NewErr("failed to compute effective derived roles [%s]", strings.Join(ec.errDerivedRoles, ", "))
+	}
+
 	if ec.runtime == nil {
 		ec.runtime = &enginev1.Runtime{}
 		if len(ec.effectiveDerivedRoles) > 0 {
