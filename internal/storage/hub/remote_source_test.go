@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	legacyBundleID    = "66PXRRKTQ396OECH"
-	ruleTableBundleID = "6LZ4003I1IQC8T9I"
+	legacyBundleID    = "JAKP26L85BR2Q64Q"
+	ruleTableBundleID = "NR0D34RQFFBEP9CX"
 	deploymentID      = bundleapi.DeploymentID("3LWZ3N3GFMIL")
 	playgroundID      = bundleapi.PlaygroundID("A4W8GJAIZYIH")
 )

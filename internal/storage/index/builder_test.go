@@ -200,8 +200,10 @@ func TestBuildIndex(t *testing.T) {
 			case tc.WantErrList != nil:
 				errList := new(BuildError)
 				require.True(t, errors.As(haveErr, &errList))
-				require.Empty(t,
-					cmp.Diff(tc.WantErrList, errList.IndexBuildErrors,
+				require.Empty(
+					t,
+					cmp.Diff(
+						tc.WantErrList, errList.IndexBuildErrors,
 						protocmp.Transform(),
 						protocmp.SortRepeatedFields(&runtimev1.IndexBuildErrors{},
 							"disabled", "duplicate_defs", "load_failures", "missing_imports", "missing_scopes"),

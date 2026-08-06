@@ -98,8 +98,8 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 		cel.FunctionDecls(customtypes.SPIFFEDeclrations...),
 		cel.Types(customtypes.HierarchyType, customtypes.SPIFFEIDType, customtypes.SPIFFETrustDomainType, customtypes.SPIFFEMatcherType),
 		cel.Function(exceptFn, setOpFuncOverloads(exceptFn, exceptList)...),
-		cel.Function(hasIntersectionFn, setCheckFuncOverloads(hasIntersectionFn, hasIntersection)...),
-		cel.Function(hasIntersectionFnDeprecated, setCheckFuncOverloads(hasIntersectionFnDeprecated, hasIntersection)...),
+		cel.Function(hasIntersectionFn, setCheckFuncOverloads(hasIntersectionFn, setsIntersects)...),
+		cel.Function(hasIntersectionFnDeprecated, setCheckFuncOverloads(hasIntersectionFnDeprecated, setsIntersects)...),
 		cel.Function(inIPAddrRangeFn, cel.MemberOverload(
 			fmt.Sprintf("%s_string", inIPAddrRangeFn),
 			[]*cel.Type{cel.StringType, cel.StringType},
@@ -107,8 +107,8 @@ func (clib cerbosLib) CompileOptions() []cel.EnvOption {
 			cel.BinaryBinding(callInStringStringOutBool(clib.inIPAddrRangeFunc)),
 		)),
 		cel.Function(intersectFn, setOpFuncOverloads(intersectFn, intersect)...),
-		cel.Function(isSubsetFn, setCheckFuncOverloads(isSubsetFn, isSubset)...),
-		cel.Function(isSubsetFnDeprecated, setCheckFuncOverloads(isSubsetFnDeprecated, isSubset)...),
+		cel.Function(isSubsetFn, setCheckFuncOverloads(isSubsetFn, setsContains)...),
+		cel.Function(isSubsetFnDeprecated, setCheckFuncOverloads(isSubsetFnDeprecated, setsContains)...),
 		cel.Function(nowFn,
 			cel.Overload(nowFn,
 				nil,
@@ -382,16 +382,6 @@ func (t *timeDecorator) decorate(in interpreter.Interpretable) (interpreter.Inte
 	}
 }
 
-// hashable checks whether the type is hashable, i.e. can be used in a Go map.
-func hashable(t ref.Type) bool {
-	return t == types.StringType ||
-		t == types.IntType ||
-		t == types.DoubleType ||
-		t == types.DurationType ||
-		t == types.TimestampType ||
-		t == types.UintType
-}
-
 // exceptList implements difference lhs-rhs returning
 // items in lhs (list) that are not members of rhs (list).
 func exceptList(lhs, rhs ref.Val) ref.Val {
@@ -411,133 +401,16 @@ func exceptList(lhs, rhs ref.Val) ref.Val {
 		return types.ValOrErr(b, "no such overload")
 	}
 
-	m := convertToMap(b)
-
 	var items []ref.Val
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-		var found bool
-		if m != nil {
-			_, found = m[va]
-		} else {
-			found = find(b.Iterator(), va)
-		}
-		if !found {
+	it := a.Iterator()
+	for it.HasNext() == types.True {
+		va := it.Next()
+		if b.Contains(va) == types.False {
 			items = append(items, va)
 		}
 	}
+
 	return types.NewRefValList(types.DefaultTypeAdapter, items)
-}
-
-// isSubset returns true value if lhs (list) is a subset of rhs (list).
-func isSubset(lhs, rhs ref.Val) ref.Val {
-	a, ok := lhs.(traits.Lister)
-	if !ok {
-		if types.IsUnknown(lhs) {
-			return lhs
-		}
-		return types.ValOrErr(a, "no such overload")
-	}
-
-	b, ok := rhs.(traits.Lister)
-	if !ok {
-		if types.IsUnknown(rhs) {
-			return rhs
-		}
-		return types.ValOrErr(b, "no such overload")
-	}
-
-	m := convertToMap(b)
-
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-		if m != nil {
-			if _, ok := m[va]; !ok {
-				return types.False
-			}
-		} else {
-			if !find(b.Iterator(), va) {
-				return types.False
-			}
-		}
-	}
-
-	return types.True
-}
-
-func find(i traits.Iterator, item ref.Val) bool {
-	for i.HasNext() == types.True {
-		current := i.Next()
-		if item.Equal(current) == types.True {
-			return true
-		}
-	}
-	return false
-}
-
-const minListLengthToConvert = 3
-
-func convertToMap(b traits.Lister) map[ref.Val]struct{} {
-	var m map[ref.Val]struct{}
-	if item := b.Get(types.IntZero); !types.IsError(item) && hashable(item.Type()) {
-		size, ok := b.Size().(types.Int)
-		if !ok || size <= minListLengthToConvert {
-			return nil
-		}
-		m = make(map[ref.Val]struct{}, size)
-
-		for i := b.Iterator(); i.HasNext() == types.True; {
-			item := i.Next()
-			if !hashable(item.Type()) {
-				m = nil
-				break
-			}
-			m[item] = struct{}{}
-		}
-	}
-	return m
-}
-
-func hasIntersection(lhs, rhs ref.Val) ref.Val {
-	a, ok := lhs.(traits.Lister)
-	if !ok {
-		if types.IsUnknown(lhs) {
-			return lhs
-		}
-		return types.ValOrErr(a, "no such overload")
-	}
-
-	b, ok := rhs.(traits.Lister)
-	if !ok {
-		if types.IsUnknown(rhs) {
-			return rhs
-		}
-		return types.ValOrErr(b, "no such overload")
-	}
-
-	//nolint:forcetypeassert
-	aSize := a.Size().(types.Int)
-	if aSize.Compare(b.Size()) == types.IntOne {
-		a, b = b, a // b is the longest list
-	}
-	m := convertToMap(b)
-
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-
-		var found bool
-		if m != nil {
-			_, found = m[va]
-		} else {
-			found = find(b.Iterator(), va)
-		}
-
-		if found {
-			return types.True
-		}
-	}
-
-	return types.False
 }
 
 func intersect(lhs, rhs ref.Val) ref.Val {
@@ -562,21 +435,79 @@ func intersect(lhs, rhs ref.Val) ref.Val {
 	if aSize.Compare(b.Size()) == types.IntOne {
 		a, b = b, a // b is the longest list
 	}
-	m := convertToMap(b)
+
 	var items []ref.Val
-	for ai := a.Iterator(); ai.HasNext() == types.True; {
-		va := ai.Next()
-		if m != nil {
-			if _, ok := m[va]; ok {
-				items = append(items, va)
-			}
-		} else {
-			if find(b.Iterator(), va) {
-				items = append(items, va)
-			}
+	it := a.Iterator()
+	for it.HasNext() == types.True {
+		va := it.Next()
+		if b.Contains(va) == types.True {
+			items = append(items, va)
 		}
 	}
+
 	return types.NewRefValList(types.DefaultTypeAdapter, items)
+}
+
+// Copyright 2023 Google LLC
+// SPDX-License-Identifier: Apache-2.0
+// setsContains is copied from https://github.com/cel-expr/cel-go/blob/c15365a7610acb37a6c8e26b6af6ee0eaf7c10ce/ext/sets.go#L214-L225.
+func setsContains(sublist, list ref.Val) ref.Val {
+	sub, ok := sublist.(traits.Lister)
+	if !ok {
+		if types.IsUnknown(sublist) {
+			return sublist
+		}
+		return types.ValOrErr(sub, "no such overload")
+	}
+
+	l, ok := list.(traits.Lister)
+	if !ok {
+		if types.IsUnknown(list) {
+			return list
+		}
+		return types.ValOrErr(l, "no such overload")
+	}
+
+	it := sub.Iterator()
+	for it.HasNext() == types.True {
+		exists := l.Contains(it.Next())
+		if exists != types.True {
+			return exists
+		}
+	}
+
+	return types.True
+}
+
+// Copyright 2023 Google LLC
+// SPDX-License-Identifier: Apache-2.0
+// setsIntersects is copied from https://github.com/cel-expr/cel-go/blob/c15365a7610acb37a6c8e26b6af6ee0eaf7c10ce/ext/sets.go#L201-L212.
+func setsIntersects(lhs, rhs ref.Val) ref.Val {
+	a, ok := lhs.(traits.Lister)
+	if !ok {
+		if types.IsUnknown(lhs) {
+			return lhs
+		}
+		return types.ValOrErr(a, "no such overload")
+	}
+
+	b, ok := rhs.(traits.Lister)
+	if !ok {
+		if types.IsUnknown(rhs) {
+			return rhs
+		}
+		return types.ValOrErr(b, "no such overload")
+	}
+
+	it := a.Iterator()
+	for it.HasNext() == types.True {
+		exists := b.Contains(it.Next())
+		if exists == types.True {
+			return types.True
+		}
+	}
+
+	return types.False
 }
 
 func (clib cerbosLib) inIPAddrRangeFunc(ipAddrVal, cidrVal string) (bool, error) {
