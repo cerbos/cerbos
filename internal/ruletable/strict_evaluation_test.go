@@ -103,7 +103,13 @@ func TestStrictEvaluationPlan(t *testing.T) {
 		assertCELErrors(t, entries)
 	})
 
-	t.Run("clean_request_succeeds", func(t *testing.T) {
+	t.Run("clean_request_allows", func(t *testing.T) {
+		kind, entries := h.plan(t, params, "account", "read", structpb.NewNumberValue(500))
+		require.Equal(t, enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED, kind)
+		assertCELErrors(t, entries)
+	})
+
+	t.Run("clean_request_denies", func(t *testing.T) {
 		kind, entries := h.plan(t, params, "account", "read", structpb.NewNumberValue(5000))
 		require.Equal(t, enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED, kind)
 		assertCELErrors(t, entries)
@@ -131,6 +137,21 @@ func TestStrictEvaluationPlan(t *testing.T) {
 	t.Run("erroring_derived_role_denies_action", func(t *testing.T) {
 		kind, entries := h.plan(t, params, "record", "view", structpb.NewStringValue("5000"))
 		require.Equal(t, enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED, kind)
+		assertCELErrors(t, entries, amountExpr)
+	})
+
+	t.Run("erroring_derived_role_denies_runtime_referencing_action", func(t *testing.T) {
+		// the `export` condition accesses runtime.effectiveDerivedRoles
+		kind, entries := h.plan(t, params, "record", "export", structpb.NewStringValue("5000"))
+		require.Equal(t, enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED, kind)
+		assertCELErrors(t, entries, amountExpr)
+	})
+
+	t.Run("erroring_derived_role_spares_non_referencing_action", func(t *testing.T) {
+		// `list` references neither the derived role nor runtime.effectiveDerivedRoles,
+		// but the derived role error is still reported
+		kind, entries := h.plan(t, params, "record", "list", structpb.NewStringValue("5000"))
+		require.Equal(t, enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED, kind)
 		assertCELErrors(t, entries, amountExpr)
 	})
 }
