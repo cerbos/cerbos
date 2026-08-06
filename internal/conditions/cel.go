@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/cel-go/cel"
+	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/decls"
 	"github.com/google/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -54,17 +55,22 @@ var (
 	}
 
 	variablesType *exprpb.Type
+
+	unoptimizableFunctions = map[string]struct{}{
+		nowFn:       {},
+		timeSinceFn: {},
+	}
 )
 
 func init() {
 	var err error
 
 	StdEnv, err = cel.NewEnv(
-		ext.TwoVarComprehensions(),
 		cel.CrossTypeNumericComparisons(true),
+		cel.ASTValidators(cel.ValidateDurationLiterals(), cel.ValidateRegexLiterals(), cel.ValidateTimestampLiterals()),
+		cel.OptionalTypes(),
 		cel.Types(&enginev1.Request{}, &enginev1.Request_Principal{}, &enginev1.Request_Resource{}, &enginev1.Runtime{}),
 		cel.VariableDecls(StdEnvDecls...),
-		cel.OptionalTypes(),
 		ext.Bindings(),
 		ext.Encoders(),
 		ext.Lists(),
@@ -73,6 +79,7 @@ func init() {
 		ext.Regex(),
 		ext.Sets(),
 		ext.Strings(),
+		ext.TwoVarComprehensions(),
 		CerbosCELLib(),
 		types.Registry(),
 	)
@@ -97,7 +104,7 @@ func init() {
 }
 
 func compileConstant(value string) (*exprpb.CheckedExpr, error) {
-	ast, iss := StdEnv.Compile(value)
+	ast, iss := Compile(value)
 	if iss.Err() != nil {
 		return nil, fmt.Errorf("failed to compile constant %q: %w", value, iss.Err())
 	}
@@ -161,4 +168,59 @@ func ExpandAbbrev(s string) string {
 	}
 
 	return expanded
+}
+
+func Compile(expr string) (*cel.Ast, *cel.Issues) {
+	ast, iss := StdEnv.Compile(expr)
+	if iss != nil && iss.Err() != nil {
+		return nil, iss
+	}
+
+	return Optimize(StdEnv, ast, nil), iss
+}
+
+func Optimize(env *cel.Env, ast *cel.Ast, knownValues cel.Activation) *cel.Ast {
+	if !canOptimize(ast) {
+		return ast
+	}
+
+	var foldOpts []cel.ConstantFoldingOption
+	if knownValues != nil {
+		foldOpts = []cel.ConstantFoldingOption{cel.FoldKnownValues(knownValues)}
+	}
+
+	folder, err := cel.NewConstantFoldingOptimizer(foldOpts...)
+	if err != nil {
+		return ast
+	}
+
+	optimizer, err := cel.NewStaticOptimizer(folder)
+	if err != nil {
+		return ast
+	}
+
+	optimizedAST, issues := optimizer.Optimize(env, ast)
+	if err := issues.Err(); err != nil {
+		return ast
+	}
+
+	return optimizedAST
+}
+
+func canOptimize(ast *cel.Ast) bool {
+	if ast == nil {
+		return false
+	}
+
+	root := celast.NavigateAST(ast.NativeRep())
+	matches := celast.MatchDescendants(root, func(e celast.NavigableExpr) bool {
+		if e.Kind() != celast.CallKind {
+			return false
+		}
+
+		_, exists := unoptimizableFunctions[e.AsCall().FunctionName()]
+		return exists
+	})
+
+	return len(matches) == 0
 }

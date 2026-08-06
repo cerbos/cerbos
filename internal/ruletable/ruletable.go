@@ -559,7 +559,7 @@ func (c *ProgramCache) GetOrCreate(expr *runtimev1.Expr) (cel.Program, error) {
 }
 
 func compileFromSource(src string) (cel.Program, error) {
-	ast, iss := conditions.StdEnv.Compile(src)
+	ast, iss := conditions.Compile(src)
 	if iss != nil && iss.Err() != nil {
 		return nil, iss.Err()
 	}
