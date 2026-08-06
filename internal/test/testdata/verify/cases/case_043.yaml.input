@@ -1,57 +1,104 @@
--- doc_default_test.yaml --
+-- testdata/principals.yaml --
 ---
-name: DefaultModeSuite
-tests:
-  - name: erroring rules are skipped
-    input:
-      principals: [alice]
-      resources: [doc1]
-      actions: [view, edit, list, export]
-    expected:
-      - principal: alice
-        resource: doc1
-        actions:
-          view: EFFECT_ALLOW
-          edit: EFFECT_ALLOW
-          list: EFFECT_ALLOW
-          export: EFFECT_DENY
 principals:
-  alice:
-    id: alice
-    roles: [user]
-resources:
-  doc1:
-    id: doc1
-    kind: doc
+  john:
+    id: john
+    policyVersion: '20210210'
+    roles:
+      - employee
     attr:
-      amount: "not-a-number"
+      department: marketing
+      geography: GB
+      team: design
+  bev: &bev
+    id: bev
+    policyVersion: '20210210'
+    roles:
+      - employee
+      - manager
+    attr: &bev_attr
+      department: marketing
+      geography: GB
+      managed_geographies: GB
+      ip_address: 10.20.1.2
+      team: design
+  matt:
+    << : *bev
+    id: matt
+    attr:
+      << : *bev_attr
+      ip_address: 10.10.1.2
 
--- doc_strict_test.yaml --
+-- testdata/resources.yaml --
 ---
-name: StrictModeSuite
-options:
-  strictEvaluation: true
-tests:
-  - name: erroring rules deny the referencing actions only
-    input:
-      principals: [alice]
-      resources: [doc1]
-      actions: [view, edit, list, export]
-    expected:
-      - principal: alice
-        resource: doc1
-        actions:
-          view: EFFECT_DENY
-          edit: EFFECT_DENY
-          list: EFFECT_ALLOW
-          export: EFFECT_DENY
-principals:
-  alice:
-    id: alice
-    roles: [user]
 resources:
-  doc1:
-    id: doc1
-    kind: doc
+  john_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
+    attr: &attr
+      department: marketing
+      geography: GB
+      id: XX125
+      owner: john
+      team: design
+  pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX125
     attr:
-      amount: "not-a-number"
+      << : *attr
+      status: PENDING_APPROVAL
+  stale_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      << : *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+  stale_pending_leave_request:
+    kind: leave_request
+    policyVersion: '20210210'
+    id: XX225
+    attr:
+      << : *attr
+      modifiedAt: "2022-08-01T15:00:00Z"
+      status: PENDING_APPROVAL
+
+-- testdata/auxdata.yaml --
+---
+auxData:
+  myJWT:
+    jwts:
+      token_a:
+        claims:
+          iss: cerbos-test-suite
+          aud: [cerbos-jwt-tests]
+          customArray: [A, B]
+      token_b:
+        claims:
+          iss: cerbos-test-suite
+          aud: [cerbos-jwt-tests]
+          customArray: [A, B]
+
+-- suite_test.yaml --
+---
+name: TestSuite
+description: Tests for verifying something
+options:
+  now: "2022-08-02T15:00:00Z"
+tests:
+  - name: John and his leave request
+    input:
+      principals:
+        - john
+      resources:
+        - john_leave_request
+      actions:
+        - frobnicate
+      auxData: myJWT
+    expected:
+      - principal: john
+        resource: john_leave_request
+        actions:
+          frobnicate: EFFECT_ALLOW

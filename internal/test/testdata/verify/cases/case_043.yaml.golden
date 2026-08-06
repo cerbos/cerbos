@@ -1,61 +1,34 @@
 {
   "suites": [
     {
-      "file": "doc_default_test.yaml",
-      "name": "DefaultModeSuite",
+      "file": "suite_test.yaml",
+      "name": "TestSuite",
       "summary": {
         "overallResult": "RESULT_PASSED",
-        "testsCount": 4,
+        "testsCount": 1,
         "resultCounts": [
           {
             "result": "RESULT_PASSED",
-            "count": 4
+            "count": 1
           }
         ]
       },
       "testCases": [
         {
-          "name": "erroring rules are skipped",
+          "name": "John and his leave request",
           "principals": [
             {
-              "name": "alice",
+              "name": "john",
               "resources": [
                 {
-                  "name": "doc1",
+                  "name": "john_leave_request",
                   "actions": [
                     {
-                      "name": "view",
+                      "name": "frobnicate",
                       "details": {
                         "result": "RESULT_PASSED",
                         "success": {
                           "effect": "EFFECT_ALLOW"
-                        }
-                      }
-                    },
-                    {
-                      "name": "edit",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_ALLOW"
-                        }
-                      }
-                    },
-                    {
-                      "name": "list",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_ALLOW"
-                        }
-                      }
-                    },
-                    {
-                      "name": "export",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_DENY"
                         }
                       }
                     }
@@ -65,83 +38,17 @@
             }
           ]
         }
-      ]
-    },
-    {
-      "file": "doc_strict_test.yaml",
-      "name": "StrictModeSuite",
-      "summary": {
-        "overallResult": "RESULT_PASSED",
-        "testsCount": 4,
-        "resultCounts": [
-          {
-            "result": "RESULT_PASSED",
-            "count": 4
-          }
-        ]
-      },
-      "testCases": [
-        {
-          "name": "erroring rules deny the referencing actions only",
-          "principals": [
-            {
-              "name": "alice",
-              "resources": [
-                {
-                  "name": "doc1",
-                  "actions": [
-                    {
-                      "name": "view",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_DENY"
-                        }
-                      }
-                    },
-                    {
-                      "name": "edit",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_DENY"
-                        }
-                      }
-                    },
-                    {
-                      "name": "list",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_ALLOW"
-                        }
-                      }
-                    },
-                    {
-                      "name": "export",
-                      "details": {
-                        "result": "RESULT_PASSED",
-                        "success": {
-                          "effect": "EFFECT_DENY"
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
+      ],
+      "description": "Tests for verifying something"
     }
   ],
   "summary": {
     "overallResult": "RESULT_PASSED",
-    "testsCount": 8,
+    "testsCount": 1,
     "resultCounts": [
       {
         "result": "RESULT_PASSED",
-        "count": 8
+        "count": 1
       }
     ]
   }
