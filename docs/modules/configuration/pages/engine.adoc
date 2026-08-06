@@ -103,7 +103,7 @@ The deny is scoped as this:
 
 * An error in a rule condition denies the actions the rule applies to.
 * An error in a variable denies only the actions whose conditions reference that variable.
-* An error in the condition of an imported derived role cannot be attributed to individual actions, so it denies every action evaluated against the policy scope that imports the derived role.
+* An error in the condition of an imported derived role denies the actions of the rules that reference the derived role in their `derivedRoles`, and the actions whose conditions access `runtime.effectiveDerivedRoles`. Actions that reference neither are not affected.
 
 xref:policies:compile.adoc#testing[Policy tests] can be run in this mode as well by passing the `--strict-evaluation` flag to the `cerbos compile` command.
 
