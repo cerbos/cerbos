@@ -138,7 +138,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	t.Run("check_stats", func(t *testing.T) {
 		stats := idx.RepoStats(t.Context())
 		require.GreaterOrEqual(t, 3, stats.SchemaCount)
-		require.Equal(t, stats.DistinctActionCount, 47)
+		require.Equal(t, stats.DistinctActionCount, 48)
 		require.Equal(t, stats.DistinctResourceCount, 19)
 		require.True(t, stats.HasOutput)
 		require.True(t, stats.HasScopedPolicies)
