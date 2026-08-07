@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+derivedRoles:
+  name: cel_errors.common_roles
+  definitions:
+    - name: owner
+      parentRoles:
+        - user
+      condition:
+        match:
+          expr: R.attr.amount > 1000
