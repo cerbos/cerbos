@@ -112,7 +112,9 @@ func replaceVarsGen(e celast.Expr, f replaceVarsFunc) (output celast.Expr, err e
 		fact := celast.NewExprFactory()
 		switch e.Kind() {
 		case celast.IdentKind:
-			e1, matched, err := f(e)
+			var e1 celast.Expr
+			var matched bool
+			e1, matched, err = f(e)
 			if err != nil {
 				return nil
 			}
@@ -183,13 +185,13 @@ func replaceVarsGen(e celast.Expr, f replaceVarsFunc) (output celast.Expr, err e
 			return ret
 		}
 	}
+	output = r(e)
 	if err != nil {
 		return nil, err
 	}
-	output = r(e)
 	internal.RenumberIDs(output)
 
-	return output, err
+	return output, nil
 }
 
 // This functions wraps references to known resource attributes in an `id` function call, which simply returns its argument.

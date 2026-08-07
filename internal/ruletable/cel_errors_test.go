@@ -34,7 +34,10 @@ import (
 
 const celErrorMsg = "Error evaluating CEL expression"
 
-const amountExpr = "request.resource.attr.amount > 1000"
+const (
+	amountExpr = "request.resource.attr.amount > 1000"
+	edrExpr    = `"owner" in runtime.effectiveDerivedRoles`
+)
 
 // celErrorsHarness loads policies whose conditions raise CEL runtime errors when `amount` is not a number.
 type celErrorsHarness struct {
@@ -112,6 +115,7 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 				Variables: &policyv1.Variables{Local: map[string]string{"v1": amountExpr}},
 				Rules: []*policyv1.ResourceRule{
 					{Actions: []string{"export"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond("V.v1")},
+					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
 				},
 			},
 		},
@@ -128,11 +132,43 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 				Rules: []*policyv1.ResourceRule{
 					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
 					{Actions: []string{"view"}, DerivedRoles: []string{"owner"}, Effect: effectv1.Effect_EFFECT_DENY},
+					{Actions: []string{"list"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
+					{Actions: []string{"export"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond(edrExpr)},
 				},
 			},
 		},
 	}
 	addOrUpdatePolicy(t, "resource_policies/record.yaml", recordPolicy, memFsys, idx, subMgr)
+
+	drVarPolicy := &policyv1.Policy{
+		ApiVersion: "api.cerbos.dev/v1",
+		PolicyType: &policyv1.Policy_DerivedRoles{
+			DerivedRoles: &policyv1.DerivedRoles{
+				Name:      "variable_roles",
+				Variables: &policyv1.Variables{Local: map[string]string{"dv": amountExpr}},
+				Definitions: []*policyv1.RoleDef{
+					{Name: "spender", ParentRoles: []string{"user"}, Condition: cond("V.dv")},
+				},
+			},
+		},
+	}
+	addOrUpdatePolicy(t, "derived_roles/variable_roles.yaml", drVarPolicy, memFsys, idx, subMgr)
+
+	walletPolicy := &policyv1.Policy{
+		ApiVersion: "api.cerbos.dev/v1",
+		PolicyType: &policyv1.Policy_ResourcePolicy{
+			ResourcePolicy: &policyv1.ResourcePolicy{
+				Resource:           "wallet",
+				Version:            "default",
+				ImportDerivedRoles: []string{"variable_roles"},
+				Rules: []*policyv1.ResourceRule{
+					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
+					{Actions: []string{"view"}, DerivedRoles: []string{"spender"}, Effect: effectv1.Effect_EFFECT_DENY},
+				},
+			},
+		},
+	}
+	addOrUpdatePolicy(t, "resource_policies/wallet.yaml", walletPolicy, memFsys, idx, subMgr)
 
 	conf := &evaluator.Conf{}
 	conf.SetDefaults()
@@ -156,6 +192,9 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 		view, _, err := mgr.Check(ctx, tracer.Start(nil), evalParams, checkInput("record", "view", structpb.NewNumberValue(5000)))
 		require.NoError(c, err)
 		require.Equal(c, effectv1.Effect_EFFECT_DENY, view.Actions["view"].GetEffect())
+		viewWallet, _, err := mgr.Check(ctx, tracer.Start(nil), evalParams, checkInput("wallet", "view", structpb.NewNumberValue(5000)))
+		require.NoError(c, err)
+		require.Equal(c, effectv1.Effect_EFFECT_DENY, viewWallet.Actions["view"].GetEffect())
 	}, 5*time.Second, 50*time.Millisecond)
 
 	return h
@@ -184,6 +223,10 @@ func (h *celErrorsHarness) plan(t *testing.T, params evaluator.EvalParams, kind,
 }
 
 func checkInput(kind, action string, amount *structpb.Value) *enginev1.CheckInput {
+	return checkInputActions(kind, amount, action)
+}
+
+func checkInputActions(kind string, amount *structpb.Value, actions ...string) *enginev1.CheckInput {
 	attr := map[string]*structpb.Value{}
 	if amount != nil {
 		attr["amount"] = amount
@@ -192,7 +235,7 @@ func checkInput(kind, action string, amount *structpb.Value) *enginev1.CheckInpu
 		RequestId: "1",
 		Resource:  &enginev1.Resource{Kind: kind, Id: "1", Attr: attr},
 		Principal: &enginev1.Principal{Id: "sam", Roles: []string{"user"}},
-		Actions:   []string{action},
+		Actions:   actions,
 	}
 }
 
@@ -277,6 +320,13 @@ func TestCELErrorsCheck(t *testing.T) {
 		require.Equal(t, effectv1.Effect_EFFECT_ALLOW, effect)
 		// the condition is evaluated more than once, but the identical errors are deduplicated
 		assertCELErrors(t, entries, amountExpr)
+	})
+
+	t.Run("erroring_derived_role_variable_is_reported", func(t *testing.T) {
+		effect, entries, _ := h.check(t, h.evalParams, "wallet", "view", structpb.NewStringValue("5000"))
+		require.Equal(t, effectv1.Effect_EFFECT_ALLOW, effect)
+		// both the variable and the condition referencing the unset variable error
+		assertCELErrors(t, entries, "V.dv", amountExpr)
 	})
 
 	t.Run("clean_derived_role_active", func(t *testing.T) {

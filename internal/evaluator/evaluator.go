@@ -42,6 +42,13 @@ func WithLenientScopeSearch() CheckOpt {
 	}
 }
 
+// WithStrictEvaluation enables strict evaluation.
+func WithStrictEvaluation() CheckOpt {
+	return func(co *CheckOptions) {
+		co.EvalParams.StrictEvaluation = true
+	}
+}
+
 // WithGlobals sets the global variables for the engine.
 func WithGlobals(globals map[string]any) CheckOpt {
 	return func(co *CheckOptions) {
@@ -95,6 +102,7 @@ type EvalParams struct {
 	DefaultScope         string
 	CELErrorLogLevel     CELErrorLogLevel
 	LenientScopeSearch   bool
+	StrictEvaluation     bool
 }
 
 func PolicyVersion(version string, params EvalParams) string {

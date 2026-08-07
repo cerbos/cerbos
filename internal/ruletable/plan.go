@@ -5,11 +5,13 @@ package ruletable
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"sort"
 
 	celast "github.com/google/cel-go/common/ast"
+	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -59,7 +61,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel)}
+	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
@@ -96,8 +98,10 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 		var hasPolicyTypeAllow bool
 		var rootNode *planner.QpN
+		var evalErr error
 
 		// evaluate resource policies before principal policies
+	policyTypesLoop:
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
 			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
 
@@ -141,6 +145,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 							derivedRolesList = c
 						} else {
 							var derivedRoles []planner.RN
+							var drListErr error
 							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
 								for name, dr := range drs {
 									if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
@@ -155,6 +160,10 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, evalParams.Globals, dr.Constants, variables, derivedRolesList)
 									if err != nil {
+										if errors.Is(err, evaluator.StrictEvaluationError{}) {
+											drListErr = multierr.Append(drListErr, err)
+											continue
+										}
 										return nil, auditTrail, err
 									}
 
@@ -167,11 +176,15 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 								}
 							}
 
-							sort.Slice(derivedRoles, func(i, j int) bool {
-								return derivedRoles[i].Role < derivedRoles[j].Role
-							})
+							if drListErr != nil {
+								derivedRolesList = func() (*exprpb.Expr, error) { return nil, drListErr }
+							} else {
+								sort.Slice(derivedRoles, func(i, j int) bool {
+									return derivedRoles[i].Role < derivedRoles[j].Role
+								})
 
-							derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+								derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+							}
 
 							scopedDerivedRolesList[scope] = derivedRolesList
 						}
@@ -202,6 +215,10 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, evalParams.Globals, constants, variables, derivedRolesList)
 						if err != nil {
+							if errors.Is(err, evaluator.StrictEvaluationError{}) {
+								evalErr = err
+								break policyTypesLoop
+							}
 							return nil, auditTrail, err
 						}
 
@@ -217,6 +234,10 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, evalParams.Globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
 							if err != nil {
+								if errors.Is(err, evaluator.StrictEvaluationError{}) {
+									evalErr = err
+									break policyTypesLoop
+								}
 								return nil, auditTrail, err
 							}
 
@@ -347,7 +368,11 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 			}
 		}
 
-		if rootNode != nil {
+		if evalErr != nil {
+			// In strict mode an evaluation error denies the affected action.
+			policyMatch = true
+			nf.ResetToUnconditionalDeny()
+		} else if rootNode != nil {
 			policyMatch = true
 			if !hasPolicyTypeAllow {
 				nf.ResetToUnconditionalDeny()

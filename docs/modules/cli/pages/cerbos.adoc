@@ -81,6 +81,7 @@ Flags:
       --test-filter=TEST-FILTER    Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times.
       --skip-tests                 Skip tests
       --skip-batching              Skip batching tests
+      --strict-evaluation          Run tests with strict evaluation enabled.
       --test-output=TEST-OUTPUT    Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)
   -o, --output="tree"              Output format (tree,list,json)
       --color=COLOR                Output color level (auto,never,always,256,16m). Defaults to auto.

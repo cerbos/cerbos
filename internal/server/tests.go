@@ -42,6 +42,7 @@ const (
 	requestTimeout     = 5 * time.Second
 	healthPollInterval = 100 * time.Millisecond
 	retryBackoffDelay  = 5
+	serverStartTimeout = 10 * time.Second
 )
 
 type AuthCreds struct {
@@ -82,7 +83,7 @@ func LoadTestCases(tb testing.TB, suiteSleeps map[string]time.Duration, dirs ...
 		}
 	}
 
-	return &TestRunner{Cases: testCases, Timeout: requestTimeout, HealthPollInterval: healthPollInterval, sleeps: testCaseSleeps}
+	return &TestRunner{Cases: testCases, ServerStartTimeout: serverStartTimeout, Timeout: requestTimeout, HealthPollInterval: healthPollInterval, sleeps: testCaseSleeps}
 }
 
 func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTestCase {
@@ -100,6 +101,7 @@ func readTestCase(tb testing.TB, name string, data []byte) *privatev1.ServerTest
 type TestRunner struct {
 	sleeps                 map[int]time.Duration
 	Cases                  []*privatev1.ServerTestCase
+	ServerStartTimeout     time.Duration
 	Timeout                time.Duration
 	HealthPollInterval     time.Duration
 	CerbosClientMaxRetries uint
@@ -117,7 +119,7 @@ func (tr *TestRunner) RunGRPCTests(addr string, opts ...grpc.DialOption) func(*t
 		grpcConn := mkGRPCConn(t, addr, opts...)
 		require.Eventually(t,
 			grpcHealthCheckPasses(t, grpcConn, tr.HealthPollInterval),
-			tr.Timeout, tr.HealthPollInterval, "Server did not come up on time")
+			tr.ServerStartTimeout, tr.HealthPollInterval, "Server did not come up on time")
 
 		for i, tc := range tr.Cases {
 			t.Run(tc.Name, tr.executeGRPCTestCase(grpcConn, tc))
