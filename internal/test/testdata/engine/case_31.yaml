@@ -1,6 +1,17 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "OVERRIDE_PARENT scope as descendent of REQUIRE_PARENTAL_CONSENT"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+    - true
+
 inputs:
   [
     {

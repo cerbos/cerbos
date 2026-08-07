@@ -1,6 +1,16 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Wildcard roles"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+
 inputs:
   [
     {
@@ -22,7 +32,7 @@ wantOutputs:
     {
       "requestId": "test",
       "resourceId": "XX125",
-      "effective_derived_roles": ["reader", "any_employee"],
+      "effectiveDerivedRoles": ["reader", "any_employee"],
       "actions":
         {
           "view":

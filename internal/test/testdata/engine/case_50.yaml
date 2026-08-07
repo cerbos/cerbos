@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Missing attribute referenced in a variable (strict evaluation)
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - true
+
+inputs:
+  [
+    {
+      "requestId": "test",
+      "actions": ["use"],
+      "principal":
+        {
+          "id": "abc",
+          "roles": ["user"],
+          "attr": { "email": "info@example.com" },
+        },
+      "resource": { "kind": "missing_attr", "id": "test" },
+    },
+  ]
+wantOutputs:
+  [
+    {
+      "requestId": "test",
+      "resourceId": "test",
+      "actions":
+        {
+          "use":
+            {
+              "effect": "EFFECT_DENY",
+              "policy": "resource.missing_attr.vdefault",
+            },
+        },
+      "evaluationErrors":
+        [
+          {
+            "celError":
+              {
+                "expression": "P.attr.is_engineer",
+                "message": "no such key: is_engineer",
+              },
+          },
+          {
+            "celError":
+              {
+                "expression": 'V.eng && P.attr.org == "org-1"',
+                "message": "undefined field 'eng'",
+              },
+          },
+        ],
+    },
+  ]
+wantDecisionLogs:
+  [
+    {
+      "callId": "01HGJY512FTY6719DYZGGVAQ21",
+      "timestamp": "2023-12-01T14:57:31.215494091Z",
+      "checkResources":
+        {
+          "inputs":
+            [
+              {
+                "requestId": "test",
+                "resource": { "kind": "missing_attr", "id": "test" },
+                "principal":
+                  {
+                    "id": "abc",
+                    "roles": ["user"],
+                    "attr": { "email": "info@example.com" },
+                  },
+                "actions": ["use"],
+              },
+            ],
+          "outputs":
+            [
+              {
+                "requestId": "test",
+                "resourceId": "test",
+                "actions":
+                  {
+                    "use":
+                      {
+                        "effect": "EFFECT_DENY",
+                        "policy": "resource.missing_attr.vdefault",
+                      },
+                  },
+                "evaluationErrors":
+                  [
+                    {
+                      "celError":
+                        {
+                          "expression": "P.attr.is_engineer",
+                          "message": "no such key: is_engineer",
+                        },
+                    },
+                    {
+                      "celError":
+                        {
+                          "expression": 'V.eng && P.attr.org == "org-1"',
+                          "message": "undefined field 'eng'",
+                        },
+                    },
+                  ],
+              },
+            ],
+        },
+      "auditTrail":
+        {
+          "effectivePolicies":
+            {
+              "resource.missing_attr.vdefault":
+                {
+                  "attributes":
+                    {
+                      "driver": "disk",
+                      "source": "resource_policies/policy_13.yaml",
+                    },
+                },
+            },
+        },
+      "policySource":
+        {
+          "disk": {},
+        },
+    },
+  ]

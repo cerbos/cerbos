@@ -2,6 +2,18 @@
 ---
 description: Error evaluating output
 
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
 inputs:
   - requestId: bad-output
     actions:

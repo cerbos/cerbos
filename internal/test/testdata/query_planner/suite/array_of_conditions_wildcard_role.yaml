@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Basics tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: user123
+  policyVersion: default
+  roles:
+    - role0
+    - role1
+    - role2
+    - role3
+    - role4
+    - role5
+    - role6
+    - role7
+    - role8
+    - role9
+  attr:
+    is_active: false
+    instance_id: "12345"
+    org_id: ["50"]
+    excluded_items: []
+    excluded: []
+
+tests:
+  - action: filter
+    resource:
+      kind: user
+      policyVersion: default
+      scope: acme
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: and
+                operands:
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: request.resource.attr.org_id
+                        - value:
+                            - "50"
+                  - expression:
+                      operator: eq
+                      operands:
+                        - variable: request.resource.attr.is_active
+                        - value: false
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.excluded_items
+                  - value: []
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.excluded
+                  - value: []

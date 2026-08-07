@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Wrong attribute data type
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+    id: adam
+    policyVersion: default
+    roles:
+        - customer-user
+    attr:
+      custAllowedValues: "VALUE1"
+      salhAllowedValues: "VALUE2"
+
+tests:
+    - action: "VIEW"
+      resource:
+        kind: top
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.custAnal
+                    - value: VALUE1
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.salhAnal
+                    - value: VALUE2
