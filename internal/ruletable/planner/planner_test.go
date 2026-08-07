@@ -50,7 +50,7 @@ func Test_evaluateCondition(t *testing.T) {
 	}
 
 	compile := func(expr string, request *enginev1.Request) args {
-		ast, iss := conditions.StdEnv.Compile(expr)
+		ast, iss := conditions.Compile(expr)
 		require.Nil(t, iss, "Error is %s", iss.Err())
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
 		require.NoError(t, err)
