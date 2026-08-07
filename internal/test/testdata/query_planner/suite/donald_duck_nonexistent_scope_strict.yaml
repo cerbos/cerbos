@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Donald duck tests with strict scope search
+
+config:
+  lenientScopeSearch:
+    - false
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: donald_duck
+  policyVersion: default
+  scope: nonexistent_principal
+  roles:
+    - employee
+    - user
+
+tests:
+  - action: read
+    resource:
+      kind: contact
+      policyVersion: default
+    want:
+      kind: KIND_ALWAYS_DENIED
+  - action: view
+    resource:
+      kind: leave_request
+      policyVersion: default
+    want:
+      kind: KIND_CONDITIONAL
+      condition:
+        expression:
+          operator: and
+          operands:
+            - expression:
+                operator: not
+                operands:
+                  - variable: request.resource.attr.hidden_from_employee
+            - expression:
+                operator: eq
+                operands:
+                  - variable: request.resource.attr.owner
+                  - value: donald_duck

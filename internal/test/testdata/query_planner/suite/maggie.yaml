@@ -1,0 +1,266 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Maggie tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+    id: maggie
+    policyVersion: default
+    roles:
+        - employee
+        - manager
+    attr:
+        geography: US
+        managed_geographies:
+            - US
+            - CA
+
+auxData:
+  jwt:
+    customInt: 42
+
+tests:
+    - action: "approve:refer-derived-role"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+              operator: and
+              operands:
+                  - expression:
+                        operator: and
+                        operands:
+                            - expression: &pending_approval_status
+                                  operator: eq
+                                  operands:
+                                      - variable: request.resource.attr.status
+                                      - value: "PENDING_APPROVAL"
+                            - expression: &maggie_is_not_owner
+                                  operator: ne
+                                  operands:
+                                      - variable: request.resource.attr.owner
+                                      - value: "maggie"
+                  - expression:
+                        operator: or
+                        operands:
+                            - expression: &geography_is_US
+                                  operator: eq
+                                  operands:
+                                      - variable: request.resource.attr.geography
+                                      - value: "US"
+                            - expression:
+                                  operator: in
+                                  operands:
+                                      - variable: request.resource.attr.geography
+                                      - value: ["US", "CA"]
+
+    - action: "report:allow-deny-deny"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - variable: request.resource.attr.deleted
+                    - variable: request.resource.attr.hidden
+
+    - action: "report:allow-deny"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - variable: request.resource.attr.deleted
+
+    - action: "approve:true-in-both-or-and-conditions"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  <<: *pending_approval_status
+              - expression:
+                  <<: *maggie_is_not_owner
+
+    - action: "approve:allow-allow-deny"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression: &maggie_is_owner
+                        <<: *maggie_is_not_owner
+                        operator: eq
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        <<: *pending_approval_status
+                    - expression:
+                        <<: *geography_is_US
+    - action: "approve:allow-allow"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  <<: *pending_approval_status
+              - expression:
+                  <<: *geography_is_US
+
+    - action: "approve:allow-deny"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                  - expression:
+                      <<: *maggie_is_owner
+              - expression:
+                  <<: *pending_approval_status
+
+    - action: "approve:false-in-and-condition"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED
+
+    - action: "enlist:none-condition"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: in
+                        operands:
+                          - variable: request.resource.attr.team
+                          - value: ["A", "B"]
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: lt
+                        operands:
+                          - variable: request.resource.attr.GPA
+                          - value: 4.7
+
+    - action: "approve:with-jwt"
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.groupID
+              - value: 42
+    - action: "approve:refer-derived-role"
+      resource:
+        kind: leave_request
+        policyVersion: default
+        attr:
+          geography: "US"
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  <<: *pending_approval_status
+              - expression:
+                  <<: *maggie_is_not_owner
+    - action: "approve"
+      resource:
+        kind: leave_request
+        policyVersion: default
+        attr:
+          geography: "US"
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  <<: *pending_approval_status
+              - expression:
+                  <<: *maggie_is_not_owner
+    - action: "approve"
+      resource:
+        kind: leave_request
+        policyVersion: default
+        attr:
+          geography: "US"
+          owner: brian
+      want:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            <<: *pending_approval_status
+
+    - action: approve:non-boolean-condition
+      resource:
+        kind: leave_request
+        policyVersion: default
+      want:
+        kind: KIND_ALWAYS_DENIED

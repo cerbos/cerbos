@@ -1,6 +1,18 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "Donald Duck tries to view and approve a production leave request and a dev leave request"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+
 inputs:
   [
     {

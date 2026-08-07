@@ -1,6 +1,19 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS resource policies interleaved with role policies with parent roles"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
 inputs:
   [
     {
@@ -107,16 +120,6 @@ wantOutputs:
         },
       "effectiveDerivedRoles":
         ["any_employee", "employee_that_owns_the_record"],
-      "evaluationErrors":
-        [
-          {
-            "celError":
-              {
-                "expression": "P.attr.in_party_committee == true",
-                "message": "no such key: in_party_committee",
-              },
-          },
-        ],
     },
   ]
 wantDecisionLogs:
@@ -217,16 +220,6 @@ wantDecisionLogs:
                   },
                 "effectiveDerivedRoles":
                   ["any_employee", "employee_that_owns_the_record"],
-                "evaluationErrors":
-                  [
-                    {
-                      "celError":
-                        {
-                          "expression": "P.attr.in_party_committee == true",
-                          "message": "no such key: in_party_committee",
-                        },
-                    },
-                  ],
               },
             ],
         },

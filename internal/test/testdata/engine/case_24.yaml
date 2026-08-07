@@ -1,6 +1,16 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: "OVERRIDE_PARENT resource policies interleaved with role policies with parent roles"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+
 inputs:
   [
     {

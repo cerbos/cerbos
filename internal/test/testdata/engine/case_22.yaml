@@ -2,6 +2,18 @@
 ---
 description: Test output.when.ruleActivated, output.when.conditionNotMet and deprecated output.expr
 
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
 inputs:
   - requestId: both-expr-and-when-defined-rule-activated
     actions:
