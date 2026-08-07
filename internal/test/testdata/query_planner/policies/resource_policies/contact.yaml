@@ -16,7 +16,7 @@ resourcePolicy:
         - user
       condition:
         match:
-          expr: request.principal.attr.department == "Sales"
+          expr: has(request.principal.attr.department) && request.principal.attr.department == "Sales"
 
     - actions: ["update", "delete"]
       effect: EFFECT_ALLOW

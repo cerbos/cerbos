@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Schema enforcement REJECT: Bad department value"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      - view:public
+      - approve
+    principal:
+      id: john
+      policyVersion: "20210210"
+      roles:
+        - employee
+      attr:
+        department: accounting
+        geography: GB
+        team: design
+    resource:
+      kind: leave_request
+      policyVersion: "20210210"
+      id: XX125
+      attr:
+        department: accounting
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    validationErrors:
+      - path: /department
+        message: value must be one of "marketing", "engineering"
+        source: SOURCE_PRINCIPAL
+      - path: /department
+        message: value must be one of "marketing", "engineering"
+        source: SOURCE_RESOURCE
+    actions:
+      view:public:
+        effect: EFFECT_DENY
+        policy: resource.leave_request.v20210210
+      approve:
+        effect: EFFECT_DENY
+        policy: resource.leave_request.v20210210
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail: {}
+    policySource:
+      disk: {}

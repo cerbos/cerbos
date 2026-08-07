@@ -4,7 +4,7 @@ apiVersion: api.cerbos.dev/v1
 variables:
   pending_approval: ("PENDING_APPROVAL")
   principal_location: |-
-    (P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")
+    has(P.attr.ip_address) && P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : ""
 resourcePolicy:
   version: "20210210"
   importDerivedRoles:
