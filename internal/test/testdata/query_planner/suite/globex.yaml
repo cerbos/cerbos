@@ -27,10 +27,13 @@ principal:
     region: EMEA
 
 tests:
-  - action: view
-    resource:
+  - resource:
       kind: stapler
       scope: GLOBEX
       policyVersion: default
+    action: view
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""

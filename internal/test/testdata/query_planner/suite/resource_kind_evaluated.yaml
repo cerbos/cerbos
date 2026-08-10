@@ -21,28 +21,34 @@ principal:
     - USER_ORG
 
 tests:
-  - action: read
-    resource:
+  - resource:
       kind: organization
       policyVersion: default
+    action: read
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.team
-            - value: RED
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.team
+              - value: RED
+      matchedScopes:
+        read: ""
 
-  - action: read
-    resource:
+  - resource:
       kind: not-organization
       policyVersion: default
+    action: read
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.team
-            - value: BLUE
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.team
+              - value: BLUE
+      matchedScopes:
+        read: ""

@@ -3461,37 +3461,6 @@ func (m *QueryPlannerTestSuite_Test) MarshalToSizedBufferVT(dAtA []byte) (int, e
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Actions) > 0 {
-		for iNdEx := len(m.Actions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Actions[iNdEx])
-			copy(dAtA[i:], m.Actions[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Actions[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
-	}
-	if m.Resource != nil {
-		if vtmsg, ok := interface{}(m.Resource).(interface {
-			MarshalToSizedBufferVT([]byte) (int, error)
-		}); ok {
-			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-		} else {
-			encoded, err := proto.Marshal(m.Resource)
-			if err != nil {
-				return 0, err
-			}
-			i -= len(encoded)
-			copy(dAtA[i:], encoded)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
-		}
-		i--
-		dAtA[i] = 0x1a
-	}
 	if m.Want != nil {
 		if vtmsg, ok := interface{}(m.Want).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -3512,12 +3481,43 @@ func (m *QueryPlannerTestSuite_Test) MarshalToSizedBufferVT(dAtA []byte) (int, e
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
 		}
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x22
+	}
+	if len(m.Actions) > 0 {
+		for iNdEx := len(m.Actions) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Actions[iNdEx])
+			copy(dAtA[i:], m.Actions[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Actions[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
 	}
 	if len(m.Action) > 0 {
 		i -= len(m.Action)
 		copy(dAtA[i:], m.Action)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Action)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Resource != nil {
+		if vtmsg, ok := interface{}(m.Resource).(interface {
+			MarshalToSizedBufferVT([]byte) (int, error)
+		}); ok {
+			size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		} else {
+			encoded, err := proto.Marshal(m.Resource)
+			if err != nil {
+				return 0, err
+			}
+			i -= len(encoded)
+			copy(dAtA[i:], encoded)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(encoded)))
+		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -6103,20 +6103,6 @@ func (m *QueryPlannerTestSuite_Test) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Action)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	if m.Want != nil {
-		if size, ok := interface{}(m.Want).(interface {
-			SizeVT() int
-		}); ok {
-			l = size.SizeVT()
-		} else {
-			l = proto.Size(m.Want)
-		}
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	if m.Resource != nil {
 		if size, ok := interface{}(m.Resource).(interface {
 			SizeVT() int
@@ -6127,11 +6113,25 @@ func (m *QueryPlannerTestSuite_Test) SizeVT() (n int) {
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	l = len(m.Action)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	if len(m.Actions) > 0 {
 		for _, s := range m.Actions {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.Want != nil {
+		if size, ok := interface{}(m.Want).(interface {
+			SizeVT() int
+		}); ok {
+			l = size.SizeVT()
+		} else {
+			l = proto.Size(m.Want)
+		}
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -13803,82 +13803,6 @@ func (m *QueryPlannerTestSuite_Test) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Action = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Want", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Want == nil {
-				m.Want = &v13.PlanResourcesFilter{}
-			}
-			if unmarshal, ok := interface{}(m.Want).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Want); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Resource", wireType)
 			}
 			var msglen int
@@ -13921,7 +13845,39 @@ func (m *QueryPlannerTestSuite_Test) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
-		case 5:
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Action", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Action = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Actions", wireType)
 			}
@@ -13952,6 +13908,50 @@ func (m *QueryPlannerTestSuite_Test) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Actions = append(m.Actions, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Want", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Want == nil {
+				m.Want = &v13.PlanResourcesOutput{}
+			}
+			if unmarshal, ok := interface{}(m.Want).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.Want); err != nil {
+					return err
+				}
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

@@ -22,96 +22,114 @@ principal:
     - user
 
 tests:
-  - action: read
-    resource:
+  - resource:
       kind: contact
       policyVersion: default
+    action: read
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        read: ""
 
-  - action: update
-    resource:
+  - resource:
       kind: contact
       policyVersion: default
+    action: update
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.ownerId
-            - value: donald_duck
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.ownerId
+              - value: donald_duck
+      matchedScopes:
+        update: ""
 
-  - action: handle_null
-    resource:
+  - resource:
       kind: contact
       policyVersion: default
+    action: handle_null
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.missing
-                  - value: null
-            - expression:
-                operator: ne
-                operands:
-                  - variable: request.resource.attr.present
-                  - value: null
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.missing
+                    - value: null
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.present
+                    - value: null
+      matchedScopes:
+        handle_null: ""
 
-  - action: view
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: mickey_mouse
-            - expression:
-                operator: or
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.dev_record
-                        - value: true
-                  - expression:
-                      operator: and
-                      operands:
-                        - expression:
-                            operator: not
-                            operands:
-                              - variable: request.resource.attr.hidden_from_employee
-                        - expression:
-                            operator: eq
-                            operands:
-                              - variable: request.resource.attr.owner
-                              - value: donald_duck
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: mickey_mouse
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.dev_record
+                          - value: true
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: not
+                              operands:
+                                - variable: request.resource.attr.hidden_from_employee
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.owner
+                                - value: donald_duck
+      matchedScopes:
+        view: ""
 
-  - action: view-salary-record
-    resource:
+  - resource:
       kind: salary_record
       policyVersion: default
+    action: view-salary-record
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        view-salary-record: ""
 
-  - action: non-existent-action
-    resource:
+  - resource:
       kind: non-existent-resource
       policyVersion: default
+    action: non-existent-action
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        non-existent-action: ""

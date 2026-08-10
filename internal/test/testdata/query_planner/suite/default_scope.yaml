@@ -26,4 +26,7 @@ tests:
       policyVersion: "2025_11"
     action: read
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        read: acme.hr

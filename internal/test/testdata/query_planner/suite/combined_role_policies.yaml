@@ -22,24 +22,27 @@ principal:
     - comb_b
 
 tests:
-  - action: debug
-    resource:
+  - resource:
       kind: x
       scope: acme
       policyVersion: default
+    action: debug
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.is_buggy
-                  - value: true
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.is_enabled
-                  - value: true
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.is_buggy
+                    - value: true
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.is_enabled
+                    - value: true
+      matchedScopes:
+        debug: acme

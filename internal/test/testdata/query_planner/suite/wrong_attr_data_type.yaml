@@ -24,23 +24,26 @@ principal:
     salhAllowedValues: VALUE2
 
 tests:
-  - action: VIEW
-    resource:
+  - resource:
       kind: top
       policyVersion: default
+    action: VIEW
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.custAnal
-                  - value: VALUE1
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.salhAnal
-                  - value: VALUE2
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.custAnal
+                    - value: VALUE1
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.salhAnal
+                    - value: VALUE2
+      matchedScopes:
+        VIEW: ""

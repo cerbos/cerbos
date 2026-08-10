@@ -57,208 +57,241 @@ principal:
           - large
 
 tests:
-  - action: write
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: write
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: hasIntersection
-                operands:
-                  - variable: request.resource.attr.workspaces
-                  - value:
-                      - workspaceA
-            - expression:
-                operator: isSubset
-                operands:
-                  - variable: request.resource.attr.workspaces
-                  - value:
-                      - workspaceA
-            - expression:
-                operator: eq
-                operands:
-                  - expression:
-                      operator: intersect
-                      operands:
-                        - variable: request.resource.attr.workspaces
-                        - value:
-                            - workspaceA
-                  - value: []
-            - expression:
-                operator: eq
-                operands:
-                  - expression:
-                      operator: except
-                      operands:
-                        - variable: request.resource.attr.workspaces
-                        - value:
-                            - workspaceA
-                  - value: []
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: hasIntersection
+                  operands:
+                    - variable: request.resource.attr.workspaces
+                    - value:
+                        - workspaceA
+              - expression:
+                  operator: isSubset
+                  operands:
+                    - variable: request.resource.attr.workspaces
+                    - value:
+                        - workspaceA
+              - expression:
+                  operator: eq
+                  operands:
+                    - expression:
+                        operator: intersect
+                        operands:
+                          - variable: request.resource.attr.workspaces
+                          - value:
+                              - workspaceA
+                    - value: []
+              - expression:
+                  operator: eq
+                  operands:
+                    - expression:
+                        operator: except
+                        operands:
+                          - variable: request.resource.attr.workspaces
+                          - value:
+                              - workspaceA
+                    - value: []
+      matchedScopes:
+        write: ""
 
-  - action: write-member
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: write-member
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: hasIntersection
-          operands:
-            - variable: request.resource.attr.workspaces
-            - value:
-                - workspaceA
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: hasIntersection
+            operands:
+              - variable: request.resource.attr.workspaces
+              - value:
+                  - workspaceA
+      matchedScopes:
+        write-member: ""
 
-  - action: write-rev # swapped hasIntersection args
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: write-rev # swapped hasIntersection args
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: hasIntersection
-          operands:
-            - value:
-                - workspaceA
-            - variable: request.resource.attr.workspaces
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: hasIntersection
+            operands:
+              - value:
+                  - workspaceA
+              - variable: request.resource.attr.workspaces
+      matchedScopes:
+        write-rev: ""
 
-  - action: write-member-rev
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: write-member-rev
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: hasIntersection
-          operands:
-            - value:
-                - workspaceA
-            - variable: request.resource.attr.workspaces
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: hasIntersection
+            operands:
+              - value:
+                  - workspaceA
+              - variable: request.resource.attr.workspaces
+      matchedScopes:
+        write-member-rev: ""
 
-  - action: handle
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: handle
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        handle: ""
 
-  - action: edit
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: edit
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.workspaceId
-            - value: A
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.workspaceId
+              - value: A
+      matchedScopes:
+        edit: ""
 
-  - action: edit_easily
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: edit_easily
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.workspaceId
-            - value: A
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.workspaceId
+              - value: A
+      matchedScopes:
+        edit_easily: ""
 
-  - action: delete
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: delete
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete: ""
 
-  - action: delete_easily
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
       attr:
         location_id: "1"
+    action: delete_easily
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        delete_easily: ""
 
-  - action: delete_easily
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: delete_easily
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.location_id
-            - value: "1"
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.location_id
+              - value: "1"
+      matchedScopes:
+        delete_easily: ""
 
-  - action: match_by
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: match_by
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: and
-                operands:
-                  - expression:
-                      operator: and
-                      operands:
-                        - expression:
-                            operator: eq
-                            operands:
-                              - variable: request.resource.attr.color
-                              - value: red
-                        - expression:
-                            operator: in
-                            operands:
-                              - variable: request.resource.attr.shape
-                              - value:
-                                  - square
-                                  - circle
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.size
-                        - value: small
-            - expression:
-                operator: and
-                operands:
-                  - expression:
-                      operator: and
-                      operands:
-                        - expression:
-                            operator: in
-                            operands:
-                              - variable: request.resource.attr.color
-                              - value:
-                                  - blue
-                                  - black
-                        - expression:
-                            operator: eq
-                            operands:
-                              - variable: request.resource.attr.shape
-                              - value: rectangle
-                  - expression:
-                      operator: in
-                      operands:
-                        - variable: request.resource.attr.size
-                        - value:
-                            - small
-                            - large
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.color
+                                - value: red
+                          - expression:
+                              operator: in
+                              operands:
+                                - variable: request.resource.attr.shape
+                                - value:
+                                    - square
+                                    - circle
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.size
+                          - value: small
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: in
+                              operands:
+                                - variable: request.resource.attr.color
+                                - value:
+                                    - blue
+                                    - black
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.shape
+                                - value: rectangle
+                    - expression:
+                        operator: in
+                        operands:
+                          - variable: request.resource.attr.size
+                          - value:
+                              - small
+                              - large
+      matchedScopes:
+        match_by: ""

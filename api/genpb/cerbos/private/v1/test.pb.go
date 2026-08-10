@@ -3428,10 +3428,10 @@ func (x *CompileTestCase_Variables_DerivedRole) GetConstants() []string {
 
 type QueryPlannerTestSuite_Test struct {
 	state         protoimpl.MessageState           `protogen:"open.v1"`
-	Action        string                           `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
-	Actions       []string                         `protobuf:"bytes,5,rep,name=actions,proto3" json:"actions,omitempty"`
-	Want          *v11.PlanResourcesFilter         `protobuf:"bytes,2,opt,name=want,proto3" json:"want,omitempty"`
-	Resource      *v11.PlanResourcesInput_Resource `protobuf:"bytes,3,opt,name=resource,proto3" json:"resource,omitempty"`
+	Resource      *v11.PlanResourcesInput_Resource `protobuf:"bytes,1,opt,name=resource,proto3" json:"resource,omitempty"`
+	Action        string                           `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
+	Actions       []string                         `protobuf:"bytes,3,rep,name=actions,proto3" json:"actions,omitempty"`
+	Want          *v11.PlanResourcesOutput         `protobuf:"bytes,4,opt,name=want,proto3" json:"want,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3466,6 +3466,13 @@ func (*QueryPlannerTestSuite_Test) Descriptor() ([]byte, []int) {
 	return file_cerbos_private_v1_test_proto_rawDescGZIP(), []int{11, 0}
 }
 
+func (x *QueryPlannerTestSuite_Test) GetResource() *v11.PlanResourcesInput_Resource {
+	if x != nil {
+		return x.Resource
+	}
+	return nil
+}
+
 func (x *QueryPlannerTestSuite_Test) GetAction() string {
 	if x != nil {
 		return x.Action
@@ -3480,16 +3487,9 @@ func (x *QueryPlannerTestSuite_Test) GetActions() []string {
 	return nil
 }
 
-func (x *QueryPlannerTestSuite_Test) GetWant() *v11.PlanResourcesFilter {
+func (x *QueryPlannerTestSuite_Test) GetWant() *v11.PlanResourcesOutput {
 	if x != nil {
 		return x.Want
-	}
-	return nil
-}
-
-func (x *QueryPlannerTestSuite_Test) GetResource() *v11.PlanResourcesInput_Resource {
-	if x != nil {
-		return x.Resource
 	}
 	return nil
 }
@@ -3819,11 +3819,11 @@ const file_cerbos_private_v1_test_proto_rawDesc = "" +
 	"\baux_data\x18\x04 \x01(\v2\x19.cerbos.engine.v1.AuxDataR\aauxData\x12?\n" +
 	"\x06config\x18\x05 \x01(\v2\x1f.cerbos.private.v1.EngineConfigB\x06\xbaH\x03\xc8\x01\x01R\x06config\x12,\n" +
 	"\x03now\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x03now\x1a\xbe\x01\n" +
-	"\x04Test\x12\x16\n" +
-	"\x06action\x18\x01 \x01(\tR\x06action\x12\x18\n" +
-	"\aactions\x18\x05 \x03(\tR\aactions\x129\n" +
-	"\x04want\x18\x02 \x01(\v2%.cerbos.engine.v1.PlanResourcesFilterR\x04want\x12I\n" +
-	"\bresource\x18\x03 \x01(\v2-.cerbos.engine.v1.PlanResourcesInput.ResourceR\bresource\"\xa9\x01\n" +
+	"\x04Test\x12I\n" +
+	"\bresource\x18\x01 \x01(\v2-.cerbos.engine.v1.PlanResourcesInput.ResourceR\bresource\x12\x16\n" +
+	"\x06action\x18\x02 \x01(\tR\x06action\x12\x18\n" +
+	"\aactions\x18\x03 \x03(\tR\aactions\x129\n" +
+	"\x04want\x18\x04 \x01(\v2%.cerbos.engine.v1.PlanResourcesOutputR\x04want\"\xa9\x01\n" +
 	"\"VerifyTestSuiteRunGetTestsTestCase\x121\n" +
 	"\x05table\x18\x01 \x01(\v2\x1b.cerbos.policy.v1.TestTableR\x05table\x125\n" +
 	"\n" +
@@ -4053,6 +4053,7 @@ var file_cerbos_private_v1_test_proto_goTypes = []any{
 	(*v19.AddOrUpdateSchemaRequest)(nil),       // 115: cerbos.request.v1.AddOrUpdateSchemaRequest
 	(*v17.AddOrUpdateSchemaResponse)(nil),      // 116: cerbos.response.v1.AddOrUpdateSchemaResponse
 	(*v11.PlanResourcesInput_Resource)(nil),    // 117: cerbos.engine.v1.PlanResourcesInput.Resource
+	(*v11.PlanResourcesOutput)(nil),            // 118: cerbos.engine.v1.PlanResourcesOutput
 }
 var file_cerbos_private_v1_test_proto_depIdxs = []int32{
 	20,  // 0: cerbos.private.v1.AuxDataTestCase.input:type_name -> cerbos.private.v1.AuxDataTestCase.Input
@@ -4182,8 +4183,8 @@ var file_cerbos_private_v1_test_proto_depIdxs = []int32{
 	115, // 124: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.input:type_name -> cerbos.request.v1.AddOrUpdateSchemaRequest
 	116, // 125: cerbos.private.v1.ServerTestCase.AdminAddOrUpdateSchemaCall.want_response:type_name -> cerbos.response.v1.AddOrUpdateSchemaResponse
 	54,  // 126: cerbos.private.v1.CompileTestCase.Variables.derived_roles:type_name -> cerbos.private.v1.CompileTestCase.Variables.DerivedRole
-	82,  // 127: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesFilter
-	117, // 128: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	117, // 127: cerbos.private.v1.QueryPlannerTestSuite.Test.resource:type_name -> cerbos.engine.v1.PlanResourcesInput.Resource
+	118, // 128: cerbos.private.v1.QueryPlannerTestSuite.Test.want:type_name -> cerbos.engine.v1.PlanResourcesOutput
 	66,  // 129: cerbos.private.v1.ProtoYamlTestCase.Want.message:type_name -> cerbos.policy.v1.Policy
 	83,  // 130: cerbos.private.v1.ProtoYamlTestCase.Want.errors:type_name -> cerbos.source.v1.Error
 	84,  // 131: cerbos.private.v1.WellKnownTypes.ListValueMapEntry.value:type_name -> google.protobuf.ListValue

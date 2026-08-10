@@ -21,9 +21,12 @@ principal:
     - admin
 
 tests:
-  - action: approve:refer-derived-role
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:refer-derived-role
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        approve:refer-derived-role: ""

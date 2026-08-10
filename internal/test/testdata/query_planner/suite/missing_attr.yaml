@@ -23,9 +23,16 @@ principal:
     org: org-1
 
 tests:
-  - action: use
-    resource:
+  - resource:
       kind: missing_attr
       policyVersion: default
+    action: use
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      evaluationErrors:
+        - celError:
+            expression: V.eng && P.attr.org == "org-1"
+            message: "no such key: is_engineer"
+      matchedScopes:
+        use: ""

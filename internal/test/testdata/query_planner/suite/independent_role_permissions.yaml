@@ -22,40 +22,50 @@ principal:
     - acme_role_deleter_restricted
 
 tests:
-  - action: view
-    resource:
+  - resource:
       kind: mixed_restrictions_res
       scope: umbrellacorp
       policyVersion: default
+    action: view
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""
 
-  - action: delete
-    resource:
+  - resource:
       kind: mixed_restrictions_res
       scope: umbrellacorp
       policyVersion: default
+    action: delete
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.safe_to_delete
-            - value: true
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.safe_to_delete
+              - value: true
+      matchedScopes:
+        delete: ""
 
-  - actions:
+  - resource:
+      kind: mixed_restrictions_res
+      scope: umbrellacorp
+      policyVersion: default
+    actions:
       - view
       - delete
-    resource:
-      kind: mixed_restrictions_res
-      scope: umbrellacorp
-      policyVersion: default
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.safe_to_delete
-            - value: true
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.safe_to_delete
+              - value: true
+      matchedScopes:
+        view: ""
+        delete: ""

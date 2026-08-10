@@ -37,38 +37,41 @@ principal:
     excluded: []
 
 tests:
-  - action: filter
-    resource:
+  - resource:
       kind: user
       policyVersion: default
       scope: acme
+    action: filter
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: and
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.org_id
-                        - value:
-                            - "50"
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.is_active
-                        - value: false
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.excluded_items
-                  - value: []
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.excluded
-                  - value: []
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.org_id
+                          - value:
+                              - "50"
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.is_active
+                          - value: false
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.excluded_items
+                    - value: []
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.excluded
+                    - value: []
+      matchedScopes:
+        filter: ""

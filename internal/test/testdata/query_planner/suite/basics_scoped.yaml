@@ -23,76 +23,88 @@ principal:
     userQid: z0
 
 tests:
-  - action: write
-    resource:
+  - resource:
       kind: x
       scope: acme
       policyVersion: default
+    action: write
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - value: z0
-            - variable: request.resource.id
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
+      matchedScopes:
+        write: ""
 
-  - action: edit
-    resource:
+  - resource:
       kind: x
       scope: acme
       policyVersion: default
+    action: edit
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: APPROVED
-            - expression:
-                operator: eq
-                operands:
-                  - value: z0
-                  - variable: request.resource.id
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: APPROVED
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: z0
+                    - variable: request.resource.id
+      matchedScopes:
+        edit: ""
 
-  - action: edit
-    resource:
+  - resource:
       kind: x
       scope: acme.hr.uk
       policyVersion: default
+    action: edit
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: PENDING_STATUS
-            - expression:
-                operator: or
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.status
-                        - value: APPROVED
-                  - expression:
-                      operator: eq
-                      operands:
-                        - value: z0
-                        - variable: request.resource.id
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_STATUS
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.status
+                          - value: APPROVED
+                    - expression:
+                        operator: eq
+                        operands:
+                          - value: z0
+                          - variable: request.resource.id
+      matchedScopes:
+        edit: ""
 
-  - action: debug
-    resource:
+  - resource:
       kind: x
       scope: acme.hr.uk
       policyVersion: default
+    action: debug
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        debug: acme

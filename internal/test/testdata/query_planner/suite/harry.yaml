@@ -28,204 +28,246 @@ principal:
     account_id: abc123
 
 tests:
-  - action: view
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - variable: request.resource.attr.hidden_from_employee
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.owner
-                  - value: harry
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - variable: request.resource.attr.hidden_from_employee
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: harry
+      matchedScopes:
+        view: ""
 
-  - action: view:refer-derived-role-no-condition
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view:refer-derived-role-no-condition
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.owner
-            - value: harry
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.owner
+              - value: harry
+      matchedScopes:
+        view:refer-derived-role-no-condition: ""
 
-  - action: view:refer-parent-and-derived-roles
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view:refer-parent-and-derived-roles
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.owner
-            - value: harry
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.owner
+              - value: harry
+      matchedScopes:
+        view:refer-parent-and-derived-roles: ""
 
-  - action: view:refer-derived-role
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view:refer-derived-role
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.owner
-            - value: harry
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.owner
+              - value: harry
+      matchedScopes:
+        view:refer-derived-role: ""
 
-  - action: non-existent-action
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: non-existent-action
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        non-existent-action: ""
 
-  - action: some-action
-    resource:
+  - resource:
       kind: non-existent-resource
       policyVersion: default
+    action: some-action
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        some-action: ""
 
-  - action: map-membership
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: map-membership
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: in
-          operands:
-            - variable: request.resource.attr.teamId
-            - value:
-                - team1
-                - team2
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: in
+            operands:
+              - variable: request.resource.attr.teamId
+              - value:
+                  - team1
+                  - team2
+      matchedScopes:
+        map-membership: ""
 
-  - action: map-exists
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: map-exists
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - value: team1
-                  - variable: request.resource.attr.teamId
-            - expression:
-                operator: eq
-                operands:
-                  - value: team2
-                  - variable: request.resource.attr.teamId
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: team1
+                    - variable: request.resource.attr.teamId
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: team2
+                    - variable: request.resource.attr.teamId
+      matchedScopes:
+        map-exists: ""
 
-  - action: map-all
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: map-all
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: startsWith
-                operands:
-                  - value: team1
-                  - variable: request.resource.attr.teamId
-            - expression:
-                operator: startsWith
-                operands:
-                  - value: team2
-                  - variable: request.resource.attr.teamId
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: startsWith
+                  operands:
+                    - value: team1
+                    - variable: request.resource.attr.teamId
+              - expression:
+                  operator: startsWith
+                  operands:
+                    - value: team2
+                    - variable: request.resource.attr.teamId
+      matchedScopes:
+        map-all: ""
 
-  - action: just-index
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: just-index
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: in
-          operands:
-            - value: abc123
-            - expression:
-                operator: map
-                operands:
-                  - variable: request.resource.attr.accounts_people
-                  - expression:
-                      operator: lambda
-                      operands:
-                        - variable: ap.account_id
-                        - variable: ap
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: in
+            operands:
+              - value: abc123
+              - expression:
+                  operator: map
+                  operands:
+                    - variable: request.resource.attr.accounts_people
+                    - expression:
+                        operator: lambda
+                        operands:
+                          - variable: ap.account_id
+                          - variable: ap
+      matchedScopes:
+        just-index: ""
 
-  - action: multi-role-test
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: multi-role-test
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        multi-role-test: ""
 
-  - action: multi-role-test-conditional-allow
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: multi-role-test-conditional-allow
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.owner
-            - value: harry
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.owner
+              - value: harry
+      matchedScopes:
+        multi-role-test-conditional-allow: ""
 
-  - action: multi-role-test-conditional-deny
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: multi-role-test-conditional-deny
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        multi-role-test-conditional-deny: ""
 
-  - action: multi-role-test-conditional-allow-deny
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: multi-role-test-conditional-allow-deny
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.owner
-                  - value: harry
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: harry
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: harry
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: harry
+      matchedScopes:
+        multi-role-test-conditional-allow-deny: ""

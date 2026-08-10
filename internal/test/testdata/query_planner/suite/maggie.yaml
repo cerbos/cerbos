@@ -31,285 +31,327 @@ auxData:
     customInt: 42
 
 tests:
-  - action: approve:refer-derived-role
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:refer-derived-role
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: and
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.status
-                        - value: PENDING_APPROVAL
-                  - expression:
-                      operator: ne
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: maggie
-            - expression:
-                operator: or
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.geography
-                        - value: US
-                  - expression:
-                      operator: in
-                      operands:
-                        - variable: request.resource.attr.geography
-                        - value:
-                            - US
-                            - CA
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.status
+                          - value: PENDING_APPROVAL
+                    - expression:
+                        operator: ne
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: maggie
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.geography
+                          - value: US
+                    - expression:
+                        operator: in
+                        operands:
+                          - variable: request.resource.attr.geography
+                          - value:
+                              - US
+                              - CA
+      matchedScopes:
+        approve:refer-derived-role: ""
 
-  - action: report:allow-deny-deny
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: report:allow-deny-deny
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: not
-          operands:
-            - expression:
-                operator: or
-                operands:
-                  - variable: request.resource.attr.deleted
-                  - variable: request.resource.attr.hidden
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: or
+                  operands:
+                    - variable: request.resource.attr.deleted
+                    - variable: request.resource.attr.hidden
+      matchedScopes:
+        report:allow-deny-deny: ""
 
-  - action: report:allow-deny
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: report:allow-deny
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: not
-          operands:
-            - variable: request.resource.attr.deleted
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - variable: request.resource.attr.deleted
+      matchedScopes:
+        report:allow-deny: ""
 
-  - action: approve:true-in-both-or-and-conditions
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:true-in-both-or-and-conditions
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: PENDING_APPROVAL
-            - expression:
-                operator: ne
-                operands:
-                  - variable: request.resource.attr.owner
-                  - value: maggie
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_APPROVAL
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: maggie
+      matchedScopes:
+        approve:true-in-both-or-and-conditions: ""
 
-  - action: approve:allow-allow-deny
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:allow-allow-deny
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: maggie
-            - expression:
-                operator: or
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.status
-                        - value: PENDING_APPROVAL
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.geography
-                        - value: US
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: maggie
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.status
+                          - value: PENDING_APPROVAL
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.geography
+                          - value: US
+      matchedScopes:
+        approve:allow-allow-deny: ""
 
-  - action: approve:allow-allow
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:allow-allow
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: PENDING_APPROVAL
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.geography
-                  - value: US
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_APPROVAL
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.geography
+                    - value: US
+      matchedScopes:
+        approve:allow-allow: ""
 
-  - action: approve:allow-deny
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:allow-deny
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: maggie
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: PENDING_APPROVAL
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: maggie
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_APPROVAL
+      matchedScopes:
+        approve:allow-deny: ""
 
-  - action: approve:false-in-and-condition
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:false-in-and-condition
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        approve:false-in-and-condition: ""
 
-  - action: enlist:none-condition
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: enlist:none-condition
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: in
-                      operands:
-                        - variable: request.resource.attr.team
-                        - value:
-                            - A
-                            - B
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: lt
-                      operands:
-                        - variable: request.resource.attr.GPA
-                        - value: 4.7
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: in
+                        operands:
+                          - variable: request.resource.attr.team
+                          - value:
+                              - A
+                              - B
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: lt
+                        operands:
+                          - variable: request.resource.attr.GPA
+                          - value: 4.7
+      matchedScopes:
+        enlist:none-condition: ""
 
-  - action: approve:with-jwt
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:with-jwt
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.groupID
-            - value: 42
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.groupID
+              - value: 42
+      matchedScopes:
+        approve:with-jwt: ""
 
-  - action: approve:refer-derived-role
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
       attr:
         geography: US
+    action: approve:refer-derived-role
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: PENDING_APPROVAL
-            - expression:
-                operator: ne
-                operands:
-                  - variable: request.resource.attr.owner
-                  - value: maggie
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_APPROVAL
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: maggie
+      matchedScopes:
+        approve:refer-derived-role: ""
 
-  - action: approve
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
       attr:
         geography: US
+    action: approve
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.status
-                  - value: PENDING_APPROVAL
-            - expression:
-                operator: ne
-                operands:
-                  - variable: request.resource.attr.owner
-                  - value: maggie
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.status
+                    - value: PENDING_APPROVAL
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: maggie
+      matchedScopes:
+        approve: ""
 
-  - action: approve
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
       attr:
         geography: US
         owner: brian
+    action: approve
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.status
-            - value: PENDING_APPROVAL
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.status
+              - value: PENDING_APPROVAL
+      matchedScopes:
+        approve: ""
 
-  - action: approve:non-boolean-condition
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: approve:non-boolean-condition
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        approve:non-boolean-condition: ""

@@ -22,48 +22,54 @@ principal:
     - user
 
 tests:
-  - action: read
-    resource:
+  - resource:
       kind: contact
       policyVersion: default
+    action: read
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        read: ""
 
-  - action: view
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.owner
-                        - value: mickey_mouse
-            - expression:
-                operator: or
-                operands:
-                  - expression:
-                      operator: eq
-                      operands:
-                        - variable: request.resource.attr.dev_record
-                        - value: true
-                  - expression:
-                      operator: and
-                      operands:
-                        - expression:
-                            operator: not
-                            operands:
-                              - variable: request.resource.attr.hidden_from_employee
-                        - expression:
-                            operator: eq
-                            operands:
-                              - variable: request.resource.attr.owner
-                              - value: donald_duck
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: mickey_mouse
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.dev_record
+                          - value: true
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: not
+                              operands:
+                                - variable: request.resource.attr.hidden_from_employee
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.owner
+                                - value: donald_duck
+      matchedScopes:
+        view: ""

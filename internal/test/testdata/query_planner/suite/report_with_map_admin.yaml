@@ -30,41 +30,50 @@ principal:
         - ADMIN
 
 tests:
-  - action: delete_vehemently
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
+    action: delete_vehemently
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: or
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.location_id
-                  - value: "1"
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.location_id
-                  - value: "3"
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.location_id
+                    - value: "1"
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.location_id
+                    - value: "3"
+      matchedScopes:
+        delete_vehemently: ""
 
-  - action: delete_vehemently
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
       attr:
         location_id: "2"
+    action: delete_vehemently
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete_vehemently: ""
 
-  - action: delete_vehemently
-    resource:
+  - resource:
       kind: report_with_map
       policyVersion: default
       attr:
         location_id: "1"
+    action: delete_vehemently
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        delete_vehemently: ""

@@ -22,29 +22,36 @@ principal:
     - employee
 
 tests:
-  # allowed in `accountant`, not in parent scope resource policy
-  - action: comment
-    resource:
-      kind: tax_return
-      scope: acme
-      policyVersion: default
-    want:
-      kind: KIND_ALWAYS_DENIED
 
-  # allowed in `accountant` and in parent scope resource policy for narrowed `manager` role
-  - action: create
-    resource:
+  - resource:
       kind: tax_return
       scope: acme
       policyVersion: default
+    action: comment # allowed in `accountant`, not in parent scope resource policy
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        comment: ""
 
-  # not allowed in `accountant` but is in parent scope resource policy for non-narrowed `employee` role
-  - action: view
-    resource:
+  - resource:
       kind: tax_return
       scope: acme
       policyVersion: default
+    action: create # allowed in `accountant` and in parent scope resource policy for narrowed `manager` role
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        create: ""
+
+  - resource:
+      kind: tax_return
+      scope: acme
+      policyVersion: default
+    action: view # not allowed in `accountant` but is in parent scope resource policy for non-narrowed `employee` role
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""

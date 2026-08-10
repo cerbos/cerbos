@@ -3577,19 +3577,14 @@ func cerbos_private_v1_QueryPlannerFilterTestCase_hashpb_sum(m *QueryPlannerFilt
 }
 
 func cerbos_private_v1_QueryPlannerTestSuite_Test_hashpb_sum(m *QueryPlannerTestSuite_Test, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
-	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.action"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetAction()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAction()), len(m.GetAction())))
-	}
-	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.want"]; !ok {
-		if m.GetWant() != nil {
-			cerbos_engine_v1_PlanResourcesFilter_hashpb_sum(m.GetWant(), hasher, ignore, b)
-		}
-	}
 	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.resource"]; !ok {
 		if m.GetResource() != nil {
 			cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m.GetResource(), hasher, ignore, b)
 		}
+	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetAction()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAction()), len(m.GetAction())))
 	}
 	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.actions"]; !ok {
 		if len(m.Actions) > 0 {
@@ -3597,6 +3592,11 @@ func cerbos_private_v1_QueryPlannerTestSuite_Test_hashpb_sum(m *QueryPlannerTest
 				_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(v))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.want"]; !ok {
+		if m.GetWant() != nil {
+			cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m.GetWant(), hasher, ignore, b)
 		}
 	}
 }

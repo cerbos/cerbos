@@ -21,16 +21,22 @@ principal:
     - accountant
 
 tests:
-  - action: file
-    resource:
+  - resource:
       kind: tax_return
       policyVersion: default
+    action: file
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        file: ""
 
-  - action: delete
-    resource:
+  - resource:
       kind: tax_return
       policyVersion: default
+    action: delete
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete: ""

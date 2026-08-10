@@ -21,24 +21,27 @@ principal:
     - employee
 
 tests:
-  - action: all
-    resource:
+  - resource:
       kind: two-var-compre
       policyVersion: default
+    action: all
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: all
-          operands:
-            - variable: request.resource.attr.deps
-            - expression:
-                operator: lambda
-                operands:
-                  - expression:
-                      operator: ne
-                      operands:
-                        - variable: k
-                        - variable: v
-                  - variable: k
-                  - variable: v
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.deps
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: ne
+                        operands:
+                          - variable: k
+                          - variable: v
+                    - variable: k
+                    - variable: v
+      matchedScopes:
+        all: ""

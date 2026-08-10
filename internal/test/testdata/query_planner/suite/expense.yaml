@@ -23,10 +23,13 @@ principal:
       - globalcorp
 
 tests:
-  - action: view
-    resource:
+  - resource:
       kind: expense
       scope: tailwind
       policyVersion: default
+    action: view
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""

@@ -22,29 +22,35 @@ principal:
     - user
 
 tests:
-  - action: read
-    resource:
+  - resource:
       kind: contact
       policyVersion: default
+    action: read
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        read: ""
 
-  - action: view
-    resource:
+  - resource:
       kind: leave_request
       policyVersion: default
+    action: view
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: not
-                operands:
-                  - variable: request.resource.attr.hidden_from_employee
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.owner
-                  - value: donald_duck
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - variable: request.resource.attr.hidden_from_employee
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: donald_duck
+      matchedScopes:
+        view: ""

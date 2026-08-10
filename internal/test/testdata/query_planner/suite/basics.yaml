@@ -27,119 +27,152 @@ principal:
 now: "2024-01-16T10:18:27.395+13:00"
 
 tests:
-  - action: write
-    resource:
+  - resource:
       kind: x
       policyVersion: default
+    action: write
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - value: z0
-            - variable: request.resource.id
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
+      matchedScopes:
+        write: ""
 
-  - action: edit
-    resource:
+  - resource:
       kind: x
       policyVersion: default
+    action: edit
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - value: z0
-            - variable: request.resource.id
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
+      matchedScopes:
+        edit: ""
 
-  - action: reference_globals
-    resource:
+  - resource:
       kind: x
       policyVersion: default
+    action: reference_globals
     want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - variable: request.resource.attr.environment
-            - value: test
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.environment
+              - value: test
+      matchedScopes:
+        reference_globals: ""
 
-  - action: now-once
-    resource:
+  - resource:
       kind: x
       policyVersion: default
+    action: now-once
     want:
-      kind: KIND_ALWAYS_ALLOWED
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        now-once: ""
 
-  - action: lecture
-    resource:
+  - resource:
       kind: x
       policyVersion: default
+    action: lecture
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        lecture: ""
 
-  - actions:
+  - resource:
+      kind: x
+      policyVersion: default
+    actions:
       - write
       - edit
-    resource:
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
+      matchedScopes:
+        write: ""
+        edit: ""
+
+  - resource:
       kind: x
       policyVersion: default
-    want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - value: z0
-            - variable: request.resource.id
-
-  - actions:
+    actions:
       - write
       - edit
       - now-once
-    resource:
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: z0
+              - variable: request.resource.id
+      matchedScopes:
+        write: ""
+        edit: ""
+        now-once: ""
+
+  - resource:
       kind: x
       policyVersion: default
-    want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: eq
-          operands:
-            - value: z0
-            - variable: request.resource.id
-
-  - actions:
+    actions:
       - edit
       - reference_globals
-    resource:
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: z0
+                    - variable: request.resource.id
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.environment
+                    - value: test
+      matchedScopes:
+        edit: ""
+        reference_globals: ""
+
+  - resource:
       kind: x
       policyVersion: default
-    want:
-      kind: KIND_CONDITIONAL
-      condition:
-        expression:
-          operator: and
-          operands:
-            - expression:
-                operator: eq
-                operands:
-                  - value: z0
-                  - variable: request.resource.id
-            - expression:
-                operator: eq
-                operands:
-                  - variable: request.resource.attr.environment
-                  - value: test
-
-  - actions:
+    actions:
       - edit
       - reference_globals
       - lecture
-    resource:
-      kind: x
-      policyVersion: default
     want:
-      kind: KIND_ALWAYS_DENIED
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        edit: ""
+        reference_globals: ""
+        lecture: ""

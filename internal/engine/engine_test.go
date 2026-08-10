@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -381,6 +380,10 @@ func TestQueryPlan(t *testing.T) {
 
 			ts := test.Parse[privatev1.QueryPlannerTestSuite](t, tc.Input)
 
+			for _, tt := range ts.Tests {
+				stabiliseOutput(tt.Want)
+			}
+
 			testEngineConfigMatrix(t, ts.GetConfig(), func(t *testing.T, params param, _ *mockAuditLog, wantSuccess bool) {
 				t.Helper()
 
@@ -416,17 +419,20 @@ func TestQueryPlan(t *testing.T) {
 							opts = append(opts, evaluator.WithNowFunc(func() time.Time { return ts.Now.AsTime() }))
 						}
 
-						response, err := eng.Plan(t.Context(), request, opts...)
+						have, err := eng.Plan(t.Context(), request, opts...)
 						require.NoError(t, err)
-						require.NotNil(t, response)
+						require.NotNil(t, have)
+						stabiliseOutput(have)
 
-						diff := cmp.Diff(stabiliseFilter(tt.Want), stabiliseFilter(response.Filter),
+						diff := cmp.Diff(tt.Want, have,
 							protocmp.Transform(),
-							protocmp.SortRepeatedFields(&enginev1.PlanResourcesFilter_Expression{}, "operands"),
+							protocmp.IgnoreFields(&enginev1.PlanResourcesOutput{}, "actions", "filter_debug", "kind", "policy_version", "request_id", "scope"),
+							protocmp.SortRepeated(cmpEvaluationError),
+							protocmp.SortRepeated(cmpValidationError),
 						)
 
 						if wantSuccess {
-							require.Empty(t, diff, protojson.Format(response))
+							require.Empty(t, diff, protojson.Format(have))
 						} else {
 							require.NotEmpty(t, diff)
 						}
@@ -437,38 +443,45 @@ func TestQueryPlan(t *testing.T) {
 	}
 }
 
-// Create a recursive function to normalize all expressions with commutative operators.
-func stabiliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {
-	if filter == nil {
-		return nil
-	}
-
-	result := &enginev1.PlanResourcesFilter{
-		Kind: filter.Kind,
-	}
-
-	if filter.Condition != nil {
-		result.Condition = stabiliseOperand(filter.Condition)
-	}
-
-	return result
+func stabiliseOutput(output *enginev1.PlanResourcesOutput) {
+	stabiliseOperand(output.Filter.GetCondition())
 }
 
-func stabiliseOperand(operand *enginev1.PlanResourcesFilter_Expression_Operand) *enginev1.PlanResourcesFilter_Expression_Operand {
+func stabiliseOperand(operand *enginev1.PlanResourcesFilter_Expression_Operand) {
 	if operand == nil {
-		return nil
+		return
 	}
 
-	if n, ok := operand.Node.(*enginev1.PlanResourcesFilter_Expression_Operand_Expression); ok {
-		result := &enginev1.PlanResourcesFilter_Expression_Operand{}
-		expr := stabiliseExpression(n.Expression)
-		result.Node = &enginev1.PlanResourcesFilter_Expression_Operand_Expression{
-			Expression: expr,
-		}
-		return result
+	stabiliseExpression(operand.GetExpression())
+}
+
+func stabiliseExpression(expr *enginev1.PlanResourcesFilter_Expression) {
+	if expr == nil {
+		return
 	}
 
-	return operand
+	for _, op := range expr.Operands {
+		stabiliseOperand(op)
+	}
+
+	// Ensure struct literals have deterministically ordered entries to avoid flaky comparisons
+	if expr.Operator == planner.Struct {
+		slices.SortFunc(expr.Operands, func(a, b *enginev1.PlanResourcesFilter_Expression_Operand) int {
+			return strings.Compare(
+				a.GetExpression().Operands[0].GetValue().GetStringValue(),
+				b.GetExpression().Operands[0].GetValue().GetStringValue(),
+			)
+		})
+	}
+
+	// Sort operands if operator is commutative
+	if isCommutativeOperator(expr.Operator) {
+		slices.SortFunc(expr.Operands, func(a, b *enginev1.PlanResourcesFilter_Expression_Operand) int {
+			aJSON, _ := protojson.Marshal(a)
+			bJSON, _ := protojson.Marshal(b)
+			return bytes.Compare(aJSON, bJSON)
+		})
+	}
 }
 
 func isCommutativeOperator(op string) bool {
@@ -478,42 +491,6 @@ func isCommutativeOperator(op string) bool {
 	default:
 		return false
 	}
-}
-
-func stabiliseExpression(expr *enginev1.PlanResourcesFilter_Expression) *enginev1.PlanResourcesFilter_Expression {
-	if expr == nil {
-		return nil
-	}
-
-	result := &enginev1.PlanResourcesFilter_Expression{
-		Operator: expr.Operator,
-	}
-
-	// Normalize all operands
-	normalizedOperands := make([]*enginev1.PlanResourcesFilter_Expression_Operand, len(expr.Operands))
-	for i, op := range expr.Operands {
-		normalizedOperands[i] = stabiliseOperand(op)
-	}
-
-	// Ensure struct literals have deterministically ordered entries to avoid flaky comparisons
-	if expr.Operator == planner.Struct {
-		sort.Slice(normalizedOperands, func(i, j int) bool {
-			return normalizedOperands[i].GetExpression().Operands[0].GetValue().GetStringValue() <
-				normalizedOperands[j].GetExpression().Operands[0].GetValue().GetStringValue()
-		})
-	}
-
-	// Sort operands if operator is commutative
-	if isCommutativeOperator(expr.Operator) {
-		sort.Slice(normalizedOperands, func(i, j int) bool {
-			aJSON, _ := protojson.Marshal(normalizedOperands[i])
-			bJSON, _ := protojson.Marshal(normalizedOperands[j])
-			return bytes.Compare(aJSON, bJSON) < 0
-		})
-	}
-
-	result.Operands = normalizedOperands
-	return result
 }
 
 type testTraceSink struct {
