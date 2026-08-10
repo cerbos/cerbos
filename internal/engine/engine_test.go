@@ -62,8 +62,8 @@ func TestCheck(t *testing.T) {
 	testCases := test.LoadTestCases(t, "engine")
 	testCases = append(testCases, test.LoadTestCases(t, "engine_strict_scope_search")...)
 
-	// strictModeFlips lists the action effects that flip from ALLOW to DENY when the testdata
-	// is evaluated in strict mode. It maps "<case name>/<request ID>" to actions.
+	// strictModeFlips lists the action effects that flip from ALLOW to DENY when an evaluator
+	// runs in strict mode. It maps "<case name>/<request ID>" to actions.
 	strictModeFlips := map[string][]string{
 		"case_04/test2": {"view:public"},
 		"case_14/test":  {"view"},
