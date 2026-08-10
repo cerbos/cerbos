@@ -42,7 +42,7 @@ const (
 	requestTimeout     = 5 * time.Second
 	healthPollInterval = 100 * time.Millisecond
 	retryBackoffDelay  = 5
-	serverStartTimeout = 10 * time.Second
+	serverStartTimeout = 20 * time.Second
 )
 
 type AuthCreds struct {
