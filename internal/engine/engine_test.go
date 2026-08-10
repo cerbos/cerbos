@@ -24,6 +24,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	privatev1 "github.com/cerbos/cerbos/api/genpb/cerbos/private/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
@@ -61,56 +62,107 @@ func TestCheck(t *testing.T) {
 	testCases := test.LoadTestCases(t, "engine")
 	testCases = append(testCases, test.LoadTestCases(t, "engine_strict_scope_search")...)
 
+	// strictModeFlips lists the action effects that flip from ALLOW to DENY when the testdata
+	// is evaluated in strict mode. It maps "<case name>/<request ID>" to actions.
+	strictModeFlips := map[string][]string{
+		"case_04/test2": {"view:public"},
+		"case_14/test":  {"view"},
+		"case_15/test":  {"view"},
+		"case_20/test":  {"use"},
+		"case_24/test":  {"view:public"},
+		"case_36/test":  {"view"},
+	}
+
 	for evalName, eval := range evaluators {
 		t.Run(evalName, func(t *testing.T) {
-			for _, tcase := range testCases {
-				t.Run(tcase.Name, func(t *testing.T) {
-					tc := readTestCase(t, tcase.Input)
-					mockAuditLog.clear()
+			t.Run("default", func(t *testing.T) {
+				for _, tcase := range testCases {
+					t.Run(tcase.Name, func(t *testing.T) {
+						tc := readTestCase(t, tcase.Input)
+						mockAuditLog.clear()
 
-					traceCollector := tracer.NewCollector()
-					haveOutputs, err := eval.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
+						traceCollector := tracer.NewCollector()
+						haveOutputs, err := eval.Check(t.Context(), tc.Inputs, evaluator.WithTraceSink(traceCollector))
 
-					if tc.WantError {
-						require.Error(t, err)
-					} else {
-						require.NoError(t, err)
-					}
+						if tc.WantError {
+							require.Error(t, err)
+						} else {
+							require.NoError(t, err)
+						}
 
-					for i, have := range haveOutputs {
-						slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
-							if a.Src < b.Src {
-								return -1
-							} else if a.Src > b.Src {
-								return 1
-							}
-							return 0
-						})
+						for i, have := range haveOutputs {
+							slices.SortStableFunc(have.Outputs, func(a, b *enginev1.OutputEntry) int {
+								if a.Src < b.Src {
+									return -1
+								} else if a.Src > b.Src {
+									return 1
+								}
+								return 0
+							})
 
-						require.Empty(t, cmp.Diff(tc.WantOutputs[i],
-							have,
+							require.Empty(t, cmp.Diff(tc.WantOutputs[i],
+								have,
+								protocmp.Transform(),
+								protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+							))
+						}
+
+						haveDecisionLogs := mockAuditLog.getDecisionLogs()
+
+						// ruletable calls do not return audit logs
+						if evalName != "engine" {
+							tc.WantDecisionLogs = nil
+						}
+
+						require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
+							haveDecisionLogs,
 							protocmp.Transform(),
+							protocmp.IgnoreEmptyMessages(),
 							protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
+							protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
+							protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
 						))
-					}
+					})
+				}
+			})
 
-					haveDecisionLogs := mockAuditLog.getDecisionLogs()
+			// The strict run compares per-action effects only. Policy attribution, evaluation
+			// errors, outputs and effective derived roles change when strict evaluation
+			// short-circuits due to an error.
+			t.Run("strict", func(t *testing.T) {
+				for _, tcase := range testCases {
+					t.Run(tcase.Name, func(t *testing.T) {
+						tc := readTestCase(t, tcase.Input)
 
-					// ruletable calls do not return audit logs
-					if evalName != "engine" {
-						tc.WantDecisionLogs = nil
-					}
+						haveOutputs, err := eval.Check(t.Context(), tc.Inputs, evaluator.WithStrictEvaluation())
+						if tc.WantError {
+							require.Error(t, err)
+							return
+						}
+						require.NoError(t, err)
 
-					require.Empty(t, cmp.Diff(tc.WantDecisionLogs,
-						haveDecisionLogs,
-						protocmp.Transform(),
-						protocmp.IgnoreEmptyMessages(),
-						protocmp.SortRepeatedFields(&enginev1.CheckOutput{}, "effective_derived_roles"),
-						protocmp.SortRepeatedFields(&enginev1.Principal{}, "roles"),
-						protocmp.IgnoreFields(&auditv1.DecisionLogEntry{}, "call_id", "timestamp", "peer"),
-					))
-				})
-			}
+						for i, have := range haveOutputs {
+							want := tc.WantOutputs[i]
+
+							wantEffects := make(map[string]effectv1.Effect, len(want.Actions))
+							for action, ae := range want.Actions {
+								wantEffects[action] = ae.Effect
+							}
+							for _, action := range strictModeFlips[fmt.Sprintf("%s/%s", tcase.Name, want.RequestId)] {
+								require.Equal(t, effectv1.Effect_EFFECT_ALLOW, wantEffects[action], "stale strictModeFlips entry for action %q", action)
+								wantEffects[action] = effectv1.Effect_EFFECT_DENY
+							}
+
+							haveEffects := make(map[string]effectv1.Effect, len(have.Actions))
+							for action, ae := range have.Actions {
+								haveEffects[action] = ae.Effect
+							}
+
+							require.Equal(t, wantEffects, haveEffects, "request %s", want.RequestId)
+						}
+					})
+				}
+			})
 		})
 	}
 
@@ -442,51 +494,78 @@ func TestQueryPlan(t *testing.T) {
 		},
 	}
 
+	modes := []struct {
+		name    string
+		options []evaluator.CheckOpt
+	}{
+		{name: "default"},
+		{name: "strict", options: []evaluator.CheckOpt{evaluator.WithStrictEvaluation()}},
+	}
+
+	// strictModeOverrides lists the plan tests whose filter changes in strict mode.
+	// It maps a "<suite>/<resource kind>/<action>" triplet to a filter KIND.
+	strictModeOverrides := map[string]enginev1.PlanResourcesFilter_Kind{
+		"array_of_conditions_wildcard_role/user/filter": enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
+		"donald_duck/contact/read":                      enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
+		"donald_duck_lenient/contact/read":              enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
+		"missing_attr/missing_attr/use":                 enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
+	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			suites := slices.Concat(commonSuites, tc.suites)
 			timestamp, err := time.Parse(time.RFC3339, "2024-01-16T10:18:27.395+13:00")
 			require.NoError(t, err)
-			for _, suite := range suites {
-				t.Run(suite.Name, func(t *testing.T) {
-					ts := test.Parse[privatev1.QueryPlannerTestSuite](t, suite.Input)
-					for _, tt := range ts.Tests {
-						actionName := tt.Action
-						if tt.Actions != nil {
-							actionName = strings.Join(tt.Actions, ", ")
-						}
-						t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, actionName), func(t *testing.T) {
-							is := require.New(t)
-							request := &enginev1.PlanResourcesInput{
-								RequestId: "requestId",
-								Principal: ts.Principal,
-								Resource: &enginev1.PlanResourcesInput_Resource{
-									Kind:          tt.Resource.Kind,
-									Attr:          tt.Resource.Attr,
-									PolicyVersion: tt.Resource.PolicyVersion,
-									Scope:         tt.Resource.Scope,
-								},
-								IncludeMeta: true,
-								AuxData:     auxData,
+			for _, mode := range modes {
+				t.Run(mode.name, func(t *testing.T) {
+					for _, suite := range suites {
+						t.Run(suite.Name, func(t *testing.T) {
+							ts := test.Parse[privatev1.QueryPlannerTestSuite](t, suite.Input)
+							for _, tt := range ts.Tests {
+								actionName := tt.Action
+								if tt.Actions != nil {
+									actionName = strings.Join(tt.Actions, ", ")
+								}
+								t.Run(fmt.Sprintf("%s/%s", tt.Resource.Kind, actionName), func(t *testing.T) {
+									is := require.New(t)
+									request := &enginev1.PlanResourcesInput{
+										RequestId: "requestId",
+										Principal: ts.Principal,
+										Resource: &enginev1.PlanResourcesInput_Resource{
+											Kind:          tt.Resource.Kind,
+											Attr:          tt.Resource.Attr,
+											PolicyVersion: tt.Resource.PolicyVersion,
+											Scope:         tt.Resource.Scope,
+										},
+										IncludeMeta: true,
+										AuxData:     auxData,
+									}
+									if tt.Actions != nil {
+										request.Actions = tt.Actions
+									} else {
+										request.Actions = []string{tt.Action} //nolint:staticcheck
+									}
+									response, err := eng.Plan(t.Context(), request, slices.Concat(tc.options, mode.options, []evaluator.CheckOpt{evaluator.WithNowFunc(func() time.Time { return timestamp })})...)
+									if tt.WantErr {
+										is.Error(err)
+									} else {
+										is.NoError(err)
+										is.NotNil(response)
+									}
+									want := tt.Want
+									if mode.name == "strict" {
+										if kind, ok := strictModeOverrides[fmt.Sprintf("%s/%s/%s", suite.Name, tt.Resource.Kind, actionName)]; ok {
+											want = &enginev1.PlanResourcesFilter{Kind: kind}
+										}
+									}
+									filter, filterDebug := response.Filter, response.FilterDebug
+									require.NoError(t, err)
+									require.Empty(t, cmp.Diff(stabiliseFilter(want), stabiliseFilter(filter),
+										protocmp.Transform(),
+										protocmp.SortRepeatedFields(&enginev1.PlanResourcesFilter_Expression{}, "operands")),
+										"AST: %s\n%s\n", filterDebug, protojson.Format(filter))
+								})
 							}
-							if tt.Actions != nil {
-								request.Actions = tt.Actions
-							} else {
-								request.Actions = []string{tt.Action} //nolint:staticcheck
-							}
-							response, err := eng.Plan(t.Context(), request, slices.Concat(tc.options, []evaluator.CheckOpt{evaluator.WithNowFunc(func() time.Time { return timestamp })})...)
-							if tt.WantErr {
-								is.Error(err)
-							} else {
-								is.NoError(err)
-								is.NotNil(response)
-							}
-							filter, filterDebug := response.Filter, response.FilterDebug
-							require.NoError(t, err)
-							require.Empty(t, cmp.Diff(stabiliseFilter(tt.Want), stabiliseFilter(filter),
-								protocmp.Transform(),
-								protocmp.SortRepeatedFields(&enginev1.PlanResourcesFilter_Expression{}, "operands")),
-								"AST: %s\n%s\n", filterDebug, protojson.Format(filter))
 						})
 					}
 				})
