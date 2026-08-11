@@ -56,7 +56,7 @@ func TestStrictEvaluationCheck(t *testing.T) {
 		out, _, err := h.mgr.Check(h.ctx, tracer.Start(nil), params, checkInputActions("ledger", wronglyTypedAmountValue, "export", "view"))
 		require.NoError(t, err)
 		require.Equal(t, effectv1.Effect_EFFECT_DENY, out.Actions["export"].GetEffect())
-		require.Equal(t, "resource.ledger.vdefault", out.Actions["export"].GetPolicy())
+		require.Equal(t, "resource.cel_errors.ledger.vdefault", out.Actions["export"].GetPolicy())
 		require.Equal(t, effectv1.Effect_EFFECT_ALLOW, out.Actions["view"].GetEffect())
 		assertCELErrors(t, out.EvaluationErrors, "V.v1", amountExpr)
 	})
