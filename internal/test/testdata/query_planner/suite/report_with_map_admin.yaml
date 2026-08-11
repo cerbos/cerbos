@@ -1,0 +1,79 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Report with map tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: "123"
+  roles:
+    - ADMIN
+  attr:
+    workspaceRolesMap:
+      "1":
+        - ADMIN
+        - MEMBER
+      "2":
+        - MEMBER
+      "3":
+        - MANAGER
+        - ADMIN
+
+tests:
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: delete_vehemently
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.location_id
+                    - value: "1"
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.location_id
+                    - value: "3"
+      matchedScopes:
+        delete_vehemently: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+      attr:
+        location_id: "2"
+    action: delete_vehemently
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete_vehemently: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+      attr:
+        location_id: "1"
+    action: delete_vehemently
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        delete_vehemently: ""

@@ -20,7 +20,7 @@ derivedRoles:
       parentRoles: ["*"]
       condition:
         match:
-          expr: request.principal.attr.reader == true
+          expr: has(request.principal.attr.reader) && request.principal.attr.reader == true
 
     - name: kube_user
       parentRoles: ["system:basic_user"]

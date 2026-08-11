@@ -1,8 +1,6 @@
 # yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
 ---
 apiVersion: "api.cerbos.dev/v1"
-variables:
-  is_dev_record: request.resource.attr.dev_record == true
 principalPolicy:
   principal: donald_duck
   version: "default"

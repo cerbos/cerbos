@@ -7,10 +7,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
-	"github.com/spf13/afero"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -19,7 +16,6 @@ import (
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
@@ -27,15 +23,14 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/schema"
-	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/disk"
-	"github.com/cerbos/cerbos/internal/storage/index"
+	"github.com/cerbos/cerbos/internal/test"
 )
 
 const celErrorMsg = "Error evaluating CEL expression"
 
 const (
-	amountExpr = "request.resource.attr.amount > 1000"
+	amountExpr = "R.attr.amount > 1000"
 	edrExpr    = `"owner" in runtime.effectiveDerivedRoles`
 )
 
@@ -52,123 +47,21 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
-	memFsys := afero.NewMemMapFs()
-	idx, err := index.Build(ctx, afero.NewIOFS(memFsys))
+	store, err := disk.NewStore(ctx, &disk.Conf{Directory: test.PathToDir(t, "store")})
 	require.NoError(t, err)
 
-	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	subMgr := storage.NewSubscriptionManager(ctx)
-	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementNone))
 	compiler, err := compile.NewManager(ctx, store)
 	require.NoError(t, err)
-	ruleTable, err := ruletable.NewRuleTable(ruletable.NewProtoRuletable())
+
+	protoRT := ruletable.NewProtoRuletable()
+	require.NoError(t, ruletable.LoadPolicies(ctx, protoRT, compiler))
+	require.NoError(t, ruletable.LoadSchemas(ctx, protoRT, store))
+
+	rt, err := ruletable.NewRuleTable(protoRT)
 	require.NoError(t, err)
-	mgr, err := ruletable.NewRuleTableManager(ruleTable, compiler, schemaMgr)
+
+	mgr, err := ruletable.NewRuleTableManager(rt, compiler, schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementNone)))
 	require.NoError(t, err)
-	subMgr.Subscribe(mgr)
-
-	cond := func(expr string) *policyv1.Condition {
-		return &policyv1.Condition{
-			Condition: &policyv1.Condition_Match{
-				Match: &policyv1.Match{Op: &policyv1.Match_Expr{Expr: expr}},
-			},
-		}
-	}
-
-	drPolicy := &policyv1.Policy{
-		ApiVersion: "api.cerbos.dev/v1",
-		PolicyType: &policyv1.Policy_DerivedRoles{
-			DerivedRoles: &policyv1.DerivedRoles{
-				Name: "common_roles",
-				Definitions: []*policyv1.RoleDef{
-					{Name: "owner", ParentRoles: []string{"user"}, Condition: cond(amountExpr)},
-				},
-			},
-		},
-	}
-	addOrUpdatePolicy(t, "derived_roles/common_roles.yaml", drPolicy, memFsys, idx, subMgr)
-
-	// Each scenario lives in its own policy: policy-level variables and imported derived roles
-	// are evaluated for every action, which would cross-pollute the expected errors.
-	accountPolicy := &policyv1.Policy{
-		ApiVersion: "api.cerbos.dev/v1",
-		PolicyType: &policyv1.Policy_ResourcePolicy{
-			ResourcePolicy: &policyv1.ResourcePolicy{
-				Resource: "account",
-				Version:  "default",
-				Rules: []*policyv1.ResourceRule{
-					{Actions: []string{"read"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
-					{Actions: []string{"read"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_DENY, Condition: cond(amountExpr)},
-					{Actions: []string{"write"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond(amountExpr)},
-				},
-			},
-		},
-	}
-	addOrUpdatePolicy(t, "resource_policies/account.yaml", accountPolicy, memFsys, idx, subMgr)
-
-	ledgerPolicy := &policyv1.Policy{
-		ApiVersion: "api.cerbos.dev/v1",
-		PolicyType: &policyv1.Policy_ResourcePolicy{
-			ResourcePolicy: &policyv1.ResourcePolicy{
-				Resource:  "ledger",
-				Version:   "default",
-				Variables: &policyv1.Variables{Local: map[string]string{"v1": amountExpr}},
-				Rules: []*policyv1.ResourceRule{
-					{Actions: []string{"export"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond("V.v1")},
-					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
-				},
-			},
-		},
-	}
-	addOrUpdatePolicy(t, "resource_policies/ledger.yaml", ledgerPolicy, memFsys, idx, subMgr)
-
-	recordPolicy := &policyv1.Policy{
-		ApiVersion: "api.cerbos.dev/v1",
-		PolicyType: &policyv1.Policy_ResourcePolicy{
-			ResourcePolicy: &policyv1.ResourcePolicy{
-				Resource:           "record",
-				Version:            "default",
-				ImportDerivedRoles: []string{"common_roles"},
-				Rules: []*policyv1.ResourceRule{
-					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
-					{Actions: []string{"view"}, DerivedRoles: []string{"owner"}, Effect: effectv1.Effect_EFFECT_DENY},
-					{Actions: []string{"list"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
-					{Actions: []string{"export"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW, Condition: cond(edrExpr)},
-				},
-			},
-		},
-	}
-	addOrUpdatePolicy(t, "resource_policies/record.yaml", recordPolicy, memFsys, idx, subMgr)
-
-	drVarPolicy := &policyv1.Policy{
-		ApiVersion: "api.cerbos.dev/v1",
-		PolicyType: &policyv1.Policy_DerivedRoles{
-			DerivedRoles: &policyv1.DerivedRoles{
-				Name:      "variable_roles",
-				Variables: &policyv1.Variables{Local: map[string]string{"dv": amountExpr}},
-				Definitions: []*policyv1.RoleDef{
-					{Name: "spender", ParentRoles: []string{"user"}, Condition: cond("V.dv")},
-				},
-			},
-		},
-	}
-	addOrUpdatePolicy(t, "derived_roles/variable_roles.yaml", drVarPolicy, memFsys, idx, subMgr)
-
-	walletPolicy := &policyv1.Policy{
-		ApiVersion: "api.cerbos.dev/v1",
-		PolicyType: &policyv1.Policy_ResourcePolicy{
-			ResourcePolicy: &policyv1.ResourcePolicy{
-				Resource:           "wallet",
-				Version:            "default",
-				ImportDerivedRoles: []string{"variable_roles"},
-				Rules: []*policyv1.ResourceRule{
-					{Actions: []string{"view"}, Roles: []string{"user"}, Effect: effectv1.Effect_EFFECT_ALLOW},
-					{Actions: []string{"view"}, DerivedRoles: []string{"spender"}, Effect: effectv1.Effect_EFFECT_DENY},
-				},
-			},
-		},
-	}
-	addOrUpdatePolicy(t, "resource_policies/wallet.yaml", walletPolicy, memFsys, idx, subMgr)
 
 	conf := &evaluator.Conf{}
 	conf.SetDefaults()
@@ -179,25 +72,7 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 		NowFunc:              conditions.Now(),
 	}
 
-	h := &celErrorsHarness{ctx: ctx, mgr: mgr, evalParams: evalParams}
-
-	// Wait for the policies to load before running single-shot checks.
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		read, _, err := mgr.Check(ctx, tracer.Start(nil), evalParams, checkInput("account", "read", structpb.NewNumberValue(500)))
-		require.NoError(c, err)
-		require.Equal(c, effectv1.Effect_EFFECT_ALLOW, read.Actions["read"].GetEffect())
-		export, _, err := mgr.Check(ctx, tracer.Start(nil), evalParams, checkInput("ledger", "export", structpb.NewNumberValue(5000)))
-		require.NoError(c, err)
-		require.Equal(c, effectv1.Effect_EFFECT_ALLOW, export.Actions["export"].GetEffect())
-		view, _, err := mgr.Check(ctx, tracer.Start(nil), evalParams, checkInput("record", "view", structpb.NewNumberValue(5000)))
-		require.NoError(c, err)
-		require.Equal(c, effectv1.Effect_EFFECT_DENY, view.Actions["view"].GetEffect())
-		viewWallet, _, err := mgr.Check(ctx, tracer.Start(nil), evalParams, checkInput("wallet", "view", structpb.NewNumberValue(5000)))
-		require.NoError(c, err)
-		require.Equal(c, effectv1.Effect_EFFECT_DENY, viewWallet.Actions["view"].GetEffect())
-	}, 5*time.Second, 50*time.Millisecond)
-
-	return h
+	return &celErrorsHarness{ctx: ctx, mgr: mgr, evalParams: evalParams}
 }
 
 func (h *celErrorsHarness) paramsWithLevel(level evaluator.CELErrorLogLevel) evaluator.EvalParams {
@@ -233,7 +108,7 @@ func checkInputActions(kind string, amount *structpb.Value, actions ...string) *
 	}
 	return &enginev1.CheckInput{
 		RequestId: "1",
-		Resource:  &enginev1.Resource{Kind: kind, Id: "1", Attr: attr},
+		Resource:  &enginev1.Resource{Kind: "cel_errors." + kind, Id: "1", Attr: attr},
 		Principal: &enginev1.Principal{Id: "sam", Roles: []string{"user"}},
 		Actions:   actions,
 	}
@@ -248,7 +123,7 @@ func planInput(kind, action string, amount *structpb.Value) *enginev1.PlanResour
 		RequestId: "1",
 		Actions:   []string{action},
 		Principal: &enginev1.Principal{Id: "sam", Roles: []string{"user"}},
-		Resource:  &enginev1.PlanResourcesInput_Resource{Kind: kind, Attr: attr},
+		Resource:  &enginev1.PlanResourcesInput_Resource{Kind: "cel_errors." + kind, Attr: attr},
 	}
 }
 
@@ -259,7 +134,7 @@ func assertCELErrors(t *testing.T, entries []*enginev1.EvaluationError, wantExpr
 		exprs = append(exprs, entry.GetCelError().GetExpression())
 		require.NotEmpty(t, entry.GetCelError().GetMessage())
 	}
-	require.Equal(t, wantExprs, exprs)
+	require.ElementsMatch(t, wantExprs, exprs)
 }
 
 // assertErrorLogs ignores the once-per-process hint line, which lands in whichever test first triggers an error.

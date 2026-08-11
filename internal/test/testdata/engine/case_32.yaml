@@ -1,147 +1,62 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "No resource policy rules"
-inputs:
-  [
-    {
-      "requestId": "test",
-      "actions": ["party_plan"],
-      "principal":
-        {
-          "id": "paula_t_planner",
-          "policyVersion": "default",
-          "roles": ["organiser"]
-        },
-      "resource":
-        {
-          "kind": "leave_request",
-          "policyVersion": "default",
-          "id": "XX125",
-          "scope": "acme.hr.uk.bristol",
-        },
-    },
-  ]
-wantOutputs:
-  [
-    {
-      "requestId": "test",
-      "resourceId": "XX125",
-      "actions":
-        {
-          "party_plan":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.bristol",
-              "scope": "acme.hr.uk"
-            }
-        },
-      "evaluationErrors":
-        [
-          {
-            "celError":
-              {
-                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                "message": "no such key: ip_address",
-              },
-          },
-        ],
-    },
-  ]
+description: No resource policy rules
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      - party_plan
+    principal:
+      id: paula_t_planner
+      policyVersion: default
+      roles:
+        - organiser
+    resource:
+      kind: leave_request
+      policyVersion: default
+      id: XX125
+      scope: acme.hr.uk.bristol
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      party_plan:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk.bristol
+        scope: acme.hr.uk
+
 wantDecisionLogs:
-  [
-    {
-      "callId": "01HGJVJCJG5D291VYDC8J5B569",
-      "timestamp": "2023-12-01T14:12:23.248570163Z",
-      "checkResources":
-        {
-          "inputs":
-            [
-              {
-                "requestId": "test",
-                "resource":
-                  {
-                    "kind": "leave_request",
-                    "policyVersion": "default",
-                    "id": "XX125",
-                    "scope": "acme.hr.uk.bristol"
-                  },
-                "principal":
-                  {
-                    "id": "paula_t_planner",
-                    "policyVersion": "default",
-                    "roles": ["organiser"]
-                  },
-                "actions": ["party_plan"],
-              },
-            ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "XX125",
-                "actions":
-                  {
-                  "party_plan":
-                    {
-                      "effect": "EFFECT_ALLOW",
-                      "policy": "resource.leave_request.vdefault/acme.hr.uk.bristol",
-                      "scope": "acme.hr.uk"
-                    }
-                  },
-                "evaluationErrors":
-                  [
-                    {
-                      "celError":
-                        {
-                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                          "message": "no such key: ip_address",
-                        },
-                    },
-                  ],
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "resource.leave_request.vdefault":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
-                    },
-                },
-            },
-        },
-      "policySource":
-        {
-          "disk": {},
-        },
-    },
-  ]
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.leave_request.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05.yaml
+        resource.leave_request.vdefault/acme:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.yaml
+        resource.leave_request.vdefault/acme.hr:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.yaml
+        resource.leave_request.vdefault/acme.hr.uk:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.uk.yaml
+    policySource:
+      disk: {}

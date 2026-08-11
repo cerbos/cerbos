@@ -3177,6 +3177,65 @@ func cerbos_private_v1_CompileTestCase_hashpb_sum(m *CompileTestCase, hasher has
 	}
 }
 
+func cerbos_private_v1_EngineConfig_hashpb_sum(m *EngineConfig, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.private.v1.EngineConfig.default_policy_version"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDefaultPolicyVersion()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDefaultPolicyVersion()), len(m.GetDefaultPolicyVersion())))
+	}
+	if _, ok := ignore["cerbos.private.v1.EngineConfig.default_scope"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDefaultScope()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDefaultScope()), len(m.GetDefaultScope())))
+	}
+	if _, ok := ignore["cerbos.private.v1.EngineConfig.globals"]; !ok {
+		if len(m.Globals) > 0 {
+			if len(m.Globals) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Globals {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Globals[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Globals[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Globals)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Globals[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Globals[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.EngineConfig.lenient_scope_search"]; !ok {
+		if len(m.LenientScopeSearch) > 0 {
+			for _, v := range m.LenientScopeSearch {
+				_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(v)))
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.EngineConfig.schema_enforcement"]; !ok {
+		if len(m.SchemaEnforcement) > 0 {
+			for _, v := range m.SchemaEnforcement {
+				_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(v)))
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.EngineConfig.strict_evaluation"]; !ok {
+		if len(m.StrictEvaluation) > 0 {
+			for _, v := range m.StrictEvaluation {
+				_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(v)))
+			}
+		}
+	}
+}
+
 func cerbos_private_v1_EngineTestCase_hashpb_sum(m *EngineTestCase, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.private.v1.EngineTestCase.description"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDescription()))))
@@ -3200,9 +3259,6 @@ func cerbos_private_v1_EngineTestCase_hashpb_sum(m *EngineTestCase, hasher hash.
 			}
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.EngineTestCase.want_error"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetWantError())))
-	}
 	if _, ok := ignore["cerbos.private.v1.EngineTestCase.want_decision_logs"]; !ok {
 		if len(m.WantDecisionLogs) > 0 {
 			for _, v := range m.WantDecisionLogs {
@@ -3210,6 +3266,11 @@ func cerbos_private_v1_EngineTestCase_hashpb_sum(m *EngineTestCase, hasher hash.
 					cerbos_audit_v1_DecisionLogEntry_hashpb_sum(v, hasher, ignore, b)
 				}
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.EngineTestCase.config"]; !ok {
+		if m.GetConfig() != nil {
+			cerbos_private_v1_EngineConfig_hashpb_sum(m.GetConfig(), hasher, ignore, b)
 		}
 	}
 }
@@ -3516,22 +3577,14 @@ func cerbos_private_v1_QueryPlannerFilterTestCase_hashpb_sum(m *QueryPlannerFilt
 }
 
 func cerbos_private_v1_QueryPlannerTestSuite_Test_hashpb_sum(m *QueryPlannerTestSuite_Test, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
-	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.action"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetAction()))))
-		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAction()), len(m.GetAction())))
-	}
-	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.want"]; !ok {
-		if m.GetWant() != nil {
-			cerbos_engine_v1_PlanResourcesFilter_hashpb_sum(m.GetWant(), hasher, ignore, b)
-		}
-	}
 	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.resource"]; !ok {
 		if m.GetResource() != nil {
 			cerbos_engine_v1_PlanResourcesInput_Resource_hashpb_sum(m.GetResource(), hasher, ignore, b)
 		}
 	}
-	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.want_err"]; !ok {
-		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetWantErr())))
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.action"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetAction()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetAction()), len(m.GetAction())))
 	}
 	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.actions"]; !ok {
 		if len(m.Actions) > 0 {
@@ -3539,6 +3592,11 @@ func cerbos_private_v1_QueryPlannerTestSuite_Test_hashpb_sum(m *QueryPlannerTest
 				_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(v))))
 				_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(v), len(v)))
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.Test.want"]; !ok {
+		if m.GetWant() != nil {
+			cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m.GetWant(), hasher, ignore, b)
 		}
 	}
 }
@@ -3560,6 +3618,21 @@ func cerbos_private_v1_QueryPlannerTestSuite_hashpb_sum(m *QueryPlannerTestSuite
 					cerbos_private_v1_QueryPlannerTestSuite_Test_hashpb_sum(v, hasher, ignore, b)
 				}
 			}
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.aux_data"]; !ok {
+		if m.GetAuxData() != nil {
+			cerbos_engine_v1_AuxData_hashpb_sum(m.GetAuxData(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.config"]; !ok {
+		if m.GetConfig() != nil {
+			cerbos_private_v1_EngineConfig_hashpb_sum(m.GetConfig(), hasher, ignore, b)
+		}
+	}
+	if _, ok := ignore["cerbos.private.v1.QueryPlannerTestSuite.now"]; !ok {
+		if m.GetNow() != nil {
+			google_protobuf_Timestamp_hashpb_sum(m.GetNow(), hasher, ignore, b)
 		}
 	}
 }

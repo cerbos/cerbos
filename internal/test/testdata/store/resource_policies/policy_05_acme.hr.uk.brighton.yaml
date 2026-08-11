@@ -22,4 +22,4 @@ resourcePolicy:
       effect: EFFECT_ALLOW
       condition:
         match:
-          expr: P.attr.in_party_committee == true
+          expr: has(P.attr.in_party_committee) && P.attr.in_party_committee == true

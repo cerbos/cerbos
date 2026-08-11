@@ -1,0 +1,119 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: CEL errors - errors (lax evaluation)
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+
+inputs: &inputs
+  - principal: &principal
+      id: sam
+      roles:
+        - user
+    resource:
+      kind: cel_errors.account
+      id: error_in_deny
+      attr:
+        amount: "5000"
+    actions:
+      - read
+  - principal: *principal
+    resource:
+      kind: cel_errors.account
+      id: missing_attribute
+    actions:
+      - read
+  - principal: *principal
+    resource:
+      kind: cel_errors.record
+      id: error_in_derived_role
+      attr:
+        amount: "5000"
+    actions:
+      - view
+      - list
+      - export
+  - principal: *principal
+    resource:
+      kind: cel_errors.wallet
+      id: error_in_derived_role_variable
+      attr:
+        amount: "5000"
+    actions:
+      - view
+
+wantOutputs: &outputs
+  - resourceId: error_in_deny
+    actions:
+      read:
+        effect: EFFECT_ALLOW
+        policy: resource.cel_errors.account.vdefault
+    evaluationErrors:
+      - celError:
+          expression: R.attr.amount > 1000
+          message: no such overload
+  - resourceId: missing_attribute
+    actions:
+      read:
+        effect: EFFECT_ALLOW
+        policy: resource.cel_errors.account.vdefault
+    evaluationErrors:
+      - celError:
+          expression: R.attr.amount > 1000
+          message: "no such key: amount"
+  - resourceId: error_in_derived_role
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.cel_errors.record.vdefault
+      list:
+        effect: EFFECT_ALLOW
+        policy: resource.cel_errors.record.vdefault
+      export:
+        effect: EFFECT_DENY
+        policy: resource.cel_errors.record.vdefault
+    evaluationErrors:
+      - celError:
+          expression: R.attr.amount > 1000
+          message: no such overload
+  - resourceId: error_in_derived_role_variable
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.cel_errors.wallet.vdefault
+    evaluationErrors:
+      - celError:
+          expression: R.attr.amount > 1000
+          message: no such overload
+      - celError:
+          expression: V.dv
+          message: undefined field 'dv'
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.cel_errors.account.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/cel_errors/account.yaml
+        resource.cel_errors.record.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/cel_errors/record.yaml
+        resource.cel_errors.wallet.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/cel_errors/wallet.yaml
+    policySource:
+      disk: {}
