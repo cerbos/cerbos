@@ -150,8 +150,7 @@ func (cs *CerbosPlaygroundService) PlaygroundEvaluate(ctx context.Context, req *
 
 	auxData, err := cs.auxData.Extract(ctx, req.AuxData)
 	if err != nil {
-		var extractErr auxdata.JWTExtractionError
-		if errors.As(err, &extractErr) {
+		if extractErr, ok := errors.AsType[auxdata.JWTExtractionError](err); ok {
 			log.Error(fmt.Sprintf("Failed to extract auxData: %s", extractErr.Description), zap.Error(extractErr.Cause))
 		} else {
 			log.Error("Failed to extract auxData", zap.Error(err))
@@ -271,8 +270,7 @@ func (cs *CerbosPlaygroundService) PlaygroundProxy(ctx context.Context, req *req
 func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.File) (*components, *responsev1.PlaygroundFailure, error) {
 	idx, err := buildIndex(ctx, log, files)
 	if err != nil {
-		idxErr := new(index.BuildError)
-		if errors.As(err, &idxErr) {
+		if idxErr, ok := errors.AsType[*index.BuildError](err); ok {
 			pf := processLintErrors(ctx, idxErr)
 			return nil, pf, nil
 		}
@@ -285,8 +283,7 @@ func doCompile(ctx context.Context, log *zap.Logger, files []*requestv1.File) (*
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementWarn))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
-		compErr := new(compile.ErrorSet)
-		if errors.As(err, &compErr) {
+		if compErr, ok := errors.AsType[*compile.ErrorSet](err); ok {
 			pf := processCompileErrors(ctx, compErr)
 			return nil, pf, nil
 		}
