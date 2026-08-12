@@ -105,13 +105,6 @@
                 "deploy/charts/cerbos/*"
             ],
             "enabled": false
-        },
-        {
-            "description": "Requires Go 1.26",
-            "matchPackageNames": [
-                "helm.sh/helm/v3"
-            ],
-            "enabled": false
         }
     ],
     "labels": [

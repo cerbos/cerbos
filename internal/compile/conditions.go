@@ -63,7 +63,7 @@ func compileMatch(modCtx *moduleCtx, path string, match *policyv1.Match, markRef
 func compileCELExpr(modCtx *moduleCtx, path, expr string, markReferencedConstantsAndVariablesAsUsed bool) *runtimev1.Expr {
 	result := &runtimev1.Expr{Original: expr}
 
-	celAST, issues := conditions.StdEnv.Compile(expr)
+	celAST, issues := conditions.Compile(expr)
 	if issues != nil && issues.Err() != nil {
 		errList := make([]string, len(issues.Errors()))
 		for i, ce := range issues.Errors() {

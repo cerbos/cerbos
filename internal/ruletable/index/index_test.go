@@ -65,7 +65,7 @@ func TestParamsIndex(t *testing.T) {
 	t.Run("interns equivalent params", func(t *testing.T) {
 		impl := index.New()
 
-		ast, iss := conditions.StdEnv.Compile("1 + 1")
+		ast, iss := conditions.Compile("1 + 1")
 		require.Nil(t, iss)
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
 		require.NoError(t, err)

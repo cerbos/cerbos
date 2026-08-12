@@ -24,6 +24,7 @@ import (
 	"github.com/cerbos/cerbos/cmd/cerbos/internal/verification"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/engine"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/printer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	internalschema "github.com/cerbos/cerbos/internal/schema"
@@ -57,13 +58,14 @@ cerbos compile --test-filter='principal=alice,bob' --test-filter='action=view,ed
 
 //nolint:govet // Kong prints fields in order, so we don't want to reorder fields to save bytes.
 type Cmd struct { //betteralign:ignore
-	Dir           string             `help:"Policy directory" arg:"" required:"" type:"path"`
-	IgnoreSchemas bool               `help:"Ignore schemas during compilation"`
-	Tests         string             `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
-	RunRegexp     string             `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
-	TestFilter    flagset.TestFilter `help:"Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times." name:"test-filter"`
-	SkipTests     bool               `help:"Skip tests"`
-	SkipBatching  bool               `help:"Skip batching tests"`
+	Dir              string             `help:"Policy directory" arg:"" required:"" type:"path"`
+	IgnoreSchemas    bool               `help:"Ignore schemas during compilation"`
+	Tests            string             `help:"[Deprecated] Path to the directory containing tests. Defaults to policy directory." type:"path"`
+	RunRegexp        string             `help:"[Deprecated] Run only tests that match this regex" name:"run" hidden:""`
+	TestFilter       flagset.TestFilter `help:"Filter tests by dimensions (suite, test, principal, resource, action). Format: 'dimension=glob1,glob2;...'. Can be specified multiple times." name:"test-filter"`
+	SkipTests        bool               `help:"Skip tests"`
+	SkipBatching     bool               `help:"Skip batching tests"`
+	StrictEvaluation bool               `help:"Run tests with strict evaluation enabled" name:"strict-evaluation"`
 	flagset.Format
 	TestOutput *flagset.VerificationOutputFormat `help:"Test output format. If unspecified matches the value of the output flag. (tree,list,json,junit)"`
 	flagset.Color
@@ -93,8 +95,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 
 	idx, err := index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 	if err != nil {
-		idxErr := new(index.BuildError)
-		if errors.As(err, &idxErr) {
+		if idxErr, ok := errors.AsType[*index.BuildError](err); ok {
 			return lint.Display(p, idxErr, c.Format, colorLevel)
 		}
 
@@ -111,8 +112,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	schemaMgr := internalschema.NewFromConf(ctx, store, internalschema.NewConf(enforcement))
 
 	if err := compile.BatchCompile(idx.GetAllCompilationUnits(ctx), schemaMgr); err != nil {
-		compErr := new(compile.ErrorSet)
-		if errors.As(err, &compErr) {
+		if compErr, ok := errors.AsType[*compile.ErrorSet](err); ok {
 			return internalcompile.Display(p, *compErr, c.Format, colorLevel)
 		}
 
@@ -160,7 +160,11 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			return fmt.Errorf("failed to create ruletable manager: %w", err)
 		}
 
-		eng := engine.NewEphemeral(nil, ruletableMgr, schemaMgr)
+		engineConf := &evaluator.Conf{}
+		engineConf.SetDefaults()
+		engineConf.StrictEvaluation = c.StrictEvaluation
+
+		eng := engine.NewEphemeral(engineConf, ruletableMgr, schemaMgr)
 
 		testFsys, testDir, err := c.testsDir()
 		if err != nil {

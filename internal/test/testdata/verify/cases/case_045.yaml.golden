@@ -1,0 +1,148 @@
+{
+  "suites": [
+    {
+      "file": "doc_default_test.yaml",
+      "name": "DefaultModeSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 4,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 4
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "erroring rules are skipped",
+          "principals": [
+            {
+              "name": "alice",
+              "resources": [
+                {
+                  "name": "doc1",
+                  "actions": [
+                    {
+                      "name": "view",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "edit",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "list",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "export",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file": "doc_strict_test.yaml",
+      "name": "StrictModeSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 4,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 4
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "erroring rules deny the referencing actions only",
+          "principals": [
+            {
+              "name": "alice",
+              "resources": [
+                {
+                  "name": "doc1",
+                  "actions": [
+                    {
+                      "name": "view",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    },
+                    {
+                      "name": "edit",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    },
+                    {
+                      "name": "list",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    },
+                    {
+                      "name": "export",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_DENY"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 8,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 8
+      }
+    ]
+  }
+}

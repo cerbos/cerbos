@@ -1,0 +1,3 @@
+type:fix
+Handle YAML block scalar syntax in test fixture attributes
+A regression introduced in Cerbos v0.54.0 meant test suites would fail to load if they referenced test fixtures that used YAML block scalar syntax (multiline strings denoted by `|` or `>`) in their attributes.

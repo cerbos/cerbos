@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Donald duck tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: donald_duck
+  policyVersion: default
+  roles:
+    - employee
+    - user
+
+tests:
+  - resource:
+      kind: contact
+      policyVersion: default
+    action: read
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        read: ""
+
+  - resource:
+      kind: contact
+      policyVersion: default
+    action: update
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.ownerId
+              - value: donald_duck
+      matchedScopes:
+        update: ""
+
+  - resource:
+      kind: contact
+      policyVersion: default
+    action: handle_null
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.missing
+                    - value: null
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.present
+                    - value: null
+      matchedScopes:
+        handle_null: ""
+
+  - resource:
+      kind: leave_request
+      policyVersion: default
+    action: view
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.owner
+                          - value: mickey_mouse
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.dev_record
+                          - value: true
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: not
+                              operands:
+                                - variable: request.resource.attr.hidden_from_employee
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.owner
+                                - value: donald_duck
+      matchedScopes:
+        view: ""
+
+  - resource:
+      kind: salary_record
+      policyVersion: default
+    action: view-salary-record
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        view-salary-record: ""
+
+  - resource:
+      kind: non-existent-resource
+      policyVersion: default
+    action: non-existent-action
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        non-existent-action: ""

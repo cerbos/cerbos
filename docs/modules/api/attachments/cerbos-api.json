@@ -1033,23 +1033,6 @@
     }
   },
   "definitions": {
-    "AuxDataJWT": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string",
-          "description": "JWT from the original request"
-        },
-        "keySetId": {
-          "type": "string",
-          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
-        }
-      },
-      "description": "JWT from the original request",
-      "required": [
-        "token"
-      ]
-    },
     "CheckOutputActionEffect": {
       "type": "object",
       "properties": {
@@ -1688,19 +1671,63 @@
         "jwt": {
           "type": "object",
           "additionalProperties": {}
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbosEngineV1AuxDataJWT"
+          }
         }
       },
       "description": "Structured auxiliary data"
+    },
+    "cerbosEngineV1AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      }
     },
     "cerbosRequestV1AuxData": {
       "type": "object",
       "example": {},
       "properties": {
         "jwt": {
-          "$ref": "#/definitions/AuxDataJWT"
+          "$ref": "#/definitions/cerbosRequestV1AuxDataJWT"
+        },
+        "jwts": {
+          "type": "object",
+          "example": {
+            "app": {
+              "token": "JWT string"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbosRequestV1AuxDataJWT"
+          },
+          "description": "Named list of JWTs associated with this request."
         }
       },
       "description": "Structured auxiliary data useful for evaluating the request"
+    },
+    "cerbosRequestV1AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "JWT from the original request"
+        },
+        "keySetId": {
+          "type": "string",
+          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
+        }
+      },
+      "description": "JWT from the original request",
+      "required": [
+        "token"
+      ]
     },
     "engineV1Resource": {
       "type": "object",

@@ -19,12 +19,12 @@ jobs:
       OCI_REGISTRY: ghcr.io/cerbos/helm-charts
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Helm
-        uses: cerbos/actions/install-tools@77b46c5f4ff1aebe72b5a8017d561a0f5a9b6845 # main
+        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
         with:
           tools: helm
 
@@ -43,6 +43,6 @@ jobs:
 
       - name: Publish to download site
         run: |-
-          gsutil cp "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml" "${{ env.CHARTS_DIR }}/index.yaml"
+          gcloud storage cp "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/index.yaml" "${{ env.CHARTS_DIR }}/index.yaml"
           helm repo index --url=https://download.cerbos.dev/helm-charts --merge=${{ env.CHARTS_DIR }}/index.yaml ${{ env.CHARTS_DIR }}
-          gsutil rsync -r ${{ env.CHARTS_DIR }}/ "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/"
+          gcloud storage rsync -r ${{ env.CHARTS_DIR }}/ "gs://${{ secrets.DOWNLOAD_GCS_BUCKET }}/helm-charts/"

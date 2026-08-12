@@ -1,253 +1,100 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Resource policy narrowed by role policy defined in same scope with non matching condition"
-inputs:
-  [
-    {
-      "requestId": "test",
-      "actions": [
-          "create", # Matching rule in the role policy, but does not satisfy the condition
-          "view",  # No matching rule in the role policy
-          "anonymise", # ALLOW in the role policy. ALLOW in resource policy with matching condition
-        ],
-      "principal":
-        {
-          "id": "john",
-          "roles": ["acme_london_employee"],
-        },
-      "resource":
-        {
-          "kind": "leave_request",
-          "scope": "acme.hr.uk.london",
-          "id": "XX125",
-          "attr":
-            {
-              "owner": "john",
-            },
-        },
-    },
-  ]
-wantOutputs:
-  [
-    {
-      "requestId": "test",
-      "resourceId": "XX125",
-      "actions":
-        {
-          "create":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
-              "scope": "acme.hr.uk.london",
-            },
-          "view":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
-              "scope": "acme.hr.uk.london",
-            },
-          "anonymise":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
-              "scope": "acme.hr",
-            },
-        },
-      "effectiveDerivedRoles":
-        ["employee_that_owns_the_record"],
-      "outputs":
-        [
-          {
-            "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#anonymise_rule",
-            "val": "anonymise_allowed:john",
-            "action": "anonymise",
-          },
-          {
-            "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
-            "val": "john_not_in_london",
-            "action": "create",
-          },
-        ],
-      "evaluationErrors":
-        [
-          {
-            "celError":
-              {
-                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                "message": "no such key: ip_address",
-              },
-          },
-          {
-            "celError":
-              {
-                "expression": "P.attr.city == constants.home_city",
-                "message": "no such key: city",
-              },
-          },
-          {
-            "celError":
-              {
-                "expression": "V.principal_in_home_city",
-                "message": "undefined field 'principal_in_home_city'",
-              },
-          },
-        ],
-    },
-  ]
+description: Resource policy narrowed by role policy defined in same scope with non matching condition
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      # Matching rule in the role policy, but does not satisfy the condition
+      - create
+
+      # No matching rule in the role policy
+      - view
+
+      # ALLOW in the role policy. ALLOW in resource policy with matching condition
+      - anonymise
+    principal:
+      id: john
+      roles:
+        - acme_london_employee
+    resource:
+      kind: leave_request
+      scope: acme.hr.uk.london
+      id: XX125
+      attr:
+        owner: john
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      create:
+        effect: EFFECT_DENY
+        policy: role.acme_london_employee.vdefault/acme.hr.uk.london
+        scope: acme.hr.uk.london
+      view:
+        effect: EFFECT_DENY
+        policy: role.acme_london_employee.vdefault/acme.hr.uk.london
+        scope: acme.hr.uk.london
+      anonymise:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk.london
+        scope: acme.hr
+    effectiveDerivedRoles:
+      - employee_that_owns_the_record
+    outputs:
+      - src: "role.acme_london_employee.vdefault/acme.hr.uk.london#anonymise_rule"
+        val: anonymise_allowed:john
+        action: anonymise
+      - src: "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check"
+        val: john_not_in_london
+        action: create
+    evaluationErrors:
+      - celError:
+          expression: P.attr.city == constants.home_city
+          message: "no such key: city"
+      - celError:
+          expression: V.principal_in_home_city
+          message: undefined field 'principal_in_home_city'
+
 wantDecisionLogs:
-  [
-    {
-      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
-      "timestamp": "2023-12-01T14:51:39.204970988Z",
-      "checkResources":
-        {
-          "inputs":
-            [
-              {
-                "requestId": "test",
-                "resource":
-                  {
-                    "kind": "leave_request",
-                    "id": "XX125",
-                    "attr":
-                      {
-                        "owner": "john",
-                      },
-                    "scope": "acme.hr.uk.london",
-                  },
-                "principal":
-                  {
-                    "id": "john",
-                    "roles": ["acme_london_employee"],
-                  },
-                "actions": ["create", "view", "anonymise"],
-              },
-            ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "XX125",
-                "actions":
-                  {
-                    "create":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
-                        "scope": "acme.hr.uk.london",
-                      },
-                    "view":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "role.acme_london_employee.vdefault/acme.hr.uk.london",
-                        "scope": "acme.hr.uk.london",
-                      },
-                    "anonymise":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk.london",
-                        "scope": "acme.hr",
-                      },
-                  },
-                "effectiveDerivedRoles":
-                  ["employee_that_owns_the_record"],
-                "outputs":
-                  [
-                    {
-                      "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#anonymise_rule",
-                      "val": "anonymise_allowed:john",
-                      "action": "anonymise",
-                    },
-                    {
-                      "src": "role.acme_london_employee.vdefault/acme.hr.uk.london#city_check",
-                      "val": "john_not_in_london",
-                      "action": "create",
-                    },
-                  ],
-                "evaluationErrors":
-                  [
-                    {
-                      "celError":
-                        {
-                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                          "message": "no such key: ip_address",
-                        },
-                    },
-                    {
-                      "celError":
-                        {
-                          "expression": "P.attr.city == constants.home_city",
-                          "message": "no such key: city",
-                        },
-                    },
-                    {
-                      "celError":
-                        {
-                          "expression": "V.principal_in_home_city",
-                          "message": "undefined field 'principal_in_home_city'",
-                        },
-                    },
-                  ],
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "resource.leave_request.vdefault":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr.uk.london":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.london.yaml",
-                    },
-                },
-              "role.acme_london_employee.vdefault/acme.hr.uk.london":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_05_acme.hr.uk.london.yaml",
-                    },
-                },
-            },
-        },
-      "policySource":
-        {
-          "disk": {},
-        },
-    },
-  ]
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.leave_request.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05.yaml
+        resource.leave_request.vdefault/acme:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.yaml
+        resource.leave_request.vdefault/acme.hr:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.yaml
+        resource.leave_request.vdefault/acme.hr.uk:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.uk.yaml
+        resource.leave_request.vdefault/acme.hr.uk.london:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.uk.london.yaml
+        role.acme_london_employee.vdefault/acme.hr.uk.london:
+          attributes:
+            driver: disk
+            source: role_policies/policy_05_acme.hr.uk.london.yaml
+    policySource:
+      disk: {}

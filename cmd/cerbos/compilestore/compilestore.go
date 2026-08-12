@@ -40,7 +40,7 @@ Examples:
 cerbos compile-store /path/to/cerbos/config.yaml
 cerbos compile-store --output=json /path/to/cerbos/config.yaml
 
-# Compile database store and disable invalid policies 
+# Compile database store and disable invalid policies
 
 cerbos compile-store --disable-invalid /path/to/cerbos/config.yaml
 cerbos compile-store --disable-invalid --output=json /path/to/cerbos/config.yaml
@@ -76,8 +76,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 	p := printer.New(k.Stdout, k.Stderr)
 	cm, disable, err := c.compileManager(ctx)
 	if err != nil {
-		idxErr := new(index.BuildError)
-		if errors.As(err, &idxErr) {
+		if idxErr, ok := errors.AsType[*index.BuildError](err); ok {
 			return lint.Display(p, idxErr, c.Format, colorLevel)
 		}
 
@@ -174,8 +173,8 @@ func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, co
 			return display(p, c.Format, colorLevel, policyKeys)
 		}
 
-		var integrityErr *db.IntegrityErr
-		if !errors.As(err, &integrityErr) {
+		integrityErr, ok := errors.AsType[*db.IntegrityErr](err)
+		if !ok {
 			return fmt.Errorf("failed to disable policies: %w", err)
 		}
 

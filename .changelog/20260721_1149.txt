@@ -1,0 +1,3 @@
+type:feature
+Support multiple JWTs in auxData
+It is now possible to attach multiple JWTs to a request and use their claims to make policy decisions. The `auxData` field in the `Check` and `Plan` requests now allows a `jwts` field where a set of named tokens can be specified. Claims from named tokens can be accessed in policy expressions as `request.auxData.jwts.NAME.claims.CLAIM`. The xref:configuration:auxdata.adoc[server-side validation settings] remain the same as before and apply to both the singular `jwt` field as well as the `jwts` field.

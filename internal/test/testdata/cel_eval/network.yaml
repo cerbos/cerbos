@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../.jsonschema/CelTestCase.schema.json
+---
+condition:
+  all:
+    of:
+      - expr: |-
+          isIP(P.attr.ipv4Address)
+      - expr: |-
+          isIP(P.attr.ipv6Address)
+      - expr: |-
+          ip(P.attr.ipv4Address).family() == 4
+      - expr: |-
+          ip(P.attr.ipv6Address).family() == 6
+      - expr: |-
+          ip(P.attr.ipv4Address).isLoopback() == false
+      - expr: |-
+          ip(P.attr.ipv6Address).isGlobalUnicast() == true
+      - expr: |-
+          ip(P.attr.ipv6Address).isLinkLocalMulticast() == false
+      - expr: |-
+          ip(P.attr.ipv6Address).isLinkLocalUnicast() == false
+      - expr: |-
+          ip(P.attr.ipv4Address).isUnspecified() == false
+      - expr: |-
+          ip.isCanonical(P.attr.ipv6Address) == false
+      - expr: |-
+          isCIDR("192.168.0.0/24")
+      - expr: |-
+          isCIDR("::1/128")
+      - expr: |-
+          cidr("192.168.0.0/24").containsIP(P.attr.ipv4Address)
+      - expr: |-
+          cidr("2001:db8::/48").containsIP(P.attr.ipv6Address)
+      - expr: |-
+          cidr("192.168.0.0/8").containsCIDR(cidr("192.168.1.0/24"))
+      - expr: |-
+          cidr("192.168.0.0/24").isMask()
+      - expr: |-
+          cidr("192.168.0.0/24").prefixLength() == 24
+
+request:
+  {
+    "principal":
+      {
+        "id": "john",
+        "roles": ["employee"],
+        "attr":
+          {
+            "department": "marketing",
+            "ipv4Address": "192.168.0.5",
+            "ipv6Address": "2001:0db8:0000:0000:0000:0000:1000:0000",
+            "lastLogin": "2021-04-20T10:05:20.021-05:00",
+          },
+      },
+    "resource": { "kind": "leave_request", "id": "test", "attr": {} },
+  }
+want: true

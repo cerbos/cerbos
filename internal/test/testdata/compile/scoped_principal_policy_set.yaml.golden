@@ -73,20 +73,20 @@
                     "checked": {
                       "referenceMap": {
                         "1": {
-                          "name": "request"
-                        },
-                        "5": {
                           "overloadId": [
                             "equals"
                           ]
+                        },
+                        "5": {
+                          "name": "request"
                         }
                       },
                       "typeMap": {
                         "1": {
-                          "messageType": "cerbos.engine.v1.Request"
+                          "primitive": "BOOL"
                         },
                         "2": {
-                          "messageType": "cerbos.engine.v1.Request.Resource"
+                          "dyn": {}
                         },
                         "3": {
                           "mapType": {
@@ -99,10 +99,10 @@
                           }
                         },
                         "4": {
-                          "dyn": {}
+                          "messageType": "cerbos.engine.v1.Request.Resource"
                         },
                         "5": {
-                          "primitive": "BOOL"
+                          "messageType": "cerbos.engine.v1.Request"
                         },
                         "6": {
                           "primitive": "BOOL"
@@ -114,30 +114,30 @@
                           41
                         ],
                         "positions": {
-                          "1": 0,
-                          "2": 7,
+                          "1": 33,
+                          "2": 21,
                           "3": 16,
-                          "4": 21,
-                          "5": 33,
+                          "4": 7,
+                          "5": 0,
                           "6": 36
                         }
                       },
                       "expr": {
-                        "id": "5",
+                        "id": "1",
                         "callExpr": {
                           "function": "_==_",
                           "args": [
                             {
-                              "id": "4",
+                              "id": "2",
                               "selectExpr": {
                                 "operand": {
                                   "id": "3",
                                   "selectExpr": {
                                     "operand": {
-                                      "id": "2",
+                                      "id": "4",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "1",
+                                          "id": "5",
                                           "identExpr": {
                                             "name": "request"
                                           }
