@@ -11,7 +11,7 @@ Resource policies define rules for actions that can be performed on a given reso
 
 A resource policy is uniquely identified by its resource kind, version, and exact scope. Multiple versions and scoped variants can exist for the same resource kind. When a request includes a scope, Cerbos can evaluate a chain of scoped policy variants. See xref:scoped_policies.adoc[Scoped policies].
 
-Every resource-policy rule must specify at least one non-empty `roles` or `derivedRoles` list. A rule can specify both. `roles` contains static roles supplied in the request, while `derivedRoles` contains names imported through `importDerivedRoles`.
+Every resource-policy rule must specify at least one non-empty `roles` or `derivedRoles` list. A rule can specify both. `roles` contains role identifiers matched against the request roles and any parent roles inherited through role policies. `derivedRoles` contains names imported through `importDerivedRoles`.
 
 Multiple rules can be defined for the same action on a resource for different roles and/or with different conditions. If more than one rule matches a given input, the protocol for conflict resolution is as follows:
 
@@ -87,7 +87,7 @@ resourcePolicy:
 <9> xref:variables.adoc#local[Local variable definitions] (optional).
 <10> Actions can contain wildcards. Wildcards honour the ``:`` delimiter. E.g. ``a:*:d`` would match ``a:x:d`` but not ``a:x``.
 <11> This rule applies to a derived role.
-<12> Rules can also refer directly to static roles. The special value ``*`` can be used to disregard roles when evaluating the rule.
+<12> Rules can also refer directly to request roles and parent roles inherited through role policies. The special value `*` matches any role.
 <13> Optional xref:outputs.adoc[output] for the action rule. You can define optional expressions to be evaluated as output depending on
 whether the rule is activated or not activated because of a condition failure.
 <14> Optional name for the rule.

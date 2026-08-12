@@ -9,7 +9,7 @@ Role policies define the set of actions a role is permitted to perform on each r
 
 Role policies are ABAC policies in which you specify a number of resources, each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be specified for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
 
-Role policies are not standalone. They apply as an additive constraint on top of xref:resource_policies.adoc[resource policies], so an action is only allowed if it is permitted by both the role policy and a matching resource policy. A role policy cannot grant access that the resource policy does not already allow, which means role-policy evaluation always requires a resource policy.
+Role policies are not standalone. They apply as an additive constraint on top of xref:resource_policies.adoc[resource policies], so an action is only allowed if it is permitted by both the role policy and a matching resource policy. A role policy can narrow access granted by a resource policy but cannot authorize an action unless the resource policy also allows it.
 
 Unlike resource and principal policies, role policies do not define explicit `ALLOW` or `DENY` effects. Instead, the **allowable actions** act as an exhaustive list of actions allowed on each resource. Any resource and action pair not defined in this list is immediately denied for that role.
 
