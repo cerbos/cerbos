@@ -142,8 +142,8 @@ func TestBuildExprRejectsOptionalLiterals(t *testing.T) {
 	}
 }
 
-// unparse renders a residual for test failure messages. Comprehensions have no source form, so
-// fall back to the error rather than failing the test in its diagnostics.
+// unparse renders a residual for test failure messages. Comprehensions have no
+// source form, so fall back to the error.
 func unparse(t *testing.T, e celast.Expr) string {
 	t.Helper()
 
