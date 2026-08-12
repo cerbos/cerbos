@@ -457,6 +457,10 @@ func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, exp
 		return nil, err
 	}
 	if celtypes.IsUnknown(val) {
+		if err := checkNoOptionals(residual); err != nil {
+			return nil, fmt.Errorf("%w in condition %q", err, original)
+		}
+
 		return p.evaluateUnknown(ctx, residual)
 	}
 
