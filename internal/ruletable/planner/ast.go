@@ -434,6 +434,9 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		}
 	case *exprpb.Expr_ListExpr:
 		x := expr.ListExpr
+		if len(x.OptionalIndices) > 0 {
+			return fmt.Errorf("%w: optional list element", ErrOptionalNotSupported)
+		}
 		ok := true
 		for _, e := range x.Elements {
 			if _, ok = e.ExprKind.(*exprpb.Expr_ConstExpr); !ok {
@@ -479,6 +482,9 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		}
 		operands := make([]*exprOp, len(x.Entries))
 		for i, entry := range x.Entries {
+			if entry.OptionalEntry {
+				return fmt.Errorf("%w: optional map entry", ErrOptionalNotSupported)
+			}
 			k, v := new(exprOp), new(exprOp)
 			switch entry := entry.KeyKind.(type) {
 			case *exprpb.Expr_CreateStruct_Entry_MapKey:
