@@ -56,6 +56,18 @@
     }
 }
 
+/* Product headings in the "Cerbos components" dropdown use Bulma's has-label
+   pattern, which puts the product name and its description on one row via
+   justify-content: space-between. The gap keeps the two apart when a
+   description is long, and nowrap keeps it on a single line. */
+.navbar-dropdown>div.navbar-item.has-label {
+    gap: 2rem;
+}
+
+.navbar-dropdown>div.navbar-item.has-label>small {
+    white-space: nowrap;
+}
+
 .footer {
     background-color: #ffb901 !important;
 }
