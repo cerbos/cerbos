@@ -84,7 +84,7 @@ derivedRoles:
 
 [TIP]
 ====
-For the tradeoffs between derived roles and dynamic attribute checks when modelling hierarchy-based permissions, see https://www.cerbos.dev/blog/mastering-hierarchy-based-permissions-with-cerbos-policy-defined-roles-vs-dynamic-attributes[Mastering hierarchy-based permissions with Cerbos]. To discuss a specific permission model, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text[speak to us].
+For the tradeoffs between derived roles and dynamic attribute checks when modelling hierarchy-based permissions, see https://www.cerbos.dev/blog/mastering-hierarchy-based-permissions-with-cerbos-policy-defined-roles-vs-dynamic-attributes[Mastering hierarchy-based permissions with Cerbos]. To discuss a specific permission model, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=derived_roles[speak to us].
 ====
 
 [#troubleshooting]

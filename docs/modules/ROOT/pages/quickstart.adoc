@@ -307,6 +307,8 @@ docker kill cerbos
 
 * link:https://github.com/cerbos?q=demo&type=all&language=&sort=[Explore the demo apps built with Cerbos]
 * xref:policies:index.adoc[Read more about Cerbos policies]
+* link:https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=quickstart_hub[Distribute policies to your PDPs with Cerbos Hub]
+* link:https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=quickstart_engineer[Talk to an engineer about your authorization model]
 * link:http://go.cerbos.io/slack[Join the Cerbos community on Slack]
 * mailto:help@cerbos.dev[Ask us anything via help@cerbos.dev]
 * link:https://cerbos.dev[Visit the Cerbos website]

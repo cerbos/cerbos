@@ -35,3 +35,10 @@ https://www.cerbos.dev/ecosystem[PEP Integrations →]
 == How Cerbos works
 
 image::_images/how_cerbos_works.png[alt="How Cerbos works", role="center-img", width=85%]
+
+== Get started
+
+xref:cerbos:ROOT:quickstart.adoc[Quick start]:: Run a Cerbos PDP locally and make your first authorization decision.
+xref:cerbos:ROOT:what-is-cerbos.adoc[What is Cerbos PDP?]:: How the policy decision point works and where it sits in an application stack.
+xref:cerbos:policies:index.adoc[Cerbos policies]:: The policy kinds and how rules are evaluated.
+https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=home_hub[Sign up for Cerbos Hub]:: Test and distribute policies without running your own build and release pipeline. See the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub quick start].
