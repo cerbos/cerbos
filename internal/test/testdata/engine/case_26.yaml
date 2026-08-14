@@ -1,218 +1,99 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Principal policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
-inputs:
-  [
-    {
-      "requestId": "test",
-      "actions": [
-        "create", # ALLOW in target scope, ALLOW in parent
-        "delete", # ALLOW in target scope, no match is parent principal scopes or resource scopes
-        "plan", # ALLOW in target scope, no match in parent principal scopes, match in resource policy scope
-        "nonaction", # no match in target scope, no match in principal policies, match in resource policy scope
-        "acme_action", # no match in target scope, match in principal policies
-        "duplicate"  # Matching rule but condition not satisfied in target scope, ALLOW in parent, still DENY
-      ],
-      "principal":
-        {
-          "id": "donald_duck",
-          "roles": ["employee"],
-          "scope": "acme.sales",
-        },
-      "resource":
-        {
-          "kind": "calendar_entry",
-          "id": "XX125",
-        },
-    },
-  ]
-wantOutputs:
-  [
-    {
-      "requestId": "test",
-      "resourceId": "XX125",
-      "actions":
-        {
-          "create":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "principal.donald_duck.vdefault/acme.sales",
-              "scope": "acme"
-            },
-          "delete":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "resource.calendar_entry.vdefault"
-            },
-          "plan":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.calendar_entry.vdefault",
-            },
-          "nonaction":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.calendar_entry.vdefault",
-            },
-          "acme_action":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "principal.donald_duck.vdefault/acme.sales",
-              "scope": "acme"
-            },
-          "duplicate":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "principal.donald_duck.vdefault/acme.sales",
-              "scope": "acme.sales"
-            },
-        },
-      "evaluationErrors":
-        [
-          {
-            "celError":
-              {
-                "expression": "P.attr.copy_cat == true",
-                "message": "no such key: copy_cat",
-              },
-          },
-          {
-            "celError":
-              {
-                "expression": "request.resource.attr.dev_record == true",
-                "message": "no such key: dev_record",
-              },
-          },
-        ],
-    },
-  ]
+description: Principal policy with REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      # ALLOW in target scope, ALLOW in parent
+      - create
+
+      # ALLOW in target scope, no match is parent principal scopes or resource scopes
+      - delete
+
+      # ALLOW in target scope, no match in parent principal scopes, match in resource policy scope
+      - plan
+
+      # no match in target scope, no match in principal policies, match in resource policy scope
+      - nonaction
+
+      # no match in target scope, match in principal policies
+      - acme_action
+
+      # Matching rule but condition not satisfied in target scope, ALLOW in parent, still DENY
+      - duplicate
+    principal:
+      id: donald_duck
+      roles:
+        - employee
+      scope: acme.sales
+    resource:
+      kind: calendar_entry
+      id: XX125
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      create:
+        effect: EFFECT_ALLOW
+        policy: principal.donald_duck.vdefault/acme.sales
+        scope: acme
+      delete:
+        effect: EFFECT_DENY
+        policy: resource.calendar_entry.vdefault
+      plan:
+        effect: EFFECT_ALLOW
+        policy: resource.calendar_entry.vdefault
+      nonaction:
+        effect: EFFECT_ALLOW
+        policy: resource.calendar_entry.vdefault
+      acme_action:
+        effect: EFFECT_ALLOW
+        policy: principal.donald_duck.vdefault/acme.sales
+        scope: acme
+      duplicate:
+        effect: EFFECT_DENY
+        policy: principal.donald_duck.vdefault/acme.sales
+        scope: acme.sales
+    evaluationErrors:
+      - celError:
+          expression: P.attr.copy_cat == true
+          message: "no such key: copy_cat"
+
 wantDecisionLogs:
-  [
-    {
-      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
-      "timestamp": "2023-12-01T14:51:39.204970988Z",
-      "checkResources":
-        {
-          "inputs":
-            [
-              {
-                "requestId": "test",
-                "resource":
-                  {
-                    "kind": "calendar_entry",
-                    "id": "XX125",
-                  },
-                "principal":
-                  {
-                    "id": "donald_duck",
-                    "roles": ["employee"],
-                    "scope": "acme.sales",
-                  },
-                "actions": ["create", "delete", "plan", "nonaction", "acme_action", "duplicate"],
-              },
-            ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "XX125",
-                "actions":
-                  {
-                    "create":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "principal.donald_duck.vdefault/acme.sales",
-                        "scope": "acme"
-                      },
-                    "delete":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "resource.calendar_entry.vdefault"
-                      },
-                    "plan":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.calendar_entry.vdefault",
-                      },
-                    "nonaction":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.calendar_entry.vdefault",
-                      },
-                    "acme_action":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "principal.donald_duck.vdefault/acme.sales",
-                        "scope": "acme"
-                      },
-                    "duplicate":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "principal.donald_duck.vdefault/acme.sales",
-                        "scope": "acme.sales"
-                      },
-                  },
-                "evaluationErrors":
-                  [
-                    {
-                      "celError":
-                        {
-                          "expression": "P.attr.copy_cat == true",
-                          "message": "no such key: copy_cat",
-                        },
-                    },
-                    {
-                      "celError":
-                        {
-                          "expression": "request.resource.attr.dev_record == true",
-                          "message": "no such key: dev_record",
-                        },
-                    },
-                  ],
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "principal.donald_duck.vdefault":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "principal_policies/policy_02.yaml",
-                    },
-                },
-              "principal.donald_duck.vdefault/acme":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "principal_policies/policy_02_acme.yaml",
-                    },
-                },
-              "principal.donald_duck.vdefault/acme.sales":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "principal_policies/policy_02_acme.sales.yaml",
-                    },
-                },
-              "resource.calendar_entry.vdefault":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_17.yaml",
-                    },
-                },
-            },
-        },
-      "policySource":
-        {
-          "disk": {},
-        },
-    },
-  ]
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        principal.donald_duck.vdefault:
+          attributes:
+            driver: disk
+            source: principal_policies/policy_02.yaml
+        principal.donald_duck.vdefault/acme:
+          attributes:
+            driver: disk
+            source: principal_policies/policy_02_acme.yaml
+        principal.donald_duck.vdefault/acme.sales:
+          attributes:
+            driver: disk
+            source: principal_policies/policy_02_acme.sales.yaml
+        resource.calendar_entry.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_17.yaml
+    policySource:
+      disk: {}

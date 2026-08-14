@@ -72,17 +72,17 @@ func BuildIndex(ctx context.Context, fsys fs.FS, attrs ...SourceAttribute) (Inde
 
 	idx, err := index.Build(ctx, fsys, index.WithSourceAttributes(srcAttrs...))
 	if err != nil {
-		idxErrs := new(index.BuildError)
-		if errors.As(err, &idxErrs) {
+		if idxErrs, ok := errors.AsType[*index.BuildError](err); ok {
 			return nil, &Errors{
 				Errors: &runtimev1.Errors{
-					Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
+					Kind: &runtimev1.Errors_IndexBuildErrors{
+						IndexBuildErrors: idxErrs.IndexBuildErrors,
+					},
 				},
 			}
 		}
 
-		panicErr := new(parser.PanicError)
-		if errors.As(err, panicErr) {
+		if panicErr, ok := errors.AsType[parser.PanicError](err); ok {
 			return nil, PanicError{Cause: panicErr.Cause, Context: panicErr.Context}
 		}
 
@@ -124,8 +124,7 @@ func Files(ctx context.Context, fsys fs.FS, schemaResolverMaker SchemaResolverMa
 
 			if artefact.Error != nil {
 				log.Error("Compilation failed", zap.Error(artefact.Error))
-				compErrs := new(internalcompile.ErrorSet)
-				if errors.As(artefact.Error, &compErrs) {
+				if compErrs, ok := errors.AsType[*internalcompile.ErrorSet](artefact.Error); ok {
 					artefact.Error = &Errors{
 						Errors: &runtimev1.Errors{
 							Kind: &runtimev1.Errors_CompileErrors{CompileErrors: compErrs.Errors()},

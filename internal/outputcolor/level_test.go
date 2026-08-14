@@ -239,9 +239,8 @@ func parse(t *testing.T, args []string) (*outputcolor.Level, []string, error) {
 	parser, err := kong.New(&cli, outputcolor.TypeMapper)
 	require.NoError(t, err, "failed to create command-line argument parser")
 
-	var parseError *kong.ParseError
 	_, err = parser.Parse(args)
-	if err == nil || errors.As(err, &parseError) {
+	if _, ok := errors.AsType[*kong.ParseError](err); err == nil || ok {
 		return cli.Color, cli.Leftovers, err
 	}
 	require.NoError(t, err, "failed to parse command-line arguments")

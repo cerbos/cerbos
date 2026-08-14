@@ -410,6 +410,7 @@ message TestOptions {
   map<string, google.protobuf.Value> globals = 3;
   string default_policy_version = 4;
   string default_scope = 5;
+  bool strict_evaluation = 6;
 }
 
 message TestSuite {

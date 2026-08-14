@@ -6,20 +6,37 @@ package evaluator
 import (
 	"cmp"
 	"context"
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
-	"sync"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 )
 
-const (
-	celErrorMsg  = "Error evaluating CEL expression"
-	celErrorHint = `CEL evaluation errors detected; set engine.celErrorLogLevel to "none" to silence these messages. From Cerbos v0.55, a DENY rule whose condition raises a runtime error will be considered as satisfying the DENY condition`
-)
+// StrictEvaluationError is raised when strict evaluation mode is enabled and a CEL runtime error occurs during evaluation.
+// It never escapes the engine: the check and plan evaluators convert it into a DENY for the affected action.
+type StrictEvaluationError struct {
+	Err        error
+	Expression string
+}
 
-var celErrorHintOnce sync.Once
+func (e StrictEvaluationError) Error() string {
+	return fmt.Sprintf("error evaluating expression %q: %v", e.Expression, e.Err)
+}
+
+func (e StrictEvaluationError) Unwrap() error {
+	return e.Err
+}
+
+func (e StrictEvaluationError) Is(target error) bool {
+	return errors.As(target, &StrictEvaluationError{})
+}
+
+const (
+	celErrorMsg = "Error evaluating CEL expression"
+)
 
 type celError struct {
 	expression string
@@ -44,25 +61,21 @@ func getLogFunc(level CELErrorLogLevel) logFunc {
 	case CELErrorLogLevelDebug:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Debug(celErrorHint) })
 			logger.Debug(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	case CELErrorLogLevelInfo:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Info(celErrorHint) })
 			logger.Info(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	case CELErrorLogLevelError:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Error(celErrorHint) })
 			logger.Error(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	default:
 		return func(ctx context.Context, expression string, err error) {
 			logger := logging.FromContext(ctx)
-			celErrorHintOnce.Do(func() { logger.Warn(celErrorHint) })
 			logger.Warn(celErrorMsg, logging.String("expression", expression), logging.Error(err))
 		}
 	}

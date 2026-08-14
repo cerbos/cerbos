@@ -289,8 +289,7 @@ func (vd *variableDefinitions) All() ([]*runtimev1.Variable, map[string]*runtime
 func (vd *variableDefinitions) list(includeUnused bool) ([]*runtimev1.Variable, map[string]*runtimev1.Expr) {
 	nodes, err := topo.SortStabilized(vd.graph, sortVariablesByName)
 	if err != nil {
-		var cycles topo.Unorderable
-		if errors.As(err, &cycles) {
+		if cycles, ok := errors.AsType[topo.Unorderable](err); ok {
 			vd.reportCyclicalVariables(cycles)
 		} else {
 			vd.modCtx.addErrWithDesc(err, "Unexpected error sorting variable definitions")

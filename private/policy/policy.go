@@ -43,8 +43,7 @@ func Read(src io.Reader) (*policyv1.Policy, error) {
 	}
 
 	if err := policy.Validate(p, sc); err != nil {
-		var verr policy.ValidationError
-		if errors.As(err, &verr) {
+		if verr, ok := errors.AsType[policy.ValidationError](err); ok {
 			return nil, ReadError{Errors: []*sourcev1.Error{verr.Err}}
 		}
 

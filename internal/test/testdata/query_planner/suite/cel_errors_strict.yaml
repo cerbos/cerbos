@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: CEL errors
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - true
+
+principal:
+  id: sam
+  roles:
+    - user
+
+tests:
+  - resource:
+      kind: cel_errors.account
+      attr:
+        amount: "5000"
+    action: read
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      evaluationErrors:
+        - celError:
+            expression: R.attr.amount > 1000
+            message: no such overload
+      matchedScopes:
+        read: ""
+
+  - resource:
+      kind: cel_errors.record
+      attr:
+        amount: "5000"
+    action: view
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      evaluationErrors:
+        - celError:
+            expression: R.attr.amount > 1000
+            message: no such overload
+      matchedScopes:
+        view: ""

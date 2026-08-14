@@ -33,10 +33,11 @@ options:
   defaultPolicyVersion: staging <4>
   defaultScope: "" <5>
   lenientScopeSearch: true <6>
-  globals: <7>
+  strictEvaluation: true <7>
+  globals: <8>
     my_global_var: foo
 
-principals: <8>
+principals: <9>
   alicia:
     id: aliciaID
     roles:
@@ -47,13 +48,13 @@ principals: <8>
     roles:
       - user
 
-principalGroups: <9>
+principalGroups: <10>
   everyone:
     principals:
       - alicia
       - bradley
 
-resources: <10>
+resources: <11>
   alicia_album:
     id: XX125
     kind: album:object
@@ -72,50 +73,51 @@ resources: <10>
       public: false
       flagged: false
 
-resourceGroups: <11>
+resourceGroups: <12>
   all_albums:
     resources:
       - alicia_album
       - bradley_album
 
-auxData: <12>
+auxData: <13>
   validJWT:
     jwt:
       iss: my.domain
       aud: ["x", "y"]
       myField: value
 
-tests: <13>
-  - name: Accessing an album <14>
-    options: <15>
-      now: "2022-08-03T15:00:00Z" <16>
-      defaultPolicyVersion: production <17>
-      defaultScope: "" <18>
-      lenientScopeSearch: false <19>
-      globals: <20>
+tests: <14>
+  - name: Accessing an album <15>
+    options: <16>
+      now: "2022-08-03T15:00:00Z" <17>
+      defaultPolicyVersion: production <18>
+      defaultScope: "" <19>
+      lenientScopeSearch: false <20>
+      strictEvaluation: true <21>
+      globals: <22>
         my_global_var: bar
 
-    input: <21>
-      principals: <22>
+    input: <23>
+      principals: <24>
         - alicia
         - bradley
-      resources: <23>
+      resources: <25>
         - alicia_album
         - bradley_album
-      actions: <24>
+      actions: <26>
         - view
         - delete
-      auxData: validJWT <25>
+      auxData: validJWT <27>
 
-    expected: <26>
-      - principal: alicia <27>
-        resource: alicia_album <28>
-        actions: <29>
+    expected: <28>
+      - principal: alicia <29>
+        resource: alicia_album <30>
+        actions: <31>
           view: EFFECT_ALLOW
           delete: EFFECT_ALLOW
-        outputs: <30>
-          - action: view <31>
-            expected: <32>
+        outputs: <32>
+          - action: view <33>
+            expected: <34>
               - src: resource.album.vdefault#view-rule
                 val:
                   key1: value1
@@ -131,17 +133,17 @@ tests: <13>
 
   - name: Using groups
     input:
-      principalGroups: <33>
+      principalGroups: <35>
         - everyone
-      resourceGroups: <34>
+      resourceGroups: <36>
         - all_albums
       actions:
         - download
 
     expected:
-      - principalGroups: <35>
+      - principalGroups: <37>
           - everyone
-        resourceGroups: <36>
+        resourceGroups: <38>
           - all_albums
         actions:
           download: EFFECT_DENY
@@ -152,36 +154,38 @@ tests: <13>
 <4> Optionally set xref:configuration:engine.adoc#default_policy_version[default policy version] for this test suite.
 <5> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite.
 <6> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test suite.
-<7> Optionally set xref:configuration:engine.adoc#globals[globals] for this test suite.
-<8> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
-<9> Map of principal groups. The key is a string that can be used to refer to the associated group of principal fixtures.
-<10> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
-<11> Map of resource groups. The key is a string that can be used to refer to the associated group of resource fixtures.
-<12> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
-<13> List of tests in this suite.
-<14> Name of the test.
-<15> Optionally set options that apply to just this test. Test-specific options are not merged with suite-wide options, so any unspecified values revert to the default.
-<16> Optional RFC3339 timestamp to be used as the return value of the `now` function.
-<17> Optionally set xref:configuration:engine.adoc#default_policy_version[default policy version] for this test.
-<18> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite.
-<19> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test.
-<20> Optionally set xref:configuration:engine.adoc#globals[globals] for this test.
-<21> Input to the policy engine.
-<22> List of keys of principal fixtures to test.
-<23> List of keys of resource fixtures to test.
-<24> List of actions to test.
-<25> Key of auxiliary data fixture to test (optional).
-<26> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
-<27> Key of the principal fixture under test. Use `principals` instead of `principal` if you want to specify identical expectations for multiple principals.
-<28> Key of the resource fixture under test. Use `resources` instead of `resource` if you want to specify identical expectations for multiple resources.
-<29> Expected outcomes for each action for each principal+resource pair. If an action specified in `input` is not listed, then `EFFECT_DENY` is expected for that action.
-<30> Optional list of xref:outputs.adoc[output values] to match.
-<31> Name of the action that would produce the output.
-<32> List of expected output values.
-<33> List of keys of principal groups to test. You can provide this instead of, or as well as, `principals`.
-<34> List of keys of resource groups to test. You can provide this instead of, or as well as, `resources`.
-<35> Key of the principal group under test. You can provide this instead of, or as well as, `principal` or `principals`.
-<36> Key of the resource group under test. You can provide this instead of, or as well as, `resource` or `resources`.
+<7> Optionally enable xref:configuration:engine.adoc#strict_evaluation[strict evaluation] for this test suite.
+<8> Optionally set xref:configuration:engine.adoc#globals[globals] for this test suite.
+<9> Map of principal fixtures. The key is a string that can be used to refer to the associated principal.
+<10> Map of principal groups. The key is a string that can be used to refer to the associated group of principal fixtures.
+<11> Map of resource fixtures. The key is a string that can be used to refer to the associated resource.
+<12> Map of resource groups. The key is a string that can be used to refer to the associated group of resource fixtures.
+<13> Map of (optional) auxiliary data fixtures required to evaluate some requests. The key is a string that can be used to refer to the associated auxData.
+<14> List of tests in this suite.
+<15> Name of the test.
+<16> Optionally set options that apply to just this test. Test-specific options are not merged with suite-wide options, so any unspecified values revert to the default.
+<17> Optional RFC3339 timestamp to be used as the return value of the `now` function.
+<18> Optionally set xref:configuration:engine.adoc#default_policy_version[default policy version] for this test.
+<19> Optionally set xref:configuration:engine.adoc#default_scope[default scope] for this test suite.
+<20> Optionally set xref:configuration:engine.adoc#lenient_scopes[lenient scope search] for this test.
+<21> Optionally enable xref:configuration:engine.adoc#strict_evaluation[strict evaluation] for this test.
+<22> Optionally set xref:configuration:engine.adoc#globals[globals] for this test.
+<23> Input to the policy engine.
+<24> List of keys of principal fixtures to test.
+<25> List of keys of resource fixtures to test.
+<26> List of actions to test.
+<27> Key of auxiliary data fixture to test (optional).
+<28> List of outcomes expected for each principal and resource. If a principal+resource pair specified in `input` is not listed in `expected`, then `EFFECT_DENY` is expected for all actions for that pair.
+<29> Key of the principal fixture under test. Use `principals` instead of `principal` if you want to specify identical expectations for multiple principals.
+<30> Key of the resource fixture under test. Use `resources` instead of `resource` if you want to specify identical expectations for multiple resources.
+<31> Expected outcomes for each action for each principal+resource pair. If an action specified in `input` is not listed, then `EFFECT_DENY` is expected for that action.
+<32> Optional list of xref:outputs.adoc[output values] to match.
+<33> Name of the action that would produce the output.
+<34> List of expected output values.
+<35> List of keys of principal groups to test. You can provide this instead of, or as well as, `principals`.
+<36> List of keys of resource groups to test. You can provide this instead of, or as well as, `resources`.
+<37> Key of the principal group under test. You can provide this instead of, or as well as, `principal` or `principals`.
+<38> Key of the resource group under test. You can provide this instead of, or as well as, `resource` or `resources`.
 
 [#fixtures]
 === Sharing test fixtures

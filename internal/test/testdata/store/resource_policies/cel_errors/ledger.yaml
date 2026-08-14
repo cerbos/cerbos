@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: cel_errors.ledger
+  version: default
+  variables:
+    local:
+      v1: R.attr.amount > 1000
+  rules:
+    - actions:
+        - export
+      roles:
+        - user
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: V.v1
+
+    - actions:
+        - view
+      roles:
+        - user
+      effect: EFFECT_ALLOW

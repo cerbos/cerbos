@@ -1,0 +1,57 @@
+-- doc_default_test.yaml --
+---
+name: DefaultModeSuite
+tests:
+  - name: erroring rules are skipped
+    input:
+      principals: [alice]
+      resources: [doc1]
+      actions: [view, edit, list, export]
+    expected:
+      - principal: alice
+        resource: doc1
+        actions:
+          view: EFFECT_ALLOW
+          edit: EFFECT_ALLOW
+          list: EFFECT_ALLOW
+          export: EFFECT_DENY
+principals:
+  alice:
+    id: alice
+    roles: [user]
+resources:
+  doc1:
+    id: doc1
+    kind: doc
+    attr:
+      amount: "not-a-number"
+
+-- doc_strict_test.yaml --
+---
+name: StrictModeSuite
+options:
+  strictEvaluation: true
+tests:
+  - name: erroring rules deny the referencing actions only
+    input:
+      principals: [alice]
+      resources: [doc1]
+      actions: [view, edit, list, export]
+    expected:
+      - principal: alice
+        resource: doc1
+        actions:
+          view: EFFECT_DENY
+          edit: EFFECT_DENY
+          list: EFFECT_ALLOW
+          export: EFFECT_DENY
+principals:
+  alice:
+    id: alice
+    roles: [user]
+resources:
+  doc1:
+    id: doc1
+    kind: doc
+    attr:
+      amount: "not-a-number"
