@@ -321,6 +321,10 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 			events = append(events, storage.Event{Kind: storage.EventAddOrUpdatePolicy, PolicyID: p.ID})
 		}
 
+		if err := s.validateScopeChains(ctx, tx, policies); err != nil {
+			return err
+		}
+
 		// build a deduplicated union of dependents across the whole batch and
 		// exclude policies updated in this batch.
 		depEvent := storage.Event{Kind: storage.EventAddOrUpdatePolicy}
@@ -347,6 +351,57 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 
 	s.subs.NotifySubscribers(events...)
 	return nil
+}
+
+func (s *dbStorage) validateScopeChains(ctx context.Context, tx *goqu.TxDatabase, policies []policy.Wrapper) error {
+	requiredAncestors := make(map[namer.ModuleID]string)
+	for _, p := range policies {
+		for id, fqn := range policy.RequiredAncestors(p.Policy) {
+			requiredAncestors[id] = namer.PolicyKeyFromFQN(fqn)
+		}
+	}
+
+	if len(requiredAncestors) == 0 {
+		return nil
+	}
+
+	ancestorIDs := make([]namer.ModuleID, 0, len(requiredAncestors))
+	for id := range requiredAncestors {
+		ancestorIDs = append(ancestorIDs, id)
+	}
+
+	var existingAncestorIDs []namer.ModuleID
+	if err := tx.
+		From(PolicyTbl).
+		Select(goqu.C(PolicyTblIDCol)).
+		Where(
+			goqu.C(PolicyTblIDCol).In(ancestorIDs),
+			goqu.C(PolicyTblDisabledCol).Neq(goqu.V(true)),
+		).
+		Executor().
+		ScanValsContext(ctx, &existingAncestorIDs); err != nil {
+		return fmt.Errorf("failed to validate policy scope chains: %w", err)
+	}
+
+	for _, id := range existingAncestorIDs {
+		delete(requiredAncestors, id)
+	}
+
+	if len(requiredAncestors) == 0 {
+		return nil
+	}
+
+	missingAncestors := make([]string, 0, len(requiredAncestors))
+	for _, policyKey := range requiredAncestors {
+		missingAncestors = append(missingAncestors, policyKey)
+	}
+	slices.Sort(missingAncestors)
+
+	return storage.NewInvalidPolicyError(
+		errors.New("scope chain is incomplete"),
+		"missing ancestor policies: %s",
+		strings.Join(missingAncestors, ", "),
+	)
 }
 
 func (s *dbStorage) GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error) {

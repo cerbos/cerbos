@@ -1,0 +1,2 @@
+type:fix
+Reject Admin API policy writes that would leave a broken scope chain

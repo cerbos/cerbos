@@ -127,6 +127,19 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, Dependents: []namer.ModuleID{rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
 			}
 			t.Run("update_partial", addPolicies([]policy.Wrapper{rp, dr}, wantPartialEvents))
+
+			t.Run("rejects_broken_scope_chain", func(t *testing.T) {
+				orphan := withScope(test.GenResourcePolicy(test.Suffix("_orphan")), "acme.hr")
+
+				err := store.AddOrUpdate(ctx, orphan)
+				require.Error(t, err)
+				require.ErrorContains(t, err, "missing ancestor policies")
+				require.ErrorContains(t, err, "orphan")
+
+				have, err := store.GetCompilationUnits(ctx, orphan.ID)
+				require.NoError(t, err)
+				require.Empty(t, have)
+			})
 		})
 
 		t.Run("iter", func(t *testing.T) {
