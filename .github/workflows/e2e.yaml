@@ -30,7 +30,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: |-
             helm
@@ -71,6 +71,6 @@ jobs:
 
       - name: Notify Slack on failure
         if: "!success()"
-        uses: cerbos/actions/notify-slack@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/notify-slack@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}
