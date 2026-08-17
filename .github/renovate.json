@@ -105,6 +105,16 @@
                 "deploy/charts/cerbos/*"
             ],
             "enabled": false
+        },
+        {
+            "description": "api/genpb needs to support the latest two Go versions; don't upgrade dependencies that require Go 1.26",
+            "matchFileNames": [
+                "api/genpb/go.mod"
+            ],
+            "matchPackageNames": [
+                "github.com/planetscale/vtprotobuf"
+            ],
+            "enabled": false
         }
     ],
     "labels": [
