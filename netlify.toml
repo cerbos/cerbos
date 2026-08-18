@@ -366,6 +366,23 @@ status = 302
 force = true
 # IMG_REDIRECTS_END
 
+# Hub's Synapse page was removed in cerbos/cloud-docs#54.
+
+[[redirects]]
+from = "/cerbos-hub/synapse"
+to = "/synapse/latest/"
+status = 301
+
+[[redirects]]
+from = "/cerbos-hub/synapse.html"
+to = "/synapse/latest/"
+status = 301
+
+[[redirects]]
+from = "/cerbos-hub/latest/synapse"
+to = "/synapse/latest/"
+status = 301
+
 # This has to be at the bottom for the above redirects to work
 [[redirects]]
 from = "/cerbos/:version/*"
