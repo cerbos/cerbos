@@ -1,0 +1,3 @@
+type:fix
+Reduce tautologies and contradictions in query planner filters
+The query planner can emit filters that contain mutually exclusive equality predicates, such as requiring a resource attribute to be two different values at once. Those tautologies and contradictions are now reduced during filter normalisation.

@@ -251,23 +251,6 @@ tests:
     action: multi-role-test-conditional-allow-deny
     want:
       filter:
-        kind: KIND_CONDITIONAL
-        condition:
-          expression:
-            operator: and
-            operands:
-              - expression:
-                  operator: eq
-                  operands:
-                    - variable: request.resource.attr.owner
-                    - value: harry
-              - expression:
-                  operator: not
-                  operands:
-                    - expression:
-                        operator: eq
-                        operands:
-                          - variable: request.resource.attr.owner
-                          - value: harry
+        kind: KIND_ALWAYS_DENIED
       matchedScopes:
         multi-role-test-conditional-allow-deny: ""

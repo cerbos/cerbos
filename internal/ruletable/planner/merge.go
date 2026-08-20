@@ -44,5 +44,8 @@ func MergeWithAnd(filters []*enginev1.PlanResourcesFilter) (*enginev1.PlanResour
 		response.Condition = &exprOp{Node: mkExprOpExpr(And, operands...)}
 		response.Kind = enginev1.PlanResourcesFilter_KIND_CONDITIONAL
 	}
+	if response.Kind == enginev1.PlanResourcesFilter_KIND_CONDITIONAL {
+		response = normaliseFilter(response)
+	}
 	return response, FilterToString(response), nil
 }

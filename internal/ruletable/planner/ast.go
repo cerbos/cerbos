@@ -710,6 +710,12 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 		operands = append(operands, normalOp)
 	}
 
+	if logicalOperator == And || logicalOperator == Or {
+		if simplified := simplifyLogicalExpr(logicalOperator, operands); simplified != nil {
+			return simplified
+		}
+	}
+
 	// AND or OR of a single value is the value itself
 	//nolint:nestif
 	if logicalOperator != "" {
