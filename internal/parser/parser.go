@@ -468,6 +468,9 @@ func (u *unmarshaler[T]) resolveMerge(uctx *unmarshalCtx, n ast.Node) (ast.MapNo
 		anchorName := an.Value.GetToken().Value
 		aliased, ok := u.anchors[anchorName]
 		if !ok {
+			if anchorName == "" || anchorName == "*" {
+				return nil, uctx.perrorf(n, "unknown anchor %q: Cerbos wildcards must be quoted as \"*\" because bare * is a YAML alias", anchorName)
+			}
 			return nil, uctx.perrorf(n, "unknown anchor %q", anchorName)
 		}
 
@@ -508,6 +511,9 @@ func (u *unmarshaler[T]) resolveNode(uctx *unmarshalCtx, n ast.Node) (ast.Node, 
 		anchorName := t.Value.GetToken().Value
 		an, ok := u.anchors[anchorName]
 		if !ok {
+			if anchorName == "" || anchorName == "*" {
+				return nil, uctx.perrorf(n, "unknown anchor %q: Cerbos wildcards must be quoted as \"*\" because bare * is a YAML alias", anchorName)
+			}
 			return nil, uctx.perrorf(n, "unknown anchor %q", anchorName)
 		}
 
@@ -589,6 +595,9 @@ func (u *unmarshaler[T]) resolveAlias(uctx *unmarshalCtx, n ast.Node) (ast.Node,
 		aliasName := nn.Value.GetToken().Value
 		node, ok := u.anchors[aliasName]
 		if !ok {
+			if aliasName == "" || aliasName == "*" {
+				return nil, uctx.perrorf(n, "unknown alias %q: Cerbos wildcards must be quoted as \"*\" because bare * is a YAML alias", aliasName)
+			}
 			return nil, uctx.perrorf(n, "unknown alias %s", aliasName)
 		}
 		return u.resolveAlias(uctx, node)
