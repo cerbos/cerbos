@@ -6,17 +6,23 @@ include::ROOT:partial$attributes.adoc[]
 :testdata-resources-schema-file: /policy/v1/TestFixture/Resources.schema.json
 :testdata-auxdata-schema-file: /policy/v1/TestFixture/AuxData.schema.json
 
-:current-policy-schema-url: {app-schema-url-current}{policy-schema-file}
-:latest-policy-schema-url: {app-schema-url-latest}{policy-schema-file}
-:current-test-schema-url: {app-schema-url-current}{test-schema-file}
-:latest-test-schema-url: {app-schema-url-latest}{test-schema-file}
-:current-testdata-principals-schema-url: {app-schema-url-current}{testdata-principals-schema-file}
-:latest-testdata-principals-schema-url: {app-schema-url-latest}{testdata-principals-schema-file}
-:current-testdata-resources-schema-url: {app-schema-url-current}{testdata-resources-schema-file}
-:latest-testdata-resources-schema-url: {app-schema-url-latest}{testdata-resources-schema-file}
-:current-testdata-auxdata-schema-url: {app-schema-url-current}{testdata-auxdata-schema-file}
-:latest-testdata-auxdata-schema-url: {app-schema-url-latest}{testdata-auxdata-schema-file}
+ifdef::app-version-is-prerelease[]
+:published-schema-base-url: {app-schema-url-latest}
+endif::[]
+ifndef::app-version-is-prerelease[]
+:published-schema-base-url: {app-schema-url-current}
+endif::[]
 
+:policy-schema-url: {published-schema-base-url}{policy-schema-file}
+:latest-policy-schema-url: {app-schema-url-latest}{policy-schema-file}
+:test-schema-url: {published-schema-base-url}{test-schema-file}
+:latest-test-schema-url: {app-schema-url-latest}{test-schema-file}
+:testdata-principals-schema-url: {published-schema-base-url}{testdata-principals-schema-file}
+:latest-testdata-principals-schema-url: {app-schema-url-latest}{testdata-principals-schema-file}
+:testdata-resources-schema-url: {published-schema-base-url}{testdata-resources-schema-file}
+:latest-testdata-resources-schema-url: {app-schema-url-latest}{testdata-resources-schema-file}
+:testdata-auxdata-schema-url: {published-schema-base-url}{testdata-auxdata-schema-file}
+:latest-testdata-auxdata-schema-url: {app-schema-url-latest}{testdata-auxdata-schema-file}
 
 
 = Policy authoring
@@ -29,24 +35,25 @@ include::ROOT:partial$version-check.adoc[]
 * Policies can be in either YAML or JSON formats. Accepted file extensions are `.yml`, `.yaml` or `.json`. All other extensions are ignored.
 * The JSON schemas for Cerbos files are available at:
 ** Policy
-*** `{current-policy-schema-url}`
+*** `{policy-schema-url}`
 ** xref:compile.adoc#testing[Test suite]
-*** `{current-test-schema-url}`
+*** `{test-schema-url}`
 ** xref:compile.adoc#fixtures[Principal test fixtures]
-*** `{current-testdata-principals-schema-url}`
+*** `{testdata-principals-schema-url}`
 ** xref:compile.adoc#fixtures[Resources test fixtures]
-*** `{current-testdata-resources-schema-url}`
+*** `{testdata-resources-schema-url}`
 ** xref:compile.adoc#fixtures[Auxiliary data test fixtures]
-*** `{current-testdata-auxdata-schema-url}`
+*** `{testdata-auxdata-schema-url}`
+ifndef::app-version-is-prerelease[]
 * If you prefer to always use the latest version, they can be accessed at:
 ** `{latest-policy-schema-url}`
 ** `{latest-test-schema-url}`
 ** `{latest-testdata-principals-schema-url}`
 ** `{latest-testdata-resources-schema-url}`
 ** `{latest-testdata-auxdata-schema-url}`
+endif::[]
 
 == Policy structure
-
 * The policy header is common for all policy types:
 ** `apiVersion`: Required. Must be `api.cerbos.dev/v1`.
 ** `description`: Optional. Description of the policy.
