@@ -1,0 +1,65 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.55.0]
+= Cerbos v0.55.0 (2026-08-13)
+
+== Changelog
+
+=== Breaking changes
+
+[unordered]
+Upgrade the CEL library and add new functions::
+The library used for evaluating policy expressions has been upgraded to v0.30.0. This is a potential breaking change because this version is stricter about unknown field access and some of the query plans produced by the PDP might be different from what the previous versions used to produce.
+
+The following new functions are available for use in policy expressions.
+
+- `<cidr>.containsCIDR()`
+- `<cidr>.containsIP()`
+- `<cidr>.isMask()`
+- `<cidr>.masked()`
+- `<cidr>.prefixLength()`
+- `<ip>.family()`
+- `<ip>.isGlobalUnicast()`
+- `<ip>.isLinkLocalMulticast()`
+- `<ip>.isLinkLocalUnicast()`
+- `<ip>.isLoopback()`
+- `<ip>.isUnspecified()`
+- `cidr()`
+- `ip()`
+- `isCIDR()`
+- `isIP()`
+- `json.encode()`
+- `regex.extractAll()`
+- `regex.replace()`
+- `sets.contains()`
+- `sets.equivalent()`
+- `sets.intersects()`
+
+
+
+
+=== Features
+
+[unordered]
+Support multiple JWTs in auxData:: It is now possible to attach multiple JWTs to a request and use their claims to make policy decisions. The `auxData` field in the `Check` and `Plan` requests now allows a `jwts` field where a set of named tokens can be specified. Claims from named tokens can be accessed in policy expressions as `request.auxData.jwts.NAME.claims.CLAIM`. The xref:configuration:auxdata.adoc[server-side validation settings] remain the same as before and apply to both the singular `jwt` field as well as the `jwts` field.
+
+
+=== Enhancements
+
+[unordered]
+Strict evaluation mode:: Strict evaluation mode treats runtime errors in policy conditions such as accessing unknown fields or mixing types as terminal failures.
+When a condition or variable expression raises a runtime error, the affected action is denied. An error in a variable denies only the actions whose conditions reference it. An error in the condition of an imported derived role denies the actions of the rules that reference the derived role in their `derivedRoles`, and the actions whose conditions access `runtime.effectiveDerivedRoles`. The mode applies to both the check and the query planner APIs. The `cerbos compile` CLI command can run tests in this mode by passing `--strict-evaluation` flag. See xref:configuration:engine.adoc#strict_evaluation[`engine.strictEvaluation`] for details.
+
+
+Constant folding for policy expressions:: Adds a new optimization step where policy conditions are simplified by evaluating them with known values at compile time. In some cases, this can dramatically reduce the time taken to evaluate policy rules. This change also includes extra validation to catch invalid time and regex definitions at compile time.
+
+
+=== Bug fixes
+
+[unordered]
+Handle YAML block scalar syntax in test fixture attributes:: A regression introduced in Cerbos v0.54.0 meant test suites would fail to load if they referenced test fixtures that used YAML block scalar syntax (multiline strings denoted by `|` or `>`) in their attributes.
+
+
+Fix inconsistent behaviour of CEL functions 'except', 'hasIntersection', 'intersect' and 'isSubset':: When the numerical types differed between the two lists (floats against integers), the comparison results were inconsistent depending on the size of the lists.
+
+
