@@ -32,7 +32,7 @@ jobs:
           write_build_cache: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: |-
             buf
@@ -42,7 +42,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/check-repo-status@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
 
       - name: Test
         run: just test-integration
@@ -50,7 +50,7 @@ jobs:
           CERBOS_LOG_LEVEL: "debug"
 
       - name: Upload integration coverage to Coveralls
-        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
+        uses: shogo82148/actions-goveralls@8781f5dd05b691c4dd042d5e859c11c73e0104fa # v1.11.1
         continue-on-error: true
         with:
           path-to-profile: integration.cover
@@ -88,14 +88,14 @@ jobs:
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       - name: Log in to GHCR
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4.5.2
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@371161bbe7024a29a25c5e19bfcbc0804fe9ad2c # v4.5.2
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: docker.io
           username: ${{ secrets.DOCKER_HUB_USER }}
@@ -122,7 +122,7 @@ jobs:
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: |-
             goreleaser
@@ -181,7 +181,7 @@ jobs:
           persist-credentials: false
 
       - name: Push to BSR
-        uses: cerbos/actions/buf@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/buf@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           push: true
           token: ${{ secrets.BUF_TOKEN }}

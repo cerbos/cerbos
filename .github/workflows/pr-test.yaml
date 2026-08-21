@@ -20,7 +20,7 @@ jobs:
       npm: ${{ steps.filter.outputs.npm }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
-      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
@@ -64,7 +64,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: |-
             buf
@@ -74,7 +74,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/check-repo-status@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
 
   download-test-times:
     name: Download test times
@@ -125,7 +125,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: just
 
@@ -156,7 +156,7 @@ jobs:
           path: junit.*.xml
 
       - name: Upload integration coverage to Coveralls
-        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
+        uses: shogo82148/actions-goveralls@8781f5dd05b691c4dd042d5e859c11c73e0104fa # v1.11.1
         continue-on-error: true
         with:
           path-to-profile: integration.cover
@@ -189,7 +189,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: just
 
@@ -210,7 +210,7 @@ jobs:
           path: test-times.json
 
       - name: Complete coveralls report
-        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
+        uses: shogo82148/actions-goveralls@8781f5dd05b691c4dd042d5e859c11c73e0104fa # v1.11.1
         continue-on-error: true
         with:
           parallel-finished: true
@@ -254,7 +254,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: just
 
@@ -265,7 +265,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: cerbos/actions/golangci-lint@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/golangci-lint@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
 
   buf:
     needs: changes
@@ -283,7 +283,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint protos
-        uses: cerbos/actions/buf@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/buf@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           breaking: false
           format: true
@@ -350,7 +350,7 @@ jobs:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
         with:
           tools: |-
             goreleaser
@@ -448,4 +448,4 @@ jobs:
           persist-credentials: false
 
       - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@db2ff6efa4315796b92eec00847c9257b89fae5c # main
+        uses: cerbos/actions/lint-actions@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
