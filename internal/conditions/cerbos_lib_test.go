@@ -200,8 +200,10 @@ func TestCmpSelectAndCall(t *testing.T) {
 			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
 			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
 			decls.NewVariable("z", celtypes.StringType),
-			decls.NewVariable("v", celtypes.NewMapType(celtypes.StringType, celtypes.DynType))),
-		ext.Strings())
+			decls.NewVariable("v", celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		),
+		ext.Strings(),
+	)
 
 	expr0 := "v.geo() in (y + [z]).map(t, t.upperAscii())"
 	expr := "v.geo in (y + [z]).map(t, t.upperAscii())"
@@ -231,10 +233,12 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 		cel.VariableDecls(
 			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
 			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
-			decls.NewVariable("z", celtypes.StringType)),
+			decls.NewVariable("z", celtypes.StringType),
+		),
 		// decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings(),
-		cel.Macros(geo))
+		cel.Macros(geo),
+	)
 
 	vars, _ := cel.PartialVars(map[string]any{
 		"y": []string{"GB", "US"},
@@ -270,8 +274,10 @@ func TestPartialEvaluation(t *testing.T) {
 			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
 			decls.NewVariable("request.principal", celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 			decls.NewVariable("z", celtypes.StringType),
-			decls.NewVariable("R.attr.department", celtypes.StringType)),
-		ext.Strings())
+			decls.NewVariable("R.attr.department", celtypes.StringType),
+		),
+		ext.Strings(),
+	)
 
 	vars, _ := cel.PartialVars(map[string]any{
 		"y":                 []string{"GB", "US"},

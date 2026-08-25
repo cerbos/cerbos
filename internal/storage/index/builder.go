@@ -209,21 +209,37 @@ func (idx *indexBuilder) addLoadFailure(file string, err error) {
 	}
 
 	if uErr, ok := errors.AsType[parser.UnmarshalError](err); ok {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: uErr.Err.GetMessage(), ErrorDetails: uErr.Err})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{
+			File:         file,
+			Error:        uErr.Err.GetMessage(), //nolint:staticcheck
+			ErrorDetails: uErr.Err,
+		})
 		return
 	}
 
 	if vErr, ok := errors.AsType[policy.ValidationError](err); ok {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: vErr.Err.GetMessage(), ErrorDetails: vErr.Err})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{
+			File:         file,
+			Error:        vErr.Err.GetMessage(), //nolint:staticcheck
+			ErrorDetails: vErr.Err,
+		})
 		return
 	}
 
-	idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: err.Error(), ErrorDetails: &sourcev1.Error{Message: err.Error()}})
+	idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{
+		File:         file,
+		Error:        err.Error(), //nolint:staticcheck
+		ErrorDetails: &sourcev1.Error{Message: err.Error()},
+	})
 }
 
 func (idx *indexBuilder) addErrors(file string, errs []*sourcev1.Error) {
 	for _, e := range errs {
-		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{File: file, Error: e.Message, ErrorDetails: e})
+		idx.loadFailures = append(idx.loadFailures, &runtimev1.IndexBuildErrors_LoadFailure{
+			File:         file,
+			Error:        e.Message, //nolint:staticcheck
+			ErrorDetails: e,
+		})
 	}
 }
 

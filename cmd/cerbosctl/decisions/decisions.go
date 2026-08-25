@@ -15,10 +15,10 @@ import (
 	"github.com/cerbos/cerbos-sdk-go/cerbos"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
+	"github.com/cerbos/cerbos/internal/printer"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
-	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -557,13 +557,10 @@ type prettyJSON struct {
 }
 
 func newPrettyJSON() *prettyJSON {
-	lexer := lexers.Get("json")
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
+	lexer := printer.Lexer("json")
 
 	return &prettyJSON{
-		lexer:     chroma.Coalesce(lexer),
+		lexer:     lexer,
 		formatter: formatters.TTY16m,
 		style:     styles.Get("monokai"),
 	}

@@ -359,7 +359,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		if keysIface := keysPool.Get(); keysIface == nil {
 			keys = make([][]byte, l.maxBatchSize)
 		} else {
-			keys = *(keysIface.(*[][]byte)) //nolint:forcetypeassert
+			keys = *keysIface.(*[][]byte) //nolint:forcetypeassert
 			if len(keys) < l.maxBatchSize {
 				keys = make([][]byte, l.maxBatchSize)
 			}

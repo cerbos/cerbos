@@ -34,10 +34,8 @@ func NewFromConf(_ context.Context, loader Loader, conf *Conf) Manager {
 	}
 
 	mgr := &manager{
-		StaticManager: StaticManager{
-			conf: conf,
-			log:  logging.NewLogger("schema"),
-		},
+		conf:     conf,
+		log:      logging.NewLogger("schema"),
 		cache:    cache.New[string, *cacheEntry]("schema", conf.CacheSize),
 		resolver: DefaultResolver(loader),
 	}
@@ -67,10 +65,8 @@ func New(ctx context.Context, loader Loader) (Manager, error) {
 
 func NewEphemeral(resolver Resolver) Manager {
 	mgr := &manager{
-		StaticManager: StaticManager{
-			conf: NewConf(EnforcementReject),
-			log:  logging.NewLogger("schema"),
-		},
+		conf:     NewConf(EnforcementReject),
+		log:      logging.NewLogger("schema"),
 		cache:    cache.New[string, *cacheEntry]("schema", defaultCacheSize),
 		resolver: resolver,
 	}
