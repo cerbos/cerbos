@@ -79,16 +79,18 @@ func (sm *SubscriptionManager) NotifySubscribers(events ...Event) {
 		return
 	}
 
-	events = withoutNopEvents(events)
-	if len(events) == 0 {
-		return
-	}
+	for _, evt := range events {
+		if evt.Kind == EventNop {
+			continue
+		}
 
-	// Blocking on a full buffer. Dropping events could compromise consistency with a storage
-	// since updates are deltas unless ReloadEvent is enqueued instead.
-	select {
-	case sm.eventChan <- eventBatch{events: events}:
-	case <-sm.stopped:
+		// Blocking on a full buffer. Dropping events could compromise consistency with a storage
+		// since updates are deltas unless ReloadEvent is enqueued instead.
+		select {
+		case sm.eventChan <- eventBatch{events: []Event{evt}}:
+		case <-sm.stopped:
+			return
+		}
 	}
 }
 
