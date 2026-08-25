@@ -13,6 +13,7 @@ import (
 	"github.com/google/cel-go/cel"
 	celast "github.com/google/cel-go/common/ast"
 	"github.com/google/cel-go/common/decls"
+	"github.com/google/cel-go/interpreter"
 	"github.com/google/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -50,7 +51,7 @@ func Test_evaluateCondition(t *testing.T) {
 	}
 
 	compile := func(expr string, request *enginev1.Request) args {
-		ast, iss := conditions.StdEnv.Compile(expr)
+		ast, iss := conditions.Compile(expr)
 		require.Nil(t, iss, "Error is %s", iss.Err())
 		checkedExpr, err := cel.AstToCheckedExpr(ast)
 		require.NoError(t, err)
@@ -277,14 +278,12 @@ func TestResidualExpr(t *testing.T) {
 			}
 
 			is := require.New(t)
-			ast, iss := env.Compile(s)
-			is.Nil(iss, iss.Err())
-			e := ast.NativeRep().Expr()
-			ex, err := replaceVars(e, variables)
-			is.NoError(err)
+			ex := compileWithVars(t, env, variables, s)
+
+			// The expected residual comes from cel-go's own ResidualAst, which needs a *cel.Ast.
 			protoEx, err := celast.ExprToProto(ex)
 			is.NoError(err)
-			ast = cel.ParsedExprToAst(&expr.ParsedExpr{Expr: protoEx})
+			ast := cel.ParsedExprToAst(&expr.ParsedExpr{Expr: protoEx})
 			_, det, err := conditions.ContextEval(t.Context(), env, ast.NativeRep(), pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
 			is.NoError(err)
 			residualAst, err := env.ResidualAst(ast, det)
@@ -293,11 +292,7 @@ func TestResidualExpr(t *testing.T) {
 			is.NoError(err)
 			wantResidualExpr := re.Expr
 
-			nativeAST := celast.NewAST(ex, nil)
-			_, det, err = conditions.ContextEval(t.Context(), env, nativeAST, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-			is.NoError(err)
-			got := residualExpr(nativeAST, det)
-			is.NoError(err)
+			got := partiallyEvaluate(t, env, pvars, nowFn, ex)
 			p, err := newPartialEvaluator(env, knownVars, nowFn)
 			is.NoError(err)
 			got, err = p.evalComprehensionBody(t.Context(), got)
@@ -378,19 +373,11 @@ func TestPartialEvaluationWithGlobalVars(t *testing.T) {
 	ignoreID := cmpopts.IgnoreMapEntries(func(k string, _ any) bool { return k == "id" })
 	for _, tt := range tests {
 		t.Run(tt.expr, func(t *testing.T) {
-			var err error
 			is := require.New(t)
-			ast, iss := env.Compile(tt.expr)
-			is.Nil(iss, iss.Err())
-			e, err := replaceVars(ast.NativeRep().Expr(), variables)
-			is.NoError(err)
-			astNative := celast.NewAST(e, nil)
-			_, det, err := conditions.ContextEval(t.Context(), env, astNative, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
-			is.NoError(err)
-			haveExpr := residualExpr(astNative, det)
-			is.NoError(err)
+			e := compileWithVars(t, env, variables, tt.expr)
+			haveExpr := partiallyEvaluate(t, env, pvars, nowFn, e)
 			p := partialEvaluator{env: env, knownVars: knownVars, vars: pvars, nowFn: nowFn}
-			haveExpr, err = p.evalComprehensionBody(t.Context(), haveExpr)
+			haveExpr, err := p.evalComprehensionBody(t.Context(), haveExpr)
 			is.NoError(err)
 			internal.RenumberIDs(haveExpr)
 			got, err := celast.ExprToProto(haveExpr)
@@ -438,6 +425,31 @@ func setupEnv(t *testing.T) (*cel.Env, map[string]any, map[string]celast.Expr) {
 		variables[k] = ast.NativeRep().Expr()
 	}
 	return env, knownVars, variables
+}
+
+// compileWithVars compiles src and substitutes the definitions of the variables it references.
+func compileWithVars(t *testing.T, env *cel.Env, variables map[string]celast.Expr, src string) celast.Expr {
+	t.Helper()
+
+	ast, iss := env.Compile(src)
+	require.Nil(t, iss, iss.Err())
+
+	e, err := replaceVars(ast.NativeRep().Expr(), variables)
+	require.NoError(t, err)
+
+	return e
+}
+
+// partiallyEvaluate evaluates e against the known variables in pvars and returns the residual
+// expression, the same way (*EvalContext).evaluateConditionExpression does.
+func partiallyEvaluate(t *testing.T, env *cel.Env, pvars interpreter.PartialActivation, nowFn func() time.Time, e celast.Expr) celast.Expr {
+	t.Helper()
+
+	ast := celast.NewAST(e, nil)
+	_, details, err := conditions.ContextEval(t.Context(), env, ast, pvars, nowFn, cel.EvalOptions(cel.OptTrackState, cel.OptPartialEval))
+	require.NoError(t, err)
+
+	return residualExpr(ast, details)
 }
 
 func TestNormaliseFilter(t *testing.T) {

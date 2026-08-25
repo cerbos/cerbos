@@ -330,6 +330,28 @@
           "additionalProperties": {
             "$ref": "#/definitions/google.protobuf.Value"
           }
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.engine.v1.AuxData.JWT"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.AuxData.JWT": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },
@@ -707,6 +729,57 @@
         }
       }
     },
+    "cerbos.private.v1.EngineConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultPolicyVersion": {
+          "type": "string"
+        },
+        "defaultScope": {
+          "type": "string"
+        },
+        "globals": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "lenientScopeSearch": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "schemaEnforcement": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.private.v1.EngineConfig.Enforcement"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "strictEvaluation": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "cerbos.private.v1.EngineConfig.Enforcement": {
+      "type": "string",
+      "enum": [
+        "ENFORCEMENT_UNSPECIFIED",
+        "ENFORCEMENT_NONE",
+        "ENFORCEMENT_WARN",
+        "ENFORCEMENT_REJECT"
+      ]
+    },
     "cerbos.schema.v1.ValidationError": {
       "type": "object",
       "additionalProperties": false,
@@ -742,8 +815,14 @@
     }
   },
   "type": "object",
+  "required": [
+    "config"
+  ],
   "additionalProperties": false,
   "properties": {
+    "config": {
+      "$ref": "#/definitions/cerbos.private.v1.EngineConfig"
+    },
     "description": {
       "type": "string"
     },
@@ -758,9 +837,6 @@
       "items": {
         "$ref": "#/definitions/cerbos.audit.v1.DecisionLogEntry"
       }
-    },
-    "wantError": {
-      "type": "boolean"
     },
     "wantOutputs": {
       "type": "array",

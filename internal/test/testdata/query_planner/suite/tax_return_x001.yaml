@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Role policies tax return tests for emma
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: x001
+  policyVersion: default
+  roles:
+    - accountant
+    - employee
+
+tests:
+
+  - resource:
+      kind: tax_return
+      scope: acme
+      policyVersion: default
+    action: comment # allowed in `accountant`, not in parent scope resource policy
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        comment: ""
+
+  - resource:
+      kind: tax_return
+      scope: acme
+      policyVersion: default
+    action: create # allowed in `accountant` and in parent scope resource policy for narrowed `manager` role
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        create: ""
+
+  - resource:
+      kind: tax_return
+      scope: acme
+      policyVersion: default
+    action: view # not allowed in `accountant` but is in parent scope resource policy for non-narrowed `employee` role
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""

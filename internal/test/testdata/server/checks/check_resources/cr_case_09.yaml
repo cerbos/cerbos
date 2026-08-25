@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=../../../.jsonschema/ServerTestCase.schema.json
+---
+description: "Aux data multiple JWTs"
+wantStatus:
+  httpStatusCode: 200
+  grpcStatusCode: 0
+checkResources:
+  input:
+    {
+      "requestId": "test",
+      "principal":
+        {
+          "id": "john",
+          "policyVersion": "20210210",
+          "roles": ["employee"],
+          "attr":
+            { "department": "marketing", "geography": "GB", "team": "design" },
+        },
+      "resources":
+        [
+          {
+            "actions": ["frobnicate"],
+            "resource":
+              {
+                "kind": "leave_request",
+                "policyVersion": "20210210",
+                "id": "XX125",
+                "attr":
+                  {
+                    "department": "marketing",
+                    "geography": "GB",
+                    "id": "XX125",
+                    "owner": "john",
+                    "team": "design",
+                  },
+              },
+          },
+        ],
+      "auxData":
+        {
+          "jwts":
+            {
+              "token_a":
+                {
+                  "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX",
+                },
+              "token_b":
+                {
+                  "token": "eyJhbGciOiJFUzM4NCIsImtpZCI6IjE5TGZaYXRFZGc4M1lOYzVyMjNndU1KcXJuND0iLCJ0eXAiOiJKV1QifQ.eyJhdWQiOlsiY2VyYm9zLWp3dC10ZXN0cyJdLCJjdXN0b21BcnJheSI6WyJBIiwiQiIsIkMiXSwiY3VzdG9tSW50Ijo0MiwiY3VzdG9tTWFwIjp7IkEiOiJBQSIsIkIiOiJCQiIsIkMiOiJDQyJ9LCJjdXN0b21TdHJpbmciOiJmb29iYXIiLCJleHAiOjE5NDk5MzQwMzksImlzcyI6ImNlcmJvcy10ZXN0LXN1aXRlIn0.WN_tOScSpd_EI-P5EI1YlagxEgExSfBjAtcrgcF6lyWj1lGpR_GKx9goZEp2p_t5AVWXN_bjz_sMUmJdJa4cVd55Qm1miR-FKu6oNRHnSEWdMFmnArwPw-YDJWfylLFX",
+                },
+            },
+        },
+    }
+  wantResponse:
+    {
+      "requestId": "test",
+      "results":
+        [
+          {
+            "resource":
+              {
+                "id": "XX125",
+                "kind": "leave_request",
+                "policyVersion": "20210210",
+              },
+            "actions": { "frobnicate": "EFFECT_ALLOW" },
+          },
+        ],
+    }

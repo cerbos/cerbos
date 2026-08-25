@@ -15,6 +15,7 @@ func newCheckOptions(tracerSink tracer.Sink, conf *Conf, opts ...CheckOpt) *Chec
 		DefaultScope:         conf.DefaultScope,
 		CELErrorLogLevel:     conf.CELErrorLogLevel,
 		LenientScopeSearch:   conf.LenientScopeSearch,
+		StrictEvaluation:     conf.StrictEvaluation,
 	}}
 	for _, opt := range opts {
 		opt(co)

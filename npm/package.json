@@ -3,7 +3,7 @@
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "npm@11.16.0+sha512.03be172fc3b199c7a06433163e459be5b110a6983c1dd6305b7ac10f6b0fa12e1440755a8df6b1064ab2ccb789df0474919fb9c684e322dc57685ede21752ccb",
+  "packageManager": "npm@12.0.2+sha512.b885e890b9418fa1693544d05f53e64f9a73ec194837d4258b15fecdd692347b1dd2a517b1b0cbaf9d31cd8e92c3b70956bd2ecc72833a57b4b3098f5bfa7943",
   "scripts": {
     "test": "test/run.sh"
   },

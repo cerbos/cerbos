@@ -1,166 +1,58 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "Role policy versions"
-inputs:
-  [
-    {
-      "requestId": "test",
-      "actions": [
-        "view",
-        "create",
-      ],
-      "principal":
-        {
-          "id": "john",
-          "roles": ["20210210_admin"],
-        },
-      "resource":
-        {
-          "kind": "leave_request",
-          "id": "XX125",
-          "policyVersion": "20210210",
-        },
-    },
-  ]
-wantOutputs:
-  [
-    {
-      "requestId": "test",
-      "resourceId": "XX125",
-      "actions":
-        {
-          "view":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.v20210210",
-            },
-          "create":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "role.20210210_admin.v20210210",
-            },
-        },
-      "evaluationErrors":
-        [
-          {
-            "celError":
-              {
-                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                "message": "no such key: ip_address",
-              },
-          },
-          {
-            "celError":
-              {
-                "expression": "request.principal.attr.reader == true",
-                "message": "no such key: reader",
-              },
-          },
-          {
-            "celError":
-              {
-                "expression": "request.resource.attr.public == true",
-                "message": "no such key: public",
-              },
-          },
-        ],
-    },
-  ]
+description: Role policy versions
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      - view
+      - create
+    principal:
+      id: john
+      roles:
+        - 20210210_admin
+    resource:
+      kind: leave_request
+      id: XX125
+      policyVersion: "20210210"
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.v20210210
+      create:
+        effect: EFFECT_DENY
+        policy: role.20210210_admin.v20210210
+    evaluationErrors:
+      - celError:
+          expression: request.resource.attr.public == true
+          message: "no such key: public"
+
 wantDecisionLogs:
-  [
-    {
-      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
-      "timestamp": "2023-12-01T14:51:39.204970988Z",
-      "checkResources":
-        {
-          "inputs":
-            [
-              {
-                "requestId": "test",
-                "resource":
-                  {
-                    "kind": "leave_request",
-                    "id": "XX125",
-                    "policyVersion": "20210210",
-                  },
-                "principal":
-                  {
-                    "id": "john",
-                    "roles": ["20210210_admin"],
-                  },
-                "actions": ["view", "create"],
-              },
-            ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "XX125",
-                "actions":
-                  {
-                    "view":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.v20210210",
-                      },
-                    "create":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "role.20210210_admin.v20210210",
-                      },
-                  },
-                "evaluationErrors":
-                  [
-                    {
-                      "celError":
-                        {
-                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                          "message": "no such key: ip_address",
-                        },
-                    },
-                    {
-                      "celError":
-                        {
-                          "expression": "request.principal.attr.reader == true",
-                          "message": "no such key: reader",
-                        },
-                    },
-                    {
-                      "celError":
-                        {
-                          "expression": "request.resource.attr.public == true",
-                          "message": "no such key: public",
-                        },
-                    },
-                  ],
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "resource.leave_request.v20210210":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_01.yaml",
-                    },
-                },
-              "role.20210210_admin.v20210210":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_07.yaml",
-                    },
-                },
-            },
-        },
-      "policySource":
-        {
-          "disk": {},
-        },
-    },
-  ]
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.leave_request.v20210210:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_01.yaml
+        role.20210210_admin.v20210210:
+          attributes:
+            driver: disk
+            source: role_policies/policy_07.yaml
+    policySource:
+      disk: {}

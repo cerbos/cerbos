@@ -86,24 +86,23 @@ func (m *manager) LoadSchema(ctx context.Context, schemaURL string) (*jsonschema
 	}
 
 	e := &cacheEntry{}
-	var notFoundErr *notFoundErr
 	e.schema, e.err = m.loadSchemaFromStore(ctx, schemaURL)
-	if e.err != nil && errors.As(e.err, &notFoundErr) {
+	if nfe, ok := errors.AsType[*notFoundErr](e.err); e.err != nil && ok {
 		var absolutePath string
 		var err error
-		if notFoundErr.scheme == fileURLScheme {
+		if nfe.scheme == fileURLScheme {
 			if absolutePath, err = filepath.Abs(schemaURL); err != nil {
 				e.err = fmt.Errorf("failed to resolve schema URL %q: %w", schemaURL, err)
 			}
 		}
 
 		switch {
-		case notFoundErr.scheme == fileURLScheme && notFoundErr.fullPath == absolutePath:
+		case nfe.scheme == fileURLScheme && nfe.fullPath == absolutePath:
 			e.err = fmt.Errorf("schema %s doesn't exist", schemaURL)
-		case notFoundErr.url != schemaURL:
-			e.err = fmt.Errorf("schema %s referenced by %s doesn't exist", notFoundErr.fullPath, schemaURL)
+		case nfe.url != schemaURL:
+			e.err = fmt.Errorf("schema %s referenced by %s doesn't exist", nfe.fullPath, schemaURL)
 		default:
-			e.err = fmt.Errorf("schema %s doesn't exist", notFoundErr.fullPath)
+			e.err = fmt.Errorf("schema %s doesn't exist", nfe.fullPath)
 		}
 	}
 
@@ -172,16 +171,16 @@ func DefaultResolver(loader Loader) Resolver {
 
 func loadFileURL(u *url.URL) (io.ReadCloser, error) {
 	f := u.Path
-	var pathErr *fs.PathError
-	if file, err := os.Open(f); err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) { //nolint:gosec
+	file, err := os.Open(f) //nolint:gosec
+	if pathErr, ok := errors.AsType[*fs.PathError](err); err != nil && errors.Is(err, fs.ErrNotExist) && ok {
 		return nil, &notFoundErr{
 			url:      u.String(),
 			scheme:   u.Scheme,
 			fullPath: pathErr.Path,
 		}
-	} else {
-		return file, nil
 	}
+
+	return file, nil
 }
 
 func loadHTTPURL(ctx context.Context, u *url.URL) (io.ReadCloser, error) {

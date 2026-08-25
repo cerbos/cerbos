@@ -85,6 +85,16 @@
       "properties": {
         "jwt": {
           "$ref": "#/definitions/cerbos.request.v1.AuxData.JWT"
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.request.v1.AuxData.JWT"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },

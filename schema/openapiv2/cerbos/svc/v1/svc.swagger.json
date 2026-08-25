@@ -83,7 +83,8 @@
             "in": "query",
             "required": true,
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "x-example": "2021-07-05T07:27:01+00:00"
           },
           {
             "name": "between.end",
@@ -91,7 +92,8 @@
             "in": "query",
             "required": true,
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "x-example": "2021-07-05T07:27:01+00:00"
           },
           {
             "name": "since",
@@ -175,7 +177,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -244,7 +247,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -285,7 +289,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -324,7 +329,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -439,7 +445,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -480,7 +487,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -558,7 +566,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -636,7 +645,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.json"
           }
         ],
         "tags": [
@@ -675,7 +685,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.json"
           }
         ],
         "tags": [
@@ -1033,23 +1044,6 @@
     }
   },
   "definitions": {
-    "AuxDataJWT": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string",
-          "description": "JWT from the original request"
-        },
-        "keySetId": {
-          "type": "string",
-          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
-        }
-      },
-      "description": "JWT from the original request",
-      "required": [
-        "token"
-      ]
-    },
     "CheckOutputActionEffect": {
       "type": "object",
       "properties": {
@@ -1688,19 +1682,63 @@
         "jwt": {
           "type": "object",
           "additionalProperties": {}
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbosEngineV1AuxDataJWT"
+          }
         }
       },
       "description": "Structured auxiliary data"
+    },
+    "cerbosEngineV1AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      }
     },
     "cerbosRequestV1AuxData": {
       "type": "object",
       "example": {},
       "properties": {
         "jwt": {
-          "$ref": "#/definitions/AuxDataJWT"
+          "$ref": "#/definitions/cerbosRequestV1AuxDataJWT"
+        },
+        "jwts": {
+          "type": "object",
+          "example": {
+            "app": {
+              "token": "JWT string"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbosRequestV1AuxDataJWT"
+          },
+          "description": "Named list of JWTs associated with this request."
         }
       },
       "description": "Structured auxiliary data useful for evaluating the request"
+    },
+    "cerbosRequestV1AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "JWT from the original request"
+        },
+        "keySetId": {
+          "type": "string",
+          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
+        }
+      },
+      "description": "JWT from the original request",
+      "required": [
+        "token"
+      ]
     },
     "engineV1Resource": {
       "type": "object",

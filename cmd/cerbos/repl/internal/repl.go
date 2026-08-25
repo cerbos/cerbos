@@ -555,8 +555,7 @@ func (r *REPL) printLoadError(err error) {
 		return
 	}
 
-	var unmarshalErr parser.UnmarshalError
-	if errors.As(err, &unmarshalErr) {
+	if unmarshalErr, ok := errors.AsType[parser.UnmarshalError](err); ok {
 		r.output.Println(colored.REPLError(fmt.Sprintf("%+v", unmarshalErr)))
 	} else {
 		r.output.PrintErr("Error:", err)

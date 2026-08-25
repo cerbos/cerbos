@@ -1,229 +1,102 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
-description: "OVERRIDE_PARENT resource policies interleaved with role policies with parent roles"
-inputs:
-  [
-    {
-      "requestId": "test",
-      "actions": [
-        "assist", # allowed in named role, parent custom role and in resource policy in same scope
-        "aid", # allowed in named role, but not in parent custom role. is in resource policy but will be denied by parent custom role
-        "suggest", # not allowed in named role, but is in parent custom role
-        "redirect", # allowed in named role and parent custom role and for parent role in resource policy in parent scope
-        "view:public", # allowed in `any_employee` derived role which has the `employee` parent role
-      ],
-      "principal":
-        {
-          "id": "john",
-          "roles": ["acme_assistant"],
-        },
-      "resource":
-        {
-          "kind": "leave_request",
-          "scope": "acme.hr.uk",
-          "id": "XX125",
-        },
-    },
-  ]
-wantOutputs:
-  [
-    {
-      "requestId": "test",
-      "resourceId": "XX125",
-      "actions":
-        {
-          "assist":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme.hr.uk",
-            },
-          "aid":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "role.acme_travel_agent.vdefault/acme.hr.uk",
-              "scope": "acme.hr.uk",
-            },
-          "suggest":
-            {
-              "effect": "EFFECT_DENY",
-              "policy": "role.acme_assistant.vdefault/acme.hr.uk",
-              "scope": "acme.hr.uk",
-            },
-          "redirect":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme.hr",
-            },
-          "view:public":
-            {
-              "effect": "EFFECT_ALLOW",
-              "policy": "resource.leave_request.vdefault/acme.hr.uk",
-              "scope": "acme",
-            },
-        },
-      "effectiveDerivedRoles": ["any_employee"],
-      "evaluationErrors":
-        [
-          {
-            "celError":
-              {
-                "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                "message": "no such key: ip_address",
-              },
-          },
-          {
-            "celError":
-              {
-                "expression": "R.attr.owner == P.id",
-                "message": "no such key: owner",
-              },
-          },
-        ],
-    },
-  ]
+description: OVERRIDE_PARENT resource policies interleaved with role policies with parent roles
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      # allowed in named role, parent custom role and in resource policy in same scope
+      - assist
+
+      # allowed in named role, but not in parent custom role. is in resource policy but will be denied by parent custom role
+      - aid
+
+      # not allowed in named role, but is in parent custom role
+      - suggest
+
+      # allowed in named role and parent custom role and for parent role in resource policy in parent scope
+      - redirect
+
+      # allowed in `any_employee` derived role which has the `employee` parent role
+      - view:public
+    principal:
+      id: john
+      roles:
+        - acme_assistant
+    resource:
+      kind: leave_request
+      scope: acme.hr.uk
+      id: XX125
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      assist:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk
+        scope: acme.hr.uk
+      aid:
+        effect: EFFECT_DENY
+        policy: role.acme_travel_agent.vdefault/acme.hr.uk
+        scope: acme.hr.uk
+      suggest:
+        effect: EFFECT_DENY
+        policy: role.acme_assistant.vdefault/acme.hr.uk
+        scope: acme.hr.uk
+      redirect:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk
+        scope: acme.hr
+      view:public:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk
+        scope: acme
+    effectiveDerivedRoles:
+      - any_employee
+    evaluationErrors:
+      - celError:
+          expression: R.attr.owner == P.id
+          message: "no such key: owner"
+
 wantDecisionLogs:
-  [
-    {
-      "callId": "01HGJXT9A4RMD9A7YG74146YV2",
-      "timestamp": "2023-12-01T14:51:39.204970988Z",
-      "checkResources":
-        {
-          "inputs":
-            [
-              {
-                "requestId": "test",
-                "resource":
-                  {
-                    "kind": "leave_request",
-                    "scope": "acme.hr.uk",
-                    "id": "XX125",
-                  },
-                "principal":
-                  {
-                    "id": "john",
-                    "roles": ["acme_assistant"],
-                  },
-                "actions": ["assist", "aid", "suggest", "redirect", "view:public"],
-              },
-            ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "XX125",
-                "actions":
-                  {
-                    "assist":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme.hr.uk",
-                      },
-                    "aid":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "role.acme_travel_agent.vdefault/acme.hr.uk",
-                        "scope": "acme.hr.uk",
-                      },
-                    "suggest":
-                      {
-                        "effect": "EFFECT_DENY",
-                        "policy": "role.acme_assistant.vdefault/acme.hr.uk",
-                        "scope": "acme.hr.uk",
-                      },
-                    "redirect":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme.hr",
-                      },
-                    "view:public":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.leave_request.vdefault/acme.hr.uk",
-                        "scope": "acme",
-                      },
-                  },
-                "effectiveDerivedRoles": ["any_employee"],
-                "evaluationErrors":
-                  [
-                    {
-                      "celError":
-                        {
-                          "expression": '(P.attr.ip_address.inIPAddrRange("10.20.0.0/16") ? "GB" : "")',
-                          "message": "no such key: ip_address",
-                        },
-                    },
-                    {
-                      "celError":
-                        {
-                          "expression": "R.attr.owner == P.id",
-                          "message": "no such key: owner",
-                        },
-                    },
-                  ],
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "resource.leave_request.vdefault":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.yaml",
-                    },
-                },
-              "resource.leave_request.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_05_acme.hr.uk.yaml",
-                    },
-                },
-              "role.acme_assistant.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_03_acme.hr.uk.yaml",
-                    },
-                },
-              "role.acme_travel_agent.vdefault/acme.hr.uk":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "role_policies/policy_04_acme.hr.uk.yaml",
-                    },
-                },
-            },
-        },
-      "policySource":
-        {
-          "disk": {},
-        },
-    },
-  ]
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.leave_request.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05.yaml
+        resource.leave_request.vdefault/acme:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.yaml
+        resource.leave_request.vdefault/acme.hr:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.yaml
+        resource.leave_request.vdefault/acme.hr.uk:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.uk.yaml
+        role.acme_assistant.vdefault/acme.hr.uk:
+          attributes:
+            driver: disk
+            source: role_policies/policy_03_acme.hr.uk.yaml
+        role.acme_travel_agent.vdefault/acme.hr.uk:
+          attributes:
+            driver: disk
+            source: role_policies/policy_04_acme.hr.uk.yaml
+    policySource:
+      disk: {}

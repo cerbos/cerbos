@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: News reader tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: alicia
+  policyVersion: default
+  roles:
+    - user
+  attr:
+    package: PREMIUM
+
+tests:
+  - resource:
+      kind: NEWS
+      policyVersion: default
+    action: SHOW
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: in
+                  operands:
+                    - value: PRO
+                    - variable: request.resource.attr.tags
+      matchedScopes:
+        SHOW: ""

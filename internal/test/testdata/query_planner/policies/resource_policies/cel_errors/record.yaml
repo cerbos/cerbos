@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  resource: cel_errors.record
+  version: default
+  importDerivedRoles:
+    - cel_errors.common_roles
+  rules:
+    - actions:
+        - list
+        - view
+      roles:
+        - user
+      effect: EFFECT_ALLOW
+
+    - actions:
+        - view
+      derivedRoles:
+        - owner
+      effect: EFFECT_DENY
+
+    - actions:
+        - export
+      roles:
+        - user
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: '"owner" in runtime.effectiveDerivedRoles'

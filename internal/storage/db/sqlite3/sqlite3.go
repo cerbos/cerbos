@@ -158,8 +158,7 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 	}
 
 	if _, err := tx.Insert(internal.PolicyTbl).Prepared(true).Rows(pr).Executor().ExecContext(ctx); err != nil {
-		sqliteErr := new(gosqlite3.Error)
-		if !errors.As(err, &sqliteErr) || sqliteErr.Code() != gosqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
+		if sqliteErr, ok := errors.AsType[*gosqlite3.Error](err); !ok || sqliteErr.Code() != gosqlite3lib.SQLITE_CONSTRAINT_PRIMARYKEY {
 			return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 		}
 

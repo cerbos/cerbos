@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Scope value used in expressions
+
+config:
+  lenientScopeSearch:
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: 25859a53-0b45-4fef-a932-65078e0a776c
+  roles:
+    - ADMIN
+  attr:
+    organizations:
+      - tailwind
+      - globalcorp
+
+tests:
+  - resource:
+      kind: expense
+      scope: tailwind
+      policyVersion: default
+    action: view
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""
