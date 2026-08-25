@@ -1,2 +1,2 @@
 type:enhancement
-New cerbos_dev_rule_table_last_successful_refresh metric tracking when the rule table served by the engine was last updated
+New `cerbos_dev_rule_table_last_successful_refresh` metric to track when the rule table served by the engine was successfully refreshed from the policy source without any errors.
