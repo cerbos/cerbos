@@ -46,7 +46,6 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	// Import to register the Badger audit log backend.
 	_ "github.com/cerbos/cerbos/internal/audit/local"
@@ -498,15 +497,11 @@ func mkGatewayMux(grpcConn grpc.ClientConnInterface) *grpcruntime.ServeMux {
 		grpcruntime.WithForwardResponseOption(customHTTPResponseCode),
 		grpcruntime.WithIncomingHeaderMatcher(incomingHeaderMatcher),
 		grpcruntime.WithMarshalerOption("application/json+pretty", &grpcJSONPb{
-			JSONPb: grpcruntime.JSONPb{
-				MarshalOptions:   protojson.MarshalOptions{Indent: "  "},
-				UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
-			},
+			Indent:         "  ",
+			DiscardUnknown: false,
 		}),
 		grpcruntime.WithMarshalerOption(grpcruntime.MIMEWildcard, &grpcJSONPb{
-			JSONPb: grpcruntime.JSONPb{
-				UnmarshalOptions: protojson.UnmarshalOptions{DiscardUnknown: false},
-			},
+			DiscardUnknown: false,
 		}),
 		grpcruntime.WithMetadata(setPeerMetadata),
 		grpcruntime.WithRoutingErrorHandler(handleRoutingError),

@@ -64,7 +64,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/install-tools@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
         with:
           tools: |-
             buf
@@ -74,7 +74,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/check-repo-status@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
 
   download-test-times:
     name: Download test times
@@ -125,7 +125,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: cerbos/actions/install-tools@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/install-tools@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
         with:
           tools: just
 
@@ -184,12 +184,12 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.x
+          go-version: 1.27.x
           cache: false
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/install-tools@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
         with:
           tools: just
 
@@ -250,11 +250,11 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.x
+          go-version: 1.27.x
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/install-tools@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
         with:
           tools: just
 
@@ -265,7 +265,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: cerbos/actions/golangci-lint@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/golangci-lint@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
 
   buf:
     needs: changes
@@ -283,7 +283,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint protos
-        uses: cerbos/actions/buf@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/buf@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
         with:
           breaking: false
           format: true
@@ -322,7 +322,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version: 1.27.x
 
       - name: Test Helm chart
         run: ./deploy/charts/validate.sh
@@ -350,7 +350,7 @@ jobs:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/install-tools@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main
         with:
           tools: |-
             goreleaser
@@ -448,4 +448,4 @@ jobs:
           persist-credentials: false
 
       - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@4ac8a5ba0639572e55895c7bd2ef39bad82a2932 # main
+        uses: cerbos/actions/lint-actions@69bd18cfe7152a480728c2617569acfcb3fcc3b7 # main

@@ -125,7 +125,8 @@ func doInitLogging(ctx context.Context, level string, zapCore zapcore.Core) {
 	grpclog.SetLoggerV2(zapgrpc.NewLogger(logger.Named("grpc").WithOptions(
 		zap.IncreaseLevel(zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl > zapcore.ErrorLevel
-		})))))
+		})),
+	)))
 }
 
 // setLogLevelForDuration temporarily sets the global log level to the given level for a period of time.

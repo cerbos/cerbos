@@ -1,10 +1,10 @@
 module github.com/cerbos/cerbos/tools
 
-go 1.26.4
+go 1.27.0
 
 require (
 	connectrpc.com/connect v1.20.0
-	github.com/cerbos/actions v0.0.0-20260824083451-4ac8a5ba0639
+	github.com/cerbos/actions v0.0.0-20260825150418-69bd18cfe715
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260817054743-3a41ba463000
@@ -12,7 +12,7 @@ require (
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
-	github.com/vektra/mockery/v3 v3.7.3
+	github.com/vektra/mockery/v3 v3.7.4
 	go.elastic.co/go-licence-detector v0.10.0
 	golang.org/x/tools v0.49.0
 	golang.org/x/vuln v1.7.0

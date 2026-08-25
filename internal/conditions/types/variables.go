@@ -20,7 +20,7 @@ type Variables interface {
 
 type VariablesMap map[string]any
 
-var _ Variables = (VariablesMap)(nil)
+var _ Variables = VariablesMap(nil)
 
 func (m VariablesMap) IsSet(name string) bool {
 	_, ok := m[name]
