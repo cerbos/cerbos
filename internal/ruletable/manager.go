@@ -93,9 +93,8 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 }
 
 // LastReloadError returns the outcome of the most recent rule table rebuild triggered by a
-// reload event. Because reload events are processed synchronously by the subscription
-// manager, after a Reloadable store's Reload call returns this reflects the rebuild
-// triggered by that reload (or a newer one).
+// reload event. A store's Reload waits until subscribers have processed the reload event,
+// so once Reload returns, this reflects the rebuild triggered by it (or a newer one).
 func (mgr *Manager) LastReloadError() error {
 	if mgr == nil {
 		return nil
