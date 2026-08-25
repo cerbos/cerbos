@@ -18,11 +18,11 @@ var (
 	reloadMu sync.Mutex
 )
 
-// Reload triggers a reload of the given store. Reloads never run concurrently and each
-// caller is served by a reload that started after its call.
-// Callers arriving while a reload is in flight join a single follow-up reload
-// instead of joining the in-flight one, whose snapshot of the storage may
-// predate their changes.
+// Reload triggers a reload of the given store. Reloads never run concurrently
+// and each caller is served by a reload that started after its call. Callers
+// arriving while a reload is in flight are merged into a single follow-up
+// reload instead of joining the in-flight one, whose snapshot of the storage
+// may predate their changes.
 func Reload(ctx context.Context, rs Reloadable) error {
 	_, err, _ := sfGroup.Do("admin_reload", func() (any, error) {
 		reloadMu.Lock()
