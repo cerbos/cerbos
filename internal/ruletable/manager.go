@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -19,17 +20,19 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
 type Manager struct {
 	*RuleTable
-	conf         *evaluator.Conf
-	policyLoader policyloader.PolicyLoader
-	schemaMgr    schema.Manager
-	log          *logging.Logger
-	mu           sync.RWMutex
+	conf          *evaluator.Conf
+	policyLoader  policyloader.PolicyLoader
+	schemaMgr     schema.Manager
+	log           *logging.Logger
+	lastReloadErr error
+	mu            sync.RWMutex
 }
 
 func NewRuleTableManager(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
@@ -67,32 +70,54 @@ func (mgr *Manager) SubscriberID() string {
 
 func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
+		var err error
 		switch event.Kind {
 		case storage.EventReload:
-			if err := mgr.reload(); err != nil {
+			if err = mgr.reload(); err != nil {
 				mgr.log.Warnw("Error reloading rule table, maintaining last valid state", "error", err)
 			}
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			mgr.log.Debugw("Processing storage event", "event", event)
-			if err := mgr.processPolicyEvent(event); err != nil {
+			if err = mgr.processPolicyEvent(event); err != nil {
 				mgr.log.Warnw("Error processing storage event, maintaining last valid state", "event", event, "error", err)
 			}
 		default:
 			mgr.log.Debugw("Ignoring storage event", "event", event)
+			continue
+		}
+
+		if err == nil {
+			metrics.Record(context.Background(), metrics.RuleTableLastSuccessfulRefresh(), time.Now().UnixMilli())
 		}
 	}
 }
 
-func (mgr *Manager) reload() error {
+// LastReloadError returns the outcome of the most recent rule table rebuild triggered by a
+// reload event. Because reload events are processed synchronously by the subscription
+// manager, after a Reloadable store's Reload call returns this reflects the rebuild
+// triggered by that reload (or a newer one).
+func (mgr *Manager) LastReloadError() error {
+	if mgr == nil {
+		return nil
+	}
+
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	return mgr.lastReloadErr
+}
+
+func (mgr *Manager) reload() (err error) {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
+	defer func() { mgr.lastReloadErr = err }() // set lastReloadErr while the lock is still held
 
 	var newRuleTable *RuleTable
 	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
-		var err error
-		newRuleTable, err = ruleTableStore.GetRuleTable()
-		if err != nil && !errors.Is(err, storage.ErrUnsupportedOperation) {
-			return fmt.Errorf("failed to load the new rule table: %w", err)
+		var rtErr error
+		newRuleTable, rtErr = ruleTableStore.GetRuleTable()
+		if rtErr != nil && !errors.Is(rtErr, storage.ErrUnsupportedOperation) {
+			return fmt.Errorf("failed to load the new rule table: %w", rtErr)
 		}
 	}
 
@@ -101,18 +126,11 @@ func (mgr *Manager) reload() error {
 		defer cancelFunc()
 
 		mgr.log.Info("Reloading rule table")
-		defer paceBuildGC()()
-		protoRT := NewProtoRuletable()
 
+		var rtErr error
 		// If compilation fails, maintain the last valid rule table state.
-		// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-		if err := LoadPolicies(ctx, protoRT, mgr.policyLoader); err != nil {
-			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
-		}
-
-		var err error
-		if newRuleTable, err = NewRuleTable(protoRT); err != nil {
-			return fmt.Errorf("failed to create rule table: %w", err)
+		if newRuleTable, rtErr = NewRuleTableFromLoader(ctx, mgr.policyLoader); rtErr != nil {
+			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", rtErr)
 		}
 	}
 
