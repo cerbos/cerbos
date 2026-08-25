@@ -1,0 +1,2 @@
+type:enhancement
+New cerbos_dev_rule_table_last_successful_refresh metric tracking when the rule table served by the engine was last updated
