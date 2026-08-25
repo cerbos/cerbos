@@ -96,10 +96,6 @@ func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 // reload event. A store's Reload waits until subscribers have processed the reload event,
 // so once Reload returns, this reflects the rebuild triggered by it (or a newer one).
 func (mgr *Manager) LastReloadError() error {
-	if mgr == nil {
-		return nil
-	}
-
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 

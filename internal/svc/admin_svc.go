@@ -465,11 +465,9 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 
 	// Reload events are processed synchronously, so by this point the rule table rebuild
 	// triggered by the reload has completed and any failure is observable here.
-	if cas.ruleTableMgr != nil {
-		if err := cas.ruleTableMgr.LastReloadError(); err != nil {
-			log.Error("store reloaded but the rule table rebuild failed", zap.Error(err))
-			return nil, status.Error(codes.Internal, "store reloaded but the rule table rebuild failed")
-		}
+	if err := cas.ruleTableMgr.LastReloadError(); err != nil {
+		log.Error("store reloaded but the rule table rebuild failed", zap.Error(err))
+		return nil, status.Error(codes.Internal, "store reloaded but the rule table rebuild failed")
 	}
 
 	return &responsev1.ReloadStoreResponse{}, nil
