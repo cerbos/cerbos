@@ -226,7 +226,9 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to reload index: %w", err)
 	}
 
-	s.subs.NotifySubscribers(evts...)
+	if err := s.subs.NotifySubscribersAndWait(ctx, evts...); err != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", err)
+	}
 
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return nil
