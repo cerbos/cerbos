@@ -1,3 +1,3 @@
 type:fix
-Admin API store reload with wait=true now waits for the rule table rebuild and reports its failure
+Admin API store reload with `wait=true` now actually waits for the policies to compile and reports any failures.
 Previously the reload request returned before policies were recompiled, so a reload that pulled in policies that fail to compile reported success while the PDP kept serving the previous rule table. The request now returns after the rule table rebuild completes and fails with a distinct error if the rebuild failed. Concurrent reload requests are merged, and each request is served by a reload that started after it was received.
