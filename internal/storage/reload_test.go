@@ -57,7 +57,7 @@ func TestReloadCoalescing(t *testing.T) {
 		t.Fatal("Timed out waiting for the first reload to start")
 	}
 
-	// These callers arrive while the first reload is in flight. They must
+	// Late callers arrive while the first reload is in flight. They must
 	// all coalesce into a single follow-up reload.
 	const numLateCallers = 3
 	lateDone := make(chan error, numLateCallers)
