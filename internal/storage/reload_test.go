@@ -3,7 +3,7 @@
 
 //go:build !js && !wasm
 
-package storage
+package storage_test
 
 import (
 	"context"
@@ -12,76 +12,67 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/cerbos/cerbos/internal/storage"
 )
 
+type ctxCaller struct{}
+
+var ctxCallerKey = &ctxCaller{}
+
 type fakeReloadableStore struct {
-	firstReloadStarted chan struct{}
-	block              chan struct{}
-	starts             []time.Time
-	mu                 sync.Mutex
+	block   chan struct{}
+	callers chan any
 }
 
-func (f *fakeReloadableStore) Reload(_ context.Context) error {
-	f.mu.Lock()
-	f.starts = append(f.starts, time.Now())
-	n := len(f.starts)
-	f.mu.Unlock()
+func (f *fakeReloadableStore) Reload(ctx context.Context) error {
+	caller := ctx.Value(ctxCallerKey)
+	f.callers <- caller
 
-	if n == 1 {
-		close(f.firstReloadStarted)
-		<-f.block
-	}
+	<-f.block
+	time.Sleep(100 * time.Millisecond)
 
 	return nil
 }
 
-func (f *fakeReloadableStore) reloadStarts() []time.Time {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	return append([]time.Time(nil), f.starts...)
-}
-
 func TestReloadCoalescing(t *testing.T) {
 	rs := &fakeReloadableStore{
-		firstReloadStarted: make(chan struct{}),
-		block:              make(chan struct{}),
+		block:   make(chan struct{}),
+		callers: make(chan any, 8),
 	}
 
-	firstDone := make(chan error, 1)
-	go func() { firstDone <- Reload(t.Context(), rs) }()
+	var wg sync.WaitGroup
+	// First request that enters the singleflight group and is "blocked"
+	wg.Go(func() {
+		ctx := context.WithValue(context.Background(), ctxCallerKey, "A")
+		_ = storage.Reload(ctx, rs)
+	})
 
-	select {
-	case <-rs.firstReloadStarted:
-	case <-time.After(5 * time.Second):
-		t.Fatal("Timed out waiting for the first reload to start")
+	// Wait for "A" to start
+	first := <-rs.callers
+	require.Equal(t, "A", first)
+
+	// Launch other requests that arrive after A and concurrently.
+	for _, c := range []string{"B", "C", "D", "E", "F"} {
+		wg.Go(func() {
+			ctx := context.WithValue(context.Background(), ctxCallerKey, c)
+			_ = storage.Reload(ctx, rs)
+		})
 	}
 
-	// Late callers arrive while the first reload is in flight. They must
-	// all coalesce into a single follow-up reload.
-	const numLateCallers = 3
-	lateDone := make(chan error, numLateCallers)
-	for range numLateCallers {
-		go func() { lateDone <- Reload(t.Context(), rs) }()
-	}
+	// Finish A's call
+	rs.block <- struct{}{}
 
-	// Give the late callers time to join the follow-up flight before the first reload finishes.
-	// If the timeout is too short, this can't produce false positives.
-	time.Sleep(200 * time.Millisecond)
-	allLateCallersJoinedBy := time.Now()
+	// No more blocking. Every call takes 100ms.
 	close(rs.block)
 
-	require.NoError(t, <-firstDone)
-	for range numLateCallers {
-		select {
-		case err := <-lateDone:
-			require.NoError(t, err)
-		case <-time.After(5 * time.Second):
-			t.Fatal("Timed out waiting for a late caller to return")
-		}
+	wg.Wait()
+	close(rs.callers)
+	callers := make([]string, 0, len(rs.callers))
+	for c := range rs.callers {
+		callers = append(callers, c.(string))
 	}
 
-	starts := rs.reloadStarts()
-	require.Len(t, starts, 2, "late callers should coalesce into exactly one follow-up reload")
-	require.True(t, starts[1].After(allLateCallersJoinedBy), "follow-up reload should have started after all late callers arrived")
+	t.Logf("%++v", append([]string{first.(string)}, callers...))
+	require.Len(t, callers, 1)
 }
