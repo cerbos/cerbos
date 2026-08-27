@@ -1331,7 +1331,9 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *dbStorage) Reload(ctx context.Context) error {
-	s.subs.NotifySubscribers(storage.NewReloadEvent())
+	if err := s.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent()); err != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", err)
+	}
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(driverName))
 	return nil
 }

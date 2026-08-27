@@ -41,23 +41,30 @@ var (
 	authSep         = []byte(":")
 )
 
+// RuleTableReloadStatus reports the outcome of the most recent rule table rebuild.
+type RuleTableReloadStatus interface {
+	LastReloadError() error
+}
+
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
-	sfGroup  singleflight.Group
-	store    storage.Store
-	auditLog audit.Log
+	sfGroup      singleflight.Group
+	store        storage.Store
+	ruleTableMgr RuleTableReloadStatus
+	auditLog     audit.Log
 	*svcv1.UnimplementedCerbosAdminServiceServer
 	adminUser       string
 	adminPasswdHash []byte
 }
 
-func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser string, adminPasswdHash []byte) *CerbosAdminService {
+func NewCerbosAdminService(store storage.Store, ruleTableMgr RuleTableReloadStatus, auditLog audit.Log, adminUser string, adminPasswdHash []byte) *CerbosAdminService {
 	svc := &CerbosAdminService{
 		auditLog:                              auditLog,
 		adminUser:                             adminUser,
 		adminPasswdHash:                       adminPasswdHash,
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
 		store:                                 store,
+		ruleTableMgr:                          ruleTableMgr,
 	}
 
 	return svc
@@ -450,6 +457,13 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 
 	if err := reload(ctx); err != nil {
 		return nil, status.Error(codes.Internal, "failed to reload store")
+	}
+
+	// Reload events are processed synchronously, so by this point the rule table rebuild
+	// triggered by the reload has completed and any failure is observable here.
+	if err := cas.ruleTableMgr.LastReloadError(); err != nil {
+		log.Error("store reloaded but the rule table rebuild failed", zap.Error(err))
+		return nil, status.Error(codes.Internal, "store reloaded but the rule table rebuild failed")
 	}
 
 	return &responsev1.ReloadStoreResponse{}, nil

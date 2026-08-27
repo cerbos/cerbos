@@ -311,7 +311,7 @@ func (s *Server) startGRPCServer(l net.Listener, core *CoreComponents) (*grpc.Se
 
 		go checkForUnsafeAdminCredentials(log, adminPasswdHash)
 
-		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(core.Store, core.AuditLog, adminUser, adminPasswdHash))
+		svcv1.RegisterCerbosAdminServiceServer(server, svc.NewCerbosAdminService(core.Store, core.RuleTableMgr, core.AuditLog, adminUser, adminPasswdHash))
 		s.health.SetServingStatus(svcv1.CerbosAdminService_ServiceDesc.ServiceName, healthpb.HealthCheckResponse_SERVING)
 	}
 

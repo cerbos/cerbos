@@ -212,6 +212,8 @@ type Subscribable interface {
 // Subscriber is the interface implemented by storage subscribers.
 type Subscriber interface {
 	SubscriberID() string
+	// OnStorageEvent must apply the events' effects before returning.
+	// SubscriptionManager.NotifySubscribersAndWait semantics treats "delivered" as processed.
 	OnStorageEvent(...Event)
 }
 

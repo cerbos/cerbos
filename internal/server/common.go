@@ -24,12 +24,13 @@ import (
 
 // CoreComponents holds the shared components needed for both server and Lambda function initialization.
 type CoreComponents struct {
-	Engine     *engine.Engine
-	AuxData    *auxdata.AuxData
-	AuditLog   audit.Log
-	Store      storage.Store
-	ReqLimits  svc.RequestLimits
-	SuggestHub bool
+	Engine       *engine.Engine
+	AuxData      *auxdata.AuxData
+	AuditLog     audit.Log
+	Store        storage.Store
+	RuleTableMgr *ruletable.Manager
+	ReqLimits    svc.RequestLimits
+	SuggestHub   bool
 }
 
 // InitializeCerbosCore performs the common initialization steps shared between server and Lambda function.
@@ -142,11 +143,12 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 	}
 
 	return &CoreComponents{
-		Engine:     eng,
-		AuxData:    auxData,
-		AuditLog:   auditLog,
-		Store:      store,
-		ReqLimits:  reqLimits,
-		SuggestHub: auditLog.Backend() != audithub.Backend && store.Driver() != storagehub.DriverName,
+		Engine:       eng,
+		AuxData:      auxData,
+		AuditLog:     auditLog,
+		Store:        store,
+		RuleTableMgr: ruletableMgr,
+		ReqLimits:    reqLimits,
+		SuggestHub:   auditLog.Backend() != audithub.Backend && store.Driver() != storagehub.DriverName,
 	}, nil
 }
