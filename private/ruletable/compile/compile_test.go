@@ -22,6 +22,7 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/cerbos/cerbos/private/compile"
+	privateruletable "github.com/cerbos/cerbos/private/ruletable"
 	ruletablecompile "github.com/cerbos/cerbos/private/ruletable/compile"
 )
 
@@ -90,6 +91,67 @@ func TestCompileStream(t *testing.T) {
 	sortRules(want)
 	sortRules(have)
 	require.Empty(t, gocmp.Diff(want, have, protocmp.Transform()))
+}
+
+// TestScanRuleTable proves that ScanRuleTable is the inverse of marshalling.
+func TestScanRuleTable(t *testing.T) {
+	rt, err := ruletablecompile.Compile(t.Context(), os.DirFS(test.PathToDir(t, "store")))
+	require.NoError(t, err)
+	require.NotEmpty(t, rt.GetRules())
+	rt.Manifest = &runtimev1.RuleTable_Manifest{BundleId: "SCANCHECK0000000"}
+
+	conventional, err := rt.MarshalVT()
+	require.NoError(t, err)
+
+	var streamed, buf []byte
+	for _, row := range rt.Rules {
+		buf, err = ruletablecompile.AppendRuleRowRecord(buf[:0], row)
+		require.NoError(t, err)
+		streamed = append(streamed, buf...)
+	}
+
+	rows := rt.Rules
+	rt.Rules = nil
+	remainderBytes, err := rt.MarshalVT()
+	require.NoError(t, err)
+	remainder := &runtimev1.RuleTable{}
+	require.NoError(t, remainder.UnmarshalVT(remainderBytes))
+	rt.Rules = rows
+
+	streamed = append(streamed, remainderBytes...)
+	for name, data := range map[string][]byte{"conventional": conventional, "streamed": streamed} {
+		t.Run(name, func(t *testing.T) {
+			var data1, remainderBytes1 []byte
+			var rows1 []*runtimev1.RuleTable_RuleRow
+			require.NoError(t, privateruletable.ScanRuleTable(data,
+				func(n int, record, payload []byte) error {
+					require.Equal(t, len(rows1), n, "ordinals must be sequential")
+					row := &runtimev1.RuleTable_RuleRow{}
+					require.NoError(t, row.UnmarshalVT(payload))
+					rows1 = append(rows1, row)
+					data1 = append(data1, record...)
+					return nil
+				},
+				func(record []byte) error {
+					remainderBytes1 = append(remainderBytes1, record...)
+					data1 = append(data1, record...)
+					return nil
+				}))
+
+			require.Len(t, rows1, len(rows))
+			for n := range len(rows) {
+				require.Empty(t, gocmp.Diff(rows[n], rows1[n], protocmp.Transform()), "row %d mismatch", n)
+			}
+
+			remainder1 := &runtimev1.RuleTable{}
+			require.NoError(t, remainder1.UnmarshalVT(remainderBytes1))
+			require.Empty(t, gocmp.Diff(remainder, remainder1, protocmp.Transform()), "remainder mismatch")
+
+			rt1 := &runtimev1.RuleTable{}
+			require.NoError(t, rt1.UnmarshalVT(data1))
+			require.Empty(t, gocmp.Diff(rt, rt1, protocmp.Transform()), "reassembled table mismatch")
+		})
+	}
 }
 
 // TestStreamedWireCompatibility proves that a rule table can be serialized incrementally.
