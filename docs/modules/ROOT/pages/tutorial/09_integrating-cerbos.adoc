@@ -12,5 +12,5 @@ Cerbos has SDKs available for Go, Java, .NET, Node, PHP, Python, Ruby, and Rust.
 
 [TIP]
 ====
-For a review of integration architecture, query plan usage, SDK configuration, or production deployment patterns, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text[speak to us].
+For a review of integration architecture, query plan usage, SDK configuration, or production deployment patterns, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=tutorial_integrating[speak to us].
 ====

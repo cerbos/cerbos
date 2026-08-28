@@ -622,5 +622,5 @@ timestamp(R.attr.lastUpdateTime) + duration("24h") == timestamp("2021-05-02T13:3
 
 [TIP]
 ====
-For patterns that translate condition logic into database queries, see https://www.cerbos.dev/blog/filtering-database-results-with-cerbos-query-plans[Filtering database results with Cerbos query plans]. For implementation review, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text[speak to us].
+For patterns that translate condition logic into database queries, see https://www.cerbos.dev/blog/filtering-database-results-with-cerbos-query-plans[Filtering database results with Cerbos query plans]. For implementation review, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=conditions[speak to us].
 ====

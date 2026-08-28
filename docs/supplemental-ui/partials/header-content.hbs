@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="navbar-brand">
       <div class="navbar-item">
-        <a href="{{or site.url (or siteRootUrl siteRootPath)}}" style="vertical-align: middle;">
+        <a href="{{siteRootPath}}/cerbos/latest/index.html" style="vertical-align: middle;">
           <img src="{{uiRootPath}}/cerbos.svg" alt="Cerbos" width="134" height="50" />
         </a>
       </div>
@@ -23,27 +23,28 @@
         <div class="navbar-item has-dropdown is-hoverable">
           <div class="navbar-link">Cerbos components</div>
           <div class="navbar-dropdown">
-            <div class="navbar-item"><strong>Cerbos PDP</strong><br /><small>Open source authorization engine</small>
-            </div>
-            <a class="navbar-item" href="{{site.url}}/cerbos/latest/index.html">&nbsp;&nbsp;Documentation</a>
-            <a class="navbar-item" href="https://github.com/cerbos/cerbos">&nbsp;&nbsp;Code</a>
-            <a class="navbar-item" href="https://github.com/cerbos/cerbos/issues">&nbsp;&nbsp;Issue Tracker</a>
-            <a class="navbar-item" href="https://github.com/cerbos/cerbos/discussions">&nbsp;&nbsp;Discussion Forum</a>
+            <div class="navbar-item has-label"><strong>Cerbos PDP</strong><small>Open source authorization
+                engine</small></div>
+            <a class="navbar-item" href="{{siteRootPath}}/cerbos/latest/index.html">Documentation</a>
+            <a class="navbar-item" href="https://github.com/cerbos/cerbos">Code</a>
+            <a class="navbar-item" href="https://github.com/cerbos/cerbos/issues">Issue Tracker</a>
+            <a class="navbar-item" href="https://github.com/cerbos/cerbos/discussions">Discussion Forum</a>
             <hr class="navbar-divider">
-            <div class="navbar-item"><strong>Cerbos Hub</strong><br /><small>Policy management control plane</small>
-            </div>
+            <div class="navbar-item has-label"><strong>Cerbos Hub</strong><small>Policy management control
+                plane</small></div>
             <a class="navbar-item"
-              href="https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text">&nbsp;&nbsp;Sign
+              href="https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=nav_hub_signup">Sign
               up</a>
-            <a class="navbar-item" href="{{site.url}}/cerbos-hub/">&nbsp;&nbsp;Documentation</a>
+            <a class="navbar-item" href="{{siteRootPath}}/cerbos-hub/index.html">Documentation</a>
             <hr class="navbar-divider">
-            <div class="navbar-item"><strong>PEP SDKs</strong><br /><small>Client libraries for policy
+            <div class="navbar-item has-label"><strong>Cerbos Synapse</strong><small>Context enrichment
+                layer</small></div>
+            <a class="navbar-item" href="https://www.cerbos.dev/product-cerbos-synapse">About</a>
+            <a class="navbar-item" href="{{siteRootPath}}/synapse/latest/index.html">Documentation</a>
+            <hr class="navbar-divider">
+            <div class="navbar-item has-label"><strong>PEP SDKs</strong><small>Client libraries for policy
                 enforcement</small></div>
-            <a class="navbar-item" href="https://www.cerbos.dev/ecosystem">&nbsp;&nbsp;Documentation</a>
-            <hr class="navbar-divider">
-            <div class="navbar-item"><strong>Cerbos Synapse</strong><br /><small>Context enrichment layer</small></div>
-            <a class="navbar-item" href="https://www.cerbos.dev/product-cerbos-synapse">&nbsp;&nbsp;About</a>
-            <a class="navbar-item" href="{{site.url}}/synapse/latest/">&nbsp;&nbsp;Documentation</a>
+            <a class="navbar-item" href="https://www.cerbos.dev/ecosystem">Documentation</a>
           </div>
         </div>
 
@@ -65,12 +66,12 @@
           </div>
         </div>
 
-        <a class="navbar-item"
-          href="https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text"
+        <a class="navbar-item cta-secondary"
+          href="https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=header_engineer"
           target="_blank">Talk to an engineer</a>
 
-        <a class="navbar-item"
-          href="https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text"
+        <a class="navbar-item cta-primary"
+          href="https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=header_hub"
           target="_blank">Try Cerbos Hub for free</a>
 
       </div>
