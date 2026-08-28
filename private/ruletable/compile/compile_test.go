@@ -103,13 +103,6 @@ func TestScanRuleTable(t *testing.T) {
 	conventional, err := rt.MarshalVT()
 	require.NoError(t, err)
 
-	var streamed, buf []byte
-	for _, row := range rt.Rules {
-		buf, err = ruletablecompile.AppendRuleRowRecord(buf[:0], row)
-		require.NoError(t, err)
-		streamed = append(streamed, buf...)
-	}
-
 	rows := rt.Rules
 	rt.Rules = nil
 	remainderBytes, err := rt.MarshalVT()
@@ -117,6 +110,13 @@ func TestScanRuleTable(t *testing.T) {
 	remainder := &runtimev1.RuleTable{}
 	require.NoError(t, remainder.UnmarshalVT(remainderBytes))
 	rt.Rules = rows
+
+	var streamed, buf []byte
+	for _, row := range rt.Rules {
+		buf, err = ruletablecompile.AppendRuleRowRecord(buf[:0], row)
+		require.NoError(t, err)
+		streamed = append(streamed, buf...)
+	}
 
 	streamed = append(streamed, remainderBytes...)
 	for name, data := range map[string][]byte{"conventional": conventional, "streamed": streamed} {
