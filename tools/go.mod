@@ -8,7 +8,7 @@ require (
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260817054743-3a41ba463000
-	github.com/dkorunic/betteralign v0.14.4
+	github.com/dkorunic/betteralign v0.15.0
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
