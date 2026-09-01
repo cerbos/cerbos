@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/cel-go/common/ast"
+	"cel.dev/cel-go/common/ast"
 	expr "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/types/known/structpb"
 

@@ -6,7 +6,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/google/cel-go/common/types"
+	"cel.dev/cel-go/common/types"
 )
 
 const variablesTypeName = "cerbos.Variables"

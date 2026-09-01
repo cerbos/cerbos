@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/cel-go/parser"
+	"cel.dev/cel-go/parser"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 

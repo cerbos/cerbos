@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"testing"
 
+	"cel.dev/cel-go/cel"
+	"cel.dev/cel-go/common/decls"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions/types"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/decls"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )

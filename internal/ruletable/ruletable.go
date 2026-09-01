@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/cel-go/cel"
+	"cel.dev/cel-go/cel"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
