@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/cel-go/cel"
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/parser"
+	"cel.dev/cel-go/cel"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/parser"
 	"github.com/stretchr/testify/require"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )

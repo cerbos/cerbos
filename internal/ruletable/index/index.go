@@ -7,8 +7,8 @@ import (
 	"slices"
 	"unique"
 
+	"cel.dev/cel-go/cel"
 	"github.com/cespare/xxhash/v2"
-	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
