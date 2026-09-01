@@ -4,7 +4,7 @@
 package internal
 
 import (
-	celast "github.com/google/cel-go/common/ast"
+	celast "cel.dev/cel-go/common/ast"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 

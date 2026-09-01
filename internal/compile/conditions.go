@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/cel-go/cel"
+	"cel.dev/cel-go/cel"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"

@@ -10,7 +10,7 @@ import (
 	"maps"
 	"sort"
 
-	celast "github.com/google/cel-go/common/ast"
+	celast "cel.dev/cel-go/common/ast"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 

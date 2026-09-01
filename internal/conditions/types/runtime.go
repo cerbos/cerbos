@@ -6,8 +6,8 @@ package types
 import (
 	"fmt"
 
+	"cel.dev/cel-go/common/types"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
-	"github.com/google/cel-go/common/types"
 )
 
 var (

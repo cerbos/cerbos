@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
+	celtypes "cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/common/types/ref"
 	"github.com/cerbos/cerbos/internal/conditions/types"
-	celtypes "github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/types/known/structpb"
 

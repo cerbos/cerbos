@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/cel-go/common/operators"
+	"cel.dev/cel-go/common/operators"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 

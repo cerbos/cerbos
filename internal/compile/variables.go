@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/google/cel-go/common/ast"
+	"cel.dev/cel-go/common/ast"
 	"gonum.org/v1/gonum/graph"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
