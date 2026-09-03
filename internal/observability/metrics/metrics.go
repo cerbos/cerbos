@@ -45,6 +45,13 @@ var Meter = sync.OnceValue(func() metric.Meter {
 })
 
 var (
+	AuditLogCount = once(func() (metric.Int64Counter, error) {
+		return Meter().Int64Counter(
+			"cerbos_dev_audit_log_count",
+			metric.WithDescription("Number of audit log entries accepted by the backend"),
+		)
+	})
+
 	AuditErrorCount = once(func() (metric.Int64Counter, error) {
 		return Meter().Int64Counter(
 			"cerbos_dev_audit_error_count",
