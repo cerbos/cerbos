@@ -52,6 +52,14 @@ var (
 		)
 	})
 
+	AuditBackendKey           = attribute.Key("backend")
+	AuditBackendBufferEntries = once(func() (metric.Int64ObservableGauge, error) {
+		return Meter().Int64ObservableGauge(
+			"cerbos_dev_audit_log_backend_buffer_entries",
+			metric.WithDescription("Number of audit log entires buffered by the backend"),
+		)
+	})
+
 	AuditErrorCount = once(func() (metric.Int64Counter, error) {
 		return Meter().Int64Counter(
 			"cerbos_dev_audit_error_count",
