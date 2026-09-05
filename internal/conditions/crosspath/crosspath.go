@@ -112,20 +112,23 @@ func Dir(path string) (string, error) {
 			return Decode(encoded), nil
 		}
 
-		idx := strings.LastIndex(encoded.value, "/")
-		encoded.value = encoded.value[:idx]
+		if idx := strings.LastIndex(encoded.value, "/"); idx != -1 {
+			encoded.value = encoded.value[:idx]
+		}
 		return Decode(encoded), nil
 	case encoded.kind == KindDrive:
 		if encoded.root {
 			return Decode(encoded) + `\`, nil
 		}
 
-		idx := strings.LastIndex(encoded.value, "/")
-		encoded.value = encoded.value[:idx]
+		if idx := strings.LastIndex(encoded.value, "/"); idx != -1 {
+			encoded.value = encoded.value[:idx]
+		}
 		return Decode(encoded), nil
 	case encoded.kind == KindUnknown && encoded.win32:
-		idx := strings.LastIndex(encoded.value, "/")
-		encoded.value = encoded.value[:idx]
+		if idx := strings.LastIndex(encoded.value, "/"); idx != -1 {
+			encoded.value = encoded.value[:idx]
+		}
 		return Decode(encoded), nil
 	default:
 		encoded.value = filepath.Dir(encoded.value)
