@@ -119,6 +119,7 @@ func TestDir(t *testing.T) {
 		{path: `\\host\share\path\\to\file.txt`, want: `\\host\share\path\to`},
 		{path: `\\host\share\\file.txt`, want: `\\host\share`},
 		{path: `C:\path\\to\file.txt`, want: `C:\path\to`},
+		{path: "file.txt", want: "."},
 	}
 
 	for idx, testCase := range testCases {
