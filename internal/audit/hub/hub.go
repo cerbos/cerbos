@@ -14,6 +14,7 @@ import (
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
 	"github.com/sourcegraph/conc/pool"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
@@ -66,7 +67,27 @@ func init() {
 			}
 		}
 
-		return NewLog(conf, decisionFilter, syncer, logger, pipeLog)
+		newl, err := NewLog(conf, decisionFilter, syncer, logger, pipeLog)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err := metrics.Meter().RegisterCallback(func(_ context.Context, o metric.Observer) error {
+			rows := int64(0)
+			for _, tbl := range newl.Db.Tables() {
+				rows += int64(tbl.KeyCount)
+			}
+
+			o.ObserveInt64(metrics.AuditBackendBufferEntries(), rows, metric.WithAttributes(
+				metrics.AuditBackendKey.String(Backend),
+			))
+
+			return nil
+		}, metrics.AuditBackendBufferEntries()); err != nil {
+			return nil, err
+		}
+
+		return newl, nil
 	})
 }
 
