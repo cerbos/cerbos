@@ -223,14 +223,12 @@ func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hu
 		Mask: hub.MaskConf{
 			Peer: []string{"address"},
 		},
-		Conf: local.Conf{
-			StoragePath:     t.TempDir(),
-			RetentionPeriod: 24 * time.Hour,
-			Advanced: local.AdvancedConf{
-				BufferSize:    1,
-				MaxBatchSize:  32,
-				FlushInterval: flushInterval,
-			},
+		StoragePath:     t.TempDir(),
+		RetentionPeriod: 24 * time.Hour,
+		Advanced: local.AdvancedConf{
+			BufferSize:    1,
+			MaxBatchSize:  32,
+			FlushInterval: flushInterval,
 		},
 	}
 
