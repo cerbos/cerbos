@@ -223,12 +223,14 @@ func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hu
 		Mask: hub.MaskConf{
 			Peer: []string{"address"},
 		},
-		StoragePath:     t.TempDir(),
-		RetentionPeriod: 24 * time.Hour,
-		Advanced: local.AdvancedConf{
-			BufferSize:    1,
-			MaxBatchSize:  32,
-			FlushInterval: flushInterval,
+		Conf: local.Conf{
+			StoragePath:     t.TempDir(),
+			RetentionPeriod: 24 * time.Hour,
+			Advanced: local.AdvancedConf{
+				BufferSize:    1,
+				MaxBatchSize:  32,
+				FlushInterval: flushInterval,
+			},
 		},
 	}
 
@@ -279,6 +281,8 @@ func TestSizeBasedBatching(t *testing.T) {
 		t.Cleanup(func() { _ = db.Close() })
 
 		ctx := t.Context()
+
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Return(nil)
 
 		// Create an ID for regular entry
 		id, err := audit.NewID()
@@ -421,8 +425,6 @@ func TestSizeBasedBatching(t *testing.T) {
 			}, nil
 		})
 		require.NoError(t, err)
-
-		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Times(3).Return(nil)
 
 		// Verify all keys are deleted after processing
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
