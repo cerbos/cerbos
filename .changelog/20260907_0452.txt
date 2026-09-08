@@ -1,0 +1,2 @@
+type:enhancement
+Reduce memory usage and allocation churn when syncing a large audit log backlog to Cerbos Hub
