@@ -6,6 +6,9 @@
 package disk
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/storage"
 )
@@ -25,6 +28,14 @@ type Conf struct {
 
 func (conf *Conf) Key() string {
 	return confKey
+}
+
+func (conf *Conf) Validate() error {
+	if _, err := os.Stat(conf.Directory); err != nil {
+		return fmt.Errorf("failed to stat policy directory: %w", err)
+	}
+
+	return nil
 }
 
 func GetConf() (*Conf, error) {
