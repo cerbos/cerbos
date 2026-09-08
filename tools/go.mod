@@ -9,7 +9,7 @@ require (
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260817054743-3a41ba463000
 	github.com/dkorunic/betteralign v0.15.0
-	github.com/fullstorydev/grpcurl v1.9.3
+	github.com/fullstorydev/grpcurl v1.9.4
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
 	github.com/vektra/mockery/v3 v3.7.4
@@ -63,7 +63,7 @@ require (
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.8.1 // indirect
-	github.com/jhump/protoreflect v1.18.0 // indirect
+	github.com/jhump/protoreflect v1.18.1 // indirect
 	github.com/jhump/protoreflect/v2 v2.0.0-beta.2 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/knadh/koanf/parsers/yaml v1.1.0 // indirect
@@ -120,8 +120,8 @@ require (
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
-	google.golang.org/grpc v1.83.1 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260825221802-da73d73af1c5 // indirect
+	google.golang.org/grpc v1.83.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	helm.sh/helm/v3 v3.21.0 // indirect
 	nikand.dev/go/cbor v0.0.0-20260513133317-e21540fee99f // indirect

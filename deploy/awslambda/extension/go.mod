@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/deploy/awslambda
 go 1.27
 
 require (
-	github.com/aws/aws-lambda-go v1.54.0
+	github.com/aws/aws-lambda-go v1.55.0
 	go.uber.org/multierr v1.11.0
 )
 
