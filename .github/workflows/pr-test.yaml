@@ -64,7 +64,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
         with:
           tools: |-
             buf
@@ -74,7 +74,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/check-repo-status@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
 
   download-test-times:
     name: Download test times
@@ -125,7 +125,7 @@ jobs:
         uses: ./.github/actions/setup-go
 
       - name: Install just
-        uses: cerbos/actions/install-tools@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
         with:
           tools: just
 
@@ -189,7 +189,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
         with:
           tools: just
 
@@ -254,7 +254,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
         with:
           tools: just
 
@@ -265,7 +265,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: cerbos/actions/golangci-lint@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/golangci-lint@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
 
   buf:
     needs: changes
@@ -283,7 +283,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint protos
-        uses: cerbos/actions/buf@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/buf@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
         with:
           breaking: false
           format: true
@@ -350,7 +350,7 @@ jobs:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
         with:
           tools: |-
             goreleaser
@@ -448,4 +448,4 @@ jobs:
           persist-credentials: false
 
       - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@2982bc2c3b7a118fb59778962ef3de549f9aca30 # main
+        uses: cerbos/actions/lint-actions@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
