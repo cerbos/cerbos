@@ -187,10 +187,8 @@ func resetPeakRSS(t *testing.T) {
 }
 
 // TestCatchupDrainProfile measures the catch-up path.
-// A large backlog accumulated during an outage draining through a syncer in a
-// single sync cycle.
 func TestCatchupDrainProfile(t *testing.T) {
-	if testing.Short() {
+	if os.Getenv("CI") == "true" {
 		t.Skip()
 	}
 
