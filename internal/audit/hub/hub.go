@@ -370,18 +370,18 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 
 	fallbacks := 0
 	err := l.Db.View(func(txn *badgerv4.Txn) error {
-		opts := badgerv4.DefaultIteratorOptions
-		opts.Prefix = prefix
-		opts.PrefetchValues = false
-		it := txn.NewIterator(opts)
-		defer it.Close()
+		markerOpts := badgerv4.DefaultIteratorOptions
+		markerOpts.Prefix = prefix
+		markerOpts.PrefetchValues = false
+		markerIt := txn.NewIterator(markerOpts)
+		defer markerIt.Close()
 
-		eOpts := badgerv4.DefaultIteratorOptions
-		eOpts.Prefix = entryPrefix
-		eOpts.PrefetchValues = false
-		eit := txn.NewIterator(eOpts)
-		defer eit.Close()
-		eit.Seek(entryPrefix)
+		entryOpts := badgerv4.DefaultIteratorOptions
+		entryOpts.Prefix = entryPrefix
+		entryOpts.PrefetchValues = false
+		entryIt := txn.NewIterator(entryOpts)
+		defer entryIt.Close()
+		entryIt.Seek(entryPrefix)
 
 		var keys [][]byte
 		if keysIface := keysPool.Get(); keysIface == nil {
@@ -417,8 +417,8 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			return nil
 		}
 
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
+		for markerIt.Seek(prefix); markerIt.ValidForPrefix(prefix); markerIt.Next() {
+			item := markerIt.Item()
 			k := item.Key()
 
 			if err := item.Value(func(v []byte) error {
@@ -431,27 +431,27 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			var entry *logsv1.IngestBatch_Entry
 			steps := 0
 		advance:
-			for eit.ValidForPrefix(entryPrefix) {
-				switch cmp := bytes.Compare(eit.Item().Key(), logKey); {
+			for entryIt.ValidForPrefix(entryPrefix) {
+				switch cmp := bytes.Compare(entryIt.Item().Key(), logKey); {
 				case cmp == 0:
-					if err := eit.Item().Value(func(v []byte) error {
+					if err := entryIt.Item().Value(func(v []byte) error {
 						var err error
 						entry, err = mkIngestBatchEntry(kind, v)
 						return err
 					}); err != nil {
 						return err
 					}
-					eit.Next()
+					entryIt.Next()
 					break advance
 				case cmp > 0:
 					break advance
 				default:
 					steps++
 					if steps > maxEntrySeekLinearSteps {
-						eit.Seek(logKey)
+						entryIt.Seek(logKey)
 						steps = 0
 					} else {
-						eit.Next()
+						entryIt.Next()
 					}
 				}
 			}
