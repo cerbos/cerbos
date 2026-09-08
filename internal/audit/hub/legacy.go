@@ -16,14 +16,8 @@ import (
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
-// legacyKeys handles sync markers written by PDP versions older than v0.44,
-// whose keys lack the entry size in the final 4 bytes. A legacy entry's size
-// is only known once the entry is materialized; if it turns out oversized, it
-// is re-written through the write path (masking it and storing a
-// size-integrated key) and the legacy key is queued for deletion here.
-// legacyKeys owns that delete batch, creating it lazily so cycles that see no
-// legacy keys never allocate it.
-//
+// legacyKeys handles sync markers written by older PDP versions, whose keys
+// lack the entry size in the final 4 bytes.
 // TODO: rip this out in the future (requires a migration or a stepping-stone
 // upgrade policy; a surviving legacy key would panic the modern size decode).
 type legacyKeys struct {
@@ -42,12 +36,8 @@ func (lk *legacyKeys) isLegacy(k []byte) bool {
 	return len(k) == local.KeyByteSizeStart
 }
 
-// rewriteOversized re-writes an oversized legacy entry through the write path
-// (masking it and storing a size-integrated key) and queues legacyKey for
-// deletion. legacyKey must be an owned copy, never an iterator's key view:
-// the delete batch holds it until flush, long after the iterator has moved
-// on. The caller must drop the event: it has been fully processed here, and
-// the rewritten, correctly filtered event is picked up on a future run.
+// rewriteOversized re-writes an oversized legacy entry through the write path.
+// legacyKey must be an owned copy.
 func (lk *legacyKeys) rewriteOversized(ctx context.Context, entry *logsv1.IngestBatch_Entry, legacyKey []byte) error {
 	switch lk.kind { //nolint:exhaustive
 	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
