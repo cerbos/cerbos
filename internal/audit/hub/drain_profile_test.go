@@ -28,8 +28,6 @@ import (
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
-const profileEnvVar = "CERBOS_AUDIT_CHURN_PROFILE"
-
 type countingSyncer struct {
 	mu           sync.Mutex
 	attempts     int
