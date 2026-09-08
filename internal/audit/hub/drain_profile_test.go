@@ -187,8 +187,8 @@ func resetPeakRSS(t *testing.T) {
 }
 
 // TestCatchupDrainProfile measures the catch-up path.
-// A large backlog accumulated during an outage draining through a healthy
-// syncer in a single sync cycle.
+// A large backlog accumulated during an outage draining through a syncer in a
+// single sync cycle.
 func TestCatchupDrainProfile(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
@@ -218,11 +218,12 @@ func TestCatchupDrainProfile(t *testing.T) {
 	require.NoError(t, log.streamLogs(), "drain cycle must succeed")
 	drainDur := time.Since(drainStart)
 
+	peakRSS := procStatusKB(t, "VmHWM")
+
 	runtime.GC()
 	var after runtime.MemStats
 	runtime.ReadMemStats(&after)
 	rssAfter := procStatusKB(t, "VmRSS")
-	peakRSS := procStatusKB(t, "VmHWM")
 
 	require.Zero(t, countKeys(t, log.Db, SyncStatusPrefix), "all sync markers must be drained")
 
@@ -242,6 +243,6 @@ func TestCatchupDrainProfile(t *testing.T) {
 		before.HeapInuse>>20, after.HeapInuse>>20)
 	t.Logf("RSS: before=%d MB after=%d MB, peak (VmHWM, drain)=%d MB",
 		rssBefore>>20, rssAfter>>20, peakRSS>>20)
-	t.Logf("empty sync cycle: before backlog=%s, after drain (over %d tombstoned markers)=%s",
+	t.Logf("empty sync cycle: before backlog=%s, after drain (scanning across %d tombstoned markers)=%s",
 		emptyCycleBefore, 2*numRecords, emptyCycleAfter)
 }
