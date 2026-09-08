@@ -1,2 +1,0 @@
-type:enhancement
-Reduce memory usage and GC pressure when syncing a large audit log backlog to Cerbos Hub
