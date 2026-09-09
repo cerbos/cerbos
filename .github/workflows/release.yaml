@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - v*
+permissions: {}
 jobs:
   releaseBinaries:
     name: Release Binaries
