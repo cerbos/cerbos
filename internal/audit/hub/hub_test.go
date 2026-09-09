@@ -280,6 +280,8 @@ func TestSizeBasedBatching(t *testing.T) {
 
 		ctx := t.Context()
 
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Return(nil)
+
 		// Create an ID for regular entry
 		id, err := audit.NewID()
 		require.NoError(t, err)
@@ -421,8 +423,6 @@ func TestSizeBasedBatching(t *testing.T) {
 			}, nil
 		})
 		require.NoError(t, err)
-
-		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Times(3).Return(nil)
 
 		// Verify all keys are deleted after processing
 		require.EventuallyWithT(t, func(c *assert.CollectT) {

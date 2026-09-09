@@ -4,6 +4,7 @@
 package hub
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -190,6 +191,9 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 
 		rec = entry.GetAccessLogEntry()
 		rec.Oversized = true
+
+		// the entry has been shrunk, update the size
+		s = entry.SizeVT()
 	}
 
 	if err := l.Log.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
@@ -248,6 +252,9 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 
 		rec = entry.GetDecisionLogEntry()
 		rec.Oversized = true
+
+		// the entry has been shrunk, update the size
+		s = entry.SizeVT()
 	}
 
 	if err := l.Log.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
@@ -332,28 +339,41 @@ func (l *Log) streamLogs() error {
 
 var keysPool = &sync.Pool{}
 
+// maxEntrySeekLinearSteps is a maximum number of times iterator.Next() can be
+// called before falling back to a Seek. Markers and entries share the call-ID
+// ordering, so in the common case each marker's entry is at most a few
+// positions ahead.
+const maxEntrySeekLinearSteps = 8
+
+// streamPrefix walks the sync markers under prefix and the entries they point
+// at with two lockstep iterators inside one snapshot.
 func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix syncPrefix) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
-	syncKeys := func(keys [][]byte) error {
-		if len(keys) == 0 {
-			return nil
-		}
-		logger.Log(zapcore.Level(-3), "Syncing and deleting batch",
-			zap.Int("batchSize", len(keys)))
-		if err := l.syncThenDelete(ctx, kind, keys); err != nil {
-			return fmt.Errorf("failed to sync and delete logs: %w", err)
-		}
-
-		return nil
+	var entryPrefix []byte
+	switch kind { //nolint:exhaustive
+	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+		entryPrefix = local.AccessLogPrefix
+	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+		entryPrefix = local.DecisionLogPrefix
+	default:
+		return errors.New("unspecified IngestBatch_EntryKind")
 	}
 
-	opts := badgerv4.DefaultIteratorOptions
-	opts.Prefix = prefix
-	opts.PrefetchValues = false
-	return l.Db.View(func(txn *badgerv4.Txn) error {
-		it := txn.NewIterator(opts)
-		defer it.Close()
+	fallbacks := 0
+	err := l.Db.View(func(txn *badgerv4.Txn) error {
+		markerOpts := badgerv4.DefaultIteratorOptions
+		markerOpts.Prefix = prefix
+		markerOpts.PrefetchValues = false
+		markerIt := txn.NewIterator(markerOpts)
+		defer markerIt.Close()
+
+		entryOpts := badgerv4.DefaultIteratorOptions
+		entryOpts.Prefix = entryPrefix
+		entryOpts.PrefetchValues = false
+		entryIt := txn.NewIterator(entryOpts)
+		defer entryIt.Close()
+		entryIt.Seek(entryPrefix)
 
 		var keys [][]byte
 		if keysIface := keysPool.Get(); keysIface == nil {
@@ -366,105 +386,128 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		}
 		defer keysPool.Put(&keys)
 
-		deleteBatch := l.Db.NewWriteBatch()
-		defer deleteBatch.Cancel()
+		// entries[j] is nil when the entry for keys[j] has expired; the
+		// orphaned marker is still deleted along with the rest of the batch
+		entries := make([]*logsv1.IngestBatch_Entry, l.maxBatchSize)
 
+		lk := newLegacyKeys(l, kind, logger)
+		defer lk.cancel()
+
+		var logKey []byte
 		var i int
 		var batchSizeBytes int
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
 
-			// Retrieve byte-size from key.
-			// If we find a legacy key (without the message size stored in the final 4 bytes), we need
-			// to establish the message size now. Retrieving and sizing each entry individually is annoyingly
-			// inefficient, but given that this'll only happen "once" when dealing with old, unprocessed
-			// events, it's probably OK.
-			// If it's oversized, we just replace the key in the DB and skip, so that it can be picked up on
-			// the next iteration.
-			// TODO: rip this if-else out in the future
-			var size int
-			if k := item.Key(); len(k) == local.KeyByteSizeStart { //nolint:nestif
-				entries, err := l.getIngestBatchEntries([][]byte{item.Key()}, kind)
-				if err != nil {
-					return err
-				}
-				if len(entries) > 0 {
-					entry := entries[0]
-					size = entry.SizeVT()
-					if size > l.maxBatchSizeBytes {
-						// Write the new size-integrated key to Badger
-						switch kind { //nolint:exhaustive
-						case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-							if err := l.WriteAccessLogEntry(ctx, func() (*auditv1.AccessLogEntry, error) {
-								return entry.GetAccessLogEntry(), nil
-							}); err != nil {
-								return err
-							}
-						case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-							if err := l.WriteDecisionLogEntry(ctx, func() (*auditv1.DecisionLogEntry, error) {
-								return entry.GetDecisionLogEntry(), nil
-							}); err != nil {
-								return err
-							}
-						}
+		flushBatch := func(ks [][]byte, es []*logsv1.IngestBatch_Entry) error {
+			if len(ks) == 0 {
+				return nil
+			}
+			logger.Log(zapcore.Level(-3), "Syncing and deleting batch",
+				zap.Int("batchSize", len(ks)))
+			if err := l.syncThenDelete(ctx, kind, ks, es); err != nil {
+				return fmt.Errorf("failed to sync and delete logs: %w", err)
+			}
+			return nil
+		}
 
-						// Delete the legacy (potentially oversized) key
-						if err := deleteBatch.Delete(k); err != nil {
-							if errors.Is(err, badgerv4.ErrDiscardedTxn) {
-								deleteBatch.Cancel()
-								deleteBatch = l.Db.NewWriteBatch()
-								_ = deleteBatch.Delete(k)
-							} else {
-								return fmt.Errorf("failed to delete key: %w", err)
-							}
-						}
+		for markerIt.Seek(prefix); markerIt.ValidForPrefix(prefix); markerIt.Next() {
+			item := markerIt.Item()
+			k := item.Key()
 
-						// Skip this event for now. The new, correctly filtered event
-						// will be processed in a future run.
-						continue
-					}
-				}
-			} else {
-				size = int(binary.BigEndian.Uint32(item.Key()[local.KeyByteSizeStart:]))
+			if err := item.Value(func(v []byte) error {
+				logKey = append(logKey[:0], v...)
+				return nil
+			}); err != nil {
+				return err
 			}
 
+			var entry *logsv1.IngestBatch_Entry
+			steps := 0
+		advance:
+			for entryIt.ValidForPrefix(entryPrefix) {
+				switch cmp := bytes.Compare(entryIt.Item().Key(), logKey); {
+				case cmp == 0:
+					if err := entryIt.Item().Value(func(v []byte) error {
+						var err error
+						entry, err = mkIngestBatchEntry(kind, v)
+						return err
+					}); err != nil {
+						return err
+					}
+					entryIt.Next()
+					break advance
+				case cmp > 0:
+					break advance
+				default:
+					steps++
+					if steps > maxEntrySeekLinearSteps {
+						entryIt.Seek(logKey)
+						steps = 0
+					} else {
+						entryIt.Next()
+					}
+				}
+			}
+
+			if entry == nil {
+				fallbacks++
+				var err error
+				if entry, err = getEntry(txn, kind, logKey); err != nil {
+					return err
+				}
+			}
+
+			legacy := lk.isLegacy(k)
+			var size int
+			if legacy {
+				size = entry.SizeVT()
+			} else {
+				size = int(binary.BigEndian.Uint32(k[local.KeyByteSizeStart:]))
+			}
+
+			// An oversized legacy entry cannot be synced as-is.
+			if legacy && size > l.maxBatchSizeBytes {
+				if err := lk.rewriteOversized(ctx, entry, item.KeyCopy(nil)); err != nil {
+					return err
+				}
+				continue
+			}
+
+			// Cut the batch if this entry would overflow it.
 			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > l.maxBatchSizeBytes) {
-				if err := syncKeys(keys[:i]); err != nil {
+				if err := flushBatch(keys[:i], entries[:i]); err != nil {
 					return err
 				}
 				i = 0
 				batchSizeBytes = 0
 			}
 
-			if keys[i] == nil {
-				keys[i] = make([]byte, len(item.Key()))
-			} else {
-				clear(keys[i])
-			}
-			copy(keys[i], item.Key())
-
+			keys[i] = append(keys[i][:0], k...)
+			entries[i] = entry
 			batchSizeBytes += size
 			i++
 		}
 
-		if err := deleteBatch.Flush(); err != nil {
-			// these legacy keys will be processed again on the next sync run
-			logger.Warn("Failed to delete legacy keys, will retry on next run",
-				zap.Error(err),
-				zap.Stringer("kind", kind))
-		}
+		lk.flush()
 
-		return syncKeys(keys[:i])
+		return flushBatch(keys[:i], entries[:i])
 	})
+	if fallbacks > 0 {
+		logger.Log(zapcore.Level(-2), "Entry lookups fell back to point reads", zap.Int("count", fallbacks))
+	}
+	return err
 }
 
-func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte) error {
+// syncThenDelete sends the non-nil entries as one IngestBatch and, on success,
+// deletes all the batch's marker keys. nil entries mark expired records whose
+// markers are cleaned up along with the rest.
+func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryKind, syncKeys [][]byte, batchEntries []*logsv1.IngestBatch_Entry) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
-	logger.Log(zapcore.Level(-3), "Getting ingest batch entries")
-	entries, err := l.getIngestBatchEntries(syncKeys, kind)
-	if err != nil {
-		logger.Log(zapcore.Level(-2), "Failed to get ingest batch entries", zap.Error(err))
-		return fmt.Errorf("failed to get ingest batch entries: %w", err)
+
+	entries := make([]*logsv1.IngestBatch_Entry, 0, len(batchEntries))
+	for _, entry := range batchEntries {
+		if entry != nil {
+			entries = append(entries, entry)
+		}
 	}
 
 	if len(entries) == 0 {
@@ -513,81 +556,57 @@ func (l *Log) syncThenDelete(ctx context.Context, kind logsv1.IngestBatch_EntryK
 	return wb.Flush()
 }
 
-func (l *Log) getIngestBatchEntries(syncKeys [][]byte, kind logsv1.IngestBatch_EntryKind) ([]*logsv1.IngestBatch_Entry, error) {
-	entries := make([]*logsv1.IngestBatch_Entry, 0, len(syncKeys))
-	if err := l.Db.Update(func(txn *badgerv4.Txn) error {
-		for _, k := range syncKeys {
-			syncItem, err := txn.Get(k)
-			if err != nil {
-				if errors.Is(err, badgerv4.ErrKeyNotFound) {
-					continue
-				}
-				return err
-			}
-
-			var logKey []byte
-			if err := syncItem.Value(func(v []byte) error {
-				logKey = v
-				return nil
-			}); err != nil {
-				return err
-			}
-
-			logItem, err := txn.Get(logKey)
-			if err != nil {
-				if errors.Is(err, badgerv4.ErrKeyNotFound) {
-					continue
-				}
-				return err
-			}
-
-			var entry *logsv1.IngestBatch_Entry
-			if err := logItem.Value(func(v []byte) error {
-				switch kind {
-				case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-					accessLog := &auditv1.AccessLogEntry{}
-					if err := accessLog.UnmarshalVT(v); err != nil {
-						return err
-					}
-
-					entry = &logsv1.IngestBatch_Entry{
-						Kind: logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG,
-						Entry: &logsv1.IngestBatch_Entry_AccessLogEntry{
-							AccessLogEntry: accessLog,
-						},
-						Timestamp: accessLog.Timestamp,
-					}
-				case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-					decisionLog := &auditv1.DecisionLogEntry{}
-					if err := decisionLog.UnmarshalVT(v); err != nil {
-						return err
-					}
-
-					entry = &logsv1.IngestBatch_Entry{
-						Kind: logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG,
-						Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
-							DecisionLogEntry: decisionLog,
-						},
-						Timestamp: decisionLog.Timestamp,
-					}
-				case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
-					return errors.New("unspecified IngestBatch_EntryKind")
-				}
-
-				return nil
-			}); err != nil {
-				return err
-			}
-
-			entries = append(entries, entry)
+func getEntry(txn *badgerv4.Txn, kind logsv1.IngestBatch_EntryKind, logKey []byte) (entry *logsv1.IngestBatch_Entry, err error) {
+	item, err := txn.Get(logKey)
+	if err != nil {
+		if errors.Is(err, badgerv4.ErrKeyNotFound) {
+			return nil, nil
 		}
+		return nil, err
+	}
 
-		return nil
+	if err = item.Value(func(v []byte) error {
+		entry, err = mkIngestBatchEntry(kind, v)
+		return err
 	}); err != nil {
 		return nil, err
 	}
 
-	return entries, nil
+	return entry, nil
+}
+
+// mkIngestBatchEntry wraps the serialized entry bytes into an IngestBatch_Entry.
+func mkIngestBatchEntry(kind logsv1.IngestBatch_EntryKind, raw []byte) (*logsv1.IngestBatch_Entry, error) {
+	switch kind { //nolint:exhaustive
+	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
+		accessLog := &auditv1.AccessLogEntry{}
+		if err := accessLog.UnmarshalVT(raw); err != nil {
+			return nil, err
+		}
+
+		return &logsv1.IngestBatch_Entry{
+			Kind: logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG,
+			Entry: &logsv1.IngestBatch_Entry_AccessLogEntry{
+				AccessLogEntry: accessLog,
+			},
+			Timestamp: accessLog.Timestamp,
+		}, nil
+	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
+		decisionLog := &auditv1.DecisionLogEntry{}
+		if err := decisionLog.UnmarshalVT(raw); err != nil {
+			return nil, err
+		}
+
+		return &logsv1.IngestBatch_Entry{
+			Kind: logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG,
+			Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{
+				DecisionLogEntry: decisionLog,
+			},
+			Timestamp: decisionLog.Timestamp,
+		}, nil
+	default:
+		return nil, errors.New("unspecified IngestBatch_EntryKind")
+	}
 }
 
 func (l *Log) Backend() string {
