@@ -14,7 +14,6 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      actions: ${{ steps.filter.outputs.actions }}
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
       npm: ${{ steps.filter.outputs.npm }}
@@ -24,8 +23,6 @@ jobs:
         id: filter
         with:
           filters: |
-            actions:
-              - '.github/**'
             code:
               - '!(.node-version|{docs,npm}/**)'
             docs:
@@ -40,7 +37,7 @@ jobs:
               - '**/*.proto'
 
   cache:
-    uses: ./.github/workflows/cache.yaml
+    uses: $/.github/workflows/cache.yaml
     permissions:
       pull-requests: read
 
@@ -58,10 +55,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Install tools
         uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
@@ -119,10 +116,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Install just
         uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
@@ -231,7 +228,7 @@ jobs:
           persist-credentials: false
 
       - name: Generate docs
-        uses: ./.github/actions/antora-docs
+        uses: $/.github/actions/antora-docs
         id: docs
 
   golangci:
@@ -342,10 +339,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
 
@@ -433,19 +430,3 @@ jobs:
         run: test "${NEEDS_TEST_NPM_RESULT}" = "success"
         env:
           NEEDS_TEST_NPM_RESULT: ${{ needs.test-npm.result }}
-
-  lint-actions:
-    name: Lint GitHub Actions
-    runs-on: ubuntu-latest
-    needs: changes
-    if: ${{ needs.changes.outputs.actions == 'true' }}
-    permissions:
-      security-events: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
