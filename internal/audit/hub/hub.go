@@ -360,14 +360,6 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		return errors.New("unspecified IngestBatch_EntryKind")
 	}
 
-	// GC pacer is enabled on demand
-	var unpace func()
-	defer func() {
-		if unpace != nil {
-			unpace()
-		}
-	}()
-
 	fallbacks := 0
 	err := l.Db.View(func(txn *badgerv4.Txn) error {
 		markerOpts := badgerv4.DefaultIteratorOptions
@@ -482,9 +474,6 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 
 			// Cut the batch if this entry would overflow it.
 			if i > 0 && (i == l.maxBatchSize || batchSizeBytes+size > l.maxBatchSizeBytes) {
-				if unpace == nil {
-					unpace = paceSyncGC()
-				}
 				if err := flushBatch(keys[:i], entries[:i]); err != nil {
 					return err
 				}
