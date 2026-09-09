@@ -40,7 +40,7 @@ jobs:
               - '**/*.proto'
 
   cache:
-    uses: ./.github/workflows/cache.yaml
+    uses: $/.github/workflows/cache.yaml
     permissions:
       pull-requests: read
 
@@ -58,10 +58,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Install tools
         uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
@@ -119,10 +119,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Install just
         uses: cerbos/actions/install-tools@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
@@ -231,7 +231,7 @@ jobs:
           persist-credentials: false
 
       - name: Generate docs
-        uses: ./.github/actions/antora-docs
+        uses: $/.github/actions/antora-docs
         id: docs
 
   golangci:
@@ -342,10 +342,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
 

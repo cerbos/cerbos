@@ -24,10 +24,10 @@ jobs:
           persist-credentials: false
 
       - name: Generate docs
-        uses: ./.github/actions/antora-docs
+        uses: $/.github/actions/antora-docs
 
       - name: Publish to Netlify
-        uses: ./.github/actions/publish-docs
+        uses: $/.github/actions/publish-docs
         with:
           auth_token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           site_id: ${{ secrets.NETLIFY_SITE_ID }}

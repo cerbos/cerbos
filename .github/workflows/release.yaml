@@ -22,10 +22,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
 
@@ -158,10 +158,10 @@ jobs:
           persist-credentials: false
 
       - name: Generate docs
-        uses: ./.github/actions/antora-docs
+        uses: $/.github/actions/antora-docs
 
       - name: Publish to Netlify
-        uses: ./.github/actions/publish-docs
+        uses: $/.github/actions/publish-docs
         with:
           auth_token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           site_id: ${{ secrets.NETLIFY_SITE_ID }}

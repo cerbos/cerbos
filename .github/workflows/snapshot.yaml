@@ -23,10 +23,10 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
           write_build_cache: true
@@ -74,7 +74,7 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Set up QEMU
         id: qemu
@@ -113,7 +113,7 @@ jobs:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
       - name: Install Go and cache dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
           write_build_cache: true

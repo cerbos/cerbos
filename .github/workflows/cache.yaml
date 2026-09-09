@@ -45,11 +45,11 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
         id: setup
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           write_deps_cache: true
           write_build_cache: true
