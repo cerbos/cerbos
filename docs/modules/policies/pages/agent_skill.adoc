@@ -79,9 +79,3 @@ The generated files are laid out as a standard Cerbos policy repository, with `_
 
 Point the agent at an existing policy directory and describe the change. The skill reads the current policies before editing, changes only the files that the request touches, updates the tests that cover the changed rules and then re-runs both validation passes over the whole directory.
 
-== Related pages
-
-* xref:authoring_tips.adoc[Policy authoring]
-* xref:compile.adoc[Validating and testing]
-* xref:debugging.adoc[Debugging authorization decisions]
-* xref:best_practices.adoc[Best practices]
