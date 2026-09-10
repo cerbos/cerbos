@@ -1,80 +1,89 @@
-![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml)  [![Go Report Card](https://goreportcard.com/badge/github.com/cerbos/cerbos)](https://goreportcard.com/report/github.com/cerbos/cerbos)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 <p align="center">
   <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
 </p>
+<p align="center">
+<b>Cerbos authorization management platform</b>
+<br/>
+Authorize every identity. Govern every action.
+</p>
+
+
+\[twitter @cerbosdev\]     \[linkedin @cerbos-dev\]
+
+
+[Docs](https://docs.cerbos.dev/cerbos/latest/index.html?utm_campaign=brand_cerbos&utm_source=github) · [Quickstart](https://docs.cerbos.dev/cerbos/latest/quickstart.html?utm_campaign=brand_cerbos&utm_source=github) · [Slack community](https://community.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github) · [Full Cerbos platform](https://www.cerbos.dev/how-it-works?utm_campaign=brand_cerbos&utm_source=github) · [Blog](https://www.cerbos.dev/blog?utm_campaign=brand_cerbos&utm_source=github)
 
 ## What is Cerbos?
 
-Cerbos is an authorization layer that evolves with your product. It enables you to define powerful, context-aware access control rules for your application resources in simple, intuitive YAML policies; managed and deployed via your Git-ops infrastructure. It provides highly available APIs to make simple requests to evaluate policies and make dynamic access decisions for your application.
+Cerbos is an end-to-end authorization management platform for authorizing every identity and governing every action across applications, gateways, workloads, and AI agents.
 
-This repo has everything you need to set up a self-hosted Cerbos Policy Decision Point (PDP). [Sign up for a free Cerbos Hub account](https://cerbos.dev/product-cerbos-hub?utm_campaign=brand_cerbos&utm_source=github) to streamline your policy authoring and distribution workflow to self-hosted PDPs.
+Four components work together to do that:
 
-With Cerbos Hub you can:
+* The open source [Cerbos PDP](https://docs.cerbos.dev/cerbos/latest/?utm_campaign=brand_cerbos&utm_source=github) makes the decisions.  
+* The [PEP SDKs](https://www.cerbos.dev/ecosystem?utm_campaign=brand_cerbos&utm_source=github) enforce them inside your applications.  
+* [Cerbos Hub](https://docs.cerbos.dev/cerbos-hub/?utm_campaign=brand_cerbos&utm_source=github) handles policy authoring, testing, distribution and audit.  
+* [Cerbos Synapse](https://docs.cerbos.dev/synapse/latest/?utm_campaign=brand_cerbos&utm_source=github) gathers the data each decision needs from the systems you already run.
 
-- Collaborate with colleagues to author and share policies in fully-interactive private playgrounds
-- Quickly and efficiently distribute policy updates to your whole PDP fleet
-- Build special policy bundles for client-side or in-browser authorization
-- Easily integrate with Cerbos in serverless and edge deployments
+.....
 
-## Key concepts, at a glance 👀
+**This repo is the Cerbos Policy Decision Point (PDP), the open source engine at the core of the platform.** It is stateless, high performance, AuthZEN compliant, and built to scale horizontally, and it runs anywhere you run code, from containers and Kubernetes to serverless and the edge. Policies are YAML, versioned in Git alongside the rest of your code, and evaluated at runtime through a simple API.
 
-**_PRINCIPAL:_** oftentimes just the "user", but can also represent: other applications, services, bots or anything you can think of. The "thing" that's trying to carry out an... ↙️
+The engine is [Apache 2.0](https://github.com/cerbos/cerbos?tab=Apache-2.0-1-ov-file), production ready, and free to run forever. No feature flags, no license keys, and no limit on authorization checks, services, or environments.
 
-**_ACTION:_** a specific task. Whether to create, view, update, delete, acknowledge, approve... anything. The principal might have permission to do all actions or maybe just one or two. The actions are carried out on a... ↙️
+*Running the engine is one part of authorization. Testing every policy change, getting it out to every running instance, keeping a record of every decision, and pulling in the data each decision needs are the parts you build and maintain yourself. The rest of the Cerbos platform ([try it here](https://hub.cerbos.cloud/?utm_campaign=brand_cerbos&utm_source=github)) does those. Running the PDP in production below is the short version. [Open source core vs the complete Cerbos solution](https://www.cerbos.dev/blog/open-source-vs-paid-cerbos?utm_campaign=brand_cerbos&utm_source=github) has the full comparison.*
 
-**_RESOURCE:_** the thing you're controlling access to. It could be anything, e.g., in an expense management system; reports, receipts, card details, payment records, etc. You define resources in Cerbos by writing... ↙️
+## Key concepts, at a glance
 
-**_POLICIES:_** YAML files where you define the access rules for each resource, following a [simple, structured format](#resource-policy). Stored either: [on disk](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#disk-driver), in [cloud object stores](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#blob-driver), [git repos](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#git-driver), or dynamically in [supported databases](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html#sqlite3). These are continually monitored by the... ↙️
+Four terms describe every authorization question Cerbos answers.
 
-**_CERBOS PDP:_** the Policy Decision Point: the stateless service where policies are executed and decisions are made. This runs as a separate process in kube (as a [service](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-service.html) or a [sidecar](https://docs.cerbos.dev/cerbos/latest/deployment/k8s-sidecar.html)), directly as a [systemd service](https://docs.cerbos.dev/cerbos/latest/deployment/systemd.html) or as an [AWS Lambda function](https://docs.cerbos.dev/cerbos/latest/deployment/serverless-faas.html). Once deployed, the PDP provides two primary APIs...
+**PRINCIPAL** is the human user or automated process making the request. A user, a service account, a bot, or an AI agent. It carries an ID, the roles it holds in your identity provider, and any attributes your policies need.
 
-* **_CheckResources:_** "Can this principal access this resource?"
-* **_PlanResources:_** "Which of resource kind=X can this principal access?"
+**ACTION** is what the principal is trying to do. Coarse-grained like create, view, update or delete, or fine-grained like view:public and update:invoice\_amt. Your application decides what actions exist.
 
-These APIs can be called via [cURL](#api-request), or in production via one of our many... ↙️
+**RESOURCE** is the kind of thing being accessed, an invoice, a document, a leave request. You write one resource policy per kind. The specific invoice a request is about is a resource instance.
 
-**_SDKs:_** you can see the list [here](#client-sdks). There are also a growing number of [query plan adapters](#query-plan-adapters) to convert the SDK `PlanResources` responses to a convenient query instance.
+**POLICY** is a YAML file holding the access rules for a resource, following a simple, structured format. Policies are stored [on disk](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html?utm_campaign=brand_cerbos&utm_source=github#disk-driver), in [cloud object stores](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html?utm_campaign=brand_cerbos&utm_source=github#blob-driver), in [git repos](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html?utm_campaign=brand_cerbos&utm_source=github#git-driver), or dynamically in [supported databases](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html?utm_campaign=brand_cerbos&utm_source=github#sqlite3), and Cerbos PDP watches them for changes. [Resource policies](https://docs.cerbos.dev/cerbos/latest/policies/resource_policies.html?utm_campaign=brand_cerbos&utm_source=github) are the main kind. There are also [principal policies](https://docs.cerbos.dev/cerbos/latest/policies/principal_policies.html?utm_campaign=brand_cerbos&utm_source=github) for per-user exceptions, [derived roles](https://docs.cerbos.dev/cerbos/latest/policies/derived_roles.html?utm_campaign=brand_cerbos&utm_source=github) for roles worked out at request time such as owner or branch manager, [role policies](https://docs.cerbos.dev/cerbos/latest/policies/role_policies.html?utm_campaign=brand_cerbos&utm_source=github), and [exported variables and constants](https://docs.cerbos.dev/cerbos/latest/policies/variables.html?utm_campaign=brand_cerbos&utm_source=github) for expressions shared across policies.
 
-**_RBAC -> ABAC:_** If simple RBAC doesn't cut it, you can extend the decision-making by implementing attribute based rules. Implement `conditions` in your resource policies which are evaluated dynamically at runtime using contextual data, for much more granular control. Add conditions in [derived roles](https://docs.cerbos.dev/cerbos/latest/policies/derived_roles.html) to extend the RBAC roles dynamically. Or use [principal policies](https://docs.cerbos.dev/cerbos/latest/policies/principal_policies.html) for more particular overrides for a specific user.
+Start with roles, then add [conditions](https://docs.cerbos.dev/cerbos/latest/policies/conditions.html?utm_campaign=brand_cerbos&utm_source=github) when roles alone stop being enough. Conditions are CEL expressions evaluated against the attributes in the request, which is how the same policy grows from RBAC into ABAC without changing shape.
 
-**_CERBOS HUB:_** A cloud-hosted control plane to streamline your Cerbos PDP deployment. Includes a comprehensive CI/CD solution for testing and distributing policy updates securely and efficiently, collaborative private playgrounds for quick prototyping and experimentation, and an exclusive Embedded PDP solution for deploying your policies to browsers and serverless/edge applications.
-
-## How Cerbos PDP works with your application:
-
-<p align="center">
-  <img src="https://github.com/cerbos/cerbos/blob/main/docs/modules/ROOT/assets/images/how_cerbos_works.png?raw=true" alt="Cerbos"/>
-</p>
-
-Learn more about how Cerbos PDP and Cerobs Hub work together to solve your authorization headaches [here](https://cerbos.dev/how-it-works?utm_campaign=brand_cerbos&utm_source=github).
-
-## Learn more
-
-* Get up and running quickly with our [quickstart](https://docs.cerbos.dev/cerbos/latest/quickstart.html), or build an example implementation in our [tutorial](https://docs.cerbos.dev/cerbos/latest/tutorial/00_intro.html)
-* See [example policies and requests](#examples)
-* Read the [full documentation](https://docs.cerbos.dev)
-* Explore some of our [demo repositories](https://github.com/cerbos)
-* Try online with the [Cerbos playground](https://play.cerbos.dev)
-* Learn more about [Cerbos Hub](https://cerbos.dev/product-cerbos-hub?utm_campaign=brand_cerbos&utm_source=github) and make an account
 
 ## Used by
-
-Cerbos is popular among large and small organizations:
 
 <p align="center">
   <img src="https://cerbos.dev/assets/logos/readme_logos.png" alt="Cerbos"/>
 </p>
 
 
-_Using Cerbos? Let us know by emailing devrel@cerbos.dev._
+Teams of all sizes run Cerbos in production. Read how in our [success stories](https://www.cerbos.dev/customers?utm_campaign=brand_cerbos&utm_source=github).
 
 
 ## Installation
 
-* [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html)
-* [Binary/OS packages](https://docs.cerbos.dev/cerbos/latest/installation/binary.html)
-* [Helm Chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html)
+* [Container](https://docs.cerbos.dev/cerbos/latest/installation/container.html?utm_campaign=brand_cerbos&utm_source=github)
+* [Binary/OS packages](https://docs.cerbos.dev/cerbos/latest/installation/binary.html?utm_campaign=brand_cerbos&utm_source=github)
+* [Helm Chart](https://docs.cerbos.dev/cerbos/latest/installation/helm.html?utm_campaign=brand_cerbos&utm_source=github)
 
+
+## Running the PDP in production
+
+The engine (Cerbos PDP) is stateless, so you can run as many instances as you need with no coordination between them and no shared database. On Kubernetes that is usually a sidecar next to each application pod, or a DaemonSet on larger clusters where a sidecar per pod is too much overhead. Everywhere else it runs as a standalone service behind a load balancer. See [deployment models](https://docs.cerbos.dev/cerbos/latest/deployment/index.html?utm_campaign=brand_cerbos&utm_source=github).
+
+Git is the preferred way to store policies in production. Each instance polls the store on its own schedule, so for a short window during a rollout different instances can be serving different versions of a policy. See [storage drivers](https://docs.cerbos.dev/cerbos/latest/configuration/storage.html?utm_campaign=brand_cerbos&utm_source=github).
+
+Audit and decision logging is off by default, so turn it on before you need it. The local backend keeps a store on disk you can query with `cerbosctl`, the file backend writes newline-delimited JSON you can feed into your existing log pipeline, and there is a Kafka backend if that is where your observability already lives. See [audit configuration](https://docs.cerbos.dev/cerbos/latest/configuration/audit.html?utm_campaign=brand_cerbos&utm_source=github).
+
+That is the shape of running the engine yourself. Here is what the [rest of the platform](https://www.cerbos.dev/how-it-works?utm_campaign=brand_cerbos&utm_source=github) changes:
+
+|  | Cerbos PDP (This repo) | Full Cerbos platform |
+| :---- | :---- | :---- |
+| **Policy changes** | You wire the tests into CI and roll the change out yourself | Tests run on every commit and a failing test blocks the rollout |
+| **Instances in sync** | Each instance pulls policy from your own git repo or bucket, on a schedule you set up | Same policy on every running instance within seconds, no redeploy |
+| **Decision logs** | Each instance writes its own locally until you build something to collect them | Searchable in one place and traceable to the exact policy version |
+| **Data for a decision** | Each service fetches the user and resource details before it can ask | Your app sends a user ID and the rest is fetched from your identity provider or database |
+
+Everything you build on the engine keeps working. Moving to the platform is a configuration change, not a rewrite. The engine is supported by the community Slack, and commercial support comes with the platform. [Start with the platform for free](https://hub.cerbos.cloud/?utm_campaign=brand_cerbos&utm_source=github) or [see pricing](https://www.cerbos.dev/pricing?utm_campaign=brand_cerbos&utm_source=github).
 
 ## Examples
 
@@ -196,43 +205,40 @@ EOF
 }
 ```
 
-## Client SDKs
+## SDKs and adapters
 
-* [Go](https://github.com/cerbos/cerbos-sdk-go)
-* [Java](https://github.com/cerbos/cerbos-sdk-java)
-* [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript)
-* [.NET](https://github.com/cerbos/cerbos-sdk-net)
-* [PHP](https://github.com/cerbos/cerbos-sdk-php)
-* [Python](https://github.com/cerbos/cerbos-sdk-python)
-* [Ruby](https://github.com/cerbos/cerbos-sdk-ruby)
-* [Rust](https://github.com/cerbos/cerbos-sdk-rust)
+We maintain all of these, and they all talk to the same [Cerbos API](https://docs.cerbos.dev/cerbos/latest/api/index.html?utm_campaign=brand_cerbos&utm_source=github).
 
-## Query plan adapters
+**Client SDKs** call the PDP from your application and handle the connection and serialization for you. [Go](https://github.com/cerbos/cerbos-sdk-go), [Java](https://github.com/cerbos/cerbos-sdk-java), [JavaScript](https://github.com/cerbos/cerbos-sdk-javascript), [.NET](https://github.com/cerbos/cerbos-sdk-net), [PHP](https://github.com/cerbos/cerbos-sdk-php), [Python](https://github.com/cerbos/cerbos-sdk-python), [Ruby](https://github.com/cerbos/cerbos-sdk-ruby), [Rust](https://github.com/cerbos/cerbos-sdk-rust), [Laravel](https://github.com/cerbos/cerbos-sdk-laravel).
 
-* [Prisma](https://github.com/cerbos/query-plan-adapters/tree/main/prisma)
-* [SQLAlchemy](https://github.com/cerbos/query-plan-adapters/tree/main/sqlalchemy)
+**Query plan adapters** take the filter the PDP returns from `PlanResources` and turn it into a query for your ORM or database, so a list endpoint only fetches the rows a user is allowed to see.
+
+* JavaScript. [Prisma](https://github.com/cerbos/query-plan-adapters/tree/main/prisma), [Drizzle](https://github.com/cerbos/query-plan-adapters/tree/main/drizzle), [Mongoose](https://github.com/cerbos/query-plan-adapters/tree/main/mongoose), [Convex](https://github.com/cerbos/query-plan-adapters/tree/main/convex)  
+* Python. [SQLAlchemy](https://github.com/cerbos/query-plan-adapters/tree/main/sqlalchemy), [LangChain with ChromaDB](https://github.com/cerbos/query-plan-adapters/tree/main/langchain-chromadb)  
+* Go. [ent](https://github.com/cerbos/query-plan-adapters/tree/main/ent), [pgx](https://github.com/cerbos/query-plan-adapters/tree/main/pgx)  
+* Java. [Spring Data](https://github.com/cerbos/query-plan-adapters/tree/main/spring-data), [Elasticsearch](https://github.com/cerbos/query-plan-adapters/tree/main/elasticsearch-java)  
+* Ruby. [ActiveRecord](https://github.com/cerbos/query-plan-adapters/tree/main/activerecord)
 
 ## Telemetry
 
-We collect anonymous usage data to help us improve the product. You can opt out by setting the `CERBOS_NO_TELEMETRY=1` environment variable. For more information about what data we collect and other ways to opt out, see the [telemetry documentation](https://docs.cerbos.dev/cerbos/latest/configuration/telemetry.html).
+We collect anonymous usage data to help us improve the product. You can opt out by setting the `CERBOS_NO_TELEMETRY=1` environment variable. For more information about what data we collect and other ways to opt out, see the [telemetry documentation](https://docs.cerbos.dev/cerbos/latest/configuration/telemetry.html?utm_campaign=brand_cerbos&utm_source=github).
 
-## Join the community on Slack 💬
+## Join the community on Slack
 
 <a href="http://go.cerbos.io/slack"><img src="https://i.ibb.co/GxJfc1Q/cerbos-slack-btn.png" width="200"></a>
 
-## 🔗 Links
-- [Newsletter](https://cerbos.dev/subscribe)
-- [Home page](https://cerbos.dev)
-- [Contribution Guidelines](CONTRIBUTING.md)
-- [Run cerbos Locally](https://docs.cerbos.dev/cerbos/latest/tutorial/01_running-locally)
+## Links
+* [Slack community](https://community.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github) for questions and help from the team and other users  
+* [Newsletter](https://cerbos.dev/subscribe?utm_campaign=brand_cerbos&utm_source=github) for product updates once a month  
+* [Tutorial](https://docs.cerbos.dev/cerbos/latest/tutorial/00_intro.html?utm_campaign=brand_cerbos&utm_source=github) for building a working example from scratch  
+* [Demo repositories](https://github.com/cerbos) showing Cerbos in Go, Python, TypeScript, NestJS and Laravel  
+* [Contribution guidelines](https://github.com/cerbos/cerbos/blob/main/CONTRIBUTING.md) for sending us a pull request
 
-## 🛡️ License
+## License
 
 Cerbos is licensed under the Apache License 2.0 - see the [LICENSE](https://github.com/cerbos/cerbos/blob/main/LICENSE) file for details.
 
-## 💪 Thanks To All Contributors
-
-Thanks a lot for spending your time helping Cerbos grow. Keep rocking 🥂
+## Big thank you to all contributors!
 
 <a>
   <img src="https://contributors-img.web.app/image?repo=cerbos/cerbos" alt="Contributors"/>
