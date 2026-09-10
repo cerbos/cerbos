@@ -14,4 +14,4 @@
 * xref:compile.adoc[Validating and testing]
 * xref:best_practices.adoc[Best practices]
 * xref:debugging.adoc[Debugging authorization decisions]
-* link:https://github.com/cerbos/skills[Agent skill]
+* xref:agent_skill.adoc[Agent skill]
