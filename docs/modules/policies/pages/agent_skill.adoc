@@ -1,0 +1,81 @@
+include::ROOT:partial$attributes.adoc[]
+
+= Agent skill for policy authoring
+
+include::ROOT:partial$version-check.adoc[]
+
+
+The `cerbos-policy` agent skill teaches AI coding agents such as Claude Code, Cursor and Codex how to write, modify and explain Cerbos policies. It captures the policy authoring workflow, the Cerbos policy schemas, CEL conventions, and the testing and debugging tools described in this documentation set. With the skill installed, an agent produces policies that follow Cerbos conventions and validates them with the Cerbos compiler before reporting back.
+
+The skill is published in the link:https://github.com/cerbos/skills[cerbos/skills] repository under the Apache-2.0 license.
+
+
+== Prerequisites
+
+The skill validates generated policies by running the Cerbos compiler in a container. Docker must be installed and available on the `PATH` of the machine where the agent runs. The skill checks for Docker before writing any files and stops if it is not available.
+
+
+[#install]
+== Installing the skill
+
+Install with the `skills` CLI. It detects the agents installed on the machine and copies the skill into each agent's skills directory.
+
+[source,sh]
+----
+npx skills add cerbos/skills --skill cerbos-policy
+----
+
+Add `-g` to install the skill globally for every project, or `-a <agent>` to limit installation to specific agents.
+
+[source,sh]
+----
+npx skills add cerbos/skills --skill cerbos-policy -a claude-code -a cursor
+----
+
+Run `npx skills add cerbos/skills --list` to see all skills in the repository.
+
+=== Claude Code plugin marketplace
+
+Claude Code can also install the skill as a plugin.
+
+[source,sh]
+----
+claude plugin marketplace add cerbos/skills
+claude plugin install cerbos-skills@cerbos-skills
+----
+
+The plugin is invoked as `/cerbos-skills:cerbos-policy`.
+
+=== Manual installation
+
+Copy the `cerbos/cerbos-policy` directory from the repository into the skills directory of your agent. Keep the `SKILL.md` file and the `references/` directory together, because the skill loads the reference files on demand.
+
+
+[#usage]
+== Using the skill
+
+The skill activates when a prompt mentions Cerbos policies, authorization rules, RBAC or ABAC, or when a policy fails to compile or a policy test fails. It can also be invoked by name where the agent supports explicit skill invocation.
+
+Give the agent the access control requirements in plain language, or point it at a specification document. For example:
+
+----
+Use the cerbos-policy skill. Write Cerbos policies for an expense management app.
+Employees can create and view their own expense reports. Managers can approve
+reports from their direct reports if the amount is below 1000. Finance can
+approve any report. Nobody can edit a report after it has been approved.
+----
+
+The skill works through the following phases:
+
+Spec intake:: The agent asks clarifying questions in business language until every rule has a subject, action, resource, condition, effect and purpose. It presents a compact spec for confirmation before writing any files.
+Write:: The agent writes the schemas, derived roles, exported variables, policies, test fixtures and test suites in one pass. Every file starts with a `yaml-language-server` schema header, and every rule carries a descriptive name and a comment recording its purpose.
+Validate:: The agent runs `cerbos compile` twice against the generated directory. The second run adds `--strict-evaluation` so that runtime CEL errors are reported as failures rather than silently evaluating to `false`.
+Fix:: Compile and test errors are fixed one at a time, in order of YAML errors, CEL errors, schema errors, compile errors and test failures. The agent uses the xref:debugging.adoc#repl[REPL] to examine a condition when the cause of a failure is unclear.
+Finalize:: The agent reports the files it created and any assumptions made during spec intake.
+
+The generated files are laid out as a standard Cerbos policy repository, with `_schemas/`, `derived_roles/`, `resource_policies/` and `role_policies/` directories and `*_test.yaml` files alongside the policies they cover.
+
+=== Modifying existing policies
+
+Point the agent at an existing policy directory and describe the change. The skill reads the current policies before editing, changes only the files that the request touches, updates the tests that cover the changed rules and then re-runs both validation passes over the whole directory.
+

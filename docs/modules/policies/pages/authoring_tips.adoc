@@ -64,6 +64,8 @@ include::ROOT:partial$version-check.adoc[]
 
 The quickest and the easiest way to get familiar with Cerbos policies is to use the link:https://play.cerbos.dev[online playground]. It provides an IDE-like experience with an interactive editor, examples, code snippets, test cases and other useful utilities to help you design policies.
 
+If you work in an AI coding agent, the xref:agent_skill.adoc[Cerbos agent skills] give it the full policy reference and validate the output against the Cerbos PDP.
+
 
 === Editor configurations
 
