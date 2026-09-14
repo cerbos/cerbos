@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - .github/actions/**
-      - .github/workflows/*
 
   push:
     branches:
