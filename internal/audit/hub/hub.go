@@ -418,10 +418,6 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		lk := newLegacyKeys(l, kind, logger)
 		defer lk.cancel()
 
-		var logKey []byte
-		var rawBuf []byte // scratch for legacy entries
-		var i int
-
 		steps := 0
 		joinEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
 			for entryIt.ValidForPrefix(entryPrefix) {
@@ -456,7 +452,36 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			return getEntry(txn, logKey, fn)
 		}
 
+		// cutBatch ships the current batch, deletes the n marker keys it
+		// covers and begins a fresh batch, returning the reset window length.
+		cutBatch := func(n int) (int, error) {
+			if err := l.sync(ctx, kind, framer); err != nil {
+				return n, err
+			}
+			if err := l.deleteMarkerKeys(kind, keys[:n]); err != nil {
+				return n, fmt.Errorf("failed to delete logs: %w", err)
+			}
+			batchID, err := audit.NewID()
+			if err != nil {
+				return n, fmt.Errorf("failed to generate batch ID: %w", err)
+			}
+			framer.beginBatch(string(batchID))
+			return 0, nil
+		}
+
+		var logKey []byte
+		var rawBuf []byte // scratch for legacy entries
+		var i int
+
 		for markerIt.Seek(prefix); markerIt.ValidForPrefix(prefix); markerIt.Next() {
+			// Cut the batch when the marker key buffer is full.
+			if i == l.maxBatchSize {
+				var err error
+				if i, err = cutBatch(i); err != nil {
+					return err
+				}
+			}
+
 			item := markerIt.Item()
 			k := item.Key()
 
@@ -490,22 +515,6 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 				}
 			}
 
-			// Cut the batch when the marker key buffer is full.
-			if i == l.maxBatchSize {
-				if err := l.sync(ctx, kind, framer); err != nil {
-					return err
-				}
-				if err := l.deleteMarkerKeys(kind, keys[:i]); err != nil {
-					return fmt.Errorf("failed to delete logs: %w", err)
-				}
-				batchID, err := audit.NewID()
-				if err != nil {
-					return fmt.Errorf("failed to generate batch ID: %w", err)
-				}
-				framer.beginBatch(string(batchID))
-				i = 0
-			}
-
 			switch {
 			case legacy && found:
 				framer.add(kind, rawBuf)
@@ -523,19 +532,10 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 			// ship the rest, and carry it into the next batch.
 			if found && framer.count > 1 && framer.size() > l.maxBatchSizeBytes {
 				framer.rollLast()
-				if err := l.sync(ctx, kind, framer); err != nil {
+				if i, err = cutBatch(i); err != nil {
 					return err
 				}
-				if err := l.deleteMarkerKeys(kind, keys[:i]); err != nil {
-					return fmt.Errorf("failed to delete logs: %w", err)
-				}
-				batchID, err := audit.NewID()
-				if err != nil {
-					return fmt.Errorf("failed to generate batch ID: %w", err)
-				}
-				framer.beginBatch(string(batchID))
 				framer.restoreLast()
-				i = 0
 			}
 
 			keys[i] = append(keys[i][:0], k...)
