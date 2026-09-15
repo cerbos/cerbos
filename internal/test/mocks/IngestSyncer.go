@@ -10,7 +10,6 @@ package mocks
 import (
 	"context"
 
-	"github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -42,16 +41,16 @@ func (_m *IngestSyncer) EXPECT() *IngestSyncer_Expecter {
 }
 
 // Sync provides a mock function for the type IngestSyncer
-func (_mock *IngestSyncer) Sync(context1 context.Context, ingestBatch *logsv1.IngestBatch) error {
-	ret := _mock.Called(context1, ingestBatch)
+func (_mock *IngestSyncer) Sync(ctx context.Context, batch []byte, numEntries int) error {
+	ret := _mock.Called(ctx, batch, numEntries)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Sync")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *logsv1.IngestBatch) error); ok {
-		r0 = returnFunc(context1, ingestBatch)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []byte, int) error); ok {
+		r0 = returnFunc(ctx, batch, numEntries)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -64,25 +63,31 @@ type IngestSyncer_Sync_Call struct {
 }
 
 // Sync is a helper method to define mock.On call
-//   - context1 context.Context
-//   - ingestBatch *logsv1.IngestBatch
-func (_e *IngestSyncer_Expecter) Sync(context1 any, ingestBatch any) *IngestSyncer_Sync_Call {
-	return &IngestSyncer_Sync_Call{Call: _e.mock.On("Sync", context1, ingestBatch)}
+//   - ctx context.Context
+//   - batch []byte
+//   - numEntries int
+func (_e *IngestSyncer_Expecter) Sync(ctx any, batch any, numEntries any) *IngestSyncer_Sync_Call {
+	return &IngestSyncer_Sync_Call{Call: _e.mock.On("Sync", ctx, batch, numEntries)}
 }
 
-func (_c *IngestSyncer_Sync_Call) Run(run func(context1 context.Context, ingestBatch *logsv1.IngestBatch)) *IngestSyncer_Sync_Call {
+func (_c *IngestSyncer_Sync_Call) Run(run func(ctx context.Context, batch []byte, numEntries int)) *IngestSyncer_Sync_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *logsv1.IngestBatch
+		var arg1 []byte
 		if args[1] != nil {
-			arg1 = args[1].(*logsv1.IngestBatch)
+			arg1 = args[1].([]byte)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -93,7 +98,7 @@ func (_c *IngestSyncer_Sync_Call) Return(err error) *IngestSyncer_Sync_Call {
 	return _c
 }
 
-func (_c *IngestSyncer_Sync_Call) RunAndReturn(run func(context1 context.Context, ingestBatch *logsv1.IngestBatch) error) *IngestSyncer_Sync_Call {
+func (_c *IngestSyncer_Sync_Call) RunAndReturn(run func(ctx context.Context, batch []byte, numEntries int) error) *IngestSyncer_Sync_Call {
 	_c.Call.Return(run)
 	return _c
 }
