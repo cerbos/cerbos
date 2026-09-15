@@ -91,7 +91,6 @@ func (f *batchFramer) wire() []byte {
 	return f.buf
 }
 
-// size returns the exact wire size of the batch accumulated so far.
 func (f *batchFramer) size() int {
 	return len(f.buf)
 }
