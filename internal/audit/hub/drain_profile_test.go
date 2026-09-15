@@ -25,7 +25,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/local"
-	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
 type countingSyncer struct {
@@ -33,23 +32,14 @@ type countingSyncer struct {
 	attempts     int
 	entriesTotal int
 	bytesTotal   int
-	marshalWire  bool
 }
 
-func (s *countingSyncer) Sync(_ context.Context, batch *logsv1.IngestBatch) error {
+func (s *countingSyncer) Sync(_ context.Context, batch []byte, numEntries int) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.attempts++
-	s.entriesTotal += len(batch.Entries)
-	if s.marshalWire {
-		wire, err := batch.MarshalVT()
-		if err != nil {
-			return err
-		}
-		s.bytesTotal += len(wire)
-	} else {
-		s.bytesTotal += batch.SizeVT()
-	}
+	s.entriesTotal += numEntries
+	s.bytesTotal += len(batch)
 	return nil
 }
 
@@ -197,7 +187,7 @@ func TestCatchupDrainProfile(t *testing.T) {
 		emptyCycles = 20
 	)
 
-	syncer := &countingSyncer{marshalWire: os.Getenv("CERBOS_AUDIT_WIRE") != ""}
+	syncer := &countingSyncer{}
 	log := newProfileLog(t, syncer)
 
 	emptyCycleBefore := timeCycles(t, log, emptyCycles)
