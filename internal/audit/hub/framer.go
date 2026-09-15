@@ -66,7 +66,7 @@ func (f *batchFramer) add(kind logsv1.IngestBatch_EntryKind, raw []byte) {
 	f.lastStart = len(f.buf)
 
 	tsField, oneofField := entryFields(kind)
-	ts, hasTS := fetchField(raw, tsField)
+	ts, hasTS := fetchFieldBytes(raw, tsField)
 
 	f.buf = protowire.AppendTag(f.buf, batchEntriesField, protowire.BytesType)
 	f.buf = protowire.AppendVarint(f.buf, uint64(entryWireSize(kind, ts, hasTS, len(raw), oneofField)))
@@ -115,7 +115,7 @@ func (f *batchFramer) restoreLast() {
 // would report via SizeVT.
 func getEntrySize(kind logsv1.IngestBatch_EntryKind, raw []byte) int {
 	tsField, oneofField := entryFields(kind)
-	ts, hasTS := fetchField(raw, tsField)
+	ts, hasTS := fetchFieldBytes(raw, tsField)
 	return entryWireSize(kind, ts, hasTS, len(raw), oneofField)
 }
 
@@ -127,10 +127,10 @@ func entryWireSize(kind logsv1.IngestBatch_EntryKind, ts []byte, hasTS bool, raw
 	return size + protowire.SizeTag(oneofField) + protowire.SizeBytes(rawLen)
 }
 
-// fetchField walks the top-level fields of a protobuf message and returns the
+// fetchFieldBytes walks the top-level fields of a protobuf message and returns the
 // payload of the first field with the given number, without decoding anything
 // else.
-func fetchField(buf []byte, target protowire.Number) ([]byte, bool) {
+func fetchFieldBytes(buf []byte, target protowire.Number) ([]byte, bool) {
 	for len(buf) > 0 {
 		num, typ, n := protowire.ConsumeTag(buf)
 		if n < 0 {
