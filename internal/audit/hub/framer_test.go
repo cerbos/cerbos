@@ -75,7 +75,7 @@ func TestRawFrameEquivalence(t *testing.T) {
 // and restoring it into the next one leaves both batches with the same wire
 // bytes as reference batches built from scratch with the same entries.
 func TestRawFrameRollRestore(t *testing.T) {
-	ts := time.Date(2026, 9, 2, 10, 0, 0, 123456789, time.UTC)
+	ts := time.Now()
 	mkRaw := func(callID string) []byte {
 		raw, err := (&auditv1.AccessLogEntry{
 			CallId:    callID,
