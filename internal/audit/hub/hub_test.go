@@ -64,17 +64,26 @@ func newMockSyncer(t *testing.T) *mockSyncer {
 	}
 }
 
-func (m *mockSyncer) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
-	if err := m.IngestSyncer.Sync(ctx, batch); err != nil {
+func (m *mockSyncer) Sync(ctx context.Context, batch []byte, numEntries int) error {
+	if err := m.IngestSyncer.Sync(ctx, batch, numEntries); err != nil {
 		return err
+	}
+
+	ingestBatch := &logsv1.IngestBatch{}
+	if err := ingestBatch.UnmarshalVT(batch); err != nil {
+		return err
+	}
+
+	if len(ingestBatch.Entries) != numEntries {
+		return fmt.Errorf("numEntries is %d but the batch holds %d entries", numEntries, len(ingestBatch.Entries))
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.entries = append(m.entries, batch.Entries...)
+	m.entries = append(m.entries, ingestBatch.Entries...)
 
-	for _, e := range batch.Entries {
+	for _, e := range ingestBatch.Entries {
 		var key []byte
 		switch e.Kind {
 		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
@@ -134,7 +143,7 @@ func TestHubLog(t *testing.T) {
 		db, syncer := initDB(t)
 		t.Cleanup(func() { _ = db.Close() })
 
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(nil)
 		loadedKeys := loadData(t, db, startDate)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -159,8 +168,8 @@ func TestHubLog(t *testing.T) {
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with unrecoverable error after first N pages
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error"))
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(nil).Times(initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(errors.New("some error"))
 
 		loadData(t, db, startDate)
 
@@ -174,7 +183,7 @@ func TestHubLog(t *testing.T) {
 		db, syncer := initDB(t)
 
 		// Server is down
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(errors.New("some error"))
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(errors.New("some error"))
 
 		loadData(t, db, startDate)
 
@@ -189,11 +198,11 @@ func TestHubLog(t *testing.T) {
 		initialNBatches := int(math.Ceil(float64(wantNumBatches) * 0.2))
 
 		// Server responds with backoff after first N pages
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil).Times(initialNBatches)
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(hub.ErrIngestBackoff{
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(nil).Times(initialNBatches)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(hub.ErrIngestBackoff{
 			Backoff: 0,
 		}).Twice() // two concurrent streams receive the same backoff response
-		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil)
+		syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(nil)
 
 		loadedKeys := loadData(t, db, startDate)
 
@@ -259,10 +268,10 @@ func TestSizeBasedBatching(t *testing.T) {
 
 		// Count the number of Sync calls to verify multiple batches are created
 		syncCalls := 0
-		syncer.EXPECT().Sync(mock.Anything, mock.MatchedBy(func(batch *logsv1.IngestBatch) bool {
+		syncer.EXPECT().Sync(mock.Anything, mock.MatchedBy(func(batch []byte) bool {
 			syncCalls++
-			return batch.SizeVT() <= int(maxBatchSizeBytes)
-		})).Return(nil)
+			return len(batch) <= int(maxBatchSizeBytes)
+		}), mock.AnythingOfType("int")).Return(nil)
 
 		loadedKeys := loadData(t, db, startDate)
 
@@ -280,7 +289,7 @@ func TestSizeBasedBatching(t *testing.T) {
 
 		ctx := t.Context()
 
-		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Return(nil)
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		// Create an ID for regular entry
 		id, err := audit.NewID()
@@ -560,7 +569,7 @@ func TestSizeBasedBatching(t *testing.T) {
 		value := local.GenKey(local.DecisionLogPrefix, callID)
 		require.NoError(t, db.Write(t.Context(), legacyKey, value))
 
-		syncer.EXPECT().Sync(mock.Anything, mock.Anything).Return(nil).Once()
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			legacyKeysPresent := false
@@ -641,7 +650,7 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
 	require.NoError(t, err)
 
-	syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("*logsv1.IngestBatch")).Return(nil)
+	syncer.EXPECT().Sync(mock.Anything, mock.AnythingOfType("[]uint8"), mock.AnythingOfType("int")).Return(nil)
 	loadedKeys := loadData(t, db, startDate)
 	// There should be no decision logs to sync. Only the access logs are synced.
 	wantNumRecords := numRecords / 2

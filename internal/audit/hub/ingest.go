@@ -13,8 +13,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cenkalti/backoff/v7"
+	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/hub"
-	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 	"github.com/cerbos/cloud-api/logcap"
 )
 
@@ -35,7 +35,7 @@ func (e ErrIngestBackoff) Error() string {
 }
 
 type IngestSyncer interface {
-	Sync(context.Context, *logsv1.IngestBatch) error
+	Sync(ctx context.Context, batch []byte, numEntries int) error
 }
 
 type wrappedBackOff struct {
@@ -90,18 +90,26 @@ func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
 	}, nil
 }
 
-func (i *Impl) Sync(ctx context.Context, batch *logsv1.IngestBatch) error {
-	if len(batch.GetEntries()) == 0 {
+func (i *Impl) Sync(ctx context.Context, batch []byte, numEntries int) error {
+	if numEntries == 0 {
 		return nil
 	}
 
-	resp, err := i.client.Ingest(ctx, batch)
+	// An invariant assertion on the client-side.
+	if len(batch) > local.MaxAllowedBatchSizeBytes {
+		return fmt.Errorf("framed batch of %d bytes exceeds the %d byte limit", len(batch), local.MaxAllowedBatchSizeBytes)
+	}
+
+	resp, err := i.client.IngestRaw(ctx, batch)
 	if err != nil {
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return err
 		}
 
-		i.log.Error("Failed to sync batch", zap.Error(err))
+		i.log.Error("Failed to sync batch",
+			zap.Error(err),
+			zap.Int("entries", numEntries),
+			zap.Int("bytes", len(batch)))
 
 		// Hard failure: use exponential backoff
 		duration := i.wbo.NextBackOff()
