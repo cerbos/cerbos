@@ -4,16 +4,39 @@
 package hub
 
 import (
+	"maps"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
+
+func TestRawFrameSchemaPin(t *testing.T) {
+	requirePinnedFields[*logsv1.IngestBatch](t, batchFieldNums)
+	requirePinnedFields[*logsv1.IngestBatch_Entry](t, entryFieldNums)
+}
+
+// requirePinnedFields checks that M declares exactly the fields the framer
+// resolved into nums, so a field added to the proto cannot go silently
+// unframed.
+func requirePinnedFields[M proto.Message](t *testing.T, nums map[protoreflect.Name]protowire.Number) {
+	t.Helper()
+	var m M
+	desc := m.ProtoReflect().Descriptor()
+	got := make([]protoreflect.Name, desc.Fields().Len())
+	for i := range got {
+		got[i] = desc.Fields().Get(i).Name()
+	}
+	require.ElementsMatch(t, slices.Collect(maps.Keys(nums)), got, "%s has fields batchFramer does not hand-encode", desc.FullName())
+}
 
 // TestRawFrameEquivalence checks the contract between batchFramer's hand-rolled
 // wire format and the generated marshalers.
