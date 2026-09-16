@@ -18,17 +18,23 @@ import (
 // batchFramer builds IngestBatch wire bytes directly from the protobuf-encoded
 // entries stored in Badger, skipping the unmarshal/re-marshal round trip.
 var (
-	batchIDField      = fieldNumber(new(logsv1.IngestBatch), "id")
-	batchEntriesField = fieldNumber(new(logsv1.IngestBatch), "entries")
-
-	entryKindField      = fieldNumber(new(logsv1.IngestBatch_Entry), "kind")
-	entryTimestampField = fieldNumber(new(logsv1.IngestBatch_Entry), "timestamp")
-	entryAccessField    = fieldNumber(new(logsv1.IngestBatch_Entry), "access_log_entry")
-	entryDecisionField  = fieldNumber(new(logsv1.IngestBatch_Entry), "decision_log_entry")
+	batchFieldNums = fieldNumbers[*logsv1.IngestBatch]("id", "entries")
+	entryFieldNums = fieldNumbers[*logsv1.IngestBatch_Entry]("kind", "timestamp", "access_log_entry", "decision_log_entry")
 
 	accessTimestampField   = fieldNumber(new(auditv1.AccessLogEntry), "timestamp")
 	decisionTimestampField = fieldNumber(new(auditv1.DecisionLogEntry), "timestamp")
 )
+
+// fieldNumbers resolves the named fields of M to their field numbers,
+// panicking on any name the descriptor does not know.
+func fieldNumbers[M proto.Message](names ...protoreflect.Name) map[protoreflect.Name]protowire.Number {
+	var m M
+	out := make(map[protoreflect.Name]protowire.Number, len(names))
+	for _, name := range names {
+		out[name] = fieldNumber(m, name)
+	}
+	return out
+}
 
 func fieldNumber(m proto.Message, name protoreflect.Name) protowire.Number {
 	fd := m.ProtoReflect().Descriptor().Fields().ByName(name)
@@ -42,9 +48,9 @@ func fieldNumber(m proto.Message, name protoreflect.Name) protowire.Number {
 // entry's own timestamp field (the fetch target) and the wrapper's oneof field.
 func entryFields(kind logsv1.IngestBatch_EntryKind) (tsField, oneofField protowire.Number) {
 	if kind == logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG {
-		return decisionTimestampField, entryDecisionField
+		return decisionTimestampField, entryFieldNums["decision_log_entry"]
 	}
-	return accessTimestampField, entryAccessField
+	return accessTimestampField, entryFieldNums["access_log_entry"]
 }
 
 var framerPool = sync.Pool{New: func() any { return new(batchFramer) }}
@@ -57,7 +63,7 @@ type batchFramer struct {
 }
 
 func (f *batchFramer) beginBatch(batchID string) {
-	f.buf = protowire.AppendTag(f.buf[:0], batchIDField, protowire.BytesType)
+	f.buf = protowire.AppendTag(f.buf[:0], batchFieldNums["id"], protowire.BytesType)
 	f.buf = protowire.AppendString(f.buf, batchID)
 	f.count = 0
 }
@@ -68,14 +74,14 @@ func (f *batchFramer) add(kind logsv1.IngestBatch_EntryKind, raw []byte) {
 	tsField, oneofField := entryFields(kind)
 	ts, hasTS := fetchFieldBytes(raw, tsField)
 
-	f.buf = protowire.AppendTag(f.buf, batchEntriesField, protowire.BytesType)
+	f.buf = protowire.AppendTag(f.buf, batchFieldNums["entries"], protowire.BytesType)
 	f.buf = protowire.AppendVarint(f.buf, uint64(entryWireSize(kind, ts, hasTS, len(raw), oneofField)))
 
-	f.buf = protowire.AppendTag(f.buf, entryKindField, protowire.VarintType)
+	f.buf = protowire.AppendTag(f.buf, entryFieldNums["kind"], protowire.VarintType)
 	f.buf = protowire.AppendVarint(f.buf, uint64(kind))
 
 	if hasTS {
-		f.buf = protowire.AppendTag(f.buf, entryTimestampField, protowire.BytesType)
+		f.buf = protowire.AppendTag(f.buf, entryFieldNums["timestamp"], protowire.BytesType)
 		f.buf = protowire.AppendBytes(f.buf, ts)
 	}
 
@@ -120,9 +126,9 @@ func getEntrySize(kind logsv1.IngestBatch_EntryKind, raw []byte) int {
 }
 
 func entryWireSize(kind logsv1.IngestBatch_EntryKind, ts []byte, hasTS bool, rawLen int, oneofField protowire.Number) int {
-	size := protowire.SizeTag(entryKindField) + protowire.SizeVarint(uint64(kind))
+	size := protowire.SizeTag(entryFieldNums["kind"]) + protowire.SizeVarint(uint64(kind))
 	if hasTS {
-		size += protowire.SizeTag(entryTimestampField) + protowire.SizeBytes(len(ts))
+		size += protowire.SizeTag(entryFieldNums["timestamp"]) + protowire.SizeBytes(len(ts))
 	}
 	return size + protowire.SizeTag(oneofField) + protowire.SizeBytes(rawLen)
 }
