@@ -20,6 +20,7 @@ audit:
     path: /path/to/file.log # Required. Path to the log file to use as output. The special values stdout and stderr can be used to write to stdout or stderr respectively.
   hub:
     advanced: 
+      badgerMemTableSize: 33554432 # Size of the Badger memtable in bytes. Do not reduce it on an existing database after an unclean shutdown: the leftover write-ahead log (*.mem) must fit the new size to be replayed, and startup fails if it does not.
       bufferSize: 256 
       flushInterval: 1s 
       gcInterval: 60s 
@@ -58,6 +59,7 @@ audit:
     topic: cerbos.audit.log # Required. Topic to write audit entries to.
   local:
     advanced: 
+      badgerMemTableSize: 33554432 # Size of the Badger memtable in bytes. Do not reduce it on an existing database after an unclean shutdown: the leftover write-ahead log (*.mem) must fit the new size to be replayed, and startup fails if it does not.
       bufferSize: 256 
       flushInterval: 1s 
       gcInterval: 60s 

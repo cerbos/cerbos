@@ -42,10 +42,11 @@ type Conf struct {
 }
 
 type AdvancedConf struct {
-	BufferSize    uint          `yaml:"bufferSize" conf:",example=256"`
-	MaxBatchSize  uint          `yaml:"maxBatchSize" conf:",example=32"`
-	FlushInterval time.Duration `yaml:"flushInterval" conf:",example=1s"`
-	GCInterval    time.Duration `yaml:"gcInterval" conf:",example=60s"`
+	BadgerMemTableSize uint64        `yaml:"badgerMemTableSize" conf:",example=33554432"` // do not reduce after an unclean shutdown
+	BufferSize         uint          `yaml:"bufferSize" conf:",example=256"`
+	MaxBatchSize       uint          `yaml:"maxBatchSize" conf:",example=32"`
+	FlushInterval      time.Duration `yaml:"flushInterval" conf:",example=1s"`
+	GCInterval         time.Duration `yaml:"gcInterval" conf:",example=60s"`
 }
 
 func (c *Conf) Key() string {
