@@ -45,7 +45,8 @@ type Conf struct {
 }
 
 type AdvancedConf struct {
-	BadgerMemTableSize uint64        `yaml:"badgerMemTableSize" conf:",example=33554432"` // do not reduce after an unclean shutdown
+	// Size of the Badger memtable in bytes. Do not reduce it on an existing database after an unclean shutdown: the leftover write-ahead log (*.mem) must fit the new size to be replayed, and startup fails if it does not.
+	BadgerMemTableSize uint64        `yaml:"badgerMemTableSize" conf:",example=33554432"`
 	BufferSize         uint          `yaml:"bufferSize" conf:",example=256"`
 	MaxBatchSize       uint          `yaml:"maxBatchSize" conf:",example=32"`
 	FlushInterval      time.Duration `yaml:"flushInterval" conf:",example=1s"`
