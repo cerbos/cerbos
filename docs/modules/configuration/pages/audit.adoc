@@ -224,7 +224,7 @@ audit:
       maxBatchSize: 16 # Write batch size. If your records are small, increasing this will reduce disk IO.
       flushInterval: 30s # Time to keep records in memory before committing.
       gcInterval: 15m # How often the garbage collector runs to remove old entries from the log.
-      badgerMemTableSize: 33554432 # Size of the Badger memtable in bytes. Larger memtables buffer more writes in memory before flushing to disk, at the cost of a higher memory footprint and a larger write-ahead log file. Do not reduce this on an existing database after an unclean shutdown: the leftover write-ahead log (*.mem) must fit the new size to be replayed, and startup fails if it does not.
+      memtableSize: 33554432 # Size of the persistent storage (BadgerDB) memtable in bytes. Larger memtables buffer more writes in memory before flushing to disk, at the cost of a higher memory footprint and a larger write-ahead log (WAL) file. Do not reduce this value if the PDP was shutdown uncleanly and there are leftover WAL files (*.mem) on disk. The PDP will fail to start if the new memtable size is smaller than the leftover WAL file.
 ----
 
 

@@ -70,7 +70,7 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
 	opts = opts.WithLogger(newDBLogger(logger))
-	opts = opts.WithMemTableSize(int64(conf.Advanced.BadgerMemTableSize))
+	opts = opts.WithMemTableSize(int64(conf.Advanced.MemtableSize))
 	opts = opts.WithValueLogFileSize(512 << 20) //nolint:mnd
 	opts = opts.WithBlockSize(64 << 10)         //nolint:mnd
 
