@@ -45,8 +45,8 @@ type Conf struct {
 }
 
 type AdvancedConf struct {
-	// Size of the Badger memtable in bytes. Do not reduce it on an existing database after an unclean shutdown: the leftover write-ahead log (*.mem) must fit the new size to be replayed, and startup fails if it does not.
-	BadgerMemTableSize uint64        `yaml:"badgerMemTableSize" conf:",example=33554432"`
+	// Size of the persistent storage (BadgerDB) memtable in bytes. Larger memtables buffer more writes in memory before flushing to disk, at the cost of a higher memory footprint and a larger write-ahead log (WAL) file. Do not reduce this value if the PDP was shutdown uncleanly and there are leftover WAL files (*.mem) on disk. The PDP will fail to start if the new memtable size is smaller than the leftover WAL file.
+	MemtableSize uint64        `yaml:"memtableSize" conf:",example=33554432"`
 	BufferSize         uint          `yaml:"bufferSize" conf:",example=256"`
 	MaxBatchSize       uint          `yaml:"maxBatchSize" conf:",example=32"`
 	FlushInterval      time.Duration `yaml:"flushInterval" conf:",example=1s"`
