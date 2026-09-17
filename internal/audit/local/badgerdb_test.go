@@ -32,14 +32,13 @@ func TestBadgerLog(t *testing.T) {
 		t.SkipNow()
 	}
 
-	conf := &local.Conf{
-		StoragePath:     t.TempDir(),
-		RetentionPeriod: 24 * time.Hour,
-		Advanced: local.AdvancedConf{
-			MaxBatchSize:  32,
-			FlushInterval: 1 * time.Second,
-		},
-	}
+	conf := &local.Conf{}
+	conf.SetDefaults()
+	conf.StoragePath = t.TempDir()
+	conf.RetentionPeriod = 24 * time.Hour
+	conf.Advanced.MaxBatchSize = 32
+	conf.Advanced.FlushInterval = 1 * time.Second
+	conf.Advanced.GCInterval = 0 // ForceWrite deadlocks if the gc goroutine is running
 
 	startDate, err := time.Parse(time.RFC3339, "2021-01-01T10:00:00Z")
 	require.NoError(t, err)

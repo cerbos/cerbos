@@ -222,24 +222,22 @@ func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
 func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hub.Log, *mockSyncer) {
 	t.Helper()
 
-	conf := &hub.Conf{
-		Ingest: hub.IngestConf{
-			MaxBatchSizeBytes: maxBatchSizeBytes,
-			MinFlushInterval:  flushInterval,
-			FlushTimeout:      1 * time.Second,
-			NumGoRoutines:     8,
-		},
-		Mask: hub.MaskConf{
-			Peer: []string{"address"},
-		},
-		StoragePath:     t.TempDir(),
-		RetentionPeriod: 24 * time.Hour,
-		Advanced: local.AdvancedConf{
-			BufferSize:    1,
-			MaxBatchSize:  32,
-			FlushInterval: flushInterval,
-		},
+	conf := &hub.Conf{}
+	conf.SetDefaults()
+	conf.Ingest = hub.IngestConf{
+		MaxBatchSizeBytes: maxBatchSizeBytes,
+		MinFlushInterval:  flushInterval,
+		FlushTimeout:      1 * time.Second,
+		NumGoRoutines:     8,
 	}
+	conf.Mask = hub.MaskConf{
+		Peer: []string{"address"},
+	}
+	conf.StoragePath = t.TempDir()
+	conf.RetentionPeriod = 24 * time.Hour
+	conf.Advanced.BufferSize = 1
+	conf.Advanced.MaxBatchSize = 32
+	conf.Advanced.FlushInterval = flushInterval
 
 	syncer := newMockSyncer(t)
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})

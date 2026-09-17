@@ -24,6 +24,7 @@ audit:
       flushInterval: 1s 
       gcInterval: 60s 
       maxBatchSize: 32 
+      memtableSize: 33554432 # Size of the persistent storage (BadgerDB) memtable in bytes. Larger memtables buffer more writes in memory before flushing to disk, at the cost of a higher memory footprint and a larger write-ahead log (WAL) file. Do not reduce this value if the PDP was shutdown uncleanly and there are leftover WAL files (*.mem) on disk. The PDP will fail to start if the new memtable size is smaller than the leftover WAL file.
     mask: # Mask defines a list of attributes to exclude from the audit logs, specified as lists of JSONPaths
       checkResources: 
         - inputs[*].principal.attr.foo
@@ -62,6 +63,7 @@ audit:
       flushInterval: 1s 
       gcInterval: 60s 
       maxBatchSize: 32 
+      memtableSize: 33554432 # Size of the persistent storage (BadgerDB) memtable in bytes. Larger memtables buffer more writes in memory before flushing to disk, at the cost of a higher memory footprint and a larger write-ahead log (WAL) file. Do not reduce this value if the PDP was shutdown uncleanly and there are leftover WAL files (*.mem) on disk. The PDP will fail to start if the new memtable size is smaller than the leftover WAL file.
     retentionPeriod: 168h # How long to keep records for
     storagePath: /path/to/dir # Path to store the data
 auxData:

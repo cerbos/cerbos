@@ -70,8 +70,9 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter) (*Log, erro
 	opts = opts.WithCompactL0OnClose(true)
 	opts = opts.WithMetricsEnabled(false)
 	opts = opts.WithLogger(newDBLogger(logger))
-	opts = opts.WithMemTableSize(32 << 20)      //nolint:mnd
+	opts = opts.WithMemTableSize(int64(conf.Advanced.MemtableSize))
 	opts = opts.WithValueLogFileSize(512 << 20) //nolint:mnd
+	opts = opts.WithBlockSize(64 << 10)         //nolint:mnd
 
 	logger.Info("Initializing audit log", zap.String("path", conf.StoragePath))
 	db, err := badgerv4.Open(opts)
@@ -176,6 +177,7 @@ func (l *Log) Enabled() bool {
 }
 
 // ForceWrite forces a write operation and blocks until completion. It is used only by tests.
+// It deadlocks if gc goroutine is running, that is when gcInterval isn't zero.
 func (l *Log) ForceWrite() {
 	close(l.buffer)
 	l.wg.Wait()

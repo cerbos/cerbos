@@ -24,7 +24,6 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
-	"github.com/cerbos/cerbos/internal/audit/local"
 )
 
 type countingSyncer struct {
@@ -52,21 +51,20 @@ func (s *countingSyncer) stats() (attempts, entries, bytes int) {
 func newProfileLog(t *testing.T, syncer IngestSyncer) *Log {
 	t.Helper()
 
-	conf := &Conf{
-		Ingest: IngestConf{
-			MaxBatchSizeBytes: 4 * 1024 * 1024, // production default
-			MinFlushInterval:  time.Hour,       // keep the background loop quiet
-			FlushTimeout:      5 * time.Second,
-			NumGoRoutines:     4,
-		},
+	conf := &Conf{}
+	conf.SetDefaults()
+	conf.Ingest = IngestConf{
+		MaxBatchSizeBytes: 4 * 1024 * 1024, // production default
+		MinFlushInterval:  time.Hour,       // keep the background loop quiet
+		FlushTimeout:      5 * time.Second,
+		NumGoRoutines:     4,
 	}
 	conf.StoragePath = t.TempDir()
 	conf.RetentionPeriod = 24 * time.Hour
-	conf.Advanced = local.AdvancedConf{
-		BufferSize:    4096,
-		MaxBatchSize:  1024,
-		FlushInterval: 100 * time.Millisecond,
-	}
+	conf.Advanced.BufferSize = 4096
+	conf.Advanced.MaxBatchSize = 1024
+	conf.Advanced.FlushInterval = 100 * time.Millisecond
+	conf.Advanced.GCInterval = 0 // ForceWrite deadlocks if the gc goroutine is running
 
 	log, err := NewLog(conf, nil, syncer, zap.NewNop(), nil)
 	require.NoError(t, err)
