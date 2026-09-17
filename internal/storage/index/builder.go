@@ -403,8 +403,8 @@ ancestors:
 			baseFqn, scope, _ := strings.Cut(ancestorPolicyKey, "/")
 
 			var version string
-			if versionIndex := strings.LastIndex(baseFqn, ".v"); versionIndex != -1 {
-				version = baseFqn[versionIndex+2:]
+			if _, after, ok0 := strings.CutLast(baseFqn, ".v"); ok0 {
+				version = after
 			}
 
 			for foundResource, scopes := range idx.foundRolePolicyResourceScopes {
