@@ -61,7 +61,7 @@ First, update your resource policy to point to the schemas that should be used t
 apiVersion: api.cerbos.dev/v1
 resourcePolicy:
   importDerivedRoles:
-    - apatr_common_roles 
+    - example_common_roles
   resource: "album:object" 
   rules:
     - actions: ['create']
