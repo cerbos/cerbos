@@ -32,7 +32,7 @@ audit:
       metadata: ['authorization'] 
       peer: 
         - address
-        - forwardedFor
+        - forwardedFor 
       planResources: ['input.principal.attr.nestedMap.foo'] 
     pipeOutput: 
       backend: file 
