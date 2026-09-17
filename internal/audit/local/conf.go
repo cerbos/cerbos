@@ -15,21 +15,24 @@ import (
 const (
 	confKey = audit.ConfKey + ".local"
 
-	defaultBufferSize      = 16
-	defaultFlushInterval   = 30 * time.Second
-	defaultMaxBatchSize    = 16
-	defaultGCInterval      = 15 * time.Minute
-	defaultRetentionPeriod = (7 * 24) * time.Hour //nolint:mnd
+	defaultBufferSize         = 16
+	defaultFlushInterval      = 30 * time.Second
+	defaultMaxBatchSize       = 16
+	defaultGCInterval         = 15 * time.Minute
+	defaultBadgerMemTableSize = 32 << 20             //nolint:mnd
+	defaultRetentionPeriod    = (7 * 24) * time.Hour //nolint:mnd
 
-	minFlushInterval   = 1 * time.Second
-	minRetentionPeriod = 1 * time.Hour
-	maxRetentionPeriod = (30 * 24) * time.Hour //nolint:mnd
+	minFlushInterval      = 1 * time.Second
+	minBadgerMemTableSize = 1 << 20 //nolint:mnd
+	minRetentionPeriod    = 1 * time.Hour
+	maxRetentionPeriod    = (30 * 24) * time.Hour //nolint:mnd
 )
 
 var (
-	errEmptyStoragePath    = errors.New("storagePath should not be empty")
-	errInvalidBufferSize   = errors.New("bufferSize must be at least 1")
-	errInvalidMaxBatchSize = errors.New("maxBatchSize must be at least 1")
+	errEmptyStoragePath          = errors.New("storagePath should not be empty")
+	errInvalidBufferSize         = errors.New("bufferSize must be at least 1")
+	errInvalidMaxBatchSize       = errors.New("maxBatchSize must be at least 1")
+	errInvalidBadgerMemTableSize = fmt.Errorf("badgerMemTableSize must be at least %d bytes", minBadgerMemTableSize)
 )
 
 // Conf is optional configuration for local Audit.
@@ -55,6 +58,7 @@ func (c *Conf) Key() string {
 
 func (c *Conf) SetDefaults() {
 	c.RetentionPeriod = defaultRetentionPeriod
+	c.Advanced.BadgerMemTableSize = defaultBadgerMemTableSize
 	c.Advanced.BufferSize = defaultBufferSize
 	c.Advanced.MaxBatchSize = defaultMaxBatchSize
 	c.Advanced.FlushInterval = defaultFlushInterval
@@ -76,6 +80,10 @@ func (c *Conf) Validate() error {
 
 	if c.Advanced.MaxBatchSize < 1 {
 		return errInvalidMaxBatchSize
+	}
+
+	if c.Advanced.BadgerMemTableSize < minBadgerMemTableSize {
+		return errInvalidBadgerMemTableSize
 	}
 
 	if c.Advanced.FlushInterval < minFlushInterval {
