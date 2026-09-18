@@ -81,7 +81,7 @@ func loadResources(fsys fs.FS, path string) (*Resources, error) {
 		FilePath: fp,
 	}
 
-	pb, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestFixture_Resources](fsys, fp))
+	pb, _, err := parser.MustSingle(parser.UnmarshalFile[policyv1.TestFixture_Resources](fsys, fp))
 	if err != nil {
 		resources.LoadError = err
 		return resources, fmt.Errorf("failed to load resources:\n%w", err)
@@ -111,7 +111,7 @@ func loadPrincipals(fsys fs.FS, path string) (*Principals, error) {
 		FilePath: fp,
 	}
 
-	pb, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestFixture_Principals](fsys, fp))
+	pb, _, err := parser.MustSingle(parser.UnmarshalFile[policyv1.TestFixture_Principals](fsys, fp))
 	if err != nil {
 		principals.LoadError = err
 		return principals, fmt.Errorf("failed to load principals:\n%w", err)
@@ -142,7 +142,7 @@ func loadAuxData(fsys fs.FS, path string) (*AuxData, error) {
 			FilePath: fp,
 		}
 
-		pb, _, err := parser.Single(parser.UnmarshalFile[policyv1.TestFixture_AuxData](fsys, fp))
+		pb, _, err := parser.MustSingle(parser.UnmarshalFile[policyv1.TestFixture_AuxData](fsys, fp))
 		if err != nil {
 			auxData.LoadError = err
 			return auxData, fmt.Errorf("failed to load aux data:\n%w", err)
