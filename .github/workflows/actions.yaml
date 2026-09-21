@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - .github/actions/**
-      - .github/workflows/*
 
   push:
     branches:
@@ -27,4 +24,4 @@ jobs:
           persist-credentials: false
 
       - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@0d9b5e1ccb075eb3b6817a6f1718b9c189498c0a # main
+        uses: cerbos/actions/lint-actions@c19f023116079958e91290ea4af73e25296d7614 # main

@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/api/genpb
 go 1.26.4
 
 require (
-	connectrpc.com/connect v1.20.0
+	connectrpc.com/connect v1.21.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
 	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754

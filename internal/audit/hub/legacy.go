@@ -36,6 +36,16 @@ func (lk *legacyKeys) isLegacy(k []byte) bool {
 	return len(k) == local.KeyByteSizeStart
 }
 
+// rewriteOversizedRaw decodes a serialized oversized legacy entry and
+// re-writes it through the write path. legacyKey must be an owned copy.
+func (lk *legacyKeys) rewriteOversizedRaw(ctx context.Context, raw, legacyKey []byte) error {
+	entry, err := mkIngestBatchEntry(lk.kind, raw)
+	if err != nil {
+		return err
+	}
+	return lk.rewriteOversized(ctx, entry, legacyKey)
+}
+
 // rewriteOversized re-writes an oversized legacy entry through the write path.
 // legacyKey must be an owned copy.
 func (lk *legacyKeys) rewriteOversized(ctx context.Context, entry *logsv1.IngestBatch_Entry, legacyKey []byte) error {
