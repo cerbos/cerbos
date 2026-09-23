@@ -1,10 +1,11 @@
 // Copyright 2021-2026 Zenauth Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package scopeperms tracks the scopePermissions setting of every resource and principal
-// policy present in a scope and detects disagreements between them. All resource and
-// principal policies that share a scope must use the same setting, and the tracker is the
-// single implementation of that rule for every policy source.
+// Package scopeperms tracks the scopePermissions setting of every resource and
+// principal policy present in a scope and detects conflicts between them. All
+// resource and principal policies that share a scope must use the same setting,
+// and the tracker is the single implementation of that rule for every policy
+// source.
 package scopeperms
 
 import (
