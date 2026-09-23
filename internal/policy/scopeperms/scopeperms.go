@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unique"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 )
@@ -83,7 +84,15 @@ func (t *Tracker) Add(kind policyv1.Kind, policyKey, scope string, sp policyv1.S
 		return
 	}
 
+	sp1 := Normalise(sp)
+	if have, ok := t.scopes[scope][policyKey]; ok && have == sp1 {
+		return
+	}
+
 	t.Remove(policyKey)
+
+	policyKey = unique.Make(policyKey).Value()
+	scope = unique.Make(scope).Value()
 
 	settings, ok := t.scopes[scope]
 	if !ok {
@@ -91,7 +100,7 @@ func (t *Tracker) Add(kind policyv1.Kind, policyKey, scope string, sp policyv1.S
 		t.scopes[scope] = settings
 	}
 
-	settings[policyKey] = Normalise(sp)
+	settings[policyKey] = sp1
 	t.policies[policyKey] = scope
 }
 
