@@ -30,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
@@ -94,6 +95,10 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 
 		if invalidPolicyErr, ok := errors.AsType[storage.InvalidPolicyError](err); ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
+		}
+
+		if conflictsErr, ok := errors.AsType[*scopeperms.ConflictsError](err); ok {
+			return nil, status.Errorf(codes.InvalidArgument, "Failed to add/update policies: %v", conflictsErr)
 		}
 		return nil, status.Error(codes.Internal, "Failed to add/update policies")
 	}
