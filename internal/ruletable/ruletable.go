@@ -498,11 +498,10 @@ func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver sche
 
 type RuleTable struct {
 	*runtimev1.RuleTable
-	idx               *index.Index
-	principalScopeMap map[string]struct{}
-	resourceScopeMap  map[string]struct{}
-	scopePermsTracker *scopeperms.Tracker
-	// scopeScopePermissions is a eval-path scope to scopePermission map.
+	idx                   *index.Index
+	principalScopeMap     map[string]struct{}
+	resourceScopeMap      map[string]struct{}
+	scopePermsTracker     *scopeperms.Tracker
 	scopeScopePermissions map[string]policyv1.ScopePermissions
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	programCache          *ProgramCache
