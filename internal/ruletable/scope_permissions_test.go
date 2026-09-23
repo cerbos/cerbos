@@ -29,7 +29,7 @@ const (
 	unspecifiedPerm = policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
 )
 
-// staticLoader serves pre-compiled policy sets, standing in for a SQL or Hub backed loader that bypasses the index builder.
+// staticLoader serves pre-compiled policy sets.
 type staticLoader struct {
 	sets []*runtimev1.RunnablePolicySet
 }
