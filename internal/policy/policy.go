@@ -242,6 +242,19 @@ func GetScope(p *policyv1.Policy) string {
 	}
 }
 
+// GetScopePermissions returns the scope permissions setting of resource and
+// principal policies. It is unspecified for other kinds.
+func GetScopePermissions(p *policyv1.Policy) policyv1.ScopePermissions {
+	switch pt := p.PolicyType.(type) {
+	case *policyv1.Policy_ResourcePolicy:
+		return pt.ResourcePolicy.ScopePermissions
+	case *policyv1.Policy_PrincipalPolicy:
+		return pt.PrincipalPolicy.ScopePermissions
+	default:
+		return policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
+	}
+}
+
 // SourceAttribute holds structured information about the policy from its source.
 type SourceAttribute struct {
 	Value *structpb.Value

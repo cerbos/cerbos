@@ -19,6 +19,7 @@ import (
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 	"github.com/cerbos/cerbos/internal/test"
@@ -127,6 +128,60 @@ func TestSuite(store DBStorage) func(*testing.T) {
 				{Kind: storage.EventAddOrUpdatePolicy, Dependents: []namer.ModuleID{rpAcme.ID, rpAcmeHR.ID, rpAcmeHRUK.ID}},
 			}
 			t.Run("update_partial", addPolicies([]policy.Wrapper{rp, dr}, wantPartialEvents))
+		})
+
+		t.Run("scope_permissions_conflict", func(t *testing.T) {
+			consent := policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+			override := policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT
+
+			t.Run("conflict_with_stored_policies", func(t *testing.T) {
+				conflicting := test.GenResourcePolicy(test.Suffix("_scope_permissions_conflict"))
+				conflicting.GetResourcePolicy().ScopePermissions = consent
+				rpConflict := withScope(conflicting, "acme")
+
+				err := store.AddOrUpdate(ctx, rpConflict)
+
+				var conflictsErr *scopeperms.ConflictsError
+				require.ErrorAs(t, err, &conflictsErr)
+				require.Len(t, conflictsErr.Conflicts, 1)
+				require.Equal(t, "acme", conflictsErr.Conflicts[0].Scope)
+				require.ElementsMatch(t,
+					[]scopeperms.PolicySetting{
+						{PolicyKey: namer.PolicyKey(rpAcme.Policy), Permissions: override},
+						{PolicyKey: namer.PolicyKey(ppAcme.Policy), Permissions: override},
+						{PolicyKey: namer.PolicyKey(rpConflict.Policy), Permissions: consent},
+					},
+					conflictsErr.Conflicts[0].PolicySettings,
+				)
+
+				stats := store.RepoStats(ctx)
+				require.Equal(t, 7, stats.PolicyCount[policy.ResourceKind], "rejected policy must not be stored")
+			})
+
+			t.Run("conflict_within_batch", func(t *testing.T) {
+				first := withScope(test.GenResourcePolicy(test.Suffix("_batch_conflict_1")), "batch")
+				second := test.GenResourcePolicy(test.Suffix("_batch_conflict_2"))
+				second.GetResourcePolicy().ScopePermissions = consent
+				rpSecond := withScope(second, "batch")
+
+				err := store.AddOrUpdate(ctx, first, rpSecond)
+
+				var conflictsErr *scopeperms.ConflictsError
+				require.ErrorAs(t, err, &conflictsErr)
+				require.Len(t, conflictsErr.Conflicts, 1)
+				require.Equal(t, "batch", conflictsErr.Conflicts[0].Scope)
+				require.Len(t, conflictsErr.Conflicts[0].PolicySettings, 2)
+			})
+
+			t.Run("explicit_default_agrees_with_unspecified", func(t *testing.T) {
+				explicit := test.GenResourcePolicy(test.Suffix("_explicit_override"))
+				explicit.GetResourcePolicy().ScopePermissions = override
+				rpExplicit := withScope(explicit, "acme")
+
+				require.NoError(t, store.AddOrUpdate(ctx, rpExplicit))
+				_, err := store.Delete(ctx, namer.PolicyKey(rpExplicit.Policy))
+				require.NoError(t, err)
+			})
 		})
 
 		t.Run("iter", func(t *testing.T) {
@@ -556,7 +611,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 			t.Run("all", func(t *testing.T) {
 				revisions, err := store.ListRevisions(ctx)
 				require.NoError(t, err)
-				require.Len(t, revisions, 24)
+				require.Len(t, revisions, 25)
 			})
 
 			t.Run("specific", func(t *testing.T) {
@@ -569,7 +624,7 @@ func TestSuite(store DBStorage) func(*testing.T) {
 		t.Run("purge_revisions", func(t *testing.T) {
 			affectedRows, err := store.PurgeRevisions(ctx, 0)
 			require.NoError(t, err)
-			require.Equal(t, uint32(51), affectedRows)
+			require.Equal(t, uint32(53), affectedRows)
 
 			t.Run("keep_last", func(t *testing.T) {
 				rpWithOneRevision := test.GenResourcePolicy(test.Suffix("one_revision"))
