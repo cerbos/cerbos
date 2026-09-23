@@ -145,18 +145,8 @@ func (t *Tracker) Check(kind policyv1.Kind, policyKey, scope string, sp policyv1
 	return &Conflict{Scope: scope, PolicySettings: others}
 }
 
-// Permissions returns the setting shared by the policies in the scope. It returns the unspecified
-// value when the scope is unknown or its policies disagree.
-func (t *Tracker) Permissions(scope string) policyv1.ScopePermissions {
-	result := policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
-	for _, sp := range t.scopes[scope] {
-		if result != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED && result != sp {
-			return policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED
-		}
-		result = sp
-	}
-
-	return result
+func (t *Tracker) Tracked(scope string) bool {
+	return len(t.scopes[scope]) > 0
 }
 
 // Conflicts returns every scope whose policies disagree, sorted by scope.

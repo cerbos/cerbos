@@ -288,6 +288,9 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	}
 
 	mgr.scopePermsTracker.Remove(namer.PolicyKeyFromFQN(meta.GetFqn()))
+	if scope := namer.ScopeFromFQN(meta.GetFqn()); !mgr.scopePermsTracker.Tracked(scope) {
+		delete(mgr.scopeScopePermissions, scope)
+	}
 
 	delete(mgr.Schemas, moduleID.RawValue())
 	delete(mgr.Meta, moduleID.RawValue())

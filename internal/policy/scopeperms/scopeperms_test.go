@@ -27,8 +27,8 @@ func TestTracker(t *testing.T) {
 
 		require.Empty(t, tr.Conflicts())
 		require.NoError(t, tr.Err())
-		require.Equal(t, override, tr.Permissions("acme"))
-		require.Equal(t, unspecified, tr.Permissions("unknown"))
+		require.True(t, tr.Tracked("acme"))
+		require.False(t, tr.Tracked("unknown"))
 	})
 
 	t.Run("first policy is not forgotten", func(t *testing.T) {
@@ -46,7 +46,7 @@ func TestTracker(t *testing.T) {
 			},
 		}, conflicts[0])
 		require.Error(t, tr.Err())
-		require.Equal(t, unspecified, tr.Permissions("acme"))
+		require.True(t, tr.Tracked("acme"))
 	})
 
 	t.Run("role policies are ignored", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestTracker(t *testing.T) {
 		tr.Add(policyv1.Kind_KIND_ROLE_POLICY, "role.r/acme", "acme", unspecified)
 
 		require.Empty(t, tr.Conflicts())
-		require.Equal(t, consent, tr.Permissions("acme"))
+		require.True(t, tr.Tracked("acme"))
 	})
 
 	t.Run("removal resolves a conflict", func(t *testing.T) {
@@ -66,10 +66,10 @@ func TestTracker(t *testing.T) {
 
 		tr.Remove("resource.a.vdefault/acme")
 		require.Empty(t, tr.Conflicts())
-		require.Equal(t, consent, tr.Permissions("acme"))
+		require.True(t, tr.Tracked("acme"))
 
 		tr.Remove("resource.b.vdefault/acme")
-		require.Equal(t, unspecified, tr.Permissions("acme"))
+		require.False(t, tr.Tracked("acme"))
 	})
 
 	t.Run("re-adding replaces the setting", func(t *testing.T) {
@@ -79,7 +79,7 @@ func TestTracker(t *testing.T) {
 		tr.Add(policyv1.Kind_KIND_RESOURCE, "resource.a.vdefault/acme", "acme", consent)
 
 		require.Empty(t, tr.Conflicts())
-		require.Equal(t, consent, tr.Permissions("acme"))
+		require.True(t, tr.Tracked("acme"))
 	})
 
 	t.Run("check does not mutate", func(t *testing.T) {
@@ -100,7 +100,7 @@ func TestTracker(t *testing.T) {
 		}, c.PolicySettings)
 
 		require.Empty(t, tr.Conflicts())
-		require.Equal(t, override, tr.Permissions("acme"))
+		require.True(t, tr.Tracked("acme"))
 	})
 
 	t.Run("conflicts are sorted by scope", func(t *testing.T) {

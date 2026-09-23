@@ -498,13 +498,15 @@ func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver sche
 
 type RuleTable struct {
 	*runtimev1.RuleTable
-	idx                *index.Index
-	principalScopeMap  map[string]struct{}
-	resourceScopeMap   map[string]struct{}
-	scopePermsTracker  *scopeperms.Tracker
-	policyDerivedRoles map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
-	programCache       *ProgramCache
-	planExprCache      *planner.ExprCache
+	idx               *index.Index
+	principalScopeMap map[string]struct{}
+	resourceScopeMap  map[string]struct{}
+	scopePermsTracker *scopeperms.Tracker
+	// scopeScopePermissions is a eval-path scope to scopePermission map.
+	scopeScopePermissions map[string]policyv1.ScopePermissions
+	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
+	programCache          *ProgramCache
+	planExprCache         *planner.ExprCache
 }
 
 type WrappedRunnableDerivedRole struct {
@@ -722,6 +724,7 @@ func (rt *RuleTable) initBuildState() {
 	rt.principalScopeMap = make(map[string]struct{})
 	rt.resourceScopeMap = make(map[string]struct{})
 	rt.scopePermsTracker = scopeperms.NewTracker()
+	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 }
 
 // finalizeBuild releases transient build state once all rows have been indexed.
@@ -825,6 +828,7 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 
 		if !rule.FromRolePolicy {
 			rt.scopePermsTracker.Add(rule.PolicyKind, namer.PolicyKeyFromFQN(rule.OriginFqn), rule.Scope, rule.ScopePermissions)
+			rt.scopeScopePermissions[rule.Scope] = scopeperms.Normalise(rule.ScopePermissions)
 		}
 
 		switch rule.PolicyKind { //nolint:exhaustive
@@ -949,7 +953,7 @@ func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []s
 }
 
 func (rt *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
-	return rt.scopePermsTracker.Permissions(scope)
+	return rt.scopeScopePermissions[scope]
 }
 
 // checkScopePermissions reports an error if adding the policy set would make the scope permissions of its scope
