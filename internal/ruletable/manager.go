@@ -147,6 +147,11 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 			return fmt.Errorf("failed to load policy: %w", err)
 		}
 
+		// Reject the policy before touching the table if it would make the scope permissions of its scope inconsistent.
+		if err := mgr.checkPolicy(rps, evt.OldPolicyID); err != nil {
+			return err
+		}
+
 		// Only delete if we successfully retrieved the policy above (e.g. no compilation errors occurred)
 		if err := mgr.deletePolicy(evt.PolicyID); err != nil {
 			return fmt.Errorf("failed to delete policy: %w", err)
@@ -187,6 +192,30 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+// checkPolicy verifies that the policy set can be added without creating a scope permissions conflict.
+// The policy identified by oldPolicyID, if any, is about to be removed and is not considered.
+func (mgr *Manager) checkPolicy(rps *runtimev1.RunnablePolicySet, oldPolicyID *namer.ModuleID) error {
+	if rps == nil {
+		return nil
+	}
+
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	var ignoredPolicyKey string
+	if oldPolicyID != nil {
+		if meta := mgr.Meta[oldPolicyID.RawValue()]; meta != nil {
+			ignoredPolicyKey = namer.PolicyKeyFromFQN(meta.GetFqn())
+		}
+	}
+
+	if err := mgr.checkScopePermissions(rps, ignoredPolicyKey); err != nil {
+		return fmt.Errorf("rejected policy %s: %w", namer.PolicyKeyFromFQN(rps.GetFqn()), err)
 	}
 
 	return nil
@@ -258,11 +287,7 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		}
 	}
 
-	for scope := range mgr.scopeScopePermissions {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.scopeScopePermissions, scope)
-		}
-	}
+	mgr.scopePermsTracker.Remove(namer.PolicyKeyFromFQN(meta.GetFqn()))
 
 	delete(mgr.Schemas, moduleID.RawValue())
 	delete(mgr.Meta, moduleID.RawValue())
