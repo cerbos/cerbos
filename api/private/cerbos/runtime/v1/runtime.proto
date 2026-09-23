@@ -337,7 +337,13 @@ message IndexBuildErrors {
   }
 
   message ScopePermissionsConflicts {
+    message Policy {
+      string policy = 1;
+      cerbos.policy.v1.ScopePermissions scope_permissions = 2;
+    }
+
     string scope = 1;
+    repeated Policy policies = 2;
   }
 
   message LoadFailure {
