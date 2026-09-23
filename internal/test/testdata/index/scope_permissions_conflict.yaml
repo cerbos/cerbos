@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=../.jsonschema/IndexBuilderTestCase.schema.json
+---
+# Two resource kinds share the scope `company` but disagree on `scopePermissions`. All
+# policies within a scope must use the same setting, so the build must fail.
+wantErrList:
+  scopePermissionsConflicts:
+    - scope: company
+      policies:
+        - policy: resource.record.vdefault/company
+          scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+        - policy: resource.tool.vdefault/company
+          scopePermissions: SCOPE_PERMISSIONS_OVERRIDE_PARENT
+
+files:
+  "tool.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: tool
+      version: default
+      rules:
+      - actions: ["execute"]
+        roles: ["manager"]
+        effect: EFFECT_ALLOW
+
+  "tool.company.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: tool
+      version: default
+      scope: company
+      rules:
+      - actions: ["execute"]
+        roles: ["manager"]
+        effect: EFFECT_ALLOW
+
+  "record.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: record
+      version: default
+      rules:
+      - actions: ["view"]
+        roles: ["manager"]
+        effect: EFFECT_ALLOW
+
+  "record.company.yaml": |-
+    ---
+    apiVersion: api.cerbos.dev/v1
+    resourcePolicy:
+      resource: record
+      version: default
+      scope: company
+      scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS
+      rules:
+      - actions: ["view"]
+        roles: ["manager"]
+        effect: EFFECT_ALLOW

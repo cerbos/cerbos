@@ -27,6 +27,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/inspect"
@@ -34,6 +35,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
@@ -255,6 +257,10 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 		for i, p := range policies {
 			modIDs[i] = p.ID
 			modIDSet[p.ID] = struct{}{}
+		}
+
+		if err := s.checkScopePermissions(ctx, tx, policies); err != nil {
+			return err
 		}
 
 		// We only need to retrieve the state of Dependents before the update (there's no need
@@ -975,6 +981,20 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 		events[idx] = storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
 	}
 
+	toEnable, err := s.LoadPolicy(ctx, policyKey...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load policies to enable: %w", err)
+	}
+
+	enabling := make([]policy.Wrapper, len(toEnable))
+	for i, p := range toEnable {
+		enabling[i] = *p
+	}
+
+	if err := s.checkScopePermissions(ctx, s.db, enabling); err != nil {
+		return 0, err
+	}
+
 	res, err := s.db.Update(PolicyTbl).Prepared(true).
 		Set(goqu.Record{PolicyTblDisabledCol: false}).
 		Where(goqu.C(PolicyTblIDCol).In(mIDs)).
@@ -990,6 +1010,69 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 
 	s.subs.NotifySubscribers(events...)
 	return uint32(affected), nil
+}
+
+type querier interface {
+	From(...any) *goqu.SelectDataset
+}
+
+// checkScopePermissions verifies that the given policies agree with the enabled policies already stored in the same
+// scopes on the scopePermissions setting. Conflicts are reported as a scopeperms.ConflictsError.
+func (s *dbStorage) checkScopePermissions(ctx context.Context, q querier, policies []policy.Wrapper) error {
+	batch := make(map[namer.ModuleID]struct{}, len(policies))
+	scopes := make([]string, 0, len(policies))
+	seenScopes := make(map[string]struct{})
+	for _, p := range policies {
+		if !scopeperms.Constrained(policyv1.Kind(p.Kind)) {
+			continue
+		}
+
+		batch[p.ID] = struct{}{}
+		if _, ok := seenScopes[p.Scope]; !ok {
+			seenScopes[p.Scope] = struct{}{}
+			scopes = append(scopes, p.Scope)
+		}
+	}
+
+	if len(scopes) == 0 {
+		return nil
+	}
+
+	var recs []Policy
+	if err := q.From(PolicyTbl).
+		Select(
+			goqu.C(PolicyTblIDCol),
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+			goqu.C(PolicyTblDescCol),
+			goqu.C(PolicyTblDisabledCol),
+			goqu.C(PolicyTblDefinitionCol),
+		).
+		Where(
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").In(scopes),
+			goqu.C(PolicyTblDisabledCol).IsFalse(),
+		).
+		ScanStructsContext(ctx, &recs); err != nil {
+		return fmt.Errorf("failed to load policies sharing scopes: %w", err)
+	}
+
+	tracker := scopeperms.NewTracker()
+	for _, rec := range recs {
+		p := rec.Definition.Policy
+		if _, ok := batch[rec.ID]; ok || p == nil {
+			continue
+		}
+
+		tracker.Add(policyv1.Kind(policy.GetKind(p)), namer.PolicyKey(p), policy.GetScope(p), policy.GetScopePermissions(p))
+	}
+
+	for _, p := range policies {
+		tracker.Add(policyv1.Kind(p.Kind), namer.PolicyKey(p.Policy), p.Scope, policy.GetScopePermissions(p.Policy))
+	}
+
+	return tracker.Err()
 }
 
 func (s *dbStorage) validateIntegrity(

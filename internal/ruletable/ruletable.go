@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 	"github.com/cerbos/cerbos/internal/schema"
@@ -500,6 +501,7 @@ type RuleTable struct {
 	idx                   *index.Index
 	principalScopeMap     map[string]struct{}
 	resourceScopeMap      map[string]struct{}
+	scopePermsTracker     *scopeperms.Tracker
 	scopeScopePermissions map[string]policyv1.ScopePermissions
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
 	programCache          *ProgramCache
@@ -669,6 +671,10 @@ func newRuleTableFromIterableLoader(ctx context.Context, spl policyloader.Iterab
 		}
 	}
 
+	if err := rt.scopePermsTracker.Err(); err != nil {
+		return nil, err
+	}
+
 	rt.finalizeBuild()
 
 	return rt, nil
@@ -703,6 +709,10 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 		return err
 	}
 
+	if err := rt.scopePermsTracker.Err(); err != nil {
+		return err
+	}
+
 	rt.finalizeBuild()
 
 	return nil
@@ -712,6 +722,7 @@ func (rt *RuleTable) initBuildState() {
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
 	rt.principalScopeMap = make(map[string]struct{})
 	rt.resourceScopeMap = make(map[string]struct{})
+	rt.scopePermsTracker = scopeperms.NewTracker()
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 }
 
@@ -814,8 +825,9 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			}
 		}
 
-		if rule.ScopePermissions != policyv1.ScopePermissions_SCOPE_PERMISSIONS_UNSPECIFIED {
-			rt.scopeScopePermissions[rule.Scope] = rule.ScopePermissions
+		if !rule.FromRolePolicy {
+			rt.scopePermsTracker.Add(rule.PolicyKind, namer.PolicyKeyFromFQN(rule.OriginFqn), rule.Scope, rule.ScopePermissions)
+			rt.scopeScopePermissions[rule.Scope] = scopeperms.Normalise(rule.ScopePermissions)
 		}
 
 		switch rule.PolicyKind { //nolint:exhaustive
@@ -941,6 +953,39 @@ func (rt *RuleTable) CombineScopes(principalScopes, resourceScopes []string) []s
 
 func (rt *RuleTable) GetScopeScopePermissions(scope string) policyv1.ScopePermissions {
 	return rt.scopeScopePermissions[scope]
+}
+
+// checkScopePermissions reports an error if adding the policy set would make the scope permissions of its scope
+// inconsistent with the policies already in the table. The policy identified by ignoredPolicyKey is not considered.
+func (rt *RuleTable) checkScopePermissions(rps *runtimev1.RunnablePolicySet, ignoredPolicyKey string) error {
+	var (
+		kind  policyv1.Kind
+		scope string
+		sp    policyv1.ScopePermissions
+	)
+
+	switch ps := rps.GetPolicySet().(type) {
+	case *runtimev1.RunnablePolicySet_ResourcePolicy:
+		policies := ps.ResourcePolicy.GetPolicies()
+		if len(policies) == 0 {
+			return nil
+		}
+		kind, scope, sp = policyv1.Kind_KIND_RESOURCE, policies[0].GetScope(), policies[0].GetScopePermissions()
+	case *runtimev1.RunnablePolicySet_PrincipalPolicy:
+		policies := ps.PrincipalPolicy.GetPolicies()
+		if len(policies) == 0 {
+			return nil
+		}
+		kind, scope, sp = policyv1.Kind_KIND_PRINCIPAL, policies[0].GetScope(), policies[0].GetScopePermissions()
+	default:
+		return nil
+	}
+
+	if c := rt.scopePermsTracker.Check(kind, namer.PolicyKeyFromFQN(rps.GetFqn()), scope, sp, ignoredPolicyKey); c != nil {
+		return &scopeperms.ConflictsError{Conflicts: []scopeperms.Conflict{*c}}
+	}
+
+	return nil
 }
 
 func (rt *RuleTable) GetSchema(fqn string) *policyv1.Schemas {

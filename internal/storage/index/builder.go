@@ -25,6 +25,7 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/util"
 )
@@ -169,8 +170,7 @@ type indexBuilder struct {
 	dependents                    map[namer.ModuleID]ModuleIDSet
 	dependencies                  map[namer.ModuleID]ModuleIDSet
 	missingScopes                 map[string]map[string]struct{}
-	sharedScopePermissionGroups   map[string]map[policyv1.ScopePermissions]struct{}
-	conflictingScopes             map[string]struct{}
+	scopePermsTracker             *scopeperms.Tracker
 	missingResourceScopes         map[string]map[string]map[string]struct{} // map[{resource}]map[{scope}]map[{version}]struct{}
 	foundRolePolicyResourceScopes map[string]map[string]map[string]struct{} // map[{resource}]map[{scope}]map[{version}]struct{}
 	missing                       map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport
@@ -189,8 +189,7 @@ func newIndexBuilder() *indexBuilder {
 		dependencies:                  make(map[namer.ModuleID]ModuleIDSet),
 		missing:                       make(map[namer.ModuleID][]*runtimev1.IndexBuildErrors_MissingImport),
 		missingScopes:                 make(map[string]map[string]struct{}),
-		sharedScopePermissionGroups:   make(map[string]map[policyv1.ScopePermissions]struct{}),
-		conflictingScopes:             make(map[string]struct{}),
+		scopePermsTracker:             scopeperms.NewTracker(),
 		missingResourceScopes:         make(map[string]map[string]map[string]struct{}),
 		foundRolePolicyResourceScopes: make(map[string]map[string]map[string]struct{}),
 		stats:                         newStatsCollector(),
@@ -344,19 +343,7 @@ func (idx *indexBuilder) addPolicy(file string, srcCtx parser.SourceCtx, p polic
 		// not executable
 	}
 
-	sharedScope, ok := idx.sharedScopePermissionGroups[p.Scope]
-	if !ok {
-		sharedScope = make(map[policyv1.ScopePermissions]struct{})
-		idx.sharedScopePermissionGroups[p.Scope] = sharedScope
-	} else if _, ok := idx.conflictingScopes[p.Scope]; !ok {
-		if _, ok := sharedScope[scopePermission]; !ok {
-			sharedScope[scopePermission] = struct{}{}
-		}
-
-		if len(sharedScope) > 1 {
-			idx.conflictingScopes[p.Scope] = struct{}{}
-		}
-	}
+	idx.scopePermsTracker.Add(policyv1.Kind(p.Kind), policyKey, p.Scope, scopePermission)
 
 	deps, paths := policy.Dependencies(p.Policy)
 	for i, dep := range deps {
@@ -459,7 +446,8 @@ func (idx *indexBuilder) addDep(child, parent namer.ModuleID) {
 func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 	logger := zap.L().Named("index")
 
-	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes) + len(idx.conflictingScopes)
+	scopePermissionsConflicts := idx.scopePermsTracker.Conflicts()
+	nErr := len(idx.missing) + len(idx.duplicates) + len(idx.loadFailures) + len(idx.missingScopes) + len(scopePermissionsConflicts)
 	if nErr > 0 {
 		err := &BuildError{
 			IndexBuildErrors: &runtimev1.IndexBuildErrors{
@@ -493,10 +481,18 @@ func (idx *indexBuilder) build(fsys fs.FS, opts buildOptions) (*index, error) {
 			})
 		}
 
-		for s := range idx.conflictingScopes {
-			err.ScopePermissionsConflicts = append(err.ScopePermissionsConflicts, &runtimev1.IndexBuildErrors_ScopePermissionsConflicts{
-				Scope: s,
-			})
+		for _, c := range scopePermissionsConflicts {
+			conflict := &runtimev1.IndexBuildErrors_ScopePermissionsConflicts{
+				Scope:    c.Scope,
+				Policies: make([]*runtimev1.IndexBuildErrors_ScopePermissionsConflicts_Policy, len(c.PolicySettings)),
+			}
+			for i, p := range c.PolicySettings {
+				conflict.Policies[i] = &runtimev1.IndexBuildErrors_ScopePermissionsConflicts_Policy{
+					Policy:           p.PolicyKey,
+					ScopePermissions: p.Permissions,
+				}
+			}
+			err.ScopePermissionsConflicts = append(err.ScopePermissionsConflicts, conflict)
 		}
 
 		logBuildFailure(logger, opts.buildFailureLogLevel, err)

@@ -384,10 +384,15 @@ func processLintErrors(ctx context.Context, errs *index.BuildError) *responsev1.
 	}
 
 	for _, scopePermissionConflict := range errs.ScopePermissionsConflicts {
+		details := make([]string, len(scopePermissionConflict.Policies))
+		for i, pol := range scopePermissionConflict.Policies {
+			details[i] = fmt.Sprintf("%s=%s", pol.Policy, pol.ScopePermissions)
+		}
 		errors = append(errors, &responsev1.PlaygroundFailure_Error{
 			Error: fmt.Sprintf(
-				"Policies sharing scope %s have conflicting scopePermissions\n",
+				"Policies sharing scope %s have conflicting scopePermissions [%s]\n",
 				scopePermissionConflict.Scope,
+				strings.Join(details, ", "),
 			),
 		})
 	}
