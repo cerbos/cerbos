@@ -2,6 +2,14 @@
   "$id": "https://api.cerbos.test/cerbos/private/v1/IndexBuilderTestCase.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.policy.v1.ScopePermissions": {
+      "type": "string",
+      "enum": [
+        "SCOPE_PERMISSIONS_UNSPECIFIED",
+        "SCOPE_PERMISSIONS_OVERRIDE_PARENT",
+        "SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS"
+      ]
+    },
     "cerbos.private.v1.IndexBuilderTestCase.CompilationUnit": {
       "type": "object",
       "additionalProperties": false,
@@ -171,8 +179,26 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.Policy"
+          }
+        },
         "scope": {
           "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "type": "string"
+        },
+        "scopePermissions": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
         }
       }
     },
