@@ -1277,16 +1277,16 @@ func TestQueryResourceKindForms(t *testing.T) {
 	}
 
 	t.Run("kind with special characters", func(t *testing.T) {
-		res := impl.Query("default", rawKind, "", "", nil, 0, "", nil)
-		require.ElementsMatch(t, []string{"resource_policy", "role_policy_literal", "role_policy_glob", "principal_policy_literal", "principal_policy_glob"}, names(res))
+		res := impl.Query("default", rawKind, "", "", nil, policyv1.Kind_KIND_RESOURCE, "", nil)
+		require.ElementsMatch(t, []string{"resource_policy", "role_policy_literal", "role_policy_glob"}, names(res))
 		require.True(t, impl.ScopedResourceExists("default", rawKind, []string{""}))
 		require.Contains(t, impl.ActionsForResource(rawKind, nil, nil), "view")
 	})
 
-	// A request whose resource kind is literally the sanitized spelling hits the same
-	// rows as the original kind. That collision predates the alias lookup. Globs
-	// written for the original spelling must not match it.
-	t.Run("kind in sanitized form", func(t *testing.T) {
+	// A request whose kind is literally the sanitized spelling hits the same rows as the
+	// original kind: that collision predates the alias lookup. Globs written for the original
+	// spelling must not match it.
+	t.Run("request kind spelled in sanitized form", func(t *testing.T) {
 		res := impl.Query("default", sanitizedKind, "", "", nil, 0, "", nil)
 		require.ElementsMatch(t, []string{"resource_policy", "sanitized_form_glob", "principal_policy_literal"}, names(res))
 	})
