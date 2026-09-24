@@ -42,7 +42,7 @@ func TestBuildIndexWithDisk(t *testing.T) {
 
 	t.Run("check_contents", func(t *testing.T) {
 		data := idxImpl.Inspect()
-		require.Len(t, data, 65)
+		require.Len(t, data, 67)
 
 		rp1 := filepath.Join("resource_policies", "policy_01.yaml")
 		rp2 := filepath.Join("resource_policies", "policy_02.yaml")
@@ -137,8 +137,8 @@ func TestBuildIndexWithDisk(t *testing.T) {
 	t.Run("check_stats", func(t *testing.T) {
 		stats := idx.RepoStats(t.Context())
 		require.GreaterOrEqual(t, 3, stats.SchemaCount)
-		require.Equal(t, stats.DistinctActionCount, 49)
-		require.Equal(t, stats.DistinctResourceCount, 23)
+		require.Equal(t, stats.DistinctActionCount, 52)
+		require.Equal(t, stats.DistinctResourceCount, 24)
 		require.True(t, stats.HasOutput)
 		require.True(t, stats.HasScopedPolicies)
 

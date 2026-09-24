@@ -211,6 +211,10 @@ func withScope(fqn, scope string) string {
 // Because we used the sanitized name for computing the module ID of the policy, in order to maintain backward compatibility
 // and not break database stores we still have to do the same if the name matches the pattern.
 func sanitize(v string) string {
+	if !strings.ContainsFunc(v, isInvalidIdentifierChar) {
+		return v
+	}
+
 	if oldNamePattern.MatchString(v) {
 		return invalidIdentifierChars.ReplaceAllLiteralString(v, "_")
 	}
@@ -280,4 +284,16 @@ func ScopeValue(scope string) string {
 type Policy struct {
 	PolicyCoords
 	ID ModuleID
+}
+
+// isInvalidIdentifierChar reports whether r would be replaced by invalidIdentifierChars.
+func isInvalidIdentifierChar(r rune) bool {
+	switch {
+	case r == '.', r == '_':
+		return false
+	case r >= '0' && r <= '9', r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z':
+		return false
+	default:
+		return true
+	}
 }

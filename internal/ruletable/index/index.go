@@ -248,7 +248,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		versionBM = bm
 	}
 	if resource != "" {
-		bm := bi.resource.Query(arena, resource)
+		bm := bi.resourceQuery(arena, resource)
 		if bm.IsEmpty() {
 			return buf
 		}
@@ -402,7 +402,7 @@ func (m *Index) appendRolePolicyDenies(
 
 	var matched []*BindingHandle
 	for _, resource := range resources {
-		resBM := bi.resource.Query(arena, resource)
+		resBM := bi.resourceQuery(arena, resource)
 		resourceMatchedBM := emptyBitmap
 		if !resBM.IsEmpty() {
 			resourceMatchedBM = arena.and2(candidateBM, resBM)
@@ -628,7 +628,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 		// An empty resourceBM doesn't short-circuit: role-policy synthesis
 		// still emits NoMatch denies when a role has a policy in the other
 		// dimensions but no rows for the requested resource.
-		resourceBM = bi.resource.QueryMultiple(arena, resources)
+		resourceBM = bi.resourceQueryMulti(arena, resources)
 	}
 
 	dims := make([]*Bitmap, 0, 4) //nolint:mnd
@@ -888,7 +888,7 @@ func (m *Index) ActionsForResource(resource string, versions, scopes []string) [
 		return nil
 	}
 
-	resBM := bi.resource.Query(arena, resource)
+	resBM := bi.resourceQuery(arena, resource)
 	return collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
 }
 
@@ -916,7 +916,7 @@ func (bi *bitmapIndex) resourceDimensionKeys(d keyDimension, versions, scopes, r
 
 	var resourceBM *Bitmap
 	if len(resources) > 0 {
-		resourceBM = bi.resource.QueryMultiple(arena, resources)
+		resourceBM = bi.resourceQueryMulti(arena, resources)
 		if resourceBM.IsEmpty() {
 			return nil
 		}
@@ -981,7 +981,7 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 		return false
 	}
 
-	resourceBM := m.bi.resource.Query(arena, resource)
+	resourceBM := m.bi.resourceQuery(arena, resource)
 	if resourceBM.IsEmpty() {
 		return false
 	}
@@ -1063,4 +1063,34 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	}
 
 	return progs, nil
+}
+
+// resourceQuery returns the bindings indexed under the given resource kind.
+func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource string) *Bitmap {
+	return bi.resource.QueryWithAlias(arena, resource, namer.SanitizedResource(resource))
+}
+
+func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []string) *Bitmap {
+	switch len(resources) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return bi.resourceQuery(arena, resources[0])
+	}
+
+	parts := make([]*Bitmap, 0, len(resources))
+	for _, r := range resources {
+		if bm := bi.resourceQuery(arena, r); !bm.IsEmpty() {
+			parts = append(parts, bm)
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return parts[0]
+	default:
+		return arena.orInto(parts)
+	}
 }
