@@ -137,6 +137,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.purchase_order.vdefault",
 					"resource.runtime_effective_derived_roles.vdefault",
 					"resource.temple_relic.vdefault",
+					"resource.udm_module_users_simple_regular_user.vdefault",
 					"resource.variables_referencing_variables.vdefault",
 					"role.20210210_admin.v20210210",
 					"role.acme_assistant.vdefault/acme.hr.uk",
@@ -144,6 +145,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"role.acme_jr_admin.vdefault/acme.hr.uk.brighton",
 					"role.acme_london_employee.vdefault/acme.hr.uk.london",
 					"role.acme_travel_agent.vdefault/acme.hr.uk",
+					"role.domain_administrator.vdefault",
 					"role.party_person.vdefault/acme.hr.uk.brighton.kemptown",
 					"role.relic_specialist.vdefault",
 				}, listPolicies(t, clientCtx))
