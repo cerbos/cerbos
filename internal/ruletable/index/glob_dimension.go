@@ -137,3 +137,23 @@ func (gd *globDimension) compact() {
 	gd.literals.compact()
 	gd.globs.compact()
 }
+
+// QueryWithAlias is like Query but additionally includes the literal bitmap
+// for alias.
+func (gd *globDimension) QueryWithAlias(arena *bitmapArena, value, alias string) *Bitmap {
+	if alias == "" || alias == value {
+		return gd.Query(arena, value)
+	}
+
+	aliasBM, _ := gd.literals.Bitmap(alias) // nil if absent
+	valueBM := gd.Query(arena, value)
+
+	switch {
+	case aliasBM == nil:
+		return valueBM
+	case valueBM.IsEmpty():
+		return aliasBM
+	default:
+		return arena.orInto([]*Bitmap{valueBM, aliasBM})
+	}
+}
