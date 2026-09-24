@@ -161,9 +161,8 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
 	scopedPrincipalExists := rt.idx.ScopedPrincipalExists(principalVersion, principalScopes)
-	scopedResourceExists := rt.idx.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
+	scopedResourceExists := rt.idx.ScopedResourceExists(resourceVersion, input.Resource.Kind, resourceScopes)
 
 	if !scopedPrincipalExists && !scopedResourceExists {
 		return result, nil
@@ -291,7 +290,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
 					}
-					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, parentRoles, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(resourceVersion, input.Resource.Kind, scope, action, parentRoles, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						bName := index.HandleStr(b.Name)
 						bOriginFqn := index.HandleStr(b.OriginFqn)

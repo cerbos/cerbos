@@ -83,8 +83,6 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
 
-	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
-
 	includingParentRoles := make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
 		includingParentRoles[r] = struct{}{}
@@ -196,7 +194,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
 					}
-					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(resourceVersion, input.Resource.Kind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
