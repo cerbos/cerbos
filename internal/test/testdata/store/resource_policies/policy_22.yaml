@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  # Matches the legacy naming pattern (letters, ":", "/", "-" only), so the rule
+  # table stores it in sanitized form. Regression test for
+  # https://github.com/cerbos/cerbos/issues/3388
+  resource: "udm:module:users/simple_regular-user"
+  rules:
+    - actions:
+        - udm:object:read
+        - udm:object:update
+        - udm:object:delete
+      roles:
+        - role-allow-role-policy-actions
+      effect: EFFECT_ALLOW
