@@ -12,7 +12,7 @@ import (
 // isInvalidIdentifierChar is a fast path in front of invalidIdentifierChars, so the two must agree.
 func TestIsInvalidIdentifierCharAgreesWithRegexp(t *testing.T) {
 	runes := make([]rune, 0, 260)
-	for r := rune(0); r < 256; r++ {
+	for r := range rune(256) {
 		runes = append(runes, r)
 	}
 	runes = append(runes, 'é', 'ß', '世', '🚀')
