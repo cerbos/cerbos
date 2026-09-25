@@ -46,8 +46,7 @@ func TestRuleTableManager(t *testing.T) {
 	schemaConf := schema.NewConf(schema.EnforcementNone)
 	schemaMgr := schema.NewFromConf(ctx, store, schemaConf)
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(t, err)
+	compiler := compile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTable(ruletable.NewProtoRuletable())
 	require.NoError(t, err)

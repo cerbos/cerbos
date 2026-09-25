@@ -40,10 +40,7 @@ func CompileStream(ctx context.Context, fsys fs.FS, onRow func(*runtimev1.RuleTa
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 
-	mgr, err := internalcompile.NewManager(ctx, store)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create compile manager: %w", err)
-	}
+	mgr := internalcompile.NewManager(store)
 
 	rt := ruletable.NewProtoRuletable()
 

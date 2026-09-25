@@ -291,8 +291,7 @@ func mkEngineFactory(tb testing.TB, storeDir string) func(testing.TB, param) eva
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: test.PathToDir(tb, storeDir)})
 	require.NoError(tb, err)
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(tb, err)
+	compiler := compile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	require.NoError(tb, err)
@@ -344,8 +343,7 @@ func mkRuleTableFactory(tb testing.TB, storeDir string, roundTripIndex bool) fun
 
 	protoRT := ruletable.NewProtoRuletable()
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(tb, err)
+	compiler := compile.NewManager(store)
 
 	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
 	require.NoError(tb, err)

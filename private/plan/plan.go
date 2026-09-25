@@ -19,10 +19,7 @@ import (
 
 func Resources(ctx context.Context, conf *evaluator.Conf, idx compile.Index, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, error) {
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	compiler, err := internalcompile.NewManager(ctx, store)
-	if err != nil {
-		return nil, err
-	}
+	compiler := internalcompile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	if err != nil {

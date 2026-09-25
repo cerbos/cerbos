@@ -26,8 +26,7 @@ func buildFullRuleTable(tb testing.TB) *RuleTable {
 
 	protoRT := NewProtoRuletable()
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(tb, err)
+	compiler := compile.NewManager(store)
 
 	require.NoError(tb, LoadPolicies(ctx, protoRT, compiler))
 	require.NoError(tb, LoadSchemas(ctx, protoRT, store))

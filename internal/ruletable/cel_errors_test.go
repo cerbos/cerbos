@@ -50,8 +50,7 @@ func newCELErrorsHarness(t *testing.T) *celErrorsHarness {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: test.PathToDir(t, "store")})
 	require.NoError(t, err)
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(t, err)
+	compiler := compile.NewManager(store)
 
 	protoRT := ruletable.NewProtoRuletable()
 	require.NoError(t, ruletable.LoadPolicies(ctx, protoRT, compiler))

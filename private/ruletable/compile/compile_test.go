@@ -37,8 +37,7 @@ func TestCompile(t *testing.T) {
 	idx, err := compile.BuildIndex(ctx, fsys)
 	require.NoError(t, err)
 
-	mgr, err := internalcompile.NewManager(ctx, disk.NewFromIndexWithConf(idx, &disk.Conf{}))
-	require.NoError(t, err)
+	mgr := internalcompile.NewManager(disk.NewFromIndexWithConf(idx, &disk.Conf{}))
 
 	want := ruletable.NewProtoRuletable()
 	require.NoError(t, ruletable.LoadPolicies(ctx, want, mgr))
