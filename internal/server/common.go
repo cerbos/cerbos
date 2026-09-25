@@ -71,10 +71,7 @@ func InitializeCerbosCore(ctx context.Context) (*CoreComponents, error) {
 		}
 	case storage.SourceStore:
 		// create compile manager
-		policyLoader, err = compile.NewManager(ctx, st)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create compile manager: %w", err)
-		}
+		policyLoader = compile.NewManager(st)
 	default:
 		return nil, ErrInvalidStore
 	}

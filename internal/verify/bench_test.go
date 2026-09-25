@@ -120,8 +120,7 @@ func mkBenchEngine(tb testing.TB, ctx context.Context, fsys fs.FS) *engine.Engin
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(tb, err, "failed to create compiler manager")
+	compiler := compile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	require.NoError(tb, err, "failed to create rule table")
