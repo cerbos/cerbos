@@ -125,7 +125,7 @@ image:jwt-token.png[alt="JWT",role="center-img"]
 == Request Flow
 
 . HTTP request comes in and the `express-jwt` library validates the
-token and adds the payload to `req.user`.
+token and adds the payload to `req.auth`.
 . The contents of the JWT token is mapped to the structure of the
 principal object required by Cerbos
 
@@ -146,27 +146,30 @@ const jwtToPrincipal = ({ sub, iat, roles = [], ...rest }) => {
 data store
 . Call the Cerbos PDP with the principal, resource and action to check
 the authorization and then return an error if the user is not
-authorized. The https://www.npmjs.com/package/cerbos[Cerbos package] is
-used for this.
+authorized. The https://www.npmjs.com/package/@cerbos/grpc[`@cerbos/grpc` package] is
+used for this. Initialize the client once when the application starts:
 
 [source,js]
 ----
-const allowed = await cerbos.check({
-  principal: jwtToPrincipal(req.user),
+import { GRPC } from "@cerbos/grpc";
+
+const cerbos = new GRPC("localhost:3593", { tls: false });
+----
+
+[source,js]
+----
+const decision = await cerbos.checkResource({
+  principal: jwtToPrincipal(req.auth),
   resource: {
     kind: "contact",
-    instances: {
-      //a map of the resource(s) being accessed
-      [contact.id]: {
-        attr: contact,
-      },
-    },
+    id: contact.id,
+    attr: contact,
   },
   actions: ["read"], //the list of actions being performed
 });
 
 // not authorized for read action
-if (!allowed.isAuthorized(contact.id, "read")) {
+if (!decision.isAllowed("read")) {
   return res.status(403).json({ error: "Unauthorized" });
 }
 ----

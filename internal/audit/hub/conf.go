@@ -55,7 +55,7 @@ type IngestConf struct {
 }
 
 type MaskConf struct {
-	Peer           []string `yaml:"peer" conf:",example=\n    - address\n    - forwarded_for"`
+	Peer           []string `yaml:"peer" conf:",example=\n    - address\n    - forwardedFor"`
 	Metadata       []string `yaml:"metadata" conf:",example=['authorization']"`
 	CheckResources []string `yaml:"checkResources" conf:",example=\n    - inputs[*].principal.attr.foo\n    - inputs[*].auxData\n    - outputs"`
 	PlanResources  []string `yaml:"planResources" conf:",example=['input.principal.attr.nestedMap.foo']"`
