@@ -1215,3 +1215,60 @@ func makeRow(fqn string, fn ...func(*runtimev1.RuleTable_RuleRow)) *runtimev1.Ru
 	}
 	return r
 }
+
+func TestResourceGlobsOnSanitizedKind(t *testing.T) {
+	const kind = "udm:module:users/x"
+
+	rolePolicyGlob := func(name, glob string) *runtimev1.RuleTable_RuleRow {
+		return makeRow(namer.RolePolicyFQN("admin", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.Role = "admin"
+			r.Resource = glob
+			r.Name = name
+		})
+	}
+	principalPolicyGlob := func(name, glob string) *runtimev1.RuleTable_RuleRow {
+		return makeRow(namer.PrincipalPolicyFQN("alice", "default", ""), func(r *runtimev1.RuleTable_RuleRow) {
+			r.PolicyKind = policyv1.Kind_KIND_PRINCIPAL
+			r.Principal = "alice"
+			r.Role = "*"
+			r.FromRolePolicy = false
+			r.Resource = glob
+			r.Name = name
+		})
+	}
+
+	names := func(handles []*index.BindingHandle) []string {
+		out := make([]string, len(handles))
+		for i, h := range handles {
+			out[i] = index.HandleStr(h.Name)
+		}
+		return out
+	}
+
+	t.Run("principal_globs_match_both_forms", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			rolePolicyGlob("role_raw", "udm:module:*"),
+			rolePolicyGlob("role_sanitized", "udm_module_*"),
+			principalPolicyGlob("principal_raw", "udm:module:*"),
+			principalPolicyGlob("principal_sanitized", "udm_module_*"),
+		}))
+
+		res := impl.Query("default", kind, "", "", nil, 0, "", nil)
+		require.ElementsMatch(t, []string{"role_raw", "principal_raw", "principal_sanitized"}, names(res))
+
+		res = impl.Query("default", kind, "", "", nil, policyv1.Kind_KIND_PRINCIPAL, "alice", nil)
+		require.ElementsMatch(t, []string{"principal_raw", "principal_sanitized"}, names(res))
+	})
+
+	t.Run("role_globs_match_raw_form_only", func(t *testing.T) {
+		impl := index.New()
+		require.NoError(t, impl.IndexRules([]*runtimev1.RuleTable_RuleRow{
+			rolePolicyGlob("role_sanitized", "udm_module_*"),
+			principalPolicyGlob("principal_other", "other:*"),
+		}))
+
+		require.Empty(t, impl.Query("default", kind, "", "", nil, 0, "", nil))
+		require.False(t, impl.ScopedResourceExists("default", kind, []string{""}))
+	})
+}
