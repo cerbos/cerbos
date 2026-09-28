@@ -4,7 +4,7 @@ runs:
   using: composite
   steps:
     - name: Install rmz
-      uses: cerbos/actions/install-tools@c19f023116079958e91290ea4af73e25296d7614 # main
+      uses: cerbos/actions/install-tools@a047f57c5d4704f7221e1914545419e38535c20d # main
       with:
         tools: rmz
 
