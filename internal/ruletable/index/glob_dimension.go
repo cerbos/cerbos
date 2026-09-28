@@ -17,14 +17,14 @@ type globDimension struct {
 	literals lazyDimension
 	// `globs` and `compiled` share the same key
 	globs    lazyDimension
-	compiled map[string]glob.Glob
+	compiled map[string]*glob.Pattern
 }
 
 func newGlobDimension() *globDimension {
 	return &globDimension{
 		literals: newLazyDimension(),
 		globs:    newLazyDimension(),
-		compiled: make(map[string]glob.Glob),
+		compiled: make(map[string]*glob.Pattern),
 	}
 }
 

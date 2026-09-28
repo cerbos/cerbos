@@ -8,10 +8,10 @@ import (
 	"github.com/gobwas/glob"
 )
 
-var globs = &globCache{cache: cache.New[string, glob.Glob]("glob", 1024)} //nolint:mnd
+var globs = &globCache{cache: cache.New[string, *glob.Pattern]("glob", 1024)} //nolint:mnd
 
 type globCache struct {
-	cache *cache.Cache[string, glob.Glob]
+	cache *cache.Cache[string, *glob.Pattern]
 }
 
 func (gc *globCache) matches(globExpr, val string) bool {
@@ -22,7 +22,7 @@ func (gc *globCache) matches(globExpr, val string) bool {
 	return g.Match(val)
 }
 
-func (gc *globCache) getOrCompile(globExpr string) glob.Glob {
+func (gc *globCache) getOrCompile(globExpr string) *glob.Pattern {
 	cachedGlob, ok := gc.cache.Get(globExpr)
 	if ok {
 		return cachedGlob
@@ -82,6 +82,6 @@ func fixGlob(g string) string {
 
 // GetOrCompileGlob returns a compiled glob for the given expression, using the global cache.
 // Returns nil if the glob expression is invalid.
-func GetOrCompileGlob(globExpr string) glob.Glob {
+func GetOrCompileGlob(globExpr string) *glob.Pattern {
 	return globs.getOrCompile(fixGlob(globExpr))
 }
