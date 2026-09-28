@@ -1259,6 +1259,9 @@ func TestResourceGlobsOnSanitizedKind(t *testing.T) {
 
 		res = impl.Query("default", index.NewResourceKind(kind), "", "", nil, policyv1.Kind_KIND_PRINCIPAL, "alice", nil)
 		require.ElementsMatch(t, []string{"principal_raw", "principal_sanitized"}, names(res))
+
+		res = impl.Query("default", index.NewResourceKind(kind), "", "", nil, policyv1.Kind_KIND_RESOURCE, "", nil)
+		require.ElementsMatch(t, []string{"role_raw"}, names(res))
 	})
 
 	t.Run("role_globs_match_raw_form_only", func(t *testing.T) {

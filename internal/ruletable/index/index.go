@@ -248,7 +248,7 @@ func (m *Index) Query(version string, resource ResourceKind, scope, action strin
 		versionBM = bm
 	}
 	if resource.raw != "" {
-		bm := bi.resourceQuery(arena, resource)
+		bm := bi.resourceQuery(arena, resource, policyKind)
 		if bm.IsEmpty() {
 			return buf
 		}
@@ -402,7 +402,7 @@ func (m *Index) appendRolePolicyDenies(
 
 	var matched []*BindingHandle
 	for _, resource := range resources {
-		resBM := bi.resourceQuery(arena, resource)
+		resBM := bi.resourceQuery(arena, resource, policyv1.Kind_KIND_RESOURCE)
 		resourceMatchedBM := emptyBitmap
 		if !resBM.IsEmpty() {
 			resourceMatchedBM = arena.and2(candidateBM, resBM)
@@ -629,7 +629,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 		// An empty resourceBM doesn't short-circuit: role-policy synthesis
 		// still emits NoMatch denies when a role has a policy in the other
 		// dimensions but no rows for the requested resource.
-		resourceBM = bi.resourceQueryMulti(arena, resourceKinds)
+		resourceBM = bi.resourceQueryMulti(arena, resourceKinds, policyv1.Kind_KIND_UNSPECIFIED)
 	}
 
 	dims := make([]*Bitmap, 0, 4) //nolint:mnd
@@ -889,7 +889,7 @@ func (m *Index) ActionsForResource(resource string, versions, scopes []string) [
 		return nil
 	}
 
-	resBM := bi.resourceQuery(arena, NewResourceKind(resource))
+	resBM := bi.resourceQuery(arena, NewResourceKind(resource), policyv1.Kind_KIND_RESOURCE)
 	return collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
 }
 
@@ -917,7 +917,7 @@ func (bi *bitmapIndex) resourceDimensionKeys(d keyDimension, versions, scopes, r
 
 	var resourceBM *Bitmap
 	if len(resources) > 0 {
-		resourceBM = bi.resourceQueryMulti(arena, newResourceKinds(resources))
+		resourceBM = bi.resourceQueryMulti(arena, newResourceKinds(resources), policyv1.Kind_KIND_RESOURCE)
 		if resourceBM.IsEmpty() {
 			return nil
 		}
@@ -982,7 +982,7 @@ func (m *Index) ScopedResourceExists(version string, resource ResourceKind, scop
 		return false
 	}
 
-	resourceBM := m.bi.resourceQuery(arena, resource)
+	resourceBM := m.bi.resourceQuery(arena, resource, policyv1.Kind_KIND_RESOURCE)
 	if resourceBM.IsEmpty() {
 		return false
 	}
@@ -1102,8 +1102,12 @@ func newResourceKinds(kinds []string) []ResourceKind {
 // are matched against both forms to keep existing rules (deny rules in particular)
 // in force. Role policy globs are matched against the kind as written only.
 //
+// policyKind is the policy kind the caller restricts the result to, or
+// KIND_UNSPECIFIED for none. It only decides whether principal policy globs
+// need matching against the sanitized kind.
+//
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind) *Bitmap {
+func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind, policyKind policyv1.Kind) *Bitmap {
 	if resource.sanitized == "" {
 		return bi.resource.Query(arena, resource.raw)
 	}
@@ -1117,7 +1121,18 @@ func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind) 
 		parts = append(parts, bm)
 	}
 
-	principalBM, hasPrincipals := bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
+	// principalBM masks the globs matching only the sanitized kind when the caller
+	// doesn't restrict the result to principal policy rows itself.
+	var principalBM *Bitmap
+	matchSanitized := false
+	switch policyKind { //nolint:exhaustive
+	case policyv1.Kind_KIND_RESOURCE:
+	case policyv1.Kind_KIND_PRINCIPAL:
+		matchSanitized = true
+	default:
+		principalBM, matchSanitized = bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
+	}
+
 	var sanitizedOnlyGlobs []*Bitmap
 	for pattern, compiled := range gd.compiled {
 		switch {
@@ -1125,7 +1140,7 @@ func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind) 
 			if bm, ok := gd.globs.Bitmap(pattern); ok {
 				parts = append(parts, bm)
 			}
-		case hasPrincipals && compiled.Match(resource.sanitized):
+		case matchSanitized && compiled.Match(resource.sanitized):
 			if bm, ok := gd.globs.Bitmap(pattern); ok {
 				sanitizedOnlyGlobs = append(sanitizedOnlyGlobs, bm)
 			}
@@ -1141,8 +1156,11 @@ func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind) 
 		globsBM = arena.orInto(sanitizedOnlyGlobs)
 	}
 	if globsBM != nil {
-		if bm := arena.and2(globsBM, principalBM); !bm.IsEmpty() {
-			parts = append(parts, bm)
+		if principalBM != nil {
+			globsBM = arena.and2(globsBM, principalBM)
+		}
+		if !globsBM.IsEmpty() {
+			parts = append(parts, globsBM)
 		}
 	}
 
@@ -1156,17 +1174,17 @@ func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind) 
 	}
 }
 
-func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []ResourceKind) *Bitmap {
+func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []ResourceKind, policyKind policyv1.Kind) *Bitmap {
 	switch len(resources) {
 	case 0:
 		return emptyBitmap
 	case 1:
-		return bi.resourceQuery(arena, resources[0])
+		return bi.resourceQuery(arena, resources[0], policyKind)
 	}
 
 	parts := make([]*Bitmap, 0, len(resources))
 	for _, r := range resources {
-		if bm := bi.resourceQuery(arena, r); !bm.IsEmpty() {
+		if bm := bi.resourceQuery(arena, r, policyKind); !bm.IsEmpty() {
 			parts = append(parts, bm)
 		}
 	}
