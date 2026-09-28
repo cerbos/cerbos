@@ -1070,31 +1070,59 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 // Principal policy globs used to be matched against the sanitized kind, so they
 // are matched against both forms to keep existing rules (deny rules in particular)
 // in force. Role policy globs are matched against the kind as written only.
+//
+// The returned bitmap may alias a stored bitmap; callers must not mutate it.
 func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource string) *Bitmap {
 	sanitized := namer.SanitizedResource(resource)
-	bm := bi.resource.QueryWithAlias(arena, resource, sanitized)
 	if sanitized == resource {
-		return bm
+		return bi.resource.Query(arena, resource)
 	}
 
-	principalBM, ok := bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
-	if !ok {
-		return bm
+	gd := bi.resource
+	var parts []*Bitmap
+	if bm, ok := gd.literals.Bitmap(resource); ok {
+		parts = append(parts, bm)
+	}
+	if bm, ok := gd.literals.Bitmap(sanitized); ok {
+		parts = append(parts, bm)
 	}
 
-	globsBM := bi.resource.queryGlobs(arena, sanitized)
-	if globsBM.IsEmpty() {
-		return bm
+	principalBM, hasPrincipals := bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
+	var sanitizedOnlyGlobs []*Bitmap
+	for pattern, compiled := range gd.compiled {
+		switch {
+		case compiled.Match(resource):
+			if bm, ok := gd.globs.Bitmap(pattern); ok {
+				parts = append(parts, bm)
+			}
+		case hasPrincipals && compiled.Match(sanitized):
+			if bm, ok := gd.globs.Bitmap(pattern); ok {
+				sanitizedOnlyGlobs = append(sanitizedOnlyGlobs, bm)
+			}
+		}
 	}
 
-	principalGlobsBM := arena.and2(globsBM, principalBM)
-	switch {
-	case principalGlobsBM.IsEmpty():
-		return bm
-	case bm.IsEmpty():
-		return principalGlobsBM
+	var globsBM *Bitmap
+	switch len(sanitizedOnlyGlobs) {
+	case 0:
+	case 1:
+		globsBM = sanitizedOnlyGlobs[0]
 	default:
-		return arena.orInto([]*Bitmap{bm, principalGlobsBM})
+		globsBM = arena.orInto(sanitizedOnlyGlobs)
+	}
+	if globsBM != nil {
+		if bm := arena.and2(globsBM, principalBM); !bm.IsEmpty() {
+			parts = append(parts, bm)
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return parts[0]
+	default:
+		return arena.orInto(parts)
 	}
 }
 
