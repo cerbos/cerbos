@@ -211,7 +211,7 @@ func (m *Index) GetAllRows() []*BindingHandle {
 // Query returns bindings matching the given dimensions. Nil or zero-values mean
 // "match all" for that dimension. Synthetic DENYs from role policy AllowActions
 // are prepended when querying for a specific action with KIND_RESOURCE.
-func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string, buf []*BindingHandle) []*BindingHandle {
+func (m *Index) Query(version string, resource ResourceKind, scope, action string, roles []string, policyKind policyv1.Kind, principalID string, buf []*BindingHandle) []*BindingHandle {
 	bi := m.bi
 
 	if bi.universe.IsEmpty() {
@@ -247,7 +247,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		}
 		versionBM = bm
 	}
-	if resource != "" {
+	if resource.raw != "" {
 		bm := bi.resourceQuery(arena, resource)
 		if bm.IsEmpty() {
 			return buf
@@ -317,8 +317,8 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	// Role policy synthetic DENYs are prepended so the evaluator sees them
 	// before regular ALLOWs, which is required for scope permission semantics.
-	if action != "" && resource != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
-		buf = m.appendRolePolicyDenies(arena, bi, []string{resource}, roles, []string{action}, versionBM, scopeBM, roleBM, buf)
+	if action != "" && resource.raw != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
+		buf = m.appendRolePolicyDenies(arena, bi, []ResourceKind{resource}, roles, []string{action}, versionBM, scopeBM, roleBM, buf)
 	}
 
 	// Regular bindings.
@@ -351,7 +351,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 // resource's full surface, not just actions referenced by filtered roles.
 func (m *Index) appendRolePolicyDenies(
 	arena *bitmapArena, bi *bitmapIndex,
-	resources, roles, targetActions []string,
+	resources []ResourceKind, roles, targetActions []string,
 	versionBM, scopeBM, roleBM *Bitmap,
 	res []*BindingHandle,
 ) []*BindingHandle {
@@ -436,7 +436,7 @@ func (m *Index) appendRolePolicyDenies(
 			// role policy exists, but no resource bindings present
 			if len(roleBindings) == 0 {
 				for _, action := range resourceActions {
-					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), resource, action))
+					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), resource.raw, action))
 				}
 				continue
 			}
@@ -624,11 +624,12 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 			return nil
 		}
 	}
-	if len(resources) > 0 {
+	resourceKinds := newResourceKinds(resources)
+	if len(resourceKinds) > 0 {
 		// An empty resourceBM doesn't short-circuit: role-policy synthesis
 		// still emits NoMatch denies when a role has a policy in the other
 		// dimensions but no rows for the requested resource.
-		resourceBM = bi.resourceQueryMulti(arena, resources)
+		resourceBM = bi.resourceQueryMulti(arena, resourceKinds)
 	}
 
 	dims := make([]*Bitmap, 0, 4) //nolint:mnd
@@ -670,7 +671,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 	}
 
 	if withRolePolicyDenies {
-		res = m.appendRolePolicyDenies(arena, bi, resources, roles, actions, versionBM, scopeBM, roleBM, res)
+		res = m.appendRolePolicyDenies(arena, bi, resourceKinds, roles, actions, versionBM, scopeBM, roleBM, res)
 	}
 
 	// QueryMulti is the external boundary: materialise interned handles back into
@@ -888,7 +889,7 @@ func (m *Index) ActionsForResource(resource string, versions, scopes []string) [
 		return nil
 	}
 
-	resBM := bi.resourceQuery(arena, resource)
+	resBM := bi.resourceQuery(arena, NewResourceKind(resource))
 	return collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
 }
 
@@ -916,7 +917,7 @@ func (bi *bitmapIndex) resourceDimensionKeys(d keyDimension, versions, scopes, r
 
 	var resourceBM *Bitmap
 	if len(resources) > 0 {
-		resourceBM = bi.resourceQueryMulti(arena, resources)
+		resourceBM = bi.resourceQueryMulti(arena, newResourceKinds(resources))
 		if resourceBM.IsEmpty() {
 			return nil
 		}
@@ -963,7 +964,7 @@ func (bi *bitmapIndex) versionScopeFilters(arena *bitmapArena, versions, scopes 
 	return versionBM, scopeBM, true
 }
 
-func (m *Index) ScopedResourceExists(version, resource string, scopes []string) bool {
+func (m *Index) ScopedResourceExists(version string, resource ResourceKind, scopes []string) bool {
 	if len(scopes) == 0 {
 		return false
 	}
@@ -1065,6 +1066,36 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	return progs, nil
 }
 
+// ResourceKind is a resource kind together with its sanitized form, which
+// resource and principal policy rows are indexed under. sanitized is empty
+// when it would equal raw.
+type ResourceKind struct {
+	raw       string
+	sanitized string
+}
+
+// NewResourceKind computes the sanitized form of kind once, so that it can be
+// reused across queries for the same request.
+func NewResourceKind(kind string) ResourceKind {
+	rk := ResourceKind{raw: kind}
+	if s := namer.SanitizedResource(kind); s != kind {
+		rk.sanitized = s
+	}
+	return rk
+}
+
+func newResourceKinds(kinds []string) []ResourceKind {
+	if len(kinds) == 0 {
+		return nil
+	}
+
+	out := make([]ResourceKind, len(kinds))
+	for i, k := range kinds {
+		out[i] = NewResourceKind(k)
+	}
+	return out
+}
+
 // resourceQuery returns the bindings indexed under the given resource kind.
 //
 // Principal policy globs used to be matched against the sanitized kind, so they
@@ -1072,18 +1103,17 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 // in force. Role policy globs are matched against the kind as written only.
 //
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
-func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource string) *Bitmap {
-	sanitized := namer.SanitizedResource(resource)
-	if sanitized == resource {
-		return bi.resource.Query(arena, resource)
+func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind) *Bitmap {
+	if resource.sanitized == "" {
+		return bi.resource.Query(arena, resource.raw)
 	}
 
 	gd := bi.resource
 	var parts []*Bitmap
-	if bm, ok := gd.literals.Bitmap(resource); ok {
+	if bm, ok := gd.literals.Bitmap(resource.raw); ok {
 		parts = append(parts, bm)
 	}
-	if bm, ok := gd.literals.Bitmap(sanitized); ok {
+	if bm, ok := gd.literals.Bitmap(resource.sanitized); ok {
 		parts = append(parts, bm)
 	}
 
@@ -1091,11 +1121,11 @@ func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource string) *Bitma
 	var sanitizedOnlyGlobs []*Bitmap
 	for pattern, compiled := range gd.compiled {
 		switch {
-		case compiled.Match(resource):
+		case compiled.Match(resource.raw):
 			if bm, ok := gd.globs.Bitmap(pattern); ok {
 				parts = append(parts, bm)
 			}
-		case hasPrincipals && compiled.Match(sanitized):
+		case hasPrincipals && compiled.Match(resource.sanitized):
 			if bm, ok := gd.globs.Bitmap(pattern); ok {
 				sanitizedOnlyGlobs = append(sanitizedOnlyGlobs, bm)
 			}
@@ -1126,7 +1156,7 @@ func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource string) *Bitma
 	}
 }
 
-func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []string) *Bitmap {
+func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []ResourceKind) *Bitmap {
 	switch len(resources) {
 	case 0:
 		return emptyBitmap

@@ -214,20 +214,20 @@ func TestFunctionalChecksum(t *testing.T) {
 
 		require.NoError(t, impl.IndexRules(rules))
 
-		docRows := impl.Query("default", "document", "", "", nil, 0, "", nil)
+		docRows := impl.Query("default", index.NewResourceKind("document"), "", "", nil, 0, "", nil)
 		require.Len(t, docRows, 1)
 
-		imgRows := impl.Query("default", "image", "", "", nil, 0, "", nil)
+		imgRows := impl.Query("default", index.NewResourceKind("image"), "", "", nil, 0, "", nil)
 		require.Len(t, imgRows, 1)
 
 		// delete `docPolicyFQN`. Its "document" binding must be removed
 		// even though the shared core still has `imgPolicyFQN` in origins.
 		require.NoError(t, impl.DeletePolicy(docPolicyFQN))
 
-		docRows = impl.Query("default", "document", "", "", nil, 0, "", nil)
+		docRows = impl.Query("default", index.NewResourceKind("document"), "", "", nil, 0, "", nil)
 		require.Len(t, docRows, 0, "orphaned binding for deleted policy should be removed from dimensions")
 
-		imgRows = impl.Query("default", "image", "", "", nil, 0, "", nil)
+		imgRows = impl.Query("default", index.NewResourceKind("image"), "", "", nil, 0, "", nil)
 		require.Len(t, imgRows, 1, "surviving policy's binding should remain")
 
 		require.NoError(t, impl.DeletePolicy(imgPolicyFQN))
@@ -1110,7 +1110,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 			}),
 		}))
 
-		res := impl.Query("default", "document", "", "delete", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "", nil)
+		res := impl.Query("default", index.NewResourceKind("document"), "", "delete", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "", nil)
 		require.Len(t, res, 1)
 		require.Equal(t, effectv1.Effect_EFFECT_DENY, res[0].Core.Effect)
 		require.True(t, res[0].Core.FromRolePolicy)
@@ -1131,7 +1131,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 			}),
 		}))
 
-		res := impl.Query("default", "document", "", "view", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "", nil)
+		res := impl.Query("default", index.NewResourceKind("document"), "", "view", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "", nil)
 		require.Len(t, res, 0)
 	})
 
@@ -1153,7 +1153,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 			}),
 		}))
 
-		res := impl.Query("default", "document", "", "view", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "", nil)
+		res := impl.Query("default", index.NewResourceKind("document"), "", "view", []string{"viewer"}, policyv1.Kind_KIND_RESOURCE, "", nil)
 		require.Len(t, res, 1)
 		require.Equal(t, effectv1.Effect_EFFECT_DENY, res[0].Core.Effect)
 		require.True(t, res[0].Core.FromRolePolicy)
@@ -1189,7 +1189,7 @@ func TestQueryAllowActionsSyntheticDeny(t *testing.T) {
 			}),
 		}))
 
-		res := impl.Query("default", "document", "", "edit", []string{"viewer", "editor"}, policyv1.Kind_KIND_RESOURCE, "", nil)
+		res := impl.Query("default", index.NewResourceKind("document"), "", "edit", []string{"viewer", "editor"}, policyv1.Kind_KIND_RESOURCE, "", nil)
 
 		// only viewer should get a synthetic DENY (edit is not in viewer's AllowActions).
 		// editor has edit in its AllowActions with no condition, so no synthetic DENY
@@ -1254,10 +1254,10 @@ func TestResourceGlobsOnSanitizedKind(t *testing.T) {
 			principalPolicyGlob("principal_sanitized", "udm_module_*"),
 		}))
 
-		res := impl.Query("default", kind, "", "", nil, 0, "", nil)
+		res := impl.Query("default", index.NewResourceKind(kind), "", "", nil, 0, "", nil)
 		require.ElementsMatch(t, []string{"role_raw", "principal_raw", "principal_sanitized"}, names(res))
 
-		res = impl.Query("default", kind, "", "", nil, policyv1.Kind_KIND_PRINCIPAL, "alice", nil)
+		res = impl.Query("default", index.NewResourceKind(kind), "", "", nil, policyv1.Kind_KIND_PRINCIPAL, "alice", nil)
 		require.ElementsMatch(t, []string{"principal_raw", "principal_sanitized"}, names(res))
 	})
 
@@ -1268,7 +1268,7 @@ func TestResourceGlobsOnSanitizedKind(t *testing.T) {
 			principalPolicyGlob("principal_other", "other:*"),
 		}))
 
-		require.Empty(t, impl.Query("default", kind, "", "", nil, 0, "", nil))
-		require.False(t, impl.ScopedResourceExists("default", kind, []string{""}))
+		require.Empty(t, impl.Query("default", index.NewResourceKind(kind), "", "", nil, 0, "", nil))
+		require.False(t, impl.ScopedResourceExists("default", index.NewResourceKind(kind), []string{""}))
 	})
 }
