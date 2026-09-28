@@ -117,7 +117,7 @@ func listPackages(ignoreFile string) (packageSet, error) {
 	return result, nil
 }
 
-type globList []glob.Glob
+type globList []*glob.Pattern
 
 func (gl globList) Matches(value string) bool {
 	for _, g := range gl {
