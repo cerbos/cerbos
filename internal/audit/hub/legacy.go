@@ -12,9 +12,10 @@ import (
 	"go.uber.org/zap"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
-	"github.com/cerbos/cerbos/internal/audit/local"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
+
+const LegacyKeyLen = 20 // prefix (4 bytes) + ULID (16 bytes)
 
 // legacyKeys handles sync markers written by older PDP versions, whose keys
 // lack the entry size in the final 4 bytes.
@@ -33,7 +34,7 @@ func newLegacyKeys(log *Log, kind logsv1.IngestBatch_EntryKind, logger *zap.Logg
 
 // isLegacy reports whether k is a legacy sync marker key.
 func (lk *legacyKeys) isLegacy(k []byte) bool {
-	return len(k) == local.KeyByteSizeStart
+	return len(k) == LegacyKeyLen
 }
 
 // rewriteOversizedRaw decodes a serialized oversized legacy entry and

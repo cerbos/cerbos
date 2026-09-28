@@ -23,6 +23,7 @@ const (
 	PDPIDKey
 	DeploymentIDKey
 	PlaygroundIDKey
+	WorkspaceIDKey
 )
 
 var envVars = map[EnvVarKey][]string{
@@ -31,6 +32,7 @@ var envVars = map[EnvVarKey][]string{
 	PDPIDKey:        {"CERBOS_HUB_PDP_ID"},
 	DeploymentIDKey: {"CERBOS_HUB_DEPLOYMENT_ID"},
 	PlaygroundIDKey: {"CERBOS_HUB_PLAYGROUND_ID"},
+	WorkspaceIDKey:  {"CERBOS_HUB_WORKSPACE_ID"},
 }
 
 func GetEnv(key EnvVarKey) string {

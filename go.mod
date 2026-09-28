@@ -23,7 +23,7 @@ require (
 	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/cerbos/cerbos-sdk-go v0.4.4
 	github.com/cerbos/cerbos/api/genpb v0.55.0
-	github.com/cerbos/cloud-api v0.2.8
+	github.com/cerbos/cloud-api v0.2.10
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cloudflare/certinel v0.4.1
 	github.com/dgraph-io/badger/v4 v4.9.6
@@ -276,7 +276,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.287.0 // indirect
 	google.golang.org/genproto v0.0.0-20260630182238-925bb5da69e7 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260918162117-cecb64721679 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260921155816-b14227669459 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	modernc.org/libc v1.75.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

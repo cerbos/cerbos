@@ -40,6 +40,7 @@ audit:
       enabled: false 
     retentionPeriod: 168h # How long to keep records for
     storagePath: /path/to/dir # Path to store the data
+    workspaceID: 87IGB1VDKCVZ # WorkspaceID specifies where to send logs. Defaults to the value of the CERBOS_HUB_WORKSPACE_ID environment variable.
   kafka:
     ack: all # Ack mode for producing messages. Valid values are "none", "leader" or "all" (default). Idempotency is disabled when mode is not "all".
     authentication: # Authentication

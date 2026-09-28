@@ -211,7 +211,7 @@ func TestCatchupDrainProfile(t *testing.T) {
 	runtime.ReadMemStats(&after)
 	rssAfter := procStatusKB(t, "VmRSS")
 
-	require.Zero(t, countKeys(t, log.Db, SyncStatusPrefix), "all sync markers must be drained")
+	require.Zero(t, countKeys(t, log.Db, []byte("bs")), "all sync markers must be drained")
 
 	emptyCycleAfter := timeCycles(t, log, emptyCycles)
 

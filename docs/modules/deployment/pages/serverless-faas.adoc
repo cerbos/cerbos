@@ -173,9 +173,10 @@ CERBOS_CONFIG: "..." <1>
 Set the following environment variables to connect to link:https://www.cerbos.dev/product-cerbos-hub[Cerbos Hub].
 [source,yaml,linenum]
 ----
-CERBOS_HUB_DEPLOYMENT_ID: "..."
 CERBOS_HUB_CLIENT_ID: "..."
 CERBOS_HUB_CLIENT_SECRET: ".."
+CERBOS_HUB_DEPLOYMENT_ID: "..."
+CERBOS_HUB_WORKSPACE_ID: "..."
 ----
 
 === Comparison: Function vs Extension

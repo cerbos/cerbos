@@ -192,11 +192,13 @@ include::ROOT:partial$try-cerbos-hub.adoc[]
 kubectl create secret generic cerbos-hub-credentials \
    --from-literal=CERBOS_HUB_CLIENT_ID=YOUR_CLIENT_ID \ <1>
    --from-literal=CERBOS_HUB_CLIENT_SECRET=YOUR_CLIENT_SECRET \ <2>
-   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=CERBOS_HUB_DEPLOYMENT_ID <3>
+   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=CERBOS_HUB_DEPLOYMENT_ID \ <3>
+   --from-literal=CERBOS_HUB_WORKSPACE_ID=CERBOS_HUB_WORKSPACE_ID <4>
 ----
 <1> Client ID from the Cerbos Hub credential
 <2> Client secret from the Cerbos Hub credential
-<3> Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[Deployment ID]
+<3> ID of the Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[deployment] from which to fetch policies
+<4> ID of the Cerbos Hub workspace to which to send audit logs
 
 
 * Create a new values file named `hub-values.yaml` with the following contents:

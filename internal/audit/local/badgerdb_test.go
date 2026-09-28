@@ -7,6 +7,7 @@ package local_test
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -32,6 +33,8 @@ func TestBadgerLog(t *testing.T) {
 		t.SkipNow()
 	}
 
+	keyPrefixes := []string{"", "WT6UQCDIZWAY"}
+
 	conf := &local.Conf{}
 	conf.SetDefaults()
 	conf.StoragePath = t.TempDir()
@@ -51,138 +54,146 @@ func TestBadgerLog(t *testing.T) {
 	require.Equal(t, local.Backend, db.Backend())
 	require.True(t, db.Enabled())
 
-	loadData(t, db, startDate)
+	for _, keyPrefix := range keyPrefixes {
+		db.KeyPrefix = []byte(keyPrefix)
+		loadData(t, db, startDate)
+	}
+
 	db.ForceWrite()
 
-	t.Run("lastNAccessLogEntries", func(t *testing.T) {
-		n := 100
+	for _, keyPrefix := range keyPrefixes {
+		t.Run(fmt.Sprintf("keyPrefix=%q", keyPrefix), func(t *testing.T) {
+			t.Run("lastNAccessLogEntries", func(t *testing.T) {
+				n := 100
 
-		ctx, cancelFunc := context.WithCancel(t.Context())
-		defer cancelFunc()
+				ctx, cancelFunc := context.WithCancel(t.Context())
+				defer cancelFunc()
 
-		it := db.LastNAccessLogEntries(ctx, uint(n))
+				it := db.LastNAccessLogEntries(ctx, uint(n))
 
-		counter := 0
-		for {
-			rec, err := it.Next()
-			if err != nil {
-				require.ErrorIs(t, err, audit.ErrIteratorClosed)
-				break
-			}
+				counter := 0
+				for {
+					rec, err := it.Next()
+					if err != nil {
+						require.ErrorIs(t, err, audit.ErrIteratorClosed)
+						break
+					}
 
-			require.Len(t, rec.Metadata, 1)
-			require.Equal(t, strconv.Itoa(numRecords-counter-1), rec.Metadata["Num"].Values[0])
+					require.Len(t, rec.Metadata, 1)
+					require.Equal(t, strconv.Itoa(numRecords-counter-1), rec.Metadata["Num"].Values[0])
 
-			counter++
-		}
+					counter++
+				}
 
-		require.Equal(t, n, counter)
-	})
+				require.Equal(t, n, counter)
+			})
 
-	t.Run("lastNDecisionLogEntries", func(t *testing.T) {
-		n := 100
+			t.Run("lastNDecisionLogEntries", func(t *testing.T) {
+				n := 100
 
-		ctx, cancelFunc := context.WithCancel(t.Context())
-		defer cancelFunc()
+				ctx, cancelFunc := context.WithCancel(t.Context())
+				defer cancelFunc()
 
-		it := db.LastNDecisionLogEntries(ctx, uint(n))
+				it := db.LastNDecisionLogEntries(ctx, uint(n))
 
-		counter := 0
-		for {
-			rec, err := it.Next()
-			if err != nil {
-				require.ErrorIs(t, err, audit.ErrIteratorClosed)
-				break
-			}
+				counter := 0
+				for {
+					rec, err := it.Next()
+					if err != nil {
+						require.ErrorIs(t, err, audit.ErrIteratorClosed)
+						break
+					}
 
-			haveEntry := rec.GetCheckResources()
-			require.NotNil(t, haveEntry)
-			require.Len(t, haveEntry.Inputs, 1)
-			require.Equal(t, strconv.Itoa(numRecords-counter-1), haveEntry.Inputs[0].RequestId)
+					haveEntry := rec.GetCheckResources()
+					require.NotNil(t, haveEntry)
+					require.Len(t, haveEntry.Inputs, 1)
+					require.Equal(t, strconv.Itoa(numRecords-counter-1), haveEntry.Inputs[0].RequestId)
 
-			counter++
-		}
+					counter++
+				}
 
-		require.Equal(t, n, counter)
-	})
+				require.Equal(t, n, counter)
+			})
 
-	t.Run("accessLogEntriesBetween", func(t *testing.T) {
-		startTime := startDate.Add(100_000 * time.Second)
-		endTime := startDate.Add(200_000 * time.Second)
+			t.Run("accessLogEntriesBetween", func(t *testing.T) {
+				startTime := startDate.Add(100_000 * time.Second)
+				endTime := startDate.Add(200_000 * time.Second)
 
-		ctx, cancelFunc := context.WithCancel(t.Context())
-		defer cancelFunc()
+				ctx, cancelFunc := context.WithCancel(t.Context())
+				defer cancelFunc()
 
-		it := db.AccessLogEntriesBetween(ctx, startTime, endTime)
+				it := db.AccessLogEntriesBetween(ctx, startTime, endTime)
 
-		counter := 0
-		for {
-			rec, err := it.Next()
-			if err != nil {
-				require.ErrorIs(t, err, audit.ErrIteratorClosed)
-				break
-			}
+				counter := 0
+				for {
+					rec, err := it.Next()
+					if err != nil {
+						require.ErrorIs(t, err, audit.ErrIteratorClosed)
+						break
+					}
 
-			haveReqTime := rec.Timestamp.AsTime()
-			require.True(t, haveReqTime.Equal(startTime) || haveReqTime.After(startTime))
-			require.True(t, haveReqTime.Equal(endTime) || haveReqTime.Before(endTime))
+					haveReqTime := rec.Timestamp.AsTime()
+					require.True(t, haveReqTime.Equal(startTime) || haveReqTime.After(startTime))
+					require.True(t, haveReqTime.Equal(endTime) || haveReqTime.Before(endTime))
 
-			counter++
-		}
+					counter++
+				}
 
-		require.Equal(t, 100_001, counter)
-	})
+				require.Equal(t, 100_001, counter)
+			})
 
-	t.Run("decisionLogEntriesBetween", func(t *testing.T) {
-		startTime := startDate.Add(100_000 * time.Second)
-		endTime := startDate.Add(200_000 * time.Second)
+			t.Run("decisionLogEntriesBetween", func(t *testing.T) {
+				startTime := startDate.Add(100_000 * time.Second)
+				endTime := startDate.Add(200_000 * time.Second)
 
-		ctx, cancelFunc := context.WithCancel(t.Context())
-		defer cancelFunc()
+				ctx, cancelFunc := context.WithCancel(t.Context())
+				defer cancelFunc()
 
-		it := db.DecisionLogEntriesBetween(ctx, startTime, endTime)
+				it := db.DecisionLogEntriesBetween(ctx, startTime, endTime)
 
-		counter := 0
-		for {
-			rec, err := it.Next()
-			if err != nil {
-				require.ErrorIs(t, err, audit.ErrIteratorClosed)
-				break
-			}
+				counter := 0
+				for {
+					rec, err := it.Next()
+					if err != nil {
+						require.ErrorIs(t, err, audit.ErrIteratorClosed)
+						break
+					}
 
-			haveReqTime := rec.Timestamp.AsTime()
-			require.True(t, haveReqTime.Equal(startTime) || haveReqTime.After(startTime))
-			require.True(t, haveReqTime.Equal(endTime) || haveReqTime.Before(endTime))
+					haveReqTime := rec.Timestamp.AsTime()
+					require.True(t, haveReqTime.Equal(startTime) || haveReqTime.After(startTime))
+					require.True(t, haveReqTime.Equal(endTime) || haveReqTime.Before(endTime))
 
-			counter++
-		}
+					counter++
+				}
 
-		require.Equal(t, 100_001, counter)
-	})
+				require.Equal(t, 100_001, counter)
+			})
 
-	t.Run("accessLogEntryByID", func(t *testing.T) {
-		it := db.LastNAccessLogEntries(t.Context(), 1)
-		wantRecord, err := it.Next()
-		require.NoError(t, err)
+			t.Run("accessLogEntryByID", func(t *testing.T) {
+				it := db.LastNAccessLogEntries(t.Context(), 1)
+				wantRecord, err := it.Next()
+				require.NoError(t, err)
 
-		it = db.AccessLogEntryByID(t.Context(), audit.ID(wantRecord.CallId))
-		haveRecord, err := it.Next()
-		require.NoError(t, err)
+				it = db.AccessLogEntryByID(t.Context(), audit.ID(wantRecord.CallId))
+				haveRecord, err := it.Next()
+				require.NoError(t, err)
 
-		require.Empty(t, cmp.Diff(wantRecord, haveRecord, protocmp.Transform()))
-	})
+				require.Empty(t, cmp.Diff(wantRecord, haveRecord, protocmp.Transform()))
+			})
 
-	t.Run("decisionLogEntryByID", func(t *testing.T) {
-		it := db.LastNDecisionLogEntries(t.Context(), 1)
-		wantRecord, err := it.Next()
-		require.NoError(t, err)
+			t.Run("decisionLogEntryByID", func(t *testing.T) {
+				it := db.LastNDecisionLogEntries(t.Context(), 1)
+				wantRecord, err := it.Next()
+				require.NoError(t, err)
 
-		it = db.DecisionLogEntryByID(t.Context(), audit.ID(wantRecord.CallId))
-		haveRecord, err := it.Next()
-		require.NoError(t, err)
+				it = db.DecisionLogEntryByID(t.Context(), audit.ID(wantRecord.CallId))
+				haveRecord, err := it.Next()
+				require.NoError(t, err)
 
-		require.Empty(t, cmp.Diff(wantRecord, haveRecord, protocmp.Transform()))
-	})
+				require.Empty(t, cmp.Diff(wantRecord, haveRecord, protocmp.Transform()))
+			})
+		})
+	}
 }
 
 func loadData(t *testing.T, db *local.Log, startDate time.Time) {
