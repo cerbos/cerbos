@@ -91,6 +91,29 @@ func (gd *globDimension) Query(arena *bitmapArena, value string) *Bitmap {
 	}
 }
 
+// queryGlobs returns the OR of the glob bitmaps whose pattern matches value,
+// ignoring literals. The returned bitmap may alias a stored bitmap; callers
+// must not mutate it.
+func (gd *globDimension) queryGlobs(arena *bitmapArena, value string) *Bitmap {
+	var parts []*Bitmap
+	for pattern, compiled := range gd.compiled {
+		if compiled.Match(value) {
+			if bm, ok := gd.globs.Bitmap(pattern); ok {
+				parts = append(parts, bm)
+			}
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return parts[0]
+	default:
+		return arena.orInto(parts)
+	}
+}
+
 // QueryMultiple returns OR of all bitmaps matching any of the given values.
 // The returned bitmap may alias a stored bitmap; callers must not mutate it.
 func (gd *globDimension) QueryMultiple(arena *bitmapArena, values []string) *Bitmap {

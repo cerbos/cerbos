@@ -1066,8 +1066,36 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 }
 
 // resourceQuery returns the bindings indexed under the given resource kind.
+//
+// Principal policy globs used to be matched against the sanitized kind, so they
+// are matched against both forms to keep existing rules (deny rules in particular)
+// in force. Role policy globs are matched against the kind as written only.
 func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource string) *Bitmap {
-	return bi.resource.QueryWithAlias(arena, resource, namer.SanitizedResource(resource))
+	sanitized := namer.SanitizedResource(resource)
+	bm := bi.resource.QueryWithAlias(arena, resource, sanitized)
+	if sanitized == resource {
+		return bm
+	}
+
+	principalBM, ok := bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
+	if !ok {
+		return bm
+	}
+
+	globsBM := bi.resource.queryGlobs(arena, sanitized)
+	if globsBM.IsEmpty() {
+		return bm
+	}
+
+	principalGlobsBM := arena.and2(globsBM, principalBM)
+	switch {
+	case principalGlobsBM.IsEmpty():
+		return bm
+	case bm.IsEmpty():
+		return principalGlobsBM
+	default:
+		return arena.orInto([]*Bitmap{bm, principalGlobsBM})
+	}
 }
 
 func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []string) *Bitmap {
