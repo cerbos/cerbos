@@ -94,10 +94,6 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 }
 
 func (s *Store) init(ctx context.Context) error {
-	if s.conf.ScratchDir != "" {
-		s.log.Warnf("ScratchDir storage option is deprecated and will be removed in a future release")
-	}
-
 	finfo, err := os.Stat(s.conf.CheckoutDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("failed to stat %s: %w", s.conf.CheckoutDir, err)

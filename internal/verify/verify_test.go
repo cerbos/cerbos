@@ -377,8 +377,7 @@ func mkEngine(t *testing.T) *engine.Engine {
 	store, err := disk.NewStore(ctx, &disk.Conf{Directory: dir})
 	require.NoError(t, err)
 
-	mgr, err := compile.NewManager(ctx, store)
-	require.NoError(t, err)
+	mgr := compile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, mgr)
 	require.NoError(t, err)

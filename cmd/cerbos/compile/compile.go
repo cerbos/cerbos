@@ -145,10 +145,7 @@ func (c *Cmd) Run(k *kong.Kong) error {
 			Filter:                  filterConfig,
 		}
 
-		compileMgr, err := compile.NewManager(ctx, store)
-		if err != nil {
-			return err
-		}
+		compileMgr := compile.NewManager(store)
 
 		ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compileMgr)
 		if err != nil {

@@ -47,10 +47,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*pol
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	compiler, err := internalcompile.NewManager(ctx, store)
-	if err != nil {
-		return nil, err
-	}
+	compiler := internalcompile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	if err != nil {

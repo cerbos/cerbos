@@ -458,10 +458,7 @@ type components struct {
 }
 
 func (c *components) mkEngine(ctx context.Context) (*engine.Engine, error) {
-	cm, err := compile.NewManager(ctx, c.store)
-	if err != nil {
-		return nil, err
-	}
+	cm := compile.NewManager(c.store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, cm)
 	if err != nil {

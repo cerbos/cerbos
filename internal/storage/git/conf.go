@@ -49,8 +49,6 @@ type Conf struct {
 	SubDir string `yaml:"subDir,omitempty" conf:",example=policies"`
 	// CheckoutDir is the local path to checkout the Git repo to.
 	CheckoutDir string `yaml:"checkoutDir" conf:",example=${HOME}/tmp/cerbos/work"`
-	// [DEPRECATED] ScratchDir is the directory to use for holding temporary data.
-	ScratchDir string `yaml:"scratchDir" conf:",ignore"`
 	// UpdatePollInterval specifies the interval to poll the Git repository for changes. Set to 0 to disable.
 	UpdatePollInterval time.Duration `yaml:"updatePollInterval" conf:",example=60s"`
 }
