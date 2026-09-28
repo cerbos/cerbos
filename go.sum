@@ -158,8 +158,8 @@ github.com/cerbos/cerbos-sdk-go v0.4.4 h1:qAHhHE58p5hIHap4WwnuhZfcnT7Ix5RieB2mQ1
 github.com/cerbos/cerbos-sdk-go v0.4.4/go.mod h1:BIRfUkWi8r6a03kXlAfuxPO8Q8u/fVn40NeOTqKVv48=
 github.com/cerbos/cerbos/api/genpb v0.55.0 h1:b7MQrsr7RjklFpyPLqkR8cpLlA5ou4YJiovkBqecT9I=
 github.com/cerbos/cerbos/api/genpb v0.55.0/go.mod h1:MZrtj82qdFvQMUIDo2a2tG6WVg6kEIheyUjaGfCvhhg=
-github.com/cerbos/cloud-api v0.2.9 h1:iyfQ9Q1qXdax0NPMgh2TIIHB7xMbnteJLo/P/Vui3fU=
-github.com/cerbos/cloud-api v0.2.9/go.mod h1:e7VuDhwl5H2UfDOsWKnhsqhCmN8pYqjKo5nkgB3MfkY=
+github.com/cerbos/cloud-api v0.2.8 h1:1zwOVzZNnaNazMYxy+6476UtqxqlKTlYYUT553kHiAI=
+github.com/cerbos/cloud-api v0.2.8/go.mod h1:dxaHVRB3+KXFZh6p5TwVX5N0QeJJvfMjLxvRrB654Lc=
 github.com/cerbos/protovalidate-go v0.0.0-20260615200145-16b6d024eb17 h1:rwZzMp1QvovVzS2WPNmzxYUUCkKQh+O/EQyw46nwwVw=
 github.com/cerbos/protovalidate-go v0.0.0-20260615200145-16b6d024eb17/go.mod h1:7rYiQEhqvAipoazpVNBBH2S2f8bjG4huMVy1V2Yofn4=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
