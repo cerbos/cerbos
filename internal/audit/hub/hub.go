@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -19,25 +20,15 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/audit/badgerkey"
 	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
+	"github.com/cerbos/cloud-api/logcap"
 )
 
-const (
-	Backend = "hub"
-
-	maxAllowedBatchSize = 1024
-)
-
-type syncPrefix []byte
-
-var (
-	SyncStatusPrefix   = syncPrefix("bs")   // "b" for contiguity with audit log keys in LSM, "s" because "sync"
-	AccessSyncPrefix   = syncPrefix("bsac") // these need to be len(4) to correctly reuse `local.GenKey`
-	DecisionSyncPrefix = syncPrefix("bsde")
-)
+const Backend = "hub"
 
 func init() {
 	audit.RegisterBackend(Backend, func(ctx context.Context, confW *config.Wrapper, decisionFilter audit.DecisionLogEntryFilter) (audit.Log, error) {
@@ -48,7 +39,16 @@ func init() {
 
 		logger := zap.L().Named("auditlog").With(zap.String("backend", Backend))
 
-		syncer, err := NewIngestSyncer(logger)
+		var target logcap.Target
+
+		switch {
+		case conf.WorkspaceID != "":
+			target = logcap.WorkspaceID(conf.WorkspaceID)
+		case conf.DeploymentID != "":
+			target = logcap.DeploymentID(conf.DeploymentID)
+		}
+
+		syncer, err := NewIngestSyncer(logger, target)
 		if err != nil {
 			return nil, err
 		}
@@ -70,18 +70,6 @@ func init() {
 	})
 }
 
-type options struct {
-	maxBatchSize int
-}
-
-type Opt func(*options)
-
-func WithMaxBatchSize(maxBatchSize int) Opt {
-	return func(o *options) {
-		o.maxBatchSize = maxBatchSize
-	}
-}
-
 type Log struct {
 	syncer          IngestSyncer
 	pipeLog         audit.Log
@@ -98,26 +86,20 @@ type Log struct {
 	numGo             int
 }
 
-func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger, pipeLog audit.Log, opts ...Opt) (*Log, error) {
-	o := &options{
-		maxBatchSize: maxAllowedBatchSize,
-	}
-
-	for _, opt := range opts {
-		opt(o)
-	}
-
+func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer IngestSyncer, logger *zap.Logger, pipeLog audit.Log) (*Log, error) {
 	localLog, err := local.NewLog(&conf.Conf, decisionFilter)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Info("Extending audit log")
+	switch {
+	case conf.WorkspaceID != "":
+		localLog.KeyPrefix = []byte(conf.WorkspaceID)
+	case conf.DeploymentID != "":
+		localLog.KeyPrefix = []byte(conf.DeploymentID)
+	}
 
-	minFlushInterval := conf.Ingest.MinFlushInterval
-	maxBatchSizeBytes := int(conf.Ingest.MaxBatchSizeBytes) - BatchSizeToleranceBytes
-	flushTimeout := conf.Ingest.FlushTimeout
-	numGo := int(conf.Ingest.NumGoRoutines)
+	logger.Info("Extending audit log")
 
 	filter, err := NewAuditLogFilter(conf.Mask)
 	if err != nil {
@@ -137,11 +119,11 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		logger:            logger,
 		filter:            filter,
 		oversizedFilter:   oversizedFilter,
-		minFlushInterval:  minFlushInterval,
-		flushTimeout:      flushTimeout,
-		maxBatchSize:      o.maxBatchSize,
-		maxBatchSizeBytes: maxBatchSizeBytes,
-		numGo:             numGo,
+		minFlushInterval:  conf.Ingest.MinFlushInterval,
+		flushTimeout:      conf.Ingest.FlushTimeout,
+		maxBatchSize:      int(conf.Ingest.MaxBatchSize),
+		maxBatchSizeBytes: int(conf.Ingest.MaxBatchSizeBytes) - BatchSizeToleranceBytes,
+		numGo:             int(conf.Ingest.NumGoRoutines),
 		cancel:            cancelFn,
 		pool:              pool.New().WithContext(ctx),
 		pipeLog:           pipeLog,
@@ -206,8 +188,8 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := local.GenKeyWithByteSize(AccessSyncPrefix, callID, s)
-	value := local.GenKey(local.AccessLogPrefix, callID)
+	key := l.Key(badgerkey.KindAccessLogSync, callID, s)
+	value := l.Key(badgerkey.KindAccessLogEntry, callID, badgerkey.WithoutByteSize)
 
 	return l.Write(ctx, key, value)
 }
@@ -267,8 +249,8 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := local.GenKeyWithByteSize(DecisionSyncPrefix, callID, s)
-	value := local.GenKey(local.DecisionLogPrefix, callID)
+	key := l.Key(badgerkey.KindDecisionLogSync, callID, s)
+	value := l.Key(badgerkey.KindDecisionLogEntry, callID, badgerkey.WithoutByteSize)
 
 	return l.Write(ctx, key, value)
 }
@@ -311,7 +293,7 @@ func (l *Log) streamLogs() error {
 	p := pool.New().WithContext(ctx).WithCancelOnError()
 	p.Go(func(ctx context.Context) error {
 		l.logger.Log(zapcore.Level(-2), "Streaming access logs")
-		if err := l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, AccessSyncPrefix); err != nil {
+		if err := l.streamKind(ctx, logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG); err != nil {
 			l.logger.Warn("Failed to stream access logs", zap.Error(err))
 			return fmt.Errorf("failed to stream access logs: %w", err)
 		}
@@ -321,7 +303,7 @@ func (l *Log) streamLogs() error {
 
 	p.Go(func(ctx context.Context) error {
 		l.logger.Log(zapcore.Level(-2), "Streaming decision logs")
-		if err := l.streamPrefix(ctx, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, DecisionSyncPrefix); err != nil {
+		if err := l.streamKind(ctx, logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG); err != nil {
 			l.logger.Warn("Failed to stream decision logs", zap.Error(err))
 			return fmt.Errorf("failed to stream decision logs: %w", err)
 		}
@@ -363,27 +345,35 @@ func (l *Log) sync(ctx context.Context, kind logsv1.IngestBatch_EntryKind, frame
 	return nil
 }
 
-// streamPrefix walks the sync markers under prefix and the entries they point
-// at with two lockstep iterators inside one snapshot. Entries' values, which
-// are byte slices, are framed into IngestBatch without decode-encode round
-// trip.
-func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKind, prefix syncPrefix) error {
+// streamKind walks the sync markers and the entries they point at with two
+// lockstep iterators inside one snapshot. Entries' values, which are byte
+// slices, are framed into IngestBatch without decode-encode round trip.
+func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
-	var entryPrefix []byte
+	var markerPrefix, entryPrefix []byte
 	switch kind { //nolint:exhaustive
 	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
-		entryPrefix = local.AccessLogPrefix
+		markerPrefix = badgerkey.KindAccessLogSync[:]
+		entryPrefix = badgerkey.KindAccessLogEntry[:]
+
 	case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
-		entryPrefix = local.DecisionLogPrefix
+		markerPrefix = badgerkey.KindDecisionLogSync[:]
+		entryPrefix = badgerkey.KindDecisionLogEntry[:]
+
 	default:
 		return errors.New("unspecified IngestBatch_EntryKind")
+	}
+
+	if len(l.KeyPrefix) > 0 {
+		markerPrefix = slices.Concat(l.KeyPrefix, markerPrefix)
+		entryPrefix = slices.Concat(l.KeyPrefix, entryPrefix)
 	}
 
 	fallbacks := 0
 	err := l.Db.View(func(txn *badgerv4.Txn) error {
 		markerOpts := badgerv4.DefaultIteratorOptions
-		markerOpts.Prefix = prefix
+		markerOpts.Prefix = markerPrefix
 		markerOpts.PrefetchValues = false
 		markerIt := txn.NewIterator(markerOpts)
 		defer markerIt.Close()
@@ -420,7 +410,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 
 		steps := 0
 		joinEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
-			for entryIt.ValidForPrefix(entryPrefix) {
+			for entryIt.Valid() {
 				switch cmp := bytes.Compare(entryIt.Item().Key(), logKey); {
 				case cmp == 0:
 					if err := entryIt.Item().Value(fn); err != nil {
@@ -473,7 +463,7 @@ func (l *Log) streamPrefix(ctx context.Context, kind logsv1.IngestBatch_EntryKin
 		var rawBuf []byte // scratch for legacy entries
 		var i int
 
-		for markerIt.Seek(prefix); markerIt.ValidForPrefix(prefix); markerIt.Next() {
+		for markerIt.Seek(markerPrefix); markerIt.Valid(); markerIt.Next() {
 			// Cut the batch when the marker key buffer is full.
 			if i == l.maxBatchSize {
 				var err error

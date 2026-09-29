@@ -158,8 +158,8 @@ github.com/cerbos/cerbos-sdk-go v0.4.4 h1:qAHhHE58p5hIHap4WwnuhZfcnT7Ix5RieB2mQ1
 github.com/cerbos/cerbos-sdk-go v0.4.4/go.mod h1:BIRfUkWi8r6a03kXlAfuxPO8Q8u/fVn40NeOTqKVv48=
 github.com/cerbos/cerbos/api/genpb v0.55.0 h1:b7MQrsr7RjklFpyPLqkR8cpLlA5ou4YJiovkBqecT9I=
 github.com/cerbos/cerbos/api/genpb v0.55.0/go.mod h1:MZrtj82qdFvQMUIDo2a2tG6WVg6kEIheyUjaGfCvhhg=
-github.com/cerbos/cloud-api v0.2.8 h1:1zwOVzZNnaNazMYxy+6476UtqxqlKTlYYUT553kHiAI=
-github.com/cerbos/cloud-api v0.2.8/go.mod h1:dxaHVRB3+KXFZh6p5TwVX5N0QeJJvfMjLxvRrB654Lc=
+github.com/cerbos/cloud-api v0.2.10 h1:yqlT9bJKsV4kNL6phcw3x4PQrJZVKWcx5KZt/E8liAk=
+github.com/cerbos/cloud-api v0.2.10/go.mod h1:ftVi29paeti/itjLsOphTC5BlNa0SYvkEeS+IUkttTM=
 github.com/cerbos/protovalidate-go v0.0.0-20260615200145-16b6d024eb17 h1:rwZzMp1QvovVzS2WPNmzxYUUCkKQh+O/EQyw46nwwVw=
 github.com/cerbos/protovalidate-go v0.0.0-20260615200145-16b6d024eb17/go.mod h1:7rYiQEhqvAipoazpVNBBH2S2f8bjG4huMVy1V2Yofn4=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
@@ -847,8 +847,8 @@ google.golang.org/genproto v0.0.0-20260630182238-925bb5da69e7 h1:lQG76ePMKmtujel
 google.golang.org/genproto v0.0.0-20260630182238-925bb5da69e7/go.mod h1:LwlOWYBU335L+sR55UuR5fbbU8KmEX+3tUHf3SwMmhM=
 google.golang.org/genproto/googleapis/api v0.0.0-20260921155816-b14227669459 h1:GS9OIt/j7c8bvBjYNgnKQysVfmV7e4jM0H8ZK95G4t8=
 google.golang.org/genproto/googleapis/api v0.0.0-20260921155816-b14227669459/go.mod h1:PX5/4vemwVoXtwEcRDWwcR1/r0qrosfx3qoVADMwnVE=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20260918162117-cecb64721679 h1:KmqdJU4vrNcxy/6qdg3JduZtalEXrJLspVltnR1cE+8=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20260918162117-cecb64721679/go.mod h1:OaIUM3+LpYcK2GXM4FTmhWoIq371Owdr+Cc7/BsYHHc=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260921155816-b14227669459 h1:b0xCahf3FK2m2Cv0p4vTozGPWncCvLfwV86UNg8xWU8=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260921155816-b14227669459/go.mod h1:OaIUM3+LpYcK2GXM4FTmhWoIq371Owdr+Cc7/BsYHHc=
 google.golang.org/grpc v1.84.0 h1:soMyaPJ8pAak5PIQ0DGBUir0XRo2fRoMqhNWMLlLxO0=
 google.golang.org/grpc v1.84.0/go.mod h1:ljCht0DrxQrXBDRTZp52Qxh3Ffk8CdYm2sj4O2QN2C0=
 google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=

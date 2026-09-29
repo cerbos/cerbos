@@ -6,10 +6,12 @@
 package hub_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"sync"
 	"testing"
@@ -28,9 +30,9 @@ import (
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/audit/badgerkey"
 	"github.com/cerbos/cerbos/internal/audit/file"
 	"github.com/cerbos/cerbos/internal/audit/hub"
-	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/config"
 
 	// Allows to set CERBOS_TEST_LOG_LEVEL environment variable.
@@ -47,10 +49,11 @@ const (
 
 type mockSyncer struct {
 	*mocks.IngestSyncer
-	entries []*logsv1.IngestBatch_Entry
-	synced  map[string]struct{}
-	t       *testing.T
-	mu      sync.RWMutex
+	keyPrefix []byte
+	entries   []*logsv1.IngestBatch_Entry
+	synced    map[string]struct{}
+	t         *testing.T
+	mu        sync.RWMutex
 }
 
 func newMockSyncer(t *testing.T) *mockSyncer {
@@ -88,10 +91,10 @@ func (m *mockSyncer) Sync(ctx context.Context, batch []byte, numEntries int) err
 		switch e.Kind {
 		case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
 			a := e.GetAccessLogEntry()
-			key = keyFromCallID(m.t, a.CallId, a.SizeVT(), hub.AccessSyncPrefix)
+			key = keyFromCallID(m.t, m.keyPrefix, badgerkey.KindAccessLogSync, a.CallId, accessLogEntrySize(a))
 		case logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG:
 			d := e.GetDecisionLogEntry()
-			key = keyFromCallID(m.t, d.CallId, d.SizeVT(), hub.DecisionSyncPrefix)
+			key = keyFromCallID(m.t, m.keyPrefix, badgerkey.KindDecisionLogSync, d.CallId, decisionLogEntrySize(d))
 		case logsv1.IngestBatch_ENTRY_KIND_UNSPECIFIED:
 			return errors.New("unspecified IngestBatch_EntryKind")
 		}
@@ -102,29 +105,26 @@ func (m *mockSyncer) Sync(ctx context.Context, batch []byte, numEntries int) err
 	return nil
 }
 
-func keyFromCallID(t *testing.T, callID string, size int, prefix []byte) []byte {
+func keyFromCallID(t *testing.T, prefix []byte, kind badgerkey.Kind, callID string, size int) []byte {
 	t.Helper()
 
 	callIDbytes, err := audit.ID(callID).Repr()
 	require.NoError(t, err)
 
-	return local.GenKeyWithByteSize(prefix, callIDbytes, size)
+	return badgerkey.New(prefix, kind, callIDbytes, size)
 }
 
-func (m *mockSyncer) hasKeys(keys [][]byte) bool {
-	m.t.Helper()
-
+func (m *mockSyncer) requireSynced(t require.TestingT, wantKeys [][]byte) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	require.Len(m.t, m.synced, len(keys))
-	for _, k := range keys {
-		if _, ok := m.synced[string(k)]; !ok {
-			return false
-		}
+	haveKeys := make([][]byte, 0, len(m.synced))
+	for key := range m.synced {
+		haveKeys = append(haveKeys, []byte(key))
 	}
+	slices.SortFunc(haveKeys, bytes.Compare)
 
-	return true
+	require.Equal(t, wantKeys, haveKeys, "keys should have been synced")
 }
 
 func TestHubLog(t *testing.T) {
@@ -147,7 +147,7 @@ func TestHubLog(t *testing.T) {
 		loadedKeys := loadData(t, db, startDate)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			syncer.requireSynced(c, loadedKeys)
 			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
 		}, 1*time.Second, 50*time.Millisecond)
 
@@ -207,25 +207,96 @@ func TestHubLog(t *testing.T) {
 		loadedKeys := loadData(t, db, startDate)
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			syncer.requireSynced(c, loadedKeys)
 			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
+		}, 1*time.Second, 50*time.Millisecond)
+	})
+
+	t.Run("prefixesKeys", func(t *testing.T) {
+		storagePath := t.TempDir()
+
+		db1, syncer1 := initDB(t, withStoragePath(storagePath))
+		require.Empty(t, db1.KeyPrefix)
+		syncer1.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).Return(errors.New("unauthorized"))
+		wantKeys1 := loadData(t, db1, startDate)
+		require.Equal(t, wantKeys1, getLocalKeys(t, db1))
+		require.NoError(t, db1.Close())
+
+		deploymentID := "JDAOCBJN0GZG"
+		db2, syncer2 := initDB(t, withStoragePath(storagePath), withDeploymentID(deploymentID))
+		require.Equal(t, []byte(deploymentID), db2.KeyPrefix)
+		syncer2.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).Return(errors.New("unauthorized"))
+		wantKeys2 := loadData(t, db2, startDate)
+		require.Equal(t, wantKeys2, getLocalKeys(t, db2))
+		require.NoError(t, db2.Close())
+
+		succeed := false
+		workspaceID := "10SA5Y8G8Y7I"
+		db3, syncer3 := initDB(t, withStoragePath(storagePath), withWorkspaceID(workspaceID))
+		require.Equal(t, []byte(workspaceID), db3.KeyPrefix)
+		syncer3.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(context.Context, []byte, int) error {
+			if succeed {
+				return nil
+			}
+			return errors.New("unauthorized")
+		})
+		wantKeys3 := loadData(t, db3, startDate)
+		require.Equal(t, wantKeys3, getLocalKeys(t, db3))
+
+		haveKeys := func() [][]byte {
+			return slices.Concat(
+				getLocalKeysWithPrefix(t, db3.Db, db1.KeyPrefix),
+				getLocalKeysWithPrefix(t, db3.Db, db2.KeyPrefix),
+				getLocalKeys(t, db3),
+			)
+		}
+
+		require.Equal(t, slices.Concat(wantKeys1, wantKeys2, wantKeys3), haveKeys())
+
+		succeed = true
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			syncer3.requireSynced(c, wantKeys3)
+			assert.Equal(c, slices.Concat(wantKeys1, wantKeys2), haveKeys(), "keys should have been deleted")
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 }
 
-func initDB(t *testing.T) (*hub.Log, *mockSyncer) {
-	t.Helper()
+type initOption func(*hub.Conf)
 
-	return initDBWithBatchCfg(t, batchSize, 1048576)
+func withBatchSize(count, bytes uint) initOption {
+	return func(conf *hub.Conf) {
+		conf.Ingest.MaxBatchSize = count
+		conf.Ingest.MaxBatchSizeBytes = bytes
+	}
 }
 
-func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hub.Log, *mockSyncer) {
+func withWorkspaceID(workspaceID string) initOption {
+	return func(conf *hub.Conf) {
+		conf.WorkspaceID = workspaceID
+	}
+}
+
+func withDeploymentID(deploymentID string) initOption {
+	return func(conf *hub.Conf) {
+		conf.DeploymentID = deploymentID
+	}
+}
+
+func withStoragePath(path string) initOption {
+	return func(conf *hub.Conf) {
+		conf.StoragePath = path
+	}
+}
+
+func initDB(t *testing.T, opts ...initOption) (*hub.Log, *mockSyncer) {
 	t.Helper()
 
 	conf := &hub.Conf{}
 	conf.SetDefaults()
 	conf.Ingest = hub.IngestConf{
-		MaxBatchSizeBytes: maxBatchSizeBytes,
+		MaxBatchSize:      batchSize,
+		MaxBatchSizeBytes: 1048576,
 		MinFlushInterval:  flushInterval,
 		FlushTimeout:      1 * time.Second,
 		NumGoRoutines:     8,
@@ -239,12 +310,17 @@ func initDBWithBatchCfg(t *testing.T, maxBatchSize, maxBatchSizeBytes uint) (*hu
 	conf.Advanced.MaxBatchSize = 32
 	conf.Advanced.FlushInterval = flushInterval
 
+	for _, opt := range opts {
+		opt(conf)
+	}
+
 	syncer := newMockSyncer(t)
 	decisionFilter := audit.NewDecisionLogEntryFilterFromConf(&audit.Conf{})
 	pipeLog, err := file.NewLog(&file.Conf{Path: "stdout"}, decisionFilter)
 	require.NoError(t, err)
-	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"), pipeLog, hub.WithMaxBatchSize(int(maxBatchSize)))
+	db, err := hub.NewLog(conf, decisionFilter, syncer, zap.L().Named("auditlog"), pipeLog)
 	require.NoError(t, err)
+	syncer.keyPrefix = db.KeyPrefix
 
 	require.Equal(t, hub.Backend, db.Backend())
 	require.True(t, db.Enabled())
@@ -261,7 +337,7 @@ func TestSizeBasedBatching(t *testing.T) {
 
 	t.Run("createsBatchesBySize", func(t *testing.T) {
 		var maxBatchSizeBytes uint = 500 // single record in the realms of ~100-200 bytes
-		db, syncer := initDBWithBatchCfg(t, numRecords, maxBatchSizeBytes)
+		db, syncer := initDB(t, withBatchSize(numRecords, maxBatchSizeBytes))
 		t.Cleanup(func() { _ = db.Close() })
 
 		// Count the number of Sync calls to verify multiple batches are created
@@ -275,14 +351,14 @@ func TestSizeBasedBatching(t *testing.T) {
 
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			assert.Greater(c, syncCalls, 1, "should have created multiple batches due to size limits")
-			assert.True(c, syncer.hasKeys(loadedKeys), "keys should have been synced")
+			syncer.requireSynced(c, loadedKeys)
 			assert.Empty(c, getLocalKeys(t, db), "keys should have been deleted")
 		}, 1*time.Second, 50*time.Millisecond)
 	})
 
 	t.Run("handlesOversizedEntries", func(t *testing.T) {
 		maxBatchSizeBytes := 1024
-		db, syncer := initDBWithBatchCfg(t, numRecords, uint(maxBatchSizeBytes))
+		db, syncer := initDB(t, withBatchSize(numRecords, uint(maxBatchSizeBytes)))
 		t.Cleanup(func() { _ = db.Close() })
 
 		ctx := t.Context()
@@ -509,7 +585,7 @@ func TestSizeBasedBatching(t *testing.T) {
 
 	t.Run("handlesLegacyOversizedKeys", func(t *testing.T) {
 		maxBatchSizeBytes := 1024
-		db, syncer := initDBWithBatchCfg(t, numRecords, uint(maxBatchSizeBytes))
+		db, syncer := initDB(t, withBatchSize(numRecords, uint(maxBatchSizeBytes)))
 		t.Cleanup(func() { _ = db.Close() })
 
 		// Create ID for legacy oversized entry
@@ -563,8 +639,8 @@ func TestSizeBasedBatching(t *testing.T) {
 		require.NoError(t, err)
 
 		// manually cut the zero bytes from the end
-		legacyKey := local.GenKey(hub.DecisionSyncPrefix, callID)[:local.KeyByteSizeStart]
-		value := local.GenKey(local.DecisionLogPrefix, callID)
+		legacyKey := badgerkey.New(nil, badgerkey.KindDecisionLogSync, callID, badgerkey.WithoutByteSize)[:hub.LegacyKeyLen]
+		value := badgerkey.New(nil, badgerkey.KindDecisionLogEntry, callID, badgerkey.WithoutByteSize)
 		require.NoError(t, db.Write(t.Context(), legacyKey, value))
 
 		syncer.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -638,7 +714,7 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 	syncer := newMockSyncer(t)
 	pipeLog, err := file.NewLog(&file.Conf{Path: "stdout"}, decisionFilter)
 	require.NoError(t, err)
-	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"), pipeLog, hub.WithMaxBatchSize(int(batchSize)))
+	db, err := hub.NewLog(&hubConf, decisionFilter, syncer, zap.L().Named("auditlog"), pipeLog)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 
@@ -654,20 +730,27 @@ func TestHubLogWithDecisionLogFilter(t *testing.T) {
 	wantNumRecords := numRecords / 2
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		assert.True(c, syncer.hasKeys(loadedKeys[:wantNumRecords]), "keys should have been synced")
+		syncer.requireSynced(c, loadedKeys[:wantNumRecords])
 	}, 1*time.Second, 50*time.Millisecond)
 }
 
 func getLocalKeys(t *testing.T, db *hub.Log) [][]byte {
 	t.Helper()
 
+	return getLocalKeysWithPrefix(t, db.Db, db.KeyPrefix)
+}
+
+func getLocalKeysWithPrefix(t *testing.T, db *badgerv4.DB, keyPrefix []byte) [][]byte {
+	t.Helper()
+
 	keys := [][]byte{}
-	err := db.Db.View(func(txn *badgerv4.Txn) error {
+	err := db.View(func(txn *badgerv4.Txn) error {
 		opts := badgerv4.DefaultIteratorOptions
 		opts.PrefetchValues = false
 		it := txn.NewIterator(opts)
 		defer it.Close()
-		for it.Seek(hub.SyncStatusPrefix); it.ValidForPrefix(hub.SyncStatusPrefix); it.Next() {
+		prefix := slices.Concat(keyPrefix, []byte("bs"))
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			key := make([]byte, len(item.Key()))
 			copy(key, item.Key())
@@ -715,12 +798,20 @@ func loadData(t *testing.T, db *hub.Log, startDate time.Time) [][]byte {
 		// order that Badger retrieves keys from the LSM.
 		// Key gen needs to follow on from the calls to `Write*LogEntry` as filtering occurs
 		// inside those calls, and we need the size of the stored log.
-		syncKeys[i] = local.GenKeyWithByteSize(hub.AccessSyncPrefix, callID, accessLogEntry.SizeVT())
-		syncKeys[i+(numRecords/2)] = local.GenKeyWithByteSize(hub.DecisionSyncPrefix, callID, decisionLogEntry.SizeVT())
+		syncKeys[i] = db.Key(badgerkey.KindAccessLogSync, callID, accessLogEntrySize(accessLogEntry))
+		syncKeys[i+(numRecords/2)] = db.Key(badgerkey.KindDecisionLogSync, callID, decisionLogEntrySize(decisionLogEntry))
 	}
 
 	time.Sleep(flushInterval * 20)
 	return syncKeys
+}
+
+func accessLogEntrySize(entry *auditv1.AccessLogEntry) int {
+	return (&logsv1.IngestBatch_Entry{Entry: &logsv1.IngestBatch_Entry_AccessLogEntry{AccessLogEntry: entry}}).SizeVT()
+}
+
+func decisionLogEntrySize(entry *auditv1.DecisionLogEntry) int {
+	return (&logsv1.IngestBatch_Entry{Entry: &logsv1.IngestBatch_Entry_DecisionLogEntry{DecisionLogEntry: entry}}).SizeVT()
 }
 
 func mkAccessLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.AccessLogEntryMaker {

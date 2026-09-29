@@ -20,6 +20,7 @@ cerbos:
       enabled: true
       backend: "hub"
       hub:
+        workspaceID: "YOUR_WORKSPACE_ID" # Alternatively, add `CERBOS_HUB_WORKSPACE_ID=<YOUR_WORKSPACE_ID>` to the secret you created above
         storagePath: /audit_logs
 
 # Create environment variables from the secret.

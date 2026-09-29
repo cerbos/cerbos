@@ -6,7 +6,6 @@ package local
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"sync"
@@ -17,6 +16,7 @@ import (
 	"go.uber.org/zap/zapcore"
 
 	"github.com/cerbos/cerbos/internal/audit"
+	"github.com/cerbos/cerbos/internal/audit/badgerkey"
 	"github.com/cerbos/cerbos/internal/config"
 )
 
@@ -24,19 +24,7 @@ const (
 	badgerDiscardRatio      = 0.5
 	goroutineResetThreshold = 1 << 16
 
-	Backend          = "local"
-	keyLen           = 24
-	keyTSStart       = 4
-	keyTSEnd         = 10
-	KeyByteSizeStart = 20
-	// Messages have a hard limit of 8mb in Hub. We hold back 2MB to allow for additional metadata/tolerances etc.
-	MaxAllowedBatchSizeBytes = 6291456 // 6MB
-
-)
-
-var (
-	AccessLogPrefix   = []byte("aacc")
-	DecisionLogPrefix = []byte("adec")
+	Backend = "local"
 )
 
 func init() {
@@ -57,6 +45,7 @@ type Log struct {
 	buffer                   chan *badgerv4.Entry
 	stopChan                 chan struct{}
 	decisionFilter           audit.DecisionLogEntryFilter
+	KeyPrefix                []byte
 	wg                       sync.WaitGroup
 	ttl                      time.Duration
 	stopOnce                 sync.Once
@@ -204,7 +193,7 @@ func (l *Log) WriteAccessLogEntry(ctx context.Context, record audit.AccessLogEnt
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := GenKey(AccessLogPrefix, callID)
+	key := l.Key(badgerkey.KindAccessLogEntry, callID, badgerkey.WithoutByteSize)
 
 	return l.Write(ctx, key, value)
 }
@@ -232,12 +221,12 @@ func (l *Log) WriteDecisionLogEntry(ctx context.Context, record audit.DecisionLo
 		return fmt.Errorf("invalid call ID: %w", err)
 	}
 
-	key := GenKey(DecisionLogPrefix, callID)
+	key := l.Key(badgerkey.KindDecisionLogEntry, callID, badgerkey.WithoutByteSize)
 
 	return l.Write(ctx, key, value)
 }
 
-func (l *Log) Write(ctx context.Context, key, value []byte) error {
+func (l *Log) Write(ctx context.Context, key badgerkey.Key, value []byte) error {
 	select {
 	case l.buffer <- badgerv4.NewEntry(key, value).WithTTL(l.ttl):
 		return nil
@@ -248,19 +237,21 @@ func (l *Log) Write(ctx context.Context, key, value []byte) error {
 
 func (l *Log) LastNAccessLogEntries(ctx context.Context, n uint) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	go l.listLastN(ctx, AccessLogPrefix, n, c)
+	go l.listLastN(ctx, badgerkey.KindAccessLogEntry, n, c)
 
 	return c
 }
 
 func (l *Log) LastNDecisionLogEntries(ctx context.Context, n uint) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	go l.listLastN(ctx, DecisionLogPrefix, n, c)
+	go l.listLastN(ctx, badgerkey.KindDecisionLogEntry, n, c)
 
 	return c
 }
 
-func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector) {
+func (l *Log) listLastN(ctx context.Context, kind badgerkey.Kind, n uint, c collector) {
+	minKey, maxKey := badgerkey.KindRange(l.KeyPrefix, kind)
+
 	err := l.Db.View(func(txn *badgerv4.Txn) error {
 		opts := badgerv4.DefaultIteratorOptions
 		opts.Reverse = true
@@ -268,15 +259,18 @@ func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector)
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
-		key := maxScanKeyForPrefix(prefix)
-
 		counter := uint(0)
-		for it.Seek(key); it.ValidForPrefix(prefix); it.Next() {
+		for it.Seek(maxKey); it.Valid(); it.Next() {
 			if err := ctx.Err(); err != nil {
 				return err
 			}
 
 			rec := it.Item()
+
+			if bytes.Compare(rec.Key(), minKey) < 0 {
+				return nil
+			}
+
 			if err := rec.Value(c.add); err != nil {
 				return err
 			}
@@ -295,47 +289,35 @@ func (l *Log) listLastN(ctx context.Context, prefix []byte, n uint, c collector)
 
 func (l *Log) AccessLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	go l.listBetweenTimestamps(ctx, AccessLogPrefix, fromTS, toTS, c)
+	go l.listBetweenTimestamps(ctx, badgerkey.KindAccessLogEntry, fromTS, toTS, c)
 
 	return c
 }
 
 func (l *Log) DecisionLogEntriesBetween(ctx context.Context, fromTS, toTS time.Time) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	go l.listBetweenTimestamps(ctx, DecisionLogPrefix, fromTS, toTS, c)
+	go l.listBetweenTimestamps(ctx, badgerkey.KindDecisionLogEntry, fromTS, toTS, c)
 
 	return c
 }
 
-func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, toTS time.Time, c collector) {
-	start, err := minScanKeyForTime(prefix, fromTS)
-	if err != nil {
-		c.done(err)
-		return
-	}
+func (l *Log) listBetweenTimestamps(ctx context.Context, kind badgerkey.Kind, fromTS, toTS time.Time, c collector) {
+	minKey, maxKey := badgerkey.TimeRange(l.KeyPrefix, kind, fromTS, toTS)
 
-	end, err := maxScanKeyForTime(prefix, toTS)
-	if err != nil {
-		c.done(err)
-		return
-	}
-
-	err = l.Db.View(func(txn *badgerv4.Txn) error {
+	err := l.Db.View(func(txn *badgerv4.Txn) error {
 		opts := badgerv4.DefaultIteratorOptions
 
 		it := txn.NewIterator(opts)
 		defer it.Close()
 
-		for it.Seek(start); it.Valid(); it.Next() {
+		for it.Seek(minKey); it.Valid(); it.Next() {
 			if err := ctx.Err(); err != nil {
 				return err
 			}
 
 			rec := it.Item()
-			key := rec.Key()
 
-			// stop when we have reached a key larger than the end key
-			if bytes.Compare(key, end) >= 0 {
+			if bytes.Compare(rec.Key(), maxKey) > 0 {
 				return nil
 			}
 
@@ -352,17 +334,17 @@ func (l *Log) listBetweenTimestamps(ctx context.Context, prefix []byte, fromTS, 
 
 func (l *Log) AccessLogEntryByID(ctx context.Context, id audit.ID) audit.AccessLogIterator {
 	c := newAccessLogEntryCollector()
-	l.getByID(ctx, AccessLogPrefix, id, c)
+	l.getByID(ctx, badgerkey.KindAccessLogEntry, id, c)
 	return c
 }
 
 func (l *Log) DecisionLogEntryByID(ctx context.Context, id audit.ID) audit.DecisionLogIterator {
 	c := newDecisionLogEntryCollector()
-	l.getByID(ctx, DecisionLogPrefix, id, c)
+	l.getByID(ctx, badgerkey.KindDecisionLogEntry, id, c)
 	return c
 }
 
-func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collector) {
+func (l *Log) getByID(ctx context.Context, kind badgerkey.Kind, id audit.ID, c collector) {
 	if err := ctx.Err(); err != nil {
 		c.done(err)
 		return
@@ -374,7 +356,7 @@ func (l *Log) getByID(ctx context.Context, prefix []byte, id audit.ID, c collect
 		return
 	}
 
-	key := GenKey(prefix, idBytes)
+	key := l.Key(kind, idBytes, badgerkey.WithoutByteSize)
 	err = l.Db.View(func(txn *badgerv4.Txn) error {
 		item, err := txn.Get(key)
 		if err != nil {
@@ -401,69 +383,8 @@ func (l *Log) Close() error {
 	return err
 }
 
-func GenKey(prefix []byte, id audit.IDBytes) []byte {
-	var key [keyLen]byte
-	copy(key[:keyTSStart], prefix)
-	copy(key[keyTSStart:], id[:])
-
-	return key[:]
-}
-
-func GenKeyWithByteSize(prefix []byte, id audit.IDBytes, nBytes int) []byte {
-	key := GenKey(prefix, id)
-	binary.BigEndian.PutUint32(key[KeyByteSizeStart:], uint32(nBytes))
-
-	return key
-}
-
-func genKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
-	id, err := audit.NewIDForTime(ts)
-	if err != nil {
-		return nil, err
-	}
-
-	idBytes, err := id.Repr()
-	if err != nil {
-		return nil, err
-	}
-
-	return GenKey(prefix, idBytes), nil
-}
-
-func minScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
-	return scanKeyForTime(prefix, ts, 0x00) //nolint:mnd
-}
-
-func maxScanKeyForTime(prefix []byte, ts time.Time) ([]byte, error) {
-	return scanKeyForTime(prefix, ts, 0xFF) //nolint:mnd
-}
-
-func scanKeyForTime(prefix []byte, ts time.Time, randFiller byte) ([]byte, error) {
-	key, err := genKeyForTime(prefix, ts)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := keyTSEnd; i < keyLen; i++ {
-		key[i] = randFiller
-	}
-
-	return key, nil
-}
-
-func maxScanKeyForPrefix(prefix []byte) []byte {
-	return scanKeyForPrefix(prefix, 0xFF) //nolint:mnd
-}
-
-func scanKeyForPrefix(prefix []byte, filler byte) []byte {
-	var key [keyLen]byte
-	copy(key[:keyTSStart], prefix)
-
-	for i := keyTSStart; i < keyLen; i++ {
-		key[i] = filler
-	}
-
-	return key[:]
+func (l *Log) Key(kind badgerkey.Kind, id audit.IDBytes, byteSize int) badgerkey.Key {
+	return badgerkey.New(l.KeyPrefix, kind, id, byteSize)
 }
 
 type batcher struct {

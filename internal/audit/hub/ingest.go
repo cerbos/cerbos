@@ -13,7 +13,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/cenkalti/backoff/v7"
-	"github.com/cerbos/cerbos/internal/audit/local"
 	"github.com/cerbos/cerbos/internal/hub"
 	"github.com/cerbos/cloud-api/logcap"
 )
@@ -59,11 +58,12 @@ func (exp *wrappedBackOff) Reset() {
 
 type Impl struct {
 	client *logcap.Client
+	target logcap.Target
 	log    *zap.Logger
 	wbo    *wrappedBackOff
 }
 
-func NewIngestSyncer(logger *zap.Logger) (*Impl, error) {
+func NewIngestSyncer(logger *zap.Logger, target logcap.Target) (*Impl, error) {
 	hubInstance, err := hub.Get()
 	if err != nil {
 		return nil, fmt.Errorf("failed to establish Cerbos Hub connection: %w", err)
@@ -96,11 +96,11 @@ func (i *Impl) Sync(ctx context.Context, batch []byte, numEntries int) error {
 	}
 
 	// An invariant assertion on the client-side.
-	if len(batch) > local.MaxAllowedBatchSizeBytes {
-		return fmt.Errorf("framed batch of %d bytes exceeds the %d byte limit", len(batch), local.MaxAllowedBatchSizeBytes)
+	if len(batch) > maxMaxBatchSizeBytes {
+		return fmt.Errorf("framed batch of %d bytes exceeds the %d byte limit", len(batch), maxMaxBatchSizeBytes)
 	}
 
-	resp, err := i.client.IngestRaw(ctx, batch)
+	resp, err := i.client.IngestRaw(ctx, i.target, batch)
 	if err != nil {
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return err
