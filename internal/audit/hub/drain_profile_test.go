@@ -54,6 +54,7 @@ func newProfileLog(t *testing.T, syncer IngestSyncer) *Log {
 	conf := &Conf{}
 	conf.SetDefaults()
 	conf.Ingest = IngestConf{
+		MaxBatchSize:      1024,
 		MaxBatchSizeBytes: 4 * 1024 * 1024, // production default
 		MinFlushInterval:  time.Hour,       // keep the background loop quiet
 		FlushTimeout:      5 * time.Second,
