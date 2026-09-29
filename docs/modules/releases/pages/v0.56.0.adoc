@@ -1,7 +1,7 @@
 include::ROOT:partial$attributes.adoc[]
 
 [#v0.56.0]
-= Cerbos v0.56.0 (2026-09-28)
+= Cerbos v0.56.0 (2026-09-30)
 
 == Changelog
 
@@ -25,6 +25,8 @@ The setting will become required in a future version.
 
 [unordered]
 Metric to track last error-free refresh from policy source:: New `cerbos_dev_rule_table_last_successful_refresh` metric added to track when the rule table served by the engine was successfully refreshed from the policy source without any errors.
+
+Optimize Hub audit log backlog sync:: Reduce the memory used when the PDP has fallen behind in syncing audit logs to Cerbos Hub.
 
 
 === Bug fixes
