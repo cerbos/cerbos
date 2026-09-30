@@ -81,7 +81,7 @@ add_redirects $VERSION
 # Set Antora branch to HEAD (author mode)
 set_branch "HEAD"
 # Commit changes and tag release
-git -C "$PROJECT_DIR" commit -s -a -m "chore(release): Prepare release $VERSION"
+git -C "$PROJECT_DIR" commit -s -a -m "Prepare release $VERSION"
 git tag "v${VERSION}" -m "v${VERSION}"
 git tag "api/genpb/v${VERSION}" -m "api/genpb/v${VERSION}"
 git tag "helm/v${VERSION}" -m "helm/v${VERSION}"
@@ -95,7 +95,7 @@ update_version $NEXT_VERSION "-prerelease"
 # Set Antora branch to HEAD (author mode)
 set_branch "HEAD"
 # Commit changes
-git -C "$PROJECT_DIR" commit -s -a -m "chore(version): Bump version to $NEXT_VERSION"
+git -C "$PROJECT_DIR" commit -s -a -m "Bump version to $NEXT_VERSION"
 
 echo "Run the following commands to trigger the release"
 echo "git push --atomic upstream main ${RELEASE_BRANCH} v${VERSION} api/genpb/v${VERSION} helm/v${VERSION}"
