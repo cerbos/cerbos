@@ -1,2 +1,2 @@
-type:fix
+type:enhancement
 Use provided.al2023 runtime in AWS Lambda SAR templates
