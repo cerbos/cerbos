@@ -1,0 +1,2 @@
+type:fix
+Use provided.al2023 runtime in AWS Lambda SAR templates

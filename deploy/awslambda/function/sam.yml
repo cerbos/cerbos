@@ -42,7 +42,7 @@ Resources:
   CerbosFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Runtime: provided.al2
+      Runtime: provided.al2023
       CodeUri: dist/
       Handler: bootstrap
       Architectures:
