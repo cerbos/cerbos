@@ -11,21 +11,22 @@ import (
 
 	"github.com/bluele/gcache"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
 type Cache[K, V any] struct {
-	cache     gcache.Cache
-	hitAttrs  []attribute.KeyValue
-	missAttrs []attribute.KeyValue
+	cache    gcache.Cache
+	hitOpts  []metric.AddOption
+	missOpts []metric.AddOption
 }
 
 func New[K, V any](kind string, size uint, attributes ...attribute.KeyValue) *Cache[K, V] {
 	attrs := append([]attribute.KeyValue{metrics.KindKey(kind)}, attributes...)
 	cache := &Cache[K, V]{
-		hitAttrs:  append([]attribute.KeyValue{metrics.ResultKey("hit")}, attrs...),
-		missAttrs: append([]attribute.KeyValue{metrics.ResultKey("miss")}, attrs...),
+		hitOpts:  accessCountOpts("hit", attrs),
+		missOpts: accessCountOpts("miss", attrs),
 	}
 
 	metrics.Add(context.Background(), metrics.CacheMaxSize(), int64(size), attrs...)
@@ -79,10 +80,15 @@ func (c *Cache[K, V]) Purge() {
 	c.cache.Purge()
 }
 
+func accessCountOpts(result string, attrs []attribute.KeyValue) []metric.AddOption {
+	kvs := append([]attribute.KeyValue{metrics.ResultKey(result)}, attrs...)
+	return []metric.AddOption{metric.WithAttributeSet(attribute.NewSet(kvs...))}
+}
+
 func (c *Cache[K, V]) hit() {
-	metrics.Inc(context.Background(), metrics.CacheAccessCount(), c.hitAttrs...)
+	metrics.CacheAccessCount().Add(context.Background(), 1, c.hitOpts...)
 }
 
 func (c *Cache[K, V]) miss() {
-	metrics.Inc(context.Background(), metrics.CacheAccessCount(), c.missAttrs...)
+	metrics.CacheAccessCount().Add(context.Background(), 1, c.missOpts...)
 }
