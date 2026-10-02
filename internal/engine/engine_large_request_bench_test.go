@@ -157,7 +157,7 @@ func mkLargeRequestInputs(b *testing.B) []*enginev1.CheckInput {
 	actions := lrActions(0, lrNumActions)
 	inputs := make([]*enginev1.CheckInput, lrNumResources)
 	for i := range lrNumResources {
-		// Half the resources sit under the principal's admin OU, so the condition is true for them.
+		// Make the condition true for half of the requests.
 		position := fmt.Sprintf("ou=team_%d,ou=hr,dc=acme", i)
 		if i%2 == 0 {
 			position = fmt.Sprintf("ou=team_%d,ou=sales,dc=acme", i)
