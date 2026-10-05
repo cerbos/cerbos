@@ -64,18 +64,18 @@ type Binding struct {
 }
 
 type BindingHandle struct {
-	Core                       *FunctionalCore
-	AllowActions               map[unique.Handle[string]]struct{}
-	AllowActionGlobs           []string // AllowActions entries that are glob patterns
+	Resource                   unique.Handle[string]
+	OriginDerivedRole          unique.Handle[string]
+	Action                     unique.Handle[string]
 	Role                       unique.Handle[string]
 	Scope                      unique.Handle[string]
 	Version                    unique.Handle[string]
-	Resource                   unique.Handle[string]
-	Action                     unique.Handle[string]
 	Principal                  unique.Handle[string]
-	OriginFqn                  unique.Handle[string]
-	OriginDerivedRole          unique.Handle[string]
 	Name                       unique.Handle[string]
+	AllowActions               map[unique.Handle[string]]struct{}
+	OriginFqn                  unique.Handle[string]
+	Core                       *FunctionalCore
+	AllowActionGlobs           []string
 	ID                         uint32
 	NoMatchForScopePermissions bool
 }
