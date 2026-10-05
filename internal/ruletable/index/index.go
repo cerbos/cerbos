@@ -4,8 +4,8 @@
 package index
 
 import (
+	"maps"
 	"slices"
-	"unique"
 
 	"cel.dev/cel-go/cel"
 	"github.com/cespare/xxhash/v2"
@@ -163,30 +163,24 @@ func (m *Index) IndexRule(rule *runtimev1.RuleTable_RuleRow) error {
 	}
 	core.origins[rule.OriginFqn] = struct{}{}
 
-	var action unique.Handle[string]
-	var allowActions map[unique.Handle[string]]struct{}
-	switch v := rule.ActionSet.(type) {
-	case *runtimev1.RuleTable_RuleRow_AllowActions_:
-		allowActions = make(map[unique.Handle[string]]struct{}, len(v.AllowActions.GetActions()))
-		for a := range v.AllowActions.GetActions() {
-			allowActions[mkStringHandle(a)] = struct{}{}
-		}
-	case *runtimev1.RuleTable_RuleRow_Action:
-		action = mkStringHandle(v.Action)
-	}
-
 	b := &BindingHandle{
 		Scope:             mkStringHandle(rule.Scope),
 		Version:           mkStringHandle(rule.Version),
 		Resource:          mkStringHandle(rule.Resource),
 		Role:              mkStringHandle(rule.Role),
-		Action:            action,
 		Principal:         mkStringHandle(rule.Principal),
 		OriginFqn:         mkStringHandle(rule.OriginFqn),
 		OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
 		Name:              mkStringHandle(rule.Name),
-		AllowActions:      allowActions,
 		Core:              core,
+	}
+
+	switch v := rule.ActionSet.(type) {
+	case *runtimev1.RuleTable_RuleRow_AllowActions_:
+		actions := v.AllowActions.GetActions()
+		b.setAllowActions(maps.Keys(actions), len(actions))
+	case *runtimev1.RuleTable_RuleRow_Action:
+		b.Action = mkStringHandle(v.Action)
 	}
 
 	m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
@@ -442,14 +436,11 @@ func (m *Index) appendRolePolicyDenies(
 			}
 
 			for _, action := range resourceActions {
+				actionHandle := mkStringHandle(action)
 				matched = matched[:0]
 				for _, rb := range roleBindings {
-					for a := range rb.AllowActions {
-						av := HandleStr(a)
-						if av == action || util.MatchesGlob(av, action) {
-							matched = append(matched, rb)
-							break
-						}
+					if rb.allowsAction(actionHandle, action) {
+						matched = append(matched, rb)
 					}
 				}
 
@@ -473,7 +464,7 @@ func (m *Index) appendRolePolicyDenies(
 									FromRolePolicy: true,
 									Params:         mb.Core.Params,
 								},
-								Action:    mkStringHandle(action),
+								Action:    actionHandle,
 								Name:      mb.Name,
 								OriginFqn: mb.OriginFqn,
 								Resource:  mb.Resource,
@@ -512,7 +503,7 @@ func (m *Index) appendRolePolicyDenies(
 							FromRolePolicy:   true,
 							Params:           mb.Core.Params,
 						},
-						Action:    mkStringHandle(action),
+						Action:    actionHandle,
 						Name:      mb.Name,
 						OriginFqn: mb.OriginFqn,
 						Resource:  mb.Resource,

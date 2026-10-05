@@ -4,12 +4,17 @@
 package index
 
 import (
+	"iter"
+	"strings"
 	"unique"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
+
+const globMetaChars = `*?[{\`
 
 // FunctionalCore holds the behavioral part of a rule, deduplicated by content hash.
 // Multiple Bindings may share the same FunctionalCore pointer when they differ only
@@ -64,6 +69,7 @@ type Binding struct {
 type BindingHandle struct {
 	Core                       *FunctionalCore
 	AllowActions               map[unique.Handle[string]]struct{}
+	AllowActionGlobs           []string // AllowActions entries that are glob patterns
 	Role                       unique.Handle[string]
 	Scope                      unique.Handle[string]
 	Version                    unique.Handle[string]
@@ -75,6 +81,32 @@ type BindingHandle struct {
 	Name                       unique.Handle[string]
 	ID                         uint32
 	NoMatchForScopePermissions bool
+}
+
+// setAllowActions sets AllowActions prefiltering globs.
+func (b *BindingHandle) setAllowActions(actions iter.Seq[string], n int) {
+	b.AllowActions = make(map[unique.Handle[string]]struct{}, n)
+	b.AllowActionGlobs = nil
+	for a := range actions {
+		b.AllowActions[mkStringHandle(a)] = struct{}{}
+		if strings.ContainsAny(a, globMetaChars) {
+			b.AllowActionGlobs = append(b.AllowActionGlobs, a)
+		}
+	}
+}
+
+// allowsAction reports whether any of the AllowActions entries matches action.
+// actionHandle must be the handle of action.
+func (b *BindingHandle) allowsAction(actionHandle unique.Handle[string], action string) bool {
+	if _, ok := b.AllowActions[actionHandle]; ok {
+		return true
+	}
+	for _, g := range b.AllowActionGlobs {
+		if util.MatchesGlob(g, action) {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
