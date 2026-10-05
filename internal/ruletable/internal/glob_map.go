@@ -5,14 +5,11 @@ package internal
 
 import (
 	"maps"
-	"strings"
 	"sync"
 
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/gobwas/glob"
 )
-
-const wildcardAny = rune('*')
 
 // GlobMap is a map that supports glob pattern matching for keys.
 //
@@ -58,7 +55,7 @@ func (gm *GlobMap[T]) Clear() {
 }
 
 func (gm *GlobMap[T]) Set(k string, v T) {
-	if strings.ContainsRune(k, wildcardAny) {
+	if util.IsGlob(k) {
 		if _, exists := gm.globs[k]; !exists {
 			g := util.GetOrCompileGlob(k)
 			if g == nil {

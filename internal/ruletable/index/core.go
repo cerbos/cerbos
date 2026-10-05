@@ -5,7 +5,6 @@ package index
 
 import (
 	"iter"
-	"strings"
 	"unique"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -13,8 +12,6 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/util"
 )
-
-const globMetaChars = `*?[{\`
 
 // FunctionalCore holds the behavioral part of a rule, deduplicated by content hash.
 // Multiple Bindings may share the same FunctionalCore pointer when they differ only
@@ -89,7 +86,7 @@ func (b *BindingHandle) setAllowActions(actions iter.Seq[string], n int) {
 	b.AllowActionGlobs = nil
 	for a := range actions {
 		b.AllowActions[mkStringHandle(a)] = struct{}{}
-		if strings.ContainsAny(a, globMetaChars) {
+		if util.IsGlob(a) {
 			b.AllowActionGlobs = append(b.AllowActionGlobs, a)
 		}
 	}
