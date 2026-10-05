@@ -45,7 +45,7 @@ You might also want to use a separate deployment with only a subset of your poli
 
 == Evaluating policies in the browser
 
-You can use link:https://docs.cerbos.dev/cerbos-hub/decision-points-embedded[Cerbos Hub's embedded PDPs] to evaluate your authorization policies directly in the browser.
+You can use xref:cerbos-hub:ROOT:deployments-epdp-rules.adoc[Cerbos Hub's embedded PDPs] to evaluate your authorization policies directly in the browser.
 This allows you to perform permission checks on the front end without changing the back end.
 
 
