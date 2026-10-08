@@ -205,7 +205,7 @@ func listActions(b *index.BindingHandle) []string {
 		actions = append(actions, b.Action.Value())
 	}
 	for a := range b.AllowActions {
-		actions = append(actions, a.Value())
+		actions = append(actions, a)
 	}
 
 	if len(actions) > 1 {

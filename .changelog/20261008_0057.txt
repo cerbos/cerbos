@@ -1,0 +1,2 @@
+type:fix
+Role policy allowActions treat only * as a wildcard, consistent with other policy fields

@@ -4,6 +4,8 @@
 package util
 
 import (
+	"strings"
+
 	"github.com/cerbos/cerbos/internal/cache"
 	"github.com/gobwas/glob"
 )
@@ -36,6 +38,11 @@ func (gc *globCache) getOrCompile(globExpr string) *glob.Pattern {
 
 	gc.cache.Set(globExpr, g)
 	return g
+}
+
+// IsGlob reports whether s is a glob pattern. Only `*` makes a policy value a glob.
+func IsGlob(s string) bool {
+	return strings.ContainsRune(s, '*')
 }
 
 // MatchesGlob returns true if the given glob expression matches the given string.

@@ -4,8 +4,6 @@
 package index
 
 import (
-	"strings"
-
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/gobwas/glob"
 )
@@ -29,7 +27,7 @@ func newGlobDimension() *globDimension {
 }
 
 func (gd *globDimension) Set(key string, id uint32) {
-	if strings.ContainsRune(key, '*') {
+	if util.IsGlob(key) {
 		if _, ok := gd.compiled[key]; !ok {
 			g := util.GetOrCompileGlob(key)
 			if g == nil {
@@ -44,7 +42,7 @@ func (gd *globDimension) Set(key string, id uint32) {
 }
 
 func (gd *globDimension) Remove(key string, id uint32) {
-	if strings.ContainsRune(key, '*') {
+	if util.IsGlob(key) {
 		gd.globs.Remove(key, id)
 		// globs.Remove drops the key when it empties; keep compiled in step.
 		if !gd.globs.has(key) {
