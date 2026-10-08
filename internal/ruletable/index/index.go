@@ -436,10 +436,9 @@ func (m *Index) appendRolePolicyDenies(
 			}
 
 			for _, action := range resourceActions {
-				actionHandle := mkStringHandle(action)
 				matched = matched[:0]
 				for _, rb := range roleBindings {
-					if rb.allowsAction(actionHandle, action) {
+					if rb.allowsAction(action) {
 						matched = append(matched, rb)
 					}
 				}
@@ -451,7 +450,15 @@ func (m *Index) appendRolePolicyDenies(
 					continue
 				}
 
+				// Only intern the action once a binding is emitted for it.
+				actionHandle := EmptyHandle
 				for _, mb := range matched {
+					if mb.Core.Condition == nil && mb.Core.EmitOutput == nil {
+						continue
+					}
+					if actionHandle == EmptyHandle {
+						actionHandle = mkStringHandle(action)
+					}
 					if mb.Core.Condition == nil {
 						// Pure ACL allow: fall through. Role-policy bindings are
 						// otherwise dropped here, so emit any output via a no-effect
@@ -559,7 +566,7 @@ func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionB
 			actionSet[b.Action.Value()] = struct{}{}
 		}
 		for a := range b.AllowActions {
-			actionSet[HandleStr(a)] = struct{}{}
+			actionSet[a] = struct{}{}
 		}
 	}
 

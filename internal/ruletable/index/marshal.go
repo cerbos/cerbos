@@ -171,7 +171,7 @@ func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32, eval
 	if b.AllowActions != nil {
 		actions := make([]string, 0, len(b.AllowActions))
 		for a := range b.AllowActions {
-			actions = append(actions, HandleStr(a))
+			actions = append(actions, a)
 		}
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_AllowActions{
 			AllowActions: &runtimev1.BitmapIndex_AllowActions{

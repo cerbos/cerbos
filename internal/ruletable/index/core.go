@@ -5,6 +5,7 @@ package index
 
 import (
 	"iter"
+	"maps"
 	"unique"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
@@ -72,7 +73,7 @@ type BindingHandle struct {
 	Version                    unique.Handle[string]
 	Principal                  unique.Handle[string]
 	Name                       unique.Handle[string]
-	AllowActions               map[unique.Handle[string]]struct{}
+	AllowActions               map[string]struct{} // keys are canonical (interned) strings
 	OriginFqn                  unique.Handle[string]
 	Core                       *FunctionalCore
 	AllowActionGlobs           []string
@@ -82,20 +83,19 @@ type BindingHandle struct {
 
 // setAllowActions sets AllowActions prefiltering globs.
 func (b *BindingHandle) setAllowActions(actions iter.Seq[string], n int) {
-	b.AllowActions = make(map[unique.Handle[string]]struct{}, n)
+	b.AllowActions = make(map[string]struct{}, n)
 	b.AllowActionGlobs = nil
 	for a := range actions {
-		b.AllowActions[mkStringHandle(a)] = struct{}{}
+		a = HandleStr(mkStringHandle(a)) // share the bytes with other copies of the action
+		b.AllowActions[a] = struct{}{}
 		if util.IsGlob(a) {
 			b.AllowActionGlobs = append(b.AllowActionGlobs, a)
 		}
 	}
 }
 
-// allowsAction reports whether any of the AllowActions entries matches action.
-// actionHandle must be the handle of action.
-func (b *BindingHandle) allowsAction(actionHandle unique.Handle[string], action string) bool {
-	if _, ok := b.AllowActions[actionHandle]; ok {
+func (b *BindingHandle) allowsAction(action string) bool {
+	if _, ok := b.AllowActions[action]; ok {
 		return true
 	}
 	for _, g := range b.AllowActionGlobs {
@@ -110,16 +110,9 @@ func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
 	if b == nil {
 		return nil
 	}
-	var allow map[string]struct{}
-	if b.AllowActions != nil {
-		allow = make(map[string]struct{}, len(b.AllowActions))
-		for a := range b.AllowActions {
-			allow[a.Value()] = struct{}{}
-		}
-	}
 	return &Binding{
 		Core:                       b.Core,
-		AllowActions:               allow,
+		AllowActions:               maps.Clone(b.AllowActions),
 		Role:                       HandleStr(b.Role),
 		Scope:                      HandleStr(b.Scope),
 		Version:                    HandleStr(b.Version),
