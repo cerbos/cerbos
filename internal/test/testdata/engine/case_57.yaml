@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Role policy rules for different resources matching the same action
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # Owned but not public: fails the "pay*" rule condition
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: alice
+      roles:
+        - limited_viewer
+    resource:
+      kind: payslip
+      id: private_owned
+      attr:
+        public: false
+        owner: alice
+  # Public but not owned: fails the payslip rule condition
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: alice
+      roles:
+        - limited_viewer
+    resource:
+      kind: payslip
+      id: public_not_owned
+      attr:
+        public: true
+        owner: bob
+  # Satisfies both conditions
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: alice
+      roles:
+        - limited_viewer
+    resource:
+      kind: payslip
+      id: public_owned
+      attr:
+        public: true
+        owner: alice
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: private_owned
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: role.limited_viewer.vdefault
+  - requestId: test
+    resourceId: public_not_owned
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: role.limited_viewer.vdefault
+  - requestId: test
+    resourceId: public_owned
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.payslip.vdefault
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.payslip.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_23.yaml
+        role.limited_viewer.vdefault:
+          attributes:
+            driver: disk
+            source: role_policies/policy_10.yaml
+    policySource:
+      disk: {}
