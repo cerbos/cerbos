@@ -188,8 +188,9 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 				}
 			}
 
+			// Rule names only have to be unique within a resource, so the resource is part of the key.
 			ruleFqn := namer.RuleFQN(rt.Meta[moduleID.RawValue()], p.Scope, rule.Name)
-			evaluationKey := fmt.Sprintf("%s#%s", namer.PrincipalPolicyFQN(principalID, rpps.Meta.Version, p.Scope), ruleFqn)
+			evaluationKey := fmt.Sprintf("%s#%s#%s", namer.PrincipalPolicyFQN(principalID, rpps.Meta.Version, p.Scope), ruleFqn, resource)
 
 			row := &runtimev1.RuleTable_RuleRow{
 				OriginFqn: rpps.Meta.Fqn,
@@ -214,6 +215,7 @@ func addPrincipalPolicy(rt *runtimev1.RuleTable, rpps *runtimev1.RunnablePrincip
 				EvaluationKey: evaluationKey,
 				EvaluationKeyTuple: &runtimev1.EvaluationKeyTuple{
 					Prefix:    namer.PrincipalPoliciesPrefix,
+					Resource:  resource,
 					Principal: principalID,
 					Version:   rpps.Meta.Version,
 					Scope:     p.Scope,
@@ -1047,22 +1049,31 @@ func migrateFromCompilerVersion0To1(rt *runtimev1.RuleTable) error {
 	return nil
 }
 
-// migrateFromCompilerVersion1To2 adds the resource to role policy evaluation keys.
-// Rule indices restart for each resource, so without it rules for different resources
-// (e.g. "*" and a literal kind) shared a key and therefore a condition cache entry.
+// migrateFromCompilerVersion1To2 adds the resource to role and principal policy evaluation keys.
+// Role policy rule indices restart for each resource, and principal policy rule names only have
+// to be unique within a resource, so without it rules for different resources (e.g. "*" and a
+// literal kind) could share a key and therefore a condition cache entry.
 func migrateFromCompilerVersion1To2(rt *runtimev1.RuleTable) error {
 	for _, row := range rt.Rules {
-		if !row.FromRolePolicy {
+		switch {
+		case row.FromRolePolicy:
+			// "<policy key>#<role>_rule-NNN" becomes "<policy key>#<role>_<resource>_rule-NNN".
+			if i := strings.LastIndex(row.EvaluationKey, "_rule-"); i >= 0 {
+				row.EvaluationKey = row.EvaluationKey[:i] + "_" + row.Resource + row.EvaluationKey[i:]
+			}
+		case row.PolicyKind == policyv1.Kind_KIND_PRINCIPAL:
+			// The row only has the sanitized resource, so rules for resources that only differ
+			// in sanitized characters still share a key until the rule table is rebuilt.
+			// Rows of principal policies without rules have no key.
+			if row.EvaluationKey != "" {
+				row.EvaluationKey += "#" + row.Resource
+			}
+		default:
 			continue
 		}
 
 		if t := row.EvaluationKeyTuple; t != nil {
 			t.Resource = row.Resource
-		}
-
-		// "<policy key>#<role>_rule-NNN" becomes "<policy key>#<role>_<resource>_rule-NNN".
-		if i := strings.LastIndex(row.EvaluationKey, "_rule-"); i >= 0 {
-			row.EvaluationKey = row.EvaluationKey[:i] + "_" + row.Resource + row.EvaluationKey[i:]
 		}
 	}
 
