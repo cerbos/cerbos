@@ -37,6 +37,7 @@ type compilerVersionMigration func(*runtimev1.RuleTable) error
 var (
 	compilerVersionMigrations = []compilerVersionMigration{
 		migrateFromCompilerVersion0To1,
+		migrateFromCompilerVersion1To2,
 	}
 
 	compilerVersion = uint32(len(compilerVersionMigrations))
@@ -1043,5 +1044,27 @@ func migrate(rt *runtimev1.RuleTable) error {
 
 func migrateFromCompilerVersion0To1(rt *runtimev1.RuleTable) error {
 	conditions.WalkExprs(rt, conditions.MigrateVariablesType)
+	return nil
+}
+
+// migrateFromCompilerVersion1To2 adds the resource to role policy evaluation keys.
+// Rule indices restart for each resource, so without it rules for different resources
+// (e.g. "*" and a literal kind) shared a key and therefore a condition cache entry.
+func migrateFromCompilerVersion1To2(rt *runtimev1.RuleTable) error {
+	for _, row := range rt.Rules {
+		if !row.FromRolePolicy {
+			continue
+		}
+
+		if t := row.EvaluationKeyTuple; t != nil {
+			t.Resource = row.Resource
+		}
+
+		// "<policy key>#<role>_rule-NNN" becomes "<policy key>#<role>_<resource>_rule-NNN".
+		if i := strings.LastIndex(row.EvaluationKey, "_rule-"); i >= 0 {
+			row.EvaluationKey = row.EvaluationKey[:i] + "_" + row.Resource + row.EvaluationKey[i:]
+		}
+	}
+
 	return nil
 }
