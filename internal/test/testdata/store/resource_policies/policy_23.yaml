@@ -10,3 +10,13 @@ resourcePolicy:
       roles:
         - user
       effect: EFFECT_ALLOW
+    # Conditional, so that the principal policy test in engine/case_58.yaml catches a shared
+    # condition result whichever of its rules is evaluated first.
+    - actions:
+        - view
+      roles:
+        - clerk
+      effect: EFFECT_ALLOW
+      condition:
+        match:
+          expr: R.attr.shared == true
