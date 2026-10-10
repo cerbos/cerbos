@@ -171,7 +171,11 @@ func (lw *logWrapper) WriteAccessLogEntry(ctx context.Context, entry AccessLogEn
 		if err := lw.backend.WriteAccessLogEntry(ctx, entry); err != nil {
 			metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindAccess))
 			logging.FromContext(ctx).Warn("Failed to write access log entry", zap.Error(err))
+
+			return
 		}
+
+		metrics.Inc(ctx, metrics.AuditLogCount(), metrics.KindKey(KindAccess))
 	})
 
 	return nil
@@ -188,7 +192,11 @@ func (lw *logWrapper) WriteDecisionLogEntry(ctx context.Context, entry DecisionL
 		if err := lw.backend.WriteDecisionLogEntry(ctx, entry); err != nil {
 			metrics.Inc(ctx, metrics.AuditErrorCount(), metrics.KindKey(KindDecision))
 			logging.FromContext(ctx).Warn("Failed to write decision log entry", zap.Error(err))
+
+			return
 		}
+
+		metrics.Inc(ctx, metrics.AuditLogCount(), metrics.KindKey(KindDecision))
 	})
 
 	return nil
