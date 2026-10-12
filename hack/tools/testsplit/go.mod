@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/alecthomas/kong v1.16.1
 	github.com/gobwas/glob v1.0.0
-	golang.org/x/tools v0.50.0
+	golang.org/x/tools v0.51.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
