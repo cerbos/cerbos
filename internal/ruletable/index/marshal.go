@@ -8,7 +8,6 @@ package index
 import (
 	"fmt"
 	"slices"
-	"unique"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -172,7 +171,7 @@ func marshalBinding(b *BindingHandle, coreIndex map[*FunctionalCore]uint32, eval
 	if b.AllowActions != nil {
 		actions := make([]string, 0, len(b.AllowActions))
 		for a := range b.AllowActions {
-			actions = append(actions, HandleStr(a))
+			actions = append(actions, a)
 		}
 		pb.ActionSet = &runtimev1.BitmapIndex_Binding_AllowActions{
 			AllowActions: &runtimev1.BitmapIndex_AllowActions{
@@ -377,11 +376,7 @@ func unmarshalBindings(pbBindings []*runtimev1.BitmapIndex_Binding, cores []*Fun
 
 		switch v := pb.ActionSet.(type) {
 		case *runtimev1.BitmapIndex_Binding_AllowActions:
-			aa := make(map[unique.Handle[string]]struct{}, len(v.AllowActions.Actions))
-			for _, a := range v.AllowActions.Actions {
-				aa[mkStringHandle(a)] = struct{}{}
-			}
-			b.AllowActions = aa
+			b.setAllowActions(slices.Values(v.AllowActions.Actions), len(v.AllowActions.Actions))
 		case *runtimev1.BitmapIndex_Binding_Action:
 			b.Action = mkStringHandle(v.Action)
 		}
