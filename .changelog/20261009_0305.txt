@@ -1,0 +1,2 @@
+type:fix
+Fix an issue where multiple role or principal policy rules with overlapping resource name matches could produce incorrect results due to cache collisions.

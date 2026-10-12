@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: limited_viewer
+  version: default
+  parentRoles:
+    - user
+  rules:
+    # Both rules match payslip:view, so both conditions must hold.
+    # Each rule is the first one for its resource, which used to give both the same evaluation key.
+    - resource: "pay*"
+      allowActions:
+        - view
+      condition:
+        match:
+          expr: R.attr.public == true
+    - resource: payslip
+      allowActions:
+        - view
+      condition:
+        match:
+          expr: R.attr.owner == P.id
