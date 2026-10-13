@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
+	celtypes "cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/common/types/ref"
 	"github.com/cerbos/cerbos/internal/conditions/types"
-	celtypes "github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
 	"go.uber.org/multierr"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -161,9 +161,9 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
 	scopedPrincipalExists := rt.idx.ScopedPrincipalExists(principalVersion, principalScopes)
-	scopedResourceExists := rt.idx.ScopedResourceExists(resourceVersion, sanitizedResource, resourceScopes)
+	resourceKind := index.NewResourceKind(input.Resource.Kind)
+	scopedResourceExists := rt.idx.ScopedResourceExists(resourceVersion, resourceKind, resourceScopes)
 
 	if !scopedPrincipalExists && !scopedResourceExists {
 		return result, nil
@@ -291,7 +291,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
 					}
-					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, parentRoles, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(resourceVersion, resourceKind, scope, action, parentRoles, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						bName := index.HandleStr(b.Name)
 						bOriginFqn := index.HandleStr(b.OriginFqn)

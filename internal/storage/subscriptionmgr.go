@@ -7,6 +7,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"sync"
 	"testing"
@@ -20,35 +21,44 @@ import (
 
 const eventBufferSize = 32
 
+var errSubscriptionManagerStopped = errors.New("subscription manager stopped")
+
+type eventBatch struct {
+	done   chan struct{}
+	events []Event
+}
+
 type SubscriptionManager struct {
-	eventChan   chan Event
+	eventChan   chan eventBatch // never closed
 	subscribers map[string]Subscriber
+	stopped     <-chan struct{} // closed when the lifecycle ctx is cancelled
 	mu          sync.RWMutex
-	once        sync.Once
 }
 
 func NewSubscriptionManager(ctx context.Context) *SubscriptionManager {
 	sm := &SubscriptionManager{
-		eventChan:   make(chan Event, eventBufferSize),
+		eventChan:   make(chan eventBatch, eventBufferSize),
 		subscribers: make(map[string]Subscriber),
+		stopped:     ctx.Done(),
 	}
 
-	go sm.handleEvents(ctx)
+	go sm.handleEvents()
 
 	return sm
 }
 
-func (sm *SubscriptionManager) handleEvents(ctx context.Context) {
+func (sm *SubscriptionManager) handleEvents() {
 	for {
 		select {
-		case <-ctx.Done():
-			sm.shutdown()
+		case <-sm.stopped:
 			return
-		case evt, ok := <-sm.eventChan:
-			if !ok {
-				return
+		case batch := <-sm.eventChan:
+			for _, evt := range batch.events {
+				sm.distributeEvent(evt)
 			}
-			sm.distributeEvent(evt)
+			if batch.done != nil {
+				close(batch.done)
+			}
 		}
 	}
 }
@@ -63,16 +73,78 @@ func (sm *SubscriptionManager) distributeEvent(evt Event) {
 	}
 }
 
-// NotifySubscribers sends the events to all subscribers.
+// NotifySubscribers sends the events to all subscribers without waiting for them to be processed.
 func (sm *SubscriptionManager) NotifySubscribers(events ...Event) {
+	if sm == nil {
+		return
+	}
+
 	for _, evt := range events {
 		if evt.Kind == EventNop {
 			continue
 		}
 
-		// TODO(cell) drop event if not published within a reasonable time period.
-		sm.eventChan <- evt
+		// Blocking on a full buffer. Dropping events could compromise consistency with a storage
+		// since updates are deltas unless ReloadEvent is enqueued instead.
+		select {
+		case sm.eventChan <- eventBatch{events: []Event{evt}}:
+		case <-sm.stopped:
+			return
+		}
 	}
+}
+
+// NotifySubscribersAndWait sends the events to all subscribers and blocks until every
+// subscriber has processed them. Events queued ahead of this batch are processed first.
+func (sm *SubscriptionManager) NotifySubscribersAndWait(ctx context.Context, events ...Event) error {
+	if sm == nil {
+		return nil
+	}
+
+	events = withoutNopEvents(events)
+	if len(events) == 0 {
+		return nil
+	}
+
+	done := make(chan struct{})
+	select {
+	case sm.eventChan <- eventBatch{events: events, done: done}:
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-sm.stopped:
+		return errSubscriptionManagerStopped
+	}
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-sm.stopped:
+		return errSubscriptionManagerStopped
+	}
+}
+
+func withoutNopEvents(events []Event) []Event {
+	hasNop := false
+	for _, evt := range events {
+		if evt.Kind == EventNop {
+			hasNop = true
+			break
+		}
+	}
+	if !hasNop {
+		return events
+	}
+
+	filtered := make([]Event, 0, len(events))
+	for _, evt := range events {
+		if evt.Kind != EventNop {
+			filtered = append(filtered, evt)
+		}
+	}
+
+	return filtered
 }
 
 func (sm *SubscriptionManager) Subscribe(s Subscriber) {
@@ -95,10 +167,6 @@ func (sm *SubscriptionManager) Unsubscribe(s Subscriber) {
 	defer sm.mu.Unlock()
 
 	delete(sm.subscribers, s.SubscriberID())
-}
-
-func (sm *SubscriptionManager) shutdown() {
-	sm.once.Do(func() { close(sm.eventChan) })
 }
 
 // TestSubscription is a helper to test subscriptions.

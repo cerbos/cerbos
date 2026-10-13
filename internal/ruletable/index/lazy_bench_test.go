@@ -50,7 +50,7 @@ func TestQueryMaterialisesLazyDimension(t *testing.T) {
 	require.NoError(t, impl.IndexRules(rules))
 
 	count := func() int {
-		return len(impl.Query("default", "shared_doc", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", nil))
+		return len(impl.Query("default", index.NewResourceKind("shared_doc"), "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", nil))
 	}
 	require.Equal(t, target, count(), "first query materialises the lazy literal")
 	require.Equal(t, target, count(), "cached re-query returns the same")
@@ -82,10 +82,11 @@ func buildScatteredResourceIndex(tb testing.TB) *index.Index {
 
 func BenchmarkQueryByResourceHit(b *testing.B) {
 	impl := buildScatteredResourceIndex(b)
+	kind := index.NewResourceKind("res_01000")
 	var buf []*index.BindingHandle
 	b.ReportAllocs()
 	for b.Loop() {
-		buf = impl.Query("default", "res_01000", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
+		buf = impl.Query("default", kind, "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
 	}
 	if len(buf) == 0 {
 		b.Fatal("expected matches")
@@ -94,10 +95,11 @@ func BenchmarkQueryByResourceHit(b *testing.B) {
 
 func BenchmarkQueryByResourceMiss(b *testing.B) {
 	impl := buildScatteredResourceIndex(b)
+	kind := index.NewResourceKind("res_99999")
 	var buf []*index.BindingHandle
 	b.ReportAllocs()
 	for b.Loop() {
-		buf = impl.Query("default", "res_99999", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
+		buf = impl.Query("default", kind, "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
 	}
 	if len(buf) != 0 {
 		b.Fatal("expected no matches for absent resource")
@@ -109,12 +111,13 @@ func BenchmarkQueryByResourceMiss(b *testing.B) {
 // value, exercised separately by the -race test).
 func BenchmarkQueryByResourceParallel(b *testing.B) {
 	impl := buildScatteredResourceIndex(b)
-	impl.Query("default", "res_01000", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", nil) // warm
+	kind := index.NewResourceKind("res_01000")
+	impl.Query("default", kind, "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", nil) // warm
 	b.ReportAllocs()
 	b.RunParallel(func(pb *testing.PB) {
 		var buf []*index.BindingHandle
 		for pb.Next() {
-			buf = impl.Query("default", "res_01000", "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
+			buf = impl.Query("default", kind, "", "view", nil, policyv1.Kind_KIND_RESOURCE, "", buf[:0])
 		}
 		_ = buf
 	})

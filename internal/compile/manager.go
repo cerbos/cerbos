@@ -15,7 +15,6 @@ import (
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/config"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/policy"
@@ -27,17 +26,11 @@ type Manager struct {
 	log   *zap.SugaredLogger
 }
 
-func NewManager(_ context.Context, store storage.SourceStore) (*Manager, error) {
-	if err := config.GetSection(&Conf{}); err != nil {
-		return nil, err
-	}
-
-	c := &Manager{
+func NewManager(store storage.SourceStore) *Manager {
+	return &Manager{
 		log:   zap.S().Named("compiler"),
 		store: store,
 	}
-
-	return c, nil
 }
 
 func (c *Manager) compile(unit *policy.CompilationUnit) (*runtimev1.RunnablePolicySet, error) {

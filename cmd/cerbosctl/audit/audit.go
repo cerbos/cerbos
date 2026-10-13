@@ -12,7 +12,6 @@ import (
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
-	"github.com/alecthomas/chroma/v2/lexers"
 	"github.com/alecthomas/chroma/v2/styles"
 	"github.com/alecthomas/kong"
 	"github.com/jwalton/gchalk"
@@ -23,6 +22,7 @@ import (
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	cmdclient "github.com/cerbos/cerbos/cmd/cerbosctl/internal/client"
 	"github.com/cerbos/cerbos/cmd/cerbosctl/internal/flagset"
+	"github.com/cerbos/cerbos/internal/printer"
 )
 
 var newline = []byte("\n")
@@ -161,10 +161,7 @@ type richAuditLogWriter struct {
 }
 
 func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
-	lexer := lexers.Get("json")
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
+	lexer := printer.Lexer("json")
 
 	var formatter chroma.Formatter
 	switch gchalk.GetLevel() {
@@ -178,7 +175,7 @@ func newRichAuditLogWriter(out io.Writer) *richAuditLogWriter {
 
 	return &richAuditLogWriter{
 		out:       bufio.NewWriter(out),
-		lexer:     chroma.Coalesce(lexer),
+		lexer:     lexer,
 		formatter: formatter,
 		rowStyle:  gchalk.WithHex("#eeeeee").WithBgHex("#005fff").Bold,
 		jsonStyle: styles.Get("solarized-dark256"),

@@ -1,0 +1,3 @@
+type:fix
+Fix principal policy precedence in query plan
+Explicit deny rules in principal policies were being ignored by the query planner due to faulty logic. This fix restores the expected behaviour of giving precedence to principal policy rules.

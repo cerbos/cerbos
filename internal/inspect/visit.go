@@ -6,11 +6,11 @@ package inspect
 import (
 	"fmt"
 
+	"cel.dev/cel-go/common/ast"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	"github.com/cerbos/cerbos/internal/compile"
 	"github.com/cerbos/cerbos/internal/ruletable/index"
-	"github.com/google/cel-go/common/ast"
 )
 
 func visitBinding(b *index.BindingHandle, visitor ast.Visitor) error {

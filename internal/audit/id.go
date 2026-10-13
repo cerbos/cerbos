@@ -45,6 +45,15 @@ func NewIDForTS(ts uint64) (ID, error) {
 	return idGen.NewForTS(ts)
 }
 
+// TimeRepr returns the ULID prefix representing the given time.
+func TimeRepr(ts time.Time) []byte {
+	var id ulid.ULID
+	if err := id.SetTime(ulid.Timestamp(ts)); err != nil {
+		panic(err) // The time is too large to be represented
+	}
+	return id[:6] //nolint:mnd
+}
+
 // IDGen is a generator for ULIDs without the monotonicity guarantee.
 // Monotonicity adds overhead that we don't really need because approximate order
 // is good enough for decision logs.

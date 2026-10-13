@@ -26,8 +26,7 @@ import (
 
 func TestManager(t *testing.T) {
 	t.Run("happy_path", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager(t)
-		defer cancel()
+		mgr, mockStore := mkManager(t)
 
 		ec := policy.Wrap(test.GenExportConstants(test.NoMod()))
 		ev := policy.Wrap(test.GenExportVariables(test.NoMod()))
@@ -61,8 +60,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("no_matching_policy", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager(t)
-		defer cancel()
+		mgr, mockStore := mkManager(t)
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 
@@ -83,8 +81,7 @@ func TestManager(t *testing.T) {
 	})
 
 	t.Run("error_from_store", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager(t)
-		defer cancel()
+		mgr, mockStore := mkManager(t)
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 
@@ -109,8 +106,7 @@ func TestManager(t *testing.T) {
 
 func TestGetFirstMatch(t *testing.T) {
 	t.Run("happy_path", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager(t)
-		defer cancel()
+		mgr, mockStore := mkManager(t)
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		rpFoo := policy.Wrap(test.GenScopedResourcePolicy("foo", test.NoMod()))
@@ -146,8 +142,7 @@ func TestGetFirstMatch(t *testing.T) {
 	})
 
 	t.Run("first_scope_missing", func(t *testing.T) {
-		mgr, mockStore, cancel := mkManager(t)
-		defer cancel()
+		mgr, mockStore := mkManager(t)
 
 		rp := policy.Wrap(test.GenResourcePolicy(test.NoMod()))
 		rpFoo := policy.Wrap(test.GenScopedResourcePolicy("foo", test.NoMod()))
@@ -185,17 +180,10 @@ func TestGetFirstMatch(t *testing.T) {
 	})
 }
 
-func mkManager(t *testing.T) (*compile.Manager, *MockStore, context.CancelFunc) {
+func mkManager(t *testing.T) (*compile.Manager, *MockStore) {
 	t.Helper()
-
-	ctx, cancelFunc := context.WithCancel(t.Context())
-
 	mockStore := &MockStore{}
-
-	mgr, err := compile.NewManager(ctx, mockStore)
-	require.NoError(t, err)
-
-	return mgr, mockStore, cancelFunc
+	return compile.NewManager(mockStore), mockStore
 }
 
 func anyCtx(context.Context) bool {

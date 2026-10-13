@@ -10,13 +10,13 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/google/cel-go/cel"
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/common/types/traits"
-	"github.com/google/cel-go/interpreter"
-	"github.com/google/cel-go/interpreter/functions"
+	"cel.dev/cel-go/cel"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/common/types/ref"
+	"cel.dev/cel-go/common/types/traits"
+	"cel.dev/cel-go/interpreter"
+	"cel.dev/cel-go/interpreter/functions"
 
 	"github.com/cerbos/cerbos/internal/conditions/crosspath"
 	customtypes "github.com/cerbos/cerbos/internal/conditions/types"
@@ -261,7 +261,7 @@ func Now() NowFunc {
 //
 // The given nowFunc must return the same timestamp each time it is called.
 //
-// See https://pkg.go.dev/github.com/google/cel-go/cel#Program.ContextEval.
+// See https://pkg.go.dev/cel.dev/cel-go/cel#Program.ContextEval.
 func ContextEval(ctx context.Context, env *cel.Env, ast *celast.AST, vars any, nowFunc NowFunc, opts ...cel.ProgramOption) (ref.Val, *cel.EvalDetails, error) {
 	programOpts := append([]cel.ProgramOption{cel.CustomDecorator(newTimeDecorator(nowFunc))}, opts...)
 	prg, err := env.PlanProgram(ast, programOpts...)

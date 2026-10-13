@@ -47,8 +47,9 @@ const (
 )
 
 var (
-	ErrMultipleYAMLDocs = errors.New("more than one YAML document detected")
-	ErrNotFound         = errors.New("not found")
+	ErrEmptyYAMLDocument = errors.New("empty YAML document")
+	ErrMultipleYAMLDocs  = errors.New("more than one YAML document detected")
+	ErrNotFound          = errors.New("not found")
 )
 
 type PanicError struct {
@@ -132,6 +133,16 @@ func Single[T any, M ProtoMessage[T]](documents []M, contexts []SourceCtx, err e
 	default:
 		return nil, SourceCtx{}, ErrMultipleYAMLDocs
 	}
+}
+
+// MustSingle wraps [Single] to throw an error if no document is found.
+func MustSingle[T any, M ProtoMessage[T]](documents []M, contexts []SourceCtx, err error) (M, SourceCtx, error) {
+	doc, srcCtx, err := Single(documents, contexts, err)
+	if err == nil && doc == nil {
+		return doc, srcCtx, ErrEmptyYAMLDocument
+	}
+
+	return doc, srcCtx, err
 }
 
 func UnmarshalFile[T any, M ProtoMessage[T]](fsys fs.FS, path string, opts ...UnmarshalOpt) ([]M, []SourceCtx, error) {

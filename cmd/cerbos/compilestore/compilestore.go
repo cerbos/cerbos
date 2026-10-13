@@ -147,12 +147,7 @@ func (c *Cmd) compileManager(ctx context.Context) (*compile.Manager, disableFn, 
 		return nil, nil, errors.New("--disable-invalid flag is only supported by mutable stores")
 	}
 
-	cm, err := compile.NewManager(ctx, ss)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create compile manager: %w", err)
-	}
-
-	return cm, fn, nil
+	return compile.NewManager(ss), fn, nil
 }
 
 func (c *Cmd) disableInvalidPolicies(ctx context.Context, p *printer.Printer, colorLevel outputcolor.Level, disable disableFn, policyKeys map[string][]errWithDesc) error {

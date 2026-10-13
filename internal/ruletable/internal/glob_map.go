@@ -5,14 +5,11 @@ package internal
 
 import (
 	"maps"
-	"strings"
 	"sync"
 
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/gobwas/glob"
 )
-
-const wildcardAny = rune('*')
 
 // GlobMap is a map that supports glob pattern matching for keys.
 //
@@ -24,16 +21,16 @@ const wildcardAny = rune('*')
 type GlobMap[T any] struct {
 	literals   map[string]T
 	globs      map[string]T
-	compiled   map[string]glob.Glob // to avoid sync overhead store local refs to globally compiled globs.
-	matchCache map[string][]string  // cache: lookup key -> matching glob patterns
-	cacheMu    sync.RWMutex         // protects matchCache
+	compiled   map[string]*glob.Pattern // to avoid sync overhead store local refs to globally compiled globs.
+	matchCache map[string][]string      // cache: lookup key -> matching glob patterns
+	cacheMu    sync.RWMutex             // protects matchCache
 }
 
 func NewGlobMap[T any](m map[string]T) *GlobMap[T] {
 	gm := &GlobMap[T]{
 		literals:   make(map[string]T),
 		globs:      make(map[string]T),
-		compiled:   make(map[string]glob.Glob),
+		compiled:   make(map[string]*glob.Pattern),
 		matchCache: make(map[string][]string),
 	}
 
@@ -58,7 +55,7 @@ func (gm *GlobMap[T]) Clear() {
 }
 
 func (gm *GlobMap[T]) Set(k string, v T) {
-	if strings.ContainsRune(k, wildcardAny) {
+	if util.IsGlob(k) {
 		if _, exists := gm.globs[k]; !exists {
 			g := util.GetOrCompileGlob(k)
 			if g == nil {

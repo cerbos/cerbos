@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Go
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Set up Cerbos (dev)
         run: |
@@ -33,7 +33,7 @@ jobs:
           docker rm cerbos-extract
 
       - name: Install ghz
-        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: ghz
 
@@ -49,6 +49,6 @@ jobs:
 
       - name: Notify Slack on failure
         if: "!success()"
-        uses: cerbos/actions/notify-slack@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
+        uses: cerbos/actions/notify-slack@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}

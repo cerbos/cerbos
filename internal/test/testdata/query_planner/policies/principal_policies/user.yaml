@@ -1,0 +1,15 @@
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: User
+  version: default
+  rules:
+    - resource: "*"
+      actions:
+        - action: "GET"
+          effect: EFFECT_DENY
+          condition:
+            match:
+              expr: "P.attr.isActive == false"
+
+        - action: "POST"
+          effect: EFFECT_ALLOW

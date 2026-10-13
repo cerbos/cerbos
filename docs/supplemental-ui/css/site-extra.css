@@ -22,6 +22,50 @@
     .navbar-item.has-dropdown:hover .navbar-link,.navbar-end .navbar-link:hover,.navbar-end>a.navbar-item:hover {
         background-color: #e0a100 !important;
     }
+
+    /* Header call-to-action buttons. Below this breakpoint the navbar collapses
+       into the burger menu, where the CTAs render as ordinary stacked links. */
+    .navbar-end>a.navbar-item.cta-primary,.navbar-end>a.navbar-item.cta-secondary {
+        margin: 0.4rem 0.25rem;
+        padding: 0.4rem 0.9rem;
+        border-radius: 0.25rem;
+        border: 1px solid #000000;
+        font-weight: 600;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+
+    .navbar-end>a.navbar-item.cta-primary {
+        background-color: #000000 !important;
+        color: #ffffff !important;
+    }
+
+    .navbar-end>a.navbar-item.cta-primary:hover {
+        background-color: #333333 !important;
+        color: #ffffff !important;
+    }
+
+    .navbar-end>a.navbar-item.cta-secondary {
+        background-color: transparent !important;
+        color: #000000 !important;
+    }
+
+    .navbar-end>a.navbar-item.cta-secondary:hover {
+        background-color: rgba(0,0,0,0.08) !important;
+        color: #000000 !important;
+    }
+}
+
+/* Product headings in the "Cerbos components" dropdown use Bulma's has-label
+   pattern, which puts the product name and its description on one row via
+   justify-content: space-between. The gap keeps the two apart when a
+   description is long, and nowrap keeps it on a single line. */
+.navbar-dropdown>div.navbar-item.has-label {
+    gap: 2rem;
+}
+
+.navbar-dropdown>div.navbar-item.has-label>small {
+    white-space: nowrap;
 }
 
 .footer {

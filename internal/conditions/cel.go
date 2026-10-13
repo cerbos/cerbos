@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/cel-go/cel"
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/decls"
-	"github.com/google/cel-go/ext"
+	"cel.dev/cel-go/cel"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/common/decls"
+	"cel.dev/cel-go/ext"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"

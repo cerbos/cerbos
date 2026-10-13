@@ -1,0 +1,3 @@
+type:breaking
+Remove deprecated configuration settings
+`compile.cacheSize` and `compile.cacheDuration` (deprecated since v0.47.0) and `storage.git.scratchDir` (deprecated since v0.9.0) have been removed.

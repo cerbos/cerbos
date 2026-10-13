@@ -8,11 +8,13 @@ import (
 	"testing/fstest"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/util"
 )
 
@@ -36,6 +38,8 @@ principalGroups:
 	fsys := make(fstest.MapFS)
 	expectedPath := "a/" + util.TestDataDirectory + "/principals.yaml"
 	fsys[expectedPath] = newMapFile(principals)
+	emptyPath := "b/" + util.TestDataDirectory + "/principals.yaml"
+	fsys[emptyPath] = newMapFile("   ")
 
 	tests := []struct {
 		want    *Principals
@@ -62,6 +66,14 @@ principalGroups:
 				},
 			},
 		},
+		{
+			name:    "b/" + util.TestDataDirectory,
+			wantErr: true,
+			want: &Principals{
+				FilePath:  emptyPath,
+				LoadError: parser.ErrEmptyYAMLDocument,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -72,7 +84,7 @@ principalGroups:
 			} else {
 				is.NoError(err)
 			}
-			if diff := cmp.Diff(got, tt.want, protocmp.Transform()); diff != "" {
+			if diff := cmp.Diff(got, tt.want, protocmp.Transform(), cmpopts.EquateErrors()); diff != "" {
 				t.Errorf("loadPrincipals() diff = %s", diff)
 			}
 		})

@@ -4,11 +4,14 @@
 package index
 
 import (
+	"iter"
+	"maps"
 	"unique"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 // FunctionalCore holds the behavioral part of a rule, deduplicated by content hash.
@@ -62,35 +65,54 @@ type Binding struct {
 }
 
 type BindingHandle struct {
-	Core                       *FunctionalCore
-	AllowActions               map[unique.Handle[string]]struct{}
+	Resource                   unique.Handle[string]
+	OriginDerivedRole          unique.Handle[string]
+	Action                     unique.Handle[string]
 	Role                       unique.Handle[string]
 	Scope                      unique.Handle[string]
 	Version                    unique.Handle[string]
-	Resource                   unique.Handle[string]
-	Action                     unique.Handle[string]
 	Principal                  unique.Handle[string]
-	OriginFqn                  unique.Handle[string]
-	OriginDerivedRole          unique.Handle[string]
 	Name                       unique.Handle[string]
+	AllowActions               map[string]struct{} // keys are canonical (interned) strings
+	OriginFqn                  unique.Handle[string]
+	Core                       *FunctionalCore
+	AllowActionGlobs           []string
 	ID                         uint32
 	NoMatchForScopePermissions bool
+}
+
+// setAllowActions sets AllowActions prefiltering globs.
+func (b *BindingHandle) setAllowActions(actions iter.Seq[string], n int) {
+	b.AllowActions = make(map[string]struct{}, n)
+	b.AllowActionGlobs = nil
+	for a := range actions {
+		a = HandleStr(mkStringHandle(a)) // share the bytes with other copies of the action
+		b.AllowActions[a] = struct{}{}
+		if util.IsGlob(a) {
+			b.AllowActionGlobs = append(b.AllowActionGlobs, a)
+		}
+	}
+}
+
+func (b *BindingHandle) allowsAction(action string) bool {
+	if _, ok := b.AllowActions[action]; ok {
+		return true
+	}
+	for _, g := range b.AllowActionGlobs {
+		if util.MatchesGlob(g, action) {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *BindingHandle) toBinding(evalKey EvaluationKeyTuple) *Binding {
 	if b == nil {
 		return nil
 	}
-	var allow map[string]struct{}
-	if b.AllowActions != nil {
-		allow = make(map[string]struct{}, len(b.AllowActions))
-		for a := range b.AllowActions {
-			allow[a.Value()] = struct{}{}
-		}
-	}
 	return &Binding{
 		Core:                       b.Core,
-		AllowActions:               allow,
+		AllowActions:               maps.Clone(b.AllowActions),
 		Role:                       HandleStr(b.Role),
 		Scope:                      HandleStr(b.Scope),
 		Version:                    HandleStr(b.Version),

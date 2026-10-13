@@ -10,8 +10,8 @@ import (
 	"sort"
 	"strings"
 
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/operators"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/common/operators"
 	"github.com/tidwall/pretty"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"

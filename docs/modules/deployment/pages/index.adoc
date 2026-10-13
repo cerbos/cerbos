@@ -39,7 +39,7 @@ image:daemonset_deployment.png[DaemonSet model,role="center-img"]
 
 [TIP]
 ====
-For a review of production deployment patterns, scaling characteristics, or operational practices, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text[speak to us]. https://docs.cerbos.dev/cerbos-hub/[Cerbos Hub] provides managed policy distribution, audit log aggregation, and PDP monitoring.
+For a review of production deployment patterns, scaling characteristics, or operational practices, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=deployment[speak to us]. https://docs.cerbos.dev/cerbos-hub/[Cerbos Hub] provides managed policy distribution, audit log aggregation, and PDP monitoring.
 ====
 
 [#choosing]

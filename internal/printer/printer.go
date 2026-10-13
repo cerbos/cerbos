@@ -44,10 +44,7 @@ func (p *Printer) Printf(format string, args ...any) {
 }
 
 func (p *Printer) coloredJSON(data string, colorLevel outputcolor.Level) error {
-	lexer := chroma.Coalesce(lexers.Get("json"))
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
+	lexer := Lexer("json")
 
 	var formatter chroma.Formatter
 	switch colorLevel {
@@ -91,10 +88,7 @@ func (p *Printer) PrintJSON(val any, colorLevel outputcolor.Level) error {
 }
 
 func (p *Printer) coloredYAML(data string, colorLevel outputcolor.Level) ([]byte, error) {
-	lexer := chroma.Coalesce(lexers.Get("yaml"))
-	if lexer == nil {
-		lexer = lexers.Fallback
-	}
+	lexer := Lexer("yaml")
 
 	var formatter chroma.Formatter
 	switch colorLevel {
@@ -305,4 +299,12 @@ func (p *Printer) printTraceEvent(event *enginev1.Trace_Event) {
 
 		p.Println(colored.ErrorMsg(event.Error))
 	}
+}
+
+func Lexer(name string) chroma.Lexer {
+	lexer := lexers.Get(name)
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	return chroma.Coalesce(lexer)
 }

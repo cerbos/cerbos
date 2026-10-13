@@ -157,7 +157,7 @@ func TestAuditLogFilter(t *testing.T) {
 							PlanResources: &auditv1.DecisionLogEntry_PlanResources{
 								Input: &enginev1.PlanResourcesInput{
 									RequestId: "1",
-									Action:    "a1",
+									Action:    "a1", //nolint:staticcheck
 									Principal: &enginev1.Principal{
 										Id:    "test",
 										Roles: []string{"a", "b"},
@@ -186,7 +186,7 @@ func TestAuditLogFilter(t *testing.T) {
 								},
 								Output: &enginev1.PlanResourcesOutput{
 									RequestId: "1",
-									Action:    "a1",
+									Action:    "a1", //nolint:staticcheck
 									Kind:      "test:kind",
 									Filter: &enginev1.PlanResourcesFilter{
 										Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED,
@@ -425,11 +425,11 @@ func TestAuditLogFilter(t *testing.T) {
 							"test_attr": structpb.NewStringValue("test_value"),
 						},
 					},
-					Action: "action1",
+					Action: "action1", //nolint:staticcheck
 				},
 				Output: &enginev1.PlanResourcesOutput{
 					RequestId:   "plan-1",
-					Action:      "action1",
+					Action:      "action1", //nolint:staticcheck
 					Kind:        "test:kind",
 					FilterDebug: "debug info",
 				},

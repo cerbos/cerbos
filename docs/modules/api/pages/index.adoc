@@ -47,6 +47,7 @@ NOTE: Demos are constantly being added or updated by the Cerbos team. Visit http
 
 * link:http://go.cerbos.io/slack[Join the Cerbos community on Slack]
 * mailto:help@cerbos.dev[Email us at help@cerbos.dev]
+* link:https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=api_index[Talk to an engineer about API integration or query plans]
 
 ****
 

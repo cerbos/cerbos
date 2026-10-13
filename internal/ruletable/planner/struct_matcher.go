@@ -10,16 +10,16 @@ import (
 	"maps"
 	"sort"
 
-	"github.com/google/cel-go/cel"
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/decls"
-	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/parser"
+	"cel.dev/cel-go/cel"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/common/decls"
+	"cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/common/types/ref"
+	"cel.dev/cel-go/parser"
 
+	"cel.dev/cel-go/common/operators"
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/ruletable/planner/internal"
-	"github.com/google/cel-go/common/operators"
 )
 
 type exprMatcherFunc func(e celast.Expr) (bool, []celast.Expr)

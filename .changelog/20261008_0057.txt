@@ -1,0 +1,2 @@
+type:breaking
+Role policy `allowActions` treat only `*` as a wildcard, consistent with other policy fields. This is only marked as a breaking change as a precaution. We don't expect this change to affect any users.   

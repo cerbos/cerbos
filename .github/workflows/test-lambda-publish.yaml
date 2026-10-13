@@ -34,15 +34,15 @@ jobs:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: |-
             goreleaser
@@ -84,7 +84,7 @@ jobs:
           path: dist/
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
           aws-region: ${{ vars.AWS_REGION }}
@@ -95,7 +95,7 @@ jobs:
           use-installer: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@5d22d281c9b3bf9a0c8f6cf19090d182cd24d2a2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: just
 

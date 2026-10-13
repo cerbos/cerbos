@@ -577,7 +577,9 @@ func (s *Store) Reload(ctx context.Context) error {
 	oldDirName := s.currDirName
 	s.currDirName = dirName
 	s.idx = idx
-	s.subs.NotifySubscribers(storage.NewReloadEvent())
+	if err := s.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent()); err != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", err)
+	}
 
 	if err := s.cloner.Clean(); err != nil {
 		s.log.Warnw("Failed to clean up the cache", "error", err)

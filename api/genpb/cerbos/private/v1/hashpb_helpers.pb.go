@@ -5673,10 +5673,29 @@ func cerbos_runtime_v1_IndexBuildErrors_MissingScope_hashpb_sum(m *v16.IndexBuil
 	}
 }
 
+func cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_Policy_hashpb_sum(m *v16.IndexBuildErrors_ScopePermissionsConflicts_Policy, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.Policy.policy"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetPolicy()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetPolicy()), len(m.GetPolicy())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.Policy.scope_permissions"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetScopePermissions())))
+	}
+}
+
 func cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_hashpb_sum(m *v16.IndexBuildErrors_ScopePermissionsConflicts, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetScope()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetScope()), len(m.GetScope())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.policies"]; !ok {
+		if len(m.Policies) > 0 {
+			for _, v := range m.Policies {
+				if v != nil {
+					cerbos_runtime_v1_IndexBuildErrors_ScopePermissionsConflicts_Policy_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
 	}
 }
 

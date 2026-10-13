@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
+	"cel.dev/cel-go/cel"
 	"github.com/fatih/color"
-	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"

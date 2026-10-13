@@ -88,8 +88,7 @@ func TestInspect(t *testing.T) {
 				require.NoError(t, err)
 
 				store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-				compiler, err := compile.NewManager(ctx, store)
-				require.NoError(t, err)
+				compiler := compile.NewManager(store)
 
 				protoRT := ruletable.NewProtoRuletable()
 				err = ruletable.LoadPolicies(t.Context(), protoRT, compiler)

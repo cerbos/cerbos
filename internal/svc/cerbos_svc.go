@@ -81,10 +81,16 @@ func (cs *CerbosService) PlanResources(ctx context.Context, request *requestv1.P
 	output, err := cs.eng.Plan(logging.ToContext(ctx, log), input)
 	if err != nil {
 		log.Error("Resources query plan request failed", zap.Error(err))
-		if errors.Is(err, compile.PolicyCompilationErr{}) {
-			return nil, status.Errorf(codes.FailedPrecondition, "Resources query plan failed due to invalid policy")
+		switch {
+		case errors.Is(err, compile.PolicyCompilationErr{}):
+			return nil, status.Errorf(codes.FailedPrecondition, "Plan failed due to invalid policy")
+		case errors.Is(err, context.Canceled):
+			return nil, status.Errorf(codes.Canceled, "Request canceled")
+		case errors.Is(err, context.DeadlineExceeded):
+			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout")
+		default:
+			return nil, status.Errorf(codes.Internal, "Plan failed")
 		}
-		return nil, status.Errorf(codes.Internal, "Resources query plan request failed")
 	}
 
 	response := &responsev1.PlanResourcesResponse{
@@ -286,10 +292,16 @@ func (cs *CerbosService) CheckResources(ctx context.Context, req *requestv1.Chec
 	outputs, err := cs.eng.Check(logging.ToContext(ctx, log), inputs)
 	if err != nil {
 		log.Error("Policy check failed", zap.Error(err))
-		if errors.Is(err, compile.PolicyCompilationErr{}) {
+		switch {
+		case errors.Is(err, compile.PolicyCompilationErr{}):
 			return nil, status.Errorf(codes.FailedPrecondition, "Check failed due to invalid policy")
+		case errors.Is(err, context.Canceled):
+			return nil, status.Errorf(codes.Canceled, "Request canceled")
+		case errors.Is(err, context.DeadlineExceeded):
+			return nil, status.Errorf(codes.DeadlineExceeded, "Request timeout")
+		default:
+			return nil, status.Errorf(codes.Internal, "Policy check failed")
 		}
-		return nil, status.Errorf(codes.Internal, "Policy check failed")
 	}
 
 	return tracing.RecordSpan2(ctx, "assemble_response", func(_ context.Context, _ trace.Span) (*responsev1.CheckResourcesResponse, error) {

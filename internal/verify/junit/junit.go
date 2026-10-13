@@ -77,13 +77,11 @@ func Build(results *policyv1.TestResults, verbose bool) (*TestSuites, error) {
 	}
 
 	return &TestSuites{
-		Tests: int(results.Summary.TestsCount),
-		Summary: Summary{
-			Errors:   errorCount,
-			Failures: failureCount,
-			Skipped:  skippedCount,
-		},
-		Suites: suites,
+		Tests:    int(results.Summary.TestsCount),
+		Errors:   errorCount,
+		Failures: failureCount,
+		Skipped:  skippedCount,
+		Suites:   suites,
 	}, nil
 }
 
@@ -121,12 +119,10 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 					case policyv1.TestResults_RESULT_FAILED:
 						if f := a.Details.GetFailure(); f != nil {
 							testCase.Failure = &failure{
-								Type:    a.Details.Result.String(),
-								Message: "Effect expectation unsatisfied",
-								resultFailed: resultFailed{
-									Actual:   f.Actual.String(),
-									Expected: f.Expected.String(),
-								},
+								Type:     a.Details.Result.String(),
+								Message:  "Effect expectation unsatisfied",
+								Actual:   f.Actual.String(),
+								Expected: f.Expected.String(),
 							}
 
 							if len(f.Outputs) > 0 {
@@ -166,11 +162,9 @@ func processTestCases(s *policyv1.TestResults_Suite) ([]testCase, Summary, error
 					case policyv1.TestResults_RESULT_PASSED:
 						if s := a.Details.GetSuccess(); s != nil {
 							testCase.Success = &success{
-								Type: a.Details.Result.String(),
-								resultSuccess: resultSuccess{
-									Actual:   s.Effect.String(),
-									Expected: s.Effect.String(),
-								},
+								Type:     a.Details.Result.String(),
+								Actual:   s.Effect.String(),
+								Expected: s.Effect.String(),
 							}
 
 							if len(s.Outputs) > 0 {

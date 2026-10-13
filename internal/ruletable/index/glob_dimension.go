@@ -4,8 +4,6 @@
 package index
 
 import (
-	"strings"
-
 	"github.com/cerbos/cerbos/internal/util"
 	"github.com/gobwas/glob"
 )
@@ -17,19 +15,19 @@ type globDimension struct {
 	literals lazyDimension
 	// `globs` and `compiled` share the same key
 	globs    lazyDimension
-	compiled map[string]glob.Glob
+	compiled map[string]*glob.Pattern
 }
 
 func newGlobDimension() *globDimension {
 	return &globDimension{
 		literals: newLazyDimension(),
 		globs:    newLazyDimension(),
-		compiled: make(map[string]glob.Glob),
+		compiled: make(map[string]*glob.Pattern),
 	}
 }
 
 func (gd *globDimension) Set(key string, id uint32) {
-	if strings.ContainsRune(key, '*') {
+	if util.IsGlob(key) {
 		if _, ok := gd.compiled[key]; !ok {
 			g := util.GetOrCompileGlob(key)
 			if g == nil {
@@ -44,7 +42,7 @@ func (gd *globDimension) Set(key string, id uint32) {
 }
 
 func (gd *globDimension) Remove(key string, id uint32) {
-	if strings.ContainsRune(key, '*') {
+	if util.IsGlob(key) {
 		gd.globs.Remove(key, id)
 		// globs.Remove drops the key when it empties; keep compiled in step.
 		if !gd.globs.has(key) {

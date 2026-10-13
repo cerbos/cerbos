@@ -252,8 +252,6 @@ homebrew_casks:
         enabled: true
         base:
           branch: main
-    url:
-      verified: github.com/cerbos/homebrew-tap
     hooks:
       post:
         install: |

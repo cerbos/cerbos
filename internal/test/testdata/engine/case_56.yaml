@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Role policy special resource kind chars
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      # Allowed by the literal role policy rule
+      - udm:object:read
+      # Allowed by the glob role policy rule
+      - udm:object:update
+      # Allowed by the resource policy but not by the role policy
+      - udm:object:delete
+    principal:
+      id: domain-admin
+      roles:
+        - domain-administrator
+    resource:
+      kind: "udm:module:users/simple_regular-user"
+      id: uid=test01
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: uid=test01
+    actions:
+      udm:object:read:
+        effect: EFFECT_ALLOW
+        policy: resource.udm_module_users_simple_regular_user.vdefault
+      udm:object:update:
+        effect: EFFECT_ALLOW
+        policy: resource.udm_module_users_simple_regular_user.vdefault
+      udm:object:delete:
+        effect: EFFECT_DENY
+        policy: role.domain_administrator.vdefault
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.udm_module_users_simple_regular_user.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_22.yaml
+        role.domain_administrator.vdefault:
+          attributes:
+            driver: disk
+            source: role_policies/policy_09.yaml
+    policySource:
+      disk: {}

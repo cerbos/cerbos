@@ -6,6 +6,7 @@
 package index_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -251,4 +252,28 @@ func TestIndexIter(t *testing.T) {
 	}
 
 	require.Greater(t, count, 5)
+}
+
+func TestIndexIterCancelled(t *testing.T) {
+	idx, err := index.Build(t.Context(), os.DirFS(test.PathToDir(t, "store")))
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	count := 0
+	var iterErr error
+	for cu, err := range idx.Iter(ctx) {
+		if err != nil {
+			iterErr = err
+			break
+		}
+		require.NotNil(t, cu)
+		count++
+		if count == 2 {
+			cancel()
+		}
+	}
+
+	require.ErrorIs(t, iterErr, context.Canceled)
 }

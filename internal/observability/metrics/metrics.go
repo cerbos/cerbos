@@ -194,6 +194,13 @@ var (
 			metric.WithDescription("The last time the store was successfully refreshed manually or automatically"),
 		)
 	})
+
+	RuleTableLastSuccessfulRefresh = once(func() (metric.Int64Gauge, error) {
+		return Meter().Int64Gauge(
+			"cerbos_dev_rule_table_last_successful_refresh",
+			metric.WithDescription("The last time the rule table served by the engine was successfully updated in response to a storage event"),
+		)
+	})
 )
 
 func NewHandler() (http.Handler, error) {

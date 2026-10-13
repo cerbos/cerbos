@@ -10,7 +10,7 @@ import (
 	"maps"
 	"sort"
 
-	celast "github.com/google/cel-go/common/ast"
+	celast "cel.dev/cel-go/common/ast"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -82,8 +82,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 	}
 
 	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-
-	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
+	resourceKind := index.NewResourceKind(input.Resource.Kind)
 
 	includingParentRoles := make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
@@ -196,7 +195,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
 					}
-					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(resourceVersion, resourceKind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
@@ -318,9 +317,12 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 					// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
 					// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
 					// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
-					roleAllowNode = planner.MkFalseNode()
-					roleDenyNode = nil
-					roleDenyRolePolicyNode = nil
+					// Principal policies are role-agnostic and only have a single role iteration, so we preserve the deny node.
+					if pt != policyv1.Kind_KIND_PRINCIPAL {
+						roleAllowNode = planner.MkFalseNode()
+						roleDenyNode = nil
+						roleDenyRolePolicyNode = nil
+					}
 				} else if roleAllowNode != nil && roleDenyNode == nil && roleDenyRolePolicyNode == nil {
 					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
 						policyTypeAllowNode = roleAllowNode

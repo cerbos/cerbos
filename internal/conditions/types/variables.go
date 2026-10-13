@@ -6,7 +6,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/google/cel-go/common/types"
+	"cel.dev/cel-go/common/types"
 )
 
 const variablesTypeName = "cerbos.Variables"
@@ -20,7 +20,7 @@ type Variables interface {
 
 type VariablesMap map[string]any
 
-var _ Variables = (VariablesMap)(nil)
+var _ Variables = VariablesMap(nil)
 
 func (m VariablesMap) IsSet(name string) bool {
 	_, ok := m[name]

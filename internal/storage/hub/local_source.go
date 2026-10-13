@@ -95,14 +95,14 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 		subs:   storage.NewSubscriptionManager(ctx),
 	}
 
-	if err := ls.loadBundle(); err != nil {
+	if err := ls.loadBundle(ctx); err != nil {
 		return nil, err
 	}
 
 	return ls, nil
 }
 
-func (ls *LocalSource) loadBundle() error {
+func (ls *LocalSource) loadBundle(ctx context.Context) error {
 	workDir, err := os.MkdirTemp(ls.params.TempDir, "cerbos-bundle-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
@@ -158,12 +158,16 @@ func (ls *LocalSource) loadBundle() error {
 	ls.bundle = b
 	ls.mu.Unlock()
 
-	ls.subs.NotifySubscribers(storage.NewReloadEvent())
+	waitErr := ls.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent())
 
 	if prevCleanupFn != nil {
 		if err := prevCleanupFn(); err != nil {
 			zap.L().Warn("Failed to cleanup previous bundle", zap.Error(err))
 		}
+	}
+
+	if waitErr != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", waitErr)
 	}
 
 	return nil
@@ -246,8 +250,8 @@ func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.Module
 	return pss, err
 }
 
-func (ls *LocalSource) Reload(_ context.Context) error {
-	return ls.loadBundle()
+func (ls *LocalSource) Reload(ctx context.Context) error {
+	return ls.loadBundle(ctx)
 }
 
 func (ls *LocalSource) RepoStats(ctx context.Context) storage.RepoStats {

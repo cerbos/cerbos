@@ -219,7 +219,7 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 		bdlPath, bdlType, encryptionKey, err = s.client.BootstrapBundle(ctx)
 		if err == nil {
 			s.log.Debug("Using bootstrap bundle")
-			return s.swapBundle(bdlPath, encryptionKey, bdlType)
+			return s.swapBundle(ctx, bdlPath, encryptionKey, bdlType)
 		}
 
 		if errors.Is(err, bundleapi.ErrBootstrappingNotSupported) {
@@ -238,7 +238,7 @@ func (s *RemoteSource) fetchBundle(ctx context.Context) error {
 	}
 
 	s.log.Debug("Using bundle fetched from the API")
-	return s.swapBundle(bdlPath, encryptionKey, bdlType)
+	return s.swapBundle(ctx, bdlPath, encryptionKey, bdlType)
 }
 
 func (s *RemoteSource) removeBundle(healthy bool) {
@@ -254,7 +254,7 @@ func (s *RemoteSource) removeBundle(healthy bool) {
 	}
 }
 
-func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundleType bundlev2.BundleType) error {
+func (s *RemoteSource) swapBundle(ctx context.Context, bundlePath string, encryptionKey []byte, bundleType bundlev2.BundleType) error {
 	s.log.Debug("Swapping bundle", zap.String("path", bundlePath), zap.String("bundle-type", bundleType.String()))
 	opts := OpenOpts{
 		Source:        "remote",
@@ -287,12 +287,16 @@ func (s *RemoteSource) swapBundle(bundlePath string, encryptionKey []byte, bundl
 	s.healthy = true
 	s.mu.Unlock()
 
-	s.subs.NotifySubscribers(storage.NewReloadEvent())
+	waitErr := s.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent())
 
 	if oldBundle != nil {
 		if err := oldBundle.Release(); err != nil {
 			s.log.Warn("Failed to release old bundle", zap.Error(err))
 		}
+	}
+
+	if waitErr != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", waitErr)
 	}
 
 	metrics.Inc(context.Background(), metrics.BundleStoreUpdatesCount())
@@ -445,7 +449,7 @@ func (s *RemoteSource) startWatch(ctx context.Context) (time.Duration, error) {
 				}
 			case bundleapi.ServerEventNewBundle:
 				incEventMetric("bundle_update")
-				if err := s.swapBundle(evt.NewBundlePath, evt.EncryptionKey, evt.BundleType); err != nil {
+				if err := s.swapBundle(ctx, evt.NewBundlePath, evt.EncryptionKey, evt.BundleType); err != nil {
 					s.log.Warn("Failed to swap bundle", zap.Error(err))
 				} else {
 					if err := watchHandle.ActiveBundleChanged(s.activeBundleID()); err != nil {
