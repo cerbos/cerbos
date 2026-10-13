@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../.jsonschema/CelTestCase.schema.json
+---
+condition:
+  all:
+    of:
+      - expr: |-
+          sets.contains(P.attr.teams, ["design"])
+      - expr: |-
+          sets.equivalent(P.attr.teams, ["commercial", "product", "communications", "design"])
+      - expr: |-
+          sets.intersects(P.attr.teams, ["communications", "engineering"])
+request:
+  {
+    "principal":
+      {
+        "id": "john",
+        "roles": ["employee"],
+        "attr":
+          {
+            "department": "marketing",
+            "teams": ["design", "communications", "product", "commercial"],
+            "1-2-3": [1, 2, 3],
+            "clients":
+              { "acme": { "active": true }, "bb inc": { "active": true } },
+          },
+      },
+    "resource":
+      { "kind": "leave_request", "id": "test", "attr": { "owner": "john" } },
+  }
+want: true

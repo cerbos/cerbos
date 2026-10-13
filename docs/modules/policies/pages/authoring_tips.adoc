@@ -207,3 +207,8 @@ After the extension is installed, hit kbd:[Ctrl+,] or menu:File[Preferences > Se
 ----
 
 NOTE: In the example above, the schema is applied to all files in the cerbos directory.
+
+[TIP]
+====
+For a review of policy design against a specific use case, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=authoring_tips[book a policy review session with Cerbos].
+====

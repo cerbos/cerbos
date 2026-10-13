@@ -1,0 +1,43 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.56.0]
+= Cerbos v0.56.0 (2026-09-30)
+
+== Changelog
+
+=== Breaking changes
+
+[unordered]
+Remove deprecated configuration settings:: `compile.cacheSize` and `compile.cacheDuration` (deprecated since v0.47.0) and `storage.git.scratchDir` (deprecated since v0.9.0) have been removed.
+
+=== Features
+
+[unordered]
+Support specifying a target for Hub audit log ingest:: Currently, client credentials are associated with a specific deployment in a Cerbos Hub workspace.
+Audit logs are implicitly sent to that workspace.
+In future, it will be possible to send audit logs to a different workspace to the one that holds the policies.
+For forwards compatibility, the target workspace can now be explicitly specified with the `audit.hub.workspaceID` setting.
+For now, this remains optional and if specified must be the ID of the workspace that owns the deployment.
+The setting will become required in a future version.
+
+
+=== Enhancements
+
+[unordered]
+Metric to track last error-free refresh from policy source:: New `cerbos_dev_rule_table_last_successful_refresh` metric added to track when the rule table served by the engine was successfully refreshed from the policy source without any errors.
+
+Optimize Hub audit log backlog sync:: Reduce the memory used when the PDP has fallen behind in syncing audit logs to Cerbos Hub.
+
+
+=== Bug fixes
+
+[unordered]
+Admin API store reload with `wait=true` now actually waits for the policies to compile and reports any failures.:: Previously the reload request returned before policies were recompiled, so a reload that pulled in policies that fail to compile reported success while the PDP kept serving the previous rule table. The request now returns after the rule table rebuild completes and fails with a distinct error if the rebuild failed. Concurrent reload requests are merged, and each request is served by a reload that started after it was received.
+
+Detect invalid `scopePermissions`:: Rejects policies whose `scopePermissions` setting conflicts with other policies in the same scope. This was documented but the enforcement of it was buggy.
+
+Fix matching for resource kinds with special characters in the name:: Role policies were not correctly matching resources whose names contained certain special characters.
+
+Fix principal policy precedence in query plan:: Explicit deny rules in principal policies were being ignored by the query planner due to faulty logic. This fix restores the expected behaviour of giving precedence to principal policy rules.
+
+

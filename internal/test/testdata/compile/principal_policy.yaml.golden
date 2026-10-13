@@ -27,20 +27,20 @@
                     "checked": {
                       "referenceMap": {
                         "1": {
-                          "name": "request"
-                        },
-                        "5": {
                           "overloadId": [
                             "equals"
                           ]
+                        },
+                        "5": {
+                          "name": "request"
                         }
                       },
                       "typeMap": {
                         "1": {
-                          "messageType": "cerbos.engine.v1.Request"
+                          "primitive": "BOOL"
                         },
                         "2": {
-                          "messageType": "cerbos.engine.v1.Request.Resource"
+                          "dyn": {}
                         },
                         "3": {
                           "mapType": {
@@ -53,10 +53,10 @@
                           }
                         },
                         "4": {
-                          "dyn": {}
+                          "messageType": "cerbos.engine.v1.Request.Resource"
                         },
                         "5": {
-                          "primitive": "BOOL"
+                          "messageType": "cerbos.engine.v1.Request"
                         },
                         "6": {
                           "primitive": "BOOL"
@@ -68,30 +68,30 @@
                           41
                         ],
                         "positions": {
-                          "1": 0,
-                          "2": 7,
+                          "1": 33,
+                          "2": 21,
                           "3": 16,
-                          "4": 21,
-                          "5": 33,
+                          "4": 7,
+                          "5": 0,
                           "6": 36
                         }
                       },
                       "expr": {
-                        "id": "5",
+                        "id": "1",
                         "callExpr": {
                           "function": "_==_",
                           "args": [
                             {
-                              "id": "4",
+                              "id": "2",
                               "selectExpr": {
                                 "operand": {
                                   "id": "3",
                                   "selectExpr": {
                                     "operand": {
-                                      "id": "2",
+                                      "id": "4",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "1",
+                                          "id": "5",
                                           "identExpr": {
                                             "name": "request"
                                           }
@@ -124,18 +124,18 @@
                       "original": "\"donald_duck_dev_record_override:%s\".format([request.resource.attr.dev_record == true])",
                       "checked": {
                         "referenceMap": {
-                          "2": {
+                          "1": {
                             "overloadId": [
                               "string_format"
                             ]
                           },
                           "4": {
-                            "name": "request"
-                          },
-                          "8": {
                             "overloadId": [
                               "equals"
                             ]
+                          },
+                          "8": {
+                            "name": "request"
                           }
                         },
                         "typeMap": {
@@ -153,10 +153,10 @@
                             }
                           },
                           "4": {
-                            "messageType": "cerbos.engine.v1.Request"
+                            "primitive": "BOOL"
                           },
                           "5": {
-                            "messageType": "cerbos.engine.v1.Request.Resource"
+                            "dyn": {}
                           },
                           "6": {
                             "mapType": {
@@ -169,10 +169,10 @@
                             }
                           },
                           "7": {
-                            "dyn": {}
+                            "messageType": "cerbos.engine.v1.Request.Resource"
                           },
                           "8": {
-                            "primitive": "BOOL"
+                            "messageType": "cerbos.engine.v1.Request"
                           },
                           "9": {
                             "primitive": "BOOL"
@@ -184,22 +184,22 @@
                             88
                           ],
                           "positions": {
-                            "1": 0,
-                            "2": 43,
+                            "1": 43,
+                            "2": 0,
                             "3": 44,
-                            "4": 45,
-                            "5": 52,
+                            "4": 78,
+                            "5": 66,
                             "6": 61,
-                            "7": 66,
-                            "8": 78,
+                            "7": 52,
+                            "8": 45,
                             "9": 81
                           }
                         },
                         "expr": {
-                          "id": "2",
+                          "id": "1",
                           "callExpr": {
                             "target": {
-                              "id": "1",
+                              "id": "2",
                               "constExpr": {
                                 "stringValue": "donald_duck_dev_record_override:%s"
                               }
@@ -211,21 +211,21 @@
                                 "listExpr": {
                                   "elements": [
                                     {
-                                      "id": "8",
+                                      "id": "4",
                                       "callExpr": {
                                         "function": "_==_",
                                         "args": [
                                           {
-                                            "id": "7",
+                                            "id": "5",
                                             "selectExpr": {
                                               "operand": {
                                                 "id": "6",
                                                 "selectExpr": {
                                                   "operand": {
-                                                    "id": "5",
+                                                    "id": "7",
                                                     "selectExpr": {
                                                       "operand": {
-                                                        "id": "4",
+                                                        "id": "8",
                                                         "identExpr": {
                                                           "name": "request"
                                                         }

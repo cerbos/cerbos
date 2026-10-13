@@ -367,6 +367,28 @@
           "additionalProperties": {
             "$ref": "#/definitions/google.protobuf.Value"
           }
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.engine.v1.AuxData.JWT"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.AuxData.JWT": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
         }
       }
     },
@@ -416,6 +438,12 @@
             "type": "string"
           }
         },
+        "evaluationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.EvaluationError"
+          }
+        },
         "outputs": {
           "type": "array",
           "items": {
@@ -447,6 +475,27 @@
           "type": "string"
         },
         "scope": {
+          "type": "string"
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "celError": {
+          "$ref": "#/definitions/cerbos.engine.v1.EvaluationError.CELError"
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError.CELError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
           "type": "string"
         }
       }
@@ -588,6 +637,12 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "evaluationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.EvaluationError"
           }
         },
         "filter": {

@@ -1,6 +1,6 @@
 include::ROOT:partial$attributes.adoc[]
 
-= The Cerbos Admin API
+= The Cerbos PDP Admin API
 
 include::ROOT:partial$version-check.adoc[]
 

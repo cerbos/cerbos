@@ -3,6 +3,10 @@ Contributing to Cerbos
 
 Thank you for your interest in Cerbos. We welcome contributions from the community. Please note that we have a [code of conduct](CODE_OF_CONDUCT.md) that must be followed when interacting with this project. In addition, please read the guidelines below to ensure that your contributions have a better chance of being accepted.
 
+> [!IMPORTANT]
+>
+> Due to the rise in AI-driven profile padding attempts, we no longer accept or engage with pull requests or issues that do not strictly follow these guidelines.
+
 - [Submitting pull requests](#submitting-pull-requests)
   - [AI assistance policy](#ai-assistance-policy)
   - [Code changes](#submitting-pull-requests-for-code-changes)

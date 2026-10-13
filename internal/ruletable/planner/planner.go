@@ -11,13 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/cel-go/cel"
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/decls"
-	"github.com/google/cel-go/common/operators"
-	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/interpreter"
+	"cel.dev/cel-go/cel"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/common/decls"
+	"cel.dev/cel-go/common/operators"
+	celtypes "cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/common/types/ref"
+	"cel.dev/cel-go/interpreter"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -27,6 +27,7 @@ import (
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/conditions"
+	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	plannerutils "github.com/cerbos/cerbos/internal/ruletable/planner/internal"
 	"github.com/cerbos/cerbos/internal/util"
@@ -304,8 +305,10 @@ func InvertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 }
 
 type EvalContext struct {
-	TimeFn    func() time.Time
-	ExprCache *ExprCache
+	TimeFn           func() time.Time
+	ExprCache        *ExprCache
+	CELErrors        *evaluator.CELErrors
+	StrictEvaluation bool
 }
 
 func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *runtimev1.Condition, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*enginev1.PlanResourcesAst_Node, error) {
@@ -400,7 +403,7 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 		if err != nil {
 			return nil, fmt.Errorf("celast.ProtoToExpr: %w", err)
 		}
-		residual, err := evalCtx.evaluateConditionExpression(ctx, ex, request, globals, constants, variables, derivedRolesList)
+		residual, err := evalCtx.evaluateConditionExpression(ctx, ex, t.Expr.Original, request, globals, constants, variables, derivedRolesList)
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating condition %q: %w", t.Expr.Original, err)
 		}
@@ -411,7 +414,7 @@ func (evalCtx *EvalContext) EvaluateCondition(ctx context.Context, condition *ru
 	return res, nil
 }
 
-func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, expr celast.Expr, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
+func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, expr celast.Expr, original string, request *enginev1.Request, globals, constants map[string]any, variables map[string]celast.Expr, derivedRolesList func() (*exprpb.Expr, error)) (*exprpb.CheckedExpr, error) {
 	p, err := evalCtx.newEvaluator(request, globals, constants)
 	if err != nil {
 		return nil, err
@@ -442,14 +445,22 @@ func (evalCtx *EvalContext) evaluateConditionExpression(ctx context.Context, exp
 
 	val, residual, err := p.evalPartially(ctx, e)
 	if err != nil {
-		// ignore expressions that are invalid
-		if types.IsError(val) {
+		// CEL runtime errors (e.g. missing keys) collapse the expression to false.
+		if celtypes.IsError(val) {
+			evalCtx.CELErrors.Add(ctx, original, err)
+			if evalCtx.StrictEvaluation {
+				return nil, evaluator.StrictEvaluationError{Expression: original, Err: err}
+			}
 			return conditions.FalseExpr, nil
 		}
 
 		return nil, err
 	}
-	if types.IsUnknown(val) {
+	if celtypes.IsUnknown(val) {
+		if err := checkNoOptionals(residual); err != nil {
+			return nil, fmt.Errorf("%w in condition %q", err, original)
+		}
+
 		return p.evaluateUnknown(ctx, residual)
 	}
 
@@ -536,30 +547,30 @@ func (evalCtx *EvalContext) newEvaluator(request *enginev1.Request, globals, con
 	const nNameVariants = 2 // qualified, unqualified name
 	ds := make([]*decls.VariableDecl, 0, nNameVariants*(len(request.Resource.GetAttr())+1))
 	if len(request.Resource.GetAttr()) > 0 {
-		reg, err := types.NewRegistry()
+		reg, err := celtypes.NewRegistry()
 		if err != nil {
 			return nil, err
 		}
 		structVal := structpb.Struct{Fields: request.Resource.GetAttr()}
-		m := types.NewJSONStruct(reg, &structVal)
+		m := celtypes.NewJSONStruct(reg, &structVal)
 		for name := range request.Resource.Attr {
-			value := m.Get(types.String(name))
+			value := m.Get(celtypes.String(name))
 			for _, s := range conditions.ResourceAttributeNames(name) {
-				ds = append(ds, decls.NewVariable(s, types.DynType))
+				ds = append(ds, decls.NewVariable(s, celtypes.DynType))
 				knownVars[s] = value
 			}
 		}
 	}
 	for _, s := range conditions.ResourceFieldNames(conditions.CELResourceKindField) {
-		ds = append(ds, decls.NewVariable(s, types.StringType))
+		ds = append(ds, decls.NewVariable(s, celtypes.StringType))
 		knownVars[s] = request.Resource.GetKind()
 	}
 	for _, s := range conditions.ResourceFieldNames(conditions.CELScopeField) {
-		ds = append(ds, decls.NewVariable(s, types.StringType))
+		ds = append(ds, decls.NewVariable(s, celtypes.StringType))
 		knownVars[s] = request.Resource.GetScope()
 	}
 	for _, s := range conditions.PrincipalFieldNames(conditions.CELScopeField) {
-		ds = append(ds, decls.NewVariable(s, types.StringType))
+		ds = append(ds, decls.NewVariable(s, celtypes.StringType))
 		knownVars[s] = request.Principal.GetScope()
 	}
 	env, err = env.Extend(cel.VariableDecls(ds...))
@@ -652,7 +663,11 @@ func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpre
 			i++
 		}
 		le := args[i]
-		env1, err := env.Extend(cel.VariableDecls(decls.NewVariable(ce.IterVar(), types.DynType)))
+		varDecls := []*decls.VariableDecl{decls.NewVariable(ce.IterVar(), celtypes.DynType)}
+		if ce.IterVar2() != "" {
+			varDecls = append(varDecls, decls.NewVariable(ce.IterVar2(), celtypes.DynType))
+		}
+		env1, err := env.Extend(cel.VariableDecls(varDecls...))
 		if err != nil {
 			return nil, err
 		}
@@ -660,6 +675,9 @@ func evalComprehensionBodyImpl(ctx context.Context, env *cel.Env, pvars interpre
 		ast := celast.NewAST(le, nil)
 
 		unknowns := append(pvars.UnknownAttributePatterns(), cel.AttributePattern(ce.IterVar()))
+		if ce.IterVar2() != "" {
+			unknowns = append(unknowns, cel.AttributePattern(ce.IterVar2()))
+		}
 		var pvars1 interpreter.PartialActivation
 		pvars1, err = cel.PartialVars(pvars, unknowns...)
 		if err != nil {
@@ -749,7 +767,7 @@ func (c *ExprCache) getOrCompile(e *runtimev1.Expr) (*exprpb.Expr, error) {
 }
 
 func compileToExpr(src string) (*exprpb.Expr, error) {
-	ast, iss := conditions.StdEnv.Compile(src)
+	ast, iss := conditions.Compile(src)
 	if iss != nil && iss.Err() != nil {
 		return nil, fmt.Errorf("failed to compile %q: %w", src, iss.Err())
 	}

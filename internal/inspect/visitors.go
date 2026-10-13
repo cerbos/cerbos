@@ -6,7 +6,7 @@ package inspect
 import (
 	"fmt"
 
-	"github.com/google/cel-go/common/ast"
+	"cel.dev/cel-go/common/ast"
 
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	"github.com/cerbos/cerbos/internal/conditions"

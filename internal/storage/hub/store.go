@@ -21,7 +21,6 @@ import (
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/ruletable"
 	"github.com/cerbos/cerbos/internal/storage"
-	"github.com/cerbos/cerbos/internal/util"
 )
 
 const DriverName = "hub"
@@ -35,16 +34,6 @@ func init() {
 		conf, err := GetConfFromWrapper(confW)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read hub configuration: %w", err)
-		}
-
-		return NewStore(ctx, conf)
-	})
-
-	storage.RegisterDriver("bundle", func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
-		util.DeprecationReplacedWarning(storage.ConfKey+".bundle", confKey)
-		conf := new(Conf)
-		if err := confW.Get(storage.ConfKey+".bundle", conf); err != nil {
-			return nil, fmt.Errorf("failed to read bundle configuration: %w", err)
 		}
 
 		return NewStore(ctx, conf)

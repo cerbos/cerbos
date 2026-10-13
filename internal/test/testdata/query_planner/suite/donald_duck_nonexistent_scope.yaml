@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Donald duck tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: donald_duck
+  policyVersion: default
+  scope: nonexistent_principal
+  roles:
+    - employee
+    - user
+
+tests:
+  - resource:
+      kind: contact
+      policyVersion: default
+    action: update
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.ownerId
+              - value: donald_duck
+      matchedScopes:
+        update: ""
+
+  - resource:
+      kind: contact
+      policyVersion: default
+    action: handle_null
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.missing
+                    - value: null
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.present
+                    - value: null
+      matchedScopes:
+        handle_null: ""
+
+  - resource:
+      kind: salary_record
+      policyVersion: default
+    action: view-salary-record
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        view-salary-record: ""
+
+  - resource:
+      kind: non-existent-resource
+      policyVersion: default
+    action: non-existent-action
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        non-existent-action: ""

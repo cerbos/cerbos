@@ -9,13 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common"
-	celast "github.com/google/cel-go/common/ast"
-	"github.com/google/cel-go/common/decls"
-	celtypes "github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/ext"
-	"github.com/google/cel-go/parser"
+	"cel.dev/cel-go/cel"
+	"cel.dev/cel-go/common"
+	celast "cel.dev/cel-go/common/ast"
+	"cel.dev/cel-go/common/decls"
+	celtypes "cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/ext"
+	"cel.dev/cel-go/parser"
 	"github.com/stretchr/testify/require"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
@@ -40,9 +40,21 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `hasIntersection([1,2,3],[3,5])`},
 		{expr: `hasIntersection([1,2,3],[4,5]) == false`},
 		{expr: `hasIntersection(['1','2','3'],['3','5'])`},
+		{expr: `hasIntersection([1],[1.0,2])`},
+		{expr: `hasIntersection([1.0,2],[1])`},
+		{expr: `hasIntersection([1,2,3,4],[1.0,5,6,7])`},
+		{expr: `hasIntersection([1.0,5,6,7],[1,2,3,4])`},
 		{expr: `intersect([1,2,3],[2,3,5]) == [2,3]`},
 		{expr: `intersect([1,2,3],[4,5]) == []`},
 		{expr: `intersect(['1','2','3'],['3','5']) == ['3']`},
+		{expr: `intersect([1],[1.0,2]) == [1]`},
+		{expr: `intersect([1.0,2],[1]) == [1]`},
+		{expr: `intersect([1,2,3,4],[1.0,5,6,7]) == [1]`},
+		{expr: `intersect([1.0,5,6,7],[1,2,3,4]) == [1]`},
+		{expr: `intersect([1],[1.0,2]) == [1.0]`},
+		{expr: `intersect([1.0,2],[1]) == [1.0]`},
+		{expr: `intersect([1,2,3,4],[1.0,5,6,7]) == [1.0]`},
+		{expr: `intersect([1.0,5,6,7],[1,2,3,4]) == [1.0]`},
 		{expr: `[1,2].is_subset([2,3]) == false`},
 		{expr: `[[1],[2]].is_subset([[2],[3]]) == false`},
 		{expr: `[1,2].is_subset([1,2])`},
@@ -59,6 +71,11 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `["1","2"].isSubset(["1","2","3"])`},
 		{expr: `[1,1].isSubset([1])`},
 		{expr: `[].isSubset([1])`},
+		{expr: `[1,2].isSubset([1.0,2])`},
+		{expr: `[1,2].isSubset([1.0,2])`},
+		{expr: `[1.0,2].isSubset([1,2])`},
+		{expr: `[1,2,3,4].isSubset([1.0,2,3,4])`},
+		{expr: `[1.0,2,3,4].isSubset([1,2,3,4])`},
 		{expr: `[].except([1]) == []`},
 		{expr: `[1].except([]) == [1]`},
 		{expr: `[].except([]) == []`},
@@ -66,6 +83,10 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `[1].except([1,2,3]) == []`},
 		{expr: `[1,3,5].except([2,4]) == [1,3,5]`},
 		{expr: `[1,3,5].except([5,3]) == [1]`},
+		{expr: `[1,2].except([1.0,2]) == []`},
+		{expr: `[1.0,2].except([1,2]) == []`},
+		{expr: `[1,2,3,4].except([1.0,2,3,4]) == []`},
+		{expr: `[1.0,2,3,4].except([1,2,3,4]) == []`},
 		{expr: `[1,2,3] + [3,5] == [1,2,3,3,5]`},
 		{expr: `hierarchy("a.b.c.d") == hierarchy("a.b.c.d")`},
 		{expr: `hierarchy("a.b.c.d") != hierarchy("a.b.c.d.e")`},
@@ -160,7 +181,7 @@ func TestCerbosLib(t *testing.T) {
 			ast, issues := env.Compile(tc.expr)
 			is.NoError(issues.Err())
 
-			have, _, err := conditions.ContextEval(t.Context(), env, ast.NativeRep(), cel.NoVars(), conditions.Now())
+			have, _, err := conditions.ContextEval(t.Context(), env, ast.NativeRep(), cel.NoVars(), conditions.Now(), cel.EvalOptions(cel.OptOptimize))
 			if tc.wantErr {
 				is.Error(err)
 			} else {
@@ -179,8 +200,10 @@ func TestCmpSelectAndCall(t *testing.T) {
 			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
 			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
 			decls.NewVariable("z", celtypes.StringType),
-			decls.NewVariable("v", celtypes.NewMapType(celtypes.StringType, celtypes.DynType))),
-		ext.Strings())
+			decls.NewVariable("v", celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
+		),
+		ext.Strings(),
+	)
 
 	expr0 := "v.geo() in (y + [z]).map(t, t.upperAscii())"
 	expr := "v.geo in (y + [z]).map(t, t.upperAscii())"
@@ -210,10 +233,12 @@ func TestPartialEvaluationWithMacroGlobalVars(t *testing.T) {
 		cel.VariableDecls(
 			decls.NewVariable("y", celtypes.NewListType(celtypes.StringType)),
 			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
-			decls.NewVariable("z", celtypes.StringType)),
+			decls.NewVariable("z", celtypes.StringType),
+		),
 		// decls.NewVar("v", decls.NewMapType(decls.String, decls.Dyn))),
 		ext.Strings(),
-		cel.Macros(geo))
+		cel.Macros(geo),
+	)
 
 	vars, _ := cel.PartialVars(map[string]any{
 		"y": []string{"GB", "US"},
@@ -249,8 +274,10 @@ func TestPartialEvaluation(t *testing.T) {
 			decls.NewVariable(conditions.CELResourceAbbrev, types.MessageType[*enginev1.Resource]()),
 			decls.NewVariable("request.principal", celtypes.NewMapType(celtypes.StringType, celtypes.DynType)),
 			decls.NewVariable("z", celtypes.StringType),
-			decls.NewVariable("R.attr.department", celtypes.StringType)),
-		ext.Strings())
+			decls.NewVariable("R.attr.department", celtypes.StringType),
+		),
+		ext.Strings(),
+	)
 
 	vars, _ := cel.PartialVars(map[string]any{
 		"y":                 []string{"GB", "US"},

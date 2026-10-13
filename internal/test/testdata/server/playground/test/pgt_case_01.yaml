@@ -100,7 +100,7 @@ playgroundTest:
                                                         { "kind": "KIND_SCOPE", "scope": "acme.hr.uk" },
                                                         { "kind": "KIND_RULE", "rule": "rule-003" },
                                                         { "kind": "KIND_VARIABLES" },
-                                                        { "kind": "KIND_VARIABLE", "variable": { "name": "principal_location", "expr": "(P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\")" } },
+                                                        { "kind": "KIND_VARIABLE", "variable": { "name": "principal_location", "expr": "has(P.attr.ip_address) && P.attr.ip_address.inIPAddrRange(\"10.20.0.0/16\") ? \"GB\" : \"\"" } },
                                                       ],
                                                     "entries":
                                                       [
@@ -108,7 +108,7 @@ playgroundTest:
                                                         { "componentIndices": [4, 5], "event": { "status": "STATUS_SKIPPED", "message": "No matching roles" } },
                                                         { "componentIndices": [6, 7, 8, 9, 2], "event": { "status": "STATUS_ACTIVATED", "result": true } },
                                                         { "componentIndices": [6, 7], "event": { "status": "STATUS_ACTIVATED", "effect": "EFFECT_ALLOW" } },
-                                                        { "componentIndices": [6, 10, 11], "event": { "status": "STATUS_ACTIVATED", "result": null } },
+                                                        { "componentIndices": [6, 10, 11], "event": { "status": "STATUS_ACTIVATED", "result": "" } },
                                                       ],
                                                   },
                                               },

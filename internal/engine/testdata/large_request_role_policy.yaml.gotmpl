@@ -1,0 +1,18 @@
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: "{{ .Role }}"
+  scope: "{{ .Scope }}"
+  version: "default"
+  parentRoles:
+    - member
+  rules:
+    {{- range $kind := .Kinds }}
+    - resource: "{{ $kind }}"
+      allowActions:
+        {{- range $.Actions }}
+        - "{{ . }}"
+        {{- end }}
+      condition:
+        match:
+          expr: P.attr.contextRoles.exists(cr, cr.role == "organizational-unit-admin" && (R.attr.position == cr.position || R.attr.position.endsWith("," + cr.position)))
+    {{- end }}

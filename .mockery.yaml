@@ -17,8 +17,7 @@ packages:
   github.com/cerbos/cerbos/internal/storage/hub:
     interfaces:
       ClientProvider: {}
-      ClientV1: {}
-      ClientV2: {}
+      Client: {}
 
   github.com/cerbos/cerbos/internal/storage/index:
     interfaces:

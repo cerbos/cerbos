@@ -53,6 +53,7 @@ func evaluatorConfFromProto(confProto *epdpv2.Config_Evaluator) (*evaluator.Conf
 	conf.DefaultScope = confProto.GetDefaultScope()
 	conf.Globals = (&structpb.Struct{Fields: confProto.GetGlobals()}).AsMap()
 	conf.LenientScopeSearch = confProto.GetLenientScopeSearch()
+	conf.StrictEvaluation = confProto.GetStrictEvaluation()
 
 	return conf, conf.Validate()
 }

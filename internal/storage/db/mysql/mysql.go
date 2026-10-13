@@ -45,7 +45,7 @@ func init() {
 	storage.RegisterDriver(DriverName, func(ctx context.Context, confW *config.Wrapper) (storage.Store, error) {
 		conf := new(Conf)
 		if err := confW.GetSection(conf); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read mysql configuration: %w", err)
 		}
 
 		return NewStore(ctx, conf)
@@ -179,8 +179,7 @@ func upsertPolicy(ctx context.Context, tx *goqu.TxDatabase, p policy.Wrapper) er
 	}
 
 	if _, err := tx.Insert(internal.PolicyTbl).Prepared(true).Rows(pr).Executor().ExecContext(ctx); err != nil {
-		mysqlErr := new(mysql.MySQLError)
-		if !errors.As(err, &mysqlErr) || mysqlErr.Number != constraintViolationErrCode {
+		if mysqlErr, ok := errors.AsType[*mysql.MySQLError](err); !ok || mysqlErr.Number != constraintViolationErrCode {
 			return fmt.Errorf("failed to insert policy %s: %w", p.FQN, err)
 		}
 

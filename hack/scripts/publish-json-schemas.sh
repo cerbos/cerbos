@@ -22,4 +22,4 @@ trap 'rm -rf "$TARGET_JSON_SCHEMAS_DIR"' EXIT
     find . -type f -name "*.schema.json" -exec "${SCRIPT_DIR}/set-json-schema-version.sh" "$VERSION" "{}" "${TARGET_JSON_SCHEMAS_DIR}/{}" \;
 )
 
-gsutil -m -h "Content-Type: application/schema+json" rsync -r "$TARGET_JSON_SCHEMAS_DIR" "gs://${GCS_BUCKET}/${VERSION}"
+gcloud storage rsync --content-type="application/schema+json" --recursive "$TARGET_JSON_SCHEMAS_DIR" "gs://${GCS_BUCKET}/${VERSION}"

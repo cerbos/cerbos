@@ -1,0 +1,27 @@
+name: Lint GitHub Actions
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  lint-actions:
+    name: Lint GitHub Actions
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Lint GitHub Actions
+        uses: cerbos/actions/lint-actions@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main

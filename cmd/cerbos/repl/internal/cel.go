@@ -6,8 +6,8 @@ package internal
 import (
 	"fmt"
 
-	"github.com/google/cel-go/common/decls"
-	"github.com/google/cel-go/common/types"
+	"cel.dev/cel-go/common/decls"
+	"cel.dev/cel-go/common/types"
 
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	"github.com/cerbos/cerbos/internal/conditions"

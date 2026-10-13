@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Schema enforcement - none
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+
+  schemaEnforcement:
+    - ENFORCEMENT_REJECT
+
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: andy
+  roles:
+    - developer
+  attr:
+    power: 0.5
+
+tests:
+  - resource:
+      kind: schema
+      attr:
+        answer: yes
+    action: validate
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      validationErrors:
+        - source: SOURCE_PRINCIPAL
+          path: /power
+          message: must be > 9000 but found 0.5
+        - source: SOURCE_RESOURCE
+          path: /answer
+          message: expected number, but got string
+
+  - resource:
+      kind: schema
+    action: validate
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      validationErrors:
+        - source: SOURCE_PRINCIPAL
+          path: /power
+          message: must be > 9000 but found 0.5

@@ -41,6 +41,36 @@ var hashpb_uint64KeyPool = sync.Pool{
 	New: func() any { return make([]uint64, 0, 32) },
 }
 
+func cerbos_engine_v1_AuxData_JWT_hashpb_sum(m *v1.AuxData_JWT, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.engine.v1.AuxData.JWT.claims"]; !ok {
+		if len(m.Claims) > 0 {
+			if len(m.Claims) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Claims {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Claims[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Claims[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Claims)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Claims[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Claims[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+}
+
 func cerbos_engine_v1_AuxData_hashpb_sum(m *v1.AuxData, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.engine.v1.AuxData.jwt"]; !ok {
 		if len(m.Jwt) > 0 {
@@ -64,6 +94,33 @@ func cerbos_engine_v1_AuxData_hashpb_sum(m *v1.AuxData, hasher hash.Hash, ignore
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 					if m.Jwt[k] != nil {
 						google_protobuf_Value_hashpb_sum(m.Jwt[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.AuxData.jwts"]; !ok {
+		if len(m.Jwts) > 0 {
+			if len(m.Jwts) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Jwts {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Jwts[k] != nil {
+						cerbos_engine_v1_AuxData_JWT_hashpb_sum(m.Jwts[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Jwts)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Jwts[k] != nil {
+						cerbos_engine_v1_AuxData_JWT_hashpb_sum(m.Jwts[k], hasher, ignore, b)
 					}
 				}
 			}
@@ -1091,6 +1148,9 @@ func cerbos_policy_v1_TestOptions_hashpb_sum(m *TestOptions, hasher hash.Hash, i
 	if _, ok := ignore["cerbos.policy.v1.TestOptions.default_scope"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetDefaultScope()))))
 		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetDefaultScope()), len(m.GetDefaultScope())))
+	}
+	if _, ok := ignore["cerbos.policy.v1.TestOptions.strict_evaluation"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], protowire.EncodeBool(m.GetStrictEvaluation())))
 	}
 }
 

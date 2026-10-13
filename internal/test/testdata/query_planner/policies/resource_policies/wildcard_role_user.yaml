@@ -18,6 +18,6 @@ resourcePolicy:
                         of:
                           - expr: R.attr.org_id == P.attr.org_id
                           - expr: R.attr.is_active == P.attr.is_active
-                    - expr: R.attr.include_all == P.attr.include_all
+                    - expr: has(R.attr.include_all) && has(P.attr.include_all) && R.attr.include_all == P.attr.include_all
               - expr: R.attr.excluded_items == P.attr.excluded_items
               - expr: R.attr.excluded == P.attr.excluded

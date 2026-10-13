@@ -99,10 +99,7 @@ func mkRuleTable(b *testing.B, policyDir string) evaluator.Evaluator {
 
 	protoRT := ruletable.NewProtoRuletable()
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(b, err)
-
-	err = ruletable.LoadPolicies(ctx, protoRT, compiler)
+	err = ruletable.LoadPolicies(ctx, protoRT, compile.NewManager(store))
 	require.NoError(b, err)
 
 	err = ruletable.LoadSchemas(ctx, protoRT, store)

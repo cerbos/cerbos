@@ -5,14 +5,11 @@ package verify_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/cerbos/cloud-api/bundle"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	"github.com/cerbos/cerbos/internal/test"
@@ -29,9 +26,8 @@ func TestFiles(t *testing.T) {
 
 func TestBundle(t *testing.T) {
 	params := engine.BundleParams{
-		BundlePath:    filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_legacy", bundle.Version2))), "bundle_unencrypted.crbp"),
-		BundleVersion: engine.BundleVersion2,
-		TempDir:       t.TempDir(),
+		BundlePath: filepath.Join(test.PathToDir(t, filepath.Join("bundle", "v2_legacy")), "bundle_unencrypted.crbp"),
+		TempDir:    t.TempDir(),
 	}
 
 	ctx, cancelFn := context.WithCancel(t.Context())
@@ -44,9 +40,8 @@ func TestBundle(t *testing.T) {
 
 func TestBundleStream(t *testing.T) {
 	params := engine.BundleParams{
-		BundlePath:    filepath.Join(test.PathToDir(t, filepath.Join("bundle", fmt.Sprintf("v%d_legacy", bundle.Version2))), "bundle_unencrypted.crbp"),
-		BundleVersion: engine.BundleVersion2,
-		TempDir:       t.TempDir(),
+		BundlePath: filepath.Join(test.PathToDir(t, filepath.Join("bundle", "v2_legacy")), "bundle_unencrypted.crbp"),
+		TempDir:    t.TempDir(),
 	}
 
 	ctx, cancelFn := context.WithCancel(t.Context())

@@ -1,0 +1,297 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Report with map tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: "123"
+  roles:
+    - USER
+  attr:
+    workspaceRolesMap:
+      "1":
+        - ADMIN
+      B:
+        - MEMBER
+    workspaceMap:
+      A: MANAGER
+      B: MEMBER
+    workspaceMapRoles:
+      A:
+        role: MANAGER
+      B:
+        role: MEMBER
+    workspaces:
+      - name: workspaceA
+        role: MANAGER
+      - name: workspaceB
+        role: MEMBER
+    figures:
+      set-1:
+        colors:
+          - red
+        shapes:
+          - square
+          - circle
+        sizes:
+          - small
+      set-2:
+        colors:
+          - blue
+          - black
+        shapes:
+          - rectangle
+        sizes:
+          - small
+          - large
+
+tests:
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: write
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: hasIntersection
+                  operands:
+                    - variable: request.resource.attr.workspaces
+                    - value:
+                        - workspaceA
+              - expression:
+                  operator: isSubset
+                  operands:
+                    - variable: request.resource.attr.workspaces
+                    - value:
+                        - workspaceA
+              - expression:
+                  operator: eq
+                  operands:
+                    - expression:
+                        operator: intersect
+                        operands:
+                          - variable: request.resource.attr.workspaces
+                          - value:
+                              - workspaceA
+                    - value: []
+              - expression:
+                  operator: eq
+                  operands:
+                    - expression:
+                        operator: except
+                        operands:
+                          - variable: request.resource.attr.workspaces
+                          - value:
+                              - workspaceA
+                    - value: []
+      matchedScopes:
+        write: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: write-member
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: hasIntersection
+            operands:
+              - variable: request.resource.attr.workspaces
+              - value:
+                  - workspaceA
+      matchedScopes:
+        write-member: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: write-rev # swapped hasIntersection args
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: hasIntersection
+            operands:
+              - value:
+                  - workspaceA
+              - variable: request.resource.attr.workspaces
+      matchedScopes:
+        write-rev: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: write-member-rev
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: hasIntersection
+            operands:
+              - value:
+                  - workspaceA
+              - variable: request.resource.attr.workspaces
+      matchedScopes:
+        write-member-rev: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: handle
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        handle: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: edit
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.workspaceId
+              - value: A
+      matchedScopes:
+        edit: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: edit_easily
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.workspaceId
+              - value: A
+      matchedScopes:
+        edit_easily: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: delete
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+      attr:
+        location_id: "1"
+    action: delete_easily
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        delete_easily: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: delete_easily
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.location_id
+              - value: "1"
+      matchedScopes:
+        delete_easily: ""
+
+  - resource:
+      kind: report_with_map
+      policyVersion: default
+    action: match_by
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.color
+                                - value: red
+                          - expression:
+                              operator: in
+                              operands:
+                                - variable: request.resource.attr.shape
+                                - value:
+                                    - square
+                                    - circle
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.size
+                          - value: small
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: and
+                        operands:
+                          - expression:
+                              operator: in
+                              operands:
+                                - variable: request.resource.attr.color
+                                - value:
+                                    - blue
+                                    - black
+                          - expression:
+                              operator: eq
+                              operands:
+                                - variable: request.resource.attr.shape
+                                - value: rectangle
+                    - expression:
+                        operator: in
+                        operands:
+                          - variable: request.resource.attr.size
+                          - value:
+                              - small
+                              - large
+      matchedScopes:
+        match_by: ""

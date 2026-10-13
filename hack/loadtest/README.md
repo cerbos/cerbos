@@ -33,11 +33,14 @@ NUM_POLICIES=1000 ./loadtest.sh -u
 NUM_POLICIES=1000 RPS=500 ./loadtest.sh -e
 ```
 
-This runs two tests back-to-back:
-- **Sustained-rate test**: sends requests at the configured RPS for `DURATION_SECS` seconds.
+This runs two tests back-to-back (throughput first, so its result can drive `RPS=auto`):
 - **Throughput test**: sends `ITERATIONS` requests as fast as possible.
+- **Sustained-rate test**: sends requests at `RPS` for `DURATION_SECS` seconds. With
+  `RPS=auto`, the target is set to `RPS_AUTO_PCT`% (default 85) of the throughput test's
+  measured RPS, rounded to the nearest `RPS_ROUND` (default 100) to absorb run-to-run
+  variance.
 
-PDP memory metrics are scraped before and after each test and printed as a diff table. Results are saved to `results/`.
+Per phase, GC-cost counters are diffed and reported (GC CPU%, cycles, pause, bytes allocated; saved to `*_gc.json`). Memory footprint is no longer measured here: instantaneous gauges scraped under load don't capture a peak. Peak RSS and the steady-state floor come from the provisioning sweep (`gcp/sweep.sh`) and the cold-start floor read. Results are saved to `results/`.
 
 ### 4. Stop services
 
@@ -65,7 +68,10 @@ PDP memory metrics are scraped before and after each test and printed as a diff 
 | `PASSWORD` | Cerbos Admin API password | `cerbosAdmin` |
 | `POLICY_SET` | Policy template set to use (see below) | `classic` |
 | `REQ_KIND` | Request template prefix. Files matching `${REQ_KIND}_*.json` are included. Use `cr` to mix all request types, or `cr_req01` for a single type | `cr` |
-| `RPS` | Target requests per second for the sustained-rate test | `500` |
+| `RPS` | Target requests/sec for the sustained-rate test, or `auto` to derive it from the throughput test (see above) | `500` |
+| `RPS_AUTO_PCT` | When `RPS=auto`, sustained target = this %% of measured throughput | `85` |
+| `RPS_ROUND` | When `RPS=auto`, round the target to the nearest this (smooths run-to-run throughput variance) | `100` |
+| `RPS_MIN` | When `RPS=auto`, reject the config (skip the sustained test, write a `*_rejected` marker) if the target falls below this (throughput collapsed and the run is degenerate) | `500` |
 | `SCHEMA_ENFORCEMENT` | Schema enforcement level | `none` |
 | `SERVER` | Cerbos gRPC server address | `localhost:3593` |
 | `STORE` | Storage backend (`disk` or `postgres`) | `disk` |
@@ -110,12 +116,12 @@ The Cerbos container is capped at 4 CPUs and 512 MB RAM to ensure reproducible r
 ./analyse_latency.sh -p 99 -w 5 results/disk_rps.json
 ```
 
-The script reports:
-- **CV (coefficient of variation)** of slow request counts per window — lower values indicate more uniform distribution
-- **Stall detection**: windows where >50% of requests are slow (system mostly unresponsive)
-- **Throughput gaps**: windows where total request count drops below 50% of the mean
-- **Error clustering**: if errors are present, shows which windows they fall in and whether they're clustered (likely a single event) or spread across the test
-- Per-window breakdown with total requests, slow count, slow%, max latency, and histogram
+A request counts as slow when its latency exceeds the threshold percentile (p95 by default; override with `-t` or `-p`). The script reports:
+- CV (coefficient of variation) of slow-request counts per window; lower values mean a more uniform distribution
+- Stall detection: windows where more than 10% of requests are slow (override with `-s`)
+- Throughput gaps: windows where the total request count drops below 75% of the mean (override with `-g`)
+- Error clustering: if errors are present, which windows they fall in and whether they are clustered (likely a single event) or spread across the test
+- A per-window breakdown with total requests, slow count, slow%, max latency, and a histogram
 
 Note: ghz caps JSON details at 1M requests. For tests exceeding this, per-request analysis will be incomplete.
 

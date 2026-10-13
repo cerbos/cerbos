@@ -123,11 +123,7 @@ func (s *Store) GetOverlayPolicyLoader(ctx context.Context) (policyloader.Policy
 	getPolicyLoader := func(storeInterface storage.Store) (policyloader.PolicyLoader, error) {
 		switch st := storeInterface.(type) {
 		case storage.SourceStore:
-			pl, err := compile.NewManager(ctx, st)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create compile manager: %w", err)
-			}
-			return pl, nil
+			return compile.NewManager(st), nil
 		case storage.BinaryStore:
 			return st, nil
 		default:

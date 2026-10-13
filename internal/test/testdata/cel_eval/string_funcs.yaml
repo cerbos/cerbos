@@ -34,20 +34,33 @@ condition:
           base64.decode("aGVsbG8=") == bytes("hello")
       - expr: |-
           base64.encode(bytes("hello")) == "aGVsbG8="
-request: {
-  "principal": {
-    "id": "john",
-    "roles": ["employee"],
-    "attr": {
-      "department": "marketing"
-    }
-  },
-  "resource": {
-    "kind": "leave_request",
-    "id": "test",
-    "attr": {
-      "department": "marketing"
-    }
+      - expr: |-
+          json.encode(P.attr) == "{\"department\":\"marketing\"}"
+      - expr: |-
+          regex.replace("banana", "a", "i") == "binini"
+      - expr: |-
+          regex.replace("banana", "a", "i", 1) == "binana"
+      - expr: |-
+          regex.replace("banana", "b(a).*", r"\1") == "a"
+      - expr: |-
+          regex.extract("hello world", "hello(.*)") == optional.of(" world")
+      - expr: |-
+          regex.extractAll("a bb a cc", "a") == ["a", "a"]
+      - expr: |-
+          regex.extractAll("a bb a cc", "x") == []
+request:
+  {
+    "principal":
+      {
+        "id": "john",
+        "roles": ["employee"],
+        "attr": { "department": "marketing" },
+      },
+    "resource":
+      {
+        "kind": "leave_request",
+        "id": "test",
+        "attr": { "department": "marketing" },
+      },
   }
-}
 want: true

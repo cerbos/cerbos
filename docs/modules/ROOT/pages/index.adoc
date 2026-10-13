@@ -1,40 +1,44 @@
-include::partial$attributes.adoc[]
+= Cerbos authorization management platform
+:page-layout: home
 
-= Painless access control for your software
+Cerbos is an authorization management platform for applications, APIs, AI agents, MCP servers, services, and workloads. It works alongside your application to produce fine-grained, contextual access decisions based on policies you define.
 
-include::partial$version-check.adoc[]
+The platform is composed of four components. Each can be adopted independently.
 
+== Platform components
 
-Cerbos helps you super-charge your authorization implementation by writing context-aware access control policies for your application resources. Author access rules using an intuitive YAML configuration language, use your Git-ops infrastructure to test and deploy them and, make simple API requests to the Cerbos PDP to evaluate the policies and make dynamic access decisions.
+[cols="1,3", frame=none, grid=none]
+|===
 
+| *Cerbos PDP*
+| The open-source policy decision point. Evaluates authorization requests against policy definitions and returns decisions. Stateless, AuthZEN-compliant, and designed to run anywhere including container orchestrators like Kubernetes, serverless runtimes, and edge environments.
 
-image:how_cerbos_works.png[alt="How Cerbos works",role="center-img",width=85%,height=85%]
+xref:cerbos:ROOT:what-is-cerbos.adoc[Cerbos PDP documentation →]
 
+| *Cerbos Hub*
+| The control plane for Cerbos PDPs with centralised policy authoring, versioning, testing, secure distribution, and audit log aggregation. Create multiple deployments for your different environments or systems and any policy changes are automatically tested and pushed to the relevant PDPs without restarts or redeployments. All requests and decisions made by the PDPs are aggregated and stored to help with security investigations and comply with SOC 2, ISO 27001, HIPAA, PCI DSS, and GDPR audit requirements.
 
-Iterate quickly:: Instantly update your access policies without re-compiling or re-deploying your application. Let your product owner tweak access policies on their own while you focus on more interesting work. 
-Increase visibility:: The traditional practice of weaving authorization logic into application code effectively obscures the logic and complicates the source code. Documentation is notoriously difficult to keep up-to-date as the system evolves — inevitably requiring a code spelunking session to answer questions or update the documentation. This is often tedious, error-prone and requires valuable developer time. The simple policy-as-configuration approach provided by Cerbos helps even non-developers easily understand the authorization logic of the system. Best of all, it is always guaranteed to be up-to-date. 
-Don't repeat yourself:: In modern microservice environments it is quite common to share some resources between different services developed by different teams (e.g. a bank account in a banking system). These services could even be developed using different programming languages. Cerbos provides a language-agnostic API to share common access control policies between these disparate services — ensuring instant consistency without the need to coordinate development and deployment efforts across many teams.
-Use proven techniques:: Cerbos provides advanced tooling to lint, compile and test policies. Native GitOps support is built in. Use the same development best practices you use day-to-day to develop and deploy authorization logic.
-Comprehensive audit trails:: The textual policy language of Cerbos makes it ideal for storing policies on version control systems. Follow the evolution of access rules through time and pinpoint exactly when changes were made, why, and by whom.
+xref:cerbos-hub:ROOT:index.adoc[Cerbos Hub documentation →]
 
+| *Cerbos Synapse*
+| A customisable context enrichment layer for the PDP. Intercept and enrich requests and responses to/from the PDP with identity, resource, and relationship data from identity providers, databases, graph stores, and internal APIs. Use Cerbos policies with systems that support external authorization such as Envoy, Kafka, and Trino.
 
-Cerbos Policy Decision Point (PDP) is built for modern, containerised microservice environments with support for both x86-64 and ARM64 architectures, comprehensive observability integrations (metrics, distributed tracing), REST and gRPC endpoints, and native GitOps support (CI tooling, push-to-deploy). 
+xref:synapse:ROOT:index.adoc[Cerbos Synapse documentation →]
 
+| *Cerbos PEP Integrations*
+| Client libraries and integrations for calling the PDP from application code. Available for JavaScript, Go, Python, Java, .NET, Rust, PHP, and Ruby.
 
-== Cerbos workflow
-* Author Cerbos policies to define access rules for your resources. Optionally, write unit tests for the policies using the Cerbos DSL. 
-* Compile the policies and run tests using the Cerbos CLI.
-* Follow your standard development process to push the changes to production. (E.g. create pull request, run CI tests, get approval and merge to prod branch)
-* Cerbos will automatically pull the latest commits from the production branch and update the policies in place without requiring a restart. Your changes are now rolled out! 
+https://www.cerbos.dev/ecosystem[PEP Integrations →]
 
-== Authorization as a Service
-Cerbos is designed to be deployed as a service rather than a library compiled into an application. This design choice provides several benefits:
+|===
 
-* Permission checks can be performed by any part of the application stack and even shared between multiple services regardless of the programming language, CPU architecture, operating system or deployment model. 
-* Policy updates instantly take effect without having to recompile or redeploy the applications. This reduces disruption to busy services and enables policy authors to iterate quickly and respond to events faster.
-* With modern network stacks, the communication overhead is link:https://www.miketheman.net/2021/12/28/container-to-container-communication/[effectively negligible] in all but the most extreme cases. Even in those exceptional cases, scaling Cerbos to handle the demand is extremely easy due to its lightweight, stateless design. 
-* All development and optimization efforts to Cerbos can be concentrated on a single project because we do not need to replicate the effort on multiple language-specific implementations. All our users, regardless of their programming language of choice, immediately get the benefit of the latest and greatest Cerbos features as soon they are released.
+== How Cerbos works
 
-The Cerbos approach is a proven, modern, cloud native pattern for delivering language-agnostic infrastructure services. link:https://dapr.io[Microsoft Dapr], link:https://istio.io[Istio] and link:https://linkerd.io[Linkerd] are good examples of popular products utilising similar language-agnostic service APIs to augment applications.
-    
-Because Cerbos is in the critical request path and expected to handle large volumes of requests, we are obsessive about making Cerbos as fast and as efficient as possible with every release. Cerbos exposes an efficient, low latency gRPC API and is designed to be stateless and lightweight so that it can be deployed as a sidecar right next to  your application. It can even be accessed over Unix domain sockets for extra security and reduced overhead.   
+image::_images/how_cerbos_works.png[alt="How Cerbos works", role="center-img", width=85%]
+
+== Get started
+
+xref:cerbos:ROOT:quickstart.adoc[Quick start]:: Run a Cerbos PDP locally and make your first authorization decision.
+xref:cerbos:ROOT:what-is-cerbos.adoc[What is Cerbos PDP?]:: How the policy decision point works and where it sits in an application stack.
+xref:cerbos:policies:index.adoc[Cerbos policies]:: The policy kinds and how rules are evaluated.
+https://hub.cerbos.cloud?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=home_hub[Sign up for Cerbos Hub]:: Test and distribute policies without running your own build and release pipeline. See the xref:cerbos-hub:ROOT:getting-started.adoc[Cerbos Hub quick start].

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/google/cel-go/common/types/ref"
+	"cel.dev/cel-go/common/types/ref"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/require"

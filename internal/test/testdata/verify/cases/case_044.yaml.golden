@@ -1,0 +1,55 @@
+{
+  "suites": [
+    {
+      "file": "inline_test.yaml",
+      "name": "TestSuite",
+      "summary": {
+        "overallResult": "RESULT_PASSED",
+        "testsCount": 1,
+        "resultCounts": [
+          {
+            "result": "RESULT_PASSED",
+            "count": 1
+          }
+        ]
+      },
+      "testCases": [
+        {
+          "name": "John and his leave request",
+          "principals": [
+            {
+              "name": "johnny",
+              "resources": [
+                {
+                  "name": "john_leave_request",
+                  "actions": [
+                    {
+                      "name": "frobnicate",
+                      "details": {
+                        "result": "RESULT_PASSED",
+                        "success": {
+                          "effect": "EFFECT_ALLOW"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "description": "Tests for verifying something"
+    }
+  ],
+  "summary": {
+    "overallResult": "RESULT_PASSED",
+    "testsCount": 1,
+    "resultCounts": [
+      {
+        "result": "RESULT_PASSED",
+        "count": 1
+      }
+    ]
+  }
+}

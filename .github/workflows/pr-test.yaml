@@ -14,18 +14,15 @@ jobs:
     permissions:
       pull-requests: read
     outputs:
-      actions: ${{ steps.filter.outputs.actions }}
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
       npm: ${{ steps.filter.outputs.npm }}
       protos: ${{ steps.filter.outputs.protos }}
     steps:
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         with:
           filters: |
-            actions:
-              - '.github/**'
             code:
               - '!(.node-version|{docs,npm}/**)'
             docs:
@@ -40,7 +37,7 @@ jobs:
               - '**/*.proto'
 
   cache:
-    uses: ./.github/workflows/cache.yaml
+    uses: $/.github/workflows/cache.yaml
     permissions:
       pull-requests: read
 
@@ -53,18 +50,18 @@ jobs:
     permissions: {}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: |-
             buf
@@ -74,7 +71,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/check-repo-status@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
 
   download-test-times:
     name: Download test times
@@ -84,7 +81,7 @@ jobs:
     steps:
       - name: Download previous test times
         continue-on-error: true
-        uses: dawidd6/action-download-artifact@b6e2e70617bc3265edd6dab6c906732b2f1ae151 # v21
+        uses: dawidd6/action-download-artifact@d63b86af1b34672e53c440b1b83979861906bad7 # v24
         with:
           workflow: pr-test.yaml
           name: test-times
@@ -113,19 +110,19 @@ jobs:
       job-total: ${{ strategy.job-total }}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           lfs: true
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
 
       - name: Install just
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: just
 
@@ -156,7 +153,7 @@ jobs:
           path: junit.*.xml
 
       - name: Upload integration coverage to Coveralls
-        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
+        uses: shogo82148/actions-goveralls@daabb2902148216a0b13c82107a6e67ed97f796e # v1.11.3
         continue-on-error: true
         with:
           path-to-profile: integration.cover
@@ -177,19 +174,19 @@ jobs:
           NEEDS_TEST_RESULT: ${{ needs.test.result }}
 
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.x
+          go-version: 1.27.1
           cache: false
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: just
 
@@ -210,7 +207,7 @@ jobs:
           path: test-times.json
 
       - name: Complete coveralls report
-        uses: shogo82148/actions-goveralls@9606dbc5ac5cf888a0e9ef901515c3cd516a2790 # v1.11.0
+        uses: shogo82148/actions-goveralls@daabb2902148216a0b13c82107a6e67ed97f796e # v1.11.3
         continue-on-error: true
         with:
           parallel-finished: true
@@ -224,14 +221,14 @@ jobs:
     permissions: {}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           lfs: true
           persist-credentials: false
 
       - name: Generate docs
-        uses: ./.github/actions/antora-docs
+        uses: $/.github/actions/antora-docs
         id: docs
 
   golangci:
@@ -243,18 +240,18 @@ jobs:
     permissions: {}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Go
-        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: 1.26.x
+          go-version: 1.27.1
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: just
 
@@ -265,7 +262,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: cerbos/actions/golangci-lint@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/golangci-lint@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
 
   buf:
     needs: changes
@@ -276,14 +273,14 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
 
       - name: Lint protos
-        uses: cerbos/actions/buf@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/buf@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           breaking: false
           format: true
@@ -316,13 +313,13 @@ jobs:
     timeout-minutes: 10
     permissions: {}
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.26.x"
+          go-version: 1.27.1
 
       - name: Test Helm chart
         run: ./deploy/charts/validate.sh
@@ -336,21 +333,21 @@ jobs:
     permissions: {}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: |-
             goreleaser
@@ -391,7 +388,7 @@ jobs:
         run: brew install bash
 
       - name: Check out .node-version file
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: |
             .node-version
@@ -408,7 +405,7 @@ jobs:
         run: tar --extract --verbose --file npm.tar
 
       - name: Install Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           cache: npm
           cache-dependency-path: npm/test/registry/package-lock.json
@@ -433,19 +430,3 @@ jobs:
         run: test "${NEEDS_TEST_NPM_RESULT}" = "success"
         env:
           NEEDS_TEST_NPM_RESULT: ${{ needs.test-npm.result }}
-
-  lint-actions:
-    name: Lint GitHub Actions
-    runs-on: ubuntu-latest
-    needs: changes
-    if: ${{ needs.changes.outputs.actions == 'true' }}
-    permissions:
-      security-events: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-
-      - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main

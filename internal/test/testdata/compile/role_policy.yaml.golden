@@ -39,16 +39,16 @@
                 "original": "variables.is_public_report",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "variables"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -57,15 +57,15 @@
                       27
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "variables"
                         }
@@ -83,12 +83,12 @@
                   "original": "\"expenses_report_allowed:%s\".format([request.principal.id])",
                   "checked": {
                     "referenceMap": {
-                      "2": {
+                      "1": {
                         "overloadId": [
                           "string_format"
                         ]
                       },
-                      "4": {
+                      "6": {
                         "name": "request"
                       }
                     },
@@ -107,13 +107,13 @@
                         }
                       },
                       "4": {
-                        "messageType": "cerbos.engine.v1.Request"
+                        "primitive": "STRING"
                       },
                       "5": {
                         "messageType": "cerbos.engine.v1.Request.Principal"
                       },
                       "6": {
-                        "primitive": "STRING"
+                        "messageType": "cerbos.engine.v1.Request"
                       }
                     },
                     "sourceInfo": {
@@ -122,19 +122,19 @@
                         60
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 35,
+                        "1": 35,
+                        "2": 0,
                         "3": 36,
-                        "4": 37,
+                        "4": 54,
                         "5": 44,
-                        "6": 54
+                        "6": 37
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "callExpr": {
                         "target": {
-                          "id": "1",
+                          "id": "2",
                           "constExpr": {
                             "stringValue": "expenses_report_allowed:%s"
                           }
@@ -146,13 +146,13 @@
                             "listExpr": {
                               "elements": [
                                 {
-                                  "id": "6",
+                                  "id": "4",
                                   "selectExpr": {
                                     "operand": {
                                       "id": "5",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "4",
+                                          "id": "6",
                                           "identExpr": {
                                             "name": "request"
                                           }
@@ -175,12 +175,12 @@
                   "original": "\"expenses_report_blocked:%s\".format([request.principal.id])",
                   "checked": {
                     "referenceMap": {
-                      "2": {
+                      "1": {
                         "overloadId": [
                           "string_format"
                         ]
                       },
-                      "4": {
+                      "6": {
                         "name": "request"
                       }
                     },
@@ -199,13 +199,13 @@
                         }
                       },
                       "4": {
-                        "messageType": "cerbos.engine.v1.Request"
+                        "primitive": "STRING"
                       },
                       "5": {
                         "messageType": "cerbos.engine.v1.Request.Principal"
                       },
                       "6": {
-                        "primitive": "STRING"
+                        "messageType": "cerbos.engine.v1.Request"
                       }
                     },
                     "sourceInfo": {
@@ -214,19 +214,19 @@
                         60
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 35,
+                        "1": 35,
+                        "2": 0,
                         "3": 36,
-                        "4": 37,
+                        "4": 54,
                         "5": 44,
-                        "6": 54
+                        "6": 37
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "callExpr": {
                         "target": {
-                          "id": "1",
+                          "id": "2",
                           "constExpr": {
                             "stringValue": "expenses_report_blocked:%s"
                           }
@@ -238,13 +238,13 @@
                             "listExpr": {
                               "elements": [
                                 {
-                                  "id": "6",
+                                  "id": "4",
                                   "selectExpr": {
                                     "operand": {
                                       "id": "5",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "4",
+                                          "id": "6",
                                           "identExpr": {
                                             "name": "request"
                                           }
@@ -277,23 +277,23 @@
           "checked": {
             "referenceMap": {
               "1": {
-                "name": "request"
-              },
-              "5": {
                 "overloadId": [
                   "equals"
                 ]
               },
-              "6": {
+              "5": {
+                "name": "request"
+              },
+              "7": {
                 "name": "constants"
               }
             },
             "typeMap": {
               "1": {
-                "messageType": "cerbos.engine.v1.Request"
+                "primitive": "BOOL"
               },
               "2": {
-                "messageType": "cerbos.engine.v1.Request.Resource"
+                "dyn": {}
               },
               "3": {
                 "mapType": {
@@ -306,16 +306,16 @@
                 }
               },
               "4": {
-                "dyn": {}
+                "messageType": "cerbos.engine.v1.Request.Resource"
               },
               "5": {
-                "primitive": "BOOL"
+                "messageType": "cerbos.engine.v1.Request"
               },
               "6": {
-                "messageType": "cerbos.Variables"
+                "dyn": {}
               },
               "7": {
-                "dyn": {}
+                "messageType": "cerbos.Variables"
               }
             },
             "sourceInfo": {
@@ -324,31 +324,31 @@
                 49
               ],
               "positions": {
-                "1": 0,
-                "2": 7,
+                "1": 29,
+                "2": 21,
                 "3": 16,
-                "4": 21,
-                "5": 29,
-                "6": 32,
-                "7": 41
+                "4": 7,
+                "5": 0,
+                "6": 41,
+                "7": 32
               }
             },
             "expr": {
-              "id": "5",
+              "id": "1",
               "callExpr": {
                 "function": "_==_",
                 "args": [
                   {
-                    "id": "4",
+                    "id": "2",
                     "selectExpr": {
                       "operand": {
                         "id": "3",
                         "selectExpr": {
                           "operand": {
-                            "id": "2",
+                            "id": "4",
                             "selectExpr": {
                               "operand": {
-                                "id": "1",
+                                "id": "5",
                                 "identExpr": {
                                   "name": "request"
                                 }
@@ -363,10 +363,10 @@
                     }
                   },
                   {
-                    "id": "7",
+                    "id": "6",
                     "selectExpr": {
                       "operand": {
-                        "id": "6",
+                        "id": "7",
                         "identExpr": {
                           "name": "constants"
                         }

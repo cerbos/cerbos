@@ -1,0 +1,354 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Macros tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: macro_user
+  policyVersion: default
+  roles:
+    - employee
+    - user
+  attr:
+    forbidden:
+      - US
+      - UK
+
+tests:
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: map
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: in
+            operands:
+              - value: US
+              - expression:
+                  operator: map
+                  operands:
+                    - variable: request.resource.attr.geos
+                    - expression:
+                        operator: lambda
+                        operands:
+                          - expression:
+                              operator: upperAscii
+                              operands:
+                                - variable: t
+                          - variable: t
+      matchedScopes:
+        map: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: filter
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: in
+            operands:
+              - value: US
+              - expression:
+                  operator: filter
+                  operands:
+                    - variable: request.resource.attr.geos
+                    - expression:
+                        operator: lambda
+                        operands:
+                          - expression:
+                              operator: startsWith
+                              operands:
+                                - variable: t
+                                - value: U
+                          - variable: t
+      matchedScopes:
+        filter: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: alt-filter
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.geos
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: exists
+                        operands:
+                          - value:
+                              - US
+                              - UK
+                          - expression:
+                              operator: lambda
+                              operands:
+                                - expression:
+                                    operator: startsWith
+                                    operands:
+                                      - variable: t
+                                      - variable: x
+                                - variable: x
+                    - variable: t
+      matchedScopes:
+        alt-filter: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: P:all
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.country
+                    - value: US
+              - expression:
+                  operator: ne
+                  operands:
+                    - variable: request.resource.attr.country
+                    - value: UK
+      matchedScopes:
+        P:all: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: all
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.geos
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: in
+                        operands:
+                          - value: US
+                          - variable: x.countries
+                    - variable: x
+      matchedScopes:
+        all: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: exists
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: exists
+            operands:
+              - variable: request.resource.attr.geos
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: in
+                        operands:
+                          - value: US
+                          - variable: x.countries
+                    - variable: x
+      matchedScopes:
+        exists: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: P:exists
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: in
+                  operands:
+                    - value: employee
+                    - variable: request.resource.attr.roles
+              - expression:
+                  operator: in
+                  operands:
+                    - value: user
+                    - variable: request.resource.attr.roles
+      matchedScopes:
+        P:exists: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: exists_one
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: exists_one
+            operands:
+              - variable: request.resource.attr.geos
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: in
+                        operands:
+                          - value: US
+                          - variable: x.countries
+                    - variable: x
+      matchedScopes:
+        exists_one: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: embedded
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.geos
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: not
+                        operands:
+                          - expression:
+                              operator: exists
+                              operands:
+                                - variable: x.countries
+                                - expression:
+                                    operator: lambda
+                                    operands:
+                                      - expression:
+                                          operator: in
+                                          operands:
+                                            - variable: t
+                                            - value:
+                                                - US
+                                                - UK
+                                      - variable: t
+                    - variable: x
+      matchedScopes:
+        embedded: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: alt-embedded
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.geos
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: all
+                        operands:
+                          - value:
+                              - US
+                              - UK
+                          - expression:
+                              operator: lambda
+                              operands:
+                                - expression:
+                                    operator: ne
+                                    operands:
+                                      - variable: t
+                                      - variable: x
+                                - variable: t
+                    - variable: x
+      matchedScopes:
+        alt-embedded: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+    action: timestamp
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: all
+            operands:
+              - variable: request.resource.attr.sessions
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: lt
+                        operands:
+                          - expression:
+                              operator: timeSince
+                              operands:
+                                - expression:
+                                    operator: timestamp
+                                    operands:
+                                      - variable: x.lastAccessed
+                          - expression:
+                              operator: duration
+                              operands:
+                                - value: 3600s
+                    - variable: x
+      matchedScopes:
+        timestamp: ""
+
+  - resource:
+      kind: macro
+      policyVersion: default
+      attr:
+        timeline:
+          - "2012-01-21T17:34:12.024Z"
+          - "2014-01-21T08:10:12.534Z"
+    action: timeline
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        timeline: ""

@@ -83,7 +83,8 @@
             "in": "query",
             "required": true,
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "x-example": "2021-07-05T07:27:01+00:00"
           },
           {
             "name": "between.end",
@@ -91,7 +92,8 @@
             "in": "query",
             "required": true,
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "x-example": "2021-07-05T07:27:01+00:00"
           },
           {
             "name": "since",
@@ -175,7 +177,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -244,7 +247,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -285,7 +289,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -324,7 +329,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -439,7 +445,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -480,7 +487,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -558,7 +566,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.sarah.vdefault"
           }
         ],
         "tags": [
@@ -636,7 +645,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.json"
           }
         ],
         "tags": [
@@ -675,7 +685,8 @@
             "items": {
               "type": "string"
             },
-            "collectionFormat": "multi"
+            "collectionFormat": "multi",
+            "x-example": "principal.json"
           }
         ],
         "tags": [
@@ -1033,23 +1044,6 @@
     }
   },
   "definitions": {
-    "AuxDataJWT": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string",
-          "description": "JWT from the original request"
-        },
-        "keySetId": {
-          "type": "string",
-          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
-        }
-      },
-      "description": "JWT from the original request",
-      "required": [
-        "token"
-      ]
-    },
     "CheckOutputActionEffect": {
       "type": "object",
       "properties": {
@@ -1258,6 +1252,17 @@
         "DRIVER_SQLITE3"
       ],
       "default": "DRIVER_UNSPECIFIED"
+    },
+    "EvaluationErrorCELError": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
     },
     "ExpressionOperand": {
       "type": "object",
@@ -1677,19 +1682,63 @@
         "jwt": {
           "type": "object",
           "additionalProperties": {}
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbosEngineV1AuxDataJWT"
+          }
         }
       },
       "description": "Structured auxiliary data"
+    },
+    "cerbosEngineV1AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      }
     },
     "cerbosRequestV1AuxData": {
       "type": "object",
       "example": {},
       "properties": {
         "jwt": {
-          "$ref": "#/definitions/AuxDataJWT"
+          "$ref": "#/definitions/cerbosRequestV1AuxDataJWT"
+        },
+        "jwts": {
+          "type": "object",
+          "example": {
+            "app": {
+              "token": "JWT string"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbosRequestV1AuxDataJWT"
+          },
+          "description": "Named list of JWTs associated with this request."
         }
       },
       "description": "Structured auxiliary data useful for evaluating the request"
+    },
+    "cerbosRequestV1AuxDataJWT": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "description": "JWT from the original request"
+        },
+        "keySetId": {
+          "type": "string",
+          "description": "Key ID to use when decoding the token (defined in the Cerbos server configuration)"
+        }
+      },
+      "description": "JWT from the original request",
+      "required": [
+        "token"
+      ]
     },
     "engineV1Resource": {
       "type": "object",
@@ -1745,7 +1794,7 @@
         "NULL_VALUE"
       ],
       "default": "NULL_VALUE",
-      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\nThe JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+      "description": "Represents a JSON `null`.\n\n`NullValue` is a sentinel, using an enum with only one value to represent\nthe null value for the `Value` type union.\n\nA field of type `NullValue` with any value other than `0` is considered\ninvalid. Most ProtoJSON serializers will emit a Value with a `null_value` set\nas a JSON `null` regardless of the integer value, and so will round trip to\na `0` value.\n\n - NULL_VALUE: Null value."
     },
     "rpcStatus": {
       "type": "object",
@@ -1961,6 +2010,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1OutputEntry"
+          }
+        },
+        "evaluationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1EvaluationError"
           }
         }
       }
@@ -2538,6 +2594,14 @@
       },
       "description": "Enable policy response"
     },
+    "v1EvaluationError": {
+      "type": "object",
+      "properties": {
+        "celError": {
+          "$ref": "#/definitions/EvaluationErrorCELError"
+        }
+      }
+    },
     "v1ExportConstants": {
       "type": "object",
       "properties": {
@@ -2900,6 +2964,13 @@
           "type": "object",
           "additionalProperties": {
             "type": "string"
+          }
+        },
+        "evaluationErrors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1EvaluationError"
           }
         }
       }

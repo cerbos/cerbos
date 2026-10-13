@@ -8,3 +8,9 @@ include::partial$version-check.adoc[]
 With the policies now defined the authorization logic inside the app can be replaced with a call out to a running Cerbos instance.
 
 Cerbos has SDKs available for Go, Java, .NET, Node, PHP, Python, Ruby, and Rust. Documentation for these and other examples can be found xref:api:index.adoc[here].
+ All Cerbos integrations can be explored at https://www.cerbos.dev/ecosystem[the Cerbos ecosystem page].
+
+[TIP]
+====
+For a review of integration architecture, query plan usage, SDK configuration, or production deployment patterns, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=tutorial_integrating[speak to us].
+====

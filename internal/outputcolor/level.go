@@ -70,7 +70,7 @@ func scan(ctx *kong.DecodeContext) (*Level, error) {
 	default:
 	}
 
-	return pointer(Basic), nil
+	return new(Basic), nil
 }
 
 func parse(v any) (*Level, error) {
@@ -84,22 +84,18 @@ func parse(v any) (*Level, error) {
 		return nil, nil
 
 	case "false", "never":
-		return pointer(None), nil
+		return new(None), nil
 
 	case "true", "always":
-		return pointer(Basic), nil
+		return new(Basic), nil
 
 	case "256":
-		return pointer(Ansi256), nil
+		return new(Ansi256), nil
 
 	case "16m", "full", "truecolor":
-		return pointer(Ansi16m), nil
+		return new(Ansi16m), nil
 
 	default:
 		return nil, fmt.Errorf("invalid value for output color level: %q", s)
 	}
-}
-
-func pointer(level Level) *Level {
-	return &level
 }

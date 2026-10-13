@@ -68,8 +68,7 @@ func TestInspect(t *testing.T) {
 				expectedErrors := testCase.RuleTablesExpectation.Errors
 
 				idx, err := index.Build(ctx, os.DirFS(dir))
-				var haveIdxBuildErr *index.BuildError
-				if errors.As(err, &haveIdxBuildErr) {
+				if haveIdxBuildErr, ok := errors.AsType[*index.BuildError](err); ok {
 					var wantIdxBuildErrs *runtimev1.IndexBuildErrors
 					expectedIdxBuildErrs, ok := expectedErrors.(*privatev1.InspectTestCase_RuleTablesExpectation_IndexBuildErrors)
 					if ok {
@@ -89,13 +88,11 @@ func TestInspect(t *testing.T) {
 				require.NoError(t, err)
 
 				store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-				compiler, err := compile.NewManager(ctx, store)
-				require.NoError(t, err)
+				compiler := compile.NewManager(store)
 
 				protoRT := ruletable.NewProtoRuletable()
 				err = ruletable.LoadPolicies(t.Context(), protoRT, compiler)
-				var haveCompileErrSet *compile.ErrorSet
-				if errors.As(err, &haveCompileErrSet) {
+				if haveCompileErrSet, ok := errors.AsType[*compile.ErrorSet](err); ok {
 					var wantCompileErrs []*runtimev1.CompileErrors_Err
 					expectedCompileErrs, ok := expectedErrors.(*privatev1.InspectTestCase_RuleTablesExpectation_CompileErrors)
 					if ok {
@@ -133,8 +130,7 @@ func TestInspect(t *testing.T) {
 				expectedErrors := testCase.PolicySetsExpectation.Errors
 
 				idx, err := index.Build(ctx, os.DirFS(dir))
-				var haveIdxBuildErr *index.BuildError
-				if errors.As(err, &haveIdxBuildErr) {
+				if haveIdxBuildErr, ok := errors.AsType[*index.BuildError](err); ok {
 					var wantIdxBuildErrs *runtimev1.IndexBuildErrors
 					expectedIdxBuildErrs, ok := expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_IndexBuildErrors)
 					if ok {
@@ -156,8 +152,7 @@ func TestInspect(t *testing.T) {
 				ins := inspect.PolicySets()
 				for unit := range idx.GetAllCompilationUnits(ctx) {
 					rps, err := compile.Compile(unit, mgr)
-					var haveCompileErrSet *compile.ErrorSet
-					if errors.As(err, &haveCompileErrSet) {
+					if haveCompileErrSet, ok := errors.AsType[*compile.ErrorSet](err); ok {
 						var wantCompileErrs []*runtimev1.CompileErrors_Err
 						expectedCompileErrs, ok := expectedErrors.(*privatev1.InspectTestCase_PolicySetsExpectation_CompileErrors)
 						if ok {

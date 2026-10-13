@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Role policies tax return tests for emma
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: emma_cpa
+  policyVersion: default
+  roles:
+    - accountant
+
+tests:
+  - resource:
+      kind: tax_return
+      policyVersion: default
+    action: file
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        file: ""
+
+  - resource:
+      kind: tax_return
+      policyVersion: default
+    action: delete
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete: ""

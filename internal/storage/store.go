@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"sync"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -155,6 +156,12 @@ type SourceStore interface {
 	LoadPolicy(context.Context, ...string) ([]*policy.Wrapper, error)
 }
 
+// IterableSourceStore is an optional interface for source stores that can yield their
+// compilation units one at a time instead of materialising them all into a slice.
+type IterableSourceStore interface {
+	Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error]
+}
+
 // BinaryStore is implemented by stores that have pre-compiled policies in binary format.
 type BinaryStore interface {
 	Store
@@ -205,6 +212,8 @@ type Subscribable interface {
 // Subscriber is the interface implemented by storage subscribers.
 type Subscriber interface {
 	SubscriberID() string
+	// OnStorageEvent must apply the events' effects before returning.
+	// SubscriptionManager.NotifySubscribersAndWait semantics treats "delivered" as processed.
 	OnStorageEvent(...Event)
 }
 

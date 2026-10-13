@@ -2,6 +2,61 @@
   "$id": "https://api.cerbos.test/cerbos/private/v1/QueryPlannerTestSuite.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "cerbos.engine.v1.AuxData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "jwt": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "jwts": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/cerbos.engine.v1.AuxData.JWT"
+          },
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.AuxData.JWT": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "claims": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "celError": {
+          "$ref": "#/definitions/cerbos.engine.v1.EvaluationError.CELError"
+        }
+      }
+    },
+    "cerbos.engine.v1.EvaluationError.CELError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
     "cerbos.engine.v1.PlanResourcesFilter": {
       "type": "object",
       "additionalProperties": false,
@@ -80,6 +135,57 @@
         }
       }
     },
+    "cerbos.engine.v1.PlanResourcesOutput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evaluationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.engine.v1.EvaluationError"
+          }
+        },
+        "filter": {
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
+        },
+        "filterDebug": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "matchedScopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "policyVersion": {
+          "type": "string"
+        },
+        "requestId": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "validationErrors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.schema.v1.ValidationError"
+          }
+        }
+      }
+    },
     "cerbos.engine.v1.Principal": {
       "type": "object",
       "required": [
@@ -121,6 +227,57 @@
         }
       }
     },
+    "cerbos.private.v1.EngineConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "defaultPolicyVersion": {
+          "type": "string"
+        },
+        "defaultScope": {
+          "type": "string"
+        },
+        "globals": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/google.protobuf.Value"
+          }
+        },
+        "lenientScopeSearch": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "schemaEnforcement": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.private.v1.EngineConfig.Enforcement"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "strictEvaluation": {
+          "type": "array",
+          "items": {
+            "type": "boolean"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "cerbos.private.v1.EngineConfig.Enforcement": {
+      "type": "string",
+      "enum": [
+        "ENFORCEMENT_UNSPECIFIED",
+        "ENFORCEMENT_NONE",
+        "ENFORCEMENT_WARN",
+        "ENFORCEMENT_REJECT"
+      ]
+    },
     "cerbos.private.v1.QueryPlannerTestSuite.Test": {
       "type": "object",
       "additionalProperties": false,
@@ -138,12 +295,38 @@
           "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesInput.Resource"
         },
         "want": {
-          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesFilter"
-        },
-        "wantErr": {
-          "type": "boolean"
+          "$ref": "#/definitions/cerbos.engine.v1.PlanResourcesOutput"
         }
       }
+    },
+    "cerbos.schema.v1.ValidationError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/cerbos.schema.v1.ValidationError.Source"
+        }
+      }
+    },
+    "cerbos.schema.v1.ValidationError.Source": {
+      "type": "string",
+      "enum": [
+        "SOURCE_UNSPECIFIED",
+        "SOURCE_PRINCIPAL",
+        "SOURCE_RESOURCE"
+      ]
+    },
+    "google.protobuf.Timestamp": {
+      "title": "Timestamp",
+      "description": "A point in time, independent of any time zone or calendar.",
+      "type": "string",
+      "format": "date-time"
     },
     "google.protobuf.Value": {
       "title": "Value",
@@ -151,10 +334,22 @@
     }
   },
   "type": "object",
+  "required": [
+    "config"
+  ],
   "additionalProperties": false,
   "properties": {
+    "auxData": {
+      "$ref": "#/definitions/cerbos.engine.v1.AuxData"
+    },
+    "config": {
+      "$ref": "#/definitions/cerbos.private.v1.EngineConfig"
+    },
     "description": {
       "type": "string"
+    },
+    "now": {
+      "$ref": "#/definitions/google.protobuf.Timestamp"
     },
     "principal": {
       "$ref": "#/definitions/cerbos.engine.v1.Principal"

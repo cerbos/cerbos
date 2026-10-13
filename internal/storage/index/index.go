@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"iter"
 	"sort"
 	"sync"
 
@@ -58,6 +59,7 @@ type Index interface {
 	GetFiles() []string
 	GetAllCompilationUnits(context.Context) <-chan *policy.CompilationUnit
 	GetAllCompilationUnitsWithCount(context.Context) (int, <-chan *policy.CompilationUnit)
+	Iter(context.Context) iter.Seq2[*policy.CompilationUnit, error]
 	Clear() error
 	InspectPolicies(context.Context, ...string) (map[string]*responsev1.InspectPoliciesResponse_Result, error)
 	ListPolicyIDs(context.Context, ...string) ([]string, error)
@@ -434,6 +436,28 @@ func (idx *index) GetAllCompilationUnitsWithCount(ctx context.Context) (int, <-c
 	}()
 
 	return len(toCompile), outChan
+}
+
+func (idx *index) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return func(yield func(*policy.CompilationUnit, error) bool) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		n, ch := idx.GetAllCompilationUnitsWithCount(ctx)
+		count := 0
+		for unit := range ch {
+			if !yield(unit, nil) {
+				return
+			}
+			count++
+		}
+
+		if count < n {
+			if err := ctx.Err(); err != nil {
+				yield(nil, err)
+			}
+		}
+	}
 }
 
 func (idx *index) Clear() error {

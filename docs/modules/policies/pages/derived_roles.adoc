@@ -4,6 +4,8 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
+[.lead]
+Derived roles are computed at request evaluation time from the principal's base roles and request attributes. They augment static IdP-assigned roles with context-dependent designations.
 
 Traditional RBAC roles are usually broad groupings with no context awareness. They are static and they are provided by the Identity Provider(IDP), not by Cerbos. Cerbos provides derived roles as a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.
 
@@ -80,6 +82,10 @@ derivedRoles:
 
 ****
 
+[TIP]
+====
+For the tradeoffs between derived roles and dynamic attribute checks when modelling hierarchy-based permissions, see https://www.cerbos.dev/blog/mastering-hierarchy-based-permissions-with-cerbos-policy-defined-roles-vs-dynamic-attributes[Mastering hierarchy-based permissions with Cerbos]. To discuss a specific permission model, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=derived_roles[speak to us].
+====
 
 [#troubleshooting]
 == Troubleshooting derived roles

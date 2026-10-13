@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"cel.dev/cel-go/cel"
 	"github.com/ghodss/yaml"
-	"github.com/google/cel-go/cel"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"

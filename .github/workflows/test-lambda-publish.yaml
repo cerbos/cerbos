@@ -28,21 +28,21 @@ jobs:
       packages: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and restore cached dependencies
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: |-
             goreleaser
@@ -72,7 +72,7 @@ jobs:
       AWS_REGION: us-east-2
     steps:
       - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -84,7 +84,7 @@ jobs:
           path: dist/
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b # v6.2.0
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/github
           aws-region: ${{ vars.AWS_REGION }}
@@ -95,7 +95,7 @@ jobs:
           use-installer: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: just
 

@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Resource kind tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: user123
+  policyVersion: default
+  roles:
+    - USER_ORG
+
+tests:
+  - resource:
+      kind: organization
+      policyVersion: default
+    action: read
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.team
+              - value: RED
+      matchedScopes:
+        read: ""
+
+  - resource:
+      kind: not-organization
+      policyVersion: default
+    action: read
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.team
+              - value: BLUE
+      matchedScopes:
+        read: ""

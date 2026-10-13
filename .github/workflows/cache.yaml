@@ -18,13 +18,13 @@ jobs:
       deps: ${{ steps.filter.outputs.deps }}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Check for changes
         id: filter
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           filters: |
             deps:
@@ -40,22 +40,22 @@ jobs:
     permissions: {}
     steps:
       - name: Check out code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+        uses: $/.github/actions/free-disk-space
 
       - name: Install Go and cache dependencies
         id: setup
-        uses: ./.github/actions/setup-go
+        uses: $/.github/actions/setup-go
         with:
           write_deps_cache: true
           write_build_cache: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@3e513163c6e062721f84cd58125a5dfa5293e3b2 # main
+        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
         with:
           tools: just
 

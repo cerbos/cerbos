@@ -391,3 +391,10 @@ storage:
     dsn: "file:/tmp/cerbos.sqlite?mode=rwc&cache=shared&_fk=true"
 ----
 
+WARNING: The DSN must either enable the shared cache (`cache=shared`) or set a busy timeout (for example, `_pragma=busy_timeout(5000)`).
+Otherwise, policies added or updated through the Admin API can be missing from the PDP until the next store reload, because the database might be locked by a concurrent write when Cerbos loads them.
+
+[TIP]
+====
+https://docs.cerbos.dev/cerbos-hub/[Cerbos Hub] automates policy change detection, testing and secure distribution to connected PDPs.
+====

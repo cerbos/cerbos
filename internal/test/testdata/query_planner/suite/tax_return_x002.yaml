@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Role policies tax return tests for x002
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: x002
+  policyVersion: default
+  roles:
+    - employee
+    - bookkeeper
+
+tests:
+  - resource:
+      kind: tax_return
+      scope: acme.finance
+      policyVersion: default
+    action: reference # not allowed in `bookkeeper`
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        reference: ""
+
+  - resource:
+      kind: tax_return
+      scope: acme.finance
+      policyVersion: default
+    action: comment # allowed in `bookkeeper`, not allowed in parent scopes for narrowed role. not allowed for non-narrowed role
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        comment: ""
+
+  - resource:
+      kind: tax_return
+      scope: acme.finance
+      policyVersion: default
+    action: view # allowed in parent scope for non-narrowed role
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""
+
+  - resource:
+      kind: tax_return
+      scope: acme.finance
+      policyVersion: default
+    action: create # allowed in `bookkeeper`, allowed in parent scopes for narrowed role
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        create: ""

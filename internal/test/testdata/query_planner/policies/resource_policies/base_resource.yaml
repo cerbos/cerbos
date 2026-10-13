@@ -1,0 +1,21 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: baseResource
+  rules:
+    - actions:
+        - GET
+      effect: EFFECT_ALLOW
+      roles:
+        - "*"
+      condition:
+        match:
+          any:
+            of:
+              - expr: "R.attr.isActive == false"
+
+    - actions:
+        - POST
+      effect: EFFECT_DENY
+      roles:
+        - "*"

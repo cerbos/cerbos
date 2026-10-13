@@ -1,7 +1,20 @@
 # yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
 ---
 description: runtime.effectiveDerivedRoles
-inputs:
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
   - requestId: test
     actions:
       - camelCase
@@ -13,7 +26,8 @@ inputs:
     resource:
       kind: runtime_effective_derived_roles
       id: test
-wantOutputs:
+
+wantOutputs: &outputs
   - requestId: test
     resourceId: test
     effectiveDerivedRoles:
@@ -27,85 +41,26 @@ wantOutputs:
         effect: EFFECT_ALLOW
         policy: resource.runtime_effective_derived_roles.vdefault
     outputs:
-      - src: resource.runtime_effective_derived_roles.vdefault#camelCase
+      - src: "resource.runtime_effective_derived_roles.vdefault#camelCase"
         val:
           - one
           - two
         action: camelCase
-      - src: resource.runtime_effective_derived_roles.vdefault#snake_case
+      - src: "resource.runtime_effective_derived_roles.vdefault#snake_case"
         val:
           - one
           - two
         action: snake_case
+
 wantDecisionLogs:
-  [
-    {
-      "callId": "01HGJY5WCDB03ECX7FW642KVK7",
-      "timestamp": "2023-12-01T14:57:59.181380904Z",
-      "checkResources":
-        {
-          "inputs":
-            [
-              {
-                "requestId": "test",
-                "resource":
-                  { "kind": "runtime_effective_derived_roles", "id": "test" },
-                "principal": { "id": "andy", "roles": ["employee"] },
-                "actions": ["camelCase", "snake_case"],
-              },
-            ],
-          "outputs":
-            [
-              {
-                "requestId": "test",
-                "resourceId": "test",
-                "actions":
-                  {
-                    "camelCase":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.runtime_effective_derived_roles.vdefault",
-                      },
-                    "snake_case":
-                      {
-                        "effect": "EFFECT_ALLOW",
-                        "policy": "resource.runtime_effective_derived_roles.vdefault",
-                      },
-                  },
-                "effectiveDerivedRoles": ["one", "two"],
-                "outputs":
-                  [
-                    {
-                      "src": "resource.runtime_effective_derived_roles.vdefault#camelCase",
-                      "val": ["one", "two"],
-                      "action": "camelCase",
-                    },
-                    {
-                      "src": "resource.runtime_effective_derived_roles.vdefault#snake_case",
-                      "val": ["one", "two"],
-                      "action": "snake_case",
-                    },
-                  ],
-              },
-            ],
-        },
-      "auditTrail":
-        {
-          "effectivePolicies":
-            {
-              "resource.runtime_effective_derived_roles.vdefault":
-                {
-                  "attributes":
-                    {
-                      "driver": "disk",
-                      "source": "resource_policies/policy_14.yaml",
-                    },
-                },
-            },
-        },
-      "policySource":
-        {
-          "disk": {},
-        },
-    },
-  ]
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.runtime_effective_derived_roles.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_14.yaml
+    policySource:
+      disk: {}

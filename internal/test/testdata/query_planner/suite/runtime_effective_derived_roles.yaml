@@ -1,0 +1,186 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: runtime.effectiveDerivedRoles tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: test
+  policyVersion: default
+  roles:
+    - user
+
+tests:
+  - resource:
+      kind: runtime_effective_derived_roles
+      policyVersion: default
+      attr:
+        one: true
+        two: true
+        three: true
+        trois: false
+        tres: false
+    action: camelCase
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        camelCase: ""
+
+  - resource:
+      kind: runtime_effective_derived_roles
+      policyVersion: default
+      attr:
+        one: true
+        two: true
+        three: false
+    action: camelCase
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        camelCase: ""
+
+  - resource:
+      kind: runtime_effective_derived_roles
+      policyVersion: default
+      attr:
+        one: true
+        two: true
+    action: camelCase
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - expression:
+                  operator: add
+                  operands:
+                    - value:
+                        - one
+                    - expression:
+                        operator: add
+                        operands:
+                          - expression:
+                              operator: if
+                              operands:
+                                - expression:
+                                    operator: and
+                                    operands:
+                                      - variable: request.resource.attr.three
+                                      - expression:
+                                          operator: and
+                                          operands:
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.trois
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.tres
+                                - value:
+                                    - three
+                                - value: []
+                          - value:
+                              - two
+              - value:
+                  - one
+                  - three
+                  - two
+      matchedScopes:
+        camelCase: ""
+
+  - resource:
+      kind: runtime_effective_derived_roles
+      policyVersion: default
+      attr:
+        one: true
+        two: true
+        three: true
+        trois: false
+        tres: false
+    action: snake_case
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        snake_case: ""
+
+  - resource:
+      kind: runtime_effective_derived_roles
+      policyVersion: default
+      attr:
+        one: true
+        two: true
+        three: false
+    action: snake_case
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        snake_case: ""
+
+  - resource:
+      kind: runtime_effective_derived_roles
+      policyVersion: default
+      attr:
+        one: true
+        two: true
+    action: snake_case
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - expression:
+                  operator: add
+                  operands:
+                    - value:
+                        - one
+                    - expression:
+                        operator: add
+                        operands:
+                          - expression:
+                              operator: if
+                              operands:
+                                - expression:
+                                    operator: and
+                                    operands:
+                                      - variable: request.resource.attr.three
+                                      - expression:
+                                          operator: and
+                                          operands:
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.trois
+                                            - expression:
+                                                operator: not
+                                                operands:
+                                                  - variable: request.resource.attr.tres
+                                - value:
+                                    - three
+                                - value: []
+                          - value:
+                              - two
+              - value:
+                  - one
+                  - three
+                  - two
+      matchedScopes:
+        snake_case: ""

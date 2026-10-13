@@ -45,8 +45,7 @@ func TestIncrementalAddReleasesCheckedExprs(t *testing.T) {
 	subMgr := storage.NewSubscriptionManager(ctx)
 	schemaMgr := schema.NewFromConf(ctx, store, schema.NewConf(schema.EnforcementNone))
 
-	compiler, err := compile.NewManager(ctx, store)
-	require.NoError(t, err)
+	compiler := compile.NewManager(store)
 
 	// Start from an empty rule table.
 	ruleTable, err := ruletable.NewRuleTable(ruletable.NewProtoRuletable())

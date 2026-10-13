@@ -128,7 +128,7 @@ message PolicySource {
     }
 
     oneof source {
-      string label = 1;
+      string label = 1 [deprecated = true];
       string deployment_id = 2 [deprecated = true];
       string playground_id = 3;
       LocalBundle local_bundle = 4;
@@ -143,14 +143,18 @@ message PolicySource {
     Disk disk = 3;
     Git git = 4;
     Hub hub = 5;
-    EmbeddedPDP embedded_pdp = 6;
+    EmbeddedPDP embedded_pdp = 6 [deprecated = true];
   }
 }
 
 message RequestContext {
-  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {json_schema: {description: "Optional metadata to attach to the request. This information will be captured in the audit logs if audit logging is enabled."}};
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
+    json_schema: {description: "Optional metadata to attach to the request. This information will be captured in the audit logs if audit logging is enabled."}
+  };
   map<string, google.protobuf.Value> annotations = 1 [
-    (buf.validate.field).map.keys = {string: {min_len: 1}},
+    (buf.validate.field).map.keys = {
+      string: {min_len: 1}
+    },
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
       description: "Key-value pairs of annotations."
       min_properties: 1

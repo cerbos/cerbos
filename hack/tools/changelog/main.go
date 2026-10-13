@@ -39,6 +39,7 @@ type addCmd struct {
 
 type generateCmd struct {
 	From       string `help:"Reference to start of change log" required:""`
+	Date       string `help:"Release date" optional:""`
 	NewVersion string `help:"New release version" required:""`
 }
 
@@ -98,6 +99,7 @@ type ChangelogSection struct {
 
 type Changelog struct {
 	Version  string
+	Date     string
 	Sections []ChangelogSection
 }
 
@@ -113,7 +115,12 @@ func (gc *generateCmd) Run(k *kong.Kong) error {
 		return err
 	}
 
-	changelogData := Changelog{Version: gc.NewVersion}
+	releaseDate := gc.Date
+	if releaseDate == "" {
+		releaseDate = time.Now().Format(time.DateOnly)
+	}
+
+	changelogData := Changelog{Version: gc.NewVersion, Date: releaseDate}
 	for _, section := range []struct {
 		Type  string
 		Title string

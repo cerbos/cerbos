@@ -4,6 +4,8 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
+[.lead]
+Conditions are CEL expressions evaluated at request time against principal, resource, and request attributes. A rule with a condition applies only when the expression evaluates to true.
 
 A powerful feature of Cerbos policies is the ability to define conditions that are evaluated against the data provided in the request. Conditions are written using the link:https://github.com/google/cel-spec/blob/master/doc/intro.md[Common Expression Language (CEL)].
 
@@ -64,6 +66,15 @@ request:
   auxData: <9>
     jwt: <10>
       iss: acme.corp
+    jwts: <11>
+      token_a:
+        claims:
+          iss: acme.corp
+          sub: foo
+      token_b:
+        claims:
+          iss: acme.corp
+          sub: bar
 ----
 <1> The principal whose permissions are being checked.
 <2> ID of the principal.
@@ -74,7 +85,9 @@ request:
 <7> ID of the resource instance.
 <8> Free-form context data about the resource instance.
 <9> xref:configuration:auxdata.adoc[Auxiliary data sources].
-<10> JWT claims.
+<10> JWT claims. Mutually exclusive with `jwts`.
+<11> Named JWT claims. Since Cerbos 0.55.0 only. Mutually exclusive with `jwt`.
+
 
 .The `runtime` object
 [source,yaml,linenums]
@@ -184,6 +197,12 @@ expr: ("GB" in R.attr.geographies)
 ----
 ****
 
+[WARNING]
+====
+A CEL *runtime error* while evaluating a condition (for example comparing incompatible types such as `R.attr.amount > 1000` when `amount` is a string, or referencing a missing attribute) causes the condition to be treated as not satisfied. For `ALLOW` rules this fails closed: the rule simply does not match. For `DENY` rules it currently fails *open*: the deny is skipped, so a matching `ALLOW` can still grant the request.
+
+From Cerbos v0.55 a `DENY` rule whose condition raises a runtime error will fail closed (the deny is applied). Cerbos v0.54 logs every runtime error raised during evaluation and includes the errors in audit log entries so you can find and fix affected policies before upgrading. The xref:configuration:engine.adoc#cel_error_log_level[`engine.celErrorLogLevel`] setting controls the level of the log messages.
+====
 
 == Policy variables
 
@@ -200,6 +219,15 @@ If you have xref:configuration:auxdata.adoc[auxiliary data sources configured], 
 ----
 "cerbie" in request.auxData.jwt.aud && request.auxData.jwt.iss == "cerbos"
 ----
+
+.Accessing named JWT claims (Cerbos 0.55.0 and above)
+[source,yaml,linenums]
+----
+"cerbie" in request.auxData.jwts.token_a.claims.aud && request.auxData.jwts.token_b.claims.iss == "cerbos"
+----
+
+NOTE: When multiple JWTs are referenced (since Cerbos 0.55.0 only), the syntax is `request.auxData.jwts.TOKEN_NAME.claims.CLAIM_NAME` or `request.auxData.jwts["TOKEN_NAME"].claims["CLAIM_NAME]`. Note the `claims` mandatory field between the token name and the claim name.
+
 
 
 == Operators
@@ -323,7 +351,7 @@ NOTE: The hierarchy functions are Cerbos-specific extensions to CEL.
 
 == IP addresses
 
-NOTE: The IP address functions are Cerbos-specific extensions to CEL.
+NOTE: The `inIPAddrRange` is a Cerbos-specific extension function to CEL.
 
 .Test data
 [source,json,linenums]
@@ -343,11 +371,25 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 [%header,cols=".^1m,.^2,4m",grid=rows]
 |===
 | Function | Description | Example
+| cidr(<cidr>).containsCIDR | Returns whether the CIDR contains the given CIDR. Since v0.55.0 only. | cidr("192.168.0.0/8").containsCIDR(cidr("192.168.1.0/24")) == true
+| cidr(<cidr>).containsIP | Returns whether the CIDR contains the given IP. Since v0.55.0 only. Use `inIPAddrRange` for older versions. | cidr("2001:db8::/48").containsIP(P.attr.ipv6Address) == true
+| cidr(<cidr>).isMask | Returns whether the CIDR is a mask. Since v0.55.0 only. | cidr("192.168.0.0/8").isMask() == true
+| cidr(<cidr>).masked | Returns the masked CIDR for the value. Since v0.55.0 only. | cidr("192.168.1.5/24").masked() == cidr("192.168.1.0/24")
+| cidr(<cidr>).prefixLength | Returns the prefix length of the CIDR. Since v0.55.0 only. | cidr("192.168.1.0/24").prefixLength() == 24
 | inIPAddrRange | Check whether the IP address is in the range defined by the CIDR | P.attr.ipv4Address.inIPAddrRange("192.168.0.0/24") && P.attr.ipv6Address.inIPAddrRange("2001:db8::/48")
+| ip(<ip>).family | Returns the IP family. Since v0.55.0 only. | ip(P.attr.ipv4Address) == 4
+| ip(<ip>).isGlobalUnicast | Returns true if the IP address is a global unicast address. Since v0.55.0 only. | ip(P.attr.ipv6Address).isGlobalUnicast() == true
+| ip(<ip>).isLinkLocalMulticast | Returns true if the IP address is a link local multicast address. Since v0.55.0 only. | ip(P.attr.ipv6Address).isLinkLocalMulticast() == false
+| ip(<ip>).isLinkLocalUnicast | Returns true if the IP address is a link local unicast address. Since v0.55.0 only. | ip(P.attr.ipv6Address).isLinkLocalUnicast() == false
+| ip(<ip>).isLoopback | Returns true if the IP address is a loopback address. Since v0.55.0 only. | ip(P.attr.ipv4Address).isLoopback() == false
+| ip(<ip>).isUnspecified | Returns true if the IP address is unspecified (either `0.0.0.0` or `::`). Since v0.55.0 only. | ip(P.attr.ipv6Address).isUnspecified() == false
+| ip.isCanonical | Check whether the IPv6 string conforms to https://www.rfc-editor.org/rfc/rfc5952.html[RFC 5952]. Since v0.55.0 only. | ip.isCanonical(P.attr.ipv6Address) == false
+| isCIDR | Returns true if the string is an IPv4 or IPv6 CIDR. Since v0.55.0 only. | isCIDR("::1/128") == true
+| isIP | Returns true if the string is an IPv4 or IPv6 address. Since v0.55.0 only. | isIP(P.attr.ipv4Address) == true
 |===
 
 
-== Lists and maps
+== Lists, maps, and sets
 
 .Test data
 [source,json,linenums]
@@ -391,6 +433,9 @@ NOTE: The IP address functions are Cerbos-specific extensions to CEL.
 | lists.range    | Returns a list of integers from 0 to n-1 | lists.range(5) == [0, 1, 2, 3, 4]
 | map      | Transform each element in a list | "DESIGN" in P.attr.teams.map(t, t.upperAscii())
 | reverse  | Returns the elements of a list in reverse order | [5, 3, 1, 2].reverse() == [2, 1, 3, 5]
+| sets.contains | Checks whether the first list contains all the elements of the second list. Since v0.55.0 only. | sets.contains(P.attr.teams, ["design"]) == true
+| sets.equivalent | Checks whether for every item in the first list, there exists an equal item in the second list. Since v0.55.0 only. | sets.equivalent(P.attr.teams, ["commercial", "product", "communications", "design"])  == true
+| sets.intersects | Checks whether the lists have at least one item in common. Since v0.55.0 only. Use `hasIntersection` for older versions. |  sets.intersects(["design", "engineering"], P.attr.teams) == true
 | size     | Number of elements in a list or map | size(P.attr.teams) == 4 && size(P.attr.clients) == 2
 | slice    | Returns a new sub-list using the indexes provided | [1,2,3,4].slice(1, 3) == [2, 3]
 | sort     | Sorts a list with comparable elements | [3, 2, 1].sort() == [1, 2, 3]
@@ -506,9 +551,13 @@ NOTE: The SPIFFE functions are Cerbos-specific extensions to CEL.
 | endsWith | Check whether a string has the given suffix | R.attr.department.endsWith("ing")
 | format   | Format a string with the given arguments | "department_%s_%d".format(["marketing", 1])
 | indexOf  | Index of the first occurrence of the given character | R.attr.department.indexOf('a') == 1
+| json.encode | Encode as JSON. Since v0.55.0 only. | json.encode(R.attr) == '{"id":"125","department":"marketing"}'
 | lastIndexOf | Index of the last occurrence of the given character | R.attr.department.lastIndexOf('g') == 8
 | lowerAscii  | Convert ASCII characters to lowercase | "MARKETING".lowerAscii() == R.attr.department
 | matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | R.attr.department.matches("^[mM].*g$")
+| regex.extractAll | Extract all occurrences of a https://github.com/google/re2/wiki/Syntax[RE2] regular expression match. Since v0.55.0 only. | regex.extractAll("a bb a cc", "a") == ["a", "a"]
+| regex.replace | Replace all occurrences of a https://github.com/google/re2/wiki/Syntax[RE2] regular expression match. Since v0.55.0 only. | regex.replace("banana", "a", "i") == "binini"
+| regex.replace | Replace occurrences of a https://github.com/google/re2/wiki/Syntax[RE2] regular expression match with a limit. Since v0.55.0 only. | regex.replace("banana", "a", "i", 1) == "binana" && regex.replace("banana", "b(a).*", r"\1") == "a"
 | replace  | Replace all occurrences of a substring | R.attr.department.replace("market", "engineer") == "engineering"
 | replace  | Replace with limits. Limit 0 replaces nothing, -1 replaces all. | "engineering".replace("e", "a", 1) == "angineering" && "engineering".replace("e", "a", -1) == "anginaaring"
 | size     | Get the length of the string | size(R.attr.department) == 9
@@ -570,3 +619,8 @@ timestamp(R.attr.lastUpdateTime) - timestamp(R.attr.lastAccessed) > duration("36
 ----
 timestamp(R.attr.lastUpdateTime) + duration("24h") == timestamp("2021-05-02T13:34:12.024Z")
 ----
+
+[TIP]
+====
+For patterns that translate condition logic into database queries, see https://www.cerbos.dev/blog/filtering-database-results-with-cerbos-query-plans[Filtering database results with Cerbos query plans]. For implementation review, https://www.cerbos.dev/workshop?utm_campaign=brand_cerbos&utm_source=documentation&utm_medium=text&utm_content=conditions[speak to us].
+====

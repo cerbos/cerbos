@@ -8,15 +8,12 @@ package hub
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"sync"
 
-	cloudapi "github.com/cerbos/cloud-api/bundle"
-	"github.com/cerbos/cloud-api/credentials"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	"github.com/spf13/afero"
 	"go.uber.org/multierr"
@@ -63,34 +60,13 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 		CacheSize:  conf.CacheSize,
 	}
 
-	ext := filepath.Ext(lp.BundlePath)
-	switch {
-	case ext == ".crrt", ext == ".crrts":
-		lp.BundleVersion = cloudapi.Version2
-		if conf.Local.EncryptionKey != "" {
-			encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode encryption key: %w", err)
-			}
-
-			lp.EncryptionKey = encryptionKey
-		}
-
-	case conf.Local.EncryptionKey != "":
-		lp.BundleVersion = cloudapi.Version2
+	if conf.Local.EncryptionKey != "" {
 		encryptionKey, err := hex.DecodeString(conf.Local.EncryptionKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode encryption key: %w", err)
 		}
 
 		lp.EncryptionKey = encryptionKey
-
-	case conf.Credentials.WorkspaceSecret != "":
-		lp.BundleVersion = cloudapi.Version1
-		lp.SecretKey = conf.Credentials.WorkspaceSecret
-
-	default:
-		return nil, errors.New("invalid configuration for local source")
 	}
 
 	return NewLocalSource(ctx, lp)
@@ -99,10 +75,8 @@ func NewLocalSourceFromConf(ctx context.Context, conf *Conf) (*LocalSource, erro
 type LocalParams struct {
 	BundlePath    string
 	TempDir       string
-	SecretKey     string
 	EncryptionKey []byte
 	CacheSize     uint
-	BundleVersion cloudapi.Version
 }
 
 func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, error) {
@@ -121,14 +95,14 @@ func NewLocalSource(ctx context.Context, params LocalParams) (*LocalSource, erro
 		subs:   storage.NewSubscriptionManager(ctx),
 	}
 
-	if err := ls.loadBundle(); err != nil {
+	if err := ls.loadBundle(ctx); err != nil {
 		return nil, err
 	}
 
 	return ls, nil
 }
 
-func (ls *LocalSource) loadBundle() error {
+func (ls *LocalSource) loadBundle(ctx context.Context) error {
 	workDir, err := os.MkdirTemp(ls.params.TempDir, "cerbos-bundle-*")
 	if err != nil {
 		return fmt.Errorf("failed to create temporary directory: %w", err)
@@ -143,49 +117,27 @@ func (ls *LocalSource) loadBundle() error {
 		bundleType = bundlev2.BundleType_BUNDLE_TYPE_LEGACY
 	}
 	opts := OpenOpts{
-		Source:     "local",
-		BundlePath: bundlePath,
-		ScratchFS:  afero.NewBasePathFs(afero.NewOsFs(), workDir),
-		CacheSize:  ls.params.CacheSize,
+		Source:        "local",
+		BundlePath:    bundlePath,
+		ScratchFS:     afero.NewBasePathFs(afero.NewOsFs(), workDir),
+		CacheSize:     ls.params.CacheSize,
+		EncryptionKey: ls.params.EncryptionKey,
 	}
 
 	var b Bundle
 
-	switch ls.params.BundleVersion {
-	case cloudapi.Version1:
-		var creds *credentials.Credentials
-		if ls.params.SecretKey != "" {
-			creds, err = credentials.New("unknown", "unknown", ls.params.SecretKey)
-			if err != nil {
-				return fmt.Errorf("failed to create credentials: %w", err)
-			}
+	if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
+		b, err = OpenRuleTableBundle(opts)
+	} else {
+		b, err = OpenLegacyBundle(opts)
+	}
+
+	if err != nil {
+		if err := os.RemoveAll(workDir); err != nil {
+			zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
 		}
 
-		opts.Credentials = creds
-		if b, err = OpenLegacy(opts); err != nil {
-			if err := os.RemoveAll(workDir); err != nil {
-				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
-			}
-
-			return fmt.Errorf("failed to open bundle: %w", err)
-		}
-	case cloudapi.Version2:
-		opts.EncryptionKey = ls.params.EncryptionKey
-		if bundleType == bundlev2.BundleType_BUNDLE_TYPE_RULE_TABLE {
-			b, err = OpenRuleTableBundle(opts)
-		} else {
-			b, err = OpenLegacyV2(opts)
-		}
-
-		if err != nil {
-			if err := os.RemoveAll(workDir); err != nil {
-				zap.L().Warn("Failed to remove work dir", zap.Error(err), zap.String("workdir", workDir))
-			}
-
-			return fmt.Errorf("failed to open bundle v2: %w", err)
-		}
-	default:
-		return fmt.Errorf("unsupported bundle version: %d", ls.params.BundleVersion)
+		return fmt.Errorf("failed to open bundle: %w", err)
 	}
 
 	cleanupFn := func() (outErr error) {
@@ -206,12 +158,16 @@ func (ls *LocalSource) loadBundle() error {
 	ls.bundle = b
 	ls.mu.Unlock()
 
-	ls.subs.NotifySubscribers(storage.NewReloadEvent())
+	waitErr := ls.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent())
 
 	if prevCleanupFn != nil {
 		if err := prevCleanupFn(); err != nil {
 			zap.L().Warn("Failed to cleanup previous bundle", zap.Error(err))
 		}
+	}
+
+	if waitErr != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", waitErr)
 	}
 
 	return nil
@@ -294,8 +250,8 @@ func (ls *LocalSource) GetAllMatching(ctx context.Context, modIDs []namer.Module
 	return pss, err
 }
 
-func (ls *LocalSource) Reload(_ context.Context) error {
-	return ls.loadBundle()
+func (ls *LocalSource) Reload(ctx context.Context) error {
+	return ls.loadBundle(ctx)
 }
 
 func (ls *LocalSource) RepoStats(ctx context.Context) storage.RepoStats {

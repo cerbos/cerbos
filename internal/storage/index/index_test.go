@@ -6,6 +6,7 @@
 package index_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -237,4 +238,42 @@ func TestIndexGetDependents(t *testing.T) {
 		namer.ResourcePolicyModuleID("import_variables", "default", ""),
 		namer.ResourcePolicyModuleID("import_derived_roles_that_import_variables", "default", ""),
 	}, dependents[modID])
+}
+
+func TestIndexIter(t *testing.T) {
+	idx, err := index.Build(t.Context(), os.DirFS(test.PathToDir(t, "store")))
+	require.NoError(t, err)
+
+	count := 0
+	for cu, err := range idx.Iter(t.Context()) {
+		require.NoError(t, err)
+		require.NotNil(t, cu)
+		count++
+	}
+
+	require.Greater(t, count, 5)
+}
+
+func TestIndexIterCancelled(t *testing.T) {
+	idx, err := index.Build(t.Context(), os.DirFS(test.PathToDir(t, "store")))
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	count := 0
+	var iterErr error
+	for cu, err := range idx.Iter(ctx) {
+		if err != nil {
+			iterErr = err
+			break
+		}
+		require.NotNil(t, cu)
+		count++
+		if count == 2 {
+			cancel()
+		}
+	}
+
+	require.ErrorIs(t, iterErr, context.Canceled)
 }

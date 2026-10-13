@@ -19,7 +19,6 @@ import (
 	bundleapi "github.com/cerbos/cloud-api/bundle"
 	"github.com/cerbos/cloud-api/credentials"
 	"github.com/cerbos/cloud-api/crypto"
-	bundlev1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v1"
 	bundlev2 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/bundle/v2"
 	"github.com/spf13/afero"
 	"github.com/spf13/afero/zipfs"
@@ -58,19 +57,7 @@ type LegacyBundle struct {
 	path     string
 }
 
-func toManifestV2(manifest *bundlev1.Manifest) *bundlev2.Manifest {
-	return &bundlev2.Manifest{
-		ApiVersion:  manifest.GetApiVersion(),
-		PolicyIndex: manifest.GetPolicyIndex(),
-		Schemas:     manifest.GetSchemas(),
-		Meta: &bundlev2.Meta{
-			BundleId: manifest.GetMeta().GetIdentifier(),
-			Source:   manifest.GetMeta().GetSource(),
-		},
-	}
-}
-
-func OpenLegacy(opts OpenOpts) (*LegacyBundle, error) {
+func OpenLegacyBundle(opts OpenOpts) (*LegacyBundle, error) {
 	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
 	logger.Info("Opening bundle")
 
@@ -91,76 +78,7 @@ func OpenLegacy(opts OpenOpts) (*LegacyBundle, error) {
 		return nil, err
 	}
 
-	logger.Info("Bundle opened", zap.String("identifier", manifest.Meta.Identifier))
-	return &LegacyBundle{
-		path:     decryptedPath,
-		manifest: toManifestV2(manifest),
-		bundleFS: zipFS,
-		cleanup:  cleanup,
-	}, nil
-}
-
-func decryptLegacyBundle(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
-	input, err := os.Open(opts.BundlePath)
-	if err != nil {
-		logger.Debug("Failed to open bundle", zap.Error(err))
-		return "", 0, fmt.Errorf("failed to open bundle at path %q: %w", opts.BundlePath, err)
-	}
-	defer input.Close()
-
-	var decrypted io.Reader
-	if opts.Credentials == nil {
-		decrypted = input
-	} else {
-		logger.Debug("Decrypting bundle")
-		decrypted, err = opts.Credentials.Decrypt(input)
-		if err != nil {
-			logger.Debug("Failed to decrypt bundle", zap.Error(err))
-			return "", 0, fmt.Errorf("failed to decrypt bundle: %w", err)
-		}
-	}
-
-	afs := &afero.Afero{Fs: opts.ScratchFS}
-	outFile, err := afs.TempFile(".", "bundle-*")
-	if err != nil {
-		logger.Debug("Failed to create temporary file", zap.Error(err))
-		return "", 0, fmt.Errorf("failed to create temporary file: %w", err)
-	}
-	defer outFile.Close()
-
-	fileName := outFile.Name()
-	logger.Debug("Writing bundle archive", zap.String("archive", fileName))
-	size, err := io.Copy(outFile, decrypted)
-	if err != nil {
-		logger.Debug("Failed to write bundle archive", zap.Error(err))
-		return "", 0, fmt.Errorf("failed to write bundle archive: %w", err)
-	}
-
-	return fileName, size, nil
-}
-
-func OpenLegacyV2(opts OpenOpts) (*LegacyBundle, error) {
-	logger := zap.L().Named(DriverName).With(zap.String("path", opts.BundlePath))
-	logger.Info("Opening bundle v2")
-
-	decryptedPath, size, err := decryptLegacyBundleV2(opts, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	zipFS, cleanup, err := archiveToFS(opts, decryptedPath, size, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Debug("Reading manifest")
-	manifest, err := loadManifestV2(zipFS)
-	if err != nil {
-		_ = cleanup()
-		return nil, err
-	}
-
-	logger.Info("Bundle v2 opened", zap.String("id", manifest.Meta.BundleId))
+	logger.Info("Bundle opened", zap.String("id", manifest.Meta.BundleId))
 	return &LegacyBundle{
 		path:     decryptedPath,
 		manifest: manifest,
@@ -169,11 +87,11 @@ func OpenLegacyV2(opts OpenOpts) (*LegacyBundle, error) {
 	}, nil
 }
 
-func decryptLegacyBundleV2(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
+func decryptLegacyBundle(opts OpenOpts, logger *zap.Logger) (string, int64, error) {
 	input, err := os.Open(opts.BundlePath)
 	if err != nil {
-		logger.Debug("Failed to open bundle v2", zap.Error(err))
-		return "", 0, fmt.Errorf("failed to open bundle v2 at path %q: %w", opts.BundlePath, err)
+		logger.Debug("Failed to open legacy bundle", zap.Error(err))
+		return "", 0, fmt.Errorf("failed to open legacy bundle at path %q: %w", opts.BundlePath, err)
 	}
 	defer input.Close()
 
@@ -201,11 +119,11 @@ func decryptLegacyBundleV2(opts OpenOpts, logger *zap.Logger) (string, int64, er
 	defer outFile.Close()
 
 	fileName := outFile.Name()
-	logger.Debug("Writing bundle v2 archive", zap.String("archive", fileName))
+	logger.Debug("Writing bundle archive", zap.String("archive", fileName))
 	size, err := io.Copy(outFile, decrypted)
 	if err != nil {
-		logger.Debug("Failed to write bundle v2 archive", zap.Error(err))
-		return "", 0, fmt.Errorf("failed to write bundle v2 archive: %w", err)
+		logger.Debug("Failed to write bundle archive", zap.Error(err))
+		return "", 0, fmt.Errorf("failed to write bundle archive: %w", err)
 	}
 
 	return fileName, size, nil
@@ -248,21 +166,7 @@ func archiveToFS(opts OpenOpts, archivePath string, archiveSize int64, logger *z
 	return zipfs.New(zipIn), cleanup, nil
 }
 
-func loadManifest(bundleFS afero.Fs) (*bundlev1.Manifest, error) {
-	manifestBytes, err := readManifestFile(bundleFS)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read manifest: %w", err)
-	}
-
-	manifest := &bundlev1.Manifest{}
-	if err := manifest.UnmarshalVT(manifestBytes); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal manifest: %w", err)
-	}
-
-	return manifest, nil
-}
-
-func loadManifestV2(bundleFS afero.Fs) (*bundlev2.Manifest, error) {
+func loadManifest(bundleFS afero.Fs) (*bundlev2.Manifest, error) {
 	manifestBytes, err := readManifestFile(bundleFS)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read manifest: %w", err)

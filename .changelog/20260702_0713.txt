@@ -1,0 +1,3 @@
+type:enhancement
+Automatically configure GOMEMLIMIT from the cgroup memory limit
+When the PDP runs under a cgroup memory limit and GOMEMLIMIT is not set explicitly, it now derives GOMEMLIMIT from the cgroup cap.

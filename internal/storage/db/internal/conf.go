@@ -9,7 +9,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/cenkalti/backoff/v5"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/jmoiron/sqlx"
 )
 

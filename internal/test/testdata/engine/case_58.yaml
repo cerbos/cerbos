@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Principal policy rules with the same name for different resources matching the same action
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # Locked: denied by the payslip rule. The resource policy allows shared payslips,
+  # so a skipped DENY shows up as ALLOW.
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: payroll_clerk
+      roles:
+        - clerk
+    resource:
+      kind: payslip
+      id: private_locked
+      attr:
+        public: false
+        locked: true
+        shared: true
+  # Locked: denied by the payslip rule even though the "pay*" rule allows it
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: payroll_clerk
+      roles:
+        - clerk
+    resource:
+      kind: payslip
+      id: public_locked
+      attr:
+        public: true
+        locked: true
+        shared: false
+  # Allowed by the "pay*" rule. The resource policy doesn't allow it, so a skipped ALLOW
+  # shows up as DENY.
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: payroll_clerk
+      roles:
+        - clerk
+    resource:
+      kind: payslip
+      id: public_open
+      attr:
+        public: true
+        locked: false
+        shared: false
+  # No principal policy rule applies, so the resource policy decides
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: payroll_clerk
+      roles:
+        - clerk
+    resource:
+      kind: payslip
+      id: private_open
+      attr:
+        public: false
+        locked: false
+        shared: true
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: private_locked
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: principal.payroll_clerk.vdefault
+  - requestId: test
+    resourceId: public_locked
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: principal.payroll_clerk.vdefault
+  - requestId: test
+    resourceId: public_open
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: principal.payroll_clerk.vdefault
+  - requestId: test
+    resourceId: private_open
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.payslip.vdefault
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        principal.payroll_clerk.vdefault:
+          attributes:
+            driver: disk
+            source: principal_policies/policy_08.yaml
+        resource.payslip.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_23.yaml
+    policySource:
+      disk: {}

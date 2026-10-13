@@ -1,0 +1,143 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: CEL errors
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: sam
+  roles:
+    - user
+
+tests:
+  - resource:
+      kind: cel_errors.account
+    action: read
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: gt
+                  operands:
+                    - variable: request.resource.attr.amount
+                    - value: 1000
+      matchedScopes:
+        read: ""
+
+  - resource:
+      kind: cel_errors.account
+      attr:
+        amount: 500
+    action: read
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        read: ""
+
+  - resource:
+      kind: cel_errors.account
+      attr:
+        amount: 5000
+    action: read
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        read: ""
+
+  - resource:
+      kind: cel_errors.account
+      attr:
+        amount: "5000"
+    action: write
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      evaluationErrors:
+        - celError:
+            expression: R.attr.amount > 1000
+            message: no such overload
+      matchedScopes:
+        write: ""
+
+  - resource:
+      kind: cel_errors.ledger
+      attr:
+        amount: "5000"
+    action: export
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      evaluationErrors:
+        - celError:
+            expression: V.v1
+            message: no such overload
+      matchedScopes:
+        export: ""
+
+  - resource:
+      kind: cel_errors.record
+      attr:
+        amount: 500
+    action: view
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        view: ""
+
+  - resource:
+      kind: cel_errors.record
+      attr:
+        amount: 5000
+    action: view
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        view: ""
+
+  - resource:
+      kind: cel_errors.record
+      attr:
+        amount: "5000"
+    action: export
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      evaluationErrors:
+        - celError:
+            expression: R.attr.amount > 1000
+            message: no such overload
+      matchedScopes:
+        export: ""
+
+  - resource:
+      kind: cel_errors.record
+      attr:
+        amount: "5000"
+    action: list
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      evaluationErrors:
+        - celError:
+            expression: R.attr.amount > 1000
+            message: no such overload
+      matchedScopes:
+        list: ""

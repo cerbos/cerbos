@@ -126,8 +126,7 @@ func (o Output) toCommandError(w io.Writer, err error) error {
 		o.format(w, cerr)
 	}()
 
-	valErr := new(hub.InvalidRequestError)
-	if errors.As(err, valErr) {
+	if valErr, ok := errors.AsType[hub.InvalidRequestError](err); ok {
 		cerr.ErrorMessage = "invalid request"
 		cerr.ErrorDetails = make([]any, len(valErr.Violations))
 		for i, v := range valErr.Violations {
@@ -136,8 +135,7 @@ func (o Output) toCommandError(w io.Writer, err error) error {
 		return cerr
 	}
 
-	rpcErr := new(hub.StoreRPCError)
-	if errors.As(err, rpcErr) {
+	if rpcErr, ok := errors.AsType[hub.StoreRPCError](err); ok {
 		switch rpcErr.Kind {
 		case store.RPCErrorAuthenticationFailed:
 			cerr.ErrorMessage = "failed to authenticate to Cerbos Hub"

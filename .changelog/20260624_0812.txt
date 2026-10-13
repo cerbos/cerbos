@@ -1,0 +1,3 @@
+type:fix
+Pick up newly created policy subdirectories and their contents in the directory watcher
+Previously, when a new subdirectory was created under a watched policy directory, the watcher only began monitoring it while draining the next batch of events. Any files or nested directories created in that window were never observed and were silently dropped from the index. Now, the watch is added immediately when the directory is created and its existing contents are traversed, so newly added subdirectories and everything within them are picked up.

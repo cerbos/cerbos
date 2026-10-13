@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"os"
 	"strings"
 	"sync"
@@ -93,10 +94,6 @@ func NewStore(ctx context.Context, conf *Conf) (*Store, error) {
 }
 
 func (s *Store) init(ctx context.Context) error {
-	if s.conf.ScratchDir != "" {
-		s.log.Warnf("ScratchDir storage option is deprecated and will be removed in a future release")
-	}
-
 	finfo, err := os.Stat(s.conf.CheckoutDir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("failed to stat %s: %w", s.conf.CheckoutDir, err)
@@ -172,6 +169,10 @@ func (s *Store) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
 	return s.idx.GetAll(ctx)
 }
 
+func (s *Store) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return s.idx.Iter(ctx)
+}
+
 func (s *Store) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	return s.idx.GetAllMatching(modIDs)
 }
@@ -221,7 +222,9 @@ func (s *Store) Reload(ctx context.Context) error {
 		return fmt.Errorf("failed to reload index: %w", err)
 	}
 
-	s.subs.NotifySubscribers(evts...)
+	if err := s.subs.NotifySubscribersAndWait(ctx, evts...); err != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", err)
+	}
 
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(DriverName))
 	return nil

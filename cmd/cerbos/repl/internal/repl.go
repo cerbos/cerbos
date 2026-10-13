@@ -21,13 +21,13 @@ import (
 	"strings"
 	"unicode"
 
+	"cel.dev/cel-go/cel"
+	"cel.dev/cel-go/common"
+	"cel.dev/cel-go/common/decls"
+	celtypes "cel.dev/cel-go/common/types"
+	"cel.dev/cel-go/common/types/ref"
+	"cel.dev/cel-go/interpreter"
 	"github.com/alecthomas/participle/v2"
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common"
-	"github.com/google/cel-go/common/decls"
-	celtypes "github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/common/types/ref"
-	"github.com/google/cel-go/interpreter"
 	"github.com/peterh/liner"
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
@@ -555,8 +555,7 @@ func (r *REPL) printLoadError(err error) {
 		return
 	}
 
-	var unmarshalErr parser.UnmarshalError
-	if errors.As(err, &unmarshalErr) {
+	if unmarshalErr, ok := errors.AsType[parser.UnmarshalError](err); ok {
 		r.output.Println(colored.REPLError(fmt.Sprintf("%+v", unmarshalErr)))
 	} else {
 		r.output.PrintErr("Error:", err)

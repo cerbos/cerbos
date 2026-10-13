@@ -34,8 +34,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*pol
 		var err error
 		idx, err = index.Build(ctx, fsys, index.WithBuildFailureLogLevel(zap.DebugLevel))
 		if err != nil {
-			idxErrs := new(index.BuildError)
-			if errors.As(err, &idxErrs) {
+			if idxErrs, ok := errors.AsType[*index.BuildError](err); ok {
 				return nil, &compile.Errors{
 					Errors: &runtimev1.Errors{
 						Kind: &runtimev1.Errors_IndexBuildErrors{IndexBuildErrors: idxErrs.IndexBuildErrors},
@@ -48,10 +47,7 @@ func Files(ctx context.Context, fsys fs.FS, idx compile.Index, trace bool) (*pol
 	}
 
 	store := disk.NewFromIndexWithConf(idx, &disk.Conf{})
-	compiler, err := internalcompile.NewManager(ctx, store)
-	if err != nil {
-		return nil, err
-	}
+	compiler := internalcompile.NewManager(store)
 
 	ruleTable, err := ruletable.NewRuleTableFromLoader(ctx, compiler)
 	if err != nil {

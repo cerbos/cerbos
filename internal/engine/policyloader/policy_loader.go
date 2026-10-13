@@ -5,6 +5,7 @@ package policyloader
 
 import (
 	"context"
+	"iter"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -16,4 +17,10 @@ type PolicyLoader interface {
 	GetAll(context.Context) ([]*runtimev1.RunnablePolicySet, error)
 	GetAllMatching(context.Context, []namer.ModuleID) ([]*runtimev1.RunnablePolicySet, error)
 	Source() *auditv1.PolicySource
+}
+
+// IterablePolicyLoader is an optional interface for loaders that can yield compiled
+// policy sets one at a time.
+type IterablePolicyLoader interface {
+	Iter(ctx context.Context) iter.Seq2[*runtimev1.RunnablePolicySet, error]
 }

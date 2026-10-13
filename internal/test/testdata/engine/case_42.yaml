@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped principal policy: strict scope search"
+
+config:
+  lenientScopeSearch:
+    - false
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test
+    actions:
+      - view:public
+      - delete
+    principal:
+      id: donald_duck
+      scope: acme.hr.france.marseille
+      roles:
+        - employee
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+        managed_geographies: GB
+    resource:
+      kind: salary_record
+      id: XX125
+      attr:
+        department: marketing
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      view:public:
+        effect: EFFECT_DENY
+        policy: NO_MATCH
+      delete:
+        effect: EFFECT_DENY
+        policy: NO_MATCH
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail: {}
+    policySource:
+      disk: {}

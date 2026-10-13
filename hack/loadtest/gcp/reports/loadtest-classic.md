@@ -1,172 +1,80 @@
-# Load Test -- Classic Policies Scaling (800 → 80K)
+# Load Test: Classic Policies Scaling (800 to 40K)
 
-**Date:** 2026-05-12  
-**Environment:** GCP c3-standard-4 PDP (4 vCPU), e2-standard-4 client, disk storage  
-**Cerbos version:** latest  
-**Config:** concurrency=100, connections=5, mixed requests (cr_req01 + cr_req02), sustained-rate target at ~80% of throughput ceiling (120s), 100K iterations (throughput)
+**Date:** 2026-06-30  
+**Environment:** GCP c3-standard-4 PDP (4 vCPU, 16 GB RAM), e2-standard-4 client, disk storage
+**Cerbos version:** latest
+**Config:** default runtime (`GOGC=100`, no `GOMEMLIMIT`); concurrency=100, connections=5; mixed requests (cr_req01 + cr_req02); throughput probe (max), then sustained-rate at ~85% of the measured ceiling for 120s.
 
 ## Summary
 
-- Throughput degrades gradually from 800 to 80K policies -- no cliff.
-- p99 latency roughly doubles per 10x policy increase under sustained load at 80% of capacity.
-- Memory grows worse than linearly with policy count (O(n²) bitmap index).
-- Only 80K policies exhibit stalls and throughput gaps from GC pressure.
+- Throughput degrades gradually from 800 to 40K policies: max RPS falls from 8.6K (800 policies) to 7.7K (8K policies) to 5.7K (40K policies).
+- Under sustained load at ~85% of capacity, p99 grows from 11.6 ms at 800 policies to 40.8 ms at 40K.
+- RSS peak is 133 MiB at 800 policies, 224 MiB at 8K, and 748 MiB at 40K, growing sub-linearly with policy count.
+- GC CPU stays around 8-9% across the range, with no sustained stalls or throughput gaps.
+- To provision for max RPS, run `GOGC=100` and set a cgroup MemoryMax of 192 MiB at 800 policies, 360 MiB at 8K, or 1.3 GiB at 40K, with `GOMEMLIMIT` at 110 MiB, 250 MiB, or 1.0 GiB respectively.
+- The multitenant policy set measures within ~6% of classic at the same policy count (memory, provisioning, and the backstop curve match; throughput is a few percent lower), so these numbers apply to either.
 
----
+## Performance (default config, `GOGC=100`)
 
-## Memory Consumption
+| Policies | RSS peak | GC CPU | Max RPS | Sust RPS (~85%) | p99@sust | stalls/gaps |
+|---------:|---------:|-------:|--------:|----------------:|---------:|------------:|
+| 800 | 133 MiB | 8.5% | 8,638 | 7,300 | 11.6 ms | 1/0 |
+| 8K | 224 MiB | 9.0% | 7,700 | 6,500 | 22.1 ms | 1/0 |
+| 40K | 748 MiB | 7.7% | 5,736 | 4,900 | 40.8 ms | 0/0 |
 
-| Policies | RSS | Heap Alloc | Heap Sys | Heap In-Use | GC Overhead |
-|---------:|----:|-----------:|---------:|------------:|------------:|
-| 800 | 225 MiB | 57 MiB | 163 MiB | 115 MiB | 5.6 MiB |
-| 8K | 1.1 GiB | 313 MiB | 1.7 GiB | 913 MiB | 22 MiB |
-| 24K | 3.3 GiB | 617 MiB | 4.8 GiB | 2.6 GiB | 54 MiB |
-| 40K | 5.1 GiB | 1.8 GiB | 7.0 GiB | 4.5 GiB | 83 MiB |
-| 80K | 11 GiB | 3.9 GiB | 14 GiB | 9.1 GiB | 159 MiB |
+RSS peak is `VmHWM` during load. GC CPU is the share of CPU time spent in garbage collection during the sustained run. Max RPS comes from the throughput probe; Sust RPS is the achieved sustained rate, about 85% of Max. Stalls and gaps are 1-second window counts: a stall is a window where more than 10% of requests exceed p95, a gap is a window serving less than 75% of mean throughput. All runs were error-clean apart from a few gRPC `Unavailable` results at connection teardown in the final window, with no application errors.
 
-**Legend:** RSS = `process_resident_memory_bytes`, Heap Alloc = `go_memstats_heap_alloc_bytes`, Heap Sys = `go_memstats_heap_sys_bytes`, Heap In-Use = `go_memstats_heap_inuse_bytes`, GC Overhead = `go_memstats_gc_sys_bytes`
+Throughput declines smoothly. The single stall window at 800 and 8K is an isolated warmup blip, and 40K is clean.
 
-Heap alloc grows worse than linearly: from 40K to 80K, policies double but heap alloc more than doubles (1.8 GiB → 3.9 GiB). RSS follows a similar pattern (5.1 GiB → 11 GiB).
+## Tail Latencies: Sustained-Rate Test (ms)
 
-### Root cause: O(n²) bitmap index memory
+| Percentile | 800 (RPS=7.3K) | 8K (RPS=6.5K) | 40K (RPS=4.9K) |
+|------------|-----------:|----------:|-----------:|
+| p50 | 1.80 | 2.59 | 3.15 |
+| p90 | 6.33 | 12.52 | 24.75 |
+| p95 | 8.00 | 15.77 | 30.02 |
+| p99 | 11.62 | 22.09 | 40.83 |
 
-`pprof -alloc_space` and bitmap index stats identified `Bitmap.ensure` (bitmap resizing during index construction) as the primary allocator. The bitmap index stores per-dimension bitmaps where both the **number of bitmaps** (keys) and the **width of each bitmap** (binding ID range) grow with policy count. Doubling policies doubles both → 4x memory per dimension.
+p50 stays low, between 1.8 and 3.2 ms: with about 15% headroom below capacity, most requests complete quickly. Larger policy sets push the tail up, since each request touches more rules and runs more CEL evaluation, but the rise is gradual and the distribution stays tight with no GC-driven clustering.
 
-| Dimension | 40K keys | 40K avg words | 40K est. | 80K keys | 80K avg words | 80K est. | Ratio |
-|-----------|--------:|--------------:|---------:|--------:|--------------:|---------:|------:|
-| resource | 5,002 | 1,435 | 55 MiB | 10,002 | 2,867 | 220 MiB | 4x |
-| principal | 5,000 | 871 | 33 MiB | 10,000 | 1,725 | 132 MiB | 4x |
+## Memory
 
-Total estimated bitmap memory: ~88 MiB at 40K, ~352 MiB at 80K. The bitmap index is the primary driver of the worse-than-linear heap growth. (Note: the `fqnBindings` dimension was previously the largest contributor at ~790 MiB for 80K policies but has since been converted from a bitmap to a map, eliminating that cost.)
+RSS peak is 133 MiB at 800 policies, 224 MiB at 8K, and 748 MiB at 40K. It grows sub-linearly with policy count: at low counts most of the footprint is fixed runtime and binary overhead, and the per-policy cost of the rule table is small. The index uses lazy sparse bitmaps and a map for fqnBindings, and the build streams one policy at a time, so its peak working set is a single policy.
 
-This is a deliberate space-time tradeoff. The two-level meta structure enables O(cardinality) iteration and O(1) skipping of empty regions in `Or`/`And` operations. The O(n²) memory cost is the price for fast bitmap operations.
+## Provisioning for Max RPS
 
-### Roaring bitmap comparison
+For maximum throughput, run the default `GOGC=100` and add a memory backstop: a soft `GOMEMLIMIT` paired with a hard cgroup MemoryMax. The cgroup MemoryMax is the figure to provision.
 
-The two-level layered bitmap replaced roaring bitmaps. Performance improvement over roaring:
+| Policies | Loaded RSS peak | GOMEMLIMIT | cgroup MemoryMax |
+|---------:|----------------:|-----------:|-----------------:|
+| 800 | 133 MiB | 110 MiB | 192 MiB |
+| 8K | 224 MiB | 250 MiB | 360 MiB |
+| 40K | 748 MiB | 1.0 GiB | 1.3 GiB |
 
-| Metric | 800 roaring | 800 layered | Delta | 8K roaring | 8K layered | Delta |
-|--------|------------:|------------:|------:|-----------:|-----------:|------:|
-| Throughput RPS | 5,167 | 7,953 | **+54%** | 2,270 | 6,323 | **+178%** |
-| p99 sustained | 42.99 ms | 24.24 ms | -44% | 100.90 ms | 39.91 ms | -60% |
-| RSS | 210 MiB | 233 MiB | +10% | 1.1 GiB | 1.1 GiB | same |
+`GOMEMLIMIT` is set to about 1.5x the loaded runtime heap (the loaded RSS peak minus ~60 MiB of binary and stack overhead), so it sits above the working set and does not bind in steady state. Throughput therefore stays at the numbers above; the backstop engages only if the live set later grows past the box, spending some CPU on extra GC to stay under the limit instead of being OOM-killed. The cgroup MemoryMax adds the ~60 MiB back plus a ~20% safety margin, so the soft limit takes effect before the kernel OOM-kills, and it clears the build-time peak as well.
 
-The layered bitmap delivers 54–178% higher throughput and 44–60% lower p99 latency at the cost of ~10% more memory at low policy counts (negligible at 8K+).
+At small policy counts the cap is mostly that fixed ~60 MiB offset plus safety, so it looks large next to the loaded peak even though the policy-dependent part is small. If you expect the policy set to grow, raise `GOMEMLIMIT` and the cap to leave runway before the backstop engages. For a policy count between these points, interpolate the loaded RSS peak linearly and apply the same formula.
 
-GC overhead grows 26x from 800 to 80K policies.
+These figures are a starting point from one hardware profile and the test policy generator. Throughput and footprint both depend on your actual policies, request mix, and hardware, so tune the limits on your own policy set. Run load against a candidate `GOMEMLIMIT` and cgroup, confirm the soft limit does not bind by checking that GC CPU and throughput match an uncapped `GOGC=100` run, and watch the tail. A loose `GOMEMLIMIT` adds some tail-latency jitter at large heaps, since GC pacing shifts toward occasional larger collections, so weigh the backstop against that if p99 stability matters. The sweep harness (`hack/loadtest/gcp/sweep.sh`) automates this and includes a validation arm at the recommended config.
 
-## Requests Per Second
+## Connection Count (HOL Blocking)
 
-| Policies | Sustained RPS (target) | Throughput (max) |
-|---------:|-----------------------:|-----------------:|
-| 800 | 7,000 (7K) | 7,658 |
-| 8K | 5,000 (5K) | 6,469 |
-| 24K | 4,399 (4.4K) | 5,516 |
-| 40K | 4,000 (4K) | 4,877 |
-| 80K | 3,300 (3.3K) | 3,820 |
-
-Sustained-rate targets are set to ~80% of throughput ceiling and all achieved. Throughput degrades gradually: 7.7K (800) → 6.5K (8K) → 5.5K (24K) → 4.9K (40K) → 3.8K (80K). No cliff -- the decline is smooth.
-
-## Tail Latencies -- Sustained-Rate Test (ms)
-
-| Percentile | 800 (7K) | 8K (5K) | 24K (4.4K) | 40K (4K) | 80K (3.3K) |
-|------------|-----:|-----:|-----:|-----:|-----:|
-| p50 | 4.13 | 1.19 | 1.79 | 1.37 | 11.56 |
-| p90 | 12.94 | 16.89 | 23.78 | 28.55 | 40.41 |
-| p95 | 16.56 | 22.13 | 30.24 | 35.51 | 49.24 |
-| p99 | 24.53 | 31.73 | 42.44 | 48.35 | 73.26 |
-| max | 56.01 | 75.49 | 83.48 | 96.80 | 390.17 |
-
-With sustained-rate targets below capacity, p50 is very low at 8K–40K (1–2ms) -- most requests complete quickly with headroom available. GC pressure, larger bitmap operations, and more CEL evaluations push up the tail (p99, max, CV), and this effect grows with policy count.
-
-### p99 scaling per 10x policy increase
-
-| Step | p99 ratio |
-|------|----------:|
-| 800 → 8K | 1.29x |
-| 8K → 80K | 2.31x |
-
-p99 roughly doubles per 10x policy increase at the 8K→80K step. The 800→8K step shows a smaller ratio (1.29x) because the 800-policy test runs closer to saturation (7K target vs 7.7K ceiling = 91%) than the other runs (~80%).
-
-## Tail Latencies -- Throughput Test (ms)
-
-| Percentile | 800 | 8K | 24K | 40K | 80K |
-|------------|-----:|-----:|-----:|-----:|-----:|
-| p50 | 9.08 | 11.66 | 14.32 | 16.25 | 22.16 |
-| p90 | 22.90 | 25.00 | 28.87 | 32.69 | 41.56 |
-| p95 | 27.92 | 30.09 | 34.05 | 39.19 | 48.47 |
-| p99 | 36.16 | 41.92 | 45.19 | 52.62 | 61.87 |
-| max | 61.29 | 113.66 | 93.57 | 101.72 | 102.26 |
-
-## CPU Utilization (% of all cores)
-
-| Policies | PDP avg | PDP max | Client avg | Client max |
-|---------:|--------:|--------:|-----------:|-----------:|
-| 800 | 64% | 93% | 61% | 80% |
-| 8K | 60% | 95% | 58% | 84% |
-| 24K | 58% | 99% | 56% | 98% |
-| 40K | 57% | 100% | 55% | 98% |
-| 80K | 53% | 100% | 52% | 91% |
-
-With corrected RPS targets (~80% of capacity), PDP avg CPU is 53–64% in sustained-rate tests. Max CPU still hits 100% at 24K+ from GC spikes. Client VM is not a bottleneck (max spikes are isolated GC events, not sustained saturation).
-
-## Error Rates
-
-| Policies | OK | Unavailable | Error Rate |
-|---------:|--------:|------------:|-----------:|
-| 800 | 839,904 | 87 | 0.010% |
-| 8K | 599,991 | 2 | 0.000% |
-| 24K | 527,763 | 100 | 0.019% |
-| 40K | 479,972 | 2 | 0.000% |
-| 80K | 395,969 | 5 | 0.001% |
-
-All errors are `Unavailable` (connection resets), not application errors. Error clustering analysis shows these are isolated events (typically clustered in 1–2 time windows), not systemic. Throughput tests had zero errors.
-
-## Stalls and Throughput Gaps (sustained-rate, p99 threshold)
-
-Stall = window where >10% of requests exceed p99 latency.
-Gap = window where throughput drops below 75% of the mean.
-
-| Suite | p99 (ms) | CV | Stalls | Gaps |
-|------:|---------:|---:|-------:|-----:|
-| 800 policies | 24.53 | 61% | 0 | 0 |
-| 8K policies | 31.73 | 71% | 0 | 0 |
-| 24K policies | 42.44 | 75% | 0 | 0 |
-| 40K policies | 48.35 | 129% | 0 | 0 |
-| 80K policies | 73.26 | 247% | 8 | 8 |
-
-### 80K policies -- stalls and throughput gaps
-
-8 stalls and 8 throughput gaps (out of 120 windows), consistent with periodic GC pauses under the 11 GiB heap. The 390ms max latency spike also points to GC pressure.
-
-## Connection Count (HOL Blocking Test)
-
-Tested whether HTTP/2 head-of-line blocking affects latency by varying gRPC connection count at 800 policies, 5.4K RPS sustained-rate, 100 workers.
-
-| Metric | 1 conn | 5 conn | 20 conn |
-|--------|-------:|-------:|--------:|
-| Sustained p50 | 0.77 ms | 1.02 ms | 1.25 ms |
-| Sustained p99 | 9.93 ms | 12.72 ms | 14.17 ms |
-| Throughput RPS | 7,848 | 7,670 | 7,382 |
-
-Fewer connections is slightly faster -- 1 connection delivers the lowest latency and highest throughput. On a same-zone VPC with near-zero packet loss, HTTP/2 multiplexing works efficiently and HOL blocking is not a factor. More connections add server-side overhead (per-connection goroutines, buffers, flow control) without benefit. The default of 5 connections is fine; real deployments don't need connection pooling beyond gRPC defaults.
-
-## PGO (Profile-Guided Optimization)
-
-A CPU profile collected from a classic 8K-policy throughput test was used as `default.pgo` to rebuild the Cerbos binary. Tests were run at 800 and 8K policies with cr_req01 only (single request type, 7K RPS target).
-
-| Metric | 800 | 800 PGO | Delta | 8K | 8K PGO | Delta |
-|--------|-----:|--------:|------:|-----:|-------:|------:|
-| Throughput RPS | 7,953 | 7,610 | -4.3% | 6,323 | 6,581 | +4.1% |
-| p99 sustained | 24.24 ms | 22.46 ms | -7.3% | 39.91 ms | 38.24 ms | -4.2% |
-| p99 throughput | 29.71 ms | 31.04 ms | +4.5% | 40.79 ms | 38.22 ms | -6.3% |
-
-PGO improves 8K consistently (+4% throughput, -4–6% latency). At 800 policies the results are mixed -- sustained-rate p99 improves but throughput drops slightly. Zero stalls or gaps in all PGO runs. Note: these PGO results use the old single-request-type config; re-run with mixed requests and corrected RPS targets is pending.
+Fewer connections is slightly faster: one connection gives the lowest latency and the highest throughput. On a same-zone VPC with near-zero packet loss, HTTP/2 multiplexing works well and head-of-line blocking is not a factor. More connections only add server-side overhead, such as per-connection goroutines, buffers, and flow control, without any benefit. The default of 5 connections is fine, and real deployments do not need connection pooling beyond gRPC defaults.
 
 ## Key Takeaways
 
-1. **Memory grows worse than linearly** (O(n²) bitmap index), reaching 11 GiB RSS at 80K.
-2. **Throughput degrades gradually from 800 to 80K** -- no cliff. Max RPS: 7.7K (800) → 6.5K (8K) → 5.5K (24K) → 4.9K (40K) → 3.8K (80K).
-3. **p99 latency roughly doubles per 10x policy increase** at the 8K→80K step (2.31x) when tested at 80% of capacity.
-4. **Stalls and throughput gaps only appear at 80K policies** -- 8 stalls and 8 gaps, consistent with GC pressure under the 11 GiB heap. CV rises from 61% (800) to 247% (80K).
-5. **Client VM is not a bottleneck** -- max CPU spikes (up to 98%) are isolated GC events, not sustained saturation.
+1. Throughput has no cliff: max RPS falls smoothly from 8.6K at 800 policies to 5.7K at 40K.
+2. Under sustained load at about 85% of capacity, p99 rises gradually from 11.6 ms at 800 policies to 40.8 ms at 40K.
+3. RSS peak ranges from 133 MiB at 800 policies to 748 MiB at 40K and grows sub-linearly with policy count.
+4. GC CPU stays around 8-9% across the range, with no sustained stalls or throughput gaps.
+5. For max RPS, run `GOGC=100` and provision a cgroup MemoryMax of 192 MiB at 800 policies, 360 MiB at 8K, or 1.3 GiB at 40K, with `GOMEMLIMIT` set to 110 MiB, 250 MiB, or 1.0 GiB respectively (about 1.5x the loaded runtime heap, well below the cap). Treat these as starting points and tune them on your own policy set and hardware.
+
+## Source Data
+
+The numbers here come from the provisioning sweep (`hack/loadtest/gcp/sweep.sh`). The full per-arm tables for each run (the Edge-1 GOGC sizing curve, the Edge-2 GOMEMLIMIT backstop curve, the validation arm, and the OOM demo) are snapshotted next to this report:
+
+- [sweep-100.md](sweep-100.md) - 800 policies
+- [sweep-1000.md](sweep-1000.md) - 8K policies
+- [sweep-5000.md](sweep-5000.md) - 40K policies
+
+Each file is titled by the sweep knob N; the real policy count is N x 8, since the generator emits 8 policies per unit. The files are verbatim sweep output, regenerated by re-running the sweep and re-copying.

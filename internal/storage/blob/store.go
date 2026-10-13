@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"iter"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -517,6 +518,10 @@ func (s *Store) GetAll(ctx context.Context) ([]*policy.CompilationUnit, error) {
 	return s.idx.GetAll(ctx)
 }
 
+func (s *Store) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return s.idx.Iter(ctx)
+}
+
 func (s *Store) GetAllMatching(_ context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
 	return s.idx.GetAllMatching(modIDs)
 }
@@ -572,7 +577,9 @@ func (s *Store) Reload(ctx context.Context) error {
 	oldDirName := s.currDirName
 	s.currDirName = dirName
 	s.idx = idx
-	s.subs.NotifySubscribers(storage.NewReloadEvent())
+	if err := s.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent()); err != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", err)
+	}
 
 	if err := s.cloner.Clean(); err != nil {
 		s.log.Warnw("Failed to clean up the cache", "error", err)

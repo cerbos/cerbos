@@ -1,0 +1,2 @@
+type:fix
+Match role policy and principal policy rules against resource kinds that contain special characters such as `:`, `/` and `-`

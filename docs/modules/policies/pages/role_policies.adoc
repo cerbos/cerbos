@@ -4,6 +4,9 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
+[.lead]
+Role policies define the set of actions a role is permitted to perform on each resource. The allowable actions list is exhaustive: any action not listed is denied for that role.
+
 Role policies are ABAC policies in which you specify a number of resources, each with a set of allowable actions that the role can carry out on the resource. Optionally, a condition can also be specified for each set of allowable actions. In the simple case, they allow you to author permissions from the view of an IdP role, rather than for a given resource.
 
 Role policies are not standalone. They apply as an additive constraint on top of xref:resource_policies.adoc[resource policies], so an action is only allowed if it is permitted by both the role policy and a matching resource policy. A role policy cannot grant access that the resource policy does not already allow, which means a resource policy is always required.
@@ -73,3 +76,8 @@ rolePolicy:
 <13> A condition that must be met for the action to be allowed.
 <14> Optional output for the action rule. You can define optional expressions to be evaluated as output depending on whether the rule is activated or not activated because of a condition failure.
 <15> Wildcard resources are also supported.
+
+[TIP]
+====
+For a walkthrough of translating business access requirements into Cerbos policies, see https://www.cerbos.dev/blog/mapping-business-requirements-to-authorization-policy[Mapping business requirements to authorization policy].
+====

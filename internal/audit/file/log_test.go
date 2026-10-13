@@ -277,7 +277,7 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 		return &auditv1.DecisionLogEntry{
 			CallId:    string(id),
 			Timestamp: timestamppb.New(ts),
-			Inputs: []*enginev1.CheckInput{
+			Inputs: []*enginev1.CheckInput{ //nolint:staticcheck
 				{
 					RequestId: strconv.Itoa(i),
 					Resource: &enginev1.Resource{
@@ -309,7 +309,7 @@ func mkDecisionLogEntry(t *testing.T, id audit.ID, i int, ts time.Time) audit.De
 					Actions: []string{"a1", "a2"},
 				},
 			},
-			Outputs: []*enginev1.CheckOutput{
+			Outputs: []*enginev1.CheckOutput{ //nolint:staticcheck
 				{
 					RequestId:  strconv.Itoa(i),
 					ResourceId: "test",

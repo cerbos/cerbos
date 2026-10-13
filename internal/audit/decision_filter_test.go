@@ -95,7 +95,7 @@ func TestDecisionLogEntryFilter(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := NewDecisionLogEntryFilterFromConf(&Conf{
-				confHolder: confHolder{DecisionLogFilters: tc.filters},
+				DecisionLogFilters: tc.filters,
 			})
 
 			have := f(tc.input)
@@ -151,7 +151,7 @@ func mkPlanResourcesLogEntry(kind enginev1.PlanResourcesFilter_Kind) *auditv1.De
 			PlanResources: &auditv1.DecisionLogEntry_PlanResources{
 				Input: &enginev1.PlanResourcesInput{
 					RequestId: "test",
-					Action:    "view",
+					Action:    "view", //nolint:staticcheck
 					Principal: &enginev1.Principal{
 						Id: "george",
 					},
@@ -161,7 +161,7 @@ func mkPlanResourcesLogEntry(kind enginev1.PlanResourcesFilter_Kind) *auditv1.De
 				},
 				Output: &enginev1.PlanResourcesOutput{
 					RequestId: "test",
-					Action:    "view",
+					Action:    "view", //nolint:staticcheck
 					Kind:      "leave_request",
 					Filter: &enginev1.PlanResourcesFilter{
 						Kind: kind,

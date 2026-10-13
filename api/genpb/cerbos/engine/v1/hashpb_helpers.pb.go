@@ -43,6 +43,36 @@ var hashpb_uint64KeyPool = sync.Pool{
 	New: func() any { return make([]uint64, 0, 32) },
 }
 
+func cerbos_engine_v1_AuxData_JWT_hashpb_sum(m *AuxData_JWT, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.engine.v1.AuxData.JWT.claims"]; !ok {
+		if len(m.Claims) > 0 {
+			if len(m.Claims) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Claims {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Claims[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Claims[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Claims)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Claims[k] != nil {
+						google_protobuf_Value_hashpb_sum(m.Claims[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+}
+
 func cerbos_engine_v1_AuxData_hashpb_sum(m *AuxData, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.engine.v1.AuxData.jwt"]; !ok {
 		if len(m.Jwt) > 0 {
@@ -66,6 +96,33 @@ func cerbos_engine_v1_AuxData_hashpb_sum(m *AuxData, hasher hash.Hash, ignore ma
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 					if m.Jwt[k] != nil {
 						google_protobuf_Value_hashpb_sum(m.Jwt[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.AuxData.jwts"]; !ok {
+		if len(m.Jwts) > 0 {
+			if len(m.Jwts) <= 32 {
+				keys := hashpb_stringKeyPool.Get().([]string)[:0]
+				for k := range m.Jwts {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Jwts[k] != nil {
+						cerbos_engine_v1_AuxData_JWT_hashpb_sum(m.Jwts[k], hasher, ignore, b)
+					}
+				}
+				hashpb_stringKeyPool.Put(keys)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Jwts)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Jwts[k] != nil {
+						cerbos_engine_v1_AuxData_JWT_hashpb_sum(m.Jwts[k], hasher, ignore, b)
 					}
 				}
 			}
@@ -175,6 +232,39 @@ func cerbos_engine_v1_CheckOutput_hashpb_sum(m *CheckOutput, hasher hash.Hash, i
 			for _, v := range m.Outputs {
 				if v != nil {
 					cerbos_engine_v1_OutputEntry_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.CheckOutput.evaluation_errors"]; !ok {
+		if len(m.EvaluationErrors) > 0 {
+			for _, v := range m.EvaluationErrors {
+				if v != nil {
+					cerbos_engine_v1_EvaluationError_hashpb_sum(v, hasher, ignore, b)
+				}
+			}
+		}
+	}
+}
+
+func cerbos_engine_v1_EvaluationError_CELError_hashpb_sum(m *EvaluationError_CELError, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.engine.v1.EvaluationError.CELError.expression"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetExpression()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetExpression()), len(m.GetExpression())))
+	}
+	if _, ok := ignore["cerbos.engine.v1.EvaluationError.CELError.message"]; !ok {
+		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.GetMessage()))))
+		_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.GetMessage()), len(m.GetMessage())))
+	}
+}
+
+func cerbos_engine_v1_EvaluationError_hashpb_sum(m *EvaluationError, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if m.Error != nil {
+		if _, ok := ignore["cerbos.engine.v1.EvaluationError.error"]; !ok {
+			switch t := m.Error.(type) {
+			case *EvaluationError_CelError:
+				if t.CelError != nil {
+					cerbos_engine_v1_EvaluationError_CELError_hashpb_sum(t.CelError, hasher, ignore, b)
 				}
 			}
 		}
@@ -435,6 +525,15 @@ func cerbos_engine_v1_PlanResourcesOutput_hashpb_sum(m *PlanResourcesOutput, has
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(m.MatchedScopes[k]))))
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(m.MatchedScopes[k]), len(m.MatchedScopes[k])))
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.engine.v1.PlanResourcesOutput.evaluation_errors"]; !ok {
+		if len(m.EvaluationErrors) > 0 {
+			for _, v := range m.EvaluationErrors {
+				if v != nil {
+					cerbos_engine_v1_EvaluationError_hashpb_sum(v, hasher, ignore, b)
 				}
 			}
 		}

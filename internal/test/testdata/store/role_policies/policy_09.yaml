@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+rolePolicy:
+  role: domain-administrator
+  version: default
+  parentRoles:
+    - role-allow-role-policy-actions
+  rules:
+    # Literal resource with special characters: https://github.com/cerbos/cerbos/issues/3388
+    - resource: "udm:module:users/simple_regular-user"
+      allowActions:
+        - udm:object:read
+    # Glob over a resource name with special characters
+    - resource: "udm:module:users/*"
+      allowActions:
+        - udm:object:update

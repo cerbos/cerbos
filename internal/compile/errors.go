@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
+	"cel.dev/cel-go/cel"
 	"github.com/fatih/color"
-	"github.com/google/cel-go/cel"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
@@ -98,13 +98,12 @@ func (e *ErrorSet) Error() string {
 }
 
 func (e *ErrorSet) Add(err error) {
-	if errList := new(ErrorSet); errors.As(err, &errList) {
+	if errList, ok := errors.AsType[*ErrorSet](err); ok {
 		maps.Copy(e.CompileErrors, errList.CompileErrors)
 		return
 	}
 
-	tmpErr := new(Error)
-	if errors.As(err, &tmpErr) {
+	if tmpErr, ok := errors.AsType[*Error](err); ok {
 		key := util.HashStr(fmt.Sprintf("%s:%d:%d:%s", tmpErr.GetFile(), tmpErr.GetPosition().GetLine(), tmpErr.GetPosition().GetColumn(), tmpErr.GetDescription()))
 		e.CompileErrors[key] = tmpErr.CompileErrors_Err
 		return

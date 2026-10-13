@@ -1,0 +1,61 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.54.0]
+= Cerbos v0.54.0 (2026-07-20)
+
+
+
+This release contains several performance improvements to make policy evaluations faster and keep the steady-state memory usage low. Most installations should see reduced resource usage and increased throughput from the PDP after the upgrade.
+
+IMPORTANT: The next release of Cerbos PDP (0.55.0) will include a breaking change to policy evaluation where invalid expressions in policy rules are treated more strictly. Currently, runtime evaluation errors (treating a string as an int, for instance) are treated as evaluating to `false` in all cases including `DENY` rules. From the next version, invalid expressions in `DENY` rules will be treated as evaluating to `true` which will result in policies that implicitly relied on the previous behaviour to fail. To help with the transition, this release logs warning messages whenever an invalid policy expression is encountered. You can set the logging level of these messages using xref:configuration:engine.adoc#cel_error_log_level[the `engine.celErrorLogLevel`] configuration setting. We also recommend developing xref:policies:compile.adoc#testing[test suites] to capture your expectations so that they could be used as an upgrade gate.
+
+== Changelog
+
+=== Breaking changes
+
+[unordered]
+Remove support for legacy Cerbos Hub workspaces:: Loading policy bundles from legacy Cerbos Hub workspaces is no longer supported and the corresponding configuration settings have been removed, along with the `cerbosctl hub epdp` command.
+
+
+=== Deprecations
+
+[unordered]
+Stop publishing the Helm chart to oci://ghcr.io/cerbos/helm-charts/cerbos:: Starting from v0.54.0, new releases of the Cerbos Helm chart will only be available from the main repository at {app-helm-chart-repo}. The OCI registry at ghcr.io/cerbos/helm-charts/cerbos will no longer be updated to include new chart versions. This is due to low uptake which doesn't justify the complexity of managing the OCI registry publishing workflow.
+
+
+=== Features
+
+[unordered]
+Add cerbos compile-store command:: Adds ability to use the PDP configuration file and directly compile the contents of the configured policy store. This is useful for diagnosing issues with stores that are not stored on disk storage such as `blob` and `database` stores. With the optional `--disable-invalid` flag, it's possible to automatically disable invalid policies on database stores as well.
+
+
+=== Enhancements
+
+[unordered]
+Surface errors evaluating outputs:: If an error is encountered when evaluating an xref:policies:outputs.adoc[output expression], the `val` field of the `OutputEntry` in the response is not set. Previously, it was not possible to gain any further insight into why the evaluation failed. Now, there is also an `error` field on the `OutputEntry` that contains the error message. The error message is also surfaced in xref:policies:compile.adoc#testing[test results] when an assertion for the output is set in `expected.outputs`.
+
+
+Improve error messages when parsing test suites and fixtures:: The same YAML parser is now used to parse policies, test suites, and fixtures, so that errors are mapped to a specific line and column number in the file.
+
+
+Automatically configure GOMEMLIMIT from the cgroup memory limit:: When the PDP runs under a cgroup memory limit and GOMEMLIMIT is not set explicitly, it now derives GOMEMLIMIT from the cgroup cap.
+
+
+Expose Go runtime GC-CPU and GOMEMLIMIT metrics:: The metrics endpoint now exports the Go runtime CPU-class metrics (`go_cpu_classes_*`, including GC CPU time) and the effective memory limit (`go_gc_gomemlimit_bytes`).
+
+
+Log CEL runtime errors raised during policy evaluation and include them in audit log entries:: When a condition or variable expression raises a runtime error at evaluation time (for example, comparing incompatible types or referencing a missing attribute), the expression is treated as not satisfied. Cerbos now logs each such error and includes it in the audit log entry for the request, so that affected policies can be found and corrected. The log level can be configured with the xref:configuration:engine.adoc#cel_error_log_level[`engine.celErrorLogLevel`] setting (default `warn`; `none` disables the log messages but the errors are still recorded in audit log entries). From Cerbos v0.55, a DENY rule whose condition raises a runtime error will be considered as satisfying the DENY condition.
+
+
+=== Bug fixes
+
+[unordered]
+Return an error when empty expressions are provided in outputs:: Previously, output blocks with no expressions set were silently ignored during compilation. Now, a compile-time error is returned when an output block is provided with no expressions.
+
+
+Fix YAML parser bugs:: Previously, the YAML parser could link:https://github.com/cerbos/cerbos/issues/3222[erroneously report policy files as invalid] if they used flow syntax for lists and mappings, or if they used aliases in certain contexts. The behavior of the YAML merge key (`<<`) was link:https://github.com/cerbos/cerbos/issues/3233[not spec-compliant]; nested lists and maps would be merged rather than overridden.
+
+
+Pick up newly created policy subdirectories and their contents in the directory watcher:: Previously, when a new subdirectory was created under a watched policy directory, the watcher only began monitoring it while draining the next batch of events. Any files or nested directories created in that window were never observed and were silently dropped from the index. Now, the watch is added immediately when the directory is created and its existing contents are traversed, so newly added subdirectories and everything within them are picked up.
+
+

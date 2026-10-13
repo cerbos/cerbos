@@ -1,0 +1,86 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Default scope
+
+config:
+  defaultScope: acme.hr.uk
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test
+    principal:
+      id: john
+      roles:
+        - employee
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+        ip_address: 10.20.0.13
+    resource:
+      kind: leave_request
+      id: XX125
+      attr:
+        department: marketing
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+    actions:
+      - create
+      - delete
+      - view:public
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    actions:
+      create:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk
+        scope: acme
+      delete:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk
+        scope: acme.hr.uk
+      view:public:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/acme.hr.uk
+        scope: acme.hr
+    effectiveDerivedRoles:
+      - any_employee
+      - employee_that_owns_the_record
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.leave_request.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05.yaml
+        resource.leave_request.vdefault/acme:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.yaml
+        resource.leave_request.vdefault/acme.hr:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.yaml
+        resource.leave_request.vdefault/acme.hr.uk:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05_acme.hr.uk.yaml
+    policySource:
+      disk: {}

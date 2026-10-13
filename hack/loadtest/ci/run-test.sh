@@ -56,7 +56,7 @@ echo "Starting Cerbos..."
 cerbos server \
   --config="${SCRIPT_DIR}/cerbos.yaml" \
   --set="storage.disk.directory=${WORK_DIR}/policies" \
-  --log-level=warn &
+  --log-level=error &
 CERBOS_PID=$!
 trap "kill $CERBOS_PID 2>/dev/null || true" EXIT
 

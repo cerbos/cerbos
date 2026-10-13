@@ -5,7 +5,7 @@ include::partial$attributes.adoc[]
 include::partial$version-check.adoc[]
 
 
-Cerbos binaries are available for multiple operating systems and architectures. See the link:{app-github-releases-page}[releases page] for all available downloads.
+Cerbos PDP binaries are available for multiple operating systems and architectures. See the link:{app-github-releases-page}[releases page] for all available downloads.
 
 [caption=]
 [%header,cols=".^1,.^1,3m",grid=rows]
@@ -30,7 +30,7 @@ chmod +x {app-name}
 [NOTE]
 ====
 
-Cerbos binaries are signed using link:https://www.sigstore.dev[sigstore] tools during the automated build process and the verification bundle is published along with the binary as `<BUNDLE>.sigstore.json`.
+Cerbos PDP binaries are signed using link:https://www.sigstore.dev[sigstore] tools during the automated build process and the verification bundle is published along with the binary as `<BUNDLE>.sigstore.json`.
 
 The following example demonstrates how to verify the Linux X86_64 bundle archive.
 
@@ -59,12 +59,13 @@ cosign verify-blob \
 [id="linux-packages"]
 == Linux packages
 
-Cerbos DEB and RPM packages can be installed on any Linux distribution that supports one of those package formats. You can download the appropriate package for your system from the link:{app-github-releases-page}[releases page].
+Cerbos PDP DEB and RPM packages can be installed on any Linux distribution that supports one of those package formats. You can download the appropriate package for your system from the link:{app-github-releases-page}[releases page].
 
-IMPORTANT: Cerbos packages are currently only designed to work with systems where `systemd` is the init system. If you use a different init system, consider installing cerbos from the tarballs instead.
+IMPORTANT: Cerbos PDP packages are currently only designed to work with systems where `systemd` is the init system. If you use a different init system, consider installing cerbos from the tarballs instead.
 
 
-The packages install the `cerbos` and `cerbosctl` binaries to `/usr/local/bin` and create a systemd service to automatically start the Cerbos server. The default configuration is setup to look for policies in `/var/cerbos/policies` but you can change this by editing `/etc/cerbos/yaml` and reloading the service with `sudo systemctl restart cerbos`.
+
+The packages install the `cerbos` and `cerbosctl` binaries to `/usr/local/bin` and create a systemd service to automatically start the Cerbos PDP server. The default configuration is setup to look for policies in `/var/cerbos/policies` but you can change this by editing `/etc/cerbos/yaml` and reloading the service with `sudo systemctl restart cerbos`.
 
 
 [source,sh]
@@ -82,7 +83,7 @@ sudo journalctl -xeu cerbos.service
 [id="homebrew"]
 == Homebrew
 
-You can install Cerbos binaries using Homebrew as well.
+You can install Cerbos PDP binaries using Homebrew as well.
 
 [source,sh]
 ----
@@ -93,7 +94,7 @@ brew install cerbos
 [id="npm"]
 == npm
 
-You can install Cerbos binaries from the npm registry. This removes a separate setup step for JavaScript projects and allows you to lock Cerbos to a specific version to ensure a consistent development environment.
+You can install Cerbos PDP binaries from the npm registry. This removes a separate setup step for JavaScript projects and allows you to lock Cerbos PDP to a specific version to ensure a consistent development environment.
 
 link:https://www.npmjs.com/package/cerbos[cerbos] and link:https://www.npmjs.com/package/cerbosctl[cerbosctl] are available as separate packages.
 
@@ -111,7 +112,7 @@ A link:https://nixos.wiki/wiki/Flakes[Nix flake] is available at https://github.
 
 [source]
 ----
-# Launch a Cerbos server
+# Launch a Cerbos PDP server
 nix run github:cerbos/cerbos-flake#cerbos -- server --set=storage.disk.directory=/path/to/policy_directory
 
 # Launch a REPL

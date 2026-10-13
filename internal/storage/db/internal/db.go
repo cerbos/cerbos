@@ -13,9 +13,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -25,6 +27,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 
+	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	responsev1 "github.com/cerbos/cerbos/api/genpb/cerbos/response/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
 	"github.com/cerbos/cerbos/internal/inspect"
@@ -32,12 +35,14 @@ import (
 	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/parser"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
 
 const (
+	batchSize   = 32
 	driverName  = "db"
 	tableLogKey = "table"
 )
@@ -49,6 +54,7 @@ type DBStorage interface {
 	storage.Instrumented
 	storage.Reloadable
 	storage.Verifiable
+	storage.IterableSourceStore
 	AddOrUpdate(ctx context.Context, policies ...policy.Wrapper) error
 	GetFirstMatch(ctx context.Context, candidates []namer.ModuleID) (*policy.CompilationUnit, error)
 	GetAll(ctx context.Context) ([]*policy.CompilationUnit, error)
@@ -253,6 +259,10 @@ func (s *dbStorage) AddOrUpdate(ctx context.Context, policies ...policy.Wrapper)
 			modIDSet[p.ID] = struct{}{}
 		}
 
+		if err := s.checkScopePermissions(ctx, tx, policies); err != nil {
+			return err
+		}
+
 		// We only need to retrieve the state of Dependents before the update (there's no need
 		// to update a dependent policy in the rule table if it's only just been added in the
 		// same batch). Therefore, we can share the same transaction.
@@ -384,6 +394,35 @@ func (s *dbStorage) GetAll(ctx context.Context) ([]*policy.CompilationUnit, erro
 	}
 
 	return res, nil
+}
+
+func (s *dbStorage) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, error] {
+	return func(yield func(*policy.CompilationUnit, error) bool) {
+		policyKeys, err := s.ListPolicyIDs(ctx, storage.ListPolicyIDsParams{})
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+
+		for batch := range slices.Chunk(policyKeys, batchSize) {
+			modIDs := make([]namer.ModuleID, len(batch))
+			for i, k := range batch {
+				modIDs[i] = namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(k))
+			}
+
+			cus, err := s.GetCompilationUnits(ctx, modIDs...)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			for _, cu := range cus {
+				if !yield(cu, nil) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (s *dbStorage) GetAllMatching(ctx context.Context, modIDs []namer.ModuleID) ([]*policy.CompilationUnit, error) {
@@ -942,6 +981,20 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 		events[idx] = storage.NewPolicyEvent(storage.EventAddOrUpdatePolicy, namer.GenModuleIDFromFQN(namer.FQNFromPolicyKey(pk)))
 	}
 
+	toEnable, err := s.LoadPolicy(ctx, policyKey...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load policies to enable: %w", err)
+	}
+
+	enabling := make([]policy.Wrapper, len(toEnable))
+	for i, p := range toEnable {
+		enabling[i] = *p
+	}
+
+	if err := s.checkScopePermissions(ctx, s.db, enabling); err != nil {
+		return 0, err
+	}
+
 	res, err := s.db.Update(PolicyTbl).Prepared(true).
 		Set(goqu.Record{PolicyTblDisabledCol: false}).
 		Where(goqu.C(PolicyTblIDCol).In(mIDs)).
@@ -957,6 +1010,69 @@ func (s *dbStorage) Enable(ctx context.Context, policyKey ...string) (uint32, er
 
 	s.subs.NotifySubscribers(events...)
 	return uint32(affected), nil
+}
+
+type querier interface {
+	From(...any) *goqu.SelectDataset
+}
+
+// checkScopePermissions verifies that the given policies agree with the enabled policies already stored in the same
+// scopes on the scopePermissions setting. Conflicts are reported as a scopeperms.ConflictsError.
+func (s *dbStorage) checkScopePermissions(ctx context.Context, q querier, policies []policy.Wrapper) error {
+	batch := make(map[namer.ModuleID]struct{}, len(policies))
+	scopes := make([]string, 0, len(policies))
+	seenScopes := make(map[string]struct{})
+	for _, p := range policies {
+		if !scopeperms.Constrained(policyv1.Kind(p.Kind)) {
+			continue
+		}
+
+		batch[p.ID] = struct{}{}
+		if _, ok := seenScopes[p.Scope]; !ok {
+			seenScopes[p.Scope] = struct{}{}
+			scopes = append(scopes, p.Scope)
+		}
+	}
+
+	if len(scopes) == 0 {
+		return nil
+	}
+
+	var recs []Policy
+	if err := q.From(PolicyTbl).
+		Select(
+			goqu.C(PolicyTblIDCol),
+			goqu.C(PolicyTblKindCol),
+			goqu.C(PolicyTblNameCol),
+			goqu.C(PolicyTblVerCol),
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").As(PolicyTblScopeCol),
+			goqu.C(PolicyTblDescCol),
+			goqu.C(PolicyTblDisabledCol),
+			goqu.C(PolicyTblDefinitionCol),
+		).
+		Where(
+			goqu.COALESCE(goqu.C(PolicyTblScopeCol), "").In(scopes),
+			goqu.C(PolicyTblDisabledCol).IsFalse(),
+		).
+		ScanStructsContext(ctx, &recs); err != nil {
+		return fmt.Errorf("failed to load policies sharing scopes: %w", err)
+	}
+
+	tracker := scopeperms.NewTracker()
+	for _, rec := range recs {
+		p := rec.Definition.Policy
+		if _, ok := batch[rec.ID]; ok || p == nil {
+			continue
+		}
+
+		tracker.Add(policyv1.Kind(policy.GetKind(p)), namer.PolicyKey(p), policy.GetScope(p), policy.GetScopePermissions(p))
+	}
+
+	for _, p := range policies {
+		tracker.Add(policyv1.Kind(p.Kind), namer.PolicyKey(p.Policy), p.Scope, policy.GetScopePermissions(p.Policy))
+	}
+
+	return tracker.Err()
 }
 
 func (s *dbStorage) validateIntegrity(
@@ -1298,7 +1414,9 @@ func (s *dbStorage) RepoStats(ctx context.Context) storage.RepoStats {
 }
 
 func (s *dbStorage) Reload(ctx context.Context) error {
-	s.subs.NotifySubscribers(storage.NewReloadEvent())
+	if err := s.subs.NotifySubscribersAndWait(ctx, storage.NewReloadEvent()); err != nil {
+		return fmt.Errorf("failed to wait for subscribers to process the reload: %w", err)
+	}
 	metrics.Record(ctx, metrics.StoreLastSuccessfulRefresh(), time.Now().UnixMilli(), metrics.DriverKey(driverName))
 	return nil
 }

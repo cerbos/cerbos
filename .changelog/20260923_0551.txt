@@ -1,0 +1,2 @@
+type:fix
+Reject policies whose scopePermissions setting conflicts with other policies in the same scope, regardless of the storage driver

@@ -23,8 +23,8 @@ type validator func(proto.Message, ...protovalidate.ValidationOption) error
 func (v validator) Validate(msg proto.Message, options ...protovalidate.ValidationOption) error {
 	err := v(msg, options...)
 
-	var validationErr *protovalidate.ValidationError
-	if !errors.As(err, &validationErr) {
+	validationErr, ok := errors.AsType[*protovalidate.ValidationError](err)
+	if !ok {
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (v validator) Validate(msg proto.Message, options ...protovalidate.Validati
 			}
 
 			slices.Sort(allowedNames)
-			violation.Proto.Message = proto.String(fmt.Sprintf("must be one of [%s]", strings.Join(allowedNames, ", ")))
+			violation.Proto.Message = new(fmt.Sprintf("must be one of [%s]", strings.Join(allowedNames, ", ")))
 		}
 	}
 

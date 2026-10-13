@@ -166,13 +166,7 @@ func (engine *Engine) doPlan(ctx context.Context, input *enginev1.PlanResourcesI
 		return nil, nil, err
 	}
 
-	ppScope := evaluator.Scope(input.Principal.Scope, opts.EvalParams)
-	ppVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, opts.EvalParams)
-
-	rpScope := evaluator.Scope(input.Resource.Scope, opts.EvalParams)
-	rpVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, opts.EvalParams)
-
-	return engine.ruleTableManager.Plan(ctx, input, ppScope, ppVersion, rpScope, rpVersion, opts.NowFunc(), opts.Globals(), opts.LenientScopeSearch())
+	return engine.ruleTableManager.Plan(ctx, opts.EvalParams, input)
 }
 
 func (engine *Engine) logPlanDecision(ctx context.Context, input *enginev1.PlanResourcesInput, output *enginev1.PlanResourcesOutput, planErr error, trail *auditv1.AuditTrail) (*enginev1.PlanResourcesOutput, error) {

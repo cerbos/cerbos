@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  principal: payroll_clerk
+  version: default
+  rules:
+    # Both rules match payslip:view. Rule names only have to be unique within a resource,
+    # and these used to give both rules the same evaluation key.
+    - resource: "pay*"
+      actions:
+        - action: view
+          name: view_rule
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              expr: R.attr.public == true
+    - resource: payslip
+      actions:
+        - action: view
+          name: view_rule
+          effect: EFFECT_DENY
+          condition:
+            match:
+              expr: R.attr.locked == true

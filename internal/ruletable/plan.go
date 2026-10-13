@@ -5,11 +5,13 @@ package ruletable
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"sort"
 
-	celast "github.com/google/cel-go/common/ast"
+	celast "cel.dev/cel-go/common/ast"
+	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
@@ -17,7 +19,6 @@ import (
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
 	schemav1 "github.com/cerbos/cerbos/api/genpb/cerbos/schema/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/tracing"
@@ -30,27 +31,21 @@ import (
 func (rt *RuleTable) Plan(ctx context.Context, conf *evaluator.Conf, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, opts ...evaluator.CheckOpt) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	checkOpts := evaluator.NewCheckOptions(ctx, conf, opts...)
 
-	principalScope := evaluator.Scope(input.Principal.Scope, checkOpts.EvalParams)
-	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, checkOpts.EvalParams)
-
-	resourceScope := evaluator.Scope(input.Resource.Scope, checkOpts.EvalParams)
-	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, checkOpts.EvalParams)
-
-	return rt.planWithAuditTrail(ctx, schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, checkOpts.NowFunc(), checkOpts.Globals(), checkOpts.LenientScopeSearch())
+	return rt.planWithAuditTrail(ctx, schemaMgr, input, checkOpts.EvalParams)
 }
 
-func (rt *RuleTable) planWithAuditTrail(
-	ctx context.Context,
-	schemaMgr schema.Manager,
-	input *enginev1.PlanResourcesInput,
-	principalScope, principalVersion, resourceScope, resourceVersion string,
-	nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool,
-) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, evalParams evaluator.EvalParams) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	defer span.End()
 
-	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, lenientScopeSearch)
-	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, lenientScopeSearch)
+	principalScope := evaluator.Scope(input.Principal.Scope, evalParams)
+	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, evalParams)
+
+	resourceScope := evaluator.Scope(input.Resource.Scope, evalParams)
+	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, evalParams)
+
+	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
 
 	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
 	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
@@ -66,7 +61,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	span.SetAttributes(tracing.PolicyFQN(fqn))
 
 	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: nowFunc, ExprCache: rt.planExprCache}
+	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}
 
 	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
 	matchedScopes := make(map[string]string, len(input.Actions))
@@ -87,8 +82,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	}
 
 	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-
-	sanitizedResource := namer.SanitizedResource(input.Resource.Kind)
+	resourceKind := index.NewResourceKind(input.Resource.Kind)
 
 	includingParentRoles := make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
@@ -103,8 +97,10 @@ func (rt *RuleTable) planWithAuditTrail(
 
 		var hasPolicyTypeAllow bool
 		var rootNode *planner.QpN
+		var evalErr error
 
 		// evaluate resource policies before principal policies
+	policyTypesLoop:
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
 			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
 
@@ -148,6 +144,7 @@ func (rt *RuleTable) planWithAuditTrail(
 							derivedRolesList = c
 						} else {
 							var derivedRoles []planner.RN
+							var drListErr error
 							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
 								for name, dr := range drs {
 									if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
@@ -160,8 +157,12 @@ func (rt *RuleTable) planWithAuditTrail(
 										return nil, auditTrail, err
 									}
 
-									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, globals, dr.Constants, variables, derivedRolesList)
+									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, evalParams.Globals, dr.Constants, variables, derivedRolesList)
 									if err != nil {
+										if errors.Is(err, evaluator.StrictEvaluationError{}) {
+											drListErr = multierr.Append(drListErr, err)
+											continue
+										}
 										return nil, auditTrail, err
 									}
 
@@ -174,11 +175,15 @@ func (rt *RuleTable) planWithAuditTrail(
 								}
 							}
 
-							sort.Slice(derivedRoles, func(i, j int) bool {
-								return derivedRoles[i].Role < derivedRoles[j].Role
-							})
+							if drListErr != nil {
+								derivedRolesList = func() (*exprpb.Expr, error) { return nil, drListErr }
+							} else {
+								sort.Slice(derivedRoles, func(i, j int) bool {
+									return derivedRoles[i].Role < derivedRoles[j].Role
+								})
 
-							derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+								derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+							}
 
 							scopedDerivedRolesList[scope] = derivedRolesList
 						}
@@ -190,7 +195,7 @@ func (rt *RuleTable) planWithAuditTrail(
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
 					}
-					bindings = rt.idx.Query(resourceVersion, sanitizedResource, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(resourceVersion, resourceKind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
 							maps.Copy(effectivePolicies, m.GetSourceAttributes())
@@ -207,8 +212,12 @@ func (rt *RuleTable) planWithAuditTrail(
 							}
 						}
 
-						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, globals, constants, variables, derivedRolesList)
+						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, evalParams.Globals, constants, variables, derivedRolesList)
 						if err != nil {
+							if errors.Is(err, evaluator.StrictEvaluationError{}) {
+								evalErr = err
+								break policyTypesLoop
+							}
 							return nil, auditTrail, err
 						}
 
@@ -222,8 +231,12 @@ func (rt *RuleTable) planWithAuditTrail(
 								}
 							}
 
-							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
+							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, evalParams.Globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
 							if err != nil {
+								if errors.Is(err, evaluator.StrictEvaluationError{}) {
+									evalErr = err
+									break policyTypesLoop
+								}
 								return nil, auditTrail, err
 							}
 
@@ -304,9 +317,12 @@ func (rt *RuleTable) planWithAuditTrail(
 					// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
 					// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
 					// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
-					roleAllowNode = planner.MkFalseNode()
-					roleDenyNode = nil
-					roleDenyRolePolicyNode = nil
+					// Principal policies are role-agnostic and only have a single role iteration, so we preserve the deny node.
+					if pt != policyv1.Kind_KIND_PRINCIPAL {
+						roleAllowNode = planner.MkFalseNode()
+						roleDenyNode = nil
+						roleDenyRolePolicyNode = nil
+					}
 				} else if roleAllowNode != nil && roleDenyNode == nil && roleDenyRolePolicyNode == nil {
 					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
 						policyTypeAllowNode = roleAllowNode
@@ -354,7 +370,11 @@ func (rt *RuleTable) planWithAuditTrail(
 			}
 		}
 
-		if rootNode != nil {
+		if evalErr != nil {
+			// In strict mode an evaluation error denies the affected action.
+			policyMatch = true
+			nf.ResetToUnconditionalDeny()
+		} else if rootNode != nil {
 			policyMatch = true
 			if !hasPolicyTypeAllow {
 				nf.ResetToUnconditionalDeny()
@@ -380,6 +400,7 @@ func (rt *RuleTable) planWithAuditTrail(
 	if !policyMatch {
 		output.FilterDebug = noPolicyMatch
 	}
+	output.EvaluationErrors = evalCtx.CELErrors.All()
 
 	return output, auditTrail, nil
 }

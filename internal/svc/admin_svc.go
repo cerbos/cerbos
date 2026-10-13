@@ -30,6 +30,7 @@ import (
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/observability/logging"
 	"github.com/cerbos/cerbos/internal/policy"
+	"github.com/cerbos/cerbos/internal/policy/scopeperms"
 	"github.com/cerbos/cerbos/internal/storage"
 	"github.com/cerbos/cerbos/internal/storage/db"
 )
@@ -41,23 +42,30 @@ var (
 	authSep         = []byte(":")
 )
 
+// RuleTableReloadStatus reports the outcome of the most recent rule table rebuild.
+type RuleTableReloadStatus interface {
+	LastReloadError() error
+}
+
 // CerbosAdminService implements the Cerbos administration service.
 type CerbosAdminService struct {
-	sfGroup  singleflight.Group
-	store    storage.Store
-	auditLog audit.Log
+	sfGroup      singleflight.Group
+	store        storage.Store
+	ruleTableMgr RuleTableReloadStatus
+	auditLog     audit.Log
 	*svcv1.UnimplementedCerbosAdminServiceServer
 	adminUser       string
 	adminPasswdHash []byte
 }
 
-func NewCerbosAdminService(store storage.Store, auditLog audit.Log, adminUser string, adminPasswdHash []byte) *CerbosAdminService {
+func NewCerbosAdminService(store storage.Store, ruleTableMgr RuleTableReloadStatus, auditLog audit.Log, adminUser string, adminPasswdHash []byte) *CerbosAdminService {
 	svc := &CerbosAdminService{
 		auditLog:                              auditLog,
 		adminUser:                             adminUser,
 		adminPasswdHash:                       adminPasswdHash,
 		UnimplementedCerbosAdminServiceServer: &svcv1.UnimplementedCerbosAdminServiceServer{},
 		store:                                 store,
+		ruleTableMgr:                          ruleTableMgr,
 	}
 
 	return svc
@@ -85,9 +93,12 @@ func (cas *CerbosAdminService) AddOrUpdatePolicy(ctx context.Context, req *reque
 			return nil, status.Error(codes.FailedPrecondition, "Policy ID conflict")
 		}
 
-		invalidPolicyErr := new(storage.InvalidPolicyError)
-		if errors.As(err, invalidPolicyErr) {
+		if invalidPolicyErr, ok := errors.AsType[storage.InvalidPolicyError](err); ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid policy: %v", invalidPolicyErr.Message)
+		}
+
+		if conflictsErr, ok := errors.AsType[*scopeperms.ConflictsError](err); ok {
+			return nil, status.Errorf(codes.InvalidArgument, "Failed to add/update policies: %v", conflictsErr)
 		}
 		return nil, status.Error(codes.Internal, "Failed to add/update policies")
 	}
@@ -107,8 +118,7 @@ func (cas *CerbosAdminService) AddOrUpdateSchema(ctx context.Context, req *reque
 
 	if err := ms.AddOrUpdateSchema(ctx, req.Schemas...); err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to add/update the schema(s)", zap.Error(err))
-		var ise storage.InvalidSchemaError
-		if ok := errors.As(err, &ise); ok {
+		if ise, ok := errors.AsType[storage.InvalidSchemaError](err); ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Invalid schema in request: %s", ise.Message)
 		}
 
@@ -245,8 +255,7 @@ func (cas *CerbosAdminService) DeletePolicy(ctx context.Context, req *requestv1.
 	deletedPolicies, err := ms.Delete(ctx, req.Id...)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to delete policies", zap.Error(err))
-		var integrityErr *db.IntegrityErr
-		if errors.As(err, &integrityErr) {
+		if integrityErr, ok := errors.AsType[*db.IntegrityErr](err); ok {
 			st := status.New(codes.InvalidArgument, "Failed to delete policies")
 			var setDetailsErr error
 			if st, setDetailsErr = st.WithDetails(&responsev1.DeletePolicyErrorDetails{
@@ -284,8 +293,7 @@ func (cas *CerbosAdminService) DisablePolicy(ctx context.Context, req *requestv1
 	disabledPolicies, err := ms.Disable(ctx, req.Id...)
 	if err != nil {
 		logging.ReqScopeLog(ctx).Error("Failed to disable policies", zap.Error(err))
-		var integrityErr *db.IntegrityErr
-		if errors.As(err, &integrityErr) {
+		if integrityErr, ok := errors.AsType[*db.IntegrityErr](err); ok {
 			st := status.New(codes.InvalidArgument, "Failed to disable policies")
 			var setDetailsErr error
 			if st, setDetailsErr = st.WithDetails(&responsev1.DisablePolicyErrorDetails{
@@ -454,6 +462,13 @@ func (cas *CerbosAdminService) ReloadStore(ctx context.Context, req *requestv1.R
 
 	if err := reload(ctx); err != nil {
 		return nil, status.Error(codes.Internal, "failed to reload store")
+	}
+
+	// Reload events are processed synchronously, so by this point the rule table rebuild
+	// triggered by the reload has completed and any failure is observable here.
+	if err := cas.ruleTableMgr.LastReloadError(); err != nil {
+		log.Error("store reloaded but the rule table rebuild failed", zap.Error(err))
+		return nil, status.Error(codes.Internal, "store reloaded but the rule table rebuild failed")
 	}
 
 	return &responsev1.ReloadStoreResponse{}, nil

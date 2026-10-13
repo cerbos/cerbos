@@ -1,6 +1,6 @@
 ---
 site:
-  title: Cerbos // Documentation
+  title: Cerbos Authorization Management Platform // Documentation
   url: https://docs.cerbos.dev
   start_page: cerbos:ROOT:index.adoc
   robots: allow
@@ -21,7 +21,7 @@ urls:
   latest_prerelease_version_segment: prerelease
 asciidoc:
   attributes:
-    app-version: "0.54.0@"
+    app-version: "0.57.0@"
     experimental: true
     page-pagination: true
   extensions:

@@ -425,6 +425,10 @@ func performCheck(ctx context.Context, eng Checker, inputs []*enginev1.CheckInpu
 		checkOpts = append(checkOpts, evaluator.WithLenientScopeSearch())
 	}
 
+	if options.GetStrictEvaluation() {
+		checkOpts = append(checkOpts, evaluator.WithStrictEvaluation())
+	}
+
 	if globals := options.GetGlobals(); len(globals) > 0 {
 		checkOpts = append(checkOpts, evaluator.WithGlobals((&structpb.Struct{Fields: globals}).AsMap()))
 	}

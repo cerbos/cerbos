@@ -171,16 +171,16 @@ func (m *StaticManager) validate(ctx context.Context, schemas *policyv1.Schemas,
 	defer span.End()
 
 	if err := m.validateAttr(ctx, ErrSourcePrincipal, schemas.PrincipalSchema, principalAttr, actions, nil); err != nil {
-		var principalErrs ValidationErrorList
-		if ok := errors.As(err, &principalErrs); !ok {
+		principalErrs, ok := errors.AsType[ValidationErrorList](err)
+		if !ok {
 			return result, fmt.Errorf("failed to validate the principal: %w", err)
 		}
 		result.add(principalErrs...)
 	}
 
 	if err := m.validateAttr(ctx, ErrSourceResource, schemas.ResourceSchema, resourceAttr, actions, resourceErrorFilter); err != nil {
-		var resourceErrs ValidationErrorList
-		if ok := errors.As(err, &resourceErrs); !ok {
+		resourceErrs, ok := errors.AsType[ValidationErrorList](err)
+		if !ok {
 			return result, fmt.Errorf("failed to validate the resource: %w", err)
 		}
 		result.add(resourceErrs...)
@@ -224,12 +224,11 @@ func (m *StaticManager) validateAttr(ctx context.Context, src ErrSource, schemaR
 	}
 
 	if err := schema.Validate(attrJSON); err != nil {
-		var validationErr *jsonschema.ValidationError
-		if ok := errors.As(err, &validationErr); !ok {
-			return fmt.Errorf("unable to validate %s: %w", src, err)
+		if validationErr, ok := errors.AsType[*jsonschema.ValidationError](err); ok {
+			return newValidationErrorList(validationErr, src, errorFilter)
 		}
 
-		return newValidationErrorList(validationErr, src, errorFilter)
+		return fmt.Errorf("unable to validate %s: %w", src, err)
 	}
 
 	return nil
@@ -265,9 +264,8 @@ func StaticResolver(loader Loader) Resolver {
 
 func loadCerbosURL(ctx context.Context, u *url.URL, loader Loader) (io.ReadCloser, error) {
 	relativePath := strings.TrimPrefix(u.Path, "/")
-	var pathErr *fs.PathError
 	s, err := loader.LoadSchema(ctx, relativePath)
-	if err != nil && errors.Is(err, fs.ErrNotExist) && errors.As(err, &pathErr) {
+	if pathErr, ok := errors.AsType[*fs.PathError](err); err != nil && errors.Is(err, fs.ErrNotExist) && ok {
 		p := pathErr.Path
 		if !strings.HasPrefix(pathErr.Path, util.SchemasDirectory) {
 			p = filepath.Join(util.SchemasDirectory, pathErr.Path)

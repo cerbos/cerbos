@@ -2,7 +2,19 @@
 ---
 description: Error evaluating output
 
-inputs:
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
   - requestId: bad-output
     actions:
       - error
@@ -16,7 +28,7 @@ inputs:
       attr:
         ownerId: john
 
-wantOutputs:
+wantOutputs: &outputs
   - requestId: bad-output
     resourceId: equipment_request_1
     effectiveDerivedRoles:
@@ -26,14 +38,12 @@ wantOutputs:
         effect: EFFECT_ALLOW
         policy: resource.equipment_request.vdefault
     outputs:
-      - src: resource.equipment_request.vdefault#output-error
+      - src: "resource.equipment_request.vdefault#output-error"
         action: error
         error: division by zero
 
 wantDecisionLogs:
-  - callId: 01KS2X0MGK5ZCG2EXV26A0CTW8
-    timestamp: 2026-05-20T14:37:22.884187572Z
-    auditTrail:
+  - auditTrail:
       effectivePolicies:
         resource.equipment_request.vdefault:
           attributes:
@@ -42,29 +52,5 @@ wantDecisionLogs:
     policySource:
       disk: {}
     checkResources:
-      inputs:
-        - requestId: bad-output
-          actions:
-            - error
-          principal:
-            id: john
-            roles:
-              - employee
-          resource:
-            kind: equipment_request
-            id: equipment_request_1
-            attr:
-              ownerId: john
-      outputs:
-        - requestId: bad-output
-          resourceId: equipment_request_1
-          actions:
-            error:
-              effect: EFFECT_ALLOW
-              policy: resource.equipment_request.vdefault
-          effectiveDerivedRoles:
-            - any_employee
-          outputs:
-            - src: resource.equipment_request.vdefault#output-error
-              action: error
-              error: division by zero
+      inputs: *inputs
+      outputs: *outputs

@@ -23,7 +23,7 @@ helm show values cerbos/cerbos --version={app-version}
 .Securing Cerbos with TLS
 ****
 
-Cerbos endpoints can be secured with TLS by providing a secret containing the certificate and its private key in the link:https://cert-manager.io[cert-manager] format:
+Cerbos PDP endpoints can be secured with TLS by providing a secret containing the certificate and its private key in the link:https://cert-manager.io[cert-manager] format:
 
 `tls.crt`:: Certificate chain. Required.
 `tls.key`:: Private key. Required.
@@ -36,7 +36,7 @@ During installation, provide the name of the Kubernetes secret containing the ce
 helm install cerbos cerbos/cerbos --version={app-version} --set=cerbos.tlsSecretName=my-certificate-secret
 ----
 
-If you require advanced features such as automatic certificate reloading, workload identities or mTLS, we recommend deploying a proxy server like link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] as a frontend to the Cerbos server. See the xref:deployment:k8s-sidecar.adoc[Kubernetes sidecar] documentation for an example of deploying Cerbos as a sidecar to Ghostunnel.
+If you require advanced features such as automatic certificate reloading, workload identities or mTLS, we recommend deploying a proxy server like link:https://www.envoyproxy.io[Envoy], link:https://github.com/ghostunnel/ghostunnel[Ghostunnel] or link:https://traefik.io[Traefik] as a frontend to the Cerbos PDP server. See the xref:deployment:k8s-sidecar.adoc[Kubernetes sidecar] documentation for an example of deploying Cerbos PDP as a sidecar to Ghostunnel.
 ****
 
 == Customizing the manifests
@@ -133,7 +133,7 @@ cerbos:
 <3> Use the environment variable containing the PAT as the password to login to GitHub
 
 
-* Deploy Cerbos using the Helm chart
+* Deploy Cerbos PDP using the Helm chart
 +
 [source,sh,subs="attributes"]
 ----
@@ -142,9 +142,9 @@ helm install cerbos cerbos/cerbos --version={app-version} --values=git-values.ya
 
 
 
-== Deploy Cerbos configured to read policies from a mounted volume
+== Deploy Cerbos PDP configured to read policies from a mounted volume
 
-Here we demonstrate how to use a `hostPath` volume to feed policies to a Cerbos deployment. You can easily substitute the `hostPath` volume type with any other type of volumes supported by Kubernetes. See https://kubernetes.io/docs/concepts/storage/volumes/.
+Here we demonstrate how to use a `hostPath` volume to feed policies to a Cerbos PDP deployment. You can easily substitute the `hostPath` volume type with any other type of volumes supported by Kubernetes. See https://kubernetes.io/docs/concepts/storage/volumes/.
 
 * Create a new values file named `pv-values.yaml` with the following contents:
 +
@@ -173,7 +173,7 @@ cerbos:
 <3> Configure Cerbos to read policies from the mounted `/policies` directory
 
 
-* Deploy Cerbos using the Helm chart
+* Deploy Cerbos PDP using the Helm chart
 +
 [source,sh,subs="attributes"]
 ----
@@ -192,11 +192,13 @@ include::ROOT:partial$try-cerbos-hub.adoc[]
 kubectl create secret generic cerbos-hub-credentials \
    --from-literal=CERBOS_HUB_CLIENT_ID=YOUR_CLIENT_ID \ <1>
    --from-literal=CERBOS_HUB_CLIENT_SECRET=YOUR_CLIENT_SECRET \ <2>
-   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=CERBOS_HUB_DEPLOYMENT_ID <3>
+   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=CERBOS_HUB_DEPLOYMENT_ID \ <3>
+   --from-literal=CERBOS_HUB_WORKSPACE_ID=CERBOS_HUB_WORKSPACE_ID <4>
 ----
 <1> Client ID from the Cerbos Hub credential
 <2> Client secret from the Cerbos Hub credential
-<3> Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[Deployment ID]
+<3> ID of the Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[deployment] from which to fetch policies
+<4> ID of the Cerbos Hub workspace to which to send audit logs
 
 
 * Create a new values file named `hub-values.yaml` with the following contents:

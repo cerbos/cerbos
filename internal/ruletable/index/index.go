@@ -4,10 +4,13 @@
 package index
 
 import (
+	"maps"
 	"slices"
-	"unique"
 
+	"cel.dev/cel-go/cel"
 	"github.com/cespare/xxhash/v2"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	effectv1 "github.com/cerbos/cerbos/api/genpb/cerbos/effect/v1"
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -15,9 +18,6 @@ import (
 	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/google/cel-go/cel"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 // functionalRuleRowFields lists proto field names that affect evaluation outcome.
@@ -54,9 +54,11 @@ type CelProgram struct {
 type Option func(*Index)
 
 type Index struct {
-	bi          *bitmapIndex
-	parentRoles map[string]map[string][]string
-	handles     UniqueHandles // handles to canonical strings
+	bi            *bitmapIndex
+	parentRoles   map[string]map[string][]string
+	handles       UniqueHandles // handles to canonical strings
+	paramsCache   map[uint64]*RowParams
+	drParamsCache map[uint64]*RowParams
 }
 
 func New(opts ...Option) *Index {
@@ -83,98 +85,105 @@ func (m *Index) IndexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		m.bi.evalKeys = slices.Grow(m.bi.evalKeys, newBindings)
 	}
 
-	paramsCache := make(map[uint64]*RowParams)
-	drParamsCache := make(map[uint64]*RowParams)
-
 	for _, rule := range rules {
-		var params, drParams *RowParams
-
-		switch rule.PolicyKind { //nolint:exhaustive
-		case policyv1.Kind_KIND_RESOURCE:
-			p, err := getOrGenerateParams(paramsCache, rule.Params)
-			if err != nil {
-				return err
-			}
-			params = p
-			if rule.OriginDerivedRole != "" {
-				drp, err := getOrGenerateParams(drParamsCache, rule.DerivedRoleParams)
-				if err != nil {
-					return err
-				}
-				drParams = drp
-			}
-		case policyv1.Kind_KIND_PRINCIPAL:
-			p, err := getOrGenerateParams(paramsCache, rule.Params)
-			if err != nil {
-				return err
-			}
-			params = p
+		if err := m.IndexRule(rule); err != nil {
+			return err
 		}
-
-		// hashpb does not include field tags, so Condition=X/DerivedRoleCondition=nil
-		// hashes identically to Condition=nil/DerivedRoleCondition=X when X is the
-		// same Condition content. Feed a discriminator byte into the hasher to break
-		// the collision.
-		// TODO(saml): addressing upstream in protoc-gen-go-hashpb, remove this when that lands.
-		hasher := xxhash.New()
-		rule.HashPB(hasher, nonFunctionalChecksumFields)
-		var condDisc byte
-		if rule.Condition != nil {
-			condDisc |= 1
-		}
-		if rule.DerivedRoleCondition != nil {
-			condDisc |= 2
-		}
-		_, _ = hasher.Write([]byte{condDisc})
-		funcSum := hasher.Sum64()
-
-		core, ok := m.bi.coresBySum[funcSum]
-		if !ok {
-			core = &FunctionalCore{
-				Effect:               rule.Effect,
-				Condition:            rule.Condition,
-				DerivedRoleCondition: rule.DerivedRoleCondition,
-				EmitOutput:           rule.EmitOutput,
-				ScopePermissions:     rule.ScopePermissions,
-				FromRolePolicy:       rule.FromRolePolicy,
-				PolicyKind:           rule.PolicyKind,
-				Params:               params,
-				DerivedRoleParams:    drParams,
-				origins:              make(map[string]struct{}),
-				sum:                  funcSum,
-			}
-			m.bi.coresBySum[funcSum] = core
-		}
-		core.origins[rule.OriginFqn] = struct{}{}
-
-		var action unique.Handle[string]
-		var allowActions map[unique.Handle[string]]struct{}
-		switch v := rule.ActionSet.(type) {
-		case *runtimev1.RuleTable_RuleRow_AllowActions_:
-			allowActions = make(map[unique.Handle[string]]struct{}, len(v.AllowActions.GetActions()))
-			for a := range v.AllowActions.GetActions() {
-				allowActions[mkStringHandle(a)] = struct{}{}
-			}
-		case *runtimev1.RuleTable_RuleRow_Action:
-			action = mkStringHandle(v.Action)
-		}
-
-		b := &BindingHandle{
-			Scope:             mkStringHandle(rule.Scope),
-			Version:           mkStringHandle(rule.Version),
-			Resource:          mkStringHandle(rule.Resource),
-			Role:              mkStringHandle(rule.Role),
-			Action:            action,
-			Principal:         mkStringHandle(rule.Principal),
-			OriginFqn:         mkStringHandle(rule.OriginFqn),
-			OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
-			Name:              mkStringHandle(rule.Name),
-			AllowActions:      allowActions,
-			Core:              core,
-		}
-
-		m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
 	}
+
+	return nil
+}
+
+// IndexRule indexes a single rule row.
+func (m *Index) IndexRule(rule *runtimev1.RuleTable_RuleRow) error {
+	if m.paramsCache == nil {
+		m.paramsCache = make(map[uint64]*RowParams)
+		m.drParamsCache = make(map[uint64]*RowParams)
+	}
+
+	var params, drParams *RowParams
+
+	switch rule.PolicyKind { //nolint:exhaustive
+	case policyv1.Kind_KIND_RESOURCE:
+		p, err := getOrGenerateParams(m.paramsCache, rule.Params)
+		if err != nil {
+			return err
+		}
+		params = p
+		if rule.OriginDerivedRole != "" {
+			drp, err := getOrGenerateParams(m.drParamsCache, rule.DerivedRoleParams)
+			if err != nil {
+				return err
+			}
+			drParams = drp
+		}
+	case policyv1.Kind_KIND_PRINCIPAL:
+		p, err := getOrGenerateParams(m.paramsCache, rule.Params)
+		if err != nil {
+			return err
+		}
+		params = p
+	}
+
+	// hashpb does not include field tags, so Condition=X/DerivedRoleCondition=nil
+	// hashes identically to Condition=nil/DerivedRoleCondition=X when X is the
+	// same Condition content. Feed a discriminator byte into the hasher to break
+	// the collision.
+	// TODO(saml): addressing upstream in protoc-gen-go-hashpb, remove this when that lands.
+	hasher := xxhash.New()
+	rule.HashPB(hasher, nonFunctionalChecksumFields)
+	var condDisc byte
+	if rule.Condition != nil {
+		condDisc |= 1
+	}
+	if rule.DerivedRoleCondition != nil {
+		condDisc |= 2
+	}
+	_, _ = hasher.Write([]byte{condDisc})
+	funcSum := hasher.Sum64()
+
+	core, ok := m.bi.coresBySum[funcSum]
+	if !ok {
+		core = &FunctionalCore{
+			Effect:               rule.Effect,
+			Condition:            rule.Condition,
+			DerivedRoleCondition: rule.DerivedRoleCondition,
+			EmitOutput:           rule.EmitOutput,
+			ScopePermissions:     rule.ScopePermissions,
+			FromRolePolicy:       rule.FromRolePolicy,
+			PolicyKind:           rule.PolicyKind,
+			Params:               params,
+			DerivedRoleParams:    drParams,
+			origins:              make(map[string]struct{}),
+			sum:                  funcSum,
+		}
+		m.bi.coresBySum[funcSum] = core
+		params.addRef()
+		drParams.addRef()
+	}
+	core.origins[rule.OriginFqn] = struct{}{}
+
+	b := &BindingHandle{
+		Scope:             mkStringHandle(rule.Scope),
+		Version:           mkStringHandle(rule.Version),
+		Resource:          mkStringHandle(rule.Resource),
+		Role:              mkStringHandle(rule.Role),
+		Principal:         mkStringHandle(rule.Principal),
+		OriginFqn:         mkStringHandle(rule.OriginFqn),
+		OriginDerivedRole: mkStringHandle(rule.OriginDerivedRole),
+		Name:              mkStringHandle(rule.Name),
+		Core:              core,
+	}
+
+	switch v := rule.ActionSet.(type) {
+	case *runtimev1.RuleTable_RuleRow_AllowActions_:
+		actions := v.AllowActions.GetActions()
+		b.setAllowActions(maps.Keys(actions), len(actions))
+	case *runtimev1.RuleTable_RuleRow_Action:
+		b.Action = mkStringHandle(v.Action)
+	}
+
+	m.bi.addBinding(b, makeEvaluationKeyTuple(rule.EvaluationKeyTuple, rule.EvaluationKey))
 
 	return nil
 }
@@ -196,7 +205,7 @@ func (m *Index) GetAllRows() []*BindingHandle {
 // Query returns bindings matching the given dimensions. Nil or zero-values mean
 // "match all" for that dimension. Synthetic DENYs from role policy AllowActions
 // are prepended when querying for a specific action with KIND_RESOURCE.
-func (m *Index) Query(version, resource, scope, action string, roles []string, policyKind policyv1.Kind, principalID string, buf []*BindingHandle) []*BindingHandle {
+func (m *Index) Query(version string, resource ResourceKind, scope, action string, roles []string, policyKind policyv1.Kind, principalID string, buf []*BindingHandle) []*BindingHandle {
 	bi := m.bi
 
 	if bi.universe.IsEmpty() {
@@ -232,8 +241,8 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 		}
 		versionBM = bm
 	}
-	if resource != "" {
-		bm := bi.resource.Query(arena, resource)
+	if resource.raw != "" {
+		bm := bi.resourceQuery(arena, resource, policyKind)
 		if bm.IsEmpty() {
 			return buf
 		}
@@ -302,8 +311,8 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 
 	// Role policy synthetic DENYs are prepended so the evaluator sees them
 	// before regular ALLOWs, which is required for scope permission semantics.
-	if action != "" && resource != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
-		buf = m.appendRolePolicyDenies(arena, bi, []string{resource}, roles, []string{action}, versionBM, scopeBM, roleBM, buf)
+	if action != "" && resource.raw != "" && policyKind == policyv1.Kind_KIND_RESOURCE && !bi.allowActionsBitmap.IsEmpty() {
+		buf = m.appendRolePolicyDenies(arena, bi, []ResourceKind{resource}, roles, []string{action}, versionBM, scopeBM, roleBM, buf)
 	}
 
 	// Regular bindings.
@@ -336,7 +345,7 @@ func (m *Index) Query(version, resource, scope, action string, roles []string, p
 // resource's full surface, not just actions referenced by filtered roles.
 func (m *Index) appendRolePolicyDenies(
 	arena *bitmapArena, bi *bitmapIndex,
-	resources, roles, targetActions []string,
+	resources []ResourceKind, roles, targetActions []string,
 	versionBM, scopeBM, roleBM *Bitmap,
 	res []*BindingHandle,
 ) []*BindingHandle {
@@ -387,7 +396,7 @@ func (m *Index) appendRolePolicyDenies(
 
 	var matched []*BindingHandle
 	for _, resource := range resources {
-		resBM := bi.resource.Query(arena, resource)
+		resBM := bi.resourceQuery(arena, resource, policyv1.Kind_KIND_RESOURCE)
 		resourceMatchedBM := emptyBitmap
 		if !resBM.IsEmpty() {
 			resourceMatchedBM = arena.and2(candidateBM, resBM)
@@ -421,7 +430,7 @@ func (m *Index) appendRolePolicyDenies(
 			// role policy exists, but no resource bindings present
 			if len(roleBindings) == 0 {
 				for _, action := range resourceActions {
-					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), resource, action))
+					res = append(res, newNoMatchRolePolicyDeny(role, HandleStr(rep.Version), HandleStr(rep.Scope), resource.raw, action))
 				}
 				continue
 			}
@@ -429,12 +438,8 @@ func (m *Index) appendRolePolicyDenies(
 			for _, action := range resourceActions {
 				matched = matched[:0]
 				for _, rb := range roleBindings {
-					for a := range rb.AllowActions {
-						av := HandleStr(a)
-						if av == action || util.MatchesGlob(av, action) {
-							matched = append(matched, rb)
-							break
-						}
+					if rb.allowsAction(action) {
+						matched = append(matched, rb)
 					}
 				}
 
@@ -445,7 +450,15 @@ func (m *Index) appendRolePolicyDenies(
 					continue
 				}
 
+				// Only intern the action once a binding is emitted for it.
+				actionHandle := EmptyHandle
 				for _, mb := range matched {
+					if mb.Core.Condition == nil && mb.Core.EmitOutput == nil {
+						continue
+					}
+					if actionHandle == EmptyHandle {
+						actionHandle = mkStringHandle(action)
+					}
 					if mb.Core.Condition == nil {
 						// Pure ACL allow: fall through. Role-policy bindings are
 						// otherwise dropped here, so emit any output via a no-effect
@@ -458,7 +471,7 @@ func (m *Index) appendRolePolicyDenies(
 									FromRolePolicy: true,
 									Params:         mb.Core.Params,
 								},
-								Action:    mkStringHandle(action),
+								Action:    actionHandle,
 								Name:      mb.Name,
 								OriginFqn: mb.OriginFqn,
 								Resource:  mb.Resource,
@@ -497,7 +510,7 @@ func (m *Index) appendRolePolicyDenies(
 							FromRolePolicy:   true,
 							Params:           mb.Core.Params,
 						},
-						Action:    mkStringHandle(action),
+						Action:    actionHandle,
 						Name:      mb.Name,
 						OriginFqn: mb.OriginFqn,
 						Resource:  mb.Resource,
@@ -553,7 +566,7 @@ func collectResourceActions(arena *bitmapArena, bi *bitmapIndex, resBM, versionB
 			actionSet[b.Action.Value()] = struct{}{}
 		}
 		for a := range b.AllowActions {
-			actionSet[HandleStr(a)] = struct{}{}
+			actionSet[a] = struct{}{}
 		}
 	}
 
@@ -609,11 +622,12 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 			return nil
 		}
 	}
-	if len(resources) > 0 {
+	resourceKinds := newResourceKinds(resources)
+	if len(resourceKinds) > 0 {
 		// An empty resourceBM doesn't short-circuit: role-policy synthesis
 		// still emits NoMatch denies when a role has a policy in the other
 		// dimensions but no rows for the requested resource.
-		resourceBM = bi.resource.QueryMultiple(arena, resources)
+		resourceBM = bi.resourceQueryMulti(arena, resourceKinds, policyv1.Kind_KIND_UNSPECIFIED)
 	}
 
 	dims := make([]*Bitmap, 0, 4) //nolint:mnd
@@ -655,7 +669,7 @@ func (m *Index) QueryMulti(versions, resources, scopes, roles, actions []string,
 	}
 
 	if withRolePolicyDenies {
-		res = m.appendRolePolicyDenies(arena, bi, resources, roles, actions, versionBM, scopeBM, roleBM, res)
+		res = m.appendRolePolicyDenies(arena, bi, resourceKinds, roles, actions, versionBM, scopeBM, roleBM, res)
 	}
 
 	// QueryMulti is the external boundary: materialise interned handles back into
@@ -792,7 +806,11 @@ func (m *Index) DeletePolicy(fqn string) error {
 		m.bi.removeBinding(b)
 
 		if len(b.Core.origins) == 0 {
-			delete(m.bi.coresBySum, b.Core.sum)
+			if _, ok := m.bi.coresBySum[b.Core.sum]; ok {
+				delete(m.bi.coresBySum, b.Core.sum)
+				b.Core.Params.removeRef(m.paramsCache)
+				b.Core.DerivedRoleParams.removeRef(m.drParamsCache)
+			}
 		}
 	}
 
@@ -869,7 +887,7 @@ func (m *Index) ActionsForResource(resource string, versions, scopes []string) [
 		return nil
 	}
 
-	resBM := bi.resource.Query(arena, resource)
+	resBM := bi.resourceQuery(arena, NewResourceKind(resource), policyv1.Kind_KIND_RESOURCE)
 	return collectResourceActions(arena, bi, resBM, versionBM, scopeBM)
 }
 
@@ -897,7 +915,7 @@ func (bi *bitmapIndex) resourceDimensionKeys(d keyDimension, versions, scopes, r
 
 	var resourceBM *Bitmap
 	if len(resources) > 0 {
-		resourceBM = bi.resource.QueryMultiple(arena, resources)
+		resourceBM = bi.resourceQueryMulti(arena, newResourceKinds(resources), policyv1.Kind_KIND_RESOURCE)
 		if resourceBM.IsEmpty() {
 			return nil
 		}
@@ -944,7 +962,7 @@ func (bi *bitmapIndex) versionScopeFilters(arena *bitmapArena, versions, scopes 
 	return versionBM, scopeBM, true
 }
 
-func (m *Index) ScopedResourceExists(version, resource string, scopes []string) bool {
+func (m *Index) ScopedResourceExists(version string, resource ResourceKind, scopes []string) bool {
 	if len(scopes) == 0 {
 		return false
 	}
@@ -962,7 +980,7 @@ func (m *Index) ScopedResourceExists(version, resource string, scopes []string) 
 		return false
 	}
 
-	resourceBM := m.bi.resource.Query(arena, resource)
+	resourceBM := m.bi.resourceQuery(arena, resource, policyv1.Kind_KIND_RESOURCE)
 	if resourceBM.IsEmpty() {
 		return false
 	}
@@ -1001,11 +1019,6 @@ func (m *Index) ScopedPrincipalExists(version string, scopes []string) bool {
 	return intersectionNonEmpty(versionBM, scopeBM, kindBM)
 }
 
-func (m *Index) Reset() {
-	m.bi = newBitmapIndex()
-	m.parentRoles = nil
-}
-
 // getOrGenerateParams returns cached RowParams for the given proto content hash,
 // compiling CEL programs on miss. Rows with identical params share the same pointer and Key.
 func getOrGenerateParams(cache map[uint64]*RowParams, proto *runtimev1.RuleTable_RuleRow_Params) (*RowParams, error) {
@@ -1031,13 +1044,14 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	progs := make([]*CelProgram, len(vars))
 
 	for i, v := range vars {
-		ast, iss := conditions.StdEnv.Compile(v.Expr.Original)
+		ast, iss := conditions.Compile(v.Expr.Original)
 		if iss != nil && iss.Err() != nil {
 			return nil, iss.Err()
 		}
 
 		p, err := conditions.StdEnv.Program(
 			ast,
+			cel.EvalOptions(cel.OptOptimize),
 			cel.CustomDecorator(conditions.CacheFriendlyTimeDecorator()),
 		)
 		if err != nil {
@@ -1048,4 +1062,137 @@ func getCelProgramsFromExpressions(vars []*runtimev1.Variable) ([]*CelProgram, e
 	}
 
 	return progs, nil
+}
+
+// ResourceKind is a resource kind together with its sanitized form, which
+// resource and principal policy rows are indexed under. sanitized is empty
+// when it would equal raw.
+type ResourceKind struct {
+	raw       string
+	sanitized string
+}
+
+// NewResourceKind computes the sanitized form of kind once, so that it can be
+// reused across queries for the same request.
+func NewResourceKind(kind string) ResourceKind {
+	rk := ResourceKind{raw: kind}
+	if s := namer.SanitizedResource(kind); s != kind {
+		rk.sanitized = s
+	}
+	return rk
+}
+
+func newResourceKinds(kinds []string) []ResourceKind {
+	if len(kinds) == 0 {
+		return nil
+	}
+
+	out := make([]ResourceKind, len(kinds))
+	for i, k := range kinds {
+		out[i] = NewResourceKind(k)
+	}
+	return out
+}
+
+// resourceQuery returns the bindings indexed under the given resource kind.
+//
+// Principal policy globs used to be matched against the sanitized kind, so they
+// are matched against both forms to keep existing rules (deny rules in particular)
+// in force. Role policy globs are matched against the kind as written only.
+//
+// policyKind is the policy kind the caller restricts the result to, or
+// KIND_UNSPECIFIED for none. It only decides whether principal policy globs
+// need matching against the sanitized kind.
+//
+// The returned bitmap may alias a stored bitmap; callers must not mutate it.
+func (bi *bitmapIndex) resourceQuery(arena *bitmapArena, resource ResourceKind, policyKind policyv1.Kind) *Bitmap {
+	if resource.sanitized == "" {
+		return bi.resource.Query(arena, resource.raw)
+	}
+
+	gd := bi.resource
+	var parts []*Bitmap
+	if bm, ok := gd.literals.Bitmap(resource.raw); ok {
+		parts = append(parts, bm)
+	}
+	if bm, ok := gd.literals.Bitmap(resource.sanitized); ok {
+		parts = append(parts, bm)
+	}
+
+	// principalBM masks the globs matching only the sanitized kind when the caller
+	// doesn't restrict the result to principal policy rows itself.
+	var principalBM *Bitmap
+	matchSanitized := false
+	switch policyKind { //nolint:exhaustive
+	case policyv1.Kind_KIND_RESOURCE:
+	case policyv1.Kind_KIND_PRINCIPAL:
+		matchSanitized = true
+	default:
+		principalBM, matchSanitized = bi.policyKind.Get(policyv1.Kind_KIND_PRINCIPAL)
+	}
+
+	var sanitizedOnlyGlobs []*Bitmap
+	for pattern, compiled := range gd.compiled {
+		switch {
+		case compiled.Match(resource.raw):
+			if bm, ok := gd.globs.Bitmap(pattern); ok {
+				parts = append(parts, bm)
+			}
+		case matchSanitized && compiled.Match(resource.sanitized):
+			if bm, ok := gd.globs.Bitmap(pattern); ok {
+				sanitizedOnlyGlobs = append(sanitizedOnlyGlobs, bm)
+			}
+		}
+	}
+
+	var globsBM *Bitmap
+	switch len(sanitizedOnlyGlobs) {
+	case 0:
+	case 1:
+		globsBM = sanitizedOnlyGlobs[0]
+	default:
+		globsBM = arena.orInto(sanitizedOnlyGlobs)
+	}
+	if globsBM != nil {
+		if principalBM != nil {
+			globsBM = arena.and2(globsBM, principalBM)
+		}
+		if !globsBM.IsEmpty() {
+			parts = append(parts, globsBM)
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return parts[0]
+	default:
+		return arena.orInto(parts)
+	}
+}
+
+func (bi *bitmapIndex) resourceQueryMulti(arena *bitmapArena, resources []ResourceKind, policyKind policyv1.Kind) *Bitmap {
+	switch len(resources) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return bi.resourceQuery(arena, resources[0], policyKind)
+	}
+
+	parts := make([]*Bitmap, 0, len(resources))
+	for _, r := range resources {
+		if bm := bi.resourceQuery(arena, r, policyKind); !bm.IsEmpty() {
+			parts = append(parts, bm)
+		}
+	}
+
+	switch len(parts) {
+	case 0:
+		return emptyBitmap
+	case 1:
+		return parts[0]
+	default:
+		return arena.orInto(parts)
+	}
 }

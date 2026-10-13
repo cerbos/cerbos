@@ -10,27 +10,29 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
 	runtimev1 "github.com/cerbos/cerbos/api/genpb/cerbos/runtime/v1"
-	"github.com/cerbos/cerbos/internal/conditions"
 	"github.com/cerbos/cerbos/internal/engine/policyloader"
 	"github.com/cerbos/cerbos/internal/engine/tracer"
 	"github.com/cerbos/cerbos/internal/evaluator"
 	"github.com/cerbos/cerbos/internal/namer"
 	"github.com/cerbos/cerbos/internal/observability/logging"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage"
 )
 
 type Manager struct {
 	*RuleTable
-	conf         *evaluator.Conf
-	policyLoader policyloader.PolicyLoader
-	schemaMgr    schema.Manager
-	log          *logging.Logger
-	mu           sync.RWMutex
+	conf          *evaluator.Conf
+	policyLoader  policyloader.PolicyLoader
+	schemaMgr     schema.Manager
+	log           *logging.Logger
+	lastReloadErr error
+	mu            sync.RWMutex
 }
 
 func NewRuleTableManager(ruleTable *RuleTable, policyLoader policyloader.PolicyLoader, schemaMgr schema.Manager) (*Manager, error) {
@@ -55,11 +57,11 @@ func (mgr *Manager) Check(ctx context.Context, tctx tracer.Context, evalParams e
 	return mgr.checkWithAuditTrail(ctx, tctx, mgr.schemaMgr, evalParams, input)
 }
 
-func (mgr *Manager) Plan(ctx context.Context, input *enginev1.PlanResourcesInput, principalScope, principalVersion, resourceScope, resourceVersion string, nowFunc conditions.NowFunc, globals map[string]any, lenientScopeSearch bool) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
+func (mgr *Manager) Plan(ctx context.Context, evalParams evaluator.EvalParams, input *enginev1.PlanResourcesInput) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	mgr.mu.RLock()
 	defer mgr.mu.RUnlock()
 
-	return mgr.planWithAuditTrail(ctx, mgr.schemaMgr, input, principalScope, principalVersion, resourceScope, resourceVersion, nowFunc, globals, lenientScopeSearch)
+	return mgr.planWithAuditTrail(ctx, mgr.schemaMgr, input, evalParams)
 }
 
 func (mgr *Manager) SubscriberID() string {
@@ -68,59 +70,78 @@ func (mgr *Manager) SubscriberID() string {
 
 func (mgr *Manager) OnStorageEvent(events ...storage.Event) {
 	for _, event := range events {
+		var err error
 		switch event.Kind {
 		case storage.EventReload:
-			if err := mgr.reload(); err != nil {
+			if err = mgr.reload(); err != nil {
 				mgr.log.Warnw("Error reloading rule table, maintaining last valid state", "error", err)
 			}
 		case storage.EventAddOrUpdatePolicy, storage.EventDeleteOrDisablePolicy:
 			mgr.log.Debugw("Processing storage event", "event", event)
-			if err := mgr.processPolicyEvent(event); err != nil {
+			if err = mgr.processPolicyEvent(event); err != nil {
 				mgr.log.Warnw("Error processing storage event, maintaining last valid state", "event", event, "error", err)
 			}
 		default:
 			mgr.log.Debugw("Ignoring storage event", "event", event)
+			continue
+		}
+
+		if err == nil {
+			metrics.Record(context.Background(), metrics.RuleTableLastSuccessfulRefresh(), time.Now().UnixMilli())
 		}
 	}
 }
 
+// LastReloadError returns the outcome of the most recent rule table rebuild triggered by a
+// reload event. A store's Reload waits until subscribers have processed the reload event,
+// so once Reload returns, this reflects the rebuild triggered by it (or a newer one).
+func (mgr *Manager) LastReloadError() error {
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	return mgr.lastReloadErr
+}
+
 func (mgr *Manager) reload() error {
+	// Build the new rule table without holding the lock so that requests keep being
+	// served by the current one in the meantime. Storage events, including reloads,
+	// are delivered sequentially. There're no other writers.
+	newRuleTable, err := mgr.buildRuleTable()
+
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	var newRuleTable *RuleTable
-	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
-		var err error
-		newRuleTable, err = ruleTableStore.GetRuleTable()
-		if err != nil && !errors.Is(err, storage.ErrUnsupportedOperation) {
-			return fmt.Errorf("failed to load the new rule table: %w", err)
-		}
-	}
-
-	if newRuleTable == nil {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
-		defer cancelFunc()
-
-		mgr.log.Info("Reloading rule table")
-		defer paceBuildGC()()
-		protoRT := NewProtoRuletable()
-
-		// If compilation fails, maintain the last valid rule table state.
-		// Set isStale to false to prevent repeated recompilation attempts until new events arrive.
-		if err := LoadPolicies(ctx, protoRT, mgr.policyLoader); err != nil {
-			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
-		}
-
-		var err error
-		if newRuleTable, err = NewRuleTable(protoRT); err != nil {
-			return fmt.Errorf("failed to create rule table: %w", err)
-		}
+	mgr.lastReloadErr = err
+	if err != nil {
+		return err
 	}
 
 	mgr.RuleTable = newRuleTable
 	mgr.log.Info("Rule table reload successful")
 
 	return nil
+}
+
+func (mgr *Manager) buildRuleTable() (*RuleTable, error) {
+	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
+		newRuleTable, err := ruleTableStore.GetRuleTable()
+		if err != nil && !errors.Is(err, storage.ErrUnsupportedOperation) {
+			return nil, fmt.Errorf("failed to load the new rule table: %w", err)
+		}
+
+		if newRuleTable != nil {
+			return newRuleTable, nil
+		}
+	}
+
+	mgr.log.Info("Reloading rule table")
+
+	newRuleTable, err := NewRuleTableFromLoader(context.Background(), mgr.policyLoader)
+	if err != nil {
+		return nil, fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
+	}
+
+	return newRuleTable, nil
 }
 
 func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
@@ -133,6 +154,11 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 		rps, err = mgr.policyLoader.GetFirstMatch(ctx, []namer.ModuleID{evt.PolicyID})
 		if err != nil {
 			return fmt.Errorf("failed to load policy: %w", err)
+		}
+
+		// Reject the policy before touching the table if it would make the scope permissions of its scope inconsistent.
+		if err := mgr.checkPolicy(rps, evt.OldPolicyID); err != nil {
+			return err
 		}
 
 		// Only delete if we successfully retrieved the policy above (e.g. no compilation errors occurred)
@@ -180,6 +206,30 @@ func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
 	return nil
 }
 
+// checkPolicy verifies that the policy set can be added without creating a scope permissions conflict.
+// The policy identified by oldPolicyID, if any, is about to be removed and is not considered.
+func (mgr *Manager) checkPolicy(rps *runtimev1.RunnablePolicySet, oldPolicyID *namer.ModuleID) error {
+	if rps == nil {
+		return nil
+	}
+
+	mgr.mu.RLock()
+	defer mgr.mu.RUnlock()
+
+	var ignoredPolicyKey string
+	if oldPolicyID != nil {
+		if meta := mgr.Meta[oldPolicyID.RawValue()]; meta != nil {
+			ignoredPolicyKey = namer.PolicyKeyFromFQN(meta.GetFqn())
+		}
+	}
+
+	if err := mgr.checkScopePermissions(rps, ignoredPolicyKey); err != nil {
+		return fmt.Errorf("rejected policy %s: %w", namer.PolicyKeyFromFQN(rps.GetFqn()), err)
+	}
+
+	return nil
+}
+
 func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	if rps == nil {
 		return nil
@@ -188,16 +238,7 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	rows := AddPolicy(mgr.RuleTable.RuleTable, rps)
-	if err := mgr.indexRules(rows); err != nil {
-		return fmt.Errorf("failed to index and purge rules: %w", err)
-	}
-
-	for _, row := range rows {
-		conditions.WalkExprs(row, func(e *runtimev1.Expr) { e.Checked = nil })
-	}
-
-	return nil
+	return mgr.ingestPolicy(rps)
 }
 
 func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) error {
@@ -255,10 +296,9 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		}
 	}
 
-	for scope := range mgr.scopeScopePermissions {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.scopeScopePermissions, scope)
-		}
+	mgr.scopePermsTracker.Remove(namer.PolicyKeyFromFQN(meta.GetFqn()))
+	if scope := namer.ScopeFromFQN(meta.GetFqn()); !mgr.scopePermsTracker.Tracked(scope) {
+		delete(mgr.scopeScopePermissions, scope)
 	}
 
 	delete(mgr.Schemas, moduleID.RawValue())

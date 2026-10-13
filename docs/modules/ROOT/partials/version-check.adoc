@@ -6,5 +6,5 @@ endif::[]
 ifeval::["{page-component-version}" < "{page-component-latest-version}"]
 a previous
 endif::[]
-version of Cerbos. Choose {page-component-latest-version} from the version picker at the top right or navigate to https://docs.cerbos.dev for the latest version.
+version of Cerbos PDP. Choose {page-component-latest-version} from the version picker at the top right or navigate to https://docs.cerbos.dev for the latest version.
 endif::page-component-version-is-latest[]

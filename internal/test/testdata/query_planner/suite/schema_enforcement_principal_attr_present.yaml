@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Schema enforcement - none
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: andy
+  roles:
+    - developer
+  attr:
+    power: 9999
+
+tests:
+  - resource:
+      kind: schema
+      attr:
+        answer: 42
+    action: validate
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.harmless
+              - value: mostly
+      matchedScopes:
+        validate: ""
+
+  - resource:
+      kind: schema
+    action: validate
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.harmless
+              - value: mostly
+      matchedScopes:
+        validate: ""

@@ -226,10 +226,6 @@ We collect anonymous usage data to help us improve the product. You can opt out 
 - [Contribution Guidelines](CONTRIBUTING.md)
 - [Run cerbos Locally](https://docs.cerbos.dev/cerbos/latest/tutorial/01_running-locally)
 
-## Stargazers ⭐
-
-[![Stargazers repo roster for cerbos/cerbos](https://bytecrank.com/nastyox/reporoster/php/stargazersSVG.php?user=cerbos&repo=cerbos)](https://github.com/cerbos/cerbos)
-
 ## 🛡️ License
 
 Cerbos is licensed under the Apache License 2.0 - see the [LICENSE](https://github.com/cerbos/cerbos/blob/main/LICENSE) file for details.

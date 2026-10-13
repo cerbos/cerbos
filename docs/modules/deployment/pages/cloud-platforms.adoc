@@ -67,11 +67,13 @@ For the following steps, you need a Cerbos Hub account with a workspace connecte
 kubectl create secret generic cerbos-hub-credentials \
    --from-literal=CERBOS_HUB_CLIENT_ID=YOUR_CLIENT_ID \ <1>
    --from-literal=CERBOS_HUB_CLIENT_SECRET=YOUR_CLIENT_SECRET \ <2>
-   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=YOUR_DEPLOYMENT_ID <3>
+   --from-literal=CERBOS_HUB_DEPLOYMENT_ID=YOUR_DEPLOYMENT_ID \ <3>
+   --from-literal=CERBOS_HUB_WORKSPACE_ID=YOUR_WORKSPACE_ID <4>
 ----
 <1> Client ID from the Cerbos Hub credential
 <2> Client secret from the Cerbos Hub credential
-<3> Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[Deployment ID]
+<3> ID of the Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[deployment] from which to fetch policies
+<4> ID of the Cerbos Hub workspace to which to send audit logs
 
 * Create a new values file named `hub-values.yaml` with the following contents:
 +
@@ -181,12 +183,12 @@ In the AWS console or the CLI, create the task using the following JSON definiti
           "value": "YOUR_CLIENT_SECRET" <2>
         },
         {
-          "name": "CERBOS_HUB_WORKSPACE_SECRET",
-          "value": "YOUR_WORKSPACE_SECRET" <3>
+          "name": "CERBOS_HUB_DEPLOYMENT_ID",
+          "value": "YOUR_DEPLOYMENT_ID" <3>
         },
         {
-          "name": "CERBOS_HUB_BUNDLE",
-          "value": "YOUR_LABEL" <4>
+          "name": "CERBOS_HUB_WORKSPACE_ID",
+          "value": "YOUR_WORKSPACE_ID" <4>
         }
       ],
       "command": [
@@ -229,8 +231,8 @@ In the AWS console or the CLI, create the task using the following JSON definiti
 ----
 <1> Client ID from the Cerbos Hub credential
 <2> Client secret from the Cerbos Hub credential
-<3> Cerbos Hub workspace secret
-<4> The label to watch for bundle updates. See xref:cerbos-hub:ROOT:deployment-labels.adoc[deployment labels documentation] for details.
+<3> ID of the Cerbos Hub xref:cerbos-hub:ROOT:deployments.adoc[deployment] from which to fetch policies
+<4> ID of the Cerbos Hub workspace to which to send audit logs
 <5> Enables audit log collection. See xref:cerbos-hub:ROOT:audit-log-collection.adoc[Hub audit log collection documentation] for information about masking sensitive fields and other advanced settings.
 <6> The ARN for the custom ECS Task Role defined in Step 1.
 <7> The ARN for the ECS Task Execution. The default is `arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole`
@@ -570,3 +572,8 @@ cerbosctl \
   put policies -R \
   policy_dir
 ----
+
+[TIP]
+====
+https://docs.cerbos.dev/cerbos-hub/[Cerbos Hub] securely distributes policy bundles to connected PDPs, eliminating per-instance polling and reload logic.
+====

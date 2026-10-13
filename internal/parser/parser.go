@@ -5,6 +5,7 @@ package parser
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"io/fs"
 	"iter"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -45,8 +47,9 @@ const (
 )
 
 var (
-	ErrMultipleYAMLDocs = errors.New("more than one YAML document detected")
-	ErrNotFound         = errors.New("not found")
+	ErrEmptyYAMLDocument = errors.New("empty YAML document")
+	ErrMultipleYAMLDocs  = errors.New("more than one YAML document detected")
+	ErrNotFound          = errors.New("not found")
 )
 
 type PanicError struct {
@@ -130,6 +133,16 @@ func Single[T any, M ProtoMessage[T]](documents []M, contexts []SourceCtx, err e
 	default:
 		return nil, SourceCtx{}, ErrMultipleYAMLDocs
 	}
+}
+
+// MustSingle wraps [Single] to throw an error if no document is found.
+func MustSingle[T any, M ProtoMessage[T]](documents []M, contexts []SourceCtx, err error) (M, SourceCtx, error) {
+	doc, srcCtx, err := Single(documents, contexts, err)
+	if err == nil && doc == nil {
+		return doc, srcCtx, ErrEmptyYAMLDocument
+	}
+
+	return doc, srcCtx, err
 }
 
 func UnmarshalFile[T any, M ProtoMessage[T]](fsys fs.FS, path string, opts ...UnmarshalOpt) ([]M, []SourceCtx, error) {
@@ -235,8 +248,7 @@ func parse(contents []byte, detectProblems bool) (_ *ast.File, outErr error) {
 
 	file, err := parser.Parse(t, parser.ParseComments)
 	if err != nil { //nolint:nestif
-		syntaxErr := new(yaml.SyntaxError)
-		if errors.As(err, &syntaxErr) {
+		if syntaxErr, ok := errors.AsType[*yaml.SyntaxError](err); ok {
 			srcErr := &sourcev1.Error{
 				Kind:    sourcev1.Error_KIND_PARSE_ERROR,
 				Message: syntaxErr.Message,
@@ -1037,6 +1049,10 @@ func (u *unmarshaler[T]) unmarshalValue(uctx *unmarshalCtx, n ast.Node, out *str
 		out.Kind = &structpb.Value_StringValue{StringValue: t.Value}
 		return nil
 
+	case *ast.LiteralNode:
+		out.Kind = &structpb.Value_StringValue{StringValue: t.Value.Value}
+		return nil
+
 	case *ast.BoolNode:
 		out.Kind = &structpb.Value_BoolValue{BoolValue: t.Value}
 		return nil
@@ -1083,7 +1099,7 @@ func (u *unmarshaler[T]) unmarshalUInt64Value(uctx *unmarshalCtx, n ast.Node, ou
 		switch v := t.Value.(type) {
 		case int64:
 			if v < 0 {
-				return uctx.perrorf(n, "unexpected negative value %q", v)
+				return uctx.perrorf(n, "unexpected negative value %d", v)
 			}
 
 			out.Value = uint64(v)
@@ -1168,14 +1184,44 @@ func (u *unmarshaler[T]) validate(uctx *unmarshalCtx, msg T) (outErr error) {
 		return nil
 	}
 
-	verrs := new(protovalidate.ValidationError)
-	if !errors.As(err, &verrs) {
+	verrs, ok := errors.AsType[*protovalidate.ValidationError](err)
+	if !ok {
 		return err
 	}
 
-	for _, v := range verrs.Violations {
+	errs := make([]UnmarshalError, len(verrs.Violations))
+	for idx, v := range verrs.Violations {
 		path := fieldPathString(v.Proto.GetField().GetElements())
-		outErr = errors.Join(outErr, uctx.verrorf(path, v.Proto.GetMessage()))
+		errs[idx] = uctx.verrorf(path, v.Proto.GetMessage())
+	}
+
+	slices.SortFunc(errs, func(a, b UnmarshalError) int {
+		posA := a.Err.GetPosition()
+		posB := b.Err.GetPosition()
+		switch {
+		case posA != nil && posB != nil:
+			if lineCmp := cmp.Compare(posA.GetLine(), posB.GetLine()); lineCmp != 0 {
+				return lineCmp
+			}
+
+			if colCmp := cmp.Compare(posA.GetColumn(), posB.GetColumn()); colCmp != 0 {
+				return colCmp
+			}
+
+			if pathCmp := cmp.Compare(posA.GetPath(), posB.GetPath()); pathCmp != 0 {
+				return pathCmp
+			}
+		case posA != nil:
+			return -1
+		case posB != nil:
+			return 1
+		}
+
+		return cmp.Compare(a.Err.GetKind(), b.Err.GetKind())
+	})
+
+	for _, err := range errs {
+		outErr = errors.Join(outErr, err)
 	}
 
 	return outErr
@@ -1351,7 +1397,7 @@ func (uc *unmarshalCtx) perrorf(n ast.Node, msg string, args ...any) error {
 	return NewUnmarshalError(err)
 }
 
-func (uc *unmarshalCtx) verrorf(path, msg string) error {
+func (uc *unmarshalCtx) verrorf(path, msg string) UnmarshalError {
 	err := &sourcev1.Error{Kind: sourcev1.Error_KIND_VALIDATION_ERROR, Message: fmt.Sprintf("%s: %s", strcase.LowerCamelCase(path), msg)}
 	if uc.srcCtx != nil {
 		if pos, ok := uc.srcCtx.FieldPositions[path]; ok {

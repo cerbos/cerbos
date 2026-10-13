@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Default scope
+
+config:
+  defaultScope: acme.hr
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: alice
+  roles:
+    - user
+
+tests:
+  - resource:
+      kind: additive
+      policyVersion: "2025_11"
+    action: read
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        read: acme.hr

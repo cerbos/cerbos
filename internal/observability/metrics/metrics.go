@@ -9,9 +9,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
@@ -191,11 +194,32 @@ var (
 			metric.WithDescription("The last time the store was successfully refreshed manually or automatically"),
 		)
 	})
+
+	RuleTableLastSuccessfulRefresh = once(func() (metric.Int64Gauge, error) {
+		return Meter().Int64Gauge(
+			"cerbos_dev_rule_table_last_successful_refresh",
+			metric.WithDescription("The last time the rule table served by the engine was successfully updated in response to a storage event"),
+		)
+	})
 )
 
 func NewHandler() (http.Handler, error) {
 	if err := runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second)); err != nil {
 		return nil, fmt.Errorf("failed to start runtime metrics collector: %w", err)
+	}
+
+	// Replace the default Go collector with one that also exports /cpu/classes/* (GC CPU cost)
+	// and /gc/gomemlimit:bytes (the effective GOMEMLIMIT, including the auto-configured value).
+	prometheus.Unregister(collectors.NewGoCollector())
+	goCollector := collectors.NewGoCollector(
+		collectors.WithGoCollectorRuntimeMetrics(
+			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile(`^/cpu/classes/.*`)},
+			collectors.GoRuntimeMetricsRule{Matcher: regexp.MustCompile(`^/gc/gomemlimit:bytes$`)},
+		),
+	)
+	prometheus.Unregister(goCollector)
+	if err := prometheus.Register(goCollector); err != nil {
+		return nil, fmt.Errorf("failed to register Go collector with CPU and memory-limit metrics: %w", err)
 	}
 
 	return promhttp.Handler(), nil

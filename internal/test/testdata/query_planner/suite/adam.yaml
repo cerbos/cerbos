@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Adam tests
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: adam
+  policyVersion: default
+  roles:
+    - admin
+
+tests:
+  - resource:
+      kind: leave_request
+      policyVersion: default
+    action: approve:refer-derived-role
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        approve:refer-derived-role: ""

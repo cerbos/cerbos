@@ -32,16 +32,16 @@
                 "original": "C.b",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -50,15 +50,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -72,16 +72,16 @@
                 "original": "constants.c",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -90,15 +90,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -112,16 +112,16 @@
                 "original": "C.f",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -130,15 +130,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -152,16 +152,16 @@
                 "original": "constants.h",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -170,15 +170,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -193,9 +193,6 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "V"
-                    },
-                    "3": {
                       "overloadId": [
                         "add_bytes",
                         "add_double",
@@ -208,25 +205,28 @@
                         "add_uint64"
                       ]
                     },
-                    "4": {
+                    "3": {
+                      "name": "V"
+                    },
+                    "5": {
                       "name": "V"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
                       "dyn": {}
                     },
                     "3": {
-                      "dyn": {}
-                    },
-                    "4": {
                       "messageType": "cerbos.Variables"
                     },
-                    "5": {
+                    "4": {
                       "dyn": {}
+                    },
+                    "5": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -235,15 +235,15 @@
                       10
                     ],
                     "positions": {
-                      "1": 0,
+                      "1": 4,
                       "2": 1,
-                      "3": 4,
-                      "4": 6,
-                      "5": 7
+                      "3": 0,
+                      "4": 7,
+                      "5": 6
                     }
                   },
                   "expr": {
-                    "id": "3",
+                    "id": "1",
                     "callExpr": {
                       "function": "_+_",
                       "args": [
@@ -251,7 +251,7 @@
                           "id": "2",
                           "selectExpr": {
                             "operand": {
-                              "id": "1",
+                              "id": "3",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -260,10 +260,10 @@
                           }
                         },
                         {
-                          "id": "5",
+                          "id": "4",
                           "selectExpr": {
                             "operand": {
-                              "id": "4",
+                              "id": "5",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -280,16 +280,16 @@
                 "original": "C.i",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -298,15 +298,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -326,9 +326,6 @@
                       "checked": {
                         "referenceMap": {
                           "1": {
-                            "name": "V"
-                          },
-                          "3": {
                             "overloadId": [
                               "greater_bool",
                               "greater_int64",
@@ -346,25 +343,28 @@
                               "greater_duration"
                             ]
                           },
-                          "4": {
+                          "3": {
+                            "name": "V"
+                          },
+                          "5": {
                             "name": "V"
                           }
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.Variables"
+                            "primitive": "BOOL"
                           },
                           "2": {
                             "dyn": {}
                           },
                           "3": {
-                            "primitive": "BOOL"
-                          },
-                          "4": {
                             "messageType": "cerbos.Variables"
                           },
-                          "5": {
+                          "4": {
                             "dyn": {}
+                          },
+                          "5": {
+                            "messageType": "cerbos.Variables"
                           }
                         },
                         "sourceInfo": {
@@ -373,15 +373,15 @@
                             10
                           ],
                           "positions": {
-                            "1": 0,
+                            "1": 4,
                             "2": 1,
-                            "3": 4,
-                            "4": 6,
-                            "5": 7
+                            "3": 0,
+                            "4": 7,
+                            "5": 6
                           }
                         },
                         "expr": {
-                          "id": "3",
+                          "id": "1",
                           "callExpr": {
                             "function": "_>_",
                             "args": [
@@ -389,7 +389,7 @@
                                 "id": "2",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "1",
+                                    "id": "3",
                                     "identExpr": {
                                       "name": "V"
                                     }
@@ -398,10 +398,10 @@
                                 }
                               },
                               {
-                                "id": "5",
+                                "id": "4",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "4",
+                                    "id": "5",
                                     "identExpr": {
                                       "name": "V"
                                     }
@@ -421,9 +421,6 @@
                       "checked": {
                         "referenceMap": {
                           "1": {
-                            "name": "variables"
-                          },
-                          "3": {
                             "overloadId": [
                               "greater_bool",
                               "greater_int64",
@@ -441,25 +438,28 @@
                               "greater_duration"
                             ]
                           },
-                          "4": {
+                          "3": {
+                            "name": "variables"
+                          },
+                          "5": {
                             "name": "variables"
                           }
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.Variables"
+                            "primitive": "BOOL"
                           },
                           "2": {
                             "dyn": {}
                           },
                           "3": {
-                            "primitive": "BOOL"
-                          },
-                          "4": {
                             "messageType": "cerbos.Variables"
                           },
-                          "5": {
+                          "4": {
                             "dyn": {}
+                          },
+                          "5": {
+                            "messageType": "cerbos.Variables"
                           }
                         },
                         "sourceInfo": {
@@ -468,15 +468,15 @@
                             27
                           ],
                           "positions": {
-                            "1": 0,
+                            "1": 12,
                             "2": 9,
-                            "3": 12,
-                            "4": 14,
-                            "5": 23
+                            "3": 0,
+                            "4": 23,
+                            "5": 14
                           }
                         },
                         "expr": {
-                          "id": "3",
+                          "id": "1",
                           "callExpr": {
                             "function": "_>_",
                             "args": [
@@ -484,7 +484,7 @@
                                 "id": "2",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "1",
+                                    "id": "3",
                                     "identExpr": {
                                       "name": "variables"
                                     }
@@ -493,10 +493,10 @@
                                 }
                               },
                               {
-                                "id": "5",
+                                "id": "4",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "4",
+                                    "id": "5",
                                     "identExpr": {
                                       "name": "variables"
                                     }
@@ -520,16 +520,16 @@
                   "original": "C.b",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -538,15 +538,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -563,16 +563,16 @@
                   "original": "constants.c",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -581,15 +581,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -606,16 +606,16 @@
                   "original": "C.f",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -624,15 +624,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -649,16 +649,16 @@
                   "original": "constants.h",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -667,15 +667,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -692,16 +692,16 @@
                   "original": "C.i",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -710,15 +710,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -736,9 +736,6 @@
                   "checked": {
                     "referenceMap": {
                       "1": {
-                        "name": "V"
-                      },
-                      "3": {
                         "overloadId": [
                           "add_bytes",
                           "add_double",
@@ -751,25 +748,28 @@
                           "add_uint64"
                         ]
                       },
-                      "4": {
+                      "3": {
+                        "name": "V"
+                      },
+                      "5": {
                         "name": "V"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
                         "dyn": {}
                       },
                       "3": {
-                        "dyn": {}
-                      },
-                      "4": {
                         "messageType": "cerbos.Variables"
                       },
-                      "5": {
+                      "4": {
                         "dyn": {}
+                      },
+                      "5": {
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -778,15 +778,15 @@
                         10
                       ],
                       "positions": {
-                        "1": 0,
+                        "1": 4,
                         "2": 1,
-                        "3": 4,
-                        "4": 6,
-                        "5": 7
+                        "3": 0,
+                        "4": 7,
+                        "5": 6
                       }
                     },
                     "expr": {
-                      "id": "3",
+                      "id": "1",
                       "callExpr": {
                         "function": "_+_",
                         "args": [
@@ -794,7 +794,7 @@
                             "id": "2",
                             "selectExpr": {
                               "operand": {
-                                "id": "1",
+                                "id": "3",
                                 "identExpr": {
                                   "name": "V"
                                 }
@@ -803,10 +803,10 @@
                             }
                           },
                           {
-                            "id": "5",
+                            "id": "4",
                             "selectExpr": {
                               "operand": {
-                                "id": "4",
+                                "id": "5",
                                 "identExpr": {
                                   "name": "V"
                                 }
@@ -836,16 +836,16 @@
             "original": "constants.a",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "constants"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -854,15 +854,15 @@
                   12
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 9
+                  "1": 9,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "constants"
                     }
@@ -877,9 +877,6 @@
             "checked": {
               "referenceMap": {
                 "1": {
-                  "name": "V"
-                },
-                "3": {
                   "overloadId": [
                     "add_bytes",
                     "add_double",
@@ -892,25 +889,28 @@
                     "add_uint64"
                   ]
                 },
-                "4": {
+                "3": {
+                  "name": "V"
+                },
+                "5": {
                   "name": "V"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
                   "dyn": {}
                 },
                 "3": {
-                  "dyn": {}
-                },
-                "4": {
                   "messageType": "cerbos.Variables"
                 },
-                "5": {
+                "4": {
                   "dyn": {}
+                },
+                "5": {
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -919,15 +919,15 @@
                   10
                 ],
                 "positions": {
-                  "1": 0,
+                  "1": 4,
                   "2": 1,
-                  "3": 4,
-                  "4": 6,
-                  "5": 7
+                  "3": 0,
+                  "4": 7,
+                  "5": 6
                 }
               },
               "expr": {
-                "id": "3",
+                "id": "1",
                 "callExpr": {
                   "function": "_+_",
                   "args": [
@@ -935,7 +935,7 @@
                       "id": "2",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "3",
                           "identExpr": {
                             "name": "V"
                           }
@@ -944,10 +944,10 @@
                       }
                     },
                     {
-                      "id": "5",
+                      "id": "4",
                       "selectExpr": {
                         "operand": {
-                          "id": "4",
+                          "id": "5",
                           "identExpr": {
                             "name": "V"
                           }
@@ -964,16 +964,16 @@
             "original": "C.b",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "C"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -982,15 +982,15 @@
                   4
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 1
+                  "1": 1,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "C"
                     }
@@ -1004,16 +1004,16 @@
             "original": "constants.n",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "constants"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -1022,15 +1022,15 @@
                   12
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 9
+                  "1": 9,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "constants"
                     }
@@ -1056,9 +1056,6 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "variables"
-                    },
-                    "3": {
                       "overloadId": [
                         "greater_bool",
                         "greater_int64",
@@ -1076,25 +1073,28 @@
                         "greater_duration"
                       ]
                     },
-                    "4": {
+                    "3": {
+                      "name": "variables"
+                    },
+                    "5": {
                       "name": "variables"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "primitive": "BOOL"
                     },
                     "2": {
                       "dyn": {}
                     },
                     "3": {
-                      "primitive": "BOOL"
-                    },
-                    "4": {
                       "messageType": "cerbos.Variables"
                     },
-                    "5": {
+                    "4": {
                       "dyn": {}
+                    },
+                    "5": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1103,15 +1103,15 @@
                       27
                     ],
                     "positions": {
-                      "1": 0,
+                      "1": 12,
                       "2": 9,
-                      "3": 12,
-                      "4": 14,
-                      "5": 23
+                      "3": 0,
+                      "4": 23,
+                      "5": 14
                     }
                   },
                   "expr": {
-                    "id": "3",
+                    "id": "1",
                     "callExpr": {
                       "function": "_>_",
                       "args": [
@@ -1119,7 +1119,7 @@
                           "id": "2",
                           "selectExpr": {
                             "operand": {
-                              "id": "1",
+                              "id": "3",
                               "identExpr": {
                                 "name": "variables"
                               }
@@ -1128,10 +1128,10 @@
                           }
                         },
                         {
-                          "id": "5",
+                          "id": "4",
                           "selectExpr": {
                             "operand": {
-                              "id": "4",
+                              "id": "5",
                               "identExpr": {
                                 "name": "variables"
                               }
@@ -1155,16 +1155,16 @@
               "original": "constants.a",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "constants"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -1173,15 +1173,15 @@
                     12
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 9
+                    "1": 9,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "constants"
                       }
@@ -1198,16 +1198,16 @@
               "original": "C.b",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "C"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -1216,15 +1216,15 @@
                     4
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 1
+                    "1": 1,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "C"
                       }
@@ -1242,9 +1242,6 @@
               "checked": {
                 "referenceMap": {
                   "1": {
-                    "name": "V"
-                  },
-                  "3": {
                     "overloadId": [
                       "add_bytes",
                       "add_double",
@@ -1257,25 +1254,28 @@
                       "add_uint64"
                     ]
                   },
-                  "4": {
+                  "3": {
+                    "name": "V"
+                  },
+                  "5": {
                     "name": "V"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
                     "dyn": {}
                   },
                   "3": {
-                    "dyn": {}
-                  },
-                  "4": {
                     "messageType": "cerbos.Variables"
                   },
-                  "5": {
+                  "4": {
                     "dyn": {}
+                  },
+                  "5": {
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -1284,15 +1284,15 @@
                     10
                   ],
                   "positions": {
-                    "1": 0,
+                    "1": 4,
                     "2": 1,
-                    "3": 4,
-                    "4": 6,
-                    "5": 7
+                    "3": 0,
+                    "4": 7,
+                    "5": 6
                   }
                 },
                 "expr": {
-                  "id": "3",
+                  "id": "1",
                   "callExpr": {
                     "function": "_+_",
                     "args": [
@@ -1300,7 +1300,7 @@
                         "id": "2",
                         "selectExpr": {
                           "operand": {
-                            "id": "1",
+                            "id": "3",
                             "identExpr": {
                               "name": "V"
                             }
@@ -1309,10 +1309,10 @@
                         }
                       },
                       {
-                        "id": "5",
+                        "id": "4",
                         "selectExpr": {
                           "operand": {
-                            "id": "4",
+                            "id": "5",
                             "identExpr": {
                               "name": "V"
                             }
@@ -1332,16 +1332,16 @@
               "original": "constants.n",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "constants"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -1350,15 +1350,15 @@
                     12
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 9
+                    "1": 9,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "constants"
                       }
@@ -1389,16 +1389,16 @@
                 "original": "constants.a",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1407,15 +1407,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -1430,9 +1430,6 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "V"
-                    },
-                    "3": {
                       "overloadId": [
                         "add_bytes",
                         "add_double",
@@ -1445,25 +1442,28 @@
                         "add_uint64"
                       ]
                     },
-                    "4": {
+                    "3": {
+                      "name": "V"
+                    },
+                    "5": {
                       "name": "V"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
                       "dyn": {}
                     },
                     "3": {
-                      "dyn": {}
-                    },
-                    "4": {
                       "messageType": "cerbos.Variables"
                     },
-                    "5": {
+                    "4": {
                       "dyn": {}
+                    },
+                    "5": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1472,15 +1472,15 @@
                       10
                     ],
                     "positions": {
-                      "1": 0,
+                      "1": 4,
                       "2": 1,
-                      "3": 4,
-                      "4": 6,
-                      "5": 7
+                      "3": 0,
+                      "4": 7,
+                      "5": 6
                     }
                   },
                   "expr": {
-                    "id": "3",
+                    "id": "1",
                     "callExpr": {
                       "function": "_+_",
                       "args": [
@@ -1488,7 +1488,7 @@
                           "id": "2",
                           "selectExpr": {
                             "operand": {
-                              "id": "1",
+                              "id": "3",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -1497,10 +1497,10 @@
                           }
                         },
                         {
-                          "id": "5",
+                          "id": "4",
                           "selectExpr": {
                             "operand": {
-                              "id": "4",
+                              "id": "5",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -1518,9 +1518,6 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "variables"
-                    },
-                    "3": {
                       "overloadId": [
                         "add_bytes",
                         "add_double",
@@ -1533,25 +1530,28 @@
                         "add_uint64"
                       ]
                     },
-                    "4": {
+                    "3": {
+                      "name": "variables"
+                    },
+                    "5": {
                       "name": "variables"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
                       "dyn": {}
                     },
                     "3": {
-                      "dyn": {}
-                    },
-                    "4": {
                       "messageType": "cerbos.Variables"
                     },
-                    "5": {
+                    "4": {
                       "dyn": {}
+                    },
+                    "5": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1560,15 +1560,15 @@
                       27
                     ],
                     "positions": {
-                      "1": 0,
+                      "1": 13,
                       "2": 9,
-                      "3": 13,
-                      "4": 15,
-                      "5": 24
+                      "3": 0,
+                      "4": 24,
+                      "5": 15
                     }
                   },
                   "expr": {
-                    "id": "3",
+                    "id": "1",
                     "callExpr": {
                       "function": "_+_",
                       "args": [
@@ -1576,7 +1576,7 @@
                           "id": "2",
                           "selectExpr": {
                             "operand": {
-                              "id": "1",
+                              "id": "3",
                               "identExpr": {
                                 "name": "variables"
                               }
@@ -1585,10 +1585,10 @@
                           }
                         },
                         {
-                          "id": "5",
+                          "id": "4",
                           "selectExpr": {
                             "operand": {
-                              "id": "4",
+                              "id": "5",
                               "identExpr": {
                                 "name": "variables"
                               }
@@ -1605,16 +1605,16 @@
                 "original": "C.b",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1623,15 +1623,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -1645,16 +1645,16 @@
                 "original": "constants.c",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1663,15 +1663,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -1685,16 +1685,16 @@
                 "original": "constants.e",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1703,15 +1703,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -1725,16 +1725,16 @@
                 "original": "C.g",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1743,15 +1743,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -1765,16 +1765,16 @@
                 "original": "constants.h",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -1783,15 +1783,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -1811,25 +1811,25 @@
                       "checked": {
                         "referenceMap": {
                           "1": {
-                            "name": "V"
-                          },
-                          "3": {
                             "overloadId": [
                               "greater_int64",
                               "greater_uint64_int64",
                               "greater_double_int64"
                             ]
+                          },
+                          "3": {
+                            "name": "V"
                           }
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.Variables"
+                            "primitive": "BOOL"
                           },
                           "2": {
                             "dyn": {}
                           },
                           "3": {
-                            "primitive": "BOOL"
+                            "messageType": "cerbos.Variables"
                           },
                           "4": {
                             "primitive": "INT64"
@@ -1841,14 +1841,14 @@
                             10
                           ],
                           "positions": {
-                            "1": 0,
+                            "1": 6,
                             "2": 1,
-                            "3": 6,
+                            "3": 0,
                             "4": 8
                           }
                         },
                         "expr": {
-                          "id": "3",
+                          "id": "1",
                           "callExpr": {
                             "function": "_>_",
                             "args": [
@@ -1856,7 +1856,7 @@
                                 "id": "2",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "1",
+                                    "id": "3",
                                     "identExpr": {
                                       "name": "V"
                                     }
@@ -1885,9 +1885,6 @@
                             "checked": {
                               "referenceMap": {
                                 "1": {
-                                  "name": "variables"
-                                },
-                                "3": {
                                   "overloadId": [
                                     "less_bool",
                                     "less_int64",
@@ -1905,25 +1902,28 @@
                                     "less_duration"
                                   ]
                                 },
-                                "4": {
+                                "3": {
+                                  "name": "variables"
+                                },
+                                "5": {
                                   "name": "variables"
                                 }
                               },
                               "typeMap": {
                                 "1": {
-                                  "messageType": "cerbos.Variables"
+                                  "primitive": "BOOL"
                                 },
                                 "2": {
                                   "dyn": {}
                                 },
                                 "3": {
-                                  "primitive": "BOOL"
-                                },
-                                "4": {
                                   "messageType": "cerbos.Variables"
                                 },
-                                "5": {
+                                "4": {
                                   "dyn": {}
+                                },
+                                "5": {
+                                  "messageType": "cerbos.Variables"
                                 }
                               },
                               "sourceInfo": {
@@ -1932,15 +1932,15 @@
                                   26
                                 ],
                                 "positions": {
-                                  "1": 0,
+                                  "1": 12,
                                   "2": 9,
-                                  "3": 12,
-                                  "4": 14,
-                                  "5": 23
+                                  "3": 0,
+                                  "4": 23,
+                                  "5": 14
                                 }
                               },
                               "expr": {
-                                "id": "3",
+                                "id": "1",
                                 "callExpr": {
                                   "function": "_<_",
                                   "args": [
@@ -1948,7 +1948,7 @@
                                       "id": "2",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "1",
+                                          "id": "3",
                                           "identExpr": {
                                             "name": "variables"
                                           }
@@ -1957,10 +1957,10 @@
                                       }
                                     },
                                     {
-                                      "id": "5",
+                                      "id": "4",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "4",
+                                          "id": "5",
                                           "identExpr": {
                                             "name": "variables"
                                           }
@@ -1980,9 +1980,6 @@
                             "checked": {
                               "referenceMap": {
                                 "1": {
-                                  "name": "V"
-                                },
-                                "3": {
                                   "overloadId": [
                                     "greater_bool",
                                     "greater_int64",
@@ -2000,25 +1997,28 @@
                                     "greater_duration"
                                   ]
                                 },
-                                "4": {
+                                "3": {
+                                  "name": "V"
+                                },
+                                "5": {
                                   "name": "C"
                                 }
                               },
                               "typeMap": {
                                 "1": {
-                                  "messageType": "cerbos.Variables"
+                                  "primitive": "BOOL"
                                 },
                                 "2": {
                                   "dyn": {}
                                 },
                                 "3": {
-                                  "primitive": "BOOL"
-                                },
-                                "4": {
                                   "messageType": "cerbos.Variables"
                                 },
-                                "5": {
+                                "4": {
                                   "dyn": {}
+                                },
+                                "5": {
+                                  "messageType": "cerbos.Variables"
                                 }
                               },
                               "sourceInfo": {
@@ -2027,15 +2027,15 @@
                                   10
                                 ],
                                 "positions": {
-                                  "1": 0,
+                                  "1": 4,
                                   "2": 1,
-                                  "3": 4,
-                                  "4": 6,
-                                  "5": 7
+                                  "3": 0,
+                                  "4": 7,
+                                  "5": 6
                                 }
                               },
                               "expr": {
-                                "id": "3",
+                                "id": "1",
                                 "callExpr": {
                                   "function": "_>_",
                                   "args": [
@@ -2043,7 +2043,7 @@
                                       "id": "2",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "1",
+                                          "id": "3",
                                           "identExpr": {
                                             "name": "V"
                                           }
@@ -2052,10 +2052,10 @@
                                       }
                                     },
                                     {
-                                      "id": "5",
+                                      "id": "4",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "4",
+                                          "id": "5",
                                           "identExpr": {
                                             "name": "C"
                                           }
@@ -2082,16 +2082,16 @@
                   "original": "constants.a",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2100,15 +2100,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -2125,16 +2125,16 @@
                   "original": "C.b",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2143,15 +2143,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -2169,9 +2169,6 @@
                   "checked": {
                     "referenceMap": {
                       "1": {
-                        "name": "V"
-                      },
-                      "3": {
                         "overloadId": [
                           "add_bytes",
                           "add_double",
@@ -2184,25 +2181,28 @@
                           "add_uint64"
                         ]
                       },
-                      "4": {
+                      "3": {
+                        "name": "V"
+                      },
+                      "5": {
                         "name": "V"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
                         "dyn": {}
                       },
                       "3": {
-                        "dyn": {}
-                      },
-                      "4": {
                         "messageType": "cerbos.Variables"
                       },
-                      "5": {
+                      "4": {
                         "dyn": {}
+                      },
+                      "5": {
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2211,15 +2211,15 @@
                         10
                       ],
                       "positions": {
-                        "1": 0,
+                        "1": 4,
                         "2": 1,
-                        "3": 4,
-                        "4": 6,
-                        "5": 7
+                        "3": 0,
+                        "4": 7,
+                        "5": 6
                       }
                     },
                     "expr": {
-                      "id": "3",
+                      "id": "1",
                       "callExpr": {
                         "function": "_+_",
                         "args": [
@@ -2227,7 +2227,7 @@
                             "id": "2",
                             "selectExpr": {
                               "operand": {
-                                "id": "1",
+                                "id": "3",
                                 "identExpr": {
                                   "name": "V"
                                 }
@@ -2236,10 +2236,10 @@
                             }
                           },
                           {
-                            "id": "5",
+                            "id": "4",
                             "selectExpr": {
                               "operand": {
-                                "id": "4",
+                                "id": "5",
                                 "identExpr": {
                                   "name": "V"
                                 }
@@ -2259,16 +2259,16 @@
                   "original": "constants.c",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2277,15 +2277,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -2302,16 +2302,16 @@
                   "original": "constants.e",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2320,15 +2320,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -2345,16 +2345,16 @@
                   "original": "C.g",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2363,15 +2363,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -2389,9 +2389,6 @@
                   "checked": {
                     "referenceMap": {
                       "1": {
-                        "name": "variables"
-                      },
-                      "3": {
                         "overloadId": [
                           "add_bytes",
                           "add_double",
@@ -2404,25 +2401,28 @@
                           "add_uint64"
                         ]
                       },
-                      "4": {
+                      "3": {
+                        "name": "variables"
+                      },
+                      "5": {
                         "name": "variables"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
                         "dyn": {}
                       },
                       "3": {
-                        "dyn": {}
-                      },
-                      "4": {
                         "messageType": "cerbos.Variables"
                       },
-                      "5": {
+                      "4": {
                         "dyn": {}
+                      },
+                      "5": {
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2431,15 +2431,15 @@
                         27
                       ],
                       "positions": {
-                        "1": 0,
+                        "1": 13,
                         "2": 9,
-                        "3": 13,
-                        "4": 15,
-                        "5": 24
+                        "3": 0,
+                        "4": 24,
+                        "5": 15
                       }
                     },
                     "expr": {
-                      "id": "3",
+                      "id": "1",
                       "callExpr": {
                         "function": "_+_",
                         "args": [
@@ -2447,7 +2447,7 @@
                             "id": "2",
                             "selectExpr": {
                               "operand": {
-                                "id": "1",
+                                "id": "3",
                                 "identExpr": {
                                   "name": "variables"
                                 }
@@ -2456,10 +2456,10 @@
                             }
                           },
                           {
-                            "id": "5",
+                            "id": "4",
                             "selectExpr": {
                               "operand": {
-                                "id": "4",
+                                "id": "5",
                                 "identExpr": {
                                   "name": "variables"
                                 }
@@ -2479,16 +2479,16 @@
                   "original": "constants.h",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -2497,15 +2497,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -2538,16 +2538,16 @@
                 "original": "C.b",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -2556,15 +2556,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -2578,16 +2578,16 @@
                 "original": "constants.c",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -2596,15 +2596,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -2618,16 +2618,16 @@
                 "original": "C.f",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -2636,15 +2636,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -2658,16 +2658,16 @@
                 "original": "constants.h",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -2676,15 +2676,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -2699,9 +2699,6 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "V"
-                    },
-                    "3": {
                       "overloadId": [
                         "add_bytes",
                         "add_double",
@@ -2714,25 +2711,28 @@
                         "add_uint64"
                       ]
                     },
-                    "4": {
+                    "3": {
+                      "name": "V"
+                    },
+                    "5": {
                       "name": "V"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
                       "dyn": {}
                     },
                     "3": {
-                      "dyn": {}
-                    },
-                    "4": {
                       "messageType": "cerbos.Variables"
                     },
-                    "5": {
+                    "4": {
                       "dyn": {}
+                    },
+                    "5": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -2741,15 +2741,15 @@
                       10
                     ],
                     "positions": {
-                      "1": 0,
+                      "1": 4,
                       "2": 1,
-                      "3": 4,
-                      "4": 6,
-                      "5": 7
+                      "3": 0,
+                      "4": 7,
+                      "5": 6
                     }
                   },
                   "expr": {
-                    "id": "3",
+                    "id": "1",
                     "callExpr": {
                       "function": "_+_",
                       "args": [
@@ -2757,7 +2757,7 @@
                           "id": "2",
                           "selectExpr": {
                             "operand": {
-                              "id": "1",
+                              "id": "3",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -2766,10 +2766,10 @@
                           }
                         },
                         {
-                          "id": "5",
+                          "id": "4",
                           "selectExpr": {
                             "operand": {
-                              "id": "4",
+                              "id": "5",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -2786,16 +2786,16 @@
                 "original": "C.i",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -2804,15 +2804,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -2832,9 +2832,6 @@
                       "checked": {
                         "referenceMap": {
                           "1": {
-                            "name": "V"
-                          },
-                          "3": {
                             "overloadId": [
                               "greater_bool",
                               "greater_int64",
@@ -2852,25 +2849,28 @@
                               "greater_duration"
                             ]
                           },
-                          "4": {
+                          "3": {
+                            "name": "V"
+                          },
+                          "5": {
                             "name": "V"
                           }
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.Variables"
+                            "primitive": "BOOL"
                           },
                           "2": {
                             "dyn": {}
                           },
                           "3": {
-                            "primitive": "BOOL"
-                          },
-                          "4": {
                             "messageType": "cerbos.Variables"
                           },
-                          "5": {
+                          "4": {
                             "dyn": {}
+                          },
+                          "5": {
+                            "messageType": "cerbos.Variables"
                           }
                         },
                         "sourceInfo": {
@@ -2879,15 +2879,15 @@
                             10
                           ],
                           "positions": {
-                            "1": 0,
+                            "1": 4,
                             "2": 1,
-                            "3": 4,
-                            "4": 6,
-                            "5": 7
+                            "3": 0,
+                            "4": 7,
+                            "5": 6
                           }
                         },
                         "expr": {
-                          "id": "3",
+                          "id": "1",
                           "callExpr": {
                             "function": "_>_",
                             "args": [
@@ -2895,7 +2895,7 @@
                                 "id": "2",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "1",
+                                    "id": "3",
                                     "identExpr": {
                                       "name": "V"
                                     }
@@ -2904,10 +2904,10 @@
                                 }
                               },
                               {
-                                "id": "5",
+                                "id": "4",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "4",
+                                    "id": "5",
                                     "identExpr": {
                                       "name": "V"
                                     }
@@ -2927,9 +2927,6 @@
                       "checked": {
                         "referenceMap": {
                           "1": {
-                            "name": "variables"
-                          },
-                          "3": {
                             "overloadId": [
                               "greater_bool",
                               "greater_int64",
@@ -2947,25 +2944,28 @@
                               "greater_duration"
                             ]
                           },
-                          "4": {
+                          "3": {
+                            "name": "variables"
+                          },
+                          "5": {
                             "name": "variables"
                           }
                         },
                         "typeMap": {
                           "1": {
-                            "messageType": "cerbos.Variables"
+                            "primitive": "BOOL"
                           },
                           "2": {
                             "dyn": {}
                           },
                           "3": {
-                            "primitive": "BOOL"
-                          },
-                          "4": {
                             "messageType": "cerbos.Variables"
                           },
-                          "5": {
+                          "4": {
                             "dyn": {}
+                          },
+                          "5": {
+                            "messageType": "cerbos.Variables"
                           }
                         },
                         "sourceInfo": {
@@ -2974,15 +2974,15 @@
                             27
                           ],
                           "positions": {
-                            "1": 0,
+                            "1": 12,
                             "2": 9,
-                            "3": 12,
-                            "4": 14,
-                            "5": 23
+                            "3": 0,
+                            "4": 23,
+                            "5": 14
                           }
                         },
                         "expr": {
-                          "id": "3",
+                          "id": "1",
                           "callExpr": {
                             "function": "_>_",
                             "args": [
@@ -2990,7 +2990,7 @@
                                 "id": "2",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "1",
+                                    "id": "3",
                                     "identExpr": {
                                       "name": "variables"
                                     }
@@ -2999,10 +2999,10 @@
                                 }
                               },
                               {
-                                "id": "5",
+                                "id": "4",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "4",
+                                    "id": "5",
                                     "identExpr": {
                                       "name": "variables"
                                     }
@@ -3026,16 +3026,16 @@
                   "original": "C.b",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3044,15 +3044,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -3069,16 +3069,16 @@
                   "original": "constants.c",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3087,15 +3087,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -3112,16 +3112,16 @@
                   "original": "C.f",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3130,15 +3130,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -3155,16 +3155,16 @@
                   "original": "constants.h",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3173,15 +3173,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -3198,16 +3198,16 @@
                   "original": "C.i",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3216,15 +3216,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -3242,9 +3242,6 @@
                   "checked": {
                     "referenceMap": {
                       "1": {
-                        "name": "V"
-                      },
-                      "3": {
                         "overloadId": [
                           "add_bytes",
                           "add_double",
@@ -3257,25 +3254,28 @@
                           "add_uint64"
                         ]
                       },
-                      "4": {
+                      "3": {
+                        "name": "V"
+                      },
+                      "5": {
                         "name": "V"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
                         "dyn": {}
                       },
                       "3": {
-                        "dyn": {}
-                      },
-                      "4": {
                         "messageType": "cerbos.Variables"
                       },
-                      "5": {
+                      "4": {
                         "dyn": {}
+                      },
+                      "5": {
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3284,15 +3284,15 @@
                         10
                       ],
                       "positions": {
-                        "1": 0,
+                        "1": 4,
                         "2": 1,
-                        "3": 4,
-                        "4": 6,
-                        "5": 7
+                        "3": 0,
+                        "4": 7,
+                        "5": 6
                       }
                     },
                     "expr": {
-                      "id": "3",
+                      "id": "1",
                       "callExpr": {
                         "function": "_+_",
                         "args": [
@@ -3300,7 +3300,7 @@
                             "id": "2",
                             "selectExpr": {
                               "operand": {
-                                "id": "1",
+                                "id": "3",
                                 "identExpr": {
                                   "name": "V"
                                 }
@@ -3309,10 +3309,10 @@
                             }
                           },
                           {
-                            "id": "5",
+                            "id": "4",
                             "selectExpr": {
                               "operand": {
-                                "id": "4",
+                                "id": "5",
                                 "identExpr": {
                                   "name": "V"
                                 }
@@ -3346,16 +3346,16 @@
                 "original": "constants.a",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -3364,15 +3364,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -3386,16 +3386,16 @@
                 "original": "C.d",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "C"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -3404,15 +3404,15 @@
                       4
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1
+                      "1": 1,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "C"
                         }
@@ -3426,16 +3426,16 @@
                 "original": "constants.e",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -3444,15 +3444,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -3466,16 +3466,16 @@
                 "original": "constants.j",
                 "checked": {
                   "referenceMap": {
-                    "1": {
+                    "2": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "2": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -3484,15 +3484,15 @@
                       12
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 9
+                      "1": 9,
+                      "2": 0
                     }
                   },
                   "expr": {
-                    "id": "2",
+                    "id": "1",
                     "selectExpr": {
                       "operand": {
-                        "id": "1",
+                        "id": "2",
                         "identExpr": {
                           "name": "constants"
                         }
@@ -3509,7 +3509,22 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "V"
+                      "overloadId": [
+                        "equals"
+                      ]
+                    },
+                    "2": {
+                      "overloadId": [
+                        "add_bytes",
+                        "add_double",
+                        "add_duration_duration",
+                        "add_duration_timestamp",
+                        "add_timestamp_duration",
+                        "add_int64",
+                        "add_list",
+                        "add_string",
+                        "add_uint64"
+                      ]
                     },
                     "3": {
                       "overloadId": [
@@ -3524,37 +3539,22 @@
                         "add_uint64"
                       ]
                     },
-                    "4": {
+                    "5": {
                       "name": "V"
-                    },
-                    "6": {
-                      "overloadId": [
-                        "add_bytes",
-                        "add_double",
-                        "add_duration_duration",
-                        "add_duration_timestamp",
-                        "add_timestamp_duration",
-                        "add_int64",
-                        "add_list",
-                        "add_string",
-                        "add_uint64"
-                      ]
                     },
                     "7": {
                       "name": "V"
                     },
                     "9": {
-                      "overloadId": [
-                        "equals"
-                      ]
+                      "name": "V"
                     },
-                    "10": {
+                    "11": {
                       "name": "V"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "primitive": "BOOL"
                     },
                     "2": {
                       "dyn": {}
@@ -3563,10 +3563,10 @@
                       "dyn": {}
                     },
                     "4": {
-                      "messageType": "cerbos.Variables"
+                      "dyn": {}
                     },
                     "5": {
-                      "dyn": {}
+                      "messageType": "cerbos.Variables"
                     },
                     "6": {
                       "dyn": {}
@@ -3578,13 +3578,13 @@
                       "dyn": {}
                     },
                     "9": {
-                      "primitive": "BOOL"
-                    },
-                    "10": {
                       "messageType": "cerbos.Variables"
                     },
-                    "11": {
+                    "10": {
                       "dyn": {}
+                    },
+                    "11": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -3593,26 +3593,26 @@
                       23
                     ],
                     "positions": {
-                      "1": 0,
-                      "2": 1,
+                      "1": 16,
+                      "2": 10,
                       "3": 4,
-                      "4": 6,
-                      "5": 7,
-                      "6": 10,
-                      "7": 12,
+                      "4": 1,
+                      "5": 0,
+                      "6": 7,
+                      "7": 6,
                       "8": 13,
-                      "9": 16,
-                      "10": 19,
-                      "11": 20
+                      "9": 12,
+                      "10": 20,
+                      "11": 19
                     }
                   },
                   "expr": {
-                    "id": "9",
+                    "id": "1",
                     "callExpr": {
                       "function": "_==_",
                       "args": [
                         {
-                          "id": "6",
+                          "id": "2",
                           "callExpr": {
                             "function": "_+_",
                             "args": [
@@ -3622,10 +3622,10 @@
                                   "function": "_+_",
                                   "args": [
                                     {
-                                      "id": "2",
+                                      "id": "4",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "1",
+                                          "id": "5",
                                           "identExpr": {
                                             "name": "V"
                                           }
@@ -3634,10 +3634,10 @@
                                       }
                                     },
                                     {
-                                      "id": "5",
+                                      "id": "6",
                                       "selectExpr": {
                                         "operand": {
-                                          "id": "4",
+                                          "id": "7",
                                           "identExpr": {
                                             "name": "V"
                                           }
@@ -3652,7 +3652,7 @@
                                 "id": "8",
                                 "selectExpr": {
                                   "operand": {
-                                    "id": "7",
+                                    "id": "9",
                                     "identExpr": {
                                       "name": "V"
                                     }
@@ -3664,10 +3664,10 @@
                           }
                         },
                         {
-                          "id": "11",
+                          "id": "10",
                           "selectExpr": {
                             "operand": {
-                              "id": "10",
+                              "id": "11",
                               "identExpr": {
                                 "name": "V"
                               }
@@ -3688,16 +3688,16 @@
                   "original": "constants.a",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3706,15 +3706,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -3731,16 +3731,16 @@
                   "original": "C.d",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "C"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3749,15 +3749,15 @@
                         4
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "C"
                           }
@@ -3774,16 +3774,16 @@
                   "original": "constants.e",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3792,15 +3792,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -3817,16 +3817,16 @@
                   "original": "constants.j",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "constants"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -3835,15 +3835,15 @@
                         12
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 9
+                        "1": 9,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "constants"
                           }
@@ -3869,16 +3869,16 @@
             "original": "constants.a",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "constants"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -3887,15 +3887,15 @@
                   12
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 9
+                  "1": 9,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "constants"
                     }
@@ -3910,9 +3910,6 @@
             "checked": {
               "referenceMap": {
                 "1": {
-                  "name": "V"
-                },
-                "3": {
                   "overloadId": [
                     "add_bytes",
                     "add_double",
@@ -3925,25 +3922,28 @@
                     "add_uint64"
                   ]
                 },
-                "4": {
+                "3": {
+                  "name": "V"
+                },
+                "5": {
                   "name": "V"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
                   "dyn": {}
                 },
                 "3": {
-                  "dyn": {}
-                },
-                "4": {
                   "messageType": "cerbos.Variables"
                 },
-                "5": {
+                "4": {
                   "dyn": {}
+                },
+                "5": {
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -3952,15 +3952,15 @@
                   10
                 ],
                 "positions": {
-                  "1": 0,
+                  "1": 4,
                   "2": 1,
-                  "3": 4,
-                  "4": 6,
-                  "5": 7
+                  "3": 0,
+                  "4": 7,
+                  "5": 6
                 }
               },
               "expr": {
-                "id": "3",
+                "id": "1",
                 "callExpr": {
                   "function": "_+_",
                   "args": [
@@ -3968,7 +3968,7 @@
                       "id": "2",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "3",
                           "identExpr": {
                             "name": "V"
                           }
@@ -3977,10 +3977,10 @@
                       }
                     },
                     {
-                      "id": "5",
+                      "id": "4",
                       "selectExpr": {
                         "operand": {
-                          "id": "4",
+                          "id": "5",
                           "identExpr": {
                             "name": "V"
                           }
@@ -3998,9 +3998,6 @@
             "checked": {
               "referenceMap": {
                 "1": {
-                  "name": "variables"
-                },
-                "3": {
                   "overloadId": [
                     "add_bytes",
                     "add_double",
@@ -4013,25 +4010,28 @@
                     "add_uint64"
                   ]
                 },
-                "4": {
+                "3": {
+                  "name": "variables"
+                },
+                "5": {
                   "name": "variables"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
                   "dyn": {}
                 },
                 "3": {
-                  "dyn": {}
-                },
-                "4": {
                   "messageType": "cerbos.Variables"
                 },
-                "5": {
+                "4": {
                   "dyn": {}
+                },
+                "5": {
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -4040,15 +4040,15 @@
                   27
                 ],
                 "positions": {
-                  "1": 0,
+                  "1": 13,
                   "2": 9,
-                  "3": 13,
-                  "4": 15,
-                  "5": 24
+                  "3": 0,
+                  "4": 24,
+                  "5": 15
                 }
               },
               "expr": {
-                "id": "3",
+                "id": "1",
                 "callExpr": {
                   "function": "_+_",
                   "args": [
@@ -4056,7 +4056,7 @@
                       "id": "2",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "3",
                           "identExpr": {
                             "name": "variables"
                           }
@@ -4065,10 +4065,10 @@
                       }
                     },
                     {
-                      "id": "5",
+                      "id": "4",
                       "selectExpr": {
                         "operand": {
-                          "id": "4",
+                          "id": "5",
                           "identExpr": {
                             "name": "variables"
                           }
@@ -4086,9 +4086,6 @@
             "checked": {
               "referenceMap": {
                 "1": {
-                  "name": "variables"
-                },
-                "3": {
                   "overloadId": [
                     "add_bytes",
                     "add_double",
@@ -4101,25 +4098,28 @@
                     "add_uint64"
                   ]
                 },
-                "4": {
+                "3": {
+                  "name": "variables"
+                },
+                "5": {
                   "name": "variables"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
                   "dyn": {}
                 },
                 "3": {
-                  "dyn": {}
-                },
-                "4": {
                   "messageType": "cerbos.Variables"
                 },
-                "5": {
+                "4": {
                   "dyn": {}
+                },
+                "5": {
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -4128,15 +4128,15 @@
                   28
                 ],
                 "positions": {
-                  "1": 0,
+                  "1": 14,
                   "2": 9,
-                  "3": 14,
-                  "4": 16,
-                  "5": 25
+                  "3": 0,
+                  "4": 25,
+                  "5": 16
                 }
               },
               "expr": {
-                "id": "3",
+                "id": "1",
                 "callExpr": {
                   "function": "_+_",
                   "args": [
@@ -4144,7 +4144,7 @@
                       "id": "2",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "3",
                           "identExpr": {
                             "name": "variables"
                           }
@@ -4153,10 +4153,10 @@
                       }
                     },
                     {
-                      "id": "5",
+                      "id": "4",
                       "selectExpr": {
                         "operand": {
-                          "id": "4",
+                          "id": "5",
                           "identExpr": {
                             "name": "variables"
                           }
@@ -4173,16 +4173,16 @@
             "original": "C.b",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "C"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -4191,15 +4191,15 @@
                   4
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 1
+                  "1": 1,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "C"
                     }
@@ -4213,16 +4213,16 @@
             "original": "constants.c",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "constants"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -4231,15 +4231,15 @@
                   12
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 9
+                  "1": 9,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "constants"
                     }
@@ -4253,16 +4253,16 @@
             "original": "constants.l",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "constants"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -4271,15 +4271,15 @@
                   12
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 9
+                  "1": 9,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "constants"
                     }
@@ -4293,16 +4293,16 @@
             "original": "C.m",
             "checked": {
               "referenceMap": {
-                "1": {
+                "2": {
                   "name": "C"
                 }
               },
               "typeMap": {
                 "1": {
-                  "messageType": "cerbos.Variables"
+                  "dyn": {}
                 },
                 "2": {
-                  "dyn": {}
+                  "messageType": "cerbos.Variables"
                 }
               },
               "sourceInfo": {
@@ -4311,15 +4311,15 @@
                   4
                 ],
                 "positions": {
-                  "1": 0,
-                  "2": 1
+                  "1": 1,
+                  "2": 0
                 }
               },
               "expr": {
-                "id": "2",
+                "id": "1",
                 "selectExpr": {
                   "operand": {
-                    "id": "1",
+                    "id": "2",
                     "identExpr": {
                       "name": "C"
                     }
@@ -4345,9 +4345,6 @@
                 "checked": {
                   "referenceMap": {
                     "1": {
-                      "name": "variables"
-                    },
-                    "3": {
                       "overloadId": [
                         "greater_bool",
                         "greater_int64",
@@ -4365,25 +4362,28 @@
                         "greater_duration"
                       ]
                     },
-                    "4": {
+                    "3": {
+                      "name": "variables"
+                    },
+                    "5": {
                       "name": "constants"
                     }
                   },
                   "typeMap": {
                     "1": {
-                      "messageType": "cerbos.Variables"
+                      "primitive": "BOOL"
                     },
                     "2": {
                       "dyn": {}
                     },
                     "3": {
-                      "primitive": "BOOL"
-                    },
-                    "4": {
                       "messageType": "cerbos.Variables"
                     },
-                    "5": {
+                    "4": {
                       "dyn": {}
+                    },
+                    "5": {
+                      "messageType": "cerbos.Variables"
                     }
                   },
                   "sourceInfo": {
@@ -4392,15 +4392,15 @@
                       26
                     ],
                     "positions": {
-                      "1": 0,
+                      "1": 12,
                       "2": 9,
-                      "3": 12,
-                      "4": 14,
-                      "5": 23
+                      "3": 0,
+                      "4": 23,
+                      "5": 14
                     }
                   },
                   "expr": {
-                    "id": "3",
+                    "id": "1",
                     "callExpr": {
                       "function": "_>_",
                       "args": [
@@ -4408,7 +4408,7 @@
                           "id": "2",
                           "selectExpr": {
                             "operand": {
-                              "id": "1",
+                              "id": "3",
                               "identExpr": {
                                 "name": "variables"
                               }
@@ -4417,10 +4417,10 @@
                           }
                         },
                         {
-                          "id": "5",
+                          "id": "4",
                           "selectExpr": {
                             "operand": {
-                              "id": "4",
+                              "id": "5",
                               "identExpr": {
                                 "name": "constants"
                               }
@@ -4441,16 +4441,16 @@
                   "original": "V.abcl",
                   "checked": {
                     "referenceMap": {
-                      "1": {
+                      "2": {
                         "name": "V"
                       }
                     },
                     "typeMap": {
                       "1": {
-                        "messageType": "cerbos.Variables"
+                        "dyn": {}
                       },
                       "2": {
-                        "dyn": {}
+                        "messageType": "cerbos.Variables"
                       }
                     },
                     "sourceInfo": {
@@ -4459,15 +4459,15 @@
                         7
                       ],
                       "positions": {
-                        "1": 0,
-                        "2": 1
+                        "1": 1,
+                        "2": 0
                       }
                     },
                     "expr": {
-                      "id": "2",
+                      "id": "1",
                       "selectExpr": {
                         "operand": {
-                          "id": "1",
+                          "id": "2",
                           "identExpr": {
                             "name": "V"
                           }
@@ -4500,16 +4500,16 @@
               "original": "constants.a",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "constants"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4518,15 +4518,15 @@
                     12
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 9
+                    "1": 9,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "constants"
                       }
@@ -4543,16 +4543,16 @@
               "original": "C.b",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "C"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4561,15 +4561,15 @@
                     4
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 1
+                    "1": 1,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "C"
                       }
@@ -4587,9 +4587,6 @@
               "checked": {
                 "referenceMap": {
                   "1": {
-                    "name": "V"
-                  },
-                  "3": {
                     "overloadId": [
                       "add_bytes",
                       "add_double",
@@ -4602,25 +4599,28 @@
                       "add_uint64"
                     ]
                   },
-                  "4": {
+                  "3": {
+                    "name": "V"
+                  },
+                  "5": {
                     "name": "V"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
                     "dyn": {}
                   },
                   "3": {
-                    "dyn": {}
-                  },
-                  "4": {
                     "messageType": "cerbos.Variables"
                   },
-                  "5": {
+                  "4": {
                     "dyn": {}
+                  },
+                  "5": {
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4629,15 +4629,15 @@
                     10
                   ],
                   "positions": {
-                    "1": 0,
+                    "1": 4,
                     "2": 1,
-                    "3": 4,
-                    "4": 6,
-                    "5": 7
+                    "3": 0,
+                    "4": 7,
+                    "5": 6
                   }
                 },
                 "expr": {
-                  "id": "3",
+                  "id": "1",
                   "callExpr": {
                     "function": "_+_",
                     "args": [
@@ -4645,7 +4645,7 @@
                         "id": "2",
                         "selectExpr": {
                           "operand": {
-                            "id": "1",
+                            "id": "3",
                             "identExpr": {
                               "name": "V"
                             }
@@ -4654,10 +4654,10 @@
                         }
                       },
                       {
-                        "id": "5",
+                        "id": "4",
                         "selectExpr": {
                           "operand": {
-                            "id": "4",
+                            "id": "5",
                             "identExpr": {
                               "name": "V"
                             }
@@ -4677,16 +4677,16 @@
               "original": "constants.c",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "constants"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4695,15 +4695,15 @@
                     12
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 9
+                    "1": 9,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "constants"
                       }
@@ -4721,9 +4721,6 @@
               "checked": {
                 "referenceMap": {
                   "1": {
-                    "name": "variables"
-                  },
-                  "3": {
                     "overloadId": [
                       "add_bytes",
                       "add_double",
@@ -4736,25 +4733,28 @@
                       "add_uint64"
                     ]
                   },
-                  "4": {
+                  "3": {
+                    "name": "variables"
+                  },
+                  "5": {
                     "name": "variables"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
                     "dyn": {}
                   },
                   "3": {
-                    "dyn": {}
-                  },
-                  "4": {
                     "messageType": "cerbos.Variables"
                   },
-                  "5": {
+                  "4": {
                     "dyn": {}
+                  },
+                  "5": {
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4763,15 +4763,15 @@
                     27
                   ],
                   "positions": {
-                    "1": 0,
+                    "1": 13,
                     "2": 9,
-                    "3": 13,
-                    "4": 15,
-                    "5": 24
+                    "3": 0,
+                    "4": 24,
+                    "5": 15
                   }
                 },
                 "expr": {
-                  "id": "3",
+                  "id": "1",
                   "callExpr": {
                     "function": "_+_",
                     "args": [
@@ -4779,7 +4779,7 @@
                         "id": "2",
                         "selectExpr": {
                           "operand": {
-                            "id": "1",
+                            "id": "3",
                             "identExpr": {
                               "name": "variables"
                             }
@@ -4788,10 +4788,10 @@
                         }
                       },
                       {
-                        "id": "5",
+                        "id": "4",
                         "selectExpr": {
                           "operand": {
-                            "id": "4",
+                            "id": "5",
                             "identExpr": {
                               "name": "variables"
                             }
@@ -4811,16 +4811,16 @@
               "original": "constants.l",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "constants"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4829,15 +4829,15 @@
                     12
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 9
+                    "1": 9,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "constants"
                       }
@@ -4855,9 +4855,6 @@
               "checked": {
                 "referenceMap": {
                   "1": {
-                    "name": "variables"
-                  },
-                  "3": {
                     "overloadId": [
                       "add_bytes",
                       "add_double",
@@ -4870,25 +4867,28 @@
                       "add_uint64"
                     ]
                   },
-                  "4": {
+                  "3": {
+                    "name": "variables"
+                  },
+                  "5": {
                     "name": "variables"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
                     "dyn": {}
                   },
                   "3": {
-                    "dyn": {}
-                  },
-                  "4": {
                     "messageType": "cerbos.Variables"
                   },
-                  "5": {
+                  "4": {
                     "dyn": {}
+                  },
+                  "5": {
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4897,15 +4897,15 @@
                     28
                   ],
                   "positions": {
-                    "1": 0,
+                    "1": 14,
                     "2": 9,
-                    "3": 14,
-                    "4": 16,
-                    "5": 25
+                    "3": 0,
+                    "4": 25,
+                    "5": 16
                   }
                 },
                 "expr": {
-                  "id": "3",
+                  "id": "1",
                   "callExpr": {
                     "function": "_+_",
                     "args": [
@@ -4913,7 +4913,7 @@
                         "id": "2",
                         "selectExpr": {
                           "operand": {
-                            "id": "1",
+                            "id": "3",
                             "identExpr": {
                               "name": "variables"
                             }
@@ -4922,10 +4922,10 @@
                         }
                       },
                       {
-                        "id": "5",
+                        "id": "4",
                         "selectExpr": {
                           "operand": {
-                            "id": "4",
+                            "id": "5",
                             "identExpr": {
                               "name": "variables"
                             }
@@ -4945,16 +4945,16 @@
               "original": "C.m",
               "checked": {
                 "referenceMap": {
-                  "1": {
+                  "2": {
                     "name": "C"
                   }
                 },
                 "typeMap": {
                   "1": {
-                    "messageType": "cerbos.Variables"
+                    "dyn": {}
                   },
                   "2": {
-                    "dyn": {}
+                    "messageType": "cerbos.Variables"
                   }
                 },
                 "sourceInfo": {
@@ -4963,15 +4963,15 @@
                     4
                   ],
                   "positions": {
-                    "1": 0,
-                    "2": 1
+                    "1": 1,
+                    "2": 0
                   }
                 },
                 "expr": {
-                  "id": "2",
+                  "id": "1",
                   "selectExpr": {
                     "operand": {
-                      "id": "1",
+                      "id": "2",
                       "identExpr": {
                         "name": "C"
                       }

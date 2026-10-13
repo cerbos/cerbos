@@ -1112,8 +1112,26 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.Policy"
+          }
+        },
         "scope": {
           "type": "string"
+        }
+      }
+    },
+    "cerbos.runtime.v1.IndexBuildErrors.ScopePermissionsConflicts.Policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "type": "string"
+        },
+        "scopePermissions": {
+          "$ref": "#/definitions/cerbos.policy.v1.ScopePermissions"
         }
       }
     },

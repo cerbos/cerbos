@@ -56,10 +56,8 @@ func TestMetadataExtractor(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			conf := &Conf{
-				confHolder: confHolder{
-					IncludeMetadataKeys: tc.includeKeys,
-					ExcludeMetadataKeys: tc.excludeKeys,
-				},
+				IncludeMetadataKeys: tc.includeKeys,
+				ExcludeMetadataKeys: tc.excludeKeys,
 			}
 			me := NewMetadataExtractorFromConf(conf)
 			ctx := metadata.NewIncomingContext(t.Context(), metadata.New(tc.input))
