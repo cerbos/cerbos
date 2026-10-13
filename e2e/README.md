@@ -9,6 +9,12 @@
 - [Helmfile](https://github.com/helmfile/helmfile)
 - [Telepresence](https://www.telepresence.io/docs/latest/install/)
 
+With [Nix](https://nixos.org), `flake.nix` in this directory provides all of the above (plus Go, gotestsum and stern). Docker must still be installed separately for kind.
+
+```sh
+nix develop ./e2e --command e2e/run.sh
+```
+
 ## Running tests
 
 ```sh
