@@ -102,37 +102,46 @@ func (mgr *Manager) LastReloadError() error {
 	return mgr.lastReloadErr
 }
 
-func (mgr *Manager) reload() (err error) {
+func (mgr *Manager) reload() error {
+	// Build the new rule table without holding the lock so that requests keep being
+	// served by the current one in the meantime. Storage events, including reloads,
+	// are delivered sequentially. There're no other writers.
+	newRuleTable, err := mgr.buildRuleTable()
+
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
-	defer func() { mgr.lastReloadErr = err }() // set lastReloadErr while the lock is still held
 
-	var newRuleTable *RuleTable
-	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
-		var rtErr error
-		newRuleTable, rtErr = ruleTableStore.GetRuleTable()
-		if rtErr != nil && !errors.Is(rtErr, storage.ErrUnsupportedOperation) {
-			return fmt.Errorf("failed to load the new rule table: %w", rtErr)
-		}
-	}
-
-	if newRuleTable == nil {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), mgr.conf.PolicyLoaderTimeout)
-		defer cancelFunc()
-
-		mgr.log.Info("Reloading rule table")
-
-		var rtErr error
-		// If compilation fails, maintain the last valid rule table state.
-		if newRuleTable, rtErr = NewRuleTableFromLoader(ctx, mgr.policyLoader); rtErr != nil {
-			return fmt.Errorf("rule table compilation failed, using previous valid state: %w", rtErr)
-		}
+	mgr.lastReloadErr = err
+	if err != nil {
+		return err
 	}
 
 	mgr.RuleTable = newRuleTable
 	mgr.log.Info("Rule table reload successful")
 
 	return nil
+}
+
+func (mgr *Manager) buildRuleTable() (*RuleTable, error) {
+	if ruleTableStore, ok := mgr.policyLoader.(RuleTableStore); ok {
+		newRuleTable, err := ruleTableStore.GetRuleTable()
+		if err != nil && !errors.Is(err, storage.ErrUnsupportedOperation) {
+			return nil, fmt.Errorf("failed to load the new rule table: %w", err)
+		}
+
+		if newRuleTable != nil {
+			return newRuleTable, nil
+		}
+	}
+
+	mgr.log.Info("Reloading rule table")
+
+	newRuleTable, err := NewRuleTableFromLoader(context.Background(), mgr.policyLoader)
+	if err != nil {
+		return nil, fmt.Errorf("rule table compilation failed, using previous valid state: %w", err)
+	}
+
+	return newRuleTable, nil
 }
 
 func (mgr *Manager) processPolicyEvent(evt storage.Event) (err error) {
