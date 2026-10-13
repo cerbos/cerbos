@@ -443,10 +443,18 @@ func (idx *index) Iter(ctx context.Context) iter.Seq2[*policy.CompilationUnit, e
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		ch := idx.GetAllCompilationUnits(ctx)
+		n, ch := idx.GetAllCompilationUnitsWithCount(ctx)
+		count := 0
 		for unit := range ch {
 			if !yield(unit, nil) {
 				return
+			}
+			count++
+		}
+
+		if count < n {
+			if err := ctx.Err(); err != nil {
+				yield(nil, err)
 			}
 		}
 	}
