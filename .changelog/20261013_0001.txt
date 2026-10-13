@@ -1,0 +1,2 @@
+type:fix
+Reloading a large policy store could silently drop some policies from the rule table, causing requests to be denied with NO_MATCH until the next reload or restart
