@@ -261,7 +261,7 @@ func (l *Log) syncLoop(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			ticker.Stop()
-			delay := l.schedule()
+			delay := l.schedule(ctx)
 			ticker.Reset(delay)
 		case <-ctx.Done():
 			return nil
@@ -269,9 +269,13 @@ func (l *Log) syncLoop(ctx context.Context) error {
 	}
 }
 
-func (l *Log) schedule() time.Duration {
+func (l *Log) schedule(ctx context.Context) time.Duration {
 	l.logger.Log(zapcore.Level(-3), "Scheduling stream")
-	if err := l.streamLogs(); err != nil {
+	if err := l.streamLogs(ctx); err != nil {
+		if ctx.Err() != nil {
+			// Shutting down: syncLoop exits on the next select.
+			return l.minFlushInterval
+		}
 		if ingestErr, ok := errors.AsType[ErrIngestBackoff](err); ok {
 			l.logger.Warn("svc-ingest issued backoff", zap.Error(err))
 			if ingestErr.Backoff < l.minFlushInterval {
@@ -285,11 +289,9 @@ func (l *Log) schedule() time.Duration {
 	return l.minFlushInterval
 }
 
-func (l *Log) streamLogs() error {
+func (l *Log) streamLogs(ctx context.Context) error {
 	// We use two streams: one for access logs, and one for decision logs, as this allows us to
 	// avoid the penalty of per-key string inspection when inferring the type down the line.
-	ctx := context.Background()
-
 	p := pool.New().WithContext(ctx).WithCancelOnError()
 	p.Go(func(ctx context.Context) error {
 		l.logger.Log(zapcore.Level(-2), "Streaming access logs")
@@ -384,6 +386,10 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 	}()
 
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
 		if err := beginBatch(framer); err != nil {
 			return err
 		}
