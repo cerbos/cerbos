@@ -356,8 +356,8 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 		return err
 	}
 
-	keys := getKeys(l.maxBatchSize)
-	defer keysPool.Put(&keys)
+	keys, releaseKeys := getKeys(l.maxBatchSize)
+	defer releaseKeys()
 
 	framer := framerPool.Get().(*batchFramer) //nolint:forcetypeassert
 	defer framerPool.Put(framer)
@@ -505,14 +505,16 @@ func (l *Log) kindPrefixes(kind logsv1.IngestBatch_EntryKind) (markerPrefix, ent
 	return markerPrefix, entryPrefix, nil
 }
 
-// getKeys returns a marker key buffer of at least n slots from keysPool.
-func getKeys(n int) [][]byte {
+// getKeys returns a pooled marker key buffer of at least n slots and a
+// function that returns it to the pool.
+func getKeys(n int) (keys [][]byte, release func()) {
 	if keysIface := keysPool.Get(); keysIface != nil {
-		if keys := *keysIface.(*[][]byte); len(keys) >= n { //nolint:forcetypeassert
-			return keys
-		}
+		keys = *keysIface.(*[][]byte) //nolint:forcetypeassert
 	}
-	return make([][]byte, n)
+	if len(keys) < n {
+		keys = make([][]byte, n)
+	}
+	return keys, func() { keysPool.Put(&keys) }
 }
 
 // keysOnlyIteratorOptions returns options for iterating over the keys with
