@@ -370,8 +370,52 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 		entryPrefix = slices.Concat(l.KeyPrefix, entryPrefix)
 	}
 
+	var keys [][]byte
+	if keysIface := keysPool.Get(); keysIface == nil {
+		keys = make([][]byte, l.maxBatchSize)
+	} else {
+		keys = *keysIface.(*[][]byte) //nolint:forcetypeassert
+		if len(keys) < l.maxBatchSize {
+			keys = make([][]byte, l.maxBatchSize)
+		}
+	}
+	defer keysPool.Put(&keys)
+
+	framer := framerPool.Get().(*batchFramer) //nolint:forcetypeassert
+	defer framerPool.Put(framer)
+
+	batchID, err := audit.NewID()
+	if err != nil {
+		return fmt.Errorf("failed to generate batch ID: %w", err)
+	}
+	framer.beginBatch(string(batchID))
+
+	lk := newLegacyKeys(l, kind, logger)
+	defer lk.cancel()
+
+	// cutBatch ships the current batch, deletes the n marker keys it
+	// covers and begins a fresh batch, returning the reset window length.
+	cutBatch := func(n int) (int, error) {
+		if err := l.sync(ctx, kind, framer); err != nil {
+			return n, err
+		}
+		if err := l.deleteMarkerKeys(kind, keys[:n]); err != nil {
+			return n, fmt.Errorf("failed to delete logs: %w", err)
+		}
+		batchID, err := audit.NewID()
+		if err != nil {
+			return n, fmt.Errorf("failed to generate batch ID: %w", err)
+		}
+		framer.beginBatch(string(batchID))
+		return 0, nil
+	}
+
+	var logKey []byte
+	var rawBuf []byte // scratch for legacy entries
+	var i int
+
 	fallbacks := 0
-	err := l.Db.View(func(txn *badgerv4.Txn) error {
+	err = l.Db.View(func(txn *badgerv4.Txn) error {
 		markerOpts := badgerv4.DefaultIteratorOptions
 		markerOpts.Prefix = markerPrefix
 		markerOpts.PrefetchValues = false
@@ -384,29 +428,6 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 		entryIt := txn.NewIterator(entryOpts)
 		defer entryIt.Close()
 		entryIt.Seek(entryPrefix)
-
-		var keys [][]byte
-		if keysIface := keysPool.Get(); keysIface == nil {
-			keys = make([][]byte, l.maxBatchSize)
-		} else {
-			keys = *keysIface.(*[][]byte) //nolint:forcetypeassert
-			if len(keys) < l.maxBatchSize {
-				keys = make([][]byte, l.maxBatchSize)
-			}
-		}
-		defer keysPool.Put(&keys)
-
-		framer := framerPool.Get().(*batchFramer) //nolint:forcetypeassert
-		defer framerPool.Put(framer)
-
-		batchID, err := audit.NewID()
-		if err != nil {
-			return fmt.Errorf("failed to generate batch ID: %w", err)
-		}
-		framer.beginBatch(string(batchID))
-
-		lk := newLegacyKeys(l, kind, logger)
-		defer lk.cancel()
 
 		steps := 0
 		joinEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
@@ -441,27 +462,6 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 			fallbacks++
 			return getEntry(txn, logKey, fn)
 		}
-
-		// cutBatch ships the current batch, deletes the n marker keys it
-		// covers and begins a fresh batch, returning the reset window length.
-		cutBatch := func(n int) (int, error) {
-			if err := l.sync(ctx, kind, framer); err != nil {
-				return n, err
-			}
-			if err := l.deleteMarkerKeys(kind, keys[:n]); err != nil {
-				return n, fmt.Errorf("failed to delete logs: %w", err)
-			}
-			batchID, err := audit.NewID()
-			if err != nil {
-				return n, fmt.Errorf("failed to generate batch ID: %w", err)
-			}
-			framer.beginBatch(string(batchID))
-			return 0, nil
-		}
-
-		var logKey []byte
-		var rawBuf []byte // scratch for legacy entries
-		var i int
 
 		for markerIt.Seek(markerPrefix); markerIt.Valid(); markerIt.Next() {
 			// Cut the batch when the marker key buffer is full.
