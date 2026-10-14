@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -260,9 +261,69 @@ func TestHubLog(t *testing.T) {
 			assert.Equal(c, slices.Concat(wantKeys1, wantKeys2), haveKeys(), "keys should have been deleted")
 		}, 1*time.Second, 50*time.Millisecond)
 	})
+
+	t.Run("closeInterruptsSync", func(t *testing.T) {
+		// Bounds waiting for the server to accept a few batches and block.
+		const blockWait = 2 * time.Second
+		// Bounds a blocked Sync when Close fails to cancel it.
+		const flushTimeout = 5 * blockWait
+		db, syncer := initDB(t, withFlushTimeout(flushTimeout))
+
+		// The server accepts a few batches, then stops responding.
+		const acceptedBatches = 4
+		var calls atomic.Int32
+		blocked := make(chan struct{})
+		var blockedOnce sync.Once
+		// Why each blocked request ended: context.Canceled when Close
+		// interrupted it, context.DeadlineExceeded when it timed out.
+		var blockedErrsMu sync.Mutex
+		var blockedErrs []error
+		syncer.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, _ []byte, _ int) error {
+			if calls.Add(1) <= acceptedBatches {
+				return nil
+			}
+			blockedOnce.Do(func() { close(blocked) })
+			<-ctx.Done()
+
+			blockedErrsMu.Lock()
+			blockedErrs = append(blockedErrs, ctx.Err())
+			blockedErrsMu.Unlock()
+			return ctx.Err()
+		})
+
+		loadData(t, db, startDate)
+
+		select {
+		case <-blocked:
+		case <-time.After(blockWait):
+			require.FailNow(t, "no sync request was blocked")
+		}
+
+		// Close returns once the sync loop has stopped, so every blocked
+		// request has ended by then.
+		require.NoError(t, db.Close())
+
+		blockedErrsMu.Lock()
+		defer blockedErrsMu.Unlock()
+		require.NotEmpty(t, blockedErrs)
+		for _, err := range blockedErrs {
+			require.ErrorIs(t, err, context.Canceled, "Close should cancel the blocked request")
+		}
+
+		syncer.mu.RLock()
+		defer syncer.mu.RUnlock()
+		require.NotEmpty(t, syncer.entries, "the drain should have started")
+		require.Less(t, len(syncer.entries), numRecords, "the drain should not have finished")
+	})
 }
 
 type initOption func(*hub.Conf)
+
+func withFlushTimeout(timeout time.Duration) initOption {
+	return func(conf *hub.Conf) {
+		conf.Ingest.FlushTimeout = timeout
+	}
+}
 
 func withBatchSize(count, bytes uint) initOption {
 	return func(conf *hub.Conf) {
