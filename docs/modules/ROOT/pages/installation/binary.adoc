@@ -90,6 +90,7 @@ You can install Cerbos PDP binaries using Homebrew as well.
 brew trust cerbos/tap
 brew tap cerbos/tap
 brew install cerbos
+brew install cerbosctl
 ----
 
 [id="npm"]
