@@ -57,7 +57,6 @@ var framerPool = sync.Pool{New: func() any { return new(batchFramer) }}
 
 type batchFramer struct {
 	buf       []byte
-	carry     []byte
 	count     int
 	lastStart int
 }
@@ -101,19 +100,11 @@ func (f *batchFramer) size() int {
 	return len(f.buf)
 }
 
-// rollLast moves the most recently added entry out of the batch into a
-// scratch buffer so the batch can be shipped without it. restoreLast puts it
-// back into the batch started by the next beginBatch.
-func (f *batchFramer) rollLast() {
-	f.carry = append(f.carry[:0], f.buf[f.lastStart:]...)
+// dropLast removes the most recently added entry from the batch so the batch
+// can be shipped without it.
+func (f *batchFramer) dropLast() {
 	f.buf = f.buf[:f.lastStart]
 	f.count--
-}
-
-func (f *batchFramer) restoreLast() {
-	f.lastStart = len(f.buf)
-	f.buf = append(f.buf, f.carry...)
-	f.count++
 }
 
 // getEntrySize returns the wire size of the IngestBatch_Entry message that add
