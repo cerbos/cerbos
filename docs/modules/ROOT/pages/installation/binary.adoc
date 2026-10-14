@@ -87,6 +87,7 @@ You can install Cerbos PDP binaries using Homebrew as well.
 
 [source,sh]
 ----
+brew trust cerbos/tap
 brew tap cerbos/tap
 brew install cerbos
 ----
