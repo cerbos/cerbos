@@ -1,2 +1,2 @@
-type:fix
-Cerbos Hub audit log sync no longer holds a local database snapshot open while uploading, which delayed reclaiming disk space and memory during long catch-up uploads. Shutdown now interrupts an upload in progress instead of waiting for the whole backlog to be sent
+type:enhancement
+Cerbos Hub audit log sync has been optimised to reclaim disk space and memory much more quickly. When the PDP is shutting down, the sync process exits as quickly as safely possible without holding up the PDP until the whole backlog is synced. 
