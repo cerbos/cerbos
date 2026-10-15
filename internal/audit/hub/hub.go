@@ -488,7 +488,7 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 			return err
 		}
 
-		if err := l.cutBatch(ctx, kind, framer, keys[:i]); err != nil {
+		if err := l.shipBatch(ctx, kind, framer, keys[:i]); err != nil {
 			return err
 		}
 
@@ -550,8 +550,8 @@ func keysOnlyIteratorOptions(prefix []byte) badgerv4.IteratorOptions {
 	return opts
 }
 
-// cutBatch ships the current batch and deletes the marker keys it covers.
-func (l *Log) cutBatch(ctx context.Context, kind logsv1.IngestBatch_EntryKind, framer *batchFramer, keys [][]byte) error {
+// shipBatch ships the current batch and deletes the marker keys it covers.
+func (l *Log) shipBatch(ctx context.Context, kind logsv1.IngestBatch_EntryKind, framer *batchFramer, keys [][]byte) error {
 	if err := l.sync(ctx, kind, framer); err != nil {
 		return err
 	}
