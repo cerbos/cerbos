@@ -395,7 +395,6 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 		}
 
 		i := 0
-		// more reports that the batch was cut before the markers ran out.
 		more := false
 		err = l.Db.View(func(txn *badgerv4.Txn) error {
 			markerIt := txn.NewIterator(markerOpts)
