@@ -148,7 +148,7 @@ func timeCycles(t *testing.T, log *Log, n int) time.Duration {
 
 	start := time.Now()
 	for range n {
-		require.NoError(t, log.streamLogs())
+		require.NoError(t, log.streamLogs(t.Context()))
 	}
 	return time.Since(start) / time.Duration(n)
 }
@@ -202,7 +202,7 @@ func TestCatchupDrainProfile(t *testing.T) {
 	rssBefore := procStatusKB(t, "VmRSS")
 
 	drainStart := time.Now()
-	require.NoError(t, log.streamLogs(), "drain cycle must succeed")
+	require.NoError(t, log.streamLogs(t.Context()), "drain cycle must succeed")
 	drainDur := time.Since(drainStart)
 
 	peakRSS := procStatusKB(t, "VmHWM")
