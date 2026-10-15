@@ -350,8 +350,7 @@ func (l *Log) sync(ctx context.Context, kind logsv1.IngestBatch_EntryKind, frame
 // streamKind walks the sync markers and the entries they point at with two
 // lockstep iterators. Entries' values, which are byte slices, are framed into
 // IngestBatch without decode-encode round trip. Each batch is collected in its
-// own read transaction, which is closed before the batch is shipped, so that a
-// long drain doesn't pin Badger's memtables, tables and discard timestamp.
+// own read transaction, which is closed before the batch is shipped.
 func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
