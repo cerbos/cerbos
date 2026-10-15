@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	"github.com/cerbos/cerbos/internal/audit"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
@@ -57,12 +58,22 @@ var framerPool = sync.Pool{New: func() any { return new(batchFramer) }}
 
 type batchFramer struct {
 	buf       []byte
-	carry     []byte
 	count     int
 	lastStart int
 }
 
-func (f *batchFramer) beginBatch(batchID string) {
+// beginBatch begins a new batch with a fresh ID.
+func (f *batchFramer) beginBatch() error {
+	batchID, err := audit.NewID()
+	if err != nil {
+		return fmt.Errorf("failed to generate batch ID: %w", err)
+	}
+	f.beginBatchWithID(string(batchID))
+	return nil
+}
+
+// beginBatchWithID begins a new batch with the given ID.
+func (f *batchFramer) beginBatchWithID(batchID string) {
 	f.buf = protowire.AppendTag(f.buf[:0], batchFieldNums["id"], protowire.BytesType)
 	f.buf = protowire.AppendString(f.buf, batchID)
 	f.count = 0
@@ -101,19 +112,11 @@ func (f *batchFramer) size() int {
 	return len(f.buf)
 }
 
-// rollLast moves the most recently added entry out of the batch into a
-// scratch buffer so the batch can be shipped without it. restoreLast puts it
-// back into the batch started by the next beginBatch.
-func (f *batchFramer) rollLast() {
-	f.carry = append(f.carry[:0], f.buf[f.lastStart:]...)
+// dropLast removes the most recently added entry from the batch so the batch
+// can be shipped without it.
+func (f *batchFramer) dropLast() {
 	f.buf = f.buf[:f.lastStart]
 	f.count--
-}
-
-func (f *batchFramer) restoreLast() {
-	f.lastStart = len(f.buf)
-	f.buf = append(f.buf, f.carry...)
-	f.count++
 }
 
 // getEntrySize returns the wire size of the IngestBatch_Entry message that add

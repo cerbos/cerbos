@@ -346,12 +346,164 @@ func (l *Log) sync(ctx context.Context, kind logsv1.IngestBatch_EntryKind, frame
 }
 
 // streamKind walks the sync markers and the entries they point at with two
-// lockstep iterators inside one snapshot. Entries' values, which are byte
-// slices, are framed into IngestBatch without decode-encode round trip.
+// lockstep iterators. Entries' values, which are byte slices, are framed into
+// IngestBatch without decode-encode round trip. Each batch is collected in its
+// own read transaction, which is closed before the batch is shipped.
 func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
-	var markerPrefix, entryPrefix []byte
+	markerPrefix, entryPrefix, err := l.kindPrefixes(kind)
+	if err != nil {
+		return err
+	}
+
+	keys, releaseKeys := getKeys(l.maxBatchSize)
+	defer releaseKeys()
+
+	framer := framerPool.Get().(*batchFramer) //nolint:forcetypeassert
+	defer framerPool.Put(framer)
+
+	lk := newLegacyKeys(l, kind, logger)
+	defer lk.cancel()
+
+	var logKey []byte
+	var rawBuf []byte // scratch for legacy entries
+	var last []byte   // last marker key consumed
+	var resume []byte // backing buffer for seek
+	seek := markerPrefix
+
+	markerOpts := keysOnlyIteratorOptions(markerPrefix)
+	entryOpts := keysOnlyIteratorOptions(entryPrefix)
+
+	fallbacks := 0
+	defer func() {
+		if fallbacks > 0 {
+			logger.Log(zapcore.Level(-2), "Entry lookups fell back to point reads", zap.Int("count", fallbacks))
+		}
+	}()
+
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		if err := framer.beginBatch(); err != nil {
+			return err
+		}
+
+		i := 0
+		more := false
+		err = l.Db.View(func(txn *badgerv4.Txn) error {
+			markerIt := txn.NewIterator(markerOpts)
+			defer markerIt.Close()
+
+			entryIt := txn.NewIterator(entryOpts)
+			defer entryIt.Close()
+			entryIt.Seek(entryPrefix)
+			joiner := &entryJoiner{it: entryIt}
+
+			readEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
+				found, err := joiner.join(logKey, fn)
+				if err != nil || found {
+					return found, err
+				}
+				fallbacks++
+				return getEntry(txn, logKey, fn)
+			}
+
+			for markerIt.Seek(seek); markerIt.Valid(); markerIt.Next() {
+				// Cut the batch when the marker key buffer is full.
+				if i == l.maxBatchSize {
+					more = true
+					return nil
+				}
+
+				item := markerIt.Item()
+				k := item.Key()
+
+				if err := item.Value(func(v []byte) error {
+					logKey = append(logKey[:0], v...)
+					return nil
+				}); err != nil {
+					return err
+				}
+
+				legacy := lk.isLegacy(k)
+				var found bool
+				var err error
+				if legacy {
+					// Legacy entries are buffered so that oversized ones can be
+					// diverted to the rewrite path before framing.
+					found, err = readEntry(logKey, func(v []byte) error {
+						rawBuf = append(rawBuf[:0], v...)
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+
+					// An oversized legacy entry cannot be synced as-is.
+					if found && getEntrySize(kind, rawBuf) > l.maxBatchSizeBytes {
+						if err := lk.rewriteOversizedRaw(ctx, rawBuf, item.KeyCopy(nil)); err != nil {
+							return err
+						}
+						last = append(last[:0], k...)
+						continue
+					}
+				}
+
+				switch {
+				case legacy && found:
+					framer.add(kind, rawBuf)
+				case !legacy:
+					found, err = readEntry(logKey, func(v []byte) error {
+						framer.add(kind, v)
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+				}
+
+				// Cut the batch if this entry overflowed it: roll the entry out
+				// and leave its marker to be read again by the next transaction.
+				if found && framer.count > 1 && framer.size() > l.maxBatchSizeBytes {
+					framer.dropLast()
+					more = true
+					return nil
+				}
+
+				keys[i] = append(keys[i][:0], k...)
+				i++
+				last = append(last[:0], k...)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		if err := l.shipBatch(ctx, kind, framer, keys[:i]); err != nil {
+			return err
+		}
+
+		if !more {
+			break
+		}
+
+		// Resume right after the last consumed marker.
+		resume = append(append(resume[:0], last...), 0) // last + 0x00
+		seek = resume
+	}
+
+	lk.flush()
+	return nil
+}
+
+// kindPrefixes returns the key prefixes of the sync markers and the entries
+// of the given kind.
+func (l *Log) kindPrefixes(kind logsv1.IngestBatch_EntryKind) (markerPrefix, entryPrefix []byte, err error) {
 	switch kind { //nolint:exhaustive
 	case logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:
 		markerPrefix = badgerkey.KindAccessLogSync[:]
@@ -362,7 +514,7 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 		entryPrefix = badgerkey.KindDecisionLogEntry[:]
 
 	default:
-		return errors.New("unspecified IngestBatch_EntryKind")
+		return nil, nil, errors.New("unspecified IngestBatch_EntryKind")
 	}
 
 	if len(l.KeyPrefix) > 0 {
@@ -370,182 +522,72 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 		entryPrefix = slices.Concat(l.KeyPrefix, entryPrefix)
 	}
 
-	fallbacks := 0
-	err := l.Db.View(func(txn *badgerv4.Txn) error {
-		markerOpts := badgerv4.DefaultIteratorOptions
-		markerOpts.Prefix = markerPrefix
-		markerOpts.PrefetchValues = false
-		markerIt := txn.NewIterator(markerOpts)
-		defer markerIt.Close()
+	return markerPrefix, entryPrefix, nil
+}
 
-		entryOpts := badgerv4.DefaultIteratorOptions
-		entryOpts.Prefix = entryPrefix
-		entryOpts.PrefetchValues = false
-		entryIt := txn.NewIterator(entryOpts)
-		defer entryIt.Close()
-		entryIt.Seek(entryPrefix)
-
-		var keys [][]byte
-		if keysIface := keysPool.Get(); keysIface == nil {
-			keys = make([][]byte, l.maxBatchSize)
-		} else {
-			keys = *keysIface.(*[][]byte) //nolint:forcetypeassert
-			if len(keys) < l.maxBatchSize {
-				keys = make([][]byte, l.maxBatchSize)
-			}
-		}
-		defer keysPool.Put(&keys)
-
-		framer := framerPool.Get().(*batchFramer) //nolint:forcetypeassert
-		defer framerPool.Put(framer)
-
-		batchID, err := audit.NewID()
-		if err != nil {
-			return fmt.Errorf("failed to generate batch ID: %w", err)
-		}
-		framer.beginBatch(string(batchID))
-
-		lk := newLegacyKeys(l, kind, logger)
-		defer lk.cancel()
-
-		steps := 0
-		joinEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
-			for entryIt.Valid() {
-				switch cmp := bytes.Compare(entryIt.Item().Key(), logKey); {
-				case cmp == 0:
-					if err := entryIt.Item().Value(fn); err != nil {
-						return false, err
-					}
-					entryIt.Next()
-					return true, nil
-				case cmp > 0:
-					return false, nil
-				default:
-					steps++
-					if steps > maxEntrySeekLinearSteps {
-						entryIt.Seek(logKey)
-						steps = 0
-					} else {
-						entryIt.Next()
-					}
-				}
-			}
-			return false, nil
-		}
-
-		readEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
-			found, err := joinEntry(logKey, fn)
-			if err != nil || found {
-				return found, err
-			}
-			fallbacks++
-			return getEntry(txn, logKey, fn)
-		}
-
-		// cutBatch ships the current batch, deletes the n marker keys it
-		// covers and begins a fresh batch, returning the reset window length.
-		cutBatch := func(n int) (int, error) {
-			if err := l.sync(ctx, kind, framer); err != nil {
-				return n, err
-			}
-			if err := l.deleteMarkerKeys(kind, keys[:n]); err != nil {
-				return n, fmt.Errorf("failed to delete logs: %w", err)
-			}
-			batchID, err := audit.NewID()
-			if err != nil {
-				return n, fmt.Errorf("failed to generate batch ID: %w", err)
-			}
-			framer.beginBatch(string(batchID))
-			return 0, nil
-		}
-
-		var logKey []byte
-		var rawBuf []byte // scratch for legacy entries
-		var i int
-
-		for markerIt.Seek(markerPrefix); markerIt.Valid(); markerIt.Next() {
-			// Cut the batch when the marker key buffer is full.
-			if i == l.maxBatchSize {
-				var err error
-				if i, err = cutBatch(i); err != nil {
-					return err
-				}
-			}
-
-			item := markerIt.Item()
-			k := item.Key()
-
-			if err := item.Value(func(v []byte) error {
-				logKey = append(logKey[:0], v...)
-				return nil
-			}); err != nil {
-				return err
-			}
-
-			legacy := lk.isLegacy(k)
-			var found bool
-			var err error
-			if legacy {
-				// Legacy entries are buffered so that oversized ones can be
-				// diverted to the rewrite path before framing.
-				found, err = readEntry(logKey, func(v []byte) error {
-					rawBuf = append(rawBuf[:0], v...)
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-
-				// An oversized legacy entry cannot be synced as-is.
-				if found && getEntrySize(kind, rawBuf) > l.maxBatchSizeBytes {
-					if err := lk.rewriteOversizedRaw(ctx, rawBuf, item.KeyCopy(nil)); err != nil {
-						return err
-					}
-					continue
-				}
-			}
-
-			switch {
-			case legacy && found:
-				framer.add(kind, rawBuf)
-			case !legacy:
-				found, err = readEntry(logKey, func(v []byte) error {
-					framer.add(kind, v)
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-			}
-
-			// Cut the batch if this entry overflowed it: roll the entry out,
-			// ship the rest, and carry it into the next batch.
-			if found && framer.count > 1 && framer.size() > l.maxBatchSizeBytes {
-				framer.rollLast()
-				if i, err = cutBatch(i); err != nil {
-					return err
-				}
-				framer.restoreLast()
-			}
-
-			keys[i] = append(keys[i][:0], k...)
-			i++
-		}
-
-		lk.flush()
-
-		if err := l.sync(ctx, kind, framer); err != nil {
-			return err
-		}
-		if err := l.deleteMarkerKeys(kind, keys[:i]); err != nil {
-			return fmt.Errorf("failed to delete logs: %w", err)
-		}
-		return nil
-	})
-	if fallbacks > 0 {
-		logger.Log(zapcore.Level(-2), "Entry lookups fell back to point reads", zap.Int("count", fallbacks))
+// getKeys returns a pooled marker key buffer of at least n slots and a
+// function that returns it to the pool.
+func getKeys(n int) (keys [][]byte, release func()) {
+	if keysIface := keysPool.Get(); keysIface != nil {
+		keys = *keysIface.(*[][]byte) //nolint:forcetypeassert
 	}
-	return err
+	if len(keys) < n {
+		keys = make([][]byte, n)
+	}
+	return keys, func() { keysPool.Put(&keys) }
+}
+
+// keysOnlyIteratorOptions returns options for iterating over the keys with
+// the given prefix without prefetching their values.
+func keysOnlyIteratorOptions(prefix []byte) badgerv4.IteratorOptions {
+	opts := badgerv4.DefaultIteratorOptions
+	opts.Prefix = prefix
+	opts.PrefetchValues = false
+	return opts
+}
+
+// shipBatch ships the current batch and deletes the marker keys it covers.
+func (l *Log) shipBatch(ctx context.Context, kind logsv1.IngestBatch_EntryKind, framer *batchFramer, keys [][]byte) error {
+	if err := l.sync(ctx, kind, framer); err != nil {
+		return err
+	}
+	if err := l.deleteMarkerKeys(kind, keys); err != nil {
+		return fmt.Errorf("failed to delete logs: %w", err)
+	}
+	return nil
+}
+
+// entryJoiner looks up entries with an iterator that moves forward in
+// lockstep with the sync markers.
+type entryJoiner struct {
+	it    *badgerv4.Iterator
+	steps int
+}
+
+// join advances the iterator to logKey and passes the entry's value to fn.
+// found is false when the iterator moves past logKey without finding it.
+func (j *entryJoiner) join(logKey []byte, fn func([]byte) error) (found bool, err error) {
+	for j.it.Valid() {
+		switch cmp := bytes.Compare(j.it.Item().Key(), logKey); {
+		case cmp == 0:
+			if err := j.it.Item().Value(fn); err != nil {
+				return false, err
+			}
+			j.it.Next()
+			return true, nil
+		case cmp > 0:
+			return false, nil
+		default:
+			j.steps++
+			if j.steps > maxEntrySeekLinearSteps {
+				j.it.Seek(logKey)
+				j.steps = 0
+			} else {
+				j.it.Next()
+			}
+		}
+	}
+	return false, nil
 }
 
 // deleteMarkerKeys deletes the batch's sync markers. It runs even when the

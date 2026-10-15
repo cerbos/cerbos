@@ -1,0 +1,2 @@
+type:enhancement
+Cerbos Hub audit log sync has been optimised to reclaim disk space and memory much more quickly
