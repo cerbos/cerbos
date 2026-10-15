@@ -1,2 +1,2 @@
 type:enhancement
-Cerbos Hub audit log sync has been optimised to reclaim disk space and memory much more quickly. When the PDP is shutting down, the sync process exits as quickly as safely possible without holding up the PDP until the whole backlog is synced. 
+Cerbos Hub audit log sync has been optimised to reclaim disk space and memory much more quickly
