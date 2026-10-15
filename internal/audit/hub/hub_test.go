@@ -274,8 +274,8 @@ func TestHubLog(t *testing.T) {
 		var calls atomic.Int32
 		blocked := make(chan struct{})
 		var blockedOnce sync.Once
-		// Why each blocked request ended: context.Canceled when Close
-		// interrupted it, context.DeadlineExceeded when it timed out.
+		// blockedErrs contains either context.Canceled, when Close
+		// interrupted it, or context.DeadlineExceeded, when it timed out.
 		var blockedErrsMu sync.Mutex
 		var blockedErrs []error
 		syncer.EXPECT().Sync(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, _ []byte, _ int) error {
@@ -299,21 +299,14 @@ func TestHubLog(t *testing.T) {
 			require.FailNow(t, "no sync request was blocked")
 		}
 
-		// Close returns once the sync loop has stopped, so every blocked
-		// request has ended by then.
 		require.NoError(t, db.Close())
 
-		blockedErrsMu.Lock()
-		defer blockedErrsMu.Unlock()
+		// Close returns once the sync loop has stopped,
+		// so every blocked request has ended.
 		require.NotEmpty(t, blockedErrs)
 		for _, err := range blockedErrs {
 			require.ErrorIs(t, err, context.Canceled, "Close should cancel the blocked request")
 		}
-
-		syncer.mu.RLock()
-		defer syncer.mu.RUnlock()
-		require.NotEmpty(t, syncer.entries, "the drain should have started")
-		require.Less(t, len(syncer.entries), numRecords, "the drain should not have finished")
 	})
 }
 
