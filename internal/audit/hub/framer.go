@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	auditv1 "github.com/cerbos/cerbos/api/genpb/cerbos/audit/v1"
+	"github.com/cerbos/cerbos/internal/audit"
 	logsv1 "github.com/cerbos/cloud-api/genpb/cerbos/cloud/logs/v1"
 )
 
@@ -61,7 +62,18 @@ type batchFramer struct {
 	lastStart int
 }
 
-func (f *batchFramer) beginBatch(batchID string) {
+// beginBatch begins a new batch with a fresh ID.
+func (f *batchFramer) beginBatch() error {
+	batchID, err := audit.NewID()
+	if err != nil {
+		return fmt.Errorf("failed to generate batch ID: %w", err)
+	}
+	f.beginBatchWithID(string(batchID))
+	return nil
+}
+
+// beginBatchWithID begins a new batch with the given ID.
+func (f *batchFramer) beginBatchWithID(batchID string) {
 	f.buf = protowire.AppendTag(f.buf[:0], batchFieldNums["id"], protowire.BytesType)
 	f.buf = protowire.AppendString(f.buf, batchID)
 	f.count = 0

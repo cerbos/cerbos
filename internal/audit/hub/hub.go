@@ -390,7 +390,7 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 			return err
 		}
 
-		if err := beginBatch(framer); err != nil {
+		if err := framer.beginBatch(); err != nil {
 			return err
 		}
 
@@ -548,16 +548,6 @@ func keysOnlyIteratorOptions(prefix []byte) badgerv4.IteratorOptions {
 	opts.Prefix = prefix
 	opts.PrefetchValues = false
 	return opts
-}
-
-// beginBatch begins a new batch with a fresh ID in framer.
-func beginBatch(framer *batchFramer) error {
-	batchID, err := audit.NewID()
-	if err != nil {
-		return fmt.Errorf("failed to generate batch ID: %w", err)
-	}
-	framer.beginBatch(string(batchID))
-	return nil
 }
 
 // cutBatch ships the current batch and deletes the marker keys it covers.

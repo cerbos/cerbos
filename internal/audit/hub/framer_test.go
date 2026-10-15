@@ -77,7 +77,7 @@ func TestRawFrameEquivalence(t *testing.T) {
 	}
 
 	f := &batchFramer{}
-	f.beginBatch(typed.Id)
+	f.beginBatchWithID(typed.Id)
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, rawAccess)
 	f.add(logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, rawDecision)
 	require.Equal(t, 2, f.count)
@@ -113,7 +113,7 @@ func TestRawFrameDropLast(t *testing.T) {
 
 	frame := func(id string, raws ...[]byte) []byte {
 		f := &batchFramer{}
-		f.beginBatch(id)
+		f.beginBatchWithID(id)
 		for _, raw := range raws {
 			f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw)
 		}
@@ -121,7 +121,7 @@ func TestRawFrameDropLast(t *testing.T) {
 	}
 
 	f := &batchFramer{}
-	f.beginBatch("batch-a")
+	f.beginBatchWithID("batch-a")
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw1)
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw2)
 
@@ -143,7 +143,7 @@ func TestRawFrameNoTimestamp(t *testing.T) {
 	require.NoError(t, err)
 
 	f := &batchFramer{}
-	f.beginBatch("batch-id")
+	f.beginBatchWithID("batch-id")
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, rawBare)
 
 	decoded := &logsv1.IngestBatch{}
