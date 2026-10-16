@@ -42,40 +42,20 @@ func TestOverlay(t *testing.T) {
 	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(reloadStore(t)))
 
 	t.Log(">>> Testing the overlay fallback driver")
-	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(breakDB(t)), e2e.WithOverlayMaxRetries(fallbackErrThreshold))
+	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(breakDB(t)), e2e.WithPostSetup(reloadStore(t)), e2e.WithOverlayMaxRetries(fallbackErrThreshold))
 }
 
 func dbURL(ctx e2e.Ctx) string {
 	return fmt.Sprintf("postgres://postgres:passw0rd@postgres-%s.%s.svc.cluster.local:5432/postgres?sslmode=disable&search_path=cerbos", ctx.ContextID, ctx.Namespace())
 }
 
-func reloadStore(t *testing.T) func(e2e.Ctx) {
-	t.Helper()
-	return func(ctx e2e.Ctx) {
-		tr := http.DefaultTransport.(*http.Transport).Clone()
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-
-		url := fmt.Sprintf("%s/admin/store/reload", ctx.HTTPAddr())
-
-		req, err := http.NewRequest(http.MethodGet, url, nil)
-		require.NoError(t, err)
-
-		auth := base64.StdEncoding.EncodeToString([]byte("cerbos:cerbosAdmin"))
-		req.Header.Set("Authorization", "Basic "+auth)
-
-		client := &http.Client{Transport: tr}
-
-		resp, err := client.Do(req)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-	}
-}
-
+// breakDB drops the policy table to break the base storage driver 'postgres'.
+// This operation alone doesn't trigger Cerbos to read policies from the fallback driver because the rule table
+// implementation reads everything from base storage driver 'postgres' into memory on start-up only. Thus, a store reload
+// is required to see the effect.
 func breakDB(t *testing.T) func(e2e.Ctx) {
 	t.Helper()
 	return func(ctx e2e.Ctx) {
-		// a rather hacky way simulate a DB error, by dropping tables
 		db, err := sqlx.Connect("pgx", dbURL(ctx))
 		require.NoError(t, err, "failed to connect to postgres")
 
@@ -84,4 +64,32 @@ func breakDB(t *testing.T) func(e2e.Ctx) {
 		err = txn.Commit()
 		require.NoError(t, err, "failed to drop tables from test postgres db")
 	}
+}
+
+func reloadStore(t *testing.T) func(e2e.Ctx) {
+	t.Helper()
+	return func(ctx e2e.Ctx) {
+		client := mkClient(t)
+
+		req, err := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("%s/admin/store/reload?wait=true", ctx.HTTPAddr()),
+			nil,
+		)
+		require.NoError(t, err)
+		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("cerbos:cerbosAdmin")))
+
+		resp, err := client.Do(req)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+}
+
+func mkClient(t *testing.T) *http.Client {
+	t.Helper()
+
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	return &http.Client{Transport: tr}
 }
