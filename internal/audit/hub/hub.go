@@ -399,7 +399,6 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 
 			entryIt := txn.NewIterator(entryOpts)
 			defer entryIt.Close()
-			entryIt.Seek(entryPrefix)
 			joiner := &entryJoiner{it: entryIt}
 
 			readEntry := func(logKey []byte, fn func([]byte) error) (bool, error) {
@@ -560,13 +559,18 @@ func (l *Log) shipBatch(ctx context.Context, kind logsv1.IngestBatch_EntryKind, 
 // entryJoiner looks up entries with an iterator that moves forward in
 // lockstep with the sync markers.
 type entryJoiner struct {
-	it    *badgerv4.Iterator
-	steps int
+	it         *badgerv4.Iterator
+	steps      int
+	positioned bool
 }
 
 // join advances the iterator to logKey and passes the entry's value to fn.
 // found is false when the iterator moves past logKey without finding it.
 func (j *entryJoiner) join(logKey []byte, fn func([]byte) error) (found bool, err error) {
+	if !j.positioned {
+		j.it.Seek(logKey)
+		j.positioned = true
+	}
 	for j.it.Valid() {
 		switch cmp := bytes.Compare(j.it.Item().Key(), logKey); {
 		case cmp == 0:
