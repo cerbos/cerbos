@@ -1,0 +1,2 @@
+type:fix
+Fix high CPU usage when Cerbos Hub is the audit log backend
