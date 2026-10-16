@@ -261,19 +261,17 @@ func TestIndexIterCancelled(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
+	var compilationUnits []*policy.CompilationUnit
 	count := 0
-	var iterErr error
 	for cu, err := range idx.Iter(ctx) {
-		if err != nil {
-			iterErr = err
-			break
-		}
+		require.NoError(t, err)
 		require.NotNil(t, cu)
+		compilationUnits = append(compilationUnits, cu)
 		count++
 		if count == 2 {
 			cancel()
 		}
 	}
 
-	require.ErrorIs(t, iterErr, context.Canceled)
+	require.Len(t, compilationUnits, 2)
 }
