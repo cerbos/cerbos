@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: has_fold
+  rules:
+    - actions:
+        - lone_allow
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner)
+
+    - actions:
+        - lone_deny
+        - negated_deny
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+
+    - actions:
+        - lone_deny
+      effect: EFFECT_DENY
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner)
+
+    - actions:
+        - negated_allow
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: "!has(R.attr.owner)"
+
+    - actions:
+        - negated_deny
+      effect: EFFECT_DENY
+      roles:
+        - user
+      condition:
+        match:
+          expr: "!has(R.attr.owner)"
+
+    - actions:
+        - or_presence
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) || has(R.attr.b)
+
+    - actions:
+        - guard_other_field
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) && R.attr.b == 1
+
+    - actions:
+        - ternary
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: 'has(R.attr.x) ? R.attr.x == "a" : false'
+
+    - actions:
+        - guard_same_field
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner) && R.attr.owner == P.id
