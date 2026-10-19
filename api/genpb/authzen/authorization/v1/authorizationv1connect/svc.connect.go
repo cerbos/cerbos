@@ -8,7 +8,7 @@
 package authorizationv1connect
 
 import (
-	connect "connectrpc.com/connect"
+	connect "connectrpc.com/connect/v2"
 	context "context"
 	errors "errors"
 	v1 "github.com/cerbos/cerbos/api/genpb/authzen/authorization/v1"

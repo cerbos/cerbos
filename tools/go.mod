@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/tools
 go 1.27.0
 
 require (
-	connectrpc.com/connect v1.21.0
+	connectrpc.com/connect v1.21.1
 	github.com/cerbos/actions v0.0.0-20261012092942-f8054d41c7cd
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
