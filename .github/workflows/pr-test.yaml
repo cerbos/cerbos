@@ -88,7 +88,7 @@ jobs:
           search_artifacts: true
 
       - name: Upload previous test times
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: previous-test-times
           path: test-times.json
@@ -127,7 +127,7 @@ jobs:
           tools: just
 
       - name: Download previous test times
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: previous-test-times
 
@@ -147,7 +147,7 @@ jobs:
           STRATEGY_JOB_TOTAL: ${{ strategy.job-total }}
 
       - name: Upload JUnit reports
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: junit-reports-${{ strategy.job-index }}
           path: junit.*.xml
@@ -191,7 +191,7 @@ jobs:
           tools: just
 
       - name: Download JUnit reports
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
 
       - name: Combine JUnit reports
         run: |-
@@ -201,7 +201,7 @@ jobs:
           NEEDS_TEST_OUTPUTS_JOB_TOTAL: ${{ needs.test.outputs.job-total }}
 
       - name: Upload new test times
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: test-times
           path: test-times.json
@@ -365,7 +365,7 @@ jobs:
         run: tar --create --verbose --file npm.tar npm
 
       - name: Upload npm packages
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: npm-packages
           path: npm.tar
@@ -397,7 +397,7 @@ jobs:
           persist-credentials: false
 
       - name: Download npm packages
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: npm-packages
 
@@ -405,7 +405,7 @@ jobs:
         run: tar --extract --verbose --file npm.tar
 
       - name: Install Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           cache: npm
           cache-dependency-path: npm/test/registry/package-lock.json
