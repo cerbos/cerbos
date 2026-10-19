@@ -6,10 +6,7 @@
 package overlay_test
 
 import (
-	"crypto/tls"
-	"encoding/base64"
 	"fmt"
-	"net/http"
 	"strconv"
 	"testing"
 
@@ -42,7 +39,7 @@ func TestOverlay(t *testing.T) {
 	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(reloadStore(t)))
 
 	t.Log(">>> Testing the overlay fallback driver")
-	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(breakDB(t)), e2e.WithPostSetup(reloadStore(t)), e2e.WithOverlayMaxRetries(fallbackErrThreshold))
+	e2e.RunSuites(t, e2e.WithContextID("overlay"), e2e.WithImmutableStoreSuites(), e2e.WithComputedEnv(computedEnv), e2e.WithPostSetup(breakDB(t)), e2e.WithOverlayMaxRetries(fallbackErrThreshold))
 }
 
 func dbURL(ctx e2e.Ctx) string {
@@ -63,33 +60,13 @@ func breakDB(t *testing.T) func(e2e.Ctx) {
 		txn.MustExec("DROP TABLE IF EXISTS policy CASCADE;")
 		err = txn.Commit()
 		require.NoError(t, err, "failed to drop tables from test postgres db")
+
+		ctx.ReloadStore(t)
 	}
 }
 
 func reloadStore(t *testing.T) func(e2e.Ctx) {
-	t.Helper()
 	return func(ctx e2e.Ctx) {
-		client := mkClient(t)
-
-		req, err := http.NewRequest(
-			http.MethodGet,
-			fmt.Sprintf("%s/admin/store/reload?wait=true", ctx.HTTPAddr()),
-			nil,
-		)
-		require.NoError(t, err)
-		req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("cerbos:cerbosAdmin")))
-
-		resp, err := client.Do(req)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		ctx.ReloadStore(t)
 	}
-}
-
-func mkClient(t *testing.T) *http.Client {
-	t.Helper()
-
-	tr := http.DefaultTransport.(*http.Transport).Clone()
-	tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	return &http.Client{Transport: tr}
 }

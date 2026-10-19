@@ -7,23 +7,17 @@ package blob_test
 
 import (
 	"bytes"
-	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/cerbos/cerbos/internal/policy"
 	"github.com/cerbos/cerbos/internal/schema"
 	"github.com/cerbos/cerbos/internal/storage/blob"
 	"github.com/cerbos/cerbos/internal/test/e2e"
 	"github.com/cerbos/cerbos/internal/util"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,40 +49,7 @@ func TestBlob(t *testing.T) {
 
 		expectedCount := countExpectedPolicies(t, p.Directory)
 		require.NotZero(t, expectedCount)
-
-		tr := http.DefaultTransport.(*http.Transport).Clone()
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		client := &http.Client{Transport: tr}
-
-		require.EventuallyWithT(t, func(c *assert.CollectT) {
-			url := fmt.Sprintf("%s/admin/policies", ctx.HTTPAddr())
-
-			req, err := http.NewRequest(http.MethodGet, url, nil)
-			require.NoError(c, err)
-
-			req.SetBasicAuth("cerbos", "cerbosAdmin")
-
-			resp, err := client.Do(req)
-			require.NoError(c, err)
-			defer resp.Body.Close()
-
-			require.Equal(c, http.StatusOK, resp.StatusCode)
-
-			body, err := io.ReadAll(resp.Body)
-			require.NoError(c, err)
-
-			var lp struct {
-				PolicyIDs []string `json:"policyIds"`
-			}
-			require.NoError(c, json.Unmarshal(body, &lp))
-
-			require.Equal(c, expectedCount, len(lp.PolicyIDs))
-		}, 1*time.Minute, 1*time.Second)
-
-		// Give it another 5 seconds to allow events to propagate from the store to the ruletable.
-		// 5 seconds might seem excessive, but the Github CI runners are driving me up the wall so
-		// I want to give this test as much chance as possible at passing.
-		time.Sleep(time.Second * 30)
+		ctx.ReloadStore(t)
 	}
 
 	e2e.RunSuites(t, e2e.WithContextID("blob"), e2e.WithImmutableStoreSuites(), e2e.WithPostSetup(postSetup), e2e.WithComputedEnv(computedEnvFn))

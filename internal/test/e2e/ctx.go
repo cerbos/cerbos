@@ -7,15 +7,19 @@ package e2e
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"maps"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -144,6 +148,43 @@ func (c Ctx) HealthURL() string {
 	return fmt.Sprintf("%s%s", c.HTTPAddr(), HealthEndpoint)
 }
 
+func (c Ctx) AdminHTTPClient() *http.Client {
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	if !c.NoTLS {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	roundTripper := adminRoundTripper(func(req *http.Request) (*http.Response, error) {
+		req.SetBasicAuth("cerbos", "cerbosAdmin")
+		return tr.RoundTrip(req)
+	})
+	return &http.Client{Transport: roundTripper}
+}
+
+func (c Ctx) ReloadStore(t *testing.T) {
+	t.Helper()
+	client := c.AdminHTTPClient()
+
+	req, err := http.NewRequestWithContext(
+		t.Context(),
+		http.MethodGet,
+		fmt.Sprintf("%s/admin/store/reload?wait=true", c.HTTPAddr()),
+		http.NoBody,
+	)
+	require.NoError(t, err, "Failed to create reload request")
+
+	resp, err := client.Do(req)
+	require.NoError(t, err, "Failed to send reload request")
+	t.Cleanup(func() { _ = resp.Body.Close() })
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Reload store call failed: %s", resp.Status)
+}
+
 func (c Ctx) CommandTimeoutCtx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), c.CommandTimeout)
+}
+
+type adminRoundTripper func(*http.Request) (*http.Response, error)
+
+func (art adminRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return art(req)
 }
