@@ -606,7 +606,105 @@ func ToFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilt
 		return nil, err
 	}
 
+	filter.Condition = elideHasGuards(filter.Condition)
 	return normaliseFilter(filter), nil
+}
+
+// elideHasGuards replaces has(p) with true where it is a conjunct alongside an expression that strictly
+// dereferences p or a path below it. That expression already fails for a missing attribute, so the guard
+// adds nothing to the filter. Anywhere else, has(p) is kept because dropping it changes the result.
+func elideHasGuards(op *exprOp) *exprOp {
+	e := op.GetExpression()
+	if e == nil {
+		return op
+	}
+
+	if e.Operator != And {
+		for i, o := range e.Operands {
+			e.Operands[i] = elideHasGuards(o)
+		}
+		return op
+	}
+
+	// Nested ANDs are analysed as one conjunction but left in place, so the filter keeps its shape.
+	var conjuncts []conjunct
+	collectConjuncts(e, &conjuncts)
+
+	strict := make(map[string]struct{})
+	for _, c := range conjuncts {
+		if _, ok := hasPath(c.get()); !ok {
+			collectStrictPaths(c.get(), strict)
+		}
+	}
+
+	for _, c := range conjuncts {
+		if p, ok := hasPath(c.get()); ok && isGuarded(p, strict) {
+			c.set(&exprOp{Node: &exprOpValue{Value: structpb.NewBoolValue(true)}})
+			continue
+		}
+		c.set(elideHasGuards(c.get()))
+	}
+
+	return op
+}
+
+// conjunct is a slot in the operands of an AND expression.
+type conjunct struct {
+	expr *enginev1.PlanResourcesFilter_Expression
+	idx  int
+}
+
+func (c conjunct) get() *exprOp  { return c.expr.Operands[c.idx] }
+func (c conjunct) set(o *exprOp) { c.expr.Operands[c.idx] = o }
+
+func collectConjuncts(e *enginev1.PlanResourcesFilter_Expression, acc *[]conjunct) {
+	for i, o := range e.Operands {
+		if oe := o.GetExpression(); oe != nil && oe.Operator == And {
+			collectConjuncts(oe, acc)
+			continue
+		}
+		*acc = append(*acc, conjunct{expr: e, idx: i})
+	}
+}
+
+func hasPath(op *exprOp) (string, bool) {
+	e := op.GetExpression()
+	if e == nil || e.Operator != Has || len(e.Operands) != 1 {
+		return "", false
+	}
+	v := e.Operands[0].GetVariable()
+	return v, v != ""
+}
+
+// collectStrictPaths records the variables whose absence makes op false or an error.
+// It assumes a missing attribute behaves like SQL NULL, i.e. a comparison against it is not true.
+// It does not descend into operators that can succeed without evaluating every operand.
+func collectStrictPaths(op *exprOp, acc map[string]struct{}) {
+	switch t := op.Node.(type) {
+	case *exprOpVar:
+		acc[t.Variable] = struct{}{}
+	case *exprOpExpr:
+		operands := t.Expression.Operands
+		switch t.Expression.Operator {
+		case Or, Not, If, Has, All, Filter, Map, TransformMap, TransformMapEntry, TransformList, Lambda:
+			return
+		case Exists, ExistsOne, GetField:
+			// Only the target is strict: the lambda body or the field name are not paths.
+			operands = operands[:min(1, len(operands))]
+		}
+		for _, o := range operands {
+			collectStrictPaths(o, acc)
+		}
+	}
+}
+
+func isGuarded(p string, strict map[string]struct{}) bool {
+	for s := range strict {
+		if s == p || strings.HasPrefix(s, p+".") {
+			return true
+		}
+	}
+	return false
 }
 
 func normaliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {
