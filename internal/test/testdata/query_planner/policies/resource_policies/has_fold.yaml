@@ -83,3 +83,66 @@ resourcePolicy:
       condition:
         match:
           expr: has(R.attr.owner) && R.attr.owner == P.id
+
+    - actions:
+        - all_of_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: has(R.attr.owner)
+              - expr: R.attr.owner == P.id
+
+    - actions:
+        - parent_path_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) && R.attr.a.b == 1
+
+    - actions:
+        - exists_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.tags) && R.attr.tags.exists(t, t == "a")
+
+    - actions:
+        - guard_under_or
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.x) && (R.attr.x == 1 || R.attr.y == 2)
+
+    - actions:
+        - guard_under_not
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.x) && !(R.attr.x == 1)
+
+    - actions:
+        - guarded_deny
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+
+    - actions:
+        - guarded_deny
+      effect: EFFECT_DENY
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner) && R.attr.owner == "bob"

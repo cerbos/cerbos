@@ -1,10 +1,9 @@
 # yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
 ---
-# These tests pin the current behaviour of the planner, which folds every has() on an unknown
-# attribute to the constant true. Several of the expected plans diverge from CheckResources for
-# a resource where the attribute is absent; those are marked "DIVERGES" and are expected to change
-# when the fold is fixed.
-description: has() folding on unknown resource attributes
+# has() on an unknown attribute is emitted as a "has" operator, except where it guards an expression
+# in the same conjunction that strictly dereferences the same path (or a path below it). There the
+# guard adds nothing to the filter and is dropped.
+description: has() on unknown resource attributes
 
 config:
   lenientScopeSearch:
@@ -25,62 +24,101 @@ principal:
     - user
 
 tests:
-  # DIVERGES: check denies a resource without owner.
   - resource:
       kind: has_fold
       policyVersion: default
     action: lone_allow
     want:
       filter:
-        kind: KIND_ALWAYS_ALLOWED
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: has
+            operands:
+              - variable: request.resource.attr.owner
       matchedScopes:
         lone_allow: ""
 
-  # Over-denies a resource without owner, which is safe.
   - resource:
       kind: has_fold
       policyVersion: default
     action: lone_deny
     want:
       filter:
-        kind: KIND_ALWAYS_DENIED
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.owner
       matchedScopes:
         lone_deny: ""
 
-  # Under-grants a resource without owner, which is safe.
   - resource:
       kind: has_fold
       policyVersion: default
     action: negated_allow
     want:
       filter:
-        kind: KIND_ALWAYS_DENIED
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.owner
       matchedScopes:
         negated_allow: ""
 
-  # DIVERGES: the DENY rule is dropped, so a resource without owner is allowed while check denies it.
+  # The DENY rule wraps the negated condition in another NOT.
   - resource:
       kind: has_fold
       policyVersion: default
     action: negated_deny
     want:
       filter:
-        kind: KIND_ALWAYS_ALLOWED
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: has
+                        operands:
+                          - variable: request.resource.attr.owner
       matchedScopes:
         negated_deny: ""
 
-  # DIVERGES: check denies a resource with neither a nor b.
   - resource:
       kind: has_fold
       policyVersion: default
     action: or_presence
     want:
       filter:
-        kind: KIND_ALWAYS_ALLOWED
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.a
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.b
       matchedScopes:
         or_presence: ""
 
-  # DIVERGES: check denies a resource with b == 1 but without a.
   - resource:
       kind: has_fold
       policyVersion: default
@@ -90,14 +128,20 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: eq
+            operator: and
             operands:
-              - variable: request.resource.attr.b
-              - value: 1
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.a
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.b
+                    - value: 1
       matchedScopes:
         guard_other_field: ""
 
-  # The condition folds to true but the if is not simplified away.
   - resource:
       kind: has_fold
       policyVersion: default
@@ -109,7 +153,10 @@ tests:
           expression:
             operator: if
             operands:
-              - value: true
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.x
               - expression:
                   operator: eq
                   operands:
@@ -119,7 +166,7 @@ tests:
       matchedScopes:
         ternary: ""
 
-  # Baseline: has() guards an access to the same field, which is what the fold is designed for.
+  # The guard is dropped: the comparison already fails for a missing owner.
   - resource:
       kind: has_fold
       policyVersion: default
@@ -135,3 +182,139 @@ tests:
               - value: adam
       matchedScopes:
         guard_same_field: ""
+
+  # The guard and the comparison are separate conditions, so they reach the filter as separate AST nodes.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: all_of_guard
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.owner
+              - value: adam
+      matchedScopes:
+        all_of_guard: ""
+
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: parent_path_guard
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.a.b
+              - value: 1
+      matchedScopes:
+        parent_path_guard: ""
+
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: exists_guard
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: exists
+            operands:
+              - variable: request.resource.attr.tags
+              - expression:
+                  operator: lambda
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - value: a
+                          - variable: t
+                    - variable: t
+      matchedScopes:
+        exists_guard: ""
+
+  # The access to x is under an OR, so it does not fail for a missing x and the guard is kept.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: guard_under_or
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.x
+              - expression:
+                  operator: or
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.x
+                          - value: 1
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.y
+                          - value: 2
+      matchedScopes:
+        guard_under_or: ""
+
+  # The access to x is under a NOT, so the guard is kept.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: guard_under_not
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.x
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.x
+                          - value: 1
+      matchedScopes:
+        guard_under_not: ""
+
+  # The guard is dropped under negation too. In SQL this excludes rows where owner is NULL, which under-grants.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: guarded_deny
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.owner
+                    - value: bob
+      matchedScopes:
+        guarded_deny: ""
