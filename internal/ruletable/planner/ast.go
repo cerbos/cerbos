@@ -55,6 +55,7 @@ const (
 	Map                = "map"
 	Lambda             = "lambda"
 	If                 = "if"
+	Has                = "has"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -395,7 +396,16 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		acc.Node = &exprOpVar{Variable: expr.IdentExpr.Name}
 	case *exprpb.Expr_SelectExpr:
 		if expr.SelectExpr.TestOnly {
-			acc.Node = &exprOpValue{Value: structpb.NewBoolValue(true)}
+			// Build the operand of has() as a plain select to reuse the "a.b.c" variable logic below.
+			sel := &exprpb.Expr{ExprKind: &exprpb.Expr_SelectExpr{SelectExpr: &exprpb.Expr_Select{
+				Operand: expr.SelectExpr.Operand,
+				Field:   expr.SelectExpr.Field,
+			}}}
+			op := new(exprOp)
+			if err := buildExprImpl(sel, op, parent); err != nil {
+				return err
+			}
+			acc.Node = mkExprOpExpr(Has, op)
 			break
 		}
 		var names []string
