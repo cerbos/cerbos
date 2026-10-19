@@ -1,50 +1,157 @@
 include::ROOT:partial$attributes.adoc[]
 
 = Agent skills
-:page-llms-description: Cerbos agent skills for AI coding agents: choosing Cerbos components, writing and testing policies, calling the PDP from code, Cerbos Hub, embedded PDPs, audit, Synapse, and migration. Install with `npx skills add cerbos/skills`.
+:page-llms-description: Install the Cerbos agent skills so your AI coding agent can write and test Cerbos policies, integrate the PDP into your application, set up Cerbos Hub and embedded PDPs, and migrate existing permission checks. Install with `npx skills add cerbos/skills`.
 
 include::ROOT:partial$version-check.adoc[]
 
 
-https://github.com/cerbos/skills[Cerbos agent skills] are instructions and helper scripts that AI coding agents load when a task involves authorization. They cover designing an authorization model, writing and testing policies, calling the PDP from application code, distributing policies with Cerbos Hub, and moving off another authorization system.
+The https://github.com/cerbos/skills[Cerbos agent skills] let you use an AI coding agent such as Claude Code, Cursor, or Codex to build authorization with Cerbos. With the skills installed, you can describe who should be able to do what in your application, and the agent turns that into Cerbos policies, policy tests, and the calls from your code to the PDP.
+
+The skills give the agent the Cerbos policy schema, CLI commands, SDK APIs, and Cerbos Hub workflows. The `cerbos-policy` skill directs the agent to write tests for the policies it changes and run them with xref:compile.adoc[`cerbos compile`] before it reports the change.
 
 [#install]
-== Installing the skills
+== Install the skills
 
-Install the skills into a project with the `skills` CLI:
+Install the skills into your project with the `skills` CLI, which works with Claude Code, Cursor, Codex, OpenCode, and other agents. It asks which of your agents to install the skills for.
 
 [source,sh]
 ----
 npx skills add cerbos/skills
 ----
 
-The skills are also published as the `cerbos-skills` plugin for Claude Code, Claude Cowork, Codex, Cursor, GitHub Copilot CLI, Gemini CLI, and Grok. See the https://github.com/cerbos/skills#installation[repository README] for the install command for each agent.
+Use these options to change what the CLI installs:
+
+[source,sh]
+----
+# List the skills without installing them
+npx skills add cerbos/skills --list
+
+# Install one skill
+npx skills add cerbos/skills --skill cerbos-policy
+
+# Install for specific agents
+npx skills add cerbos/skills -a cursor -a claude-code
+
+# Install for your user account instead of the project
+npx skills add cerbos/skills -g
+----
+
+To update skills installed this way, run `npx skills update`.
+
+The `cerbos-policy` skill runs the xref:ROOT:installation/binary.adoc[`cerbos` CLI], or the xref:ROOT:installation/container.adoc[Cerbos container image] when the CLI is not installed.
+
+[#plugin]
+=== Install as a plugin
+
+The skills are also published as the `cerbos-skills` plugin, which your agent's plugin manager installs and updates.
+
+[tabs]
+====
+Claude Code::
++
+--
+[source,sh]
+----
+claude plugin marketplace add cerbos/skills
+claude plugin install cerbos-skills@cerbos-skills
+----
+
+To update, run `claude plugin marketplace update cerbos-skills`.
+--
+Codex::
++
+--
+[source,sh]
+----
+codex plugin marketplace add cerbos/skills
+codex plugin add cerbos-skills@cerbos-skills
+----
+
+To update, run `codex plugin marketplace upgrade cerbos-skills`.
+--
+GitHub Copilot CLI::
++
+--
+[source,sh]
+----
+copilot plugin marketplace add cerbos/skills
+copilot plugin install cerbos-skills@cerbos-skills
+----
+
+To update, run `copilot plugin update cerbos-skills`.
+--
+Cursor::
++
+--
+Clone the repository into the Cursor local plugin directory, then run *Developer: Reload Window*:
+
+[source,sh]
+----
+git clone --depth 1 https://github.com/cerbos/skills ~/.cursor/plugins/local/cerbos-skills
+----
+
+To update, run `git -C ~/.cursor/plugins/local/cerbos-skills pull` and reload the window.
+--
+Gemini CLI::
++
+--
+[source,sh]
+----
+gemini extensions install https://github.com/cerbos/skills
+----
+
+To update, run `gemini extensions update cerbos-skills`.
+--
+Grok::
++
+--
+[source,sh]
+----
+grok plugin install cerbos/skills --trust
+----
+--
+====
+
+To add the plugin to a Cursor team marketplace or to Claude Cowork, follow the steps in the https://github.com/cerbos/skills#plugin-marketplaces[repository README].
+
+[#use]
+== Use the skills
+
+Describe the access rule or task in your own words. The agent selects the matching skill, even when the request does not name Cerbos. For example:
+
+* "Only the owner of a document or an admin in the same tenant can edit it."
+* "Filter the invoices list to the ones the current user can see."
+* "Replace the role checks in our Express middleware with Cerbos."
+* "Deploy our policies to Cerbos Hub and connect the PDP in staging."
 
 [#skills]
-== Available skills
+=== Available skills
 
-The `cerbos` skill is the entry point. It maps an access-control requirement to Cerbos components and hands off to the skill that implements them. An agent loads it when a user describes who can do what, even if the user does not name Cerbos.
+The `cerbos` skill chooses the Cerbos components for a requirement and hands off to the other skills. To install only some of them, use the `--skill` option.
 
 [cols="1,3"]
 |===
-| Skill | Scope
+| Skill | Use it to
 
-| `cerbos` | Choosing between the Cerbos PDP, Cerbos Hub, Cerbos Synapse, embedded PDPs, and the SDKs.
-| `cerbos-policy` | Resource and role policies, derived roles, CEL conditions, and policy tests.
-| `cerbos-pep-integration` | Calling the PDP from application code, including JWT auxiliary data and query plans from `PlanResources`.
-| `cerbos-hub-setup` | Cerbos Hub policy stores, deployments, client credentials, and connecting a PDP.
-| `cerbos-embedded-pdp` | Authorization in browsers, edge functions, serverless functions, and React Native with an embedded PDP.
-| `cerbos-audit-insights` | Sending decision logs to Cerbos Hub, masking sensitive fields, and Insights.
-| `cerbos-synapse-extension` | Synapse call mappers, data sources, and proxy, route, and Envoy ext_authz extensions.
-| `cerbos-authz-migration` | Replacing permission checks in application code or another authorization system with Cerbos.
+| `cerbos` | Decide which Cerbos components fit a requirement: the PDP, Cerbos Hub, Cerbos Synapse, an embedded PDP, or an SDK.
+| `cerbos-policy` | Write resource policies, role policies, derived roles, and CEL conditions, with policy tests that cover them.
+| `cerbos-pep-integration` | Add authorization checks to your application and to AI agent or MCP tool calls with a Cerbos SDK, pass JWT data to the PDP, and filter database queries with `PlanResources`.
+| `cerbos-hub-setup` | Create Cerbos Hub policy stores and deployments, issue client credentials, and connect your PDPs.
+| `cerbos-embedded-pdp` | Run authorization checks in browsers, edge functions, serverless functions, and React Native apps with an embedded PDP.
+| `cerbos-audit-insights` | Turn on audit logging, mask sensitive fields, send decision logs to Cerbos Hub, and use Insights.
+| `cerbos-synapse-extension` | Build Synapse call mappers, data sources, and proxy, route, and Envoy ext_authz extensions.
+| `cerbos-authz-migration` | Move permission checks out of your application code, or off another authorization system, into Cerbos policies.
 |===
 
 [#project-pointer]
-== Project instructions file
+=== Project pointer in AGENTS.md
 
-After Cerbos is set up in a project, the `cerbos` skill offers to add a one-line pointer to the project's `AGENTS.md` or `CLAUDE.md`. It creates `AGENTS.md` when neither file exists. The pointer names the policy directory and directs authorization changes to the Cerbos skills, so later agent sessions in the repository use them. The skill does not write the file without the user's approval, and does not add the pointer again when it is already present.
+After Cerbos is set up in your project, the agent offers to add a short pointer to your `AGENTS.md` or `CLAUDE.md`, or to create `AGENTS.md` if neither exists. The pointer names your policy directory, so later agent sessions make authorization changes in your Cerbos policies instead of in application code. The agent adds the pointer only if you accept, and skips this step if the file already has one.
 
 [#commands]
-== Commands the skills run
+== Commands and permissions
 
-The skills contain no hooks, MCP servers, or background processes. They direct the agent to run commands in the project, such as `cerbos compile` to validate and test policies and `cerbosctl` to manage a Cerbos Hub policy store. The agent asks before it runs a command that the skill does not pre-approve. The https://github.com/cerbos/skills#what-the-plugin-runs[repository README] lists the commands each skill runs and pre-approves.
+The skills contain no hooks, MCP servers, or background processes, and send no data to Cerbos. They direct the agent to run commands in your project, such as `cerbos compile` to test policies and `cerbosctl` to manage a Cerbos Hub policy store. The `cerbos-hub-setup` skill uploads your policy files to your own Cerbos Hub policy store.
+
+The agent asks for approval before it runs a command, unless the active skill pre-approves it. The `cerbos-policy` skill pre-approves only `cerbos compile` and version checks. The `cerbos-hub-setup` skill pre-approves all shell commands, because it runs Docker, `cerbos`, and `cerbosctl`. The https://github.com/cerbos/skills#what-the-plugin-runs[repository README] lists what each skill runs and pre-approves.

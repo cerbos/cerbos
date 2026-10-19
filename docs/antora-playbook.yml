@@ -52,6 +52,6 @@ antora:
           links:
             - title: Cerbos agent skills
               url: https://github.com/cerbos/skills
-              description: Skills that teach AI coding agents to choose Cerbos components, write and test policies, integrate the PDP, and set up Cerbos Hub. Install with `npx skills add cerbos/skills`.
+              description: Install the Cerbos agent skills so your AI coding agent can write and test Cerbos policies, integrate the PDP, and set up Cerbos Hub. Install with `npx skills add cerbos/skills`.
 
     - require: "@antora/collector-extension"
