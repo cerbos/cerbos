@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	celast "cel.dev/cel-go/common/ast"
 	"cel.dev/cel-go/common/operators"
@@ -627,7 +628,8 @@ func foldHasGuards(op *exprOp) {
 	}
 
 	// Nested ANDs are analysed together but left in place, so plans without has() guards are unchanged.
-	var operands []*exprOp
+	operandsPtr := andOperandsPool.Get().(*[]*exprOp) //nolint:forcetypeassert
+	operands := (*operandsPtr)[:0]
 	collectAndOperands(e, &operands)
 
 	for _, o := range operands {
@@ -644,7 +646,13 @@ func foldHasGuards(op *exprOp) {
 			}
 		}
 	}
+
+	clear(operands)
+	*operandsPtr = operands[:0]
+	andOperandsPool.Put(operandsPtr)
 }
+
+var andOperandsPool = sync.Pool{New: func() any { s := make([]*exprOp, 0, 8); return &s }} //nolint:mnd
 
 // collectAndOperands collects the operands of e and of any ANDs nested in it.
 func collectAndOperands(e *enginev1.PlanResourcesFilter_Expression, acc *[]*exprOp) {
