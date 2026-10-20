@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
 ---
-# has() on an unknown attribute is emitted as a "has" operator, except where it guards an expression
-# in the same conjunction that strictly dereferences the same path (or a path below it). There the
-# guard adds nothing to the filter and is dropped.
+# has() on an unknown attribute is emitted as a "has" operator, except where it is ANDed with an
+# expression that strictly dereferences the same path (or a path below it), as in has(x) && x == 1.
+# There the guard adds nothing to the filter and is dropped.
 description: has() on unknown resource attributes
 
 config:
