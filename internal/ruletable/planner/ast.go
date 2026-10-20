@@ -627,43 +627,40 @@ func foldHasGuards(op *exprOp) *exprOp {
 	}
 
 	// Nested ANDs are analysed together but left in place, so plans without has() guards are unchanged.
-	var conjuncts []conjunct
-	collectConjuncts(e, &conjuncts)
-
+	var guards []hasGuard
 	strict := make(map[string]struct{})
-	for _, c := range conjuncts {
-		if _, ok := hasPath(c.get()); !ok {
-			collectStrictPaths(c.get(), strict)
-		}
-	}
+	collectHasGuards(e, &guards, strict)
 
-	for _, c := range conjuncts {
-		if p, ok := hasPath(c.get()); ok && isGuarded(p, strict) {
-			c.set(&exprOp{Node: &exprOpValue{Value: structpb.NewBoolValue(true)}})
-			continue
+	for _, g := range guards {
+		if isGuarded(g.path, strict) {
+			*g.slot = &exprOp{Node: &exprOpValue{Value: structpb.NewBoolValue(true)}}
 		}
-		c.set(foldHasGuards(c.get()))
 	}
 
 	return op
 }
 
-// conjunct is a slot in the operands of an AND expression.
-type conjunct struct {
-	expr *enginev1.PlanResourcesFilter_Expression
-	idx  int
+// hasGuard is a has(path) operand of an AND expression.
+type hasGuard struct {
+	slot **exprOp
+	path string
 }
 
-func (c conjunct) get() *exprOp  { return c.expr.Operands[c.idx] }
-func (c conjunct) set(o *exprOp) { c.expr.Operands[c.idx] = o }
-
-func collectConjuncts(e *enginev1.PlanResourcesFilter_Expression, acc *[]conjunct) {
+// collectHasGuards walks the operands of e and of any ANDs nested in it. It records the has() operands
+// in guards and the paths strictly dereferenced by the other operands in strict, folding the guards nested
+// in those operands along the way.
+func collectHasGuards(e *enginev1.PlanResourcesFilter_Expression, guards *[]hasGuard, strict map[string]struct{}) {
 	for i, o := range e.Operands {
 		if oe := o.GetExpression(); oe != nil && oe.Operator == And {
-			collectConjuncts(oe, acc)
+			collectHasGuards(oe, guards, strict)
 			continue
 		}
-		*acc = append(*acc, conjunct{expr: e, idx: i})
+		if p, ok := hasPath(o); ok {
+			*guards = append(*guards, hasGuard{slot: &e.Operands[i], path: p})
+			continue
+		}
+		collectStrictPaths(o, strict)
+		e.Operands[i] = foldHasGuards(o)
 	}
 }
 
