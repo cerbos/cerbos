@@ -610,9 +610,9 @@ func ToFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilt
 	return normaliseFilter(filter), nil
 }
 
-// foldHasGuards folds has(p) to true when it is ANDed with an expression that strictly dereferences p
-// or a path below it, as in has(p) && p == 1. That expression already fails for a missing attribute, so
-// the guard adds nothing to the filter. Anywhere else, has(p) is kept because folding it changes the result.
+// foldHasGuards folds has(p) to true when it is ANDed with an expression that fails without p or a path
+// below it, as in has(p) && p == 1. That expression already excludes a missing attribute, so the guard
+// adds nothing to the filter. Anywhere else, has(p) is kept because folding it changes the result.
 func foldHasGuards(op *exprOp) {
 	e := op.GetExpression()
 	if e == nil {
@@ -627,38 +627,33 @@ func foldHasGuards(op *exprOp) {
 	}
 
 	// Nested ANDs are analysed together but left in place, so plans without has() guards are unchanged.
-	var guards []hasGuard
-	strict := make(map[string]struct{})
-	collectHasGuards(e, &guards, strict)
+	var operands []*exprOp
+	collectAndOperands(e, &operands)
 
-	for _, g := range guards {
-		if isGuarded(g.path, strict) {
-			g.op.Node = &exprOpValue{Value: structpb.NewBoolValue(true)}
+	for _, o := range operands {
+		p, ok := hasPath(o)
+		if !ok {
+			foldHasGuards(o)
+			continue
+		}
+
+		for _, other := range operands {
+			if other != o && failsWithout(other, p) {
+				o.Node = &exprOpValue{Value: structpb.NewBoolValue(true)}
+				break
+			}
 		}
 	}
 }
 
-// hasGuard is a has(path) operand of an AND expression.
-type hasGuard struct {
-	op   *exprOp
-	path string
-}
-
-// collectHasGuards walks the operands of e and of any ANDs nested in it. It records the has() operands
-// in guards and the paths strictly dereferenced by the other operands in strict, folding the guards nested
-// in those operands along the way.
-func collectHasGuards(e *enginev1.PlanResourcesFilter_Expression, guards *[]hasGuard, strict map[string]struct{}) {
+// collectAndOperands collects the operands of e and of any ANDs nested in it.
+func collectAndOperands(e *enginev1.PlanResourcesFilter_Expression, acc *[]*exprOp) {
 	for _, o := range e.Operands {
 		if oe := o.GetExpression(); oe != nil && oe.Operator == And {
-			collectHasGuards(oe, guards, strict)
+			collectAndOperands(oe, acc)
 			continue
 		}
-		if p, ok := hasPath(o); ok {
-			*guards = append(*guards, hasGuard{op: o, path: p})
-			continue
-		}
-		collectStrictPaths(o, strict)
-		foldHasGuards(o)
+		*acc = append(*acc, o)
 	}
 }
 
@@ -671,35 +666,40 @@ func hasPath(op *exprOp) (string, bool) {
 	return v, v != ""
 }
 
-// collectStrictPaths records the variables whose absence makes op false or an error.
+// failsWithout reports whether op is false or an error when the attribute at path p is missing.
 // It assumes a missing attribute behaves like SQL NULL, i.e. a comparison against it is not true.
-// It does not descend into operators that can succeed without evaluating every operand.
-func collectStrictPaths(op *exprOp, acc map[string]struct{}) {
+func failsWithout(op *exprOp, p string) bool {
 	switch t := op.Node.(type) {
 	case *exprOpVar:
-		acc[t.Variable] = struct{}{}
+		return t.Variable == p || strings.HasPrefix(t.Variable, p+".")
 	case *exprOpExpr:
 		operands := t.Expression.Operands
 		switch t.Expression.Operator {
-		case Or, Not, If, Has, All, Filter, Map, TransformMap, TransformMapEntry, TransformList, Lambda:
-			return
+		case Or:
+			return len(operands) > 0 && allFailWithout(operands, p)
+		case If:
+			return len(operands) == 3 && (failsWithout(operands[0], p) || allFailWithout(operands[1:], p))
+		case Has:
+			// One guard can't justify another.
+			return false
+		case Not, All, Filter, Map, TransformMap, TransformMapEntry, TransformList, Lambda:
+			return false
 		case Exists, ExistsOne, GetField:
 			// Only the target is strict: the lambda body or the field name are not paths.
-			operands = operands[:min(1, len(operands))]
+			return len(operands) > 0 && failsWithout(operands[0], p)
 		}
-		for _, o := range operands {
-			collectStrictPaths(o, acc)
-		}
-	}
-}
-
-func isGuarded(p string, strict map[string]struct{}) bool {
-	for s := range strict {
-		if s == p || strings.HasPrefix(s, p+".") {
-			return true
-		}
+		return slices.ContainsFunc(operands, func(o *exprOp) bool { return failsWithout(o, p) })
 	}
 	return false
+}
+
+func allFailWithout(operands []*exprOp, p string) bool {
+	for _, o := range operands {
+		if !failsWithout(o, p) {
+			return false
+		}
+	}
+	return true
 }
 
 func normaliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {

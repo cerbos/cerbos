@@ -318,3 +318,130 @@ tests:
                     - value: bob
       matchedScopes:
         guarded_deny: ""
+
+  # b appears in both branches of the OR, so has(b) is folded. a and c appear in one branch each, so their guards are kept.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: three_guards_or
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: and
+            operands:
+              - expression:
+                  operator: and
+                  operands:
+                    - expression:
+                        operator: has
+                        operands:
+                          - variable: request.resource.attr.c
+                    - expression:
+                        operator: or
+                        operands:
+                          - expression:
+                              operator: gt
+                              operands:
+                                - variable: request.resource.attr.a
+                                - variable: request.resource.attr.b
+                          - expression:
+                              operator: gt
+                              operands:
+                                - variable: request.resource.attr.b
+                                - variable: request.resource.attr.c
+              - expression:
+                  operator: has
+                  operands:
+                    - variable: request.resource.attr.a
+      matchedScopes:
+        three_guards_or: ""
+
+  # The guard can come after the expression it guards.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: guard_after_access
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - value: 1
+              - variable: request.resource.attr.x
+      matchedScopes:
+        guard_after_access: ""
+
+  # x appears in both branches of the OR, so the guard is folded.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: guard_or_both
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: or
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: 1
+                    - variable: request.resource.attr.x
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: 2
+                    - variable: request.resource.attr.x
+      matchedScopes:
+        guard_or_both: ""
+
+  # x appears in both branches of the conditional, so the guard is folded.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: guard_if_branches
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: if
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: 1
+                    - variable: request.resource.attr.y
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: a
+                    - variable: request.resource.attr.x
+              - expression:
+                  operator: eq
+                  operands:
+                    - value: b
+                    - variable: request.resource.attr.x
+      matchedScopes:
+        guard_if_branches: ""
+
+  # A has() never fails, so one guard can't justify folding another.
+  - resource:
+      kind: has_fold
+      policyVersion: default
+    action: duplicate_guard
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: has
+            operands:
+              - variable: request.resource.attr.x
+      matchedScopes:
+        duplicate_guard: ""
