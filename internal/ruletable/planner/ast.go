@@ -626,7 +626,7 @@ func foldHasGuards(op *exprOp) *exprOp {
 		return op
 	}
 
-	// Nested ANDs are analysed together but left in place, so the filter keeps its shape.
+	// Nested ANDs are analysed together but left in place, so plans without has() guards are unchanged.
 	var conjuncts []conjunct
 	collectConjuncts(e, &conjuncts)
 
