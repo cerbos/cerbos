@@ -631,7 +631,7 @@ func foldHasGuards(op *exprOp) {
 	collectAndOperands(e, &operands)
 
 	for _, o := range operands {
-		p, ok := hasPath(o)
+		p, ok := asHasGuard(o)
 		if !ok {
 			foldHasGuards(o)
 			continue
@@ -657,7 +657,7 @@ func collectAndOperands(e *enginev1.PlanResourcesFilter_Expression, acc *[]*expr
 	}
 }
 
-func hasPath(op *exprOp) (string, bool) {
+func asHasGuard(op *exprOp) (string, bool) {
 	e := op.GetExpression()
 	if e == nil || e.Operator != Has || len(e.Operands) != 1 {
 		return "", false
