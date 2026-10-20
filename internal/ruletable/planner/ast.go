@@ -773,6 +773,13 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 		}
 	}
 
+	// remove double negation
+	if expr.Expression.Operator == Not && len(expr.Expression.Operands) == 1 {
+		if inner := expr.Expression.Operands[0].GetExpression(); inner != nil && inner.Operator == Not && len(inner.Operands) == 1 {
+			return normaliseFilterExprOp(inner.Operands[0])
+		}
+	}
+
 	var logicalOperator string
 	var operandHashes map[uint64]struct{}
 	if expr.Expression.Operator == And || expr.Expression.Operator == Or || expr.Expression.Operator == Not {

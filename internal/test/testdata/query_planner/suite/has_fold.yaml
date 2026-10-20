@@ -75,7 +75,7 @@ tests:
       matchedScopes:
         negated_allow: ""
 
-  # The DENY rule wraps the negated condition in another NOT.
+  # The DENY rule wraps the negated condition in another NOT, and the two cancel out.
   - resource:
       kind: has_fold
       policyVersion: default
@@ -85,15 +85,9 @@ tests:
         kind: KIND_CONDITIONAL
         condition:
           expression:
-            operator: not
+            operator: has
             operands:
-              - expression:
-                  operator: not
-                  operands:
-                    - expression:
-                        operator: has
-                        operands:
-                          - variable: request.resource.attr.owner
+              - variable: request.resource.attr.owner
       matchedScopes:
         negated_deny: ""
 
