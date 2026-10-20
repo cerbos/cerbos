@@ -606,14 +606,14 @@ func ToFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilt
 		return nil, err
 	}
 
-	filter.Condition = elideHasGuards(filter.Condition)
+	filter.Condition = foldHasGuards(filter.Condition)
 	return normaliseFilter(filter), nil
 }
 
-// elideHasGuards replaces has(p) with true where it is a conjunct alongside an expression that strictly
-// dereferences p or a path below it. That expression already fails for a missing attribute, so the guard
-// adds nothing to the filter. Anywhere else, has(p) is kept because dropping it changes the result.
-func elideHasGuards(op *exprOp) *exprOp {
+// foldHasGuards folds has(p) to true when it is ANDed with an expression that strictly dereferences p
+// or a path below it, as in has(p) && p == 1. That expression already fails for a missing attribute, so
+// the guard adds nothing to the filter. Anywhere else, has(p) is kept because folding it changes the result.
+func foldHasGuards(op *exprOp) *exprOp {
 	e := op.GetExpression()
 	if e == nil {
 		return op
@@ -621,12 +621,12 @@ func elideHasGuards(op *exprOp) *exprOp {
 
 	if e.Operator != And {
 		for i, o := range e.Operands {
-			e.Operands[i] = elideHasGuards(o)
+			e.Operands[i] = foldHasGuards(o)
 		}
 		return op
 	}
 
-	// Nested ANDs are analysed as one conjunction but left in place, so the filter keeps its shape.
+	// Nested ANDs are analysed together but left in place, so the filter keeps its shape.
 	var conjuncts []conjunct
 	collectConjuncts(e, &conjuncts)
 
@@ -642,7 +642,7 @@ func elideHasGuards(op *exprOp) *exprOp {
 			c.set(&exprOp{Node: &exprOpValue{Value: structpb.NewBoolValue(true)}})
 			continue
 		}
-		c.set(elideHasGuards(c.get()))
+		c.set(foldHasGuards(c.get()))
 	}
 
 	return op
