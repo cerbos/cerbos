@@ -606,24 +606,24 @@ func ToFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilt
 		return nil, err
 	}
 
-	filter.Condition = foldHasGuards(filter.Condition)
+	foldHasGuards(filter.Condition)
 	return normaliseFilter(filter), nil
 }
 
 // foldHasGuards folds has(p) to true when it is ANDed with an expression that strictly dereferences p
 // or a path below it, as in has(p) && p == 1. That expression already fails for a missing attribute, so
 // the guard adds nothing to the filter. Anywhere else, has(p) is kept because folding it changes the result.
-func foldHasGuards(op *exprOp) *exprOp {
+func foldHasGuards(op *exprOp) {
 	e := op.GetExpression()
 	if e == nil {
-		return op
+		return
 	}
 
 	if e.Operator != And {
-		for i, o := range e.Operands {
-			e.Operands[i] = foldHasGuards(o)
+		for _, o := range e.Operands {
+			foldHasGuards(o)
 		}
-		return op
+		return
 	}
 
 	// Nested ANDs are analysed together but left in place, so plans without has() guards are unchanged.
@@ -633,16 +633,14 @@ func foldHasGuards(op *exprOp) *exprOp {
 
 	for _, g := range guards {
 		if isGuarded(g.path, strict) {
-			*g.slot = &exprOp{Node: &exprOpValue{Value: structpb.NewBoolValue(true)}}
+			g.op.Node = &exprOpValue{Value: structpb.NewBoolValue(true)}
 		}
 	}
-
-	return op
 }
 
 // hasGuard is a has(path) operand of an AND expression.
 type hasGuard struct {
-	slot **exprOp
+	op   *exprOp
 	path string
 }
 
@@ -650,17 +648,17 @@ type hasGuard struct {
 // in guards and the paths strictly dereferenced by the other operands in strict, folding the guards nested
 // in those operands along the way.
 func collectHasGuards(e *enginev1.PlanResourcesFilter_Expression, guards *[]hasGuard, strict map[string]struct{}) {
-	for i, o := range e.Operands {
+	for _, o := range e.Operands {
 		if oe := o.GetExpression(); oe != nil && oe.Operator == And {
 			collectHasGuards(oe, guards, strict)
 			continue
 		}
 		if p, ok := hasPath(o); ok {
-			*guards = append(*guards, hasGuard{slot: &e.Operands[i], path: p})
+			*guards = append(*guards, hasGuard{op: o, path: p})
 			continue
 		}
 		collectStrictPaths(o, strict)
-		e.Operands[i] = foldHasGuards(o)
+		foldHasGuards(o)
 	}
 }
 
