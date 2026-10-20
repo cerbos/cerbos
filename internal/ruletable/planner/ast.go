@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
 	celast "cel.dev/cel-go/common/ast"
 	"cel.dev/cel-go/common/operators"
@@ -55,6 +56,7 @@ const (
 	Map                = "map"
 	Lambda             = "lambda"
 	If                 = "if"
+	Has                = "has"
 )
 
 var ErrUnknownOperator = errors.New("unknown operator")
@@ -395,7 +397,16 @@ func buildExprImpl(cur *exprpb.Expr, acc *enginev1.PlanResourcesFilter_Expressio
 		acc.Node = &exprOpVar{Variable: expr.IdentExpr.Name}
 	case *exprpb.Expr_SelectExpr:
 		if expr.SelectExpr.TestOnly {
-			acc.Node = &exprOpValue{Value: structpb.NewBoolValue(true)}
+			// Build the operand of has() as a plain select to reuse the "a.b.c" variable logic below.
+			sel := &exprpb.Expr{ExprKind: &exprpb.Expr_SelectExpr{SelectExpr: &exprpb.Expr_Select{
+				Operand: expr.SelectExpr.Operand,
+				Field:   expr.SelectExpr.Field,
+			}}}
+			op := new(exprOp)
+			if err := buildExprImpl(sel, op, parent); err != nil {
+				return err
+			}
+			acc.Node = mkExprOpExpr(Has, op)
 			break
 		}
 		var names []string
@@ -596,7 +607,107 @@ func ToFilter(plan *enginev1.PlanResourcesAst_Node) (*enginev1.PlanResourcesFilt
 		return nil, err
 	}
 
+	foldHasGuards(filter.Condition)
 	return normaliseFilter(filter), nil
+}
+
+// foldHasGuards folds has(p) to true when it is ANDed with an expression that fails without p or a path
+// below it, as in has(p) && p == 1. That expression already excludes a missing attribute, so the guard
+// adds nothing to the filter. Anywhere else, has(p) is kept because folding it changes the result.
+func foldHasGuards(op *exprOp) {
+	e := op.GetExpression()
+	if e == nil {
+		return
+	}
+
+	if e.Operator != And {
+		for _, o := range e.Operands {
+			foldHasGuards(o)
+		}
+		return
+	}
+
+	// Nested ANDs are analysed together but left in place, so plans without has() guards are unchanged.
+	operandsPtr := andOperandsPool.Get().(*[]*exprOp) //nolint:forcetypeassert
+	operands := (*operandsPtr)[:0]
+	collectAndOperands(e, &operands)
+
+	for _, o := range operands {
+		p, ok := asHasGuard(o)
+		if !ok {
+			foldHasGuards(o)
+			continue
+		}
+
+		for _, other := range operands {
+			if other != o && failsWithout(other, p) {
+				o.Node = &exprOpValue{Value: structpb.NewBoolValue(true)}
+				break
+			}
+		}
+	}
+
+	clear(operands)
+	*operandsPtr = operands[:0]
+	andOperandsPool.Put(operandsPtr)
+}
+
+var andOperandsPool = sync.Pool{New: func() any { s := make([]*exprOp, 0, 8); return &s }} //nolint:mnd
+
+// collectAndOperands collects the operands of e and of any ANDs nested in it.
+func collectAndOperands(e *enginev1.PlanResourcesFilter_Expression, acc *[]*exprOp) {
+	for _, o := range e.Operands {
+		if oe := o.GetExpression(); oe != nil && oe.Operator == And {
+			collectAndOperands(oe, acc)
+			continue
+		}
+		*acc = append(*acc, o)
+	}
+}
+
+func asHasGuard(op *exprOp) (string, bool) {
+	e := op.GetExpression()
+	if e == nil || e.Operator != Has || len(e.Operands) != 1 {
+		return "", false
+	}
+	v := e.Operands[0].GetVariable()
+	return v, v != ""
+}
+
+// failsWithout reports whether op is false or an error when the attribute at path p is missing.
+// It assumes a missing attribute behaves like SQL NULL, i.e. a comparison against it is not true.
+func failsWithout(op *exprOp, p string) bool {
+	switch t := op.Node.(type) {
+	case *exprOpVar:
+		return t.Variable == p || strings.HasPrefix(t.Variable, p+".")
+	case *exprOpExpr:
+		operands := t.Expression.Operands
+		switch t.Expression.Operator {
+		case Or:
+			return len(operands) > 0 && allFailWithout(operands, p)
+		case If:
+			return len(operands) == 3 && (failsWithout(operands[0], p) || allFailWithout(operands[1:], p))
+		case Has:
+			// One guard can't justify another.
+			return false
+		case Not, All, Filter, Map, TransformMap, TransformMapEntry, TransformList, Lambda:
+			return false
+		case Exists, ExistsOne, GetField:
+			// Only the target is strict: the lambda body or the field name are not paths.
+			return len(operands) > 0 && failsWithout(operands[0], p)
+		}
+		return slices.ContainsFunc(operands, func(o *exprOp) bool { return failsWithout(o, p) })
+	}
+	return false
+}
+
+func allFailWithout(operands []*exprOp, p string) bool {
+	for _, o := range operands {
+		if !failsWithout(o, p) {
+			return false
+		}
+	}
+	return true
 }
 
 func normaliseFilter(filter *enginev1.PlanResourcesFilter) *enginev1.PlanResourcesFilter {
@@ -659,6 +770,13 @@ func normaliseFilterExprOpExpr(expr *enginev1.PlanResourcesFilter_Expression_Ope
 	if expr.Expression.Operator == In && len(expr.Expression.Operands) == 2 {
 		if s := normaliseInExpr(expr); s != nil {
 			return s
+		}
+	}
+
+	// remove double negation
+	if expr.Expression.Operator == Not && len(expr.Expression.Operands) == 1 {
+		if inner := expr.Expression.Operands[0].GetExpression(); inner != nil && inner.Operator == Not && len(inner.Operands) == 1 {
+			return normaliseFilterExprOp(inner.Operands[0])
 		}
 	}
 
