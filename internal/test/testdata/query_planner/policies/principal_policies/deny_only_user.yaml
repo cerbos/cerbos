@@ -14,3 +14,10 @@ principalPolicy:
               expr: R.attr.public == true
         - action: edit
           effect: EFFECT_ALLOW
+    - resource: deny_only_mixed
+      actions:
+        - action: view
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              expr: R.attr.public == true

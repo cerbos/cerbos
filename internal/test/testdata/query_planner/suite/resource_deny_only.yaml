@@ -2,7 +2,7 @@
 ---
 # The resource policy only has a conditional DENY for these actions, so it never allows on its own.
 # A principal policy ALLOW must not be ORed with "NOT deny condition".
-description: Resource policy with only a DENY combined with a principal policy ALLOW
+description: Resource policy with only DENY rules for a role and action combined with a principal policy ALLOW
 
 config:
   lenientScopeSearch:
@@ -60,3 +60,40 @@ tests:
         kind: KIND_ALWAYS_DENIED
       matchedScopes:
         delete: ""
+
+  # The resource policy has ALLOWs for other roles and actions but only a DENY for user/view
+  - resource:
+      kind: deny_only_mixed
+      policyVersion: default
+    action: view
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.public
+              - value: true
+      matchedScopes:
+        view: ""
+
+  # user/edit has a resource ALLOW, so the resource DENY applies on top of it
+  - resource:
+      kind: deny_only_mixed
+      policyVersion: default
+    action: edit
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: eq
+                  operands:
+                    - variable: request.resource.attr.confidential
+                    - value: true
+      matchedScopes:
+        edit: ""

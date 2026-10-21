@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: deny_only_mixed
+  rules:
+    - actions: ["*"]
+      effect: EFFECT_ALLOW
+      roles: ["admin"]
+    - actions: ["edit"]
+      effect: EFFECT_ALLOW
+      roles: ["user"]
+    - actions: ["view", "edit"]
+      effect: EFFECT_DENY
+      roles: ["user"]
+      condition:
+        match:
+          expr: R.attr.confidential == true
