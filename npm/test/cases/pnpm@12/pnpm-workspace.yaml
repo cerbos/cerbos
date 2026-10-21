@@ -1,0 +1,8 @@
+cacheDir: .pnpm/cache
+minimumReleaseAgeExclude:
+  - "@cerbos/*"
+  - cerbos
+  - cerbosctl
+registries:
+  default: http://localhost:4873
+storeDir: .pnpm/store
