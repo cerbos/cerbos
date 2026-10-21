@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+# The resource policy only has a conditional DENY for these actions, so it never allows on its own.
+# A principal policy ALLOW must not be ORed with "NOT deny condition".
+description: Resource policy with only a DENY combined with a principal policy ALLOW
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: deny_only_user
+  policyVersion: default
+  roles:
+    - user
+
+tests:
+  - resource:
+      kind: deny_only
+      policyVersion: default
+    action: view
+    want:
+      filter:
+        kind: KIND_CONDITIONAL
+        condition:
+          expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.public
+              - value: true
+      matchedScopes:
+        view: ""
+
+  # An unconditional principal ALLOW takes precedence over the resource DENY
+  - resource:
+      kind: deny_only
+      policyVersion: default
+    action: edit
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        edit: ""
+
+  # No principal rule, so the result is DENY whatever the attributes
+  - resource:
+      kind: deny_only
+      policyVersion: default
+    action: delete
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        delete: ""

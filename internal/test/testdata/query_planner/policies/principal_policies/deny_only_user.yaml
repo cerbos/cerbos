@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+principalPolicy:
+  version: default
+  principal: deny_only_user
+  rules:
+    - resource: deny_only
+      actions:
+        - action: view
+          effect: EFFECT_ALLOW
+          condition:
+            match:
+              expr: R.attr.public == true
+        - action: edit
+          effect: EFFECT_ALLOW
