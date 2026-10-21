@@ -1,7 +1,8 @@
 # yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
 ---
-# The resource policy only has a conditional DENY for these actions, so it never allows on its own.
-# A principal policy ALLOW must not be ORed with "NOT deny condition".
+# When the resource policy has only DENY rules for the principal's role and the requested action, it never
+# allows that action on its own, even if it has ALLOW rules for other roles or actions. A principal policy
+# ALLOW must not be ORed with "NOT deny condition".
 description: Resource policy with only DENY rules for a role and action combined with a principal policy ALLOW
 
 config:
