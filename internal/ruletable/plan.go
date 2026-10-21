@@ -361,14 +361,14 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 			// DENY in a principal policy needs to be a top level `(NOT deny condition) AND nested ALLOW`), so we
 			// invert and AND them as we go.
 			if policyTypeDenyNode != nil {
-				inv := planner.InvertNodeBooleanValue(policyTypeDenyNode)
 				if rootNode == nil {
-					rootNode = inv
+					// No ALLOW at this level or below, so this subtree denies unconditionally.
+					rootNode = planner.MkFalseNode()
 				} else {
-					rootNode = planner.MkAndNode([]*planner.QpN{inv, rootNode})
+					rootNode = planner.MkAndNode([]*planner.QpN{planner.InvertNodeBooleanValue(policyTypeDenyNode), rootNode})
 				}
 			}
-		}
+		} // range over policy kinds
 
 		if evalErr != nil {
 			// In strict mode an evaluation error denies the affected action.
