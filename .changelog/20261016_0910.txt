@@ -1,0 +1,2 @@
+type:fix
+Reduce the CPU usage of the Cerbos Hub audit log backend when the local database holds many deleted sync markers that have not been compacted away yet. Most sync cycles now resume after the last uploaded entry instead of stepping over all of them

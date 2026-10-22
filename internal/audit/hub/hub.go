@@ -79,6 +79,7 @@ type Log struct {
 	pool            *pool.ContextPool
 	logger          *zap.Logger
 	*local.Log
+	markerScans       map[logsv1.IngestBatch_EntryKind]*markerScan
 	minFlushInterval  time.Duration
 	flushTimeout      time.Duration
 	maxBatchSize      int
@@ -127,6 +128,10 @@ func NewLog(conf *Conf, decisionFilter audit.DecisionLogEntryFilter, syncer Inge
 		cancel:            cancelFn,
 		pool:              pool.New().WithContext(ctx),
 		pipeLog:           pipeLog,
+		markerScans: map[logsv1.IngestBatch_EntryKind]*markerScan{
+			logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG:   {},
+			logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG: {},
+		},
 	}
 
 	log.pool.Go(log.syncLoop)
@@ -348,7 +353,8 @@ func (l *Log) sync(ctx context.Context, kind logsv1.IngestBatch_EntryKind, frame
 // streamKind walks the sync markers and the entries they point at with two
 // lockstep iterators. Entries' values, which are byte slices, are framed into
 // IngestBatch without decode-encode round trip. Each batch is collected in its
-// own read transaction, which is closed before the batch is shipped.
+// own read transaction, which is closed before the batch is shipped. The run
+// starts walking the markers where markerScan says.
 func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind) error {
 	logger := l.logger.With(zap.Stringer("kind", kind))
 
@@ -369,8 +375,8 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 	var logKey []byte
 	var rawBuf []byte // scratch for legacy entries
 	var last []byte   // last marker key consumed
-	var resume []byte // backing buffer for seek
-	seek := markerPrefix
+	scan := l.markerScans[kind]
+	seek := scan.afterLastOrPrefix(markerPrefix)
 
 	markerOpts := keysOnlyIteratorOptions(markerPrefix)
 	entryOpts := keysOnlyIteratorOptions(entryPrefix)
@@ -487,17 +493,46 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 			return err
 		}
 
+		if len(last) > 0 {
+			// Resume right after the last consumed marker.
+			// This is how (*markerScan).afterLastOrPrefix() got its name.
+			scan.resume = append(append(scan.resume[:0], last...), 0) // last + 0x00
+		}
+
 		if !more {
 			break
 		}
 
-		// Resume right after the last consumed marker.
-		resume = append(append(resume[:0], last...), 0) // last + 0x00
-		seek = resume
+		seek = scan.resume // `seek` is a local tracker of multi-batch sync.
 	}
 
 	lk.flush()
 	return nil
+}
+
+// fullMarkerScanEvery is how often, in sync runs, a run walks the sync markers
+// from the start of their prefix.
+const fullMarkerScanEvery = 12
+
+// markerScan tracks where the sync runs of one kind start walking the sync
+// markers. Most runs start right after the last shipped marker, skipping the
+// tombstones of the shipped markers that compaction has not dropped yet, and
+// every fullMarkerScanEvery-th run starts from the prefix. A marker committed
+// after a marker with a greater key was shipped is picked up the next full
+// scan.
+type markerScan struct {
+	resume []byte // right after the last shipped marker; nil until a marker is shipped
+	runs   int
+}
+
+// afterLastOrPrefix returns the key the next run starts walking the markers from.
+func (s *markerScan) afterLastOrPrefix(markerPrefix []byte) []byte {
+	defer func() { s.runs++ }()
+
+	if s.resume == nil || s.runs%fullMarkerScanEvery == 0 {
+		return markerPrefix
+	}
+	return s.resume
 }
 
 // kindPrefixes returns the key prefixes of the sync markers and the entries
