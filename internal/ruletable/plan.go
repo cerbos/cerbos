@@ -376,6 +376,8 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 			nf.ResetToUnconditionalDeny()
 		} else if rootNode != nil {
 			policyMatch = true
+			// Defensive: with no ALLOW in any policy type, rootNode is `false` or `NOT(deny) AND false`,
+			// which normalises to KIND_ALWAYS_DENIED anyway.
 			if !hasPolicyTypeAllow {
 				nf.ResetToUnconditionalDeny()
 			} else {
