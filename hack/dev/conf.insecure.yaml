@@ -15,7 +15,7 @@ auxData:
     keySets:
       - id: default
         local:
-          file: internal/test/testdata/auxdata/verify_key.jwk
+          file: internal/test/testdata/auxdata/keys/verify_key.jwk
 
 audit:
   enabled: true

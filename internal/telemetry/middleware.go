@@ -22,6 +22,7 @@ var totalReqCount atomic.Uint64
 type Interceptors interface {
 	UnaryServerInterceptor() grpc.UnaryServerInterceptor
 	StreamServerInterceptor() grpc.StreamServerInterceptor
+	GenerateEvent() *telemetryv1.Event
 }
 
 type nopInterceptors struct{}
@@ -36,6 +37,10 @@ func (nopInterceptors) StreamServerInterceptor() grpc.StreamServerInterceptor {
 	return func(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		return handler(srv, ss)
 	}
+}
+
+func (nopInterceptors) GenerateEvent() *telemetryv1.Event {
+	return nil
 }
 
 type methodInfo struct {
@@ -108,7 +113,7 @@ func (i *statsInterceptors) doTally(interval time.Duration, shutdown <-chan stru
 		case <-shutdown:
 			return
 		case <-ticker.C:
-			i.report()
+			i.Report()
 		case m := <-i.collector:
 			i.methodTally[m.name]++
 			i.uaTally[m.userAgent]++
@@ -117,8 +122,12 @@ func (i *statsInterceptors) doTally(interval time.Duration, shutdown <-chan stru
 	}
 }
 
-func (i *statsInterceptors) report() {
-	i.reporter.Report(&telemetryv1.Event{
+func (i *statsInterceptors) Report() {
+	i.reporter.Report(i.GenerateEvent())
+}
+
+func (i *statsInterceptors) GenerateEvent() *telemetryv1.Event {
+	return &telemetryv1.Event{
 		Data: &telemetryv1.Event_ApiActivity_{
 			ApiActivity: &telemetryv1.Event_ApiActivity{
 				Version:     "1.0.0",
@@ -127,7 +136,7 @@ func (i *statsInterceptors) report() {
 				UserAgents:  toCountStats(i.uaTally),
 			},
 		},
-	})
+	}
 }
 
 func toCountStats(m map[string]uint64) []*telemetryv1.Event_CountStat {
