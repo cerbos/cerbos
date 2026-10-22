@@ -495,6 +495,7 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 
 		if len(last) > 0 {
 			// Resume right after the last consumed marker.
+			// This is how (*markerScan).afterLastOrPrefix() got its name.
 			scan.resume = append(append(scan.resume[:0], last...), 0) // last + 0x00
 		}
 
@@ -502,7 +503,7 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 			break
 		}
 
-		seek = scan.resume
+		seek = scan.resume // `seek` is a local tracker of multi-batch sync.
 	}
 
 	lk.flush()
