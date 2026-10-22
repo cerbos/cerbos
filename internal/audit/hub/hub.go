@@ -517,9 +517,8 @@ const fullMarkerScanEvery = 12
 // markers. Most runs start right after the last shipped marker, skipping the
 // tombstones of the shipped markers that compaction has not dropped yet, and
 // every fullMarkerScanEvery-th run starts from the prefix. A marker committed
-// after a marker with a greater key was shipped sorts before the resume point,
-// so it waits for the next full scan. Runs of a kind never overlap, so
-// markerScan needs no locking.
+// after a marker with a greater key was shipped is picked up the next full
+// scan.
 type markerScan struct {
 	resume []byte // right after the last shipped marker; nil until a marker is shipped
 	runs   int
