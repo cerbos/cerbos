@@ -113,7 +113,7 @@ func (i *statsInterceptors) doTally(interval time.Duration, shutdown <-chan stru
 		case <-shutdown:
 			return
 		case <-ticker.C:
-			i.Report()
+			i.report()
 		case m := <-i.collector:
 			i.methodTally[m.name]++
 			i.uaTally[m.userAgent]++
@@ -122,7 +122,7 @@ func (i *statsInterceptors) doTally(interval time.Duration, shutdown <-chan stru
 	}
 }
 
-func (i *statsInterceptors) Report() {
+func (i *statsInterceptors) report() {
 	i.reporter.Report(i.GenerateEvent())
 }
 
