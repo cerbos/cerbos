@@ -5,7 +5,7 @@ go 1.27.0
 require (
 	connectrpc.com/connect v1.21.0
 	github.com/cerbos/actions v0.0.0-20261012092942-f8054d41c7cd
-	github.com/cerbos/protoc-gen-go-hashpb v0.5.0
+	github.com/cerbos/protoc-gen-go-hashpb v0.5.1
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20260921220656-1eb6a53ffc34
 	github.com/dkorunic/betteralign v0.15.3

@@ -26,8 +26,8 @@ github.com/bufbuild/protocompile v0.14.2-0.20260420203553-9e5399662822 h1:up+abu
 github.com/bufbuild/protocompile v0.14.2-0.20260420203553-9e5399662822/go.mod h1:DhgqsRznX/F0sGkUYtTQJRP+q8xMReQRQ3qr+n1opWU=
 github.com/cerbos/actions v0.0.0-20261012092942-f8054d41c7cd h1:6iGmcm+d+JvctNd2H+cL90lTQiD5OLHkbV+LJkp73hw=
 github.com/cerbos/actions v0.0.0-20261012092942-f8054d41c7cd/go.mod h1:4ucAKO8n/W8Y8NToVPmuzSl3UFdoxpABD2u7MmEKUA0=
-github.com/cerbos/protoc-gen-go-hashpb v0.5.0 h1:eRxAGfPtAPIwuEu/5TwUM//iE2DLxPRv6MYcKTk+Vqg=
-github.com/cerbos/protoc-gen-go-hashpb v0.5.0/go.mod h1:2xx4aHivI/LQZA2iusGwPwsg/EOKxRX59BZZbojy2OM=
+github.com/cerbos/protoc-gen-go-hashpb v0.5.1 h1:lCdBJcXvs3lgL3KxYxu71BYn0jImPq0mKCsquv90cOM=
+github.com/cerbos/protoc-gen-go-hashpb v0.5.1/go.mod h1:JPxkZwfqZqzDzJXXxFP+wb/1WD/5A5DBCA0/pAiTTqQ=
 github.com/cerbos/protoc-gen-jsonschema v0.1.8 h1:kB6x96DfdOItL3+y4/cTdLleZUuSD+y0dnHfnfFjqbM=
 github.com/cerbos/protoc-gen-jsonschema v0.1.8/go.mod h1:PxUCBuUpqR+WgKX701NnzdBHEoZHZNNCLMCMBqTgrFQ=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
