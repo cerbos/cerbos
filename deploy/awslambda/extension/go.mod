@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos/deploy/awslambda
 
-go 1.27
+go 1.27.3
 
 require (
 	github.com/aws/aws-lambda-go v1.55.1
