@@ -376,7 +376,7 @@ func (l *Log) streamKind(ctx context.Context, kind logsv1.IngestBatch_EntryKind)
 	var rawBuf []byte // scratch for legacy entries
 	var last []byte   // last marker key consumed
 	scan := l.markerScans[kind]
-	seek := scan.start(markerPrefix)
+	seek := scan.afterLastOrPrefix(markerPrefix)
 
 	markerOpts := keysOnlyIteratorOptions(markerPrefix)
 	entryOpts := keysOnlyIteratorOptions(entryPrefix)
@@ -525,14 +525,14 @@ type markerScan struct {
 	runs   int
 }
 
-// start returns the key the next run starts walking the markers from.
-func (s *markerScan) start(markerPrefix []byte) []byte {
+// afterLastOrPrefix returns the key the next run starts walking the markers from.
+func (s *markerScan) afterLastOrPrefix(markerPrefix []byte) []byte {
 	defer func() { s.runs++ }()
 
 	if s.resume == nil || s.runs%fullMarkerScanEvery == 0 {
 		return markerPrefix
 	}
-	return slices.Clone(s.resume)
+	return s.resume
 }
 
 // kindPrefixes returns the key prefixes of the sync markers and the entries
