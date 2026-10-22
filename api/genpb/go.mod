@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos/api/genpb
 
-go 1.26.4
+go 1.27.3
 
 require (
 	connectrpc.com/connect v1.21.0

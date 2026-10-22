@@ -1,6 +1,6 @@
 module github.com/cerbos/cerbos/hack/loadtest
 
-go 1.27
+go 1.27.3
 
 require (
 	github.com/alecthomas/kong v1.16.1
