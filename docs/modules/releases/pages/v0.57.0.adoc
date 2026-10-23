@@ -1,0 +1,37 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.57.0]
+= Cerbos v0.57.0 (2026-10-23)
+
+== Highlights
+
+In addition to the enhancements and bug fixes described below, this release is built on Go 1.27.3 which includes a patch to distrust the recently published insecure CA trust roots even if the underlying operating system trust stores have not been updated.
+
+
+== Changelog
+
+=== Breaking changes
+
+[unordered]
+Make `rolePolicy` wildcards consistent with other policy types:: Role policy `allowActions` treat only `*` as a wildcard, consistent with other policies with wildcard fields. This is only marked as a breaking change as a precaution. We don't expect this change to affect any users.
+
+Query planner emits a `has` operator for presence tests on unknown attributes unless it guards an expression on the same attribute:: The most common use of `has()` is as a guard for an expression on the same attribute, as in `has(R.attr.owner) && R.attr.owner == P.id`. Most databases do not have or need a special existence check for columns so the query planner ignores such guards. That behaviour remains unchanged.
+Previously, the planner also replaced every `has()` on an attribute missing from the plan request with `true`. A condition such as `has(R.attr.owner)` produced a `KIND_ALWAYS_ALLOWED` plan even though `CheckResources` denies requests without the `owner` attribute. A `DENY` rule such as `!has(R.attr.owner)` was dropped from the plan entirely. To keep plans consistent with `CheckResources`, the planner now emits these presence tests as a `has` operator, e.g. `{"operator": "has", "operands": [{"variable": "request.resource.attr.owner"}]}`. This is a potential breaking change because query plan handlers that do not handle the `has` operator would fail after this change.
+
+
+=== Enhancements
+
+[unordered]
+
+Optimise Hub audit log sync:: Cerbos Hub audit log sync has had several optimisations to reduce CPU usage and reclaim disk space and memory faster.
+
+=== Bug fixes
+
+[unordered]
+Fix non-deterministic results due to name clashes:: Fixes an issue where multiple role or principal policy rules with overlapping resource name matches could produce incorrect results due to cache collisions.
+
+Fix store reload finishing with a partial rule table:: Reloading a large policy store could silently drop some policies from the rule table, causing requests to be denied with NO_MATCH until the next reload or restart.
+
+Fix over-permissive query plans combining a principal policy ALLOW with resource policy DENY rules:: When the resource policy had only `DENY` rules for the principal's role and the requested action, the query planner ORed the principal policy `ALLOW` condition with the negated `DENY` condition. The plan then admitted resources that matched neither rule, although `CheckResources` denied them. For example, a principal policy allowing `view` when `R.attr.public == true`, combined with a resource policy denying `view` to the `user` role when `R.attr.confidential == true`, produced `R.attr.public == true || !(R.attr.confidential == true)` instead of `R.attr.public == true`.
+
+
