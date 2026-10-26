@@ -1786,7 +1786,7 @@
           "type": "string"
         }
       },
-      "additionalProperties": {}
+      "additionalProperties": true
     },
     "protobufNullValue": {
       "type": "string",
