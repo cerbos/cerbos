@@ -61,7 +61,7 @@ jobs:
         uses: $/.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/install-tools@6f636d2f02ee257dd226044f85ca097b901b3572 # main
         with:
           tools: |-
             buf
@@ -71,7 +71,7 @@ jobs:
         run: just generate
 
       - name: Check repo status
-        uses: cerbos/actions/check-repo-status@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/check-repo-status@6f636d2f02ee257dd226044f85ca097b901b3572 # main
 
   download-test-times:
     name: Download test times
@@ -122,7 +122,7 @@ jobs:
         uses: $/.github/actions/setup-go
 
       - name: Install just
-        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/install-tools@6f636d2f02ee257dd226044f85ca097b901b3572 # main
         with:
           tools: just
 
@@ -186,7 +186,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/install-tools@6f636d2f02ee257dd226044f85ca097b901b3572 # main
         with:
           tools: just
 
@@ -251,7 +251,7 @@ jobs:
           check-latest: true
 
       - name: Install just
-        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/install-tools@6f636d2f02ee257dd226044f85ca097b901b3572 # main
         with:
           tools: just
 
@@ -262,7 +262,7 @@ jobs:
         run: just lint-modernize
 
       - name: golangci-lint
-        uses: cerbos/actions/golangci-lint@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/golangci-lint@6f636d2f02ee257dd226044f85ca097b901b3572 # main
 
   buf:
     needs: changes
@@ -280,7 +280,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint protos
-        uses: cerbos/actions/buf@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/buf@6f636d2f02ee257dd226044f85ca097b901b3572 # main
         with:
           breaking: false
           format: true
@@ -347,7 +347,7 @@ jobs:
           cross_compiling: true
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/install-tools@6f636d2f02ee257dd226044f85ca097b901b3572 # main
         with:
           tools: |-
             goreleaser
