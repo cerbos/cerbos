@@ -25,6 +25,9 @@ func TestJSONFields(t *testing.T) {
 					"fooBar": structpb.NewStringValue("baz"),
 				},
 			},
+			Principal: &enginev1.Request_Principal{
+				PolicyVersion: "default",
+			},
 		},
 	}
 
@@ -55,6 +58,40 @@ func TestJSONFields(t *testing.T) {
 			name:       "get camel case",
 			expr:       "request.auxData.jwt.fooBar",
 			bindings:   bindings,
+			wantResult: "baz",
+		},
+		{
+			name:       "get camel case nested",
+			expr:       "request.principal.policyVersion",
+			bindings:   bindings,
+			wantResult: "default",
+		},
+		{
+			name:       "isSet camel case nested unchecked",
+			expr:       "has(request.principal.policyVersion)",
+			bindings:   bindings,
+			unchecked:  true,
+			wantResult: true,
+		},
+		{
+			name:       "get camel case nested unchecked",
+			expr:       "request.principal.policyVersion",
+			bindings:   bindings,
+			unchecked:  true,
+			wantResult: "default",
+		},
+		{
+			name:       "get snake case nested unchecked",
+			expr:       "request.principal.policy_version",
+			bindings:   bindings,
+			unchecked:  true,
+			wantResult: "default",
+		},
+		{
+			name:       "get map nested unchecked",
+			expr:       "request.auxData.jwt.fooBar",
+			bindings:   bindings,
+			unchecked:  true,
 			wantResult: "baz",
 		},
 		{
@@ -241,6 +278,8 @@ type celTestCase struct {
 	wantCompileErr string
 	wantResult     any
 	wantEvalErr    string
+	// unchecked parses the expression without type-checking it, as the query planner does.
+	unchecked bool
 }
 
 func testCEL(t *testing.T, envOptions []cel.EnvOption, testCases []celTestCase) {
@@ -251,7 +290,12 @@ func testCEL(t *testing.T, envOptions []cel.EnvOption, testCases []celTestCase) 
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ast, issues := env.Compile(tc.expr)
+			compile := env.Compile
+			if tc.unchecked {
+				compile = env.Parse
+			}
+
+			ast, issues := compile(tc.expr)
 			if tc.wantCompileErr == "" {
 				require.NoError(t, issues.Err(), "Failed to compile CEL expression")
 			} else {
