@@ -73,17 +73,37 @@ func (r *typeRegistry) FindStructFieldType(structType, fieldName string) (*types
 }
 
 func (r *typeRegistry) NativeToValue(native any) ref.Val {
-	value := r.Adapter.NativeToValue(native)
-	if message, ok := native.(proto.Message); ok {
-		if obj, ok := value.(object); ok {
-			return &protoMessageObject{
-				object: obj,
-				fields: message.ProtoReflect().Descriptor().Fields(),
-			}
-		}
+	return r.wrapProtoMessage(r.Adapter.NativeToValue(native))
+}
+
+// wrapProtoMessage wraps a proto message value so that its fields can be accessed by JSON name.
+// Messages nested in a wrapped message are wrapped as they are accessed, because they are adapted by
+// the underlying adapter. Type-checked expressions resolve JSON names at compile time, but unchecked
+// ones (as evaluated by the query planner) rely on this.
+func (r *typeRegistry) wrapProtoMessage(value ref.Val) ref.Val {
+	if _, ok := value.(*protoMessageObject); ok {
+		return value
 	}
 
-	return value
+	if t, ok := value.Type().(*types.Type); !ok || t.Kind() != types.StructKind {
+		return value
+	}
+
+	message, ok := value.Value().(proto.Message)
+	if !ok {
+		return value
+	}
+
+	obj, ok := value.(object)
+	if !ok {
+		return value
+	}
+
+	return &protoMessageObject{
+		object:   obj,
+		fields:   message.ProtoReflect().Descriptor().Fields(),
+		registry: r,
+	}
 }
 
 type object interface {
@@ -94,7 +114,8 @@ type object interface {
 
 type protoMessageObject struct {
 	object
-	fields protoreflect.FieldDescriptors
+	fields   protoreflect.FieldDescriptors
+	registry *typeRegistry
 }
 
 func (o *protoMessageObject) IsSet(field ref.Val) ref.Val {
@@ -102,7 +123,7 @@ func (o *protoMessageObject) IsSet(field ref.Val) ref.Val {
 }
 
 func (o *protoMessageObject) Get(index ref.Val) ref.Val {
-	return o.resolveField(o.object.Get, index)
+	return o.registry.wrapProtoMessage(o.resolveField(o.object.Get, index))
 }
 
 func (o *protoMessageObject) resolveField(method func(ref.Val) ref.Val, field ref.Val) ref.Val {
