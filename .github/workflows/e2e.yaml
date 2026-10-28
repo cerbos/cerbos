@@ -64,7 +64,10 @@ jobs:
         run: helmfile init --force
 
       - name: Run E2E Tests
-        run: e2e/run.sh
+        run: |-
+          sudo sysctl fs.inotify.max_user_watches=524288
+          sudo sysctl fs.inotify.max_user_instances=512
+          e2e/run.sh
         env:
           E2E_NO_CLEANUP: "true"
           E2E_PACKAGE: ${{ inputs.package }}
