@@ -4,15 +4,19 @@
 set -euo pipefail
 
 log_heading() {
-  printf "\n\n\e[1;36m==> %s\e[0m\n\n" "$1"
+  log "\n\n\e[1;36m==> %s\e[0m\n\n" "$1"
 }
 
 log_subheading() {
-  printf "\n\n\e[35m==> %s\e[0m\n\n" "$1"
+  log "\n\n\e[35m==> %s\e[0m\n\n" "$1"
 }
 
 log_error() {
-  printf "\n\e[31m%s\e[0m\n" "$1"
+  log "\n\e[31m%s\e[0m\n" "$1"
+}
+
+log() {
+  printf "$@" >&2
 }
 
 start_registry() {
@@ -39,11 +43,11 @@ start_registry() {
 
     kill -s 0 $registry_pid 2> /dev/null
 
-    printf "."
+    log "."
     sleep 0.1
   done
 
-  printf "\n"
+  log "\n"
   cd ~-
 }
 
@@ -62,7 +66,7 @@ stop_registry() {
 print_version() {
   local version
   version=$(corepack "${package_manager}" --version)
-  printf "Using %s %s\n" "${package_manager}" "${version}"
+  log "Using %s %s\n" "${package_manager}" "${version}"
 }
 
 install_dependencies() {
@@ -77,7 +81,7 @@ install_dependencies() {
 
 declare -A expected_output
 
-execute_binary_directly() {
+set_expected_output() {
   local binary
   binary="$1"
   shift
@@ -86,7 +90,10 @@ execute_binary_directly() {
     local platform
     platform=$(node --print '`${os.platform()}-${os.arch()}`')
 
-    expected_output[$binary]=$("${root_dir}/packages/${binary}-${platform}/${binary}-${platform}" "$@")
+    local path
+    path="${root_dir}/packages/${binary}-${platform}/${binary}-${platform}"
+
+    expected_output[$binary]=$("${path}" "$@")
   fi
 }
 
@@ -108,23 +115,39 @@ execute_via_package_manager() {
   corepack "${package_manager}" "${command[@]}" "$@"
 }
 
-execute_binary() {
+test_binary() {
   local binary
   binary="$1"
   shift
 
   log_subheading "Executing ${binary}"
 
-  local expected actual
-  execute_binary_directly "${binary}" "$@"
+  set_expected_output "${binary}" "$@"
   expected="${expected_output[$binary]}"
+
   actual=$(execute_via_package_manager "${binary}" "$@")
   compare "${expected}" "${actual}" "Executing via package manager"
+  test_nonzero_exit_status "Executing via package manager" execute_via_package_manager "${binary}"
 
   local path
   path=$(execute_via_package_manager node --print "require('${binary}').binaryPath")
   actual=$("${path}" "$@")
   compare "${expected}" "${actual}" "Executing via exported path"
+  test_nonzero_exit_status "Executing via exported path" "${path}"
+}
+
+test_nonzero_exit_status() {
+  local message
+  message="$1"
+  shift
+
+  local exit_status
+  set +e
+  "$@" --wtf >/dev/null 2>&1
+  exit_status="$?"
+  set -e
+
+  compare "80" "${exit_status}" "${message} (non-zero exit status)"
 }
 
 compare() {
@@ -134,7 +157,7 @@ compare() {
   message="$3"
 
   if diff <(printf "%s\n" "${expected}") <(printf "%s\n" "${actual}"); then
-    printf "%s: OK\n" "${message}"
+    log "%s: OK\n" "${message}"
   else
     log_error "${message}: unexpected output"
     exit 1
@@ -163,7 +186,7 @@ for test_case in *; do
   package_manager="${test_case%@*}"
   print_version
   install_dependencies
-  execute_binary cerbos --version
-  execute_binary cerbosctl version --client
+  test_binary cerbos --version
+  test_binary cerbosctl version --client
   cd ~-
 done

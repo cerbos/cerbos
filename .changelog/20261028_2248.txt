@@ -1,0 +1,3 @@
+type:fix
+Preserve exit status when executing npm-packaged binaries
+Previously, executing `cerbos` or `cerbosctl` via `npm exec` (or the equivalent for other package managers) would always exit with status 1 when the packaged binary exited with any non-zero status. Now, the original exit status is preserved.
