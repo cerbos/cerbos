@@ -1,7 +1,5 @@
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver)](https://github.com/cerbos/cerbos/releases/latest)  [![Snapshots](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml/badge.svg)](https://github.com/cerbos/cerbos/actions/workflows/snapshot.yaml)  [![Go Report Card](https://goreportcard.com/badge/github.com/cerbos/cerbos)](https://goreportcard.com/report/github.com/cerbos/cerbos)  [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)  [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)  [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/cerbosdev?style=social)](https://x.com/cerbosdev)  [![LinkedIn](https://img.shields.io/badge/LinkedIn-cerbos--dev-0A66C2?logo=linkedin)](https://www.linkedin.com/company/cerbos-dev/)
-
 <p align="center">
-  <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos"/>
+  <img src="https://github.com/cerbos/cerbos/blob/main/docs/supplemental-ui/logo.png?raw=true" alt="Cerbos" width="100%"/>
 </p>
 <p align="center">
 <b>Cerbos authorization management platform</b>
@@ -9,7 +7,23 @@
 Authorize every identity. Govern every action.
 </p>
 
-[Docs](https://docs.cerbos.dev/cerbos/latest/index.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) · [Quickstart](https://docs.cerbos.dev/cerbos/latest/quickstart.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) · [Playground](https://play.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) · [Slack community](https://community.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) · [Cerbos platform](https://www.cerbos.dev/how-it-works?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) · [Blog](https://www.cerbos.dev/blog?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro)
+<p align="center">
+  <a href="https://github.com/cerbos/cerbos/releases/latest"><img src="https://img.shields.io/github/v/release/cerbos/cerbos?color=green&logo=github&sort=semver" alt="GitHub release (latest SemVer)"/></a>
+  <a href="https://goreportcard.com/report/github.com/cerbos/cerbos"><img src="https://goreportcard.com/badge/github.com/cerbos/cerbos" alt="Go Report Card"/></a>
+  <a href="CODE_OF_CONDUCT.md"><img src="https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg" alt="Contributor Covenant"/></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0"/></a>
+  <a href="https://x.com/cerbosdev"><img src="https://img.shields.io/twitter/follow/cerbosdev?style=social" alt="X (formerly Twitter) Follow"/></a>
+  <a href="https://www.linkedin.com/company/cerbos-dev/"><img src="https://img.shields.io/badge/LinkedIn-cerbos--dev-0A66C2?logo=linkedin" alt="LinkedIn"/></a>
+</p>
+
+<p align="center">
+  <a href="https://docs.cerbos.dev/cerbos/latest/index.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro">Docs</a> ·
+  <a href="https://docs.cerbos.dev/cerbos/latest/quickstart.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro">Quickstart</a> ·
+  <a href="https://play.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro">Playground</a> ·
+  <a href="https://community.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro">Slack community</a> ·
+  <a href="https://www.cerbos.dev/how-it-works?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro">Cerbos platform</a> ·
+  <a href="https://www.cerbos.dev/blog?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro">Blog</a>
+</p>
 
 ## What is Cerbos?
 
@@ -23,14 +37,14 @@ The platform has four components:
 * [Cerbos Synapse](https://docs.cerbos.dev/synapse/latest/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) fetches the data each decision needs from the systems you already run.
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=0DDin9I0abc"><img src="https://img.youtube.com/vi/0DDin9I0abc/maxresdefault.jpg" alt="How Cerbos works (video)" width="640"/></a>
+  <a href="https://www.youtube.com/watch?v=0DDin9I0abc"><img src="https://img.youtube.com/vi/0DDin9I0abc/maxresdefault.jpg" alt="How Cerbos works (video)" width="100%"/></a>
 </p>
 
 **This repository contains Cerbos PDP, the open source policy decision point at the core of the platform.** Cerbos PDP is stateless, AuthZEN compliant, and scales horizontally. It runs in containers, on Kubernetes, in serverless functions, and at the edge. Policies are YAML files that you version in Git alongside your code.
 
 Cerbos PDP is licensed under [Apache 2.0](LICENSE) and is production ready. It has no feature flags, no license keys, and no limits on authorization checks, services, or environments.
 
-Cerbos PDP evaluates policies. Policy testing, distribution to every instance, decision log collection, and data fetching are separate concerns. You can build them yourself or use the rest of the platform. [Running Cerbos PDP in production](#running-cerbos-pdp-in-production) summarizes the difference, and [Open source core vs the complete Cerbos solution](https://www.cerbos.dev/blog/open-source-vs-paid-cerbos?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) has the full comparison.
+Cerbos PDP evaluates policies. Policy testing, distribution to every instance, decision log collection, and data fetching are separate concerns. You can build them yourself or use the rest of the platform. [Running Cerbos PDP in production](#running-cerbos-pdp-in-production) summarizes the difference, and [open source core vs the complete Cerbos solution](https://www.cerbos.dev/blog/open-source-vs-paid-cerbos?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro) has the full comparison.
 
 ## Key concepts, at a glance
 
@@ -66,7 +80,7 @@ Call the APIs over HTTP, as in the [API request example](#api-request), or with 
 ## Used by
 
 <p align="center">
-  <img src="https://cerbos.dev/assets/logos/readme_logos.png" alt="Logos of organizations that use Cerbos"/>
+  <a href="https://www.cerbos.dev/customers?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro"><img src="https://cerbos.dev/assets/logos/readme_logos.png" alt="Logos of organizations that use Cerbos" width="100%"/></a>
 </p>
 
 Organizations of all sizes run Cerbos in production. See the [customer stories](https://www.cerbos.dev/customers?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_intro).
@@ -234,23 +248,15 @@ We maintain all of these, and they all talk to the same [Cerbos API](https://doc
 
 We collect anonymous usage data to help us improve the product. You can opt out by setting the `CERBOS_NO_TELEMETRY=1` environment variable. For more information about what data we collect and other ways to opt out, see the [telemetry documentation](https://docs.cerbos.dev/cerbos/latest/configuration/telemetry.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore).
 
-## Join the community on Slack
-
-<a href="https://community.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore"><img src="https://i.ibb.co/GxJfc1Q/cerbos-slack-btn.png" alt="Join the Cerbos community on Slack" width="200"></a>
-
 ## Community and links
 
 * [Slack community](https://community.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore) for questions and help from the Cerbos team and other users
 * [Newsletter](https://cerbos.dev/subscribe?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore) for product updates
-* [Tutorial](https://docs.cerbos.dev/cerbos/latest/tutorial/00_intro.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore) for building a complete example
+* [Tutorial](https://docs.cerbos.dev/cerbos/latest/tutorial/00_intro.html?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore) for implementing Cerbos PDP
 * [Cerbos playground](https://play.cerbos.dev/?utm_campaign=brand_cerbos&utm_source=github&utm_content=readme_learnmore) for writing and testing policies in the browser
 * [Examples](#examples) of policies and requests on this page
 * [Demo repositories](https://github.com/cerbos) with example applications
 * [Contribution guidelines](CONTRIBUTING.md) for sending a pull request
-
-## 🛡️ License
-
-Cerbos is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Big thank you to all contributors!
 
