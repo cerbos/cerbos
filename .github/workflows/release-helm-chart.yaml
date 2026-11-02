@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Helm
-        uses: cerbos/actions/install-tools@3b65c15c153c9bbfab65116b25692065e3f6a91e # main
+        uses: cerbos/actions/install-tools@d175c743932636d403a72e9baf690c37da2963fa # main
         with:
           tools: helm
 
