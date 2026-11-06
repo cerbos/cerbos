@@ -58,6 +58,7 @@ jobs:
 
   publishContainers:
     name: Publish Dev Containers
+    if: github.repository == 'cerbos/cerbos'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: ["tests"]
@@ -171,6 +172,7 @@ jobs:
 
   publishProtos:
     name: Publish Protobufs
+    if: github.repository == 'cerbos/cerbos'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: {}
