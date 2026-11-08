@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"strings"
 	"time"
 
 	"cel.dev/cel-go/cel"
@@ -534,7 +535,13 @@ func pathHasPrefix(path, prefix string) (bool, error) {
 		return false, err
 	}
 
-	return len(rel) > 0 && rel[0] != '.' && rel[0] != '/', nil
+	// Reject only results that start with a parent-directory step. Names such as ".env" or "..b" are children.
+	return rel != "" &&
+		rel != ".." &&
+		!strings.HasPrefix(rel, "../") &&
+		!strings.HasPrefix(rel, `..\`) &&
+		rel[0] != '/' &&
+		rel[0] != '\\', nil
 }
 
 func pathMatchAnyOf(path string, patterns ...string) (bool, error) {
