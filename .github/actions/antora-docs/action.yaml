@@ -2,7 +2,7 @@ name: "antora-docs"
 description: "Build the docs using Antora"
 runs:
   using: "docker"
-  image: "docker://docker.io/antora/antora:3.2.1@sha256:1592f1833a703aeb4e911df2f447df24eb36b37a958719e79e2537de51e9784b"
+  image: "docker://docker.io/antora/antora:3.2.2@sha256:97608b44fc0bb987aaf734ecfcdc02c821ee82eedcb8e4ee91d52f934854d611"
   args:
     - "sh"
     - "-c"
