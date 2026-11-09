@@ -37,7 +37,7 @@ func TestOptionalFuncNames(t *testing.T) {
 		"regex.extract",
 		"unwrapOpt",
 		"value",
-		"yaml.parse"
+		"yaml.parse",
 	}
 
 	have := make([]string, 0, len(optionalFuncs))
