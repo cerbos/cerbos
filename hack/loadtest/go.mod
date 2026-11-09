@@ -3,7 +3,7 @@ module github.com/cerbos/cerbos/hack/loadtest
 go 1.27.3
 
 require (
-	github.com/alecthomas/kong v1.16.1
+	github.com/alecthomas/kong v1.17.0
 	github.com/bojand/ghz v0.121.0
 )
 
