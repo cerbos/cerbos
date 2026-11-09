@@ -1,0 +1,3 @@
+type:fix
+Fix `pathHasPrefix` for paths whose next segment starts with a dot
+`pathHasPrefix` now treats names starting with a dot as being under the prefix. For example, `pathHasPrefix("/secrets/.env", "/secrets")` returns true.
