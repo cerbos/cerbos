@@ -157,6 +157,7 @@ func TestCerbosLib(t *testing.T) {
 		{expr: `pathHasPrefix("C:\\foo\\..bar", "C:\\foo") == true`},
 		{expr: `pathHasPrefix("/foo", "/foo/bar") == false`},
 		{expr: `pathHasPrefix("/foo/baz", "/foo/bar") == false`},
+		{expr: `pathHasPrefix("/foo/", "/foo") == true`},
 		{expr: `pathHasPrefix("C:\\foo", "C:\\foo\\bar") == false`},
 		{expr: `pathHasPrefix("C:\\foo\\baz", "C:\\foo\\bar") == false`},
 		{expr: `"/path/to/dir".pathHasPrefix("/path/to") == true`},
