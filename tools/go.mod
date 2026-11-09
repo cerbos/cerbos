@@ -7,12 +7,12 @@ require (
 	github.com/cerbos/actions v0.0.0-20261102065444-d175c7439326
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.1
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
-	github.com/dadav/helm-schema v0.0.0-20260921220656-1eb6a53ffc34
+	github.com/dadav/helm-schema v0.0.0-20261026082132-f578d6e2ff5a
 	github.com/dkorunic/betteralign v0.15.4
 	github.com/fullstorydev/grpcurl v1.9.4
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.32.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.33.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df
-	github.com/vektra/mockery/v3 v3.8.1
+	github.com/vektra/mockery/v3 v3.9.0
 	go.elastic.co/go-licence-detector v0.11.1
 	golang.org/x/tools v0.52.0
 	golang.org/x/vuln v1.9.0
@@ -121,8 +121,8 @@ require (
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	google.golang.org/api v0.278.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20261012220534-4341edf3f941 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261019180522-ce908d29299b // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	helm.sh/helm/v3 v3.21.4 // indirect

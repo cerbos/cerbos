@@ -1,12 +1,12 @@
 github.com/alecthomas/assert/v2 v2.11.0 h1:2Q9r3ki8+JYXvGsDyBXwH3LcJ+WK5D0gc5E8vS6K3D0=
 github.com/alecthomas/assert/v2 v2.11.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
-github.com/alecthomas/kong v1.16.1 h1:ixhCt93XkJ98kGposQ54+bl0IK6XwqB40AsMynU7Z8E=
-github.com/alecthomas/kong v1.16.1/go.mod h1:wrlbXem1CWqUV5Vbmss5ISYhsVPkBb1Yo7YKJghju2I=
+github.com/alecthomas/kong v1.17.0 h1:f52BVWChYMDkMkCoqkEWRuFOk/K4B5LO7xIijeLJRdk=
+github.com/alecthomas/kong v1.17.0/go.mod h1:wrlbXem1CWqUV5Vbmss5ISYhsVPkBb1Yo7YKJghju2I=
 github.com/alecthomas/repr v0.5.2 h1:SU73FTI9D1P5UNtvseffFSGmdNci/O6RsqzeXJtP0Qs=
 github.com/alecthomas/repr v0.5.2/go.mod h1:Fr0507jx4eOXV7AlPV6AVZLYrLIuIeSOWtW57eE/O/4=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
-github.com/gobwas/glob v1.0.0 h1:p+FKbLEIsK1yZ39/OINwFvqNb5oyPY4H8xcy6uYu8dg=
-github.com/gobwas/glob v1.0.0/go.mod h1:oWCdo522i2P1n/hMXGNWs7yoV4wy/ciZuUIbvKj5rkc=
+github.com/gobwas/glob v1.1.0 h1:CS8tIr7+5fu50N+tKsQy3osOU5jmhjHv0/ildcKAn2Q=
+github.com/gobwas/glob v1.1.0/go.mod h1:5OYLTTNYHcww+D/XwWAjGpmIE8sD41kWneKyzWkK7/k=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
