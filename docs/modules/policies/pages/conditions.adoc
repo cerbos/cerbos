@@ -426,7 +426,11 @@ NOTE: The `inIPAddrRange` is a Cerbos-specific extension function to CEL.
 | exists_one | Check that only one element matching the predicate exists. | P.attr.teams.exists_one(t, t.startsWith("comm")) == false && P.attr.limits.exists_one(k, v, k == "design" && v > 0) == false
 | filter   | Filter a list using the predicate. | size(P.attr.teams.filter(t, t.matches("^comm"))) == 2
 | flatten   | Flattens a list. If an optional depth is provided, the list is flattened to the specified level | [1,2,[],[],[3,4]].flatten() == [1, 2, 3, 4] && [1,[2,[3,[4]]]].flatten(2) == [1, 2, 3, [4]]
+| hasAll   | Checks whether the list contains every element of the argument list. Since v0.58.0 only. | P.attr.teams.hasAll(["design", "product"])
+| hasAny   | Checks whether the lists have at least one common element. Since v0.58.0 only. Use `hasIntersection` for older versions. | P.attr.teams.hasAny(["design", "engineering"])
+| hasExactly | Checks whether the lists contain the same elements, ignoring order and duplicates. Since v0.58.0 only. | P.attr.teams.hasExactly(["commercial", "product", "communications", "design"])
 | hasIntersection| Checks whether the lists have at least one common element | hasIntersection(["design", "engineering"], P.attr.teams)
+| hasOnly  | Checks whether every element of the list is contained in the argument list. Since v0.58.0 only. | ["design", "product"].hasOnly(P.attr.teams)
 | in       | Check whether the given element is contained in the list or map | ("design" in P.attr.teams) && ("acme" in P.attr.clients)
 | intersect| Produces the set intersection of two lists | intersect(["design", "engineering"], P.attr.teams) == ["design"]
 | isSubset | Checks whether the list is a subset of another list | ["design", "engineering"].isSubset(P.attr.teams) == false
@@ -552,6 +556,7 @@ NOTE: The SPIFFE functions are Cerbos-specific extensions to CEL.
 | format   | Format a string with the given arguments | "department_%s_%d".format(["marketing", 1])
 | indexOf  | Index of the first occurrence of the given character | R.attr.department.indexOf('a') == 1
 | json.encode | Encode as JSON. Since v0.55.0 only. | json.encode(R.attr) == '{"id":"125","department":"marketing"}'
+| json.parse | Parse a JSON string into an optional value, which is empty if the string is not valid JSON. Pass a type as the second argument to parse into that type. Since v0.58.0 only. Not supported in query plans when the string depends on resource attributes. | json.parse('{"department":"marketing"}').value().department == "marketing" && json.parse('123', int).value() == 123
 | lastIndexOf | Index of the last occurrence of the given character | R.attr.department.lastIndexOf('g') == 8
 | lowerAscii  | Convert ASCII characters to lowercase | "MARKETING".lowerAscii() == R.attr.department
 | matches  | Check whether a string matches a link:https://github.com/google/re2/wiki/Syntax[RE2] regular expression | R.attr.department.matches("^[mM].*g$")
@@ -567,6 +572,8 @@ NOTE: The SPIFFE functions are Cerbos-specific extensions to CEL.
 | substring | Selects a substring from the string | R.attr.department.substring(4) == "eting" && R.attr.department.substring(4, 6) == "et"
 | trim     | Remove whitespace from beginning and end | "  marketing  ".trim() == "marketing"
 | upperAscii | Convert ASCII characters to uppercase | R.attr.department.upperAscii() == "MARKETING"
+| yaml.encode | Encode as YAML. Since v0.58.0 only. | yaml.encode({"department": "marketing"}) == "department: marketing\n"
+| yaml.parse | Parse a YAML string into an optional value, which is empty if the string is not valid YAML. Pass a type as the second argument to parse into that type. Since v0.58.0 only. Not supported in query plans when the string depends on resource attributes. | yaml.parse("department: marketing").value().department == "marketing"
 |===
 
 
