@@ -1,0 +1,2 @@
+type:feature
+Add base64.encodeUrl, base64.decodeUrl, json.parse, yaml.encode, yaml.parse, hasAll, hasAny, hasExactly and hasOnly CEL functions, and an optional.hasValue(value) overload
