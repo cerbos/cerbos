@@ -11,6 +11,7 @@ import (
 
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/plugin/kzap"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -60,8 +61,22 @@ func init() {
 		if err := confW.GetSection(conf); err != nil {
 			return nil, fmt.Errorf("failed to read kafka audit log configuration: %w", err)
 		}
+		newp, err := NewPublisher(ctx, conf, decisionFilter)
+		if err != nil {
+			return nil, err
+		}
 
-		return NewPublisher(ctx, conf, decisionFilter)
+		if _, err := metrics.Meter().RegisterCallback(func(_ context.Context, o metric.Observer) error {
+			o.ObserveInt64(metrics.AuditBackendBufferEntries(), newp.measureBacklog(), metric.WithAttributes(
+				metrics.AuditBackendKey.String(Backend),
+			))
+
+			return nil
+		}, metrics.AuditBackendBufferEntries()); err != nil {
+			return nil, err
+		}
+
+		return newp, nil
 	})
 }
 
@@ -74,6 +89,7 @@ type Client interface {
 
 type Publisher struct {
 	Client         Client
+	measureBacklog func() int64
 	decisionFilter audit.DecisionLogEntryFilter
 	marshaller     recordMarshaller
 	sync           bool
@@ -135,6 +151,7 @@ func NewPublisher(ctx context.Context, conf *Conf, decisionFilter audit.Decision
 		marshaller:     newMarshaller(conf.Encoding),
 		sync:           conf.ProduceSync,
 		closeTimeout:   conf.CloseTimeout,
+		measureBacklog: client.BufferedProduceRecords,
 	}, nil
 }
 
