@@ -7,8 +7,8 @@ include::ROOT:partial$version-check.adoc[]
 
 There are six kinds of Cerbos policies:
 
-xref:derived_roles.adoc[Derived roles]:: Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.
 xref:resource_policies.adoc[Resource policies]:: Defines rules for actions that can be performed on a given resource. A resource is an application-specific concept that applies to anything that requires access rules. For example, in an HR application, a resource can be as coarse-grained as a full employee record or as fine-grained as a single field in the record.
+xref:derived_roles.adoc[Derived roles]:: Traditional RBAC roles are usually broad groupings with no context awareness. Derived roles are a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.
 xref:principal_policies.adoc[Principal policies]:: Defines overrides for a specific user.
 xref:role_policies.adoc[Role policies]:: Define rules specific to a given role. Rules are defined as a list of allowable actions that apply to a particular resource.
 xref:variables.adoc#export[Exported variables]:: Defines variables to be reused in condition expressions in other policies.
@@ -16,5 +16,35 @@ xref:variables.adoc#export-constants[Exported constants]:: Defines constants to 
 
 
 Policies are evaluated based on the metadata passed in the request to the Cerbos PDP. See xref:api:index.adoc[Cerbos API] for more information.
+
+== Choosing a policy type
+
+Resource policies are the primary policy type. The other policy types either provide reusable inputs to resource policies, constrain resource-policy decisions, or override decisions for a specific principal.
+
+[cols="2,3",options="header"]
+|===
+| Requirement
+| Policy type
+
+| Define the actions that roles can perform on a resource kind
+| xref:resource_policies.adoc[Resource policy]
+
+| Reuse a context-dependent designation, such as `owner`, across resource-policy rules
+| xref:derived_roles.adoc[Derived roles], imported by a resource policy
+
+| Define an exception for a specific principal
+| xref:principal_policies.adoc[Principal policy]
+
+| Restrict the resources and actions available to an IdP role or custom role
+| xref:role_policies.adoc[Role policy], applied as a constraint on a resource policy
+
+| Define hierarchical variants of resource or principal policies
+| xref:scoped_policies.adoc[Scoped policies]
+
+| Reuse expressions or values across policies
+| xref:variables.adoc[Exported variables or constants]
+|===
+
+See xref:evaluation.adoc[How Cerbos evaluates requests] for the evaluation order and xref:best_practices.adoc[Best practices and recipes] for policy modelling patterns.
 
 NOTE: View the latest documentation and example requests by accessing a running Cerbos instance using a browser (http://localhost:3592/). The OpenAPI (Swagger) schema can be obtained by accessing `{cerbos-openapi-schema}` as well.
