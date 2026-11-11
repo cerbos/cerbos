@@ -11,7 +11,6 @@ import (
 	"sort"
 
 	celast "cel.dev/cel-go/common/ast"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/multierr"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 
@@ -43,6 +42,7 @@ type planRequest struct {
 	auditTrail           *auditv1.AuditTrail
 	includingParentRoles map[string]struct{}
 	resourceKind         index.ResourceKind
+	policyFQN            string
 	resourceScope        string
 	resourceVersion      string
 	evalParams           evaluator.EvalParams
@@ -65,9 +65,12 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	defer span.End()
 
-	p, output, err := rt.newPlanRequest(ctx, span, schemaMgr, input, evalParams)
+	p, output, err := rt.newPlanRequest(ctx, schemaMgr, input, evalParams)
 	if err != nil {
 		return nil, nil, err
+	}
+	if p.policyFQN != "" {
+		span.SetAttributes(tracing.PolicyFQN(p.policyFQN))
 	}
 	if output != nil {
 		return output, p.auditTrail, nil
@@ -107,7 +110,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 // newPlanRequest resolves the scopes and validates the input. It returns a non-nil output when the
 // plan is decided without evaluating any action. The returned planRequest is non-nil unless err is.
-func (rt *RuleTable) newPlanRequest(ctx context.Context, span trace.Span, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, evalParams evaluator.EvalParams) (*planRequest, *enginev1.PlanResourcesOutput, error) {
+func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, evalParams evaluator.EvalParams) (*planRequest, *enginev1.PlanResourcesOutput, error) {
 	principalScope := evaluator.Scope(input.Principal.Scope, evalParams)
 	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, evalParams)
 
@@ -135,7 +138,7 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, span trace.Span, schema
 	if fqn == "" {
 		fqn = principalPolicyFQN
 	}
-	span.SetAttributes(tracing.PolicyFQN(fqn))
+	p.policyFQN = fqn
 
 	p.request = planner.PlanResourcesInputToRequest(input)
 	p.evalCtx = &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}

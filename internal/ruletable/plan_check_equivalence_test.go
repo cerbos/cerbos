@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -173,7 +172,7 @@ func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager,
 	}
 
 	evalParams := evaluator.NewCheckOptions(ctx, conf, opts...).EvalParams
-	p, earlyOutput, err := rt.newPlanRequest(ctx, trace.SpanFromContext(ctx), schemaMgr, planInput, evalParams)
+	p, earlyOutput, err := rt.newPlanRequest(ctx, schemaMgr, planInput, evalParams)
 	require.NoError(t, err)
 
 	for _, action := range input.Actions {
