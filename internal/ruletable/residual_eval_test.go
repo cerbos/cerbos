@@ -16,9 +16,13 @@ import (
 	"github.com/cerbos/cerbos/internal/ruletable/planner"
 )
 
-// evalResidual evaluates a plan AST against the concrete resource in input, using the same
-// activation that Check builds. Constants and variables are left unbound: the planner should have
-// folded them into the residual, so a reference to one surfaces as an error.
+// evalResidual evaluates a plan AST against the concrete resource in input.
+//
+// The planner substitutes policy constants (C) and variables (V) into the residual, so a correct
+// residual never refers to them. They are deliberately not bound here: if the planner leaves such a
+// reference behind, evaluation fails and exposes it.
+//
+// The request, principal and globals are bound as Check binds them.
 func evalResidual(ctx context.Context, node *planner.QpN, input *enginev1.CheckInput, globals map[string]any, nowFn conditions.NowFunc) (bool, error) {
 	exprProto, err := planner.QpNToExpr(node)
 	if err != nil {
