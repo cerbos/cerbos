@@ -24,12 +24,23 @@ import (
 	"github.com/cerbos/cerbos/internal/test"
 )
 
-// planCheckSkip lists engine test cases excluded from the equivalence check, with the reason.
-var planCheckSkip = map[string]string{}
+// planCheckResidualErrorCases lists the engine test cases in which a residual may fail to evaluate
+// against the resource, with the reason. Such a residual yields neither allow nor deny, so the action is
+// counted as indeterminate. Actions whose residual does evaluate must still match, and in any other
+// case a residual error fails the test.
+var planCheckResidualErrorCases = map[string]string{
+	"case_53": "the cel_errors policies have conditions that fail on purpose",
+	"case_54": "the cel_errors policies have conditions that fail on purpose",
+	"case_55": "the cel_errors policies have conditions that fail on purpose",
+}
+
+type planCheckCounts struct {
+	matched, indeterminate int
+}
 
 // TestPlanCheckEquivalence checks that for every input in the Check corpus, the residual AST that Plan
 // builds for each action, evaluated against the input's resource, agrees with the Check effect.
-// See plan_check_equivalence.md.
+// Each case runs with the lenient scope search and strict evaluation settings that it declares.
 func TestPlanCheckEquivalence(t *testing.T) {
 	rt := mkStoreRuleTable(t)
 	schemaMgr, err := schema.NewStaticFromConf(schema.NewConf(schema.EnforcementNone), rt.Schemas, rt.JsonSchemas)
@@ -38,16 +49,14 @@ func TestPlanCheckEquivalence(t *testing.T) {
 	now := time.Now()
 	nowFn := func() time.Time { return now }
 
-	var matched, indeterminate int
+	var counts planCheckCounts
 	for _, tcase := range test.LoadTestCases(t, "engine") {
 		t.Run(tcase.Name, func(t *testing.T) {
-			if reason, ok := planCheckSkip[tcase.Name]; ok {
-				t.Skip(reason)
-			}
+			_, allowResidualErrors := planCheckResidualErrorCases[tcase.Name]
 
 			tc := test.Parse[privatev1.EngineTestCase](t, tcase.Input)
-			for _, lenientScopeSearch := range []bool{false, true} {
-				for _, strictEvaluation := range []bool{false, true} {
+			for _, lenientScopeSearch := range tc.GetConfig().GetLenientScopeSearch() {
+				for _, strictEvaluation := range tc.GetConfig().GetStrictEvaluation() {
 					conf := &evaluator.Conf{}
 					conf.SetDefaults()
 					if v := tc.GetConfig().GetDefaultPolicyVersion(); v != "" {
@@ -60,9 +69,7 @@ func TestPlanCheckEquivalence(t *testing.T) {
 
 					t.Run(fmt.Sprintf("lenient_scope_search=%t/strict_evaluation=%t", lenientScopeSearch, strictEvaluation), func(t *testing.T) {
 						for i, input := range tc.Inputs {
-							m, ind := comparePlanWithCheck(t, rt, schemaMgr, conf, nowFn, i, input)
-							matched += m
-							indeterminate += ind
+							comparePlanWithCheck(t, rt, schemaMgr, conf, nowFn, i, input, allowResidualErrors, &counts)
 						}
 					})
 				}
@@ -70,12 +77,12 @@ func TestPlanCheckEquivalence(t *testing.T) {
 		})
 	}
 
-	t.Logf("matched=%d indeterminate=%d", matched, indeterminate)
+	t.Logf("matched=%d indeterminate=%d", counts.matched, counts.indeterminate)
 }
 
-// comparePlanWithCheck runs Check and Plan for one input and compares each action's outcome.
-// It returns the number of matching and indeterminate actions; mismatches fail the test.
-func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager, conf *evaluator.Conf, nowFn func() time.Time, idx int, input *enginev1.CheckInput) (matched, indeterminate int) {
+// comparePlanWithCheck runs Check and Plan for one input and compares each action's outcome. A mismatch
+// fails the test, and so does a residual that fails to evaluate unless allowResidualErrors is set.
+func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager, conf *evaluator.Conf, nowFn func() time.Time, idx int, input *enginev1.CheckInput, allowResidualErrors bool, counts *planCheckCounts) {
 	t.Helper()
 
 	ctx := t.Context()
@@ -102,42 +109,36 @@ func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager,
 	require.NoError(t, err)
 
 	for _, action := range input.Actions {
-		wantAllow := outputs[0].Actions[action].GetEffect() == effectv1.Effect_EFFECT_ALLOW
+		checkEffect := outputs[0].Actions[action].GetEffect()
+		wantAllow := checkEffect == effectv1.Effect_EFFECT_ALLOW
 
 		var haveAllow bool
 		var residual *planner.QpN
+		var residualErr error
 		if earlyOutput == nil {
 			ap, err := rt.planAction(ctx, p, action)
 			require.NoError(t, err)
 
 			residual = ap.ast
-			haveAllow, err = evalResidual(ctx, residual, input, conf.Globals, nowFn)
-			if err != nil {
-				t.Logf("indeterminate: input[%d] resource=%s/%s action=%s check=%s: %v\nresidual: %s",
-					idx, input.Resource.Kind, input.Resource.Id, action, outputs[0].Actions[action].GetEffect(), err, astString(residual))
-				indeterminate++
-				continue
-			}
+			haveAllow, residualErr = evalResidual(ctx, residual, input, conf.Globals, nowFn)
 		}
 
-		if haveAllow != wantAllow && conf.StrictEvaluation && !wantAllow && len(outputs[0].EvaluationErrors) > 0 {
-			// Check denied because a condition failed on the concrete resource, typically a missing
-			// attribute. Plan treats the attribute as unknown, so it can't see the error.
-			t.Logf("indeterminate: input[%d] resource=%s/%s action=%s: strict evaluation error in Check: %v\nresidual: %s",
-				idx, input.Resource.Kind, input.Resource.Id, action, outputs[0].EvaluationErrors, astString(residual))
-			indeterminate++
-			continue
+		describe := func() string {
+			return fmt.Sprintf("input[%d] action=%s resource=%s/%s check=%s plan=%t residualErr=%v evaluationErrors=%v\nresidual: %s\ninput: %s",
+				idx, action, input.Resource.Kind, input.Resource.Id, checkEffect, haveAllow, residualErr, outputs[0].EvaluationErrors, astString(residual), protojson.Format(input))
 		}
 
-		if haveAllow != wantAllow {
-			t.Errorf("mismatch: input[%d] resource=%s/%s action=%s check=%s plan=%t\nresidual: %s\ninput: %s",
-				idx, input.Resource.Kind, input.Resource.Id, action, outputs[0].Actions[action].GetEffect(), haveAllow, astString(residual), protojson.Format(input))
-			continue
+		switch {
+		case residualErr != nil && allowResidualErrors:
+			counts.indeterminate++
+		case residualErr != nil:
+			t.Errorf("residual failed to evaluate: %s", describe())
+		case haveAllow != wantAllow:
+			t.Errorf("mismatch: %s", describe())
+		default:
+			counts.matched++
 		}
-		matched++
 	}
-
-	return matched, indeterminate
 }
 
 func astString(node *planner.QpN) string {
