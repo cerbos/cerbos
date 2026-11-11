@@ -79,25 +79,17 @@ func (r *typeRegistry) NativeToValue(native any) ref.Val {
 // wrapProtoMessage wraps a proto message value so that its fields can be accessed by JSON name.
 // Type-checked expressions resolve JSON names at compile time, but unchecked ones (as evaluated by
 // the query planner) rely on this.
-//
-// The check is made on the adapted value, not on the native one. While evaluating `a.b.c`, CEL passes
-// each intermediate result through the adapter. A nested message such as `a.b` arrives there as a CEL
-// value that the underlying adapter has already built, not as a proto.Message.
 func wrapProtoMessage(value ref.Val) ref.Val {
 	if _, ok := value.(*protoMessageObject); ok {
 		return value
 	}
 
-	if t, ok := value.Type().(*types.Type); !ok || t.Kind() != types.StructKind {
-		return value
-	}
-
-	message, ok := value.Value().(proto.Message)
+	obj, ok := value.(object)
 	if !ok {
 		return value
 	}
 
-	obj, ok := value.(object)
+	message, ok := value.Value().(proto.Message)
 	if !ok {
 		return value
 	}
