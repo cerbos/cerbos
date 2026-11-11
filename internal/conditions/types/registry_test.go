@@ -290,14 +290,11 @@ func testCEL(t *testing.T, envOptions []cel.EnvOption, testCases []celTestCase) 
 				testCELCase(t, env, env.Compile, tc)
 			})
 
-			// The query planner evaluates expressions that are parsed but not type-checked.
+			if tc.wantCompileErr != "" || tc.checkedOnly != "" {
+				return
+			}
+
 			t.Run("unchecked", func(t *testing.T) {
-				if tc.wantCompileErr != "" {
-					t.Skip("Compile errors come from the type checker")
-				}
-				if tc.checkedOnly != "" {
-					t.Skip(tc.checkedOnly)
-				}
 				testCELCase(t, env, env.Parse, tc)
 			})
 		})
