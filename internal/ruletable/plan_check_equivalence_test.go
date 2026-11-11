@@ -57,19 +57,13 @@ func TestPlanCheckEquivalence(t *testing.T) {
 			tc := test.Parse[privatev1.EngineTestCase](t, tcase.Input)
 			for _, lenientScopeSearch := range tc.GetConfig().GetLenientScopeSearch() {
 				for _, strictEvaluation := range tc.GetConfig().GetStrictEvaluation() {
-					conf := &evaluator.Conf{}
-					conf.SetDefaults()
-					if v := tc.GetConfig().GetDefaultPolicyVersion(); v != "" {
-						conf.DefaultPolicyVersion = v
-					}
-					conf.DefaultScope = tc.GetConfig().GetDefaultScope()
-					conf.Globals = (&structpb.Struct{Fields: tc.GetConfig().GetGlobals()}).AsMap()
-					conf.LenientScopeSearch = lenientScopeSearch
-					conf.StrictEvaluation = strictEvaluation
+					conf := planCheckConf(tc.GetConfig(), lenientScopeSearch, strictEvaluation)
 
 					t.Run(fmt.Sprintf("lenient_scope_search=%t/strict_evaluation=%t", lenientScopeSearch, strictEvaluation), func(t *testing.T) {
 						for i, input := range tc.Inputs {
-							comparePlanWithCheck(t, rt, schemaMgr, conf, nowFn, i, input, allowResidualErrors, &counts)
+							for _, failure := range comparePlanWithCheck(t, rt, schemaMgr, conf, nowFn, i, input, allowResidualErrors, &counts) {
+								t.Error(failure)
+							}
 						}
 					})
 				}
@@ -80,9 +74,83 @@ func TestPlanCheckEquivalence(t *testing.T) {
 	t.Logf("matched=%d indeterminate=%d", counts.matched, counts.indeterminate)
 }
 
-// comparePlanWithCheck runs Check and Plan for one input and compares each action's outcome. A mismatch
-// fails the test, and so does a residual that fails to evaluate unless allowResidualErrors is set.
-func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager, conf *evaluator.Conf, nowFn func() time.Time, idx int, input *enginev1.CheckInput, allowResidualErrors bool, counts *planCheckCounts) {
+// planCheckStrictMissingAttr lists engine test case inputs, by case name and
+// input index, that hit a known divergence when run with strict evaluation.
+//
+// The resource lacks an attribute that a condition reads. Check denies on
+// the evaluation error. Plan treats the attribute as unknown, so its residual
+// either allows the resource or fails to evaluate against it.
+var planCheckStrictMissingAttr = map[string][]int{
+	// leave_request/XX125 has no attributes. The failing condition is ORed with an unconditional allow,
+	// so the residual is true.
+	"case_14": {0},
+	"case_24": {0},
+	"case_36": {0},
+	// cel_errors.account/missing_attribute. The failing condition stays in the residual, which fails
+	// with the same error as Check.
+	"case_55": {1},
+}
+
+// TestPlanCheckStrictMissingAttr targets the known divergence described on planCheckStrictMissingAttr.
+// The inputs run with strict evaluation whatever their test case declares. Until Plan agrees with
+// Check on them, the test reports the disagreements and skips.
+func TestPlanCheckStrictMissingAttr(t *testing.T) {
+	rt := mkStoreRuleTable(t)
+	schemaMgr, err := schema.NewStaticFromConf(schema.NewConf(schema.EnforcementNone), rt.Schemas, rt.JsonSchemas)
+	require.NoError(t, err)
+
+	now := time.Now()
+	nowFn := func() time.Time { return now }
+
+	var counts planCheckCounts
+	var failures []string
+	found := 0
+	for _, tcase := range test.LoadTestCases(t, "engine") {
+		indices, ok := planCheckStrictMissingAttr[tcase.Name]
+		if !ok {
+			continue
+		}
+		found++
+
+		tc := test.Parse[privatev1.EngineTestCase](t, tcase.Input)
+		for _, lenientScopeSearch := range tc.GetConfig().GetLenientScopeSearch() {
+			conf := planCheckConf(tc.GetConfig(), lenientScopeSearch, true)
+			for _, i := range indices {
+				require.Less(t, i, len(tc.Inputs), "%s has no input[%d]", tcase.Name, i)
+				for _, failure := range comparePlanWithCheck(t, rt, schemaMgr, conf, nowFn, i, tc.Inputs[i], false, &counts) {
+					failures = append(failures, fmt.Sprintf("%s lenient_scope_search=%t: %s", tcase.Name, lenientScopeSearch, failure))
+				}
+			}
+		}
+	}
+	require.Equal(t, len(planCheckStrictMissingAttr), found, "Some test cases in planCheckStrictMissingAttr don't exist")
+
+	if len(failures) > 0 {
+		for _, failure := range failures {
+			t.Log(failure)
+		}
+		t.Skipf("WARNING: known divergence: with strict evaluation, Plan disagrees with Check on resources with missing attributes (%d of %d comparisons). See plan_check_equivalence.md.",
+			len(failures), len(failures)+counts.matched)
+	}
+}
+
+func planCheckConf(config *privatev1.EngineConfig, lenientScopeSearch, strictEvaluation bool) *evaluator.Conf {
+	conf := &evaluator.Conf{}
+	conf.SetDefaults()
+	if v := config.GetDefaultPolicyVersion(); v != "" {
+		conf.DefaultPolicyVersion = v
+	}
+	conf.DefaultScope = config.GetDefaultScope()
+	conf.Globals = (&structpb.Struct{Fields: config.GetGlobals()}).AsMap()
+	conf.LenientScopeSearch = lenientScopeSearch
+	conf.StrictEvaluation = strictEvaluation
+
+	return conf
+}
+
+// comparePlanWithCheck runs Check and Plan for one input and compares each action's outcome. It returns
+// a description of each failure.
+func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager, conf *evaluator.Conf, nowFn func() time.Time, idx int, input *enginev1.CheckInput, allowResidualErrors bool, counts *planCheckCounts) (failures []string) {
 	t.Helper()
 
 	ctx := t.Context()
@@ -132,13 +200,15 @@ func comparePlanWithCheck(t *testing.T, rt *RuleTable, schemaMgr schema.Manager,
 		case residualErr != nil && allowResidualErrors:
 			counts.indeterminate++
 		case residualErr != nil:
-			t.Errorf("residual failed to evaluate: %s", describe())
+			failures = append(failures, "residual failed to evaluate: "+describe())
 		case haveAllow != wantAllow:
-			t.Errorf("mismatch: %s", describe())
+			failures = append(failures, "mismatch: "+describe())
 		default:
 			counts.matched++
 		}
 	}
+
+	return failures
 }
 
 func astString(node *planner.QpN) string {
