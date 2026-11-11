@@ -73,14 +73,17 @@ func (r *typeRegistry) FindStructFieldType(structType, fieldName string) (*types
 }
 
 func (r *typeRegistry) NativeToValue(native any) ref.Val {
-	return r.wrapProtoMessage(r.Adapter.NativeToValue(native))
+	return wrapProtoMessage(r.Adapter.NativeToValue(native))
 }
 
 // wrapProtoMessage wraps a proto message value so that its fields can be accessed by JSON name.
-// Messages nested in a wrapped message are wrapped as they are accessed, because they are adapted by
-// the underlying adapter. Type-checked expressions resolve JSON names at compile time, but unchecked
-// ones (as evaluated by the query planner) rely on this.
-func (r *typeRegistry) wrapProtoMessage(value ref.Val) ref.Val {
+// Type-checked expressions resolve JSON names at compile time, but unchecked ones (as evaluated by
+// the query planner) rely on this.
+//
+// The check is made on the adapted value, not on the native one. While evaluating `a.b.c`, CEL passes
+// each intermediate result through the adapter. A nested message such as `a.b` arrives there as a CEL
+// value that the underlying adapter has already built, not as a proto.Message.
+func wrapProtoMessage(value ref.Val) ref.Val {
 	if _, ok := value.(*protoMessageObject); ok {
 		return value
 	}
@@ -100,9 +103,8 @@ func (r *typeRegistry) wrapProtoMessage(value ref.Val) ref.Val {
 	}
 
 	return &protoMessageObject{
-		object:   obj,
-		fields:   message.ProtoReflect().Descriptor().Fields(),
-		registry: r,
+		object: obj,
+		fields: message.ProtoReflect().Descriptor().Fields(),
 	}
 }
 
@@ -114,8 +116,7 @@ type object interface {
 
 type protoMessageObject struct {
 	object
-	fields   protoreflect.FieldDescriptors
-	registry *typeRegistry
+	fields protoreflect.FieldDescriptors
 }
 
 func (o *protoMessageObject) IsSet(field ref.Val) ref.Val {
@@ -123,7 +124,7 @@ func (o *protoMessageObject) IsSet(field ref.Val) ref.Val {
 }
 
 func (o *protoMessageObject) Get(index ref.Val) ref.Val {
-	return o.registry.wrapProtoMessage(o.resolveField(o.object.Get, index))
+	return o.resolveField(o.object.Get, index)
 }
 
 func (o *protoMessageObject) resolveField(method func(ref.Val) ref.Val, field ref.Val) ref.Val {
