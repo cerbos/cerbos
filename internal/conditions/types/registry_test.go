@@ -67,32 +67,16 @@ func TestJSONFields(t *testing.T) {
 			wantResult: "default",
 		},
 		{
-			name:       "isSet camel case nested unchecked",
+			name:       "isSet camel case nested",
 			expr:       "has(request.principal.policyVersion)",
 			bindings:   bindings,
-			unchecked:  true,
 			wantResult: true,
 		},
 		{
-			name:       "get camel case nested unchecked",
-			expr:       "request.principal.policyVersion",
-			bindings:   bindings,
-			unchecked:  true,
-			wantResult: "default",
-		},
-		{
-			name:       "get snake case nested unchecked",
+			name:       "get snake case nested",
 			expr:       "request.principal.policy_version",
 			bindings:   bindings,
-			unchecked:  true,
 			wantResult: "default",
-		},
-		{
-			name:       "get map nested unchecked",
-			expr:       "request.auxData.jwt.fooBar",
-			bindings:   bindings,
-			unchecked:  true,
-			wantResult: "baz",
 		},
 		{
 			name:           "isSet missing",
@@ -149,28 +133,32 @@ func TestRuntime(t *testing.T) {
 			wantResult: []string{"foo", "bar"},
 		},
 		{
-			name:       "lazy isSet effective_derived_roles",
-			bindings:   lazy,
-			expr:       "has(runtime.effective_derived_roles)",
-			wantResult: true,
+			name:        "lazy isSet effective_derived_roles",
+			bindings:    lazy,
+			checkedOnly: lazyNeedsTypes,
+			expr:        "has(runtime.effective_derived_roles)",
+			wantResult:  true,
 		},
 		{
-			name:       "lazy isSet effectiveDerivedRoles",
-			bindings:   lazy,
-			expr:       "has(runtime.effectiveDerivedRoles)",
-			wantResult: true,
+			name:        "lazy isSet effectiveDerivedRoles",
+			bindings:    lazy,
+			checkedOnly: lazyNeedsTypes,
+			expr:        "has(runtime.effectiveDerivedRoles)",
+			wantResult:  true,
 		},
 		{
-			name:       "lazy get effective_derived_roles",
-			bindings:   lazy,
-			expr:       "runtime.effective_derived_roles",
-			wantResult: []string{"foo", "bar"},
+			name:        "lazy get effective_derived_roles",
+			bindings:    lazy,
+			checkedOnly: lazyNeedsTypes,
+			expr:        "runtime.effective_derived_roles",
+			wantResult:  []string{"foo", "bar"},
 		},
 		{
-			name:       "lazy get effectiveDerivedRoles",
-			bindings:   lazy,
-			expr:       "runtime.effectiveDerivedRoles",
-			wantResult: []string{"foo", "bar"},
+			name:        "lazy get effectiveDerivedRoles",
+			bindings:    lazy,
+			checkedOnly: lazyNeedsTypes,
+			expr:        "runtime.effectiveDerivedRoles",
+			wantResult:  []string{"foo", "bar"},
 		},
 		{
 			name:           "isSet missing",
@@ -237,34 +225,40 @@ func TestVariables(t *testing.T) {
 			bindings:    eager,
 			expr:        "V.bar",
 			wantEvalErr: "undefined field 'bar'",
+			checkedOnly: "unchecked, the error is 'no such key: bar'",
 		},
 		{
-			name:       "lazy isSet present",
-			bindings:   lazy("bar", nil),
-			expr:       "has(V.foo)",
-			wantResult: true,
+			name:        "lazy isSet present",
+			bindings:    lazy("bar", nil),
+			checkedOnly: lazyNeedsTypes,
+			expr:        "has(V.foo)",
+			wantResult:  true,
 		},
 		{
-			name:       "lazy isSet absent",
-			bindings:   lazy("bar", nil),
-			expr:       "has(V.bar)",
-			wantResult: false,
+			name:        "lazy isSet absent",
+			bindings:    lazy("bar", nil),
+			checkedOnly: lazyNeedsTypes,
+			expr:        "has(V.bar)",
+			wantResult:  false,
 		},
 		{
-			name:       "lazy get success",
-			bindings:   lazy("bar", nil),
-			expr:       "V.foo",
-			wantResult: "bar",
+			name:        "lazy get success",
+			bindings:    lazy("bar", nil),
+			checkedOnly: lazyNeedsTypes,
+			expr:        "V.foo",
+			wantResult:  "bar",
 		},
 		{
 			name:        "lazy get failure",
 			bindings:    lazy(nil, errors.New("💥")),
+			checkedOnly: lazyNeedsTypes,
 			expr:        "V.foo",
 			wantEvalErr: "💥",
 		},
 		{
 			name:        "lazy get absent",
 			bindings:    lazy("bar", nil),
+			checkedOnly: lazyNeedsTypes,
 			expr:        "V.bar",
 			wantEvalErr: "undefined field 'bar'",
 		},
@@ -278,9 +272,11 @@ type celTestCase struct {
 	wantCompileErr string
 	wantResult     any
 	wantEvalErr    string
-	// unchecked parses the expression without type-checking it, as the query planner does.
-	unchecked bool
+	checkedOnly    string // If set, it is the reason that the case can't run unchecked
 }
+
+// lazyNeedsTypes is the reason that cases with lazy bindings are checked only.
+const lazyNeedsTypes = "lazy bindings can only be read through their declared type"
 
 func testCEL(t *testing.T, envOptions []cel.EnvOption, testCases []celTestCase) {
 	t.Helper()
@@ -290,33 +286,47 @@ func testCEL(t *testing.T, envOptions []cel.EnvOption, testCases []celTestCase) 
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			compile := env.Compile
-			if tc.unchecked {
-				compile = env.Parse
-			}
+			t.Run("checked", func(t *testing.T) {
+				testCELCase(t, env, env.Compile, tc)
+			})
 
-			ast, issues := compile(tc.expr)
-			if tc.wantCompileErr == "" {
-				require.NoError(t, issues.Err(), "Failed to compile CEL expression")
-			} else {
-				require.ErrorContains(t, issues.Err(), tc.wantCompileErr, "Expected compile error")
-				return
-			}
-
-			program, err := env.Program(ast)
-			require.NoError(t, err, "Failed to create CEL program")
-
-			out, _, err := program.ContextEval(t.Context(), tc.bindings)
-			if tc.wantEvalErr == "" {
-				require.NoError(t, err, "Failed to evaluate CEL program")
-			} else {
-				require.ErrorContains(t, err, tc.wantEvalErr, "Expected evaluation error")
-				return
-			}
-
-			haveResult, err := out.ConvertToNative(reflect.TypeOf(tc.wantResult))
-			require.NoError(t, err, "Failed to convert CEL program result to %T", tc.wantResult)
-			require.Equal(t, tc.wantResult, haveResult, "Unexpected result from CEL evaluation")
+			// The query planner evaluates expressions that are parsed but not type-checked.
+			t.Run("unchecked", func(t *testing.T) {
+				if tc.wantCompileErr != "" {
+					t.Skip("Compile errors come from the type checker")
+				}
+				if tc.checkedOnly != "" {
+					t.Skip(tc.checkedOnly)
+				}
+				testCELCase(t, env, env.Parse, tc)
+			})
 		})
 	}
+}
+
+func testCELCase(t *testing.T, env *cel.Env, compile func(string) (*cel.Ast, *cel.Issues), tc celTestCase) {
+	t.Helper()
+
+	ast, issues := compile(tc.expr)
+	if tc.wantCompileErr == "" {
+		require.NoError(t, issues.Err(), "Failed to compile CEL expression")
+	} else {
+		require.ErrorContains(t, issues.Err(), tc.wantCompileErr, "Expected compile error")
+		return
+	}
+
+	program, err := env.Program(ast)
+	require.NoError(t, err, "Failed to create CEL program")
+
+	out, _, err := program.ContextEval(t.Context(), tc.bindings)
+	if tc.wantEvalErr == "" {
+		require.NoError(t, err, "Failed to evaluate CEL program")
+	} else {
+		require.ErrorContains(t, err, tc.wantEvalErr, "Expected evaluation error")
+		return
+	}
+
+	haveResult, err := out.ConvertToNative(reflect.TypeOf(tc.wantResult))
+	require.NoError(t, err, "Failed to convert CEL program result to %T", tc.wantResult)
+	require.Equal(t, tc.wantResult, haveResult, "Unexpected result from CEL evaluation")
 }
