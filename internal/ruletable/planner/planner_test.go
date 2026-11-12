@@ -28,8 +28,51 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 )
+
+func TestLogicalNodeDeduplication(t *testing.T) {
+	nodes := make([]*QpN, 0, 3)
+	for _, source := range []string{
+		`R.attr.id in {"a": true, "b": true}`,
+		`R.attr.id in {"b": true, "a": true}`,
+		`R.attr.id in {"a": true, "c": true}`,
+	} {
+		ast, issues := conditions.Compile(source)
+		require.Nil(t, issues, "%v", issues)
+		expression, err := cel.AstToCheckedExpr(ast)
+		require.NoError(t, err)
+		nodes = append(nodes, &QpN{Node: &qpNE{Expression: expression}})
+	}
+	nodes[1].GetExpression().ExprVersion = "ignored metadata"
+	original := make([]*QpN, len(nodes))
+	for i, node := range nodes {
+		original[i] = proto.Clone(node).(*QpN)
+	}
+	evalCtx := &EvalContext{}
+	for _, combine := range []func([]*QpN) *QpN{evalCtx.MkOrNode, evalCtx.MkAndNode} {
+		require.Nil(t, combine(nil))
+		require.Same(t, nodes[0], combine(nodes[:1]))
+		combined := combine(nodes)
+		require.Equal(t, []*QpN{nodes[0], nodes[2]}, combined.GetLogicalOperation().Nodes)
+		for i, node := range nodes {
+			require.True(t, proto.Equal(original[i], node), "deduplication changed its input")
+		}
+		require.Same(t, nodes[0], combine(nodes[:2]))
+	}
+
+	t.Run("hash collisions keep distinct expressions", func(t *testing.T) {
+		clone := proto.Clone(nodes[2]).(*QpN)
+		orderStructEntriesNode(clone)
+		fingerprint := evalCtx.nodeFingerprints[nodes[2]]
+		fingerprint.hash = evalCtx.nodeFingerprints[nodes[0]].hash
+		fingerprint.canonical = clone
+		evalCtx.nodeFingerprints[nodes[2]] = fingerprint
+		combined := evalCtx.MkOrNode([]*QpN{nodes[0], nodes[2]})
+		require.Len(t, combined.GetLogicalOperation().Nodes, 2)
+	})
+}
 
 func Test_evaluateCondition(t *testing.T) {
 	type args struct {

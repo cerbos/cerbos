@@ -102,7 +102,8 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 		// evaluate resource policies before principal policies
 	policyTypesLoop:
 		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
-			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+			policyTypeAllowNodes := make([]*planner.QpN, 0, len(input.Principal.Roles))
+			policyTypeDenyNodes := make([]*planner.QpN, 0, len(input.Principal.Roles))
 
 			var scopes []string
 			if pt == policyv1.Kind_KIND_PRINCIPAL {
@@ -249,7 +250,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 						switch b.Core.Effect { //nolint:exhaustive
 						case effectv1.Effect_EFFECT_ALLOW:
-							scopeAllowNode = addNode(scopeAllowNode, node, planner.MkOrNode)
+							scopeAllowNode = addNode(scopeAllowNode, node, evalCtx.MkOrNode)
 						case effectv1.Effect_EFFECT_DENY:
 							// ignore constant false DENY nodes
 							if bv, ok := planner.IsNodeConstBool(node); ok && !bv {
@@ -257,28 +258,28 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 							}
 
 							if b.Core.FromRolePolicy {
-								scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, planner.MkOrNode)
+								scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, evalCtx.MkOrNode)
 							} else {
-								scopeDenyNode = addNode(scopeDenyNode, node, planner.MkOrNode)
+								scopeDenyNode = addNode(scopeDenyNode, node, evalCtx.MkOrNode)
 							}
 						}
 					}
 
-					scopeDenyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyNode)
-					scopeDenyRolePolicyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyRolePolicyNode)
+					scopeDenyNode = gateByChildOverrideAllow(evalCtx, childOverrideAllow, scopeDenyNode)
+					scopeDenyRolePolicyNode = gateByChildOverrideAllow(evalCtx, childOverrideAllow, scopeDenyRolePolicyNode)
 
-					roleDenyNode = addNode(roleDenyNode, scopeDenyNode, planner.MkOrNode)
-					roleDenyRolePolicyNode = addNode(roleDenyRolePolicyNode, scopeDenyRolePolicyNode, planner.MkOrNode)
+					roleDenyNode = addNode(roleDenyNode, scopeDenyNode, evalCtx.MkOrNode)
+					roleDenyRolePolicyNode = addNode(roleDenyRolePolicyNode, scopeDenyRolePolicyNode, evalCtx.MkOrNode)
 
 					if scopeAllowNode != nil { //nolint:nestif
 						if roleAllowNode == nil {
 							roleAllowNode = scopeAllowNode
 						} else {
 							if pendingAllow {
-								roleAllowNode = planner.MkAndNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
+								roleAllowNode = evalCtx.MkAndNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
 								pendingAllow = false
 							} else {
-								roleAllowNode = planner.MkOrNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
+								roleAllowNode = evalCtx.MkOrNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
 							}
 						}
 
@@ -294,7 +295,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 
 					if scopeAllowNode != nil &&
 						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-						childOverrideAllow = addNode(childOverrideAllow, scopeAllowNode, planner.MkOrNode)
+						childOverrideAllow = addNode(childOverrideAllow, scopeAllowNode, evalCtx.MkOrNode)
 					}
 				}
 
@@ -325,8 +326,8 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 					}
 				} else if roleAllowNode != nil && roleDenyNode == nil && roleDenyRolePolicyNode == nil {
 					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
-						policyTypeAllowNode = roleAllowNode
-						policyTypeDenyNode = nil
+						policyTypeAllowNodes = append(policyTypeAllowNodes[:0], roleAllowNode)
+						policyTypeDenyNodes = nil
 						// Break out of the roles loop entirely
 						break
 					}
@@ -335,15 +336,23 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 				// If there is a role policy restriction for this specific role, we must apply it here.
 				// An ALLOW from this role is valid ONLY IF it is NOT denied by this role's role policy.
 				if roleDenyRolePolicyNode != nil && roleAllowNode != nil {
-					roleAllowNode = planner.MkAndNode([]*planner.QpN{
+					roleAllowNode = evalCtx.MkAndNode([]*planner.QpN{
 						roleAllowNode,
 						planner.InvertNodeBooleanValue(roleDenyRolePolicyNode),
 					})
 				}
 
-				policyTypeAllowNode = addNode(policyTypeAllowNode, roleAllowNode, planner.MkOrNode)
-				policyTypeDenyNode = addNode(policyTypeDenyNode, roleDenyNode, planner.MkOrNode)
+				if roleAllowNode != nil {
+					policyTypeAllowNodes = append(policyTypeAllowNodes, roleAllowNode)
+				}
+				if roleDenyNode != nil {
+					policyTypeDenyNodes = append(policyTypeDenyNodes, roleDenyNode)
+				}
 			}
+
+			// Combine completed roles once instead of cloning each growing prefix.
+			policyTypeAllowNode := evalCtx.MkOrNode(policyTypeAllowNodes)
+			policyTypeDenyNode := evalCtx.MkOrNode(policyTypeDenyNodes)
 
 			if policyTypeAllowNode != nil {
 				hasPolicyTypeAllow = true
@@ -353,7 +362,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 				if rootNode == nil {
 					rootNode = policyTypeAllowNode
 				} else {
-					rootNode = planner.MkOrNode([]*planner.QpN{policyTypeAllowNode, rootNode})
+					rootNode = evalCtx.MkOrNode([]*planner.QpN{policyTypeAllowNode, rootNode})
 				}
 			}
 
@@ -365,7 +374,7 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 					// No ALLOW at this level or below, so this subtree denies unconditionally.
 					rootNode = planner.MkFalseNode()
 				} else {
-					rootNode = planner.MkAndNode([]*planner.QpN{planner.InvertNodeBooleanValue(policyTypeDenyNode), rootNode})
+					rootNode = evalCtx.MkAndNode([]*planner.QpN{planner.InvertNodeBooleanValue(policyTypeDenyNode), rootNode})
 				}
 			}
 		} // range over policy kinds
@@ -426,7 +435,7 @@ func addNode(curr, next *planner.QpN, combine func([]*planner.QpN) *planner.QpN)
 
 // gateByChildOverrideAllow narrows a parent-scope DENY to only fire when no child OVERRIDE_PARENT
 // scope has already produced an ALLOW.
-func gateByChildOverrideAllow(childOverrideAllow, deny *planner.QpN) *planner.QpN {
+func gateByChildOverrideAllow(evalCtx *planner.EvalContext, childOverrideAllow, deny *planner.QpN) *planner.QpN {
 	if deny == nil || childOverrideAllow == nil {
 		return deny
 	}
@@ -434,5 +443,5 @@ func gateByChildOverrideAllow(childOverrideAllow, deny *planner.QpN) *planner.Qp
 	if bv, ok := planner.IsNodeConstBool(deny); ok && bv {
 		return inv
 	}
-	return planner.MkAndNode([]*planner.QpN{inv, deny})
+	return evalCtx.MkAndNode([]*planner.QpN{inv, deny})
 }

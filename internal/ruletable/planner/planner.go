@@ -33,15 +33,6 @@ import (
 	"github.com/cerbos/cerbos/internal/util"
 )
 
-var ignoreHashFields = map[string]struct{}{
-	"google.api.expr.v1alpha1.CheckedExpr.reference_map":  {},
-	"google.api.expr.v1alpha1.CheckedExpr.type_map":       {},
-	"google.api.expr.v1alpha1.CheckedExpr.source_info":    {},
-	"google.api.expr.v1alpha1.CheckedExpr.expr_version":   {},
-	"google.api.expr.v1alpha1.Expr.id":                    {},
-	"google.api.expr.v1alpha1.Expr.CreateStruct.Entry.id": {},
-}
-
 type (
 	QpN   = enginev1.PlanResourcesAst_Node
 	qpNLO = enginev1.PlanResourcesAst_Node_LogicalOperation
@@ -54,6 +45,11 @@ type (
 	NodeFilter struct {
 		allowFilter []*QpN
 		denyFilter  []*QpN
+	}
+
+	nodeFingerprint struct {
+		canonical *QpN
+		hash      uint64
 	}
 )
 
@@ -145,8 +141,8 @@ func MkNodeFromLO(lo *enginev1.PlanResourcesAst_LogicalOperation) *enginev1.Plan
 	return &QpN{Node: &qpNLO{LogicalOperation: lo}}
 }
 
-func MkOrNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
-	uniqueNodes := dedupNodes(nodes)
+func (evalCtx *EvalContext) MkOrNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	uniqueNodes := evalCtx.dedupNodes(nodes)
 	switch len(uniqueNodes) {
 	case 0:
 		return nil
@@ -157,8 +153,8 @@ func MkOrNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAs
 	return MkNodeFromLO(mkOrLogicalOperation(uniqueNodes))
 }
 
-func MkAndNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
-	uniqueNodes := dedupNodes(nodes)
+func (evalCtx *EvalContext) MkAndNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesAst_Node {
+	uniqueNodes := evalCtx.dedupNodes(nodes)
 	switch len(uniqueNodes) {
 	case 0:
 		return nil
@@ -169,26 +165,48 @@ func MkAndNode(nodes []*enginev1.PlanResourcesAst_Node) *enginev1.PlanResourcesA
 	return MkNodeFromLO(MkAndLogicalOperation(uniqueNodes))
 }
 
-func dedupNodes(nodes []*enginev1.PlanResourcesAst_Node) []*enginev1.PlanResourcesAst_Node {
+func (evalCtx *EvalContext) dedupNodes(nodes []*enginev1.PlanResourcesAst_Node) []*enginev1.PlanResourcesAst_Node {
+	if len(nodes) < 2 { //nolint:mnd
+		return nodes
+	}
+	if evalCtx.nodeFingerprints == nil {
+		evalCtx.nodeFingerprints = make(map[*QpN]nodeFingerprint)
+	}
+
 	uniqueNodes := make([]*enginev1.PlanResourcesAst_Node, 0, len(nodes))
-	nodeHashes := make(map[uint64]struct{}, len(nodes))
+	nodeHashes := make(map[uint64][]*QpN, len(nodes))
 
+nodesLoop:
 	for _, node := range nodes {
-		// We hit a bug where Go map iteration was causing inconsistent ordering with `Expr_CreateStruct` entries. This led to
-		// outputs with many OR'd duplicate sets of conditions (namely in rules with wildcard roles and with many roles being resolved
-		// against those rules). I've tried to be a bit thorough in covering a few cases, but I'll admit that I'm shooting from
-		// the hip somewhat. However, this feels low risk given the context. Worst case, we'll miss a dedup opportunity and end up
-		// with duplicate nodes (logical no-ops), which is the situation we were in before.
-		// A clone probably isn't necessary, but it keeps the function side-effect free and predictable.
-		clone := proto.Clone(node).(*enginev1.PlanResourcesAst_Node) //nolint:forcetypeassert
-		orderStructEntriesNode(clone)
-
-		hash := util.HashPB(clone, ignoreHashFields)
-		if _, exists := nodeHashes[hash]; exists {
-			continue
+		fingerprint, ok := evalCtx.nodeFingerprints[node]
+		if !ok {
+			// Cache the fingerprint without retaining a copy of every unique tree.
+			clone := proto.Clone(node).(*enginev1.PlanResourcesAst_Node) //nolint:forcetypeassert
+			orderStructEntriesNode(clone)
+			fingerprint = nodeFingerprint{canonical: clone, hash: util.HashPB(clone, nil)}
+			evalCtx.nodeFingerprints[node] = nodeFingerprint{hash: fingerprint.hash}
+		}
+		for _, existing := range nodeHashes[fingerprint.hash] {
+			if proto.Equal(existing, node) {
+				continue nodesLoop
+			}
+			candidate := evalCtx.nodeFingerprints[existing]
+			if candidate.canonical == nil {
+				candidate.canonical = proto.Clone(existing).(*QpN) //nolint:forcetypeassert
+				orderStructEntriesNode(candidate.canonical)
+				evalCtx.nodeFingerprints[existing] = candidate
+			}
+			if fingerprint.canonical == nil {
+				fingerprint.canonical = proto.Clone(node).(*QpN) //nolint:forcetypeassert
+				orderStructEntriesNode(fingerprint.canonical)
+			}
+			if proto.Equal(candidate.canonical, fingerprint.canonical) {
+				evalCtx.nodeFingerprints[node] = candidate
+				continue nodesLoop
+			}
 		}
 
-		nodeHashes[hash] = struct{}{}
+		nodeHashes[fingerprint.hash] = append(nodeHashes[fingerprint.hash], node)
 		uniqueNodes = append(uniqueNodes, node)
 	}
 
@@ -202,6 +220,12 @@ func orderStructEntriesNode(node *enginev1.PlanResourcesAst_Node) {
 			orderStructEntriesNode(child)
 		}
 	case *enginev1.PlanResourcesAst_Node_Expression:
+		if t.Expression != nil {
+			t.Expression.ReferenceMap = nil
+			t.Expression.TypeMap = nil
+			t.Expression.SourceInfo = nil
+			t.Expression.ExprVersion = ""
+		}
 		orderStructEntriesExpr(t.Expression.GetExpr())
 	}
 }
@@ -210,6 +234,7 @@ func orderStructEntriesExpr(expr *exprpb.Expr) {
 	if expr == nil {
 		return
 	}
+	expr.Id = 0
 
 	switch t := expr.ExprKind.(type) {
 	case *exprpb.Expr_CallExpr:
@@ -223,6 +248,7 @@ func orderStructEntriesExpr(expr *exprpb.Expr) {
 		}
 	case *exprpb.Expr_StructExpr:
 		for _, entry := range t.StructExpr.Entries {
+			entry.Id = 0
 			if mk := entry.GetMapKey(); mk != nil {
 				orderStructEntriesExpr(mk)
 			}
@@ -305,6 +331,7 @@ func InvertNodeBooleanValue(node *enginev1.PlanResourcesAst_Node) *enginev1.Plan
 }
 
 type EvalContext struct {
+	nodeFingerprints map[*QpN]nodeFingerprint
 	TimeFn           func() time.Time
 	ExprCache        *ExprCache
 	CELErrors        *evaluator.CELErrors

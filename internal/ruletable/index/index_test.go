@@ -53,6 +53,26 @@ func TestParentRoleIndex(t *testing.T) {
 		require.ElementsMatch(t, []string{"manager", "employee", "user", "contractor"}, roles)
 	})
 
+	t.Run("only requested roles", func(t *testing.T) {
+		roles := []string{"employee", "unknown"}
+		have := impl.AddParentRoles([]string{"missing", "acme"}, roles)
+		require.Equal(t, []string{"employee", "unknown", "user"}, have)
+		require.Equal(t, []string{"employee", "unknown"}, roles)
+	})
+
+	t.Run("repeated scopes preserve parents", func(t *testing.T) {
+		roles := impl.AddParentRoles([]string{"acme", "acme"}, []string{"manager"})
+		require.Equal(t, []string{"manager", "employee", "user", "employee", "user"}, roles)
+	})
+
+	t.Run("missing scope", func(t *testing.T) {
+		require.Equal(t, []string{"manager"}, impl.AddParentRoles([]string{"missing"}, []string{"manager"}))
+	})
+
+	t.Run("no roles", func(t *testing.T) {
+		require.Empty(t, impl.AddParentRoles([]string{"acme"}, nil))
+	})
+
 	t.Run("replace existing parent role index", func(t *testing.T) {
 		require.NoError(t, impl.IndexParentRoles(map[string]*runtimev1.RuleTable_RoleParentRoles{}))
 

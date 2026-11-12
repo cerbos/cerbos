@@ -8,11 +8,24 @@ import (
 	"maps"
 	"slices"
 
+	"google.golang.org/protobuf/proto"
+
 	enginev1 "github.com/cerbos/cerbos/api/genpb/cerbos/engine/v1"
+	"github.com/cerbos/cerbos/internal/util"
 )
 
 func MergeWithAnd(filters []*enginev1.PlanResourcesFilter) (*enginev1.PlanResourcesFilter, string, error) {
+	if len(filters) == 1 && filters[0].Kind == enginev1.PlanResourcesFilter_KIND_CONDITIONAL {
+		response := &enginev1.PlanResourcesFilter{
+			Kind:      enginev1.PlanResourcesFilter_KIND_CONDITIONAL,
+			Condition: filters[0].Condition,
+		}
+		return response, FilterToString(response), nil
+	}
+
 	conds := make(map[string]*exprOp, len(filters))
+	nodeHashes := make(map[uint64][]*exprOp, len(filters))
+filtersLoop:
 	for _, f := range filters {
 		switch f.Kind {
 		case enginev1.PlanResourcesFilter_KIND_ALWAYS_ALLOWED:
@@ -22,6 +35,13 @@ func MergeWithAnd(filters []*enginev1.PlanResourcesFilter) (*enginev1.PlanResour
 				Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED,
 			}, FilterToString(f), nil
 		case enginev1.PlanResourcesFilter_KIND_CONDITIONAL:
+			hash := util.HashPB(f.Condition, nil)
+			for _, existing := range nodeHashes[hash] {
+				if proto.Equal(existing, f.Condition) {
+					continue filtersLoop
+				}
+			}
+			nodeHashes[hash] = append(nodeHashes[hash], f.Condition)
 			conds[FilterToString(f)] = f.Condition
 		case enginev1.PlanResourcesFilter_KIND_UNSPECIFIED:
 			return nil, "", fmt.Errorf("unknown filter kind %s", f.Kind)

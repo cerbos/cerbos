@@ -717,25 +717,12 @@ func (m *Index) AddParentRoles(scopes, roles []string) []string {
 		return roles
 	}
 
-	merged := make(map[string][]string)
-	for _, scope := range scopes {
-		c, ok := m.parentRoles[scope]
-		if !ok {
-			continue
-		}
-		for role, parents := range c {
-			merged[role] = append(merged[role], parents...)
-		}
-	}
-
-	if len(merged) == 0 {
-		return roles
-	}
-
 	result := make([]string, 0, len(roles)*2) //nolint:mnd
 	result = append(result, roles...)
 	for _, role := range roles {
-		result = append(result, merged[role]...)
+		for _, scope := range scopes {
+			result = append(result, m.parentRoles[scope][role]...)
+		}
 	}
 	return result
 }
