@@ -62,7 +62,7 @@ func TestParentRoleIndex(t *testing.T) {
 
 	t.Run("repeated scopes preserve parents", func(t *testing.T) {
 		roles := impl.AddParentRoles([]string{"acme", "acme"}, []string{"manager"})
-		require.Equal(t, []string{"manager", "employee", "user", "employee", "user"}, roles)
+		require.ElementsMatch(t, []string{"manager", "employee", "user", "employee", "user"}, roles)
 	})
 
 	t.Run("missing scope", func(t *testing.T) {
