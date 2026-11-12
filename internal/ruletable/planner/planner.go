@@ -569,6 +569,12 @@ func (evalCtx *EvalContext) newEvaluator(request *enginev1.Request, globals, con
 		ds = append(ds, decls.NewVariable(s, celtypes.StringType))
 		knownVars[s] = request.Resource.GetScope()
 	}
+	for _, field := range []string{conditions.CELPolicyVersionField, conditions.CELPolicyVersionProtoField} {
+		for _, s := range conditions.ResourceFieldNames(field) {
+			ds = append(ds, decls.NewVariable(s, celtypes.StringType))
+			knownVars[s] = request.Resource.GetPolicyVersion()
+		}
+	}
 	for _, s := range conditions.PrincipalFieldNames(conditions.CELScopeField) {
 		ds = append(ds, decls.NewVariable(s, celtypes.StringType))
 		knownVars[s] = request.Principal.GetScope()
@@ -807,15 +813,17 @@ func (evalCtx *EvalContext) VariableExprs(variables []*runtimev1.Variable) (map[
 func PlanResourcesInputToRequest(input *enginev1.PlanResourcesInput) *enginev1.Request {
 	return &enginev1.Request{
 		Principal: &enginev1.Request_Principal{
-			Id:    input.Principal.Id,
-			Roles: input.Principal.Roles,
-			Attr:  input.Principal.Attr,
-			Scope: namer.ScopeValue(input.Principal.Scope),
+			Id:            input.Principal.Id,
+			Roles:         input.Principal.Roles,
+			Attr:          input.Principal.Attr,
+			PolicyVersion: input.Principal.PolicyVersion,
+			Scope:         namer.ScopeValue(input.Principal.Scope),
 		},
 		Resource: &enginev1.Request_Resource{
-			Kind:  input.Resource.Kind,
-			Attr:  input.Resource.Attr,
-			Scope: namer.ScopeValue(input.Resource.Scope),
+			Kind:          input.Resource.Kind,
+			Attr:          input.Resource.Attr,
+			PolicyVersion: input.Resource.PolicyVersion,
+			Scope:         namer.ScopeValue(input.Resource.Scope),
 		},
 		AuxData: input.AuxData,
 	}
@@ -883,7 +891,7 @@ func derivedRoleListElement(derivedRole RN) (*exprpb.Expr, error) {
 		return nil, err
 	}
 
-	conditionExpr, err := qpNToExpr(conditionNode)
+	conditionExpr, err := QpNToExpr(conditionNode)
 	if err != nil {
 		return nil, err
 	}
@@ -896,7 +904,8 @@ func derivedRoleListElement(derivedRole RN) (*exprpb.Expr, error) {
 	), nil
 }
 
-func qpNToExpr(node *QpN) (*exprpb.Expr, error) {
+// QpNToExpr converts a plan AST into a single CEL expression.
+func QpNToExpr(node *QpN) (*exprpb.Expr, error) {
 	switch n := node.Node.(type) {
 	case *enginev1.PlanResourcesAst_Node_Expression:
 		return n.Expression.Expr, nil
@@ -905,7 +914,7 @@ func qpNToExpr(node *QpN) (*exprpb.Expr, error) {
 		var op string
 		switch n.LogicalOperation.Operator {
 		case enginev1.PlanResourcesAst_LogicalOperation_OPERATOR_NOT:
-			arg, err := qpNToExpr(n.LogicalOperation.Nodes[0])
+			arg, err := QpNToExpr(n.LogicalOperation.Nodes[0])
 			if err != nil {
 				return nil, err
 			}
@@ -924,7 +933,7 @@ func qpNToExpr(node *QpN) (*exprpb.Expr, error) {
 		args := make([]*exprpb.Expr, len(n.LogicalOperation.Nodes))
 		for i, arg := range n.LogicalOperation.Nodes {
 			var err error
-			args[i], err = qpNToExpr(arg)
+			args[i], err = QpNToExpr(arg)
 			if err != nil {
 				return nil, err
 			}

@@ -1,0 +1,3 @@
+type:fix
+Evaluate policy version conditions in query plans instead of denying
+The query planner dropped the principal and resource policy versions from the plan request and could not resolve fields by their JSON names on messages nested under `request`. A condition such as `request.principal.policyVersion == request.resource.policyVersion` failed to evaluate and the plan denied the action, although `CheckResources` allowed it. The planner now evaluates these conditions, and treats the resource policy version as known like the resource kind and scope, so `R.policyVersion` no longer appears in plan filters.

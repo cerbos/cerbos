@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+# The principal and resource policy versions are known to the planner, so conditions on them are
+# evaluated rather than left in the filter, whether the field is named policyVersion or policy_version.
+description: Policy version is evaluated
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: policy_version_user
+  policyVersion: default
+  roles:
+    - user
+
+tests:
+  - resource:
+      kind: policy_version
+      policyVersion: default
+    action: same_version
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        same_version: ""
+
+  - resource:
+      kind: policy_version
+      policyVersion: default
+    action: different_version
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        different_version: ""
+
+  - resource:
+      kind: policy_version
+      policyVersion: default
+    action: abbreviated
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        abbreviated: ""
+
+  - resource:
+      kind: policy_version
+      policyVersion: default
+    action: proto_name
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        proto_name: ""

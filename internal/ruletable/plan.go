@@ -34,10 +34,83 @@ func (rt *RuleTable) Plan(ctx context.Context, conf *evaluator.Conf, schemaMgr s
 	return rt.planWithAuditTrail(ctx, schemaMgr, input, checkOpts.EvalParams)
 }
 
+// planRequest holds the inputs to planning that are shared by all actions in a request.
+type planRequest struct {
+	input                *enginev1.PlanResourcesInput
+	request              *enginev1.Request
+	evalCtx              *planner.EvalContext
+	auditTrail           *auditv1.AuditTrail
+	includingParentRoles map[string]struct{}
+	resourceKind         index.ResourceKind
+	policyFQN            string
+	resourceScope        string
+	resourceVersion      string
+	evalParams           evaluator.EvalParams
+	principalScopes      []string
+	resourceScopes       []string
+	validationErrors     []*schemav1.ValidationError
+}
+
+// actionPlan is the result of planning a single action.
+type actionPlan struct {
+	// ast is the residual condition under which the action is allowed.
+	ast *planner.QpN
+	// matchedScope is the OVERRIDE_PARENT scope that decided the action, if any.
+	matchedScope string
+	// policyMatch is true when a policy produced a result for the action.
+	policyMatch bool
+}
+
 func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, evalParams evaluator.EvalParams) (*enginev1.PlanResourcesOutput, *auditv1.AuditTrail, error) {
 	_, span := tracing.StartSpan(ctx, "engine.Plan")
 	defer span.End()
 
+	p, output, err := rt.newPlanRequest(ctx, schemaMgr, input, evalParams)
+	if err != nil {
+		return nil, nil, err
+	}
+	if p.policyFQN != "" {
+		span.SetAttributes(tracing.PolicyFQN(p.policyFQN))
+	}
+	if output != nil {
+		return output, p.auditTrail, nil
+	}
+
+	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
+	matchedScopes := make(map[string]string, len(input.Actions))
+	policyMatch := false
+	for _, action := range input.Actions {
+		ap, err := rt.planAction(ctx, p, action)
+		if err != nil {
+			return nil, p.auditTrail, err
+		}
+
+		matchedScopes[action] = ap.matchedScope
+		policyMatch = policyMatch || ap.policyMatch
+
+		f, err := planner.ToFilter(ap.ast)
+		if err != nil {
+			return nil, nil, err
+		}
+		filters = append(filters, f)
+	}
+
+	output = planner.MkPlanResourcesOutput(input, matchedScopes, p.validationErrors)
+	output.Filter, output.FilterDebug, err = planner.MergeWithAnd(filters)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !policyMatch {
+		output.FilterDebug = noPolicyMatch
+	}
+	output.EvaluationErrors = p.evalCtx.CELErrors.All()
+
+	return output, p.auditTrail, nil
+}
+
+// newPlanRequest resolves the scopes and validates the input. It returns a non-nil output when the
+// plan is decided without evaluating any action. The returned planRequest is non-nil unless err is.
+func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manager, input *enginev1.PlanResourcesInput, evalParams evaluator.EvalParams) (*planRequest, *enginev1.PlanResourcesOutput, error) {
 	principalScope := evaluator.Scope(input.Principal.Scope, evalParams)
 	principalVersion := evaluator.PolicyVersion(input.Principal.PolicyVersion, evalParams)
 
@@ -47,364 +120,357 @@ func (rt *RuleTable) planWithAuditTrail(ctx context.Context, schemaMgr schema.Ma
 	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
 	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
 
-	effectivePolicies := make(map[string]*policyv1.SourceAttributes)
-	auditTrail := &auditv1.AuditTrail{EffectivePolicies: effectivePolicies}
+	p := &planRequest{
+		input:           input,
+		evalParams:      evalParams,
+		auditTrail:      &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes)},
+		principalScopes: principalScopes,
+		resourceScopes:  resourceScopes,
+		resourceScope:   resourceScope,
+		resourceVersion: resourceVersion,
+	}
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
-		return noMatchPlanOutput(input, nil), auditTrail, nil
+		return p, noMatchPlanOutput(input, nil), nil
 	}
 
 	fqn := resourcePolicyFQN
 	if fqn == "" {
 		fqn = principalPolicyFQN
 	}
-	span.SetAttributes(tracing.PolicyFQN(fqn))
+	p.policyFQN = fqn
 
-	request := planner.PlanResourcesInputToRequest(input)
-	evalCtx := &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}
+	p.request = planner.PlanResourcesInputToRequest(input)
+	p.evalCtx = &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}
 
-	filters := make([]*enginev1.PlanResourcesFilter, 0, len(input.Actions))
-	matchedScopes := make(map[string]string, len(input.Actions))
 	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
 	}
-	var validationErrors []*schemav1.ValidationError
 	if len(vr.Errors) > 0 {
-		validationErrors = vr.Errors.SchemaErrors()
+		p.validationErrors = vr.Errors.SchemaErrors()
 
 		if vr.Reject {
-			output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
+			output := planner.MkPlanResourcesOutput(input, nil, p.validationErrors)
 			output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
 			output.FilterDebug = planner.FilterToString(output.Filter)
-			return output, auditTrail, nil
+			return p, output, nil
 		}
 	}
 
 	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
-	resourceKind := index.NewResourceKind(input.Resource.Kind)
+	p.resourceKind = index.NewResourceKind(input.Resource.Kind)
 
-	includingParentRoles := make(map[string]struct{}, len(allRoles))
+	p.includingParentRoles = make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
-		includingParentRoles[r] = struct{}{}
+		p.includingParentRoles[r] = struct{}{}
 	}
 
-	policyMatch := false
-	for _, action := range input.Actions {
-		matchedScopes[action] = ""
-		nf := new(planner.NodeFilter)
-		scopedDerivedRolesList := make(map[string]func() (*exprpb.Expr, error))
+	return p, nil, nil
+}
 
-		var hasPolicyTypeAllow bool
-		var rootNode *planner.QpN
-		var evalErr error
+// planAction builds the residual AST for a single action.
+func (rt *RuleTable) planAction(ctx context.Context, p *planRequest, action string) (actionPlan, error) {
+	var matchedScope string
+	var policyMatch bool
+	nf := new(planner.NodeFilter)
+	scopedDerivedRolesList := make(map[string]func() (*exprpb.Expr, error))
 
-		// evaluate resource policies before principal policies
-	policyTypesLoop:
-		for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
-			var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+	var hasPolicyTypeAllow bool
+	var rootNode *planner.QpN
+	var evalErr error
 
-			var scopes []string
-			if pt == policyv1.Kind_KIND_PRINCIPAL {
-				scopes = principalScopes
-			} else {
-				scopes = resourceScopes
+	// evaluate resource policies before principal policies
+policyTypesLoop:
+	for _, pt := range []policyv1.Kind{policyv1.Kind_KIND_RESOURCE, policyv1.Kind_KIND_PRINCIPAL} {
+		var policyTypeAllowNode, policyTypeDenyNode *planner.QpN
+
+		var scopes []string
+		if pt == policyv1.Kind_KIND_PRINCIPAL {
+			scopes = p.principalScopes
+		} else {
+			scopes = p.resourceScopes
+		}
+
+		for i, role := range p.input.Principal.Roles {
+			// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
+			// break out of the loop after the first iteration as it covers all potential principal rows.
+			if i > 0 && pt == policyv1.Kind_KIND_PRINCIPAL {
+				break
 			}
 
-			for i, role := range input.Principal.Roles {
-				// Principal rules are role agnostic (they treat the rows as having a `*` role). Therefore we can
-				// break out of the loop after the first iteration as it covers all potential principal rows.
-				if i > 0 && pt == policyv1.Kind_KIND_PRINCIPAL {
+			var roleAllowNode *planner.QpN
+			var roleDenyNode *planner.QpN
+			var roleDenyRolePolicyNode *planner.QpN
+			var pendingAllow bool
+			var childOverrideAllow *planner.QpN
+
+			rolesIncludingParents := rt.idx.AddParentRoles([]string{p.resourceScope}, []string{role})
+
+			var bindings []*index.BindingHandle
+			for _, scope := range scopes {
+				// Once a child OVERRIDE_PARENT scope has matched an unconditional ALLOW, no
+				// parent-scope rule can change the outcome, so we skip
+				if bv, ok := planner.IsNodeConstBool(childOverrideAllow); ok && bv {
 					break
 				}
 
-				var roleAllowNode *planner.QpN
-				var roleDenyNode *planner.QpN
-				var roleDenyRolePolicyNode *planner.QpN
-				var pendingAllow bool
-				var childOverrideAllow *planner.QpN
+				var scopeAllowNode *planner.QpN
+				var scopeDenyNode *planner.QpN
+				var scopeDenyRolePolicyNode *planner.QpN
 
-				rolesIncludingParents := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
+				derivedRolesList := planner.MkDerivedRolesList(nil)
+				if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
+					if c, ok := scopedDerivedRolesList[scope]; ok {
+						derivedRolesList = c
+					} else {
+						var derivedRoles []planner.RN
+						var drListErr error
+						if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(p.input.Resource.Kind, p.resourceVersion, scope)); drs != nil {
+							for name, dr := range drs {
+								if !internal.SetIntersects(dr.ParentRoles, p.includingParentRoles) {
+									continue
+								}
 
-				var bindings []*index.BindingHandle
-				for _, scope := range scopes {
-					// Once a child OVERRIDE_PARENT scope has matched an unconditional ALLOW, no
-					// parent-scope rule can change the outcome, so we skip
-					if bv, ok := planner.IsNodeConstBool(childOverrideAllow); ok && bv {
-						break
-					}
+								var err error
+								variables, err := p.evalCtx.VariableExprs(dr.OrderedVariables)
+								if err != nil {
+									return actionPlan{}, err
+								}
 
-					var scopeAllowNode *planner.QpN
-					var scopeDenyNode *planner.QpN
-					var scopeDenyRolePolicyNode *planner.QpN
-
-					derivedRolesList := planner.MkDerivedRolesList(nil)
-					if pt == policyv1.Kind_KIND_RESOURCE { //nolint:nestif
-						if c, ok := scopedDerivedRolesList[scope]; ok {
-							derivedRolesList = c
-						} else {
-							var derivedRoles []planner.RN
-							var drListErr error
-							if drs := rt.GetDerivedRoles(namer.ResourcePolicyFQN(input.Resource.Kind, resourceVersion, scope)); drs != nil {
-								for name, dr := range drs {
-									if !internal.SetIntersects(dr.ParentRoles, includingParentRoles) {
+								node, err := p.evalCtx.EvaluateCondition(ctx, dr.Condition, p.request, p.evalParams.Globals, dr.Constants, variables, derivedRolesList)
+								if err != nil {
+									if errors.Is(err, evaluator.StrictEvaluationError{}) {
+										drListErr = multierr.Append(drListErr, err)
 										continue
 									}
-
-									var err error
-									variables, err := evalCtx.VariableExprs(dr.OrderedVariables)
-									if err != nil {
-										return nil, auditTrail, err
-									}
-
-									node, err := evalCtx.EvaluateCondition(ctx, dr.Condition, request, evalParams.Globals, dr.Constants, variables, derivedRolesList)
-									if err != nil {
-										if errors.Is(err, evaluator.StrictEvaluationError{}) {
-											drListErr = multierr.Append(drListErr, err)
-											continue
-										}
-										return nil, auditTrail, err
-									}
-
-									derivedRoles = append(derivedRoles, planner.RN{
-										Node: func() (*enginev1.PlanResourcesAst_Node, error) {
-											return node, nil
-										},
-										Role: name,
-									})
+									return actionPlan{}, err
 								}
-							}
 
-							if drListErr != nil {
-								derivedRolesList = func() (*exprpb.Expr, error) { return nil, drListErr }
-							} else {
-								sort.Slice(derivedRoles, func(i, j int) bool {
-									return derivedRoles[i].Role < derivedRoles[j].Role
+								derivedRoles = append(derivedRoles, planner.RN{
+									Node: func() (*enginev1.PlanResourcesAst_Node, error) {
+										return node, nil
+									},
+									Role: name,
 								})
-
-								derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
 							}
+						}
 
-							scopedDerivedRolesList[scope] = derivedRolesList
+						if drListErr != nil {
+							derivedRolesList = func() (*exprpb.Expr, error) { return nil, drListErr }
+						} else {
+							sort.Slice(derivedRoles, func(i, j int) bool {
+								return derivedRoles[i].Role < derivedRoles[j].Role
+							})
+
+							derivedRolesList = planner.MkDerivedRolesList(derivedRoles)
+						}
+
+						scopedDerivedRolesList[scope] = derivedRolesList
+					}
+				}
+
+				// principal ID is only passed for principal policies; for resource
+				// policies an empty string means "match all principals".
+				var pid string
+				if pt == policyv1.Kind_KIND_PRINCIPAL {
+					pid = p.input.Principal.Id
+				}
+				bindings = rt.idx.Query(p.resourceVersion, p.resourceKind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
+				for _, b := range bindings {
+					if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
+						maps.Copy(p.auditTrail.EffectivePolicies, m.GetSourceAttributes())
+					}
+
+					var constants map[string]any
+					var variables map[string]celast.Expr
+					if b.Core.Params != nil {
+						constants = b.Core.Params.Constants
+						var err error
+						variables, err = p.evalCtx.VariableExprs(b.Core.Params.Variables)
+						if err != nil {
+							return actionPlan{}, err
 						}
 					}
 
-					// principal ID is only passed for principal policies; for resource
-					// policies an empty string means "match all principals".
-					var pid string
-					if pt == policyv1.Kind_KIND_PRINCIPAL {
-						pid = input.Principal.Id
-					}
-					bindings = rt.idx.Query(resourceVersion, resourceKind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
-					for _, b := range bindings {
-						if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
-							maps.Copy(effectivePolicies, m.GetSourceAttributes())
+					node, err := p.evalCtx.EvaluateCondition(ctx, b.Core.Condition, p.request, p.evalParams.Globals, constants, variables, derivedRolesList)
+					if err != nil {
+						if errors.Is(err, evaluator.StrictEvaluationError{}) {
+							evalErr = err
+							break policyTypesLoop
 						}
+						return actionPlan{}, err
+					}
 
-						var constants map[string]any
+					if b.Core.DerivedRoleCondition != nil { //nolint:nestif
 						var variables map[string]celast.Expr
-						if b.Core.Params != nil {
-							constants = b.Core.Params.Constants
+						if b.Core.DerivedRoleParams != nil {
 							var err error
-							variables, err = evalCtx.VariableExprs(b.Core.Params.Variables)
+							variables, err = p.evalCtx.VariableExprs(b.Core.DerivedRoleParams.Variables)
 							if err != nil {
-								return nil, auditTrail, err
+								return actionPlan{}, err
 							}
 						}
 
-						node, err := evalCtx.EvaluateCondition(ctx, b.Core.Condition, request, evalParams.Globals, constants, variables, derivedRolesList)
+						drNode, err := p.evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, p.request, p.evalParams.Globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
 						if err != nil {
 							if errors.Is(err, evaluator.StrictEvaluationError{}) {
 								evalErr = err
 								break policyTypesLoop
 							}
-							return nil, auditTrail, err
+							return actionPlan{}, err
 						}
 
-						if b.Core.DerivedRoleCondition != nil { //nolint:nestif
-							var variables map[string]celast.Expr
-							if b.Core.DerivedRoleParams != nil {
-								var err error
-								variables, err = evalCtx.VariableExprs(b.Core.DerivedRoleParams.Variables)
-								if err != nil {
-									return nil, auditTrail, err
-								}
-							}
-
-							drNode, err := evalCtx.EvaluateCondition(ctx, b.Core.DerivedRoleCondition, request, evalParams.Globals, b.Core.DerivedRoleParams.Constants, variables, derivedRolesList)
-							if err != nil {
-								if errors.Is(err, evaluator.StrictEvaluationError{}) {
-									evalErr = err
-									break policyTypesLoop
-								}
-								return nil, auditTrail, err
-							}
-
-							if b.Core.Condition == nil {
-								node = drNode
-							} else {
-								node = planner.MkNodeFromLO(planner.MkAndLogicalOperation([]*planner.QpN{node, drNode}))
-							}
-						}
-
-						switch b.Core.Effect { //nolint:exhaustive
-						case effectv1.Effect_EFFECT_ALLOW:
-							scopeAllowNode = addNode(scopeAllowNode, node, planner.MkOrNode)
-						case effectv1.Effect_EFFECT_DENY:
-							// ignore constant false DENY nodes
-							if bv, ok := planner.IsNodeConstBool(node); ok && !bv {
-								continue
-							}
-
-							if b.Core.FromRolePolicy {
-								scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, planner.MkOrNode)
-							} else {
-								scopeDenyNode = addNode(scopeDenyNode, node, planner.MkOrNode)
-							}
-						}
-					}
-
-					scopeDenyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyNode)
-					scopeDenyRolePolicyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyRolePolicyNode)
-
-					roleDenyNode = addNode(roleDenyNode, scopeDenyNode, planner.MkOrNode)
-					roleDenyRolePolicyNode = addNode(roleDenyRolePolicyNode, scopeDenyRolePolicyNode, planner.MkOrNode)
-
-					if scopeAllowNode != nil { //nolint:nestif
-						if roleAllowNode == nil {
-							roleAllowNode = scopeAllowNode
+						if b.Core.Condition == nil {
+							node = drNode
 						} else {
-							if pendingAllow {
-								roleAllowNode = planner.MkAndNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
-								pendingAllow = false
-							} else {
-								roleAllowNode = planner.MkOrNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
-							}
-						}
-
-						if rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
-							pendingAllow = true
+							node = planner.MkNodeFromLO(planner.MkAndLogicalOperation([]*planner.QpN{node, drNode}))
 						}
 					}
 
-					if (scopeDenyNode != nil || scopeDenyRolePolicyNode != nil || scopeAllowNode != nil) &&
-						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-						matchedScopes[action] = scope
-					}
+					switch b.Core.Effect { //nolint:exhaustive
+					case effectv1.Effect_EFFECT_ALLOW:
+						scopeAllowNode = addNode(scopeAllowNode, node, planner.MkOrNode)
+					case effectv1.Effect_EFFECT_DENY:
+						// ignore constant false DENY nodes
+						if bv, ok := planner.IsNodeConstBool(node); ok && !bv {
+							continue
+						}
 
-					if scopeAllowNode != nil &&
-						rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
-						childOverrideAllow = addNode(childOverrideAllow, scopeAllowNode, planner.MkOrNode)
-					}
-				}
-
-				// only an ALLOW from a scope with ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS exists with no
-				// matching rules in the parent scopes, therefore null the node
-				if pendingAllow {
-					roleAllowNode = nil
-				}
-
-				// Const DENY overrides any ALLOW in the same role. Check both deny types.
-				constTrue := false
-				if b, ok := planner.IsNodeConstBool(roleDenyNode); ok && b {
-					constTrue = true
-				} else if b, ok := planner.IsNodeConstBool(roleDenyRolePolicyNode); ok && b {
-					constTrue = true
-				}
-
-				if constTrue {
-					// Roles are evaluated independently, therefore an ALLOW for one role needs to override a DENY for another.
-					// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
-					// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
-					// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
-					// Principal policies are role-agnostic and only have a single role iteration, so we preserve the deny node.
-					if pt != policyv1.Kind_KIND_PRINCIPAL {
-						roleAllowNode = planner.MkFalseNode()
-						roleDenyNode = nil
-						roleDenyRolePolicyNode = nil
-					}
-				} else if roleAllowNode != nil && roleDenyNode == nil && roleDenyRolePolicyNode == nil {
-					if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
-						policyTypeAllowNode = roleAllowNode
-						policyTypeDenyNode = nil
-						// Break out of the roles loop entirely
-						break
+						if b.Core.FromRolePolicy {
+							scopeDenyRolePolicyNode = addNode(scopeDenyRolePolicyNode, node, planner.MkOrNode)
+						} else {
+							scopeDenyNode = addNode(scopeDenyNode, node, planner.MkOrNode)
+						}
 					}
 				}
 
-				// If there is a role policy restriction for this specific role, we must apply it here.
-				// An ALLOW from this role is valid ONLY IF it is NOT denied by this role's role policy.
-				if roleDenyRolePolicyNode != nil && roleAllowNode != nil {
-					roleAllowNode = planner.MkAndNode([]*planner.QpN{
-						roleAllowNode,
-						planner.InvertNodeBooleanValue(roleDenyRolePolicyNode),
-					})
+				scopeDenyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyNode)
+				scopeDenyRolePolicyNode = gateByChildOverrideAllow(childOverrideAllow, scopeDenyRolePolicyNode)
+
+				roleDenyNode = addNode(roleDenyNode, scopeDenyNode, planner.MkOrNode)
+				roleDenyRolePolicyNode = addNode(roleDenyRolePolicyNode, scopeDenyRolePolicyNode, planner.MkOrNode)
+
+				if scopeAllowNode != nil { //nolint:nestif
+					if roleAllowNode == nil {
+						roleAllowNode = scopeAllowNode
+					} else {
+						if pendingAllow {
+							roleAllowNode = planner.MkAndNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
+							pendingAllow = false
+						} else {
+							roleAllowNode = planner.MkOrNode([]*planner.QpN{roleAllowNode, scopeAllowNode})
+						}
+					}
+
+					if rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS {
+						pendingAllow = true
+					}
 				}
 
-				policyTypeAllowNode = addNode(policyTypeAllowNode, roleAllowNode, planner.MkOrNode)
-				policyTypeDenyNode = addNode(policyTypeDenyNode, roleDenyNode, planner.MkOrNode)
-			}
+				if (scopeDenyNode != nil || scopeDenyRolePolicyNode != nil || scopeAllowNode != nil) &&
+					rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+					matchedScope = scope
+				}
 
-			if policyTypeAllowNode != nil {
-				hasPolicyTypeAllow = true
-			}
-
-			if policyTypeAllowNode != nil {
-				if rootNode == nil {
-					rootNode = policyTypeAllowNode
-				} else {
-					rootNode = planner.MkOrNode([]*planner.QpN{policyTypeAllowNode, rootNode})
+				if scopeAllowNode != nil &&
+					rt.GetScopeScopePermissions(scope) == policyv1.ScopePermissions_SCOPE_PERMISSIONS_OVERRIDE_PARENT {
+					childOverrideAllow = addNode(childOverrideAllow, scopeAllowNode, planner.MkOrNode)
 				}
 			}
 
-			// PolicyType denies need to reside at the top level of their PolicyType sub trees (e.g. a conditional
-			// DENY in a principal policy needs to be a top level `(NOT deny condition) AND nested ALLOW`), so we
-			// invert and AND them as we go.
-			if policyTypeDenyNode != nil {
-				if rootNode == nil {
-					// No ALLOW at this level or below, so this subtree denies unconditionally.
-					rootNode = planner.MkFalseNode()
-				} else {
-					rootNode = planner.MkAndNode([]*planner.QpN{planner.InvertNodeBooleanValue(policyTypeDenyNode), rootNode})
+			// only an ALLOW from a scope with ScopePermissions_SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS exists with no
+			// matching rules in the parent scopes, therefore null the node
+			if pendingAllow {
+				roleAllowNode = nil
+			}
+
+			// Const DENY overrides any ALLOW in the same role. Check both deny types.
+			constTrue := false
+			if b, ok := planner.IsNodeConstBool(roleDenyNode); ok && b {
+				constTrue = true
+			} else if b, ok := planner.IsNodeConstBool(roleDenyRolePolicyNode); ok && b {
+				constTrue = true
+			}
+
+			if constTrue {
+				// Roles are evaluated independently, therefore an ALLOW for one role needs to override a DENY for another.
+				// If we pass the role level `DENY==true`, we end up overriding the result for all roles with an `AND(..., NOT(true))`
+				// due to the policyTypeDenyNode inversion below. Inverting and resolving in the allow node ensures the role is OR'd
+				// against others, e.g. `OR(false, roleAllow1, roleAllow2, ...)`).
+				// Principal policies are role-agnostic and only have a single role iteration, so we preserve the deny node.
+				if pt != policyv1.Kind_KIND_PRINCIPAL {
+					roleAllowNode = planner.MkFalseNode()
+					roleDenyNode = nil
+					roleDenyRolePolicyNode = nil
+				}
+			} else if roleAllowNode != nil && roleDenyNode == nil && roleDenyRolePolicyNode == nil {
+				if b, ok := planner.IsNodeConstBool(roleAllowNode); ok && b {
+					policyTypeAllowNode = roleAllowNode
+					policyTypeDenyNode = nil
+					// Break out of the roles loop entirely
+					break
 				}
 			}
-		} // range over policy kinds
 
-		if evalErr != nil {
-			// In strict mode an evaluation error denies the affected action.
-			policyMatch = true
-			nf.ResetToUnconditionalDeny()
-		} else if rootNode != nil {
-			policyMatch = true
-			// Defensive: with no ALLOW in any policy type, rootNode is `false` or `NOT(deny) AND false`,
-			// which normalises to KIND_ALWAYS_DENIED anyway.
-			if !hasPolicyTypeAllow {
-				nf.ResetToUnconditionalDeny()
+			// If there is a role policy restriction for this specific role, we must apply it here.
+			// An ALLOW from this role is valid ONLY IF it is NOT denied by this role's role policy.
+			if roleDenyRolePolicyNode != nil && roleAllowNode != nil {
+				roleAllowNode = planner.MkAndNode([]*planner.QpN{
+					roleAllowNode,
+					planner.InvertNodeBooleanValue(roleDenyRolePolicyNode),
+				})
+			}
+
+			policyTypeAllowNode = addNode(policyTypeAllowNode, roleAllowNode, planner.MkOrNode)
+			policyTypeDenyNode = addNode(policyTypeDenyNode, roleDenyNode, planner.MkOrNode)
+		}
+
+		if policyTypeAllowNode != nil {
+			hasPolicyTypeAllow = true
+		}
+
+		if policyTypeAllowNode != nil {
+			if rootNode == nil {
+				rootNode = policyTypeAllowNode
 			} else {
-				nf.Add(rootNode, effectv1.Effect_EFFECT_ALLOW)
+				rootNode = planner.MkOrNode([]*planner.QpN{policyTypeAllowNode, rootNode})
 			}
 		}
 
-		if nf.AllowIsEmpty() && !nf.DenyIsEmpty() { // reset a conditional DENY to an unconditional one
-			nf.ResetToUnconditionalDeny()
+		// PolicyType denies need to reside at the top level of their PolicyType sub trees (e.g. a conditional
+		// DENY in a principal policy needs to be a top level `(NOT deny condition) AND nested ALLOW`), so we
+		// invert and AND them as we go.
+		if policyTypeDenyNode != nil {
+			if rootNode == nil {
+				// No ALLOW at this level or below, so this subtree denies unconditionally.
+				rootNode = planner.MkFalseNode()
+			} else {
+				rootNode = planner.MkAndNode([]*planner.QpN{planner.InvertNodeBooleanValue(policyTypeDenyNode), rootNode})
+			}
 		}
-		f, err := planner.ToFilter(nf.ToAST())
-		if err != nil {
-			return nil, nil, err
-		}
-		filters = append(filters, f)
-	} // for each action
-	output := planner.MkPlanResourcesOutput(input, matchedScopes, validationErrors)
-	output.Filter, output.FilterDebug, err = planner.MergeWithAnd(filters)
-	if err != nil {
-		return nil, nil, err
-	}
-	if !policyMatch {
-		output.FilterDebug = noPolicyMatch
-	}
-	output.EvaluationErrors = evalCtx.CELErrors.All()
+	} // range over policy kinds
 
-	return output, auditTrail, nil
+	if evalErr != nil {
+		// In strict mode an evaluation error denies the affected action.
+		policyMatch = true
+		nf.ResetToUnconditionalDeny()
+	} else if rootNode != nil {
+		policyMatch = true
+		// Defensive: with no ALLOW in any policy type, rootNode is `false` or `NOT(deny) AND false`,
+		// which normalises to KIND_ALWAYS_DENIED anyway.
+		if !hasPolicyTypeAllow {
+			nf.ResetToUnconditionalDeny()
+		} else {
+			nf.Add(rootNode, effectv1.Effect_EFFECT_ALLOW)
+		}
+	}
+
+	if nf.AllowIsEmpty() && !nf.DenyIsEmpty() { // reset a conditional DENY to an unconditional one
+		nf.ResetToUnconditionalDeny()
+	}
+
+	return actionPlan{ast: nf.ToAST(), matchedScope: matchedScope, policyMatch: policyMatch}, nil
 }
 
 func noMatchPlanOutput(input *enginev1.PlanResourcesInput, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
