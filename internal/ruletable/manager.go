@@ -238,7 +238,15 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	return mgr.ingestPolicy(rps)
+	if err := mgr.ingestPolicy(rps); err != nil {
+		return err
+	}
+
+	if rps.GetRolePolicy() != nil {
+		return mgr.idx.IndexParentRoles(mgr.ScopeParentRoles)
+	}
+
+	return nil
 }
 
 func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) error {
