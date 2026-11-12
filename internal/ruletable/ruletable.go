@@ -676,7 +676,9 @@ func newRuleTableFromIterableLoader(ctx context.Context, spl policyloader.Iterab
 		return nil, err
 	}
 
-	rt.finalizeBuild()
+	if err := rt.finalizeBuild(); err != nil {
+		return nil, err
+	}
 
 	return rt, nil
 }
@@ -714,9 +716,7 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 		return err
 	}
 
-	rt.finalizeBuild()
-
-	return nil
+	return rt.finalizeBuild()
 }
 
 func (rt *RuleTable) initBuildState() {
@@ -727,8 +727,8 @@ func (rt *RuleTable) initBuildState() {
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 }
 
-// finalizeBuild releases transient build state once all rows have been indexed.
-func (rt *RuleTable) finalizeBuild() {
+// finalizeBuild indexes the parent roles and releases transient build state once all rows have been indexed.
+func (rt *RuleTable) finalizeBuild() error {
 	// rules are now indexed, we can clear up any unnecessary transport state
 	clear(rt.Rules)
 	rt.Rules = []*runtimev1.RuleTable_RuleRow{} // otherwise the empty slice hangs around
@@ -742,7 +742,14 @@ func (rt *RuleTable) finalizeBuild() {
 	// The CheckedExpr are not needed at runtime. Programs are compiled from source.
 	rt.releaseCheckedExprs()
 	rt.dedupStrings()
+
+	if err := rt.idx.IndexParentRoles(rt.ScopeParentRoles); err != nil {
+		return err
+	}
+
 	debug.FreeOSMemory()
+
+	return nil
 }
 
 // releaseCheckedExprs sets to nil every retained *Expr.Checked.
@@ -839,11 +846,7 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 		}
 	}
 
-	if err := rt.idx.IndexRules(rules); err != nil {
-		return err
-	}
-
-	return rt.idx.IndexParentRoles(rt.ScopeParentRoles)
+	return rt.idx.IndexRules(rules)
 }
 
 func (rt *RuleTable) GetAllRows() []*index.BindingHandle {
