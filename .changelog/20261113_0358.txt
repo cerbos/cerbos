@@ -1,0 +1,2 @@
+type:fix
+Requests in a scope that only has role policies are now validated against the schema of the nearest resource policy

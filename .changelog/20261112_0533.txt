@@ -1,0 +1,2 @@
+type:fix
+Scoped requests no longer fall through to parent scopes when the requested scope has no policy for the requested resource kind, principal or version
