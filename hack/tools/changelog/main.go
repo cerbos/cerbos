@@ -34,7 +34,8 @@ type args struct {
 
 type addCmd struct {
 	Type        string `help:"Type of the entry" enum:"breaking,chore,deprecation,docs,enhancement,feature,fix" required:""`
-	Description string `help:"Change description" required:""`
+	Title       string `help:"Title of the change" required:""`
+	Description string `help:"Description of the change in AsciiDoc" required:""`
 }
 
 type generateCmd struct {
@@ -79,9 +80,11 @@ func (ac *addCmd) Run(k *kong.Kong) error {
 
 	if err := entryTemplate.Execute(entryFile, struct {
 		Type        string
+		Title       string
 		Description string
 	}{
 		Type:        ac.Type,
+		Title:       ac.Title,
 		Description: ac.Description,
 	}); err != nil {
 		return fmt.Errorf("failed to render entry: %w", err)
