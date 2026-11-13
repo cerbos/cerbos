@@ -272,12 +272,6 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		return err
 	}
 
-	activeScopes := mgr.idx.GetScopes()
-	activeScopeSet := make(map[string]struct{}, len(activeScopes))
-	for _, s := range activeScopes {
-		activeScopeSet[s] = struct{}{}
-	}
-
 	if role := meta.GetRole(); role != "" {
 		scope := namer.ScopeFromFQN(meta.GetFqn())
 		if scopeParentRoles, ok := mgr.ScopeParentRoles[scope]; ok && scopeParentRoles != nil {
@@ -288,19 +282,6 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		}
 		if err := mgr.idx.IndexParentRoles(mgr.ScopeParentRoles); err != nil {
 			return err
-		}
-	}
-
-	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer.
-	for scope := range mgr.principalScopeMap {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.principalScopeMap, scope)
-		}
-	}
-
-	for scope := range mgr.resourceScopeMap {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.resourceScopeMap, scope)
 		}
 	}
 
