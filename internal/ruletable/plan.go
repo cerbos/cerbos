@@ -476,7 +476,13 @@ policyTypesLoop:
 }
 
 func noMatchPlanOutput(input *enginev1.PlanResourcesInput, validationErrors []*schemav1.ValidationError) *enginev1.PlanResourcesOutput {
-	output := planner.MkPlanResourcesOutput(input, nil, validationErrors)
+	// Report every action with an empty scope, as planning the actions does when no scope decides them.
+	matchedScopes := make(map[string]string, len(input.Actions))
+	for _, action := range input.Actions {
+		matchedScopes[action] = ""
+	}
+
+	output := planner.MkPlanResourcesOutput(input, matchedScopes, validationErrors)
 	output.Filter = &enginev1.PlanResourcesFilter{Kind: enginev1.PlanResourcesFilter_KIND_ALWAYS_DENIED}
 	output.FilterDebug = noPolicyMatch
 	return output
