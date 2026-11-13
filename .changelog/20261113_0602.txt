@@ -1,0 +1,3 @@
+type:enhancement
+Consistent matched scopes in query plans
+PlanResources now reports an empty matched scope for each action when no policy matches the requested scope, as it already did for other requests that no policy decides

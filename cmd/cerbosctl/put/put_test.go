@@ -147,6 +147,7 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"role.acme_jr_admin.vdefault/acme.hr.uk.brighton",
 					"role.acme_london_employee.vdefault/acme.hr.uk.london",
 					"role.acme_travel_agent.vdefault/acme.hr.uk",
+					"role.contoso_manager.vdefault/contoso",
 					"role.domain_administrator.vdefault",
 					"role.limited_viewer.vdefault",
 					"role.party_person.vdefault/acme.hr.uk.brighton.kemptown",

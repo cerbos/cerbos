@@ -30,8 +30,6 @@ func (rt *RuleTable) dedupStrings() {
 	}
 
 	rt.JsonSchemas = dedupJSONSchemas(s, rt.JsonSchemas)
-	rt.principalScopeMap = dedupStringSet(s, rt.principalScopeMap)
-	rt.resourceScopeMap = dedupStringSet(s, rt.resourceScopeMap)
 	rt.scopeScopePermissions = dedupScopePermissions(s, rt.scopeScopePermissions)
 	rt.idx.DedupStrings(s)
 }
@@ -213,18 +211,6 @@ func dedupJSONSchemas(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_
 	for k, v := range m {
 		s.Intern(&k)
 		out[k] = v
-	}
-	return out
-}
-
-func dedupStringSet(s *index.StringDeduper, m map[string]struct{}) map[string]struct{} {
-	if len(m) == 0 {
-		return m
-	}
-	out := make(map[string]struct{}, len(m))
-	for k := range m {
-		s.Intern(&k)
-		out[k] = struct{}{}
 	}
 	return out
 }

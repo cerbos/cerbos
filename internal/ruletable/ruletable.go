@@ -500,8 +500,6 @@ func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver sche
 type RuleTable struct {
 	*runtimev1.RuleTable
 	idx                   *index.Index
-	principalScopeMap     map[string]struct{}
-	resourceScopeMap      map[string]struct{}
 	scopePermsTracker     *scopeperms.Tracker
 	scopeScopePermissions map[string]policyv1.ScopePermissions
 	policyDerivedRoles    map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole
@@ -721,8 +719,6 @@ func (rt *RuleTable) init(protoRT *runtimev1.RuleTable) error {
 
 func (rt *RuleTable) initBuildState() {
 	rt.policyDerivedRoles = make(map[namer.ModuleID]map[string]*WrappedRunnableDerivedRole)
-	rt.principalScopeMap = make(map[string]struct{})
-	rt.resourceScopeMap = make(map[string]struct{})
 	rt.scopePermsTracker = scopeperms.NewTracker()
 	rt.scopeScopePermissions = make(map[string]policyv1.ScopePermissions)
 }
@@ -837,13 +833,6 @@ func (rt *RuleTable) indexRules(rules []*runtimev1.RuleTable_RuleRow) error {
 			rt.scopePermsTracker.Add(rule.PolicyKind, namer.PolicyKeyFromFQN(rule.OriginFqn), rule.Scope, rule.ScopePermissions)
 			rt.scopeScopePermissions[rule.Scope] = scopeperms.Normalise(rule.ScopePermissions)
 		}
-
-		switch rule.PolicyKind { //nolint:exhaustive
-		case policyv1.Kind_KIND_PRINCIPAL:
-			rt.principalScopeMap[rule.Scope] = struct{}{}
-		case policyv1.Kind_KIND_RESOURCE:
-			rt.resourceScopeMap[rule.Scope] = struct{}{}
-		}
 	}
 
 	return rt.idx.IndexRules(rules)
@@ -861,40 +850,60 @@ func (rt *RuleTable) GetDerivedRoles(fqn string) map[string]*WrappedRunnableDeri
 	return rt.policyDerivedRoles[namer.GenModuleIDFromFQN(fqn)]
 }
 
-func (rt *RuleTable) GetAllScopes(pt policyv1.Kind, scope, name, version string, lenient bool) ([]string, string, string) {
-	var firstPolicyKey, firstFqn string
-	var scopes []string
+// ScopeLookup is the result of resolving the scopes to evaluate for a policy.
+type ScopeLookup struct {
+	// PolicyFQN is the name of the policy in the first of Scopes. It is the name to report in traces, audit logs
+	// and outputs. If that scope is included only for its role policies, no policy with this name exists.
+	PolicyFQN string
+	// ExistingPolicyFQN is the name of the first policy in Scopes that exists. Empty if there is none.
+	ExistingPolicyFQN string
+	// Scopes to evaluate, starting from the most specific.
+	Scopes []string
+}
 
-	var fqnFn func(string, string, string) string
-	var scopeMap map[string]struct{}
+// GetAllScopes returns the scopes to evaluate for the given policy, starting from the requested scope and walking
+// up to the root. A scope is only included if the policy with the given name and version exists in it. For resource
+// policies, a scope holding role policies is included as well because role policies apply to all resource kinds.
+// Unless lenient is set, nothing is returned if the requested scope is not included.
+func (rt *RuleTable) GetAllScopes(pt policyv1.Kind, scope, name, version string, lenient bool) ScopeLookup {
+	var rootFqn string
 	switch pt { //nolint:exhaustive
 	case policyv1.Kind_KIND_PRINCIPAL:
-		fqnFn = namer.PrincipalPolicyFQN
-		scopeMap = rt.principalScopeMap
+		rootFqn = namer.PrincipalPolicyFQN(name, version, "")
 	case policyv1.Kind_KIND_RESOURCE:
-		fqnFn = namer.ResourcePolicyFQN
-		scopeMap = rt.resourceScopeMap
+		rootFqn = namer.ResourcePolicyFQN(name, version, "")
+	default:
+		return ScopeLookup{}
 	}
 
-	if _, ok := scopeMap[scope]; ok {
-		firstFqn = fqnFn(name, version, scope)
-		firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
-		scopes = append(scopes, scope)
-	} else if !lenient {
-		return nil, "", ""
-	}
+	var res ScopeLookup
+	visit := func(s string) {
+		fqn := namer.WithScope(rootFqn, s)
+		_, policyExists := rt.Meta[namer.GenModuleIDFromFQN(fqn).RawValue()]
+		if !policyExists && (pt != policyv1.Kind_KIND_RESOURCE || rt.ScopeParentRoles[s] == nil) {
+			return
+		}
 
-	for s := range namer.ScopeParents(scope) {
-		if _, ok := scopeMap[s]; ok {
-			scopes = append(scopes, s)
-			if firstPolicyKey == "" {
-				firstFqn = fqnFn(name, version, s)
-				firstPolicyKey = namer.PolicyKeyFromFQN(firstFqn)
-			}
+		res.Scopes = append(res.Scopes, s)
+		if policyExists && res.ExistingPolicyFQN == "" {
+			res.ExistingPolicyFQN = fqn
 		}
 	}
 
-	return scopes, firstPolicyKey, firstFqn
+	visit(scope)
+	if len(res.Scopes) == 0 && !lenient {
+		return ScopeLookup{}
+	}
+
+	for s := range namer.ScopeParents(scope) {
+		visit(s)
+	}
+
+	if len(res.Scopes) > 0 {
+		res.PolicyFQN = namer.WithScope(rootFqn, res.Scopes[0])
+	}
+
+	return res
 }
 
 type scopeNode struct {
