@@ -113,8 +113,12 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	principalScopes, principalPolicyKey, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
-	resourceScopes, resourcePolicyKey, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalLookup := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceLookup := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalScopes, principalPolicyFQN := principalLookup.Scopes, principalLookup.PolicyFQN
+	resourceScopes, resourcePolicyFQN := resourceLookup.Scopes, resourceLookup.PolicyFQN
+	principalPolicyKey := namer.PolicyKeyFromFQN(principalPolicyFQN)
+	resourcePolicyKey := namer.PolicyKeyFromFQN(resourcePolicyFQN)
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
 		return result, nil
@@ -128,7 +132,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	pctx := tctx.StartPolicy(fqn)
 
 	// validate the input
-	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
+	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(resourceLookup.ExistingPolicyFQN), input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 

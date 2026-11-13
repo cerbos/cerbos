@@ -117,8 +117,10 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manage
 	resourceScope := evaluator.Scope(input.Resource.Scope, evalParams)
 	resourceVersion := evaluator.PolicyVersion(input.Resource.PolicyVersion, evalParams)
 
-	principalScopes, _, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
-	resourceScopes, _, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalLookup := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceLookup := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalScopes, principalPolicyFQN := principalLookup.Scopes, principalLookup.PolicyFQN
+	resourceScopes, resourcePolicyFQN := resourceLookup.Scopes, resourceLookup.PolicyFQN
 
 	p := &planRequest{
 		input:           input,
@@ -143,7 +145,7 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manage
 	p.request = planner.PlanResourcesInputToRequest(input)
 	p.evalCtx = &planner.EvalContext{TimeFn: evalParams.NowFunc, ExprCache: rt.planExprCache, CELErrors: evaluator.NewCELErrors(evalParams.CELErrorLogLevel), StrictEvaluation: evalParams.StrictEvaluation}
 
-	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
+	vr, err := schemaMgr.ValidatePlanResourcesInput(ctx, rt.GetSchema(resourceLookup.ExistingPolicyFQN), input)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to validate input: %w", err)
 	}
