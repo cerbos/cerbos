@@ -23,9 +23,9 @@ align PKG='./...': _betteralign
 
 build: generate lint tests package
 
-# Generate a changelog entry. E.g. changelog-entry feature "Added a frobnicate function to frobnicate"
-changelog-entry TYPE DESCRIPTION:
-    @ go run hack/tools/changelog/main.go add --type='{{ TYPE }}' --description='{{ DESCRIPTION }}'
+# Generate a changelog entry. E.g. changelog-entry feature "Added a frobnicate function to frobnicate" "Frobnicate allows users to frobnicate better."
+changelog-entry TYPE TITLE DESCRIPTION:
+    @ go run hack/tools/changelog/main.go add --type='{{ TYPE }}' --title='{{ TITLE }}' --description='{{ DESCRIPTION }}'
 
 changelog-generate NEW_VERSION PREV_VERSION=`git describe --abbrev=0  --match='v*'`:
     @ go run hack/tools/changelog/main.go generate --from='{{ PREV_VERSION }}' --new-version='{{ NEW_VERSION }}'
