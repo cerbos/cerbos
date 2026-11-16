@@ -291,11 +291,14 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 
 					// principal ID is only passed for principal policies; for resource
 					// policies an empty string means "match all principals".
+					// Each policy kind is resolved using its own policy version.
 					var pid string
+					version := resourceVersion
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
+						version = principalVersion
 					}
-					bindings = rt.idx.Query(resourceVersion, resourceKind, scope, action, parentRoles, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(version, resourceKind, scope, action, parentRoles, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						bName := index.HandleStr(b.Name)
 						bOriginFqn := index.HandleStr(b.OriginFqn)

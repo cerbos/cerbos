@@ -44,6 +44,7 @@ type planRequest struct {
 	resourceKind         index.ResourceKind
 	policyFQN            string
 	resourceScope        string
+	principalVersion     string
 	resourceVersion      string
 	evalParams           evaluator.EvalParams
 	principalScopes      []string
@@ -123,13 +124,14 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manage
 	resourceScopes, resourcePolicyFQN := resourceLookup.Scopes, resourceLookup.PolicyFQN
 
 	p := &planRequest{
-		input:           input,
-		evalParams:      evalParams,
-		auditTrail:      &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes)},
-		principalScopes: principalScopes,
-		resourceScopes:  resourceScopes,
-		resourceScope:   resourceScope,
-		resourceVersion: resourceVersion,
+		input:            input,
+		evalParams:       evalParams,
+		auditTrail:       &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes)},
+		principalScopes:  principalScopes,
+		resourceScopes:   resourceScopes,
+		resourceScope:    resourceScope,
+		principalVersion: principalVersion,
+		resourceVersion:  resourceVersion,
 	}
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
@@ -274,11 +276,14 @@ policyTypesLoop:
 
 				// principal ID is only passed for principal policies; for resource
 				// policies an empty string means "match all principals".
+				// Each policy kind is resolved using its own policy version.
 				var pid string
+				version := p.resourceVersion
 				if pt == policyv1.Kind_KIND_PRINCIPAL {
 					pid = p.input.Principal.Id
+					version = p.principalVersion
 				}
-				bindings = rt.idx.Query(p.resourceVersion, p.resourceKind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
+				bindings = rt.idx.Query(version, p.resourceKind, scope, action, rolesIncludingParents, pt, pid, bindings[:0])
 				for _, b := range bindings {
 					if m := rt.GetMeta(index.HandleStr(b.OriginFqn)); m != nil && m.GetSourceAttributes() != nil {
 						maps.Copy(p.auditTrail.EffectivePolicies, m.GetSourceAttributes())
