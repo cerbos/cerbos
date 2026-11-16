@@ -24,4 +24,4 @@ jobs:
           persist-credentials: false
 
       - name: Lint GitHub Actions
-        uses: cerbos/actions/lint-actions@d175c743932636d403a72e9baf690c37da2963fa # main
+        uses: cerbos/actions/lint-actions@19e204e7bafa58a693eff12f5e95a09763723be5 # main

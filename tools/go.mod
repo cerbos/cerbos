@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	connectrpc.com/connect v1.21.1
-	github.com/cerbos/actions v0.0.0-20261102065444-d175c7439326
+	github.com/cerbos/actions v0.0.0-20261116063849-19e204e7bafa
 	github.com/cerbos/protoc-gen-go-hashpb v0.5.1
 	github.com/cerbos/protoc-gen-jsonschema v0.1.8
 	github.com/dadav/helm-schema v0.0.0-20261026082132-f578d6e2ff5a
@@ -112,7 +112,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
-	golang.org/x/mod v0.42.0 // indirect
+	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
