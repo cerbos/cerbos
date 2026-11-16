@@ -1,0 +1,3 @@
+type:fix
+Restore AWS Marketplace usage registration
+Cerbos images published to AWS Marketplace register usage with AWS again.
