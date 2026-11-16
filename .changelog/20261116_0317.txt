@@ -1,0 +1,3 @@
+type:fix
+Honour the principal policy version
+Resolve principal policies using the principal policy version when it differs from the resource policy version
