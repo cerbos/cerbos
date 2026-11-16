@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=../../.jsonschema/QueryPlannerTestSuite.schema.json
+---
+description: Principal policy is resolved using the principal's policy version when it differs from the resource's policy version
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+principal:
+  id: User
+  policyVersion: default
+  roles:
+    - user
+  attr:
+    isActive: true
+
+tests:
+  - resource:
+      kind: additive
+      policyVersion: "2025_11"
+    action: POST
+    want:
+      filter:
+        kind: KIND_ALWAYS_ALLOWED
+      matchedScopes:
+        POST: ""
+
+  - resource:
+      kind: additive
+      policyVersion: "2025_11"
+    action: GET
+    want:
+      filter:
+        kind: KIND_ALWAYS_DENIED
+      matchedScopes:
+        GET: ""
