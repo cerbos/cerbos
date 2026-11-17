@@ -21,42 +21,85 @@ import (
 func TestParentRoleIndex(t *testing.T) {
 	impl := index.New()
 
-	scopeParentRoles := map[string]*runtimev1.RuleTable_RoleParentRoles{
-		"acme": {
-			RoleParentRoles: map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles{
-				"manager": {
-					Roles: []string{"employee"},
+	mkParents := func(roles ...string) *runtimev1.RuleTable_RoleParentRoles_ParentRoles {
+		return &runtimev1.RuleTable_RoleParentRoles_ParentRoles{Roles: roles}
+	}
+
+	versionScopeParentRoles := map[string]*runtimev1.RuleTable_ScopeParentRoles{
+		"default": {
+			Scopes: map[string]*runtimev1.RuleTable_RoleParentRoles{
+				"acme": {
+					RoleParentRoles: map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles{
+						"manager":  mkParents("employee"),
+						"employee": mkParents("user"),
+					},
 				},
-				"employee": {
-					Roles: []string{"user"},
+				"acme.hr": {
+					RoleParentRoles: map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles{
+						"manager": mkParents("contractor"),
+					},
 				},
 			},
 		},
-		"acme.hr": {
-			RoleParentRoles: map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles{
-				"manager": {
-					Roles: []string{"contractor"},
+		"v2": {
+			Scopes: map[string]*runtimev1.RuleTable_RoleParentRoles{
+				"acme": {
+					RoleParentRoles: map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles{
+						"manager": mkParents("auditor"),
+					},
 				},
 			},
 		},
 	}
 
-	require.NoError(t, impl.IndexParentRoles(scopeParentRoles))
+	require.NoError(t, impl.IndexParentRoles(versionScopeParentRoles))
 
 	t.Run("transitive closure", func(t *testing.T) {
-		roles := impl.AddParentRoles([]string{"acme"}, []string{"manager"})
+		roles := impl.AddParentRoles("default", []string{"acme"}, []string{"manager"})
 		require.ElementsMatch(t, []string{"manager", "employee", "user"}, roles)
 	})
 
 	t.Run("scope union", func(t *testing.T) {
-		roles := impl.AddParentRoles([]string{"acme", "acme.hr"}, []string{"manager"})
+		roles := impl.AddParentRoles("default", []string{"acme", "acme.hr"}, []string{"manager"})
 		require.ElementsMatch(t, []string{"manager", "employee", "user", "contractor"}, roles)
 	})
 
-	t.Run("replace existing parent role index", func(t *testing.T) {
-		require.NoError(t, impl.IndexParentRoles(map[string]*runtimev1.RuleTable_RoleParentRoles{}))
+	t.Run("versions are independent", func(t *testing.T) {
+		roles := impl.AddParentRoles("v2", []string{"acme", "acme.hr"}, []string{"manager"})
+		require.ElementsMatch(t, []string{"manager", "auditor"}, roles)
+	})
 
-		roles := impl.AddParentRoles([]string{"acme", "acme.hr"}, []string{"manager"})
+	t.Run("unknown version", func(t *testing.T) {
+		roles := impl.AddParentRoles("v3", []string{"acme"}, []string{"manager"})
+		require.Equal(t, []string{"manager"}, roles)
+	})
+
+	t.Run("survives marshalling", func(t *testing.T) {
+		data, err := impl.Marshal()
+		require.NoError(t, err)
+
+		have, err := index.Unmarshal(data)
+		require.NoError(t, err)
+
+		require.ElementsMatch(t, []string{"manager", "employee", "user"}, have.AddParentRoles("default", []string{"acme"}, []string{"manager"}))
+		require.ElementsMatch(t, []string{"manager", "auditor"}, have.AddParentRoles("v2", []string{"acme"}, []string{"manager"}))
+
+		// the version-agnostic field holds the parent roles of one of the versions
+		msg := &runtimev1.BitmapIndex{}
+		require.NoError(t, msg.UnmarshalVT(data))
+		acmeManager := msg.GetParentRoles()["acme"].GetRoles()["manager"].GetParents()
+		if len(acmeManager) == 1 {
+			require.Equal(t, []string{"auditor"}, acmeManager)
+		} else {
+			require.ElementsMatch(t, []string{"employee", "user"}, acmeManager)
+		}
+		require.ElementsMatch(t, []string{"contractor"}, msg.GetParentRoles()["acme.hr"].GetRoles()["manager"].GetParents())
+	})
+
+	t.Run("replace existing parent role index", func(t *testing.T) {
+		require.NoError(t, impl.IndexParentRoles(map[string]*runtimev1.RuleTable_ScopeParentRoles{}))
+
+		roles := impl.AddParentRoles("default", []string{"acme", "acme.hr"}, []string{"manager"})
 		require.Equal(t, []string{"manager"}, roles)
 	})
 }

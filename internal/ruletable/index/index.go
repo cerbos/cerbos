@@ -55,8 +55,8 @@ type Option func(*Index)
 
 type Index struct {
 	bi            *bitmapIndex
-	parentRoles   map[string]map[string][]string
-	handles       UniqueHandles // handles to canonical strings
+	parentRoles   map[string]map[string]map[string][]string // version -> scope -> role -> ancestor roles
+	handles       UniqueHandles                             // handles to canonical strings
 	paramsCache   map[uint64]*RowParams
 	drParamsCache map[uint64]*RowParams
 }
@@ -710,16 +710,18 @@ func (m *Index) applyActionFilter(arena *bitmapArena, baseBM *Bitmap, actions []
 	}
 }
 
-// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes.
+// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes,
+// as declared by the role policies of the given version.
 // When multiple scopes define parents for the same role, the results are merged rather than overwritten.
-func (m *Index) AddParentRoles(scopes, roles []string) []string {
-	if len(m.parentRoles) == 0 {
+func (m *Index) AddParentRoles(version string, scopes, roles []string) []string {
+	scopeParentRoles := m.parentRoles[version]
+	if len(scopeParentRoles) == 0 {
 		return roles
 	}
 
 	merged := make(map[string][]string)
 	for _, scope := range scopes {
-		c, ok := m.parentRoles[scope]
+		c, ok := scopeParentRoles[scope]
 		if !ok {
 			continue
 		}
@@ -740,8 +742,19 @@ func (m *Index) AddParentRoles(scopes, roles []string) []string {
 	return result
 }
 
-func (m *Index) IndexParentRoles(scopeParentRoles map[string]*runtimev1.RuleTable_RoleParentRoles) error {
-	m.parentRoles = compileParentRoleAncestors(scopeParentRoles)
+// IndexParentRoles replaces the parent role index with the transitive parent roles of each role.
+// Parent roles are resolved within a single role policy version and scope.
+func (m *Index) IndexParentRoles(versionScopeParentRoles map[string]*runtimev1.RuleTable_ScopeParentRoles) error {
+	compiled := make(map[string]map[string]map[string][]string, len(versionScopeParentRoles))
+	for version, scopeParentRoles := range versionScopeParentRoles {
+		if len(scopeParentRoles.GetScopes()) == 0 {
+			continue
+		}
+
+		compiled[version] = compileParentRoleAncestors(scopeParentRoles.GetScopes())
+	}
+
+	m.parentRoles = compiled
 	return nil
 }
 
