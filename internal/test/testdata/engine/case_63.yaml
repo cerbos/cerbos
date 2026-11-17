@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Parent roles of a role policy only apply to requests for the policy version of that role policy
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # parcel_manager has the parent role parcel_viewer in v1
+  - requestId: v1
+    actions:
+      - view
+      - edit
+    principal:
+      id: pat
+      roles:
+        - parcel_manager
+    resource:
+      kind: parcel
+      policyVersion: v1
+      id: P1
+  # parcel_manager has the parent role parcel_editor in v2
+  - requestId: v2
+    actions:
+      - view
+      - edit
+    principal:
+      id: pat
+      roles:
+        - parcel_manager
+    resource:
+      kind: parcel
+      policyVersion: v2
+      id: P1
+  # there is no parcel_manager role policy in v3, so the role has no parent roles
+  - requestId: v3
+    actions:
+      - view
+      - edit
+    principal:
+      id: pat
+      roles:
+        - parcel_manager
+    resource:
+      kind: parcel
+      policyVersion: v3
+      id: P1
+
+wantOutputs: &outputs
+  - requestId: v1
+    resourceId: P1
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.parcel.vv1
+      edit:
+        effect: EFFECT_DENY
+        policy: resource.parcel.vv1
+  - requestId: v2
+    resourceId: P1
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: resource.parcel.vv2
+      edit:
+        effect: EFFECT_ALLOW
+        policy: resource.parcel.vv2
+  - requestId: v3
+    resourceId: P1
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: resource.parcel.vv3
+      edit:
+        effect: EFFECT_DENY
+        policy: resource.parcel.vv3
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.parcel.vv1:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_24.yaml
+        resource.parcel.vv2:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_25.yaml
+    policySource:
+      disk: {}
