@@ -243,7 +243,7 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	}
 
 	if rps.GetRolePolicy() != nil {
-		return mgr.idx.IndexParentRoles(mgr.ScopeParentRoles)
+		return mgr.idx.IndexParentRoles(mgr.VersionScopeParentRoles)
 	}
 
 	return nil
@@ -273,14 +273,8 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 	}
 
 	if role := meta.GetRole(); role != "" {
-		scope := namer.ScopeFromFQN(meta.GetFqn())
-		if scopeParentRoles, ok := mgr.ScopeParentRoles[scope]; ok && scopeParentRoles != nil {
-			delete(scopeParentRoles.RoleParentRoles, role)
-			if len(scopeParentRoles.RoleParentRoles) == 0 {
-				delete(mgr.ScopeParentRoles, scope)
-			}
-		}
-		if err := mgr.idx.IndexParentRoles(mgr.ScopeParentRoles); err != nil {
+		deleteRoleParentRoles(mgr.RuleTable.RuleTable, meta.GetVersion(), namer.ScopeFromFQN(meta.GetFqn()), role)
+		if err := mgr.idx.IndexParentRoles(mgr.VersionScopeParentRoles); err != nil {
 			return err
 		}
 	}

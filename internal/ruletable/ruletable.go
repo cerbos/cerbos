@@ -51,13 +51,14 @@ const (
 
 func NewProtoRuletable() *runtimev1.RuleTable {
 	return &runtimev1.RuleTable{
-		Rules:              []*runtimev1.RuleTable_RuleRow{},
-		Schemas:            make(map[uint64]*policyv1.Schemas),
-		Meta:               make(map[uint64]*runtimev1.RuleTableMetadata),
-		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
-		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
-		JsonSchemas:        make(map[string]*runtimev1.RuleTable_JSONSchema),
-		CompilerVersion:    compilerVersion,
+		Rules:                   []*runtimev1.RuleTable_RuleRow{},
+		Schemas:                 make(map[uint64]*policyv1.Schemas),
+		Meta:                    make(map[uint64]*runtimev1.RuleTableMetadata),
+		ScopeParentRoles:        make(map[string]*runtimev1.RuleTable_RoleParentRoles),
+		VersionScopeParentRoles: make(map[string]*runtimev1.RuleTable_ScopeParentRoles),
+		PolicyDerivedRoles:      make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
+		JsonSchemas:             make(map[string]*runtimev1.RuleTable_JSONSchema),
+		CompilerVersion:         compilerVersion,
 	}
 }
 
@@ -461,17 +462,79 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 		}
 	}
 
-	if _, ok := rt.ScopeParentRoles[p.Scope]; !ok {
-		rt.ScopeParentRoles[p.Scope] = &runtimev1.RuleTable_RoleParentRoles{
-			RoleParentRoles: make(map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles),
+	setRoleParentRoles(rt, p.Meta.Version, p.Scope, p.Role, p.ParentRoles)
+
+	return res
+}
+
+// setRoleParentRoles records the parent roles declared by the role policy identified by version, scope and role.
+// ScopeParentRoles is not version aware and is only maintained for readers that haven't moved to
+// VersionScopeParentRoles: it holds the parent roles of the last role policy added for the scope and role.
+func setRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, parentRoles []string) {
+	pr := &runtimev1.RuleTable_RoleParentRoles_ParentRoles{Roles: parentRoles}
+
+	if rt.VersionScopeParentRoles == nil {
+		rt.VersionScopeParentRoles = make(map[string]*runtimev1.RuleTable_ScopeParentRoles)
+	}
+	scopes, ok := rt.VersionScopeParentRoles[version]
+	if !ok || scopes == nil {
+		scopes = &runtimev1.RuleTable_ScopeParentRoles{}
+		rt.VersionScopeParentRoles[version] = scopes
+	}
+	if scopes.Scopes == nil {
+		scopes.Scopes = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+	}
+	setScopeRoleParentRoles(scopes.Scopes, scope, role, pr)
+
+	if rt.ScopeParentRoles == nil {
+		rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+	}
+	setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr)
+}
+
+func setScopeRoleParentRoles(m map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, pr *runtimev1.RuleTable_RoleParentRoles_ParentRoles) {
+	roles, ok := m[scope]
+	if !ok || roles == nil {
+		roles = &runtimev1.RuleTable_RoleParentRoles{}
+		m[scope] = roles
+	}
+	if roles.RoleParentRoles == nil {
+		roles.RoleParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles)
+	}
+	roles.RoleParentRoles[role] = pr
+}
+
+// deleteRoleParentRoles removes the parent roles declared by the role policy identified by version, scope and role.
+// The ScopeParentRoles entry for the scope and role is repointed to one of the remaining versions of the role
+// policy, or removed if there are none.
+func deleteRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string) {
+	if scopes := rt.VersionScopeParentRoles[version]; scopes != nil {
+		deleteScopeRoleParentRoles(scopes.Scopes, scope, role)
+		if len(scopes.Scopes) == 0 {
+			delete(rt.VersionScopeParentRoles, version)
 		}
 	}
 
-	rt.ScopeParentRoles[p.Scope].RoleParentRoles[p.Role] = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{
-		Roles: p.ParentRoles,
+	for _, scopes := range rt.VersionScopeParentRoles {
+		if pr, ok := scopes.GetScopes()[scope].GetRoleParentRoles()[role]; ok {
+			if rt.ScopeParentRoles == nil {
+				rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+			}
+			setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr)
+			return
+		}
 	}
 
-	return res
+	deleteScopeRoleParentRoles(rt.ScopeParentRoles, scope, role)
+}
+
+func deleteScopeRoleParentRoles(m map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string) {
+	if roles := m[scope]; roles != nil {
+		delete(roles.RoleParentRoles, role)
+		if len(roles.RoleParentRoles) == 0 {
+			delete(m, scope)
+		}
+	}
 }
 
 func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver schema.Resolver) error {
@@ -739,7 +802,7 @@ func (rt *RuleTable) finalizeBuild() error {
 	rt.releaseCheckedExprs()
 	rt.dedupStrings()
 
-	if err := rt.idx.IndexParentRoles(rt.ScopeParentRoles); err != nil {
+	if err := rt.idx.IndexParentRoles(rt.VersionScopeParentRoles); err != nil {
 		return err
 	}
 
@@ -880,7 +943,7 @@ func (rt *RuleTable) GetAllScopes(pt policyv1.Kind, scope, name, version string,
 	visit := func(s string) {
 		fqn := namer.WithScope(rootFqn, s)
 		_, policyExists := rt.Meta[namer.GenModuleIDFromFQN(fqn).RawValue()]
-		if !policyExists && (pt != policyv1.Kind_KIND_RESOURCE || rt.ScopeParentRoles[s] == nil) {
+		if !policyExists && (pt != policyv1.Kind_KIND_RESOURCE || rt.VersionScopeParentRoles[version].GetScopes()[s] == nil) {
 			return
 		}
 

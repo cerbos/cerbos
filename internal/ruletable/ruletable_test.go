@@ -479,6 +479,71 @@ func TestRuleTableManager(t *testing.T) {
 			require.Equal(c, effectv1.Effect_EFFECT_DENY, output.Actions[action].GetEffect())
 		}, 1*time.Second, 50*time.Millisecond)
 	})
+
+	t.Run("deleting_role_policy_version_keeps_parent_roles_of_other_versions", func(t *testing.T) {
+		mkWidget := func(version string) *policyv1.Policy {
+			return &policyv1.Policy{
+				ApiVersion: "api.cerbos.dev/v1",
+				PolicyType: &policyv1.Policy_ResourcePolicy{
+					ResourcePolicy: &policyv1.ResourcePolicy{
+						Resource: "widget",
+						Version:  version,
+						Rules: []*policyv1.ResourceRule{
+							{
+								Actions: []string{"view"},
+								Roles:   []string{"viewer"},
+								Effect:  effectv1.Effect_EFFECT_ALLOW,
+							},
+						},
+					},
+				},
+			}
+		}
+
+		mkAgent := func(version string) *policyv1.Policy {
+			return &policyv1.Policy{
+				ApiVersion: "api.cerbos.dev/v1",
+				PolicyType: &policyv1.Policy_RolePolicy{
+					RolePolicy: &policyv1.RolePolicy{
+						PolicyType:  &policyv1.RolePolicy_Role{Role: "agent"},
+						Version:     version,
+						ParentRoles: []string{"viewer"},
+					},
+				},
+			}
+		}
+
+		for _, version := range []string{"v1", "v2"} {
+			addOrUpdatePolicy(t, "resource_policies/widget_"+version+".yaml", mkWidget(version), memFsys, idx, subMgr)
+			addOrUpdatePolicy(t, "role_policies/agent_"+version+".yaml", mkAgent(version), memFsys, idx, subMgr)
+		}
+
+		action := "view"
+		requireEffect := func(version string, want effectv1.Effect) {
+			t.Helper()
+
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				output, _, err := ruletableMgr.Check(ctx, tctx, evalParams, &enginev1.CheckInput{
+					RequestId: "parent-roles-" + version,
+					Resource:  &enginev1.Resource{Kind: "widget", Id: "1", PolicyVersion: version},
+					Principal: &enginev1.Principal{Id: "sam", Roles: []string{"agent"}},
+					Actions:   []string{action},
+				})
+				require.NoError(c, err)
+
+				require.Contains(c, output.Actions, action)
+				require.Equal(c, want, output.Actions[action].GetEffect())
+			}, 1*time.Second, 50*time.Millisecond)
+		}
+
+		requireEffect("v1", effectv1.Effect_EFFECT_ALLOW)
+		requireEffect("v2", effectv1.Effect_EFFECT_ALLOW)
+
+		deletePolicy(t, "role_policies/agent_v2.yaml", memFsys, idx, subMgr)
+
+		requireEffect("v2", effectv1.Effect_EFFECT_DENY)
+		requireEffect("v1", effectv1.Effect_EFFECT_ALLOW)
+	})
 }
 
 func addOrUpdatePolicy(t *testing.T, f string, p *policyv1.Policy, memFsys afero.Fs, idx index.Index, subMgr *storage.SubscriptionManager) {
