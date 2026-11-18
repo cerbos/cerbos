@@ -173,7 +173,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
+	allRoles := rt.idx.AddParentRoles(resourceVersion, []string{resourceScope}, input.Principal.Roles)
 
 	includingParentRoles := make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
@@ -228,7 +228,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
+				parentRoles := rt.idx.AddParentRoles(resourceVersion, []string{resourceScope}, []string{role})
 
 				var bindings []*index.BindingHandle
 			scopesLoop:
