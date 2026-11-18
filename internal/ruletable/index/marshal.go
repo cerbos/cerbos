@@ -7,6 +7,7 @@ package index
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 
 	policyv1 "github.com/cerbos/cerbos/api/genpb/cerbos/policy/v1"
@@ -103,7 +104,8 @@ func (m *Index) Marshal() ([]byte, error) {
 		AllowActionsBitmap: allowActions,
 		Bindings:           pbBindings,
 		Cores:              pbCores,
-		ParentRoles:        marshalParentRoles(m.parentRoles),
+		ParentRoles:        marshalParentRoles(legacyParentRoles(m.parentRoles)),
+		VersionParentRoles: marshalVersionParentRoles(m.parentRoles),
 	}
 
 	return msg.MarshalVT()
@@ -217,6 +219,38 @@ func marshalEntries(m map[string]*Bitmap) ([]*runtimev1.BitmapIndex_Entry, error
 	return entries, nil
 }
 
+// legacyParentRoles flattens the versioned parent roles into the version-agnostic form. When a role
+// has parent roles in several versions of the same scope, which version is kept is unspecified.
+func legacyParentRoles(parentRoles map[string]map[string]map[string][]string) map[string]map[string][]string {
+	if len(parentRoles) == 0 {
+		return nil
+	}
+
+	out := make(map[string]map[string][]string)
+	for _, scopeMap := range parentRoles {
+		for scope, roleMap := range scopeMap {
+			if _, ok := out[scope]; !ok {
+				out[scope] = make(map[string][]string, len(roleMap))
+			}
+			maps.Copy(out[scope], roleMap)
+		}
+	}
+	return out
+}
+
+func marshalVersionParentRoles(parentRoles map[string]map[string]map[string][]string) map[string]*runtimev1.BitmapIndex_ScopeRoleParents {
+	if len(parentRoles) == 0 {
+		return nil
+	}
+	out := make(map[string]*runtimev1.BitmapIndex_ScopeRoleParents, len(parentRoles))
+	for version, scopeMap := range parentRoles {
+		out[version] = &runtimev1.BitmapIndex_ScopeRoleParents{
+			Scopes: marshalParentRoles(scopeMap),
+		}
+	}
+	return out
+}
+
 func marshalParentRoles(parentRoles map[string]map[string][]string) map[string]*runtimev1.BitmapIndex_RoleParents {
 	if len(parentRoles) == 0 {
 		return nil
@@ -303,7 +337,7 @@ func Unmarshal(data []byte) (*Index, error) {
 
 	return &Index{
 		bi:          bi,
-		parentRoles: unmarshalParentRoles(msg.ParentRoles),
+		parentRoles: unmarshalVersionParentRoles(msg.VersionParentRoles),
 		handles:     s.Handles,
 	}, nil
 }
@@ -456,6 +490,17 @@ func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimen
 	}
 
 	return gd, nil
+}
+
+func unmarshalVersionParentRoles(pb map[string]*runtimev1.BitmapIndex_ScopeRoleParents) map[string]map[string]map[string][]string {
+	if len(pb) == 0 {
+		return nil
+	}
+	out := make(map[string]map[string]map[string][]string, len(pb))
+	for version, srp := range pb {
+		out[version] = unmarshalParentRoles(srp.GetScopes())
+	}
+	return out
 }
 
 func unmarshalParentRoles(pb map[string]*runtimev1.BitmapIndex_RoleParents) map[string]map[string][]string {
