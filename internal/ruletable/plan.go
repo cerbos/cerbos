@@ -43,7 +43,7 @@ type planRequest struct {
 	includingParentRoles map[string]struct{}
 	resourceKind         index.ResourceKind
 	policyFQN            string
-	resourceScope        string
+	parentRolesScope     string
 	principalVersion     string
 	resourceVersion      string
 	evalParams           evaluator.EvalParams
@@ -129,9 +129,15 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manage
 		auditTrail:       &auditv1.AuditTrail{EffectivePolicies: make(map[string]*policyv1.SourceAttributes)},
 		principalScopes:  principalScopes,
 		resourceScopes:   resourceScopes,
-		resourceScope:    resourceScope,
+		parentRolesScope: resourceScope,
 		principalVersion: principalVersion,
 		resourceVersion:  resourceVersion,
+	}
+
+	// Parent roles come from the role policies in the scope that the request resolved to, which with
+	// lenient scope search may be an ancestor of the requested scope.
+	if len(resourceScopes) > 0 {
+		p.parentRolesScope = resourceScopes[0]
 	}
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
@@ -162,7 +168,7 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manage
 		}
 	}
 
-	allRoles := rt.idx.AddParentRoles(resourceVersion, resourceScope, input.Principal.Roles)
+	allRoles := rt.idx.AddParentRoles(resourceVersion, p.parentRolesScope, input.Principal.Roles)
 	p.resourceKind = index.NewResourceKind(input.Resource.Kind)
 
 	p.includingParentRoles = make(map[string]struct{}, len(allRoles))
@@ -209,7 +215,7 @@ policyTypesLoop:
 			var pendingAllow bool
 			var childOverrideAllow *planner.QpN
 
-			rolesIncludingParents := rt.idx.AddParentRoles(p.resourceVersion, p.resourceScope, []string{role})
+			rolesIncludingParents := rt.idx.AddParentRoles(p.resourceVersion, p.parentRolesScope, []string{role})
 
 			var bindings []*index.BindingHandle
 			for _, scope := range scopes {
