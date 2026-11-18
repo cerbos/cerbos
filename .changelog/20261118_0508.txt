@@ -1,0 +1,3 @@
+type:fix
+Apply role policy parent roles with lenient scope search
+With lenient scope search, a request for a scope that has no policies now uses the parent roles of the role policies in the scope it resolves to. Previously the parent roles were looked up in the requested scope, so they were ignored and the request could be denied.
