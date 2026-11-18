@@ -710,34 +710,18 @@ func (m *Index) applyActionFilter(arena *bitmapArena, baseBM *Bitmap, actions []
 	}
 }
 
-// AddParentRoles returns the given roles plus the union of all their parent roles across the provided scopes,
-// as declared by the role policies of the given version.
-// When multiple scopes define parents for the same role, the results are merged rather than overwritten.
-func (m *Index) AddParentRoles(version string, scopes, roles []string) []string {
-	scopeParentRoles := m.parentRoles[version]
-	if len(scopeParentRoles) == 0 {
-		return roles
-	}
-
-	merged := make(map[string][]string)
-	for _, scope := range scopes {
-		c, ok := scopeParentRoles[scope]
-		if !ok {
-			continue
-		}
-		for role, parents := range c {
-			merged[role] = append(merged[role], parents...)
-		}
-	}
-
-	if len(merged) == 0 {
+// AddParentRoles returns the given roles plus their parent roles, as declared by the role policies of
+// the given version and scope.
+func (m *Index) AddParentRoles(version, scope string, roles []string) []string {
+	roleParents := m.parentRoles[version][scope]
+	if len(roleParents) == 0 {
 		return roles
 	}
 
 	result := make([]string, 0, len(roles)*2) //nolint:mnd
 	result = append(result, roles...)
 	for _, role := range roles {
-		result = append(result, merged[role]...)
+		result = append(result, roleParents[role]...)
 	}
 	return result
 }

@@ -162,7 +162,7 @@ func (rt *RuleTable) newPlanRequest(ctx context.Context, schemaMgr schema.Manage
 		}
 	}
 
-	allRoles := rt.idx.AddParentRoles(resourceVersion, []string{resourceScope}, input.Principal.Roles)
+	allRoles := rt.idx.AddParentRoles(resourceVersion, resourceScope, input.Principal.Roles)
 	p.resourceKind = index.NewResourceKind(input.Resource.Kind)
 
 	p.includingParentRoles = make(map[string]struct{}, len(allRoles))
@@ -209,7 +209,7 @@ policyTypesLoop:
 			var pendingAllow bool
 			var childOverrideAllow *planner.QpN
 
-			rolesIncludingParents := rt.idx.AddParentRoles(p.resourceVersion, []string{p.resourceScope}, []string{role})
+			rolesIncludingParents := rt.idx.AddParentRoles(p.resourceVersion, p.resourceScope, []string{role})
 
 			var bindings []*index.BindingHandle
 			for _, scope := range scopes {
