@@ -10,6 +10,7 @@ import (
 	"iter"
 	"os"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,6 +39,7 @@ var (
 	compilerVersionMigrations = []compilerVersionMigration{
 		migrateFromCompilerVersion0To1,
 		migrateFromCompilerVersion1To2,
+		migrateFromCompilerVersion2To3,
 	}
 
 	compilerVersion = uint32(len(compilerVersionMigrations))
@@ -1163,6 +1165,70 @@ func migrateFromCompilerVersion1To2(rt *runtimev1.RuleTable) error {
 		if t := row.EvaluationKeyTuple; t != nil {
 			t.Resource = row.Resource
 		}
+	}
+
+	return nil
+}
+
+// migrateFromCompilerVersion2To3 populates VersionScopeParentRoles, which tracks the parent roles of
+// role policies by policy version. Older rule tables only have ScopeParentRoles, which is keyed by
+// scope and role, so the versions are recovered from the metadata of the role policies.
+//
+// If several versions of a role policy exist for the same scope and role, ScopeParentRoles only has the
+// parent roles of one of them. All those versions get the same parent roles, which is how they were
+// evaluated before, and a warning is logged because that can only be fixed by rebuilding the rule table.
+func migrateFromCompilerVersion2To3(rt *runtimev1.RuleTable) error {
+	if len(rt.VersionScopeParentRoles) > 0 {
+		return nil
+	}
+
+	type scopeRole struct {
+		scope, role string
+	}
+	versions := make(map[scopeRole][]string)
+
+	for _, meta := range rt.Meta {
+		role := meta.GetRole()
+		if role == "" {
+			continue
+		}
+
+		version := meta.GetVersion()
+		if version == "" {
+			version = namer.DefaultVersion
+		}
+		scope := namer.ScopeFromFQN(meta.GetFqn())
+
+		// Role policies without parent roles are recorded too because the presence of a role policy
+		// in a scope affects scope resolution.
+		pr := rt.ScopeParentRoles[scope].GetRoleParentRoles()[role]
+		if pr == nil {
+			pr = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{}
+		}
+		setVersionRoleParentRoles(rt, version, scope, role, pr)
+
+		sr := scopeRole{scope: scope, role: role}
+		versions[sr] = append(versions[sr], version)
+	}
+
+	var log *logging.Logger
+	for sr, vs := range versions {
+		if len(vs) < 2 { //nolint:mnd
+			continue
+		}
+
+		if log == nil {
+			log = logging.NewLogger("compiler")
+		}
+
+		slices.Sort(vs)
+		log.Warnw(
+			"Role policy has multiple versions but the compiled policies only have the parent roles of one of them: all versions will use the same parent roles until the policies are compiled again",
+			"role", sr.role,
+			"scope", sr.scope,
+			"versions", vs,
+			"parent_roles", rt.ScopeParentRoles[sr.scope].GetRoleParentRoles()[sr.role].GetRoles(),
+		)
 	}
 
 	return nil

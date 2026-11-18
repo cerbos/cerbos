@@ -220,15 +220,19 @@ func marshalEntries(m map[string]*Bitmap) ([]*runtimev1.BitmapIndex_Entry, error
 }
 
 // legacyParentRoles flattens the versioned parent roles into the version-agnostic form. When a role
-// has parent roles in several versions of the same scope, which version is kept is unspecified.
+// has parent roles in several versions of the same scope, the version that sorts first is kept so that
+// the output is stable.
 func legacyParentRoles(parentRoles map[string]map[string]map[string][]string) map[string]map[string][]string {
 	if len(parentRoles) == 0 {
 		return nil
 	}
 
+	versions := slices.Sorted(maps.Keys(parentRoles))
+	slices.Reverse(versions)
+
 	out := make(map[string]map[string][]string)
-	for _, scopeMap := range parentRoles {
-		for scope, roleMap := range scopeMap {
+	for _, version := range versions {
+		for scope, roleMap := range parentRoles[version] {
 			if _, ok := out[scope]; !ok {
 				out[scope] = make(map[string][]string, len(roleMap))
 			}
