@@ -469,10 +469,28 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 
 // setRoleParentRoles records the parent roles declared by the role policy identified by version, scope and role.
 // ScopeParentRoles is not version aware and is only maintained for readers that haven't moved to
-// VersionScopeParentRoles: it holds the parent roles of the last role policy added for the scope and role.
+// VersionScopeParentRoles. When several versions of the role policy exist, it holds the parent roles of
+// the version that sorts first, so that the result doesn't depend on the order the policies are added in.
 func setRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, parentRoles []string) {
 	pr := &runtimev1.RuleTable_RoleParentRoles_ParentRoles{Roles: parentRoles}
 
+	setVersionRoleParentRoles(rt, version, scope, role, pr)
+
+	for v, scopes := range rt.VersionScopeParentRoles {
+		if v < version {
+			if _, ok := scopes.GetScopes()[scope].GetRoleParentRoles()[role]; ok {
+				return
+			}
+		}
+	}
+
+	if rt.ScopeParentRoles == nil {
+		rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+	}
+	setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr)
+}
+
+func setVersionRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, pr *runtimev1.RuleTable_RoleParentRoles_ParentRoles) {
 	if rt.VersionScopeParentRoles == nil {
 		rt.VersionScopeParentRoles = make(map[string]*runtimev1.RuleTable_ScopeParentRoles)
 	}
@@ -485,11 +503,6 @@ func setRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, pa
 		scopes.Scopes = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
 	}
 	setScopeRoleParentRoles(scopes.Scopes, scope, role, pr)
-
-	if rt.ScopeParentRoles == nil {
-		rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
-	}
-	setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr)
 }
 
 func setScopeRoleParentRoles(m map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, pr *runtimev1.RuleTable_RoleParentRoles_ParentRoles) {
