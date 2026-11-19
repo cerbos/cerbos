@@ -22,7 +22,8 @@ func (rt *RuleTable) dedupStrings() {
 		dedupMeta(s, m)
 	}
 
-	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles)
+	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles) //nolint:staticcheck
+	rt.VersionScopeParentRoles = dedupVersionScopeParentRoles(s, rt.VersionScopeParentRoles)
 
 	shared := make(map[uint64]*runtimev1.RunnableDerivedRole)
 	for modID, drs := range rt.policyDerivedRoles {
@@ -116,6 +117,21 @@ func relocateValue(s *index.StringDeduper, v *structpb.Value) *structpb.Value {
 	default:
 		return v
 	}
+}
+
+func dedupVersionScopeParentRoles(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_ScopeParentRoles) map[string]*runtimev1.RuleTable_ScopeParentRoles {
+	if len(m) == 0 {
+		return m
+	}
+	out := make(map[string]*runtimev1.RuleTable_ScopeParentRoles, len(m))
+	for version, spr := range m {
+		s.Intern(&version)
+		if spr != nil {
+			spr.Scopes = dedupScopeParentRoles(s, spr.Scopes)
+		}
+		out[version] = spr
+	}
+	return out
 }
 
 func dedupScopeParentRoles(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_RoleParentRoles) map[string]*runtimev1.RuleTable_RoleParentRoles {

@@ -134,6 +134,9 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"resource.leave_request.vstaging",
 					"resource.missing_attr.vdefault",
 					"resource.output_now.vdefault",
+					"resource.parcel.vv1",
+					"resource.parcel.vv2",
+					"resource.parcel.vv3",
 					"resource.payslip.vdefault",
 					"resource.products.vdefault",
 					"resource.purchase_order.vdefault",
@@ -150,6 +153,8 @@ func testPutCmd(clientCtx *cmdclient.Context, globals *flagset.Globals) func(*te
 					"role.contoso_manager.vdefault/contoso",
 					"role.domain_administrator.vdefault",
 					"role.limited_viewer.vdefault",
+					"role.parcel_manager.vv1",
+					"role.parcel_manager.vv2",
 					"role.party_person.vdefault/acme.hr.uk.brighton.kemptown",
 					"role.relic_specialist.vdefault",
 				}, listPolicies(t, clientCtx))

@@ -10,6 +10,7 @@ import (
 	"iter"
 	"os"
 	"runtime/debug"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -38,6 +39,7 @@ var (
 	compilerVersionMigrations = []compilerVersionMigration{
 		migrateFromCompilerVersion0To1,
 		migrateFromCompilerVersion1To2,
+		migrateFromCompilerVersion2To3,
 	}
 
 	compilerVersion = uint32(len(compilerVersionMigrations))
@@ -51,13 +53,14 @@ const (
 
 func NewProtoRuletable() *runtimev1.RuleTable {
 	return &runtimev1.RuleTable{
-		Rules:              []*runtimev1.RuleTable_RuleRow{},
-		Schemas:            make(map[uint64]*policyv1.Schemas),
-		Meta:               make(map[uint64]*runtimev1.RuleTableMetadata),
-		ScopeParentRoles:   make(map[string]*runtimev1.RuleTable_RoleParentRoles),
-		PolicyDerivedRoles: make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
-		JsonSchemas:        make(map[string]*runtimev1.RuleTable_JSONSchema),
-		CompilerVersion:    compilerVersion,
+		Rules:                   []*runtimev1.RuleTable_RuleRow{},
+		Schemas:                 make(map[uint64]*policyv1.Schemas),
+		Meta:                    make(map[uint64]*runtimev1.RuleTableMetadata),
+		ScopeParentRoles:        make(map[string]*runtimev1.RuleTable_RoleParentRoles), //nolint:staticcheck
+		VersionScopeParentRoles: make(map[string]*runtimev1.RuleTable_ScopeParentRoles),
+		PolicyDerivedRoles:      make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
+		JsonSchemas:             make(map[string]*runtimev1.RuleTable_JSONSchema),
+		CompilerVersion:         compilerVersion,
 	}
 }
 
@@ -461,17 +464,92 @@ func addRolePolicy(rt *runtimev1.RuleTable, p *runtimev1.RunnableRolePolicySet) 
 		}
 	}
 
-	if _, ok := rt.ScopeParentRoles[p.Scope]; !ok {
-		rt.ScopeParentRoles[p.Scope] = &runtimev1.RuleTable_RoleParentRoles{
-			RoleParentRoles: make(map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles),
+	setRoleParentRoles(rt, p.Meta.Version, p.Scope, p.Role, p.ParentRoles)
+
+	return res
+}
+
+// setRoleParentRoles records the parent roles declared by the role policy identified by version, scope and role.
+// ScopeParentRoles is not version aware and is only maintained for readers that haven't moved to
+// VersionScopeParentRoles. When several versions of the role policy exist, it holds the parent roles of
+// the version that sorts first, so that the result doesn't depend on the order the policies are added in.
+func setRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, parentRoles []string) {
+	pr := &runtimev1.RuleTable_RoleParentRoles_ParentRoles{Roles: parentRoles}
+
+	setVersionRoleParentRoles(rt, version, scope, role, pr)
+
+	for v, scopes := range rt.VersionScopeParentRoles {
+		if v < version {
+			if _, ok := scopes.GetScopes()[scope].GetRoleParentRoles()[role]; ok {
+				return
+			}
 		}
 	}
 
-	rt.ScopeParentRoles[p.Scope].RoleParentRoles[p.Role] = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{
-		Roles: p.ParentRoles,
+	if rt.ScopeParentRoles == nil { //nolint:staticcheck
+		rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles) //nolint:staticcheck
+	}
+	setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr) //nolint:staticcheck
+}
+
+func setVersionRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, pr *runtimev1.RuleTable_RoleParentRoles_ParentRoles) {
+	if rt.VersionScopeParentRoles == nil {
+		rt.VersionScopeParentRoles = make(map[string]*runtimev1.RuleTable_ScopeParentRoles)
+	}
+	scopes, ok := rt.VersionScopeParentRoles[version]
+	if !ok || scopes == nil {
+		scopes = &runtimev1.RuleTable_ScopeParentRoles{}
+		rt.VersionScopeParentRoles[version] = scopes
+	}
+	if scopes.Scopes == nil {
+		scopes.Scopes = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+	}
+	setScopeRoleParentRoles(scopes.Scopes, scope, role, pr)
+}
+
+func setScopeRoleParentRoles(m map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string, pr *runtimev1.RuleTable_RoleParentRoles_ParentRoles) {
+	roles, ok := m[scope]
+	if !ok || roles == nil {
+		roles = &runtimev1.RuleTable_RoleParentRoles{}
+		m[scope] = roles
+	}
+	if roles.RoleParentRoles == nil {
+		roles.RoleParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles_ParentRoles)
+	}
+	roles.RoleParentRoles[role] = pr
+}
+
+// deleteRoleParentRoles removes the parent roles declared by the role policy identified by version, scope and role.
+// The ScopeParentRoles entry for the scope and role is repointed to one of the remaining versions of the role
+// policy, or removed if there are none.
+func deleteRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string) {
+	if scopes := rt.VersionScopeParentRoles[version]; scopes != nil {
+		deleteScopeRoleParentRoles(scopes.Scopes, scope, role)
+		if len(scopes.Scopes) == 0 {
+			delete(rt.VersionScopeParentRoles, version)
+		}
 	}
 
-	return res
+	for _, scopes := range rt.VersionScopeParentRoles {
+		if pr, ok := scopes.GetScopes()[scope].GetRoleParentRoles()[role]; ok {
+			if rt.ScopeParentRoles == nil { //nolint:staticcheck
+				rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles) //nolint:staticcheck
+			}
+			setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr) //nolint:staticcheck
+			return
+		}
+	}
+
+	deleteScopeRoleParentRoles(rt.ScopeParentRoles, scope, role) //nolint:staticcheck
+}
+
+func deleteScopeRoleParentRoles(m map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string) {
+	if roles := m[scope]; roles != nil {
+		delete(roles.RoleParentRoles, role)
+		if len(roles.RoleParentRoles) == 0 {
+			delete(m, scope)
+		}
+	}
 }
 
 func buildRawSchemas(ctx context.Context, rt *runtimev1.RuleTable, resolver schema.Resolver) error {
@@ -739,7 +817,7 @@ func (rt *RuleTable) finalizeBuild() error {
 	rt.releaseCheckedExprs()
 	rt.dedupStrings()
 
-	if err := rt.idx.IndexParentRoles(rt.ScopeParentRoles); err != nil {
+	if err := rt.idx.IndexParentRoles(rt.VersionScopeParentRoles); err != nil {
 		return err
 	}
 
@@ -880,7 +958,7 @@ func (rt *RuleTable) GetAllScopes(pt policyv1.Kind, scope, name, version string,
 	visit := func(s string) {
 		fqn := namer.WithScope(rootFqn, s)
 		_, policyExists := rt.Meta[namer.GenModuleIDFromFQN(fqn).RawValue()]
-		if !policyExists && (pt != policyv1.Kind_KIND_RESOURCE || rt.ScopeParentRoles[s] == nil) {
+		if !policyExists && (pt != policyv1.Kind_KIND_RESOURCE || rt.VersionScopeParentRoles[version].GetScopes()[s] == nil) {
 			return
 		}
 
@@ -1087,6 +1165,70 @@ func migrateFromCompilerVersion1To2(rt *runtimev1.RuleTable) error {
 		if t := row.EvaluationKeyTuple; t != nil {
 			t.Resource = row.Resource
 		}
+	}
+
+	return nil
+}
+
+// migrateFromCompilerVersion2To3 populates VersionScopeParentRoles, which tracks the parent roles of
+// role policies by policy version. Older rule tables only have ScopeParentRoles, which is keyed by
+// scope and role, so the versions are recovered from the metadata of the role policies.
+//
+// If several versions of a role policy exist for the same scope and role, ScopeParentRoles only has the
+// parent roles of one of them. All those versions get the same parent roles, which is how they were
+// evaluated before, and a warning is logged because that can only be fixed by rebuilding the rule table.
+func migrateFromCompilerVersion2To3(rt *runtimev1.RuleTable) error {
+	if len(rt.VersionScopeParentRoles) > 0 {
+		return nil
+	}
+
+	type scopeRole struct {
+		scope, role string
+	}
+	versions := make(map[scopeRole][]string)
+
+	for _, meta := range rt.Meta {
+		role := meta.GetRole()
+		if role == "" {
+			continue
+		}
+
+		version := meta.GetVersion()
+		if version == "" {
+			version = namer.DefaultVersion
+		}
+		scope := namer.ScopeFromFQN(meta.GetFqn())
+
+		// Role policies without parent roles are recorded too because the presence of a role policy
+		// in a scope affects scope resolution.
+		pr := rt.ScopeParentRoles[scope].GetRoleParentRoles()[role] //nolint:staticcheck
+		if pr == nil {
+			pr = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{}
+		}
+		setVersionRoleParentRoles(rt, version, scope, role, pr)
+
+		sr := scopeRole{scope: scope, role: role}
+		versions[sr] = append(versions[sr], version)
+	}
+
+	var log *logging.Logger
+	for sr, vs := range versions {
+		if len(vs) < 2 { //nolint:mnd
+			continue
+		}
+
+		if log == nil {
+			log = logging.NewLogger("compiler")
+		}
+
+		slices.Sort(vs)
+		log.Warnw(
+			"Role policy has multiple versions but the compiled policies only have the parent roles of one of them: all versions will use the same parent roles until the policies are compiled again",
+			"role", sr.role,
+			"scope", sr.scope,
+			"versions", vs,
+			"parent_roles", rt.ScopeParentRoles[sr.scope].GetRoleParentRoles()[sr.role].GetRoles(), //nolint:staticcheck
+		)
 	}
 
 	return nil

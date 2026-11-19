@@ -303,6 +303,39 @@ func cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m *BitmapIndex_RolePar
 	}
 }
 
+func cerbos_runtime_v1_BitmapIndex_ScopeRoleParents_hashpb_sum(m *BitmapIndex_ScopeRoleParents, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.ScopeRoleParents.scopes"]; !ok {
+		if len(m.Scopes) > 0 {
+			if len(m.Scopes) <= 32 {
+				kp := hashpb_stringKeyPool.Get().(*[]string)
+				keys := (*kp)[:0]
+				for k := range m.Scopes {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Scopes[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m.Scopes[k], hasher, ignore, b)
+					}
+				}
+				clear(keys)
+				*kp = keys
+				hashpb_stringKeyPool.Put(kp)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Scopes)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Scopes[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m.Scopes[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_BitmapIndex_hashpb_sum(m *BitmapIndex, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.version"]; !ok {
 		if len(m.Version) > 0 {
@@ -422,6 +455,36 @@ func cerbos_runtime_v1_BitmapIndex_hashpb_sum(m *BitmapIndex, hasher hash.Hash, 
 					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
 					if m.ParentRoles[k] != nil {
 						cerbos_runtime_v1_BitmapIndex_RoleParents_hashpb_sum(m.ParentRoles[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+	if _, ok := ignore["cerbos.runtime.v1.BitmapIndex.version_parent_roles"]; !ok {
+		if len(m.VersionParentRoles) > 0 {
+			if len(m.VersionParentRoles) <= 32 {
+				kp := hashpb_stringKeyPool.Get().(*[]string)
+				keys := (*kp)[:0]
+				for k := range m.VersionParentRoles {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.VersionParentRoles[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_ScopeRoleParents_hashpb_sum(m.VersionParentRoles[k], hasher, ignore, b)
+					}
+				}
+				clear(keys)
+				*kp = keys
+				hashpb_stringKeyPool.Put(kp)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.VersionParentRoles)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.VersionParentRoles[k] != nil {
+						cerbos_runtime_v1_BitmapIndex_ScopeRoleParents_hashpb_sum(m.VersionParentRoles[k], hasher, ignore, b)
 					}
 				}
 			}
@@ -1132,6 +1195,39 @@ func cerbos_runtime_v1_RuleTable_RuleRow_hashpb_sum(m *RuleTable_RuleRow, hasher
 	}
 }
 
+func cerbos_runtime_v1_RuleTable_ScopeParentRoles_hashpb_sum(m *RuleTable_ScopeParentRoles, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.ScopeParentRoles.scopes"]; !ok {
+		if len(m.Scopes) > 0 {
+			if len(m.Scopes) <= 32 {
+				kp := hashpb_stringKeyPool.Get().(*[]string)
+				keys := (*kp)[:0]
+				for k := range m.Scopes {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Scopes[k] != nil {
+						cerbos_runtime_v1_RuleTable_RoleParentRoles_hashpb_sum(m.Scopes[k], hasher, ignore, b)
+					}
+				}
+				clear(keys)
+				*kp = keys
+				hashpb_stringKeyPool.Put(kp)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.Scopes)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.Scopes[k] != nil {
+						cerbos_runtime_v1_RuleTable_RoleParentRoles_hashpb_sum(m.Scopes[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
+	}
+}
+
 func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, ignore map[string]struct{}, b *[10]byte) {
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.rules"]; !ok {
 		if len(m.Rules) > 0 {
@@ -1290,6 +1386,36 @@ func cerbos_runtime_v1_RuleTable_hashpb_sum(m *RuleTable, hasher hash.Hash, igno
 	}
 	if _, ok := ignore["cerbos.runtime.v1.RuleTable.compiler_version"]; !ok {
 		_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(m.GetCompilerVersion())))
+	}
+	if _, ok := ignore["cerbos.runtime.v1.RuleTable.version_scope_parent_roles"]; !ok {
+		if len(m.VersionScopeParentRoles) > 0 {
+			if len(m.VersionScopeParentRoles) <= 32 {
+				kp := hashpb_stringKeyPool.Get().(*[]string)
+				keys := (*kp)[:0]
+				for k := range m.VersionScopeParentRoles {
+					keys = append(keys, k)
+				}
+				slices.Sort(keys)
+				for _, k := range keys {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.VersionScopeParentRoles[k] != nil {
+						cerbos_runtime_v1_RuleTable_ScopeParentRoles_hashpb_sum(m.VersionScopeParentRoles[k], hasher, ignore, b)
+					}
+				}
+				clear(keys)
+				*kp = keys
+				hashpb_stringKeyPool.Put(kp)
+			} else {
+				for _, k := range slices.Sorted(maps.Keys(m.VersionScopeParentRoles)) {
+					_, _ = hasher.Write(protowire.AppendVarint(b[:0], uint64(len(k))))
+					_, _ = hasher.Write(unsafe.Slice(unsafe.StringData(k), len(k)))
+					if m.VersionScopeParentRoles[k] != nil {
+						cerbos_runtime_v1_RuleTable_ScopeParentRoles_hashpb_sum(m.VersionScopeParentRoles[k], hasher, ignore, b)
+					}
+				}
+			}
+		}
 	}
 }
 

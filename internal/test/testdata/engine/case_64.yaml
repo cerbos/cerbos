@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped role policy: lenient scope search applies the parent roles of the role policy in the scope that the request resolves to"
+
+config:
+  lenientScopeSearch:
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # contoso_manager has a role policy in the contoso scope with the parent role admin.
+  # contoso.sales has no policies, so the request resolves to contoso and must be decided as if it was made there.
+  - requestId: resolved_scope
+    actions:
+      - view
+      - delete
+    principal:
+      id: pat
+      roles:
+        - contoso_manager
+    resource:
+      kind: leave_request
+      scope: contoso.sales
+      id: XX125
+
+wantOutputs: &outputs
+  - requestId: resolved_scope
+    resourceId: XX125
+    actions:
+      view:
+        effect: EFFECT_ALLOW
+        policy: resource.leave_request.vdefault/contoso
+      delete:
+        effect: EFFECT_DENY
+        policy: role.contoso_manager.vdefault/contoso
+        scope: contoso
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        resource.leave_request.vdefault:
+          attributes:
+            driver: disk
+            source: resource_policies/policy_05.yaml
+        role.contoso_manager.vdefault/contoso:
+          attributes:
+            driver: disk
+            source: role_policies/policy_11_contoso.yaml
+    policySource:
+      disk: {}
