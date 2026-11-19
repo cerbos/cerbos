@@ -103,7 +103,7 @@ message RuleTable {
   map<uint64, RuleTableMetadata> meta = 3;
   // Parent roles keyed by scope and role, ignoring the role policy version. Derived from
   // version_scope_parent_roles for readers that are not version aware.
-  map<string, RoleParentRoles> scope_parent_roles = 4;
+  map<string, RoleParentRoles> scope_parent_roles = 4 [deprecated = true];
   map<uint64, PolicyDerivedRoles> policy_derived_roles = 5;
   map<string, JSONSchema> json_schemas = 6;
   Manifest manifest = 7;
