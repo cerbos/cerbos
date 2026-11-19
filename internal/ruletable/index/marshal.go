@@ -341,7 +341,7 @@ func Unmarshal(data []byte) (*Index, error) {
 
 	return &Index{
 		bi:          bi,
-		parentRoles: unmarshalVersionParentRoles(msg.VersionParentRoles),
+		parentRoles: unmarshalVersionParentRoles(msg),
 		handles:     s.Handles,
 	}, nil
 }
@@ -496,13 +496,30 @@ func unmarshalGlobDimension(pb *runtimev1.BitmapIndex_GlobDimension) (*globDimen
 	return gd, nil
 }
 
-func unmarshalVersionParentRoles(pb map[string]*runtimev1.BitmapIndex_ScopeRoleParents) map[string]map[string]map[string][]string {
+func unmarshalVersionParentRoles(msg *runtimev1.BitmapIndex) map[string]map[string]map[string][]string {
+	pb := msg.GetVersionParentRoles()
 	if len(pb) == 0 {
-		return nil
+		return unmarshalLegacyParentRoles(msg)
 	}
 	out := make(map[string]map[string]map[string][]string, len(pb))
 	for version, srp := range pb {
 		out[version] = unmarshalParentRoles(srp.GetScopes())
+	}
+	return out
+}
+
+// unmarshalLegacyParentRoles handles indexes marshalled before parent roles were tracked by policy
+// version. They only have the version-agnostic parent roles, and nothing in the index tells which
+// versions of a role policy declared them, so they are applied to every version in the index. That is
+// how such an index was evaluated before.
+func unmarshalLegacyParentRoles(msg *runtimev1.BitmapIndex) map[string]map[string]map[string][]string {
+	parentRoles := unmarshalParentRoles(msg.GetParentRoles())
+	if len(parentRoles) == 0 {
+		return nil
+	}
+	out := make(map[string]map[string]map[string][]string, len(msg.GetVersion()))
+	for _, version := range msg.GetVersion() {
+		out[version.GetKey()] = parentRoles
 	}
 	return out
 }

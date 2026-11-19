@@ -96,6 +96,30 @@ func TestParentRoleIndex(t *testing.T) {
 		require.ElementsMatch(t, []string{"contractor"}, msg.GetParentRoles()["acme.hr"].GetRoles()["manager"].GetParents())
 	})
 
+	t.Run("unmarshals an index without versioned parent roles", func(t *testing.T) {
+		data, err := impl.Marshal()
+		require.NoError(t, err)
+
+		// An index marshalled before parent roles were tracked by version only has the
+		// version-agnostic field.
+		msg := &runtimev1.BitmapIndex{}
+		require.NoError(t, msg.UnmarshalVT(data))
+		msg.VersionParentRoles = nil
+		msg.Version = []*runtimev1.BitmapIndex_Entry{{Key: "default"}, {Key: "v2"}}
+		data, err = msg.MarshalVT()
+		require.NoError(t, err)
+
+		have, err := index.Unmarshal(data)
+		require.NoError(t, err)
+
+		// the same parent roles apply to every version in the index
+		for _, version := range []string{"default", "v2"} {
+			require.ElementsMatch(t, []string{"manager", "employee", "user"}, have.AddParentRoles(version, "acme", []string{"manager"}), "version=%s", version)
+			require.ElementsMatch(t, []string{"manager", "contractor"}, have.AddParentRoles(version, "acme.hr", []string{"manager"}), "version=%s", version)
+		}
+		require.Equal(t, []string{"manager"}, have.AddParentRoles("v3", "acme", []string{"manager"}))
+	})
+
 	t.Run("replace existing parent role index", func(t *testing.T) {
 		require.NoError(t, impl.IndexParentRoles(map[string]*runtimev1.RuleTable_ScopeParentRoles{}))
 
