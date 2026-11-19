@@ -295,6 +295,8 @@ type RuleTable struct {
 	Meta    map[uint64]*RuleTableMetadata `protobuf:"bytes,3,rep,name=meta,proto3" json:"meta,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Parent roles keyed by scope and role, ignoring the role policy version. Derived from
 	// version_scope_parent_roles for readers that are not version aware.
+	//
+	// Deprecated: Marked as deprecated in cerbos/runtime/v1/runtime.proto.
 	ScopeParentRoles   map[string]*RuleTable_RoleParentRoles    `protobuf:"bytes,4,rep,name=scope_parent_roles,json=scopeParentRoles,proto3" json:"scope_parent_roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	PolicyDerivedRoles map[uint64]*RuleTable_PolicyDerivedRoles `protobuf:"bytes,5,rep,name=policy_derived_roles,json=policyDerivedRoles,proto3" json:"policy_derived_roles,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	JsonSchemas        map[string]*RuleTable_JSONSchema         `protobuf:"bytes,6,rep,name=json_schemas,json=jsonSchemas,proto3" json:"json_schemas,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -357,6 +359,7 @@ func (x *RuleTable) GetMeta() map[uint64]*RuleTableMetadata {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cerbos/runtime/v1/runtime.proto.
 func (x *RuleTable) GetScopeParentRoles() map[string]*RuleTable_RoleParentRoles {
 	if x != nil {
 		return x.ScopeParentRoles
@@ -1472,6 +1475,8 @@ type BitmapIndex struct {
 	Cores              []*BitmapIndex_FunctionalCore `protobuf:"bytes,11,rep,name=cores,proto3" json:"cores,omitempty"`
 	// Parent roles keyed by scope and role, ignoring the role policy version. Derived from
 	// version_parent_roles for readers that are not version aware.
+	//
+	// Deprecated: Marked as deprecated in cerbos/runtime/v1/runtime.proto.
 	ParentRoles map[string]*BitmapIndex_RoleParents `protobuf:"bytes,12,rep,name=parent_roles,json=parentRoles,proto3" json:"parent_roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Parent roles keyed by role policy version, scope and role.
 	VersionParentRoles map[string]*BitmapIndex_ScopeRoleParents `protobuf:"bytes,13,rep,name=version_parent_roles,json=versionParentRoles,proto3" json:"version_parent_roles,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
@@ -1586,6 +1591,7 @@ func (x *BitmapIndex) GetCores() []*BitmapIndex_FunctionalCore {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in cerbos/runtime/v1/runtime.proto.
 func (x *BitmapIndex) GetParentRoles() map[string]*BitmapIndex_RoleParents {
 	if x != nil {
 		return x.ParentRoles
@@ -4262,12 +4268,12 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\aversion\x18\x06 \x01(\tR\aversion\x12\x14\n" +
 	"\x05scope\x18\a \x01(\tR\x05scope\x12\x1b\n" +
 	"\trule_name\x18\b \x01(\tR\bruleName\x12\x17\n" +
-	"\arule_id\x18\t \x01(\rR\x06ruleId\"\x86\x1d\n" +
+	"\arule_id\x18\t \x01(\rR\x06ruleId\"\x8a\x1d\n" +
 	"\tRuleTable\x12:\n" +
 	"\x05rules\x18\x01 \x03(\v2$.cerbos.runtime.v1.RuleTable.RuleRowR\x05rules\x12C\n" +
 	"\aschemas\x18\x02 \x03(\v2).cerbos.runtime.v1.RuleTable.SchemasEntryR\aschemas\x12:\n" +
-	"\x04meta\x18\x03 \x03(\v2&.cerbos.runtime.v1.RuleTable.MetaEntryR\x04meta\x12`\n" +
-	"\x12scope_parent_roles\x18\x04 \x03(\v22.cerbos.runtime.v1.RuleTable.ScopeParentRolesEntryR\x10scopeParentRoles\x12f\n" +
+	"\x04meta\x18\x03 \x03(\v2&.cerbos.runtime.v1.RuleTable.MetaEntryR\x04meta\x12d\n" +
+	"\x12scope_parent_roles\x18\x04 \x03(\v22.cerbos.runtime.v1.RuleTable.ScopeParentRolesEntryB\x02\x18\x01R\x10scopeParentRoles\x12f\n" +
 	"\x14policy_derived_roles\x18\x05 \x03(\v24.cerbos.runtime.v1.RuleTable.PolicyDerivedRolesEntryR\x12policyDerivedRoles\x12P\n" +
 	"\fjson_schemas\x18\x06 \x03(\v2-.cerbos.runtime.v1.RuleTable.JsonSchemasEntryR\vjsonSchemas\x12A\n" +
 	"\bmanifest\x18\a \x01(\v2%.cerbos.runtime.v1.RuleTable.ManifestR\bmanifest\x12)\n" +
@@ -4615,7 +4621,7 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\x06Errors\x12S\n" +
 	"\x12index_build_errors\x18\x01 \x01(\v2#.cerbos.runtime.v1.IndexBuildErrorsH\x00R\x10indexBuildErrors\x12I\n" +
 	"\x0ecompile_errors\x18\x02 \x01(\v2 .cerbos.runtime.v1.CompileErrorsH\x00R\rcompileErrorsB\x06\n" +
-	"\x04kind\"\xc9\x17\n" +
+	"\x04kind\"\xcd\x17\n" +
 	"\vBitmapIndex\x12>\n" +
 	"\aversion\x18\x01 \x03(\v2$.cerbos.runtime.v1.BitmapIndex.EntryR\aversion\x12:\n" +
 	"\x05scope\x18\x02 \x03(\v2$.cerbos.runtime.v1.BitmapIndex.EntryR\x05scope\x12@\n" +
@@ -4629,8 +4635,8 @@ const file_cerbos_runtime_v1_runtime_proto_rawDesc = "" +
 	"\x14allow_actions_bitmap\x18\t \x01(\fR\x12allowActionsBitmap\x12B\n" +
 	"\bbindings\x18\n" +
 	" \x03(\v2&.cerbos.runtime.v1.BitmapIndex.BindingR\bbindings\x12C\n" +
-	"\x05cores\x18\v \x03(\v2-.cerbos.runtime.v1.BitmapIndex.FunctionalCoreR\x05cores\x12R\n" +
-	"\fparent_roles\x18\f \x03(\v2/.cerbos.runtime.v1.BitmapIndex.ParentRolesEntryR\vparentRoles\x12h\n" +
+	"\x05cores\x18\v \x03(\v2-.cerbos.runtime.v1.BitmapIndex.FunctionalCoreR\x05cores\x12V\n" +
+	"\fparent_roles\x18\f \x03(\v2/.cerbos.runtime.v1.BitmapIndex.ParentRolesEntryB\x02\x18\x01R\vparentRoles\x12h\n" +
 	"\x14version_parent_roles\x18\r \x03(\v26.cerbos.runtime.v1.BitmapIndex.VersionParentRolesEntryR\x12versionParentRoles\x1a1\n" +
 	"\x05Entry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
