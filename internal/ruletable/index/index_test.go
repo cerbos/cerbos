@@ -92,8 +92,8 @@ func TestParentRoleIndex(t *testing.T) {
 		// the version-agnostic field holds the parent roles of the version that sorts first
 		msg := &runtimev1.BitmapIndex{}
 		require.NoError(t, msg.UnmarshalVT(data))
-		require.ElementsMatch(t, []string{"employee", "user"}, msg.GetParentRoles()["acme"].GetRoles()["manager"].GetParents())
-		require.ElementsMatch(t, []string{"contractor"}, msg.GetParentRoles()["acme.hr"].GetRoles()["manager"].GetParents())
+		require.ElementsMatch(t, []string{"employee", "user"}, msg.GetParentRoles()["acme"].GetRoles()["manager"].GetParents()) //nolint:staticcheck
+		require.ElementsMatch(t, []string{"contractor"}, msg.GetParentRoles()["acme.hr"].GetRoles()["manager"].GetParents())    //nolint:staticcheck
 	})
 
 	t.Run("unmarshals an index without versioned parent roles", func(t *testing.T) {

@@ -104,7 +104,7 @@ func (m *Index) Marshal() ([]byte, error) {
 		AllowActionsBitmap: allowActions,
 		Bindings:           pbBindings,
 		Cores:              pbCores,
-		ParentRoles:        marshalParentRoles(legacyParentRoles(m.parentRoles)),
+		ParentRoles:        marshalParentRoles(legacyParentRoles(m.parentRoles)), //nolint:staticcheck
 		VersionParentRoles: marshalVersionParentRoles(m.parentRoles),
 	}
 
@@ -513,7 +513,7 @@ func unmarshalVersionParentRoles(msg *runtimev1.BitmapIndex) map[string]map[stri
 // versions of a role policy declared them, so they are applied to every version in the index. That is
 // how such an index was evaluated before.
 func unmarshalLegacyParentRoles(msg *runtimev1.BitmapIndex) map[string]map[string]map[string][]string {
-	parentRoles := unmarshalParentRoles(msg.GetParentRoles())
+	parentRoles := unmarshalParentRoles(msg.GetParentRoles()) //nolint:staticcheck
 	if len(parentRoles) == 0 {
 		return nil
 	}

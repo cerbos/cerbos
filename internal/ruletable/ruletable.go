@@ -56,7 +56,7 @@ func NewProtoRuletable() *runtimev1.RuleTable {
 		Rules:                   []*runtimev1.RuleTable_RuleRow{},
 		Schemas:                 make(map[uint64]*policyv1.Schemas),
 		Meta:                    make(map[uint64]*runtimev1.RuleTableMetadata),
-		ScopeParentRoles:        make(map[string]*runtimev1.RuleTable_RoleParentRoles),
+		ScopeParentRoles:        make(map[string]*runtimev1.RuleTable_RoleParentRoles), //nolint:staticcheck
 		VersionScopeParentRoles: make(map[string]*runtimev1.RuleTable_ScopeParentRoles),
 		PolicyDerivedRoles:      make(map[uint64]*runtimev1.RuleTable_PolicyDerivedRoles),
 		JsonSchemas:             make(map[string]*runtimev1.RuleTable_JSONSchema),
@@ -486,10 +486,10 @@ func setRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, pa
 		}
 	}
 
-	if rt.ScopeParentRoles == nil {
-		rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+	if rt.ScopeParentRoles == nil { //nolint:staticcheck
+		rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles) //nolint:staticcheck
 	}
-	setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr)
+	setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr) //nolint:staticcheck
 }
 
 func setVersionRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string, pr *runtimev1.RuleTable_RoleParentRoles_ParentRoles) {
@@ -532,15 +532,15 @@ func deleteRoleParentRoles(rt *runtimev1.RuleTable, version, scope, role string)
 
 	for _, scopes := range rt.VersionScopeParentRoles {
 		if pr, ok := scopes.GetScopes()[scope].GetRoleParentRoles()[role]; ok {
-			if rt.ScopeParentRoles == nil {
-				rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles)
+			if rt.ScopeParentRoles == nil { //nolint:staticcheck
+				rt.ScopeParentRoles = make(map[string]*runtimev1.RuleTable_RoleParentRoles) //nolint:staticcheck
 			}
-			setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr)
+			setScopeRoleParentRoles(rt.ScopeParentRoles, scope, role, pr) //nolint:staticcheck
 			return
 		}
 	}
 
-	deleteScopeRoleParentRoles(rt.ScopeParentRoles, scope, role)
+	deleteScopeRoleParentRoles(rt.ScopeParentRoles, scope, role) //nolint:staticcheck
 }
 
 func deleteScopeRoleParentRoles(m map[string]*runtimev1.RuleTable_RoleParentRoles, scope, role string) {
@@ -1201,7 +1201,7 @@ func migrateFromCompilerVersion2To3(rt *runtimev1.RuleTable) error {
 
 		// Role policies without parent roles are recorded too because the presence of a role policy
 		// in a scope affects scope resolution.
-		pr := rt.ScopeParentRoles[scope].GetRoleParentRoles()[role]
+		pr := rt.ScopeParentRoles[scope].GetRoleParentRoles()[role] //nolint:staticcheck
 		if pr == nil {
 			pr = &runtimev1.RuleTable_RoleParentRoles_ParentRoles{}
 		}
@@ -1227,7 +1227,7 @@ func migrateFromCompilerVersion2To3(rt *runtimev1.RuleTable) error {
 			"role", sr.role,
 			"scope", sr.scope,
 			"versions", vs,
-			"parent_roles", rt.ScopeParentRoles[sr.scope].GetRoleParentRoles()[sr.role].GetRoles(),
+			"parent_roles", rt.ScopeParentRoles[sr.scope].GetRoleParentRoles()[sr.role].GetRoles(), //nolint:staticcheck
 		)
 	}
 

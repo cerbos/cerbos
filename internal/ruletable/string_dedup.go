@@ -22,7 +22,7 @@ func (rt *RuleTable) dedupStrings() {
 		dedupMeta(s, m)
 	}
 
-	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles)
+	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles) //nolint:staticcheck
 	rt.VersionScopeParentRoles = dedupVersionScopeParentRoles(s, rt.VersionScopeParentRoles)
 
 	shared := make(map[uint64]*runtimev1.RunnableDerivedRole)

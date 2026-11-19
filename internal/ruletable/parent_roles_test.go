@@ -25,7 +25,7 @@ func TestRoleParentRoles(t *testing.T) {
 		return rt.VersionScopeParentRoles[version].GetScopes()[scope].GetRoleParentRoles()[role].GetRoles()
 	}
 	legacy := func(scope, role string) []string {
-		return rt.ScopeParentRoles[scope].GetRoleParentRoles()[role].GetRoles()
+		return rt.ScopeParentRoles[scope].GetRoleParentRoles()[role].GetRoles() //nolint:staticcheck
 	}
 
 	setRoleParentRoles(rt, "v2", "acme", "agent", []string{"editor"})
@@ -46,7 +46,7 @@ func TestRoleParentRoles(t *testing.T) {
 		other := NewProtoRuletable()
 		setRoleParentRoles(other, "v1", "acme", "agent", []string{"viewer"})
 		setRoleParentRoles(other, "v2", "acme", "agent", []string{"editor"})
-		require.Equal(t, []string{"viewer"}, other.ScopeParentRoles["acme"].GetRoleParentRoles()["agent"].GetRoles())
+		require.Equal(t, []string{"viewer"}, other.ScopeParentRoles["acme"].GetRoleParentRoles()["agent"].GetRoles()) //nolint:staticcheck
 	})
 
 	t.Run("deleting a version keeps the other versions", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestRoleParentRoles(t *testing.T) {
 		deleteRoleParentRoles(rt, "v2", "acme", "agent")
 		deleteRoleParentRoles(rt, "v1", "acme", "clerk")
 		require.Empty(t, rt.VersionScopeParentRoles)
-		require.Empty(t, rt.ScopeParentRoles)
+		require.Empty(t, rt.ScopeParentRoles) //nolint:staticcheck
 	})
 }
 
@@ -119,7 +119,7 @@ func TestMigrateParentRoles(t *testing.T) {
 
 	t.Run("restores versions from metadata", func(t *testing.T) {
 		protoRT, want := mkLegacy(t)
-		legacy := protoRT.ScopeParentRoles
+		legacy := protoRT.ScopeParentRoles //nolint:staticcheck
 		require.NoError(t, migrate(protoRT))
 
 		have := protoRT.VersionScopeParentRoles
