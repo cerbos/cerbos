@@ -11,7 +11,7 @@ Understanding how Cerbos evaluates authorization requests helps you write correc
 [#default-deny]
 == Default deny
 
-Cerbos is deny-by-default. If no policy exists for the resource kind and version in the request, or if no rule within a matching policy grants access, the result is `EFFECT_DENY`. There is no concept of "no opinion" — the absence of an explicit allow is a deny.
+Cerbos is deny-by-default. If neither a principal policy nor a resource policy grants an action, the result is `EFFECT_DENY`. A principal policy can make a final decision before resource-policy evaluation. For actions that fall through to resource-policy evaluation, a missing resource policy or the absence of a matching `EFFECT_ALLOW` rule produces `EFFECT_DENY`. There is no concept of "no opinion" — the absence of an explicit allow is a deny.
 
 
 [#policy-lookup]
@@ -26,7 +26,7 @@ If a `scope` is provided, Cerbos looks for the most specific scoped policy first
 . scope `a`
 . no scope
 
-See xref:scoped_policies.adoc[scoped policies] for details on how scoped policy evaluation works.
+By default, a policy matching the exact requested scope must exist. To allow a missing leaf scope to fall back to the nearest available ancestor, enable xref:configuration:engine.adoc#lenient_scopes[lenient scope search]. See xref:scoped_policies.adoc[scoped policies] for details on how scoped policy evaluation works.
 
 
 [#rule-matching]
@@ -35,7 +35,7 @@ See xref:scoped_policies.adoc[scoped policies] for details on how scoped policy 
 For each action in the request, Cerbos evaluates all rules in the matched policy. A rule matches when all of the following are true:
 
 . The rule's `actions` match the requested action. Wildcards are supported and respect the `:` delimiter (e.g. `view:*` matches `view:public` but not `view`).
-. The rule's `roles` or `derivedRoles` include at least one of the principal's static roles or activated derived roles.
+. The rule's `roles` include at least one of the principal's request roles or parent roles inherited through role policies, or its `derivedRoles` include an activated derived role.
 . If the rule has a xref:conditions.adoc[condition], the condition evaluates to `true`.
 
 
@@ -100,9 +100,9 @@ The derived roles policy must be imported into the resource policy via `importDe
 [#principal-policies]
 == Principal policies
 
-xref:principal_policies.adoc[Principal policies] are evaluated *before* resource policies. When a principal policy matches the requesting principal, Cerbos evaluates its rules for the requested actions first. For each action where the principal policy produces an explicit `EFFECT_ALLOW` or `EFFECT_DENY`, that decision is final — the resource policy is not consulted for that action.
+xref:principal_policies.adoc[Principal policies] are evaluated *before* resource policies. When a principal policy matches the requesting principal, Cerbos evaluates its rules for the requested actions first. The decision produced after evaluating the applicable principal-policy scope chain is final, and the resource policy is not consulted for that action. With `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, an allow also requires an allow from a parent scope.
 
-Actions the principal policy leaves undecided (no matching rule, or a matching rule whose condition did not hold) fall through to resource policy evaluation.
+Actions that remain undecided after the principal-policy scope chain is evaluated fall through to resource-policy evaluation. A matching `EFFECT_ALLOW` rule whose condition is not satisfied produces `EFFECT_DENY` when the policy uses `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`.
 
 
 [#role-policies]
@@ -110,7 +110,7 @@ Actions the principal policy leaves undecided (no matching rule, or a matching r
 
 xref:role_policies.adoc[Role policies] apply as an *additive constraint* on top of resource policies. They do not produce `EFFECT_ALLOW` or `EFFECT_DENY` directly — instead, the `allowActions` list acts as an allow-list of actions permitted for that role on each resource. Any action not in the list is an implicit `EFFECT_DENY` for that role.
 
-For an action to be allowed, it must be permitted by *both* the role policy and a matching xref:resource_policies.adoc[resource policy]. A role policy can narrow access granted by a resource policy but cannot grant access the resource policy does not already allow — which is why a resource policy is always required.
+For an action to be allowed, it must be permitted by *both* the role policy and a matching xref:resource_policies.adoc[resource policy]. A role policy can narrow access granted by a resource policy but cannot authorize an action unless the resource policy also allows it.
 
 If a role policy declares `parentRoles`, it inherits and narrows those roles' permissions recursively.
 
@@ -118,7 +118,7 @@ If a role policy declares `parentRoles`, it inherits and narrows those roles' pe
 [#evaluation-order]
 == Evaluation order summary
 
-. If a xref:principal_policies.adoc[principal policy] matches the requesting principal, evaluate it first. For each action with an explicit `EFFECT_ALLOW` or `EFFECT_DENY` from the principal policy, that is the final result and no further evaluation happens for that action.
+. If a xref:principal_policies.adoc[principal policy] matches the requesting principal, evaluate its applicable scope chain first. A decision produced by that evaluation is final, and no further evaluation happens for the action.
 . For actions the principal policy did not decide, look up the resource policy for the resource kind and version (considering xref:scoped_policies.adoc[scope]).
 . Evaluate xref:derived_roles.adoc[derived roles] to determine which apply to the principal.
 . Evaluate all matching rules in the resource policy. If any xref:role_policies.adoc[role policies] apply to the principal's roles, their `allowActions` lists further restrict which actions are permitted for those roles.

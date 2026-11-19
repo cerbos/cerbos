@@ -4,8 +4,23 @@ include::ROOT:partial$attributes.adoc[]
 
 include::ROOT:partial$version-check.adoc[]
 
+[.lead]
+Principal policies define explicit overrides for a specific principal. A matching rule can allow or deny an action independently of the resource policy.
 
-Principal policies define overrides for a specific user.
+== Evaluation
+
+Cerbos matches a principal policy when its `principal` and `version` correspond to the principal in the request. If the request contains a principal scope, Cerbos also applies the xref:scoped_policies.adoc[scoped-policy lookup rules].
+
+Principal policies are evaluated before resource policies:
+
+* The decision produced after evaluating the applicable principal-policy scope chain is final for that action. The resource policy is not evaluated for the action.
+* An `EFFECT_ALLOW` in a policy that uses `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS` also requires an allow from a parent scope. See xref:scope_permissions.adoc[Scope permissions].
+* An action without a matching principal-policy rule falls through to resource-policy evaluation.
+* If no resource policy grants an unresolved action, the result is `EFFECT_DENY`.
+
+A resource policy is not required for an action decided by a principal policy. Resource policies are required for actions that fall through and for permissions governed by xref:role_policies.adoc[role policies].
+
+Use principal policies for exceptions that apply to one principal, such as an explicit grant or revocation for a user or service account. Use resource policies for rules shared by roles or attributes.
 
 [source,yaml,linenums]
 ----
@@ -18,12 +33,12 @@ principalPolicy:
   scopePermissions: SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS <4>
   constants:
     import: <5>
-      - apatr_common_constants
+      - example_common_constants
     local: <6>
       test_department_id: 12345
   variables:
     import: <7>
-      - apatr_common_variables
+      - example_common_variables
     local: <8>
       is_dev_record: |-
         request.resource.attr.dev_record == true || request.resource.attr.department_id == constants.test_department_id
@@ -60,9 +75,9 @@ principalPolicy:
         - action: "*"
           effect: EFFECT_DENY
 ----
-<1> Principal to whom this policy applies.
-<2> Version of this policy. Policies are uniquely identified by the principal name and version pair. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
-<3> Optional xref:scoped_policies.adoc[scope] for this policy.
+<1> Principal to whom this policy applies. Cerbos matches this value against `request.principal.id`.
+<2> Version of this policy. You can have multiple policy versions for the same principal (e.g. production vs. staging). The version value `default` is special as it is the default fallback when no version is specified in the request.
+<3> Optional xref:scoped_policies.adoc[scope] for this policy. The principal name, version, and exact scope form the unique identity of a principal policy.
 <4> Optional xref:scope_permissions.adoc[scope permission] for this policy, defaults to `SCOPE_PERMISSIONS_OVERRIDE_PARENT`.
 <5> xref:variables.adoc#export-constants[Constant definitions] to import (optional).
 <6> xref:variables.adoc#local-constants[Local constant definitions] (optional).
