@@ -52,7 +52,7 @@ wantErrors:
   - file: resource_policies/example.yaml
     error: invalid expression
     description: |-
-      Invalid expression `wat`: [undeclared reference to 'wat' (in container '')]
+      Invalid expression `wat`: [undeclared reference to 'wat']
     position:
       line: 16
       column: 10

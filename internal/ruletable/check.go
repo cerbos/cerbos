@@ -113,8 +113,12 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	trail := newAuditTrail(make(map[string]*policyv1.SourceAttributes))
 	result := newEvalResult(input.Actions, trail)
 
-	principalScopes, principalPolicyKey, principalPolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
-	resourceScopes, resourcePolicyKey, resourcePolicyFQN := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalLookup := rt.GetAllScopes(policyv1.Kind_KIND_PRINCIPAL, principalScope, input.Principal.Id, principalVersion, evalParams.LenientScopeSearch)
+	resourceLookup := rt.GetAllScopes(policyv1.Kind_KIND_RESOURCE, resourceScope, input.Resource.Kind, resourceVersion, evalParams.LenientScopeSearch)
+	principalScopes, principalPolicyFQN := principalLookup.Scopes, principalLookup.PolicyFQN
+	resourceScopes, resourcePolicyFQN := resourceLookup.Scopes, resourceLookup.PolicyFQN
+	principalPolicyKey := namer.PolicyKeyFromFQN(principalPolicyFQN)
+	resourcePolicyKey := namer.PolicyKeyFromFQN(resourcePolicyFQN)
 
 	if len(principalScopes) == 0 && len(resourceScopes) == 0 {
 		return result, nil
@@ -128,7 +132,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 	pctx := tctx.StartPolicy(fqn)
 
 	// validate the input
-	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(resourcePolicyFQN), input)
+	vr, err := schemaMgr.ValidateCheckInput(ctx, rt.GetSchema(resourceLookup.ExistingPolicyFQN), input)
 	if err != nil {
 		pctx.Failed(err, "Error during validation")
 
@@ -169,7 +173,14 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 		return result, nil
 	}
 
-	allRoles := rt.idx.AddParentRoles([]string{resourceScope}, input.Principal.Roles)
+	// Parent roles come from the role policies in the scope that the request resolved to, which with
+	// lenient scope search may be an ancestor of the requested scope.
+	parentRolesScope := resourceScope
+	if len(resourceScopes) > 0 {
+		parentRolesScope = resourceScopes[0]
+	}
+
+	allRoles := rt.idx.AddParentRoles(resourceVersion, parentRolesScope, input.Principal.Roles)
 
 	includingParentRoles := make(map[string]struct{}, len(allRoles))
 	for _, r := range allRoles {
@@ -224,7 +235,7 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 					roleEffectInfo.Policy = mainPolicyKey
 				}
 
-				parentRoles := rt.idx.AddParentRoles([]string{resourceScope}, []string{role})
+				parentRoles := rt.idx.AddParentRoles(resourceVersion, parentRolesScope, []string{role})
 
 				var bindings []*index.BindingHandle
 			scopesLoop:
@@ -287,11 +298,14 @@ func (rt *RuleTable) check(ctx context.Context, tctx tracer.Context, schemaMgr s
 
 					// principal ID is only passed for principal policies; for resource
 					// policies an empty string means "match all principals".
+					// Each policy kind is resolved using its own policy version.
 					var pid string
+					version := resourceVersion
 					if pt == policyv1.Kind_KIND_PRINCIPAL {
 						pid = input.Principal.Id
+						version = principalVersion
 					}
-					bindings = rt.idx.Query(resourceVersion, resourceKind, scope, action, parentRoles, pt, pid, bindings[:0])
+					bindings = rt.idx.Query(version, resourceKind, scope, action, parentRoles, pt, pid, bindings[:0])
 					for _, b := range bindings {
 						bName := index.HandleStr(b.Name)
 						bOriginFqn := index.HandleStr(b.OriginFqn)

@@ -22,7 +22,8 @@ func (rt *RuleTable) dedupStrings() {
 		dedupMeta(s, m)
 	}
 
-	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles)
+	rt.ScopeParentRoles = dedupScopeParentRoles(s, rt.ScopeParentRoles) //nolint:staticcheck
+	rt.VersionScopeParentRoles = dedupVersionScopeParentRoles(s, rt.VersionScopeParentRoles)
 
 	shared := make(map[uint64]*runtimev1.RunnableDerivedRole)
 	for modID, drs := range rt.policyDerivedRoles {
@@ -30,8 +31,6 @@ func (rt *RuleTable) dedupStrings() {
 	}
 
 	rt.JsonSchemas = dedupJSONSchemas(s, rt.JsonSchemas)
-	rt.principalScopeMap = dedupStringSet(s, rt.principalScopeMap)
-	rt.resourceScopeMap = dedupStringSet(s, rt.resourceScopeMap)
 	rt.scopeScopePermissions = dedupScopePermissions(s, rt.scopeScopePermissions)
 	rt.idx.DedupStrings(s)
 }
@@ -118,6 +117,21 @@ func relocateValue(s *index.StringDeduper, v *structpb.Value) *structpb.Value {
 	default:
 		return v
 	}
+}
+
+func dedupVersionScopeParentRoles(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_ScopeParentRoles) map[string]*runtimev1.RuleTable_ScopeParentRoles {
+	if len(m) == 0 {
+		return m
+	}
+	out := make(map[string]*runtimev1.RuleTable_ScopeParentRoles, len(m))
+	for version, spr := range m {
+		s.Intern(&version)
+		if spr != nil {
+			spr.Scopes = dedupScopeParentRoles(s, spr.Scopes)
+		}
+		out[version] = spr
+	}
+	return out
 }
 
 func dedupScopeParentRoles(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_RoleParentRoles) map[string]*runtimev1.RuleTable_RoleParentRoles {
@@ -213,18 +227,6 @@ func dedupJSONSchemas(s *index.StringDeduper, m map[string]*runtimev1.RuleTable_
 	for k, v := range m {
 		s.Intern(&k)
 		out[k] = v
-	}
-	return out
-}
-
-func dedupStringSet(s *index.StringDeduper, m map[string]struct{}) map[string]struct{} {
-	if len(m) == 0 {
-		return m
-	}
-	out := make(map[string]struct{}, len(m))
-	for k := range m {
-		s.Intern(&k)
-		out[k] = struct{}{}
 	}
 	return out
 }

@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped policy: lenient scope search skips a scope only used by another resource kind and validates against the policy it finds"
+
+config:
+  lenientScopeSearch:
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # calendar_entry has a policy in acme.sales but leave_request does not. The nearest leave_request policy is in acme.
+  - requestId: test
+    actions:
+      - view:public
+    principal:
+      id: john
+      roles:
+        - employee
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+    resource:
+      kind: leave_request
+      scope: acme.sales
+      id: XX125
+      attr:
+        department: accounting
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    validationErrors:
+      - path: /department
+        message: value must be one of "marketing", "engineering"
+        source: SOURCE_RESOURCE
+    actions:
+      view:public:
+        effect: EFFECT_DENY
+        policy: resource.leave_request.vdefault/acme
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail: {}
+    policySource:
+      disk: {}

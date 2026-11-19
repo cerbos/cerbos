@@ -35,7 +35,7 @@ func (m *ModuleID) Scan(src any) error {
 }
 
 func (m ModuleID) Value() (driver.Value, error) {
-	return m.hash, nil
+	return int64(m.hash), nil
 }
 
 // GenModuleID generates a short ID for the module.

@@ -343,6 +343,7 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 | eq                | Equality (==)
 | ge                | Greater than or equal (>=)
 | gt                | Greater than (>)
+| has               | Presence test (has)
 | in                | List membership (in)
 | index             | Array or map index
 | lambda            | Anonymous function
@@ -451,6 +452,23 @@ The `condition` field holds the AST of the condition that must be satisfied. It 
 }
 
 ----
+
+.Example: `has(request.resource.attr.owner)`
+[source,json,linenums]
+----
+{
+  "expression": {
+    "operator": "has",
+    "operands": [
+      {
+        "variable": "request.resource.attr.owner"
+      }
+    ]
+  }
+}
+----
+
+A `has` expression is true when the attribute is present on the resource. When `has()` guards an expression on the same attribute, as in `has(R.attr.owner) && R.attr.owner == P.id`, it is left out of the plan because the expression already excludes resources without the attribute.
 
 ==== Query plan adapters
 

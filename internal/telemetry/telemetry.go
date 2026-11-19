@@ -162,11 +162,12 @@ func Intercept() Interceptors {
 }
 
 type analyticsReporter struct {
-	state          *statev1.TelemetryState
 	fsys           afero.Fs
 	store          storage.Store
-	eventChan      chan *telemetryv1.Event
 	client         analytics.Client
+	interceptors   Interceptors
+	state          *statev1.TelemetryState
+	eventChan      chan *telemetryv1.Event
 	logger         *zap.Logger
 	shutdownChan   chan struct{}
 	reportInterval time.Duration
@@ -246,7 +247,8 @@ func (r *analyticsReporter) start() {
 }
 
 func (r *analyticsReporter) Intercept() Interceptors {
-	return newStatsInterceptors(r, r.reportInterval, r.shutdownChan)
+	r.interceptors = newStatsInterceptors(r, r.reportInterval, r.shutdownChan)
+	return r.interceptors
 }
 
 func (r *analyticsReporter) reportServerLaunch() {
@@ -266,6 +268,10 @@ func (r *analyticsReporter) Report(event *telemetryv1.Event) bool {
 }
 
 func (r *analyticsReporter) reportAPIActivity(event *telemetryv1.Event_ApiActivity) {
+	if event == nil {
+		return
+	}
+
 	if err := r.send("api_activity", event); err != nil {
 		r.logger.Debug("Failed to send API activity event", zap.Error(err))
 	}
@@ -286,6 +292,12 @@ func (r *analyticsReporter) Stop() error {
 }
 
 func (r *analyticsReporter) reportServerStop() {
+	if r.interceptors != nil {
+		if event := r.interceptors.GenerateEvent(); event != nil {
+			r.reportAPIActivity(event.GetApiActivity())
+		}
+	}
+
 	event := &telemetryv1.ServerStop{
 		Version:       "1.0.0",
 		Uptime:        durationpb.New(time.Since(startTime)),

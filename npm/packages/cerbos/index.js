@@ -1,5 +1,3 @@
-const { execFileSync } = require("child_process");
-
 const { platform: os, arch } = process;
 const currentPlatform = `${os}-${arch}`;
 const supportedPlatforms = [
@@ -32,7 +30,25 @@ Make sure optional dependencies are installed.`, { cause: error });
 })();
 
 function run(...args) {
-  execFileSync(binaryPath, args, { stdio: "inherit" });
+  const { spawnSync } = require("child_process");
+
+  const { status, signal, error } = spawnSync(binaryPath, args, { stdio: "inherit" });
+
+  if (error) {
+    throw error;
+  }
+
+  if (status !== null) {
+    process.exit(status);
+  }
+
+  if (signal !== null) {
+    const { constants } = require("os");
+    const signalNumber = constants.signals[signal] ?? 127;
+    process.exit(128 + signalNumber);
+  }
+
+  process.exit(255);
 }
 
 module.exports = { binaryPath, run };

@@ -12,6 +12,7 @@ permissions: {}
 jobs:
   publishDocs:
     name: Publish Documentation
+    if: github.repository == 'cerbos/cerbos'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

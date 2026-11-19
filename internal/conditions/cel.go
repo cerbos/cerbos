@@ -33,6 +33,9 @@ const (
 	CELGlobalsAbbrev     = "G"
 	CELAttrField         = "attr"
 	CELScopeField        = "scope"
+	// Expressions can refer to the policy_version field by its JSON name or its proto name.
+	CELPolicyVersionField      = "policyVersion"
+	CELPolicyVersionProtoField = "policy_version"
 )
 
 var (

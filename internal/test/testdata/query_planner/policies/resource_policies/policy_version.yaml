@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: policy_version
+  rules:
+    - actions:
+        - same_version
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.principal.policyVersion == request.resource.policyVersion
+
+    - actions:
+        - different_version
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.principal.policyVersion != request.resource.policyVersion
+
+    - actions:
+        - abbreviated
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: R.policyVersion == "default"
+
+    - actions:
+        - proto_name
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: request.resource.policy_version == "default"

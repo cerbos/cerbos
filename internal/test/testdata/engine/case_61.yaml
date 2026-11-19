@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped policy: scope with role policies only validates against the schema of the nearest resource policy"
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # contoso has a role policy but no leave_request policy. The nearest leave_request policy is in the root scope.
+  - requestId: test
+    actions:
+      - view
+    principal:
+      id: john
+      roles:
+        - contoso_manager
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+    resource:
+      kind: leave_request
+      scope: contoso
+      id: XX125
+      attr:
+        department: accounting
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+
+wantOutputs: &outputs
+  - requestId: test
+    resourceId: XX125
+    validationErrors:
+      - path: /department
+        message: value must be one of "marketing", "engineering"
+        source: SOURCE_RESOURCE
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: resource.leave_request.vdefault/contoso
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail: {}
+    policySource:
+      disk: {}

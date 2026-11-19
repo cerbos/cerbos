@@ -26,6 +26,7 @@ func TestOptionalFuncNames(t *testing.T) {
 		"_[?_]",
 		"first",
 		"hasValue",
+		"json.parse",
 		"last",
 		"optional.none",
 		"optional.of",
@@ -36,6 +37,7 @@ func TestOptionalFuncNames(t *testing.T) {
 		"regex.extract",
 		"unwrapOpt",
 		"value",
+		"yaml.parse",
 	}
 
 	have := make([]string, 0, len(optionalFuncs))

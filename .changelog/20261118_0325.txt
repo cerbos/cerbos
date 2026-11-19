@@ -1,0 +1,3 @@
+type:fix
+Track role policy parent roles per policy version
+Parent roles declared by a role policy now apply only to requests for that role policy version. Previously, role policies with the same role and scope but different versions overwrote each other, and their parent roles applied to every policy version. Compiled policies built by earlier versions are migrated when they are loaded. If they contain several versions of a role policy for the same role and scope, those versions keep sharing the same parent roles and a warning is logged until the policies are compiled again.

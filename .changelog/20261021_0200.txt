@@ -1,0 +1,3 @@
+type:fix
+Fix over-permissive query plans combining a principal policy ALLOW with resource policy DENY rules
+When the resource policy had only `DENY` rules for the principal's role and the requested action, the query planner ORed the principal policy `ALLOW` condition with the negated `DENY` condition. The plan then admitted resources that matched neither rule, although `CheckResources` denied them. For example, a principal policy allowing `view` when `R.attr.public == true`, combined with a resource policy denying `view` to the `user` role when `R.attr.confidential == true`, produced `R.attr.public == true || !(R.attr.confidential == true)` instead of `R.attr.public == true`.

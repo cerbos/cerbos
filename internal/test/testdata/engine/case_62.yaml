@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: Principal policy is resolved using the principal's policy version when it differs from the resource's policy version
+
+config:
+  lenientScopeSearch:
+    - false
+    - true
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  - requestId: test1
+    actions:
+      - approve
+      - view:public
+    principal:
+      id: donald_duck
+      policyVersion: "20210210"
+      roles:
+        - employee
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+        managed_geographies: GB
+    resource:
+      kind: leave_request
+      policyVersion: "default"
+      id: XX125
+      attr:
+        department: marketing
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+        status: PENDING_APPROVAL
+        dev_record: true
+
+wantOutputs: &outputs
+  - requestId: test1
+    resourceId: XX125
+    actions:
+      approve:
+        effect: EFFECT_ALLOW
+        policy: principal.donald_duck.v20210210
+      view:public:
+        effect: EFFECT_ALLOW
+        policy: principal.donald_duck.v20210210
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail:
+      effectivePolicies:
+        principal.donald_duck.v20210210:
+          attributes:
+            driver: disk
+            source: principal_policies/policy_01.yaml
+    policySource:
+      disk: {}

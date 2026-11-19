@@ -1,0 +1,101 @@
+# yaml-language-server: $schema=../.jsonschema/EngineTestCase.schema.json
+---
+description: "Scoped policy: scope only used by policies for another resource kind, principal or version"
+
+config:
+  lenientScopeSearch:
+    - false
+  schemaEnforcement:
+    - ENFORCEMENT_NONE
+    - ENFORCEMENT_WARN
+    - ENFORCEMENT_REJECT
+  strictEvaluation:
+    - false
+    - true
+
+inputs: &inputs
+  # calendar_entry has a policy in acme.sales but leave_request does not.
+  - requestId: other_resource_kind
+    actions:
+      - view:public
+    principal:
+      id: john
+      roles:
+        - employee
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+    resource:
+      kind: leave_request
+      scope: acme.sales
+      id: XX125
+      attr:
+        department: marketing
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+  # leave_request has a default version policy in acme but no 20210210 version.
+  - requestId: other_version
+    actions:
+      - view
+    principal:
+      id: john
+      roles:
+        - admin
+      attr:
+        department: marketing
+        geography: GB
+        team: design
+    resource:
+      kind: leave_request
+      policyVersion: "20210210"
+      scope: acme
+      id: XX125
+      attr:
+        department: marketing
+        geography: GB
+        id: XX125
+        owner: john
+        team: design
+  # donald_duck has a policy in acme.sales but daisy_duck does not.
+  - requestId: other_principal
+    actions:
+      - view
+    principal:
+      id: daisy_duck
+      scope: acme.sales
+      roles:
+        - employee
+    resource:
+      kind: expenses
+      id: XX125
+
+wantOutputs: &outputs
+  - requestId: other_resource_kind
+    resourceId: XX125
+    actions:
+      view:public:
+        effect: EFFECT_DENY
+        policy: NO_MATCH
+  - requestId: other_version
+    resourceId: XX125
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: NO_MATCH
+  - requestId: other_principal
+    resourceId: XX125
+    actions:
+      view:
+        effect: EFFECT_DENY
+        policy: NO_MATCH
+
+wantDecisionLogs:
+  - checkResources:
+      inputs: *inputs
+      outputs: *outputs
+    auditTrail: {}
+    policySource:
+      disk: {}

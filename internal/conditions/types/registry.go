@@ -73,17 +73,31 @@ func (r *typeRegistry) FindStructFieldType(structType, fieldName string) (*types
 }
 
 func (r *typeRegistry) NativeToValue(native any) ref.Val {
-	value := r.Adapter.NativeToValue(native)
-	if message, ok := native.(proto.Message); ok {
-		if obj, ok := value.(object); ok {
-			return &protoMessageObject{
-				object: obj,
-				fields: message.ProtoReflect().Descriptor().Fields(),
-			}
-		}
+	return wrapProtoMessage(r.Adapter.NativeToValue(native))
+}
+
+// wrapProtoMessage wraps a proto message value so that its fields can be accessed by JSON name.
+// Type-checked expressions resolve JSON names at compile time, but unchecked ones (as evaluated by
+// the query planner) rely on this.
+func wrapProtoMessage(value ref.Val) ref.Val {
+	if _, ok := value.(*protoMessageObject); ok {
+		return value
 	}
 
-	return value
+	obj, ok := value.(object)
+	if !ok {
+		return value
+	}
+
+	message, ok := value.Value().(proto.Message)
+	if !ok {
+		return value
+	}
+
+	return &protoMessageObject{
+		object: obj,
+		fields: message.ProtoReflect().Descriptor().Fields(),
+	}
 }
 
 type object interface {

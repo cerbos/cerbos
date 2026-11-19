@@ -145,7 +145,10 @@
       - value: q
     operator: list
 "has(a.b)":
-  value: true
+  expression:
+    operands:
+      - variable: a.b
+    operator: has
 "a - 2":
   expression:
     operands:

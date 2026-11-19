@@ -192,6 +192,10 @@ func UnmarshalBytes[T any, M ProtoMessage[T]](contents []byte, opts ...Unmarshal
 	outSrc := make([]SourceCtx, 0, len(f.Docs))
 	invalidDocSeen := false
 	for _, doc := range f.Docs {
+		if doc.Body == nil {
+			continue
+		}
+
 		msg := M(new(T))
 		uctx := newUnmarshalCtx(doc)
 
@@ -1279,7 +1283,7 @@ type unmarshalCtx struct {
 
 func newUnmarshalCtx(doc *ast.DocumentNode) *unmarshalCtx {
 	var startPos *sourcev1.StartPosition
-	if doc != nil && doc.GetToken() != nil {
+	if doc != nil && doc.Body != nil && doc.GetToken() != nil {
 		if p := doc.GetToken().Position; p != nil {
 			startPos = &sourcev1.StartPosition{Line: uint32(p.Line), Column: uint32(p.Column), Offset: uint32(p.Offset)}
 		}

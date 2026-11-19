@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../.jsonschema/QueryPlannerFilterTestCase.schema.json
+---
+description: Double negation cancels out
+input:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: not
+      operands:
+        - expression:
+            operator: not
+            operands:
+              - expression:
+                  operator: not
+                  operands:
+                    - expression:
+                        operator: eq
+                        operands:
+                          - variable: request.resource.attr.x
+                          - value: 1
+wantFilter:
+  kind: KIND_CONDITIONAL
+  condition:
+    expression:
+      operator: not
+      operands:
+        - expression:
+            operator: eq
+            operands:
+              - variable: request.resource.attr.x
+              - value: 1
+wantString: "(not (eq request.resource.attr.x 1))"

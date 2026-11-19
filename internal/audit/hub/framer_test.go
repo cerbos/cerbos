@@ -77,7 +77,7 @@ func TestRawFrameEquivalence(t *testing.T) {
 	}
 
 	f := &batchFramer{}
-	f.beginBatch(typed.Id)
+	f.beginBatchWithID(typed.Id)
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, rawAccess)
 	f.add(logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, rawDecision)
 	require.Equal(t, 2, f.count)
@@ -94,10 +94,10 @@ func TestRawFrameEquivalence(t *testing.T) {
 	require.Equal(t, typed.Entries[1].SizeVT(), getEntrySize(logsv1.IngestBatch_ENTRY_KIND_DECISION_LOG, rawDecision))
 }
 
-// TestRawFrameRollRestore checks that rolling the last entry out of a batch
-// and restoring it into the next one leaves both batches with the same wire
-// bytes as reference batches built from scratch with the same entries.
-func TestRawFrameRollRestore(t *testing.T) {
+// TestRawFrameDropLast checks that dropping the last entry out of a batch
+// leaves the batch with the same wire bytes as a reference batch built from
+// scratch without it.
+func TestRawFrameDropLast(t *testing.T) {
 	ts := time.Now()
 	mkRaw := func(callID string) []byte {
 		raw, err := (&auditv1.AccessLogEntry{
@@ -113,7 +113,7 @@ func TestRawFrameRollRestore(t *testing.T) {
 
 	frame := func(id string, raws ...[]byte) []byte {
 		f := &batchFramer{}
-		f.beginBatch(id)
+		f.beginBatchWithID(id)
 		for _, raw := range raws {
 			f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw)
 		}
@@ -121,24 +121,18 @@ func TestRawFrameRollRestore(t *testing.T) {
 	}
 
 	f := &batchFramer{}
-	f.beginBatch("batch-a")
+	f.beginBatchWithID("batch-a")
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw1)
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw2)
 
-	f.rollLast()
+	f.dropLast()
 	require.Equal(t, 1, f.count)
 	require.Equal(t, frame("batch-a", raw1), f.wire())
 
-	f.beginBatch("batch-b")
-	f.restoreLast()
-	require.Equal(t, 1, f.count)
-	require.Equal(t, frame("batch-b", raw2), f.wire())
-
-	// the restored entry must roll again, e.g. when it overflows the sole-entry batch
-	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw1)
-	f.rollLast()
-	require.Equal(t, 1, f.count)
-	require.Equal(t, frame("batch-b", raw2), f.wire())
+	// entries added after a drop must frame as if the dropped one never was
+	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, raw2)
+	require.Equal(t, 2, f.count)
+	require.Equal(t, frame("batch-a", raw1, raw2), f.wire())
 }
 
 // TestRawFrameNoTimestamp checks that an entry without a timestamp is framed
@@ -149,7 +143,7 @@ func TestRawFrameNoTimestamp(t *testing.T) {
 	require.NoError(t, err)
 
 	f := &batchFramer{}
-	f.beginBatch("batch-id")
+	f.beginBatchWithID("batch-id")
 	f.add(logsv1.IngestBatch_ENTRY_KIND_ACCESS_LOG, rawBare)
 
 	decoded := &logsv1.IngestBatch{}

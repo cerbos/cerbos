@@ -60,11 +60,11 @@ func buildFQNTree[T any](fqn, scope string, elementFn func(string) T) []T {
 		return []T{elementFn(fqn)}
 	}
 
-	fqnTree := []T{elementFn(withScope(fqn, scope))}
+	fqnTree := []T{elementFn(WithScope(fqn, scope))}
 
 	for i := len(scope) - 1; i >= 0; i-- {
 		if scope[i] == '.' {
-			fqnTree = append(fqnTree, elementFn(withScope(fqn, scope[:i])))
+			fqnTree = append(fqnTree, elementFn(WithScope(fqn, scope[:i])))
 		}
 	}
 
@@ -108,7 +108,7 @@ func SanitizedResource(resource string) string {
 // ResourcePolicyFQN returns the fully-qualified name for the resource policy with given resource, version and scope.
 func ResourcePolicyFQN(resource, version, scope string) string {
 	fqn := fmt.Sprintf("%s.%s.v%s", ResourcePoliciesPrefix, sanitize(resource), sanitize(version))
-	return withScope(fqn, scope)
+	return WithScope(fqn, scope)
 }
 
 // ResourcePolicyModuleID returns the module ID for the resource policy with given resource, version and scope.
@@ -129,7 +129,7 @@ func ScopedResourcePolicyModuleIDs(resource, version, scope string, genTree bool
 // PrincipalPolicyFQN returns the fully-qualified module name for the principal policy with given principal, version and scope.
 func PrincipalPolicyFQN(principal, version, scope string) string {
 	fqn := fmt.Sprintf("%s.%s.v%s", PrincipalPoliciesPrefix, sanitize(principal), sanitize(version))
-	return withScope(fqn, scope)
+	return WithScope(fqn, scope)
 }
 
 // PrincipalPolicyModuleID returns the module ID for the principal policy with given principal and version.
@@ -144,7 +144,7 @@ func RolePolicyFQN(role, version, scope string) string {
 		version = DefaultVersion
 	}
 	fqn := fmt.Sprintf("%s.%s.v%s", RolePoliciesPrefix, sanitize(role), sanitize(version))
-	return withScope(fqn, scope)
+	return WithScope(fqn, scope)
 }
 
 // RolePolicyModuleID returns the module ID for the role policies with the given scope.
@@ -197,7 +197,8 @@ func SimpleName(fqn string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(fqn, ExportVariablesPrefix+"."), ExportConstantsPrefix+"."), DerivedRolesPrefix+".")
 }
 
-func withScope(fqn, scope string) string {
+// WithScope returns the FQN of the policy in the given scope from the FQN of its unscoped (root) counterpart.
+func WithScope(fqn, scope string) string {
 	if scope == "" {
 		return fqn
 	}

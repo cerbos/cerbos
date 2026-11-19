@@ -1,0 +1,193 @@
+# yaml-language-server: $schema=../../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: has_fold
+  rules:
+    - actions:
+        - lone_allow
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner)
+
+    - actions:
+        - lone_deny
+        - negated_deny
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+
+    - actions:
+        - lone_deny
+      effect: EFFECT_DENY
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner)
+
+    - actions:
+        - negated_allow
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: "!has(R.attr.owner)"
+
+    - actions:
+        - negated_deny
+      effect: EFFECT_DENY
+      roles:
+        - user
+      condition:
+        match:
+          expr: "!has(R.attr.owner)"
+
+    - actions:
+        - or_presence
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) || has(R.attr.b)
+
+    - actions:
+        - guard_other_field
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) && R.attr.b == 1
+
+    - actions:
+        - ternary
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: 'has(R.attr.x) ? R.attr.x == "a" : false'
+
+    - actions:
+        - guard_same_field
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner) && R.attr.owner == P.id
+
+    - actions:
+        - all_of_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          all:
+            of:
+              - expr: has(R.attr.owner)
+              - expr: R.attr.owner == P.id
+
+    - actions:
+        - parent_path_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) && R.attr.a.b == 1
+
+    - actions:
+        - exists_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.tags) && R.attr.tags.exists(t, t == "a")
+
+    - actions:
+        - guard_under_or
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.x) && (R.attr.x == 1 || R.attr.y == 2)
+
+    - actions:
+        - guard_under_not
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.x) && !(R.attr.x == 1)
+
+    - actions:
+        - guarded_deny
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+
+    - actions:
+        - guarded_deny
+      effect: EFFECT_DENY
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.owner) && R.attr.owner == "bob"
+
+    - actions:
+        - three_guards_or
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.a) && has(R.attr.b) && has(R.attr.c) && (R.attr.a > R.attr.b || R.attr.b > R.attr.c)
+
+    - actions:
+        - guard_after_access
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: R.attr.x == 1 && has(R.attr.x)
+
+    - actions:
+        - guard_or_both
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.x) && (R.attr.x == 1 || R.attr.x == 2)
+
+    - actions:
+        - guard_if_branches
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: 'has(R.attr.x) && (R.attr.y == 1 ? R.attr.x == "a" : R.attr.x == "b")'
+
+    - actions:
+        - duplicate_guard
+      effect: EFFECT_ALLOW
+      roles:
+        - user
+      condition:
+        match:
+          expr: has(R.attr.x) && has(R.attr.x)

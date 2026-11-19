@@ -30,7 +30,7 @@ jobs:
         uses: $/.github/actions/setup-go
 
       - name: Install tools
-        uses: cerbos/actions/install-tools@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/install-tools@19e204e7bafa58a693eff12f5e95a09763723be5 # main
         with:
           tools: |-
             helm
@@ -64,13 +64,16 @@ jobs:
         run: helmfile init --force
 
       - name: Run E2E Tests
-        run: e2e/run.sh
+        run: |-
+          sudo sysctl fs.inotify.max_user_watches=524288
+          sudo sysctl fs.inotify.max_user_instances=512
+          e2e/run.sh
         env:
           E2E_NO_CLEANUP: "true"
           E2E_PACKAGE: ${{ inputs.package }}
 
       - name: Notify Slack on failure
         if: "!success()"
-        uses: cerbos/actions/notify-slack@f8054d41c7cdcaa04f93d8562c462ba3c6c83035 # main
+        uses: cerbos/actions/notify-slack@19e204e7bafa58a693eff12f5e95a09763723be5 # main
         with:
           webhook-url: ${{ secrets.SLACK_CI_NOTIFICATIONS_WEBHOOK_URL }}

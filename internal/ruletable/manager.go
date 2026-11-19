@@ -238,7 +238,15 @@ func (mgr *Manager) addPolicy(rps *runtimev1.RunnablePolicySet) error {
 	mgr.mu.Lock()
 	defer mgr.mu.Unlock()
 
-	return mgr.ingestPolicy(rps)
+	if err := mgr.ingestPolicy(rps); err != nil {
+		return err
+	}
+
+	if rps.GetRolePolicy() != nil {
+		return mgr.idx.IndexParentRoles(mgr.VersionScopeParentRoles)
+	}
+
+	return nil
 }
 
 func (mgr *Manager) deletePolicy(moduleID namer.ModuleID) error {
@@ -264,35 +272,10 @@ func (mgr *Manager) doDeletePolicy(moduleID namer.ModuleID) error {
 		return err
 	}
 
-	activeScopes := mgr.idx.GetScopes()
-	activeScopeSet := make(map[string]struct{}, len(activeScopes))
-	for _, s := range activeScopes {
-		activeScopeSet[s] = struct{}{}
-	}
-
 	if role := meta.GetRole(); role != "" {
-		scope := namer.ScopeFromFQN(meta.GetFqn())
-		if scopeParentRoles, ok := mgr.ScopeParentRoles[scope]; ok && scopeParentRoles != nil {
-			delete(scopeParentRoles.RoleParentRoles, role)
-			if len(scopeParentRoles.RoleParentRoles) == 0 {
-				delete(mgr.ScopeParentRoles, scope)
-			}
-		}
-		if err := mgr.idx.IndexParentRoles(mgr.ScopeParentRoles); err != nil {
+		deleteRoleParentRoles(mgr.RuleTable.RuleTable, meta.GetVersion(), namer.ScopeFromFQN(meta.GetFqn()), role)
+		if err := mgr.idx.IndexParentRoles(mgr.VersionScopeParentRoles); err != nil {
 			return err
-		}
-	}
-
-	// TODO(saml) many of these ephemeral caches on the RuleTable should probably now reside inside the Index layer.
-	for scope := range mgr.principalScopeMap {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.principalScopeMap, scope)
-		}
-	}
-
-	for scope := range mgr.resourceScopeMap {
-		if _, ok := activeScopeSet[scope]; !ok {
-			delete(mgr.resourceScopeMap, scope)
 		}
 	}
 

@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../../../schema/jsonschema/cerbos/policy/v1/Policy.schema.json
+---
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "v3"
+  resource: parcel
+  rules:
+    - actions:
+        - view
+      roles:
+        - parcel_viewer
+      effect: EFFECT_ALLOW
+    - actions:
+        - edit
+      roles:
+        - parcel_editor
+      effect: EFFECT_ALLOW

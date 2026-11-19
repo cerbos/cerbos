@@ -1,0 +1,2 @@
+type:enhancement
+Index role policy parent roles once per rule table build instead of once per ingested policy
