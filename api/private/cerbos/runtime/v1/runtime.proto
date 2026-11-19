@@ -460,7 +460,7 @@ message BitmapIndex {
   repeated FunctionalCore cores = 11;
   // Parent roles keyed by scope and role, ignoring the role policy version. Derived from
   // version_parent_roles for readers that are not version aware.
-  map<string, RoleParents> parent_roles = 12;
+  map<string, RoleParents> parent_roles = 12 [deprecated = true];
   // Parent roles keyed by role policy version, scope and role.
   map<string, ScopeRoleParents> version_parent_roles = 13;
 }
