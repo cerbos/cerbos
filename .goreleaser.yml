@@ -225,7 +225,7 @@ dockers_v2:
     tags:
       - "{{.Version}}"
     ids:
-      - cerbos
+      - cerbos-aws
     labels:
       "org.opencontainers.image.created": "{{.Date}}"
       "org.opencontainers.image.name": "{{.ProjectName}}"
