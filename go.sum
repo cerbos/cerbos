@@ -147,8 +147,8 @@ github.com/cenkalti/backoff/v7 v7.0.3 h1:oJlXCmDgfNcGYViwioz1cZ1kHebejP4OLfJ/gqM
 github.com/cenkalti/backoff/v7 v7.0.3/go.mod h1:qcKBGwsu4hpxHtQ8tWYsQ+ifzx2+sS+Xx/3jfe30lI8=
 github.com/cerbos/cerbos-sdk-go v0.4.5 h1:mR8vT2FXXKqXeSUu6QckgdpI1Oq5E3hpZsRl4ej0UhM=
 github.com/cerbos/cerbos-sdk-go v0.4.5/go.mod h1:3xLnC5g3jrJ0rfAqvyquO6oYjbiTioUP0/Or49hWqE8=
-github.com/cerbos/cerbos/api/genpb v0.57.1-0.20261119091315-14d4e31ab2ac h1:nxK5yLwZVXW11Kn7c9dKRH8XHjM3NuZ8WI/knkmU9YM=
-github.com/cerbos/cerbos/api/genpb v0.57.1-0.20261119091315-14d4e31ab2ac/go.mod h1:wWND4bI6NKpVpvZupkySQgNsY7seGytoJk8hbm7Lkxo=
+github.com/cerbos/cerbos/api/genpb v0.57.1-0.20261123101744-2090c52af744 h1:fmnf8kx8KET+zZl9x0LwZ/2HM2Rb+8mj+PJn13lGUdc=
+github.com/cerbos/cerbos/api/genpb v0.57.1-0.20261123101744-2090c52af744/go.mod h1:rMTLL+7Z/17AFPSJglWlb8AvLdvTKIFypfJYP6757rY=
 github.com/cerbos/cloud-api v0.2.11 h1:/dyZdoqp/cEaqH/tLUcBD6FxcsH7gNmJ39YRLjnjO20=
 github.com/cerbos/cloud-api v0.2.11/go.mod h1:V0lYhEwMoJGFrf/aqK7j4Un/7zoWDcZ2GfNpNCBm3BA=
 github.com/cerbos/protovalidate-go v0.0.0-20260615200145-16b6d024eb17 h1:rwZzMp1QvovVzS2WPNmzxYUUCkKQh+O/EQyw46nwwVw=
