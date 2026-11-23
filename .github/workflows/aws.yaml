@@ -40,7 +40,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Log in to ECR
-        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
         with:
           registries: ${{ vars.AWS_CONTAINER_REGISTRY_ID }}
 
@@ -51,7 +51,7 @@ jobs:
           write_build_cache: true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
 
       - name: Install goreleaser
         uses: cerbos/actions/install-tools@19e204e7bafa58a693eff12f5e95a09763723be5 # main
