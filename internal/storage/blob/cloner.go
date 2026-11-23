@@ -171,6 +171,10 @@ func (c *Cloner) downloadToFile(ctx context.Context, key, file string) error {
 		return fmt.Errorf("failed to read the object %s: %w", key, err)
 	}
 
+	if err := fd.Close(); err != nil {
+		return fmt.Errorf("failed to flush %s: %w", underscoreFile, err)
+	}
+
 	if err := c.fs.Rename(underscoreFile, file); err != nil {
 		return fmt.Errorf("failed to rename temporary file %s to %s: %w", underscoreFile, file, err)
 	}
