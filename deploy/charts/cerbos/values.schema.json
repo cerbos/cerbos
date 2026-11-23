@@ -387,7 +387,6 @@
           ]
         },
         "clusterIP": {
-          "default": "null",
           "description": "Service Cluster IP",
           "required": [],
           "title": "clusterIP",
@@ -431,7 +430,6 @@
           ]
         },
         "loadBalancerIP": {
-          "default": "null",
           "description": "LoadBalancer static IP",
           "required": [],
           "title": "loadBalancerIP",
