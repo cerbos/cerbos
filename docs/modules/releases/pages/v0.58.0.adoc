@@ -1,0 +1,46 @@
+include::ROOT:partial$attributes.adoc[]
+
+[#v0.58.0]
+= Cerbos v0.58.0 (2026-11-23)
+
+
+== Changelog
+
+=== Enhancements
+
+[unordered]
+Document new CEL functions:: Add `json.parse`, `yaml.encode`, `yaml.parse`, `hasAll`, `hasAny`, `hasExactly` and `hasOnly` CEL functions.
+
+
+Reduce work done during rule table build:: Index role policy parent roles once per rule table build instead of once per ingested policy.
+
+Consistent matched scopes in query plans:: PlanResources now reports an empty matched scope for each action when no policy matches the requested scope.
+
+
+=== Bug fixes
+
+[unordered]
+Preserve exit status when executing npm-packaged binaries:: Previously, executing `cerbos` or `cerbosctl` via `npm exec` (or the equivalent for other package managers) would always exit with status 1 when the packaged binary exited with any non-zero status. Now, the original exit status is preserved.
+
+
+Fix `pathHasPrefix` handling of dot-prefixed segments:: The `pathHasPrefix` function now treats names starting with a dot as being under the prefix. For example, `pathHasPrefix("/secrets/.env", "/secrets")` returns true.
+
+
+Evaluate policy version conditions in query plans instead of denying:: The query planner dropped the principal and resource policy versions from the plan request and could not resolve fields by their JSON names on messages nested under `request`. A condition such as `request.principal.policyVersion == request.resource.policyVersion` failed to evaluate and the plan denied the action, although `CheckResources` allowed it. The planner now evaluates these conditions, and treats the resource policy version as known like the resource kind and scope, so `R.policyVersion` no longer appears in plan filters.
+
+
+Fix incorrect scope fall through:: Scoped requests no longer fall through to parent scopes when the requested scope has no policy for the requested resource kind, principal or version.
+
+
+Schema validation in role policy scopes:: Requests in a scope that only has role policies are now validated against the schema of the nearest resource policy.
+
+
+Honour the principal policy version:: Resolve principal policies using the principal policy version when it differs from the resource policy version.
+
+
+Track role policy parent roles per policy version:: Parent roles declared by a role policy now apply only to requests for that role policy version. Previously, role policies with the same role and scope but different versions overwrote each other, and their parent roles applied to every policy version. Compiled policies built by earlier versions are migrated when they are loaded. If they contain several versions of a role policy for the same role and scope, those versions keep sharing the same parent roles and a warning is logged until the policies are compiled again.
+
+
+Apply role policy parent roles with lenient scope search:: With lenient scope search, a request for a scope that has no policies now uses the parent roles of the role policies in the scope it resolves to. Previously the parent roles were looked up in the requested scope, so they were ignored and the request could be denied.
+
+
