@@ -36,7 +36,7 @@ See xref:scoped_policies.adoc[scoped policies] for details on how scoped policy 
 
 For each action in the request, Cerbos evaluates all rules in the matched policy. A rule matches when all of the following are true:
 
-. The rule's `actions` match the requested action. Wildcards are supported and respect the `:` delimiter (e.g. `view:*` matches `view:public` but not `view`).
+. The rule's `actions` match the requested action. Wildcards are supported and respect the `:` delimiter (e.g. `view:*` matches `view:public` but not `view` or `view:public:draft`).
 . The rule's `roles` or `derivedRoles` include at least one of the principal's roles (including parent roles inherited through role policies) or activated derived roles.
 . If the rule has a xref:conditions.adoc[condition], the condition evaluates to `true`.
 
