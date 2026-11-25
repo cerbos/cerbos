@@ -9,7 +9,7 @@ Derived roles are computed at request evaluation time from the principal's base 
 
 Traditional RBAC roles are usually broad groupings with no context awareness. They are static and they are provided by the Identity Provider(IDP), not by Cerbos. Cerbos provides derived roles as a way of augmenting those broad roles with contextual data to provide more fine-grained control at runtime. For example, a person with the broad `manager` role can be augmented to `manager_of_scranton_branch` by taking into account the geographic location (or another factor) and giving that derived role bearer extra privileges on resources that belong to the Scranton branch.
 
-NOTE: Derived roles are dynamically determined at runtime by matching the principal's `roles` sent in the xref:api:index.adoc#check-resources[API request] to the `parentRoles` specified in the derived roles definitions. Don't use the derived role names as `roles` in the API request as Cerbos only expects that field to contain "normal" roles.
+NOTE: Derived roles are dynamically determined at runtime by matching the principal's `roles` sent in the xref:api:index.adoc#check-resources[API request], and any parent roles inherited through xref:role_policies.adoc[role policies], to the `parentRoles` specified in the derived roles definitions. Don't use the derived role names as `roles` in the API request as Cerbos only expects that field to contain "normal" roles.
 
 [source,yaml,linenums]
 ----
@@ -110,7 +110,7 @@ resourcePolicy:
         - owner
 ----
 
-. *The principal's static roles match `parentRoles`.* The roles sent in the API request must include at least one of the roles listed in the derived role's `parentRoles` field. These are case-sensitive.
+. *The principal's static roles match `parentRoles`.* The roles sent in the API request, or parent roles inherited through role policies, must include at least one of the roles listed in the derived role's `parentRoles` field. These are case-sensitive.
 
 . *The condition evaluates to true.* If the derived role has a condition, verify that the attribute names and types in the request match what the expression expects. Use the xref:cli:cerbos.adoc#repl[Cerbos REPL] to test expressions interactively.
 
