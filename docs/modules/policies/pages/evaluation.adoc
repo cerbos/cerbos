@@ -11,7 +11,7 @@ Understanding how Cerbos evaluates authorization requests helps you write correc
 [#default-deny]
 == Default deny
 
-Cerbos is deny-by-default. If no policy exists for the resource kind and version in the request, or if no rule within a matching policy grants access, the result is `EFFECT_DENY`. There is no concept of "no opinion" — the absence of an explicit allow is a deny.
+Cerbos is deny-by-default. If no principal policy exists for the principal and no resource policy exists for the resource kind and version in the request, or if no rule within a matching policy grants access, the result is `EFFECT_DENY`. There is no concept of "no opinion" — the absence of an explicit allow is a deny.
 
 
 [#policy-lookup]
@@ -26,6 +26,8 @@ If a `scope` is provided, Cerbos looks for the most specific scoped policy first
 . scope `a`
 . no scope
 
+A policy must exist for the exact scope in the request unless xref:configuration:engine.adoc#lenient_scopes[lenient scope search] is enabled.
+
 See xref:scoped_policies.adoc[scoped policies] for details on how scoped policy evaluation works.
 
 
@@ -34,8 +36,8 @@ See xref:scoped_policies.adoc[scoped policies] for details on how scoped policy 
 
 For each action in the request, Cerbos evaluates all rules in the matched policy. A rule matches when all of the following are true:
 
-. The rule's `actions` match the requested action. Wildcards are supported and respect the `:` delimiter (e.g. `view:*` matches `view:public` but not `view`).
-. The rule's `roles` or `derivedRoles` include at least one of the principal's static roles or activated derived roles.
+. The rule's `actions` match the requested action. Wildcards are supported and respect the `:` delimiter (e.g. `view:*` matches `view:public` but not `view` or `view:public:draft`).
+. The rule's `roles` or `derivedRoles` include at least one of the principal's roles (including parent roles inherited through role policies) or activated derived roles.
 . If the rule has a xref:conditions.adoc[condition], the condition evaluates to `true`.
 
 
@@ -100,9 +102,9 @@ The derived roles policy must be imported into the resource policy via `importDe
 [#principal-policies]
 == Principal policies
 
-xref:principal_policies.adoc[Principal policies] are evaluated *before* resource policies. When a principal policy matches the requesting principal, Cerbos evaluates its rules for the requested actions first. For each action where the principal policy produces an explicit `EFFECT_ALLOW` or `EFFECT_DENY`, that decision is final — the resource policy is not consulted for that action.
+xref:principal_policies.adoc[Principal policies] are evaluated *before* resource policies. When a principal policy matches the requesting principal, Cerbos evaluates its rules for the requested actions first. For each action where the principal policy produces an explicit `EFFECT_ALLOW` or `EFFECT_DENY`, that decision is final — the resource policy is not consulted for that action. With `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, an allow is only final if a parent scope also allows the action.
 
-Actions the principal policy leaves undecided (no matching rule, or a matching rule whose condition did not hold) fall through to resource policy evaluation.
+Actions the principal policy leaves undecided (no matching rule, or a matching rule whose condition did not hold) fall through to resource policy evaluation. The exception is `SCOPE_PERMISSIONS_REQUIRE_PARENTAL_CONSENT_FOR_ALLOWS`, where an `EFFECT_ALLOW` rule whose condition did not hold produces `EFFECT_DENY`.
 
 
 [#role-policies]
