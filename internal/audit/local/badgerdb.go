@@ -12,12 +12,14 @@ import (
 	"time"
 
 	badgerv4 "github.com/dgraph-io/badger/v4"
+	"go.opentelemetry.io/otel/metric"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
 	"github.com/cerbos/cerbos/internal/audit"
 	"github.com/cerbos/cerbos/internal/audit/badgerkey"
 	"github.com/cerbos/cerbos/internal/config"
+	"github.com/cerbos/cerbos/internal/observability/metrics"
 )
 
 const (
@@ -34,7 +36,23 @@ func init() {
 			return nil, fmt.Errorf("failed to read local audit log configuration: %w", err)
 		}
 
-		return NewLog(conf, decisionFilter)
+		newl, err := NewLog(conf, decisionFilter)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err := metrics.Meter().RegisterCallback(func(_ context.Context, o metric.Observer) error {
+			count := int64(len(newl.buffer)) // it is GoRoutine safe to read len for measurement
+			o.ObserveInt64(metrics.AuditBackendBufferEntries(), count, metric.WithAttributes(
+				metrics.AuditBackendKey.String(Backend),
+			))
+
+			return nil
+		}, metrics.AuditBackendBufferEntries()); err != nil {
+			return nil, err
+		}
+
+		return newl, nil
 	})
 }
 
