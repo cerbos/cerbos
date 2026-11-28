@@ -128,10 +128,10 @@ func (c *Cmd) Run(k *kong.Kong) error {
 		return err
 	case status := <-statusChan:
 		if status.Error != nil {
-			log.Errorw("Command execution error", "command", c.Command, "error", err)
+			log.Errorw("Command execution error", "command", c.Command, "error", status.Error)
 			cleanup()
 
-			return err
+			return status.Error
 		}
 
 		if status.Complete {
